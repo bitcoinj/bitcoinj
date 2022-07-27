@@ -19,6 +19,7 @@ package org.bitcoinj.crypto;
 
 import com.google.common.base.Stopwatch;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.slf4j.Logger;
@@ -97,7 +98,7 @@ public class MnemonicCode {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(wordstream, StandardCharsets.UTF_8))) {
             this.wordList = br.lines()
                     .peek(word -> md.update(word.getBytes()))
-                    .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                    .collect(StreamUtils.toUnmodifiableList());
         }
 
         if (this.wordList.size() != 2048)

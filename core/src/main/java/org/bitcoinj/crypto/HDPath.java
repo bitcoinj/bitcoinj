@@ -16,6 +16,7 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.internal.InternalUtils;
 
 import javax.annotation.Nonnull;
@@ -289,7 +290,7 @@ public class HDPath extends AbstractList<ChildNumber> {
         return IntStream.range(1, endExclusive)
                 .mapToObj(i -> unmodifiableList.subList(0, i))
                 .map(l -> HDPath.of(hasPrivateKey, l))
-                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     @Override

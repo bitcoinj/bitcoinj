@@ -21,6 +21,7 @@ import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -1215,7 +1216,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     private <T> List<T> concatLists(List<T> list1, List<T> list2) {
         return Stream.concat(list1.stream(), list2.stream())
-                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
@@ -1248,7 +1249,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         List<DeterministicKey> result = HDKeyDerivation.generate(parent, numChildren)
                 .limit(limit)
                 .map(DeterministicKey::dropPrivateBytes)
-                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                .collect(StreamUtils.toUnmodifiableList());
         watch.stop();
         log.info("Took {}", watch);
         return result;
@@ -1341,7 +1342,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return basicKeyChain.getKeys().stream()
                 .map(key -> (DeterministicKey) key)
                 .filter(keyFilter)
-                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     /**

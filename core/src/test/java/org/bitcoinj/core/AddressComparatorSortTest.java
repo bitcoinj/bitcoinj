@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.utils.StreamUtils;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class AddressComparatorSortTest {
                     "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
                     "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
             ).map(s -> Address.fromString(null, s))
-            .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+            .collect(StreamUtils.toUnmodifiableList());
 
     @Test
     public void testAddressComparisonSortOrder() {
@@ -72,6 +73,6 @@ public class AddressComparatorSortTest {
     private static List<Address> sorted(List<Address> addresses) {
         return addresses.stream()                                       // stream it
                 .sorted()                                               // sort it
-                .collect(collectingAndThen(toList(), Collections::unmodifiableList));  // collect as unmodifiable
+                .collect(StreamUtils.toUnmodifiableList());  // collect as unmodifiable
     }
 }
