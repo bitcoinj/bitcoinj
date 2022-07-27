@@ -469,14 +469,18 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     private void installShutdownHook() {
-        if (autoStop) Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                WalletAppKit.this.stopAsync();
-                WalletAppKit.this.awaitTerminated();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }));
+        if (autoStop) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
+        }
+    }
+
+    private void shutdownHook() {
+        try {
+            stopAsync();
+            awaitTerminated();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
