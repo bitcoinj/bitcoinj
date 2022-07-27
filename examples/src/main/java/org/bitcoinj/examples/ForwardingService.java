@@ -124,9 +124,9 @@ public class ForwardingService implements AutoCloseable {
             kit.connectToLocalHost();
         }
 
-        // Download the blockchain and wait until it's done.
-        kit.startAsync();
-        kit.awaitRunning();
+        kit.setBlockingStartup(false);  // Don't wait for blockchain synchronization before entering RUNNING state
+        kit.startAsync();               // Connect to the network and start downloading transactions
+        kit.awaitRunning();             // Wait for the service to reach the RUNNING state
         kit.peerGroup().setMaxConnections(MAX_CONNECTIONS);
 
         // Start listening and forwarding
