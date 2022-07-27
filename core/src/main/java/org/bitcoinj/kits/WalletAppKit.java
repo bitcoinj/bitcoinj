@@ -378,23 +378,24 @@ public class WalletAppKit extends AbstractIdleService {
         }
         vChain.addWallet(vWallet);
         vPeerGroup.addWallet(vWallet);
+
+        // vChain, vWallet, and vPeerGroup all initialized; allow subclass (if any) a chance to adjust configuration
         onSetupCompleted();
 
-        if (blockingStartup) {
-            vPeerGroup.start();
-            // Make sure we shut down cleanly.
-            installShutdownHook();
+        // Start the PeerGroup (asynchronously) and start downloading the blockchain (asynchronously)
+        vPeerGroup.startAsync().whenComplete((result, t) -> {
+            if (t == null) {
+                vPeerGroup.startBlockChainDownload(downloadListener);
+            } else {
+                throw new RuntimeException(t);
+            }
+        });
 
-            vPeerGroup.startBlockChainDownload(downloadListener);
-            downloadListener.await();
-        } else {
-            vPeerGroup.startAsync().whenComplete((result, t) -> {
-                if (t == null) {
-                    vPeerGroup.startBlockChainDownload(downloadListener);
-                } else {
-                    throw new RuntimeException(t);
-                }
-            });
+        // Make sure we shut down cleanly.
+        installShutdownHook();
+
+        if (blockingStartup) {
+            downloadListener.await();   // Wait for the blockchain to download
         }
     }
 
