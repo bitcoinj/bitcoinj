@@ -73,15 +73,15 @@ public class ForwardingService implements AutoCloseable {
             network = address.network();
         }
 
-        forward(network, address);
+        forward(new File("."), network, address);
     }
 
-    public static void forward(BitcoinNetwork network, Address address) {
+    public static void forward(File directory, BitcoinNetwork network, Address address) {
         System.out.println("Network: " + network.id());
         System.out.println("Forwarding address: " + address);
 
         // Create the Service (and WalletKit)
-        try (ForwardingService forwardingService = new ForwardingService(address, network)) {
+        try (ForwardingService forwardingService = new ForwardingService(directory, address, network)) {
             // Start the Service (and WalletKit)
             forwardingService.start();
 
@@ -99,10 +99,11 @@ public class ForwardingService implements AutoCloseable {
     /**
      * Forwarding service. Creating this object creates the {@link WalletAppKit} object.
      *
+     * @param directory directory for .wallet and .chain files
      * @param forwardingAddress forwarding destination
      * @param network Network to listen on
      */
-    public ForwardingService(Address forwardingAddress, BitcoinNetwork network) {
+    public ForwardingService(File directory, Address forwardingAddress, BitcoinNetwork network) {
         this.forwardingAddress = forwardingAddress;
         this.network = network;
         listener = this::coinsReceivedListener;
@@ -110,7 +111,7 @@ public class ForwardingService implements AutoCloseable {
         kit = new WalletAppKit(network,
                 ScriptType.P2WPKH,
                 KeyChainGroupStructure.BIP32,
-                new File("."),
+                directory,
                 getPrefix(network));
     }
 
