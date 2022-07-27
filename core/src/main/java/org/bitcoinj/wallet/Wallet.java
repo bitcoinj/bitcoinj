@@ -25,6 +25,7 @@ import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Base58;
@@ -4387,7 +4388,7 @@ public class Wallet extends BaseTaggableObject
                 candidates = myUnspents.stream()
                     .filter(output ->   (!excludeUnsignable || canSignFor(output.getScriptPubKey())) &&
                                         (!excludeImmatureCoinbases || checkNotNull(output.getParentTransaction()).isMature()))
-                    .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                    .collect(StreamUtils.toUnmodifiableList());
             } else {
                 candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
             }

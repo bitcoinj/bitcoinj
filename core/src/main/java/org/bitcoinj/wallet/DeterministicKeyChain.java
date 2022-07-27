@@ -21,6 +21,7 @@ import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -50,7 +51,6 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -58,14 +58,11 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toList;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the
@@ -1215,7 +1212,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     private <T> List<T> concatLists(List<T> list1, List<T> list2) {
         return Stream.concat(list1.stream(), list2.stream())
-                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued) {
@@ -1248,7 +1245,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         List<DeterministicKey> result = HDKeyDerivation.generate(parent, numChildren)
                 .limit(limit)
                 .map(DeterministicKey::dropPrivateBytes)
-                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                .collect(StreamUtils.toUnmodifiableList());
         watch.stop();
         log.info("Took {}", watch);
         return result;
@@ -1341,7 +1338,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return basicKeyChain.getKeys().stream()
                 .map(key -> (DeterministicKey) key)
                 .filter(keyFilter)
-                .collect(collectingAndThen(toList(), Collections::unmodifiableList));
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     /**
