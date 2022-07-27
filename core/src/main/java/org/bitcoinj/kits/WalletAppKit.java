@@ -100,7 +100,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     protected boolean useAutoSave = true;
     protected PeerAddress[] peerAddresses;
-    protected DownloadProgressTracker downloadListener;
+    protected DownloadProgressTracker downloadListener = new DownloadProgressTracker();
     protected boolean autoStop = true;
     protected InputStream checkpoints;
     protected boolean blockingStartup = true;
@@ -179,6 +179,7 @@ public class WalletAppKit extends AbstractIdleService {
      * too, due to some missing implementation code.
      */
     public WalletAppKit setDownloadListener(DownloadProgressTracker listener) {
+        checkNotNull(listener);
         this.downloadListener = listener;
         return this;
     }
@@ -384,15 +385,12 @@ public class WalletAppKit extends AbstractIdleService {
             // Make sure we shut down cleanly.
             installShutdownHook();
 
-            // TODO: Be able to use the provided download listener when doing a blocking startup.
-            final DownloadProgressTracker listener = new DownloadProgressTracker();
-            vPeerGroup.startBlockChainDownload(listener);
-            listener.await();
+            vPeerGroup.startBlockChainDownload(downloadListener);
+            downloadListener.await();
         } else {
             vPeerGroup.startAsync().whenComplete((result, t) -> {
                 if (t == null) {
-                    final DownloadProgressTracker l = downloadListener == null ? new DownloadProgressTracker() : downloadListener;
-                    vPeerGroup.startBlockChainDownload(l);
+                    vPeerGroup.startBlockChainDownload(downloadListener);
                 } else {
                     throw new RuntimeException(t);
                 }
