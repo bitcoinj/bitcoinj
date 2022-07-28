@@ -470,7 +470,7 @@ public class WalletAppKit extends AbstractIdleService {
 
     private void installShutdownHook() {
         if (autoStop) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
+            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook, "shutdownHook"));
         }
     }
 
