@@ -27,7 +27,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -39,9 +38,10 @@ import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 
 /**
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
@@ -260,11 +260,8 @@ public class ForwardingService implements AutoCloseable {
      * @return a coin selector
      */
     static CoinSelector forwardingCoinSelector(Sha256Hash forwardTxId) {
-        return (target, candidates) -> {
-            var selected = candidates.stream()
-                    .filter(output -> output.getParentTransactionHash().equals(forwardTxId))
-                    .collect(Collectors.toList());
-            return new CoinSelection(selected);
-        };
+        return (target, candidates) -> candidates.stream()
+                .filter(output -> output.getParentTransactionHash().equals(forwardTxId))
+                .collect(collectingAndThen(toList(), CoinSelection::new));
     }
 }
