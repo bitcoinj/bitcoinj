@@ -177,7 +177,7 @@ public class ForwardingService implements AutoCloseable {
                 System.out.printf("Incoming tx has received %d confirmations.\n", confidence.getDepthInBlocks());
                 // Now send the coins onwards by sending exactly the outputs that have been sent to us
                 SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
-                sendRequest.coinSelector = new ForwardingCoinSelector(incomingTx);
+                sendRequest.coinSelector = forwardingCoinSelector(incomingTx.getTxId());
                 System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
                 return sendTransaction(sendRequest);
             })
@@ -251,20 +251,20 @@ public class ForwardingService implements AutoCloseable {
         return String.format("forwarding-service-%s", network.toString());
     }
 
-    static class ForwardingCoinSelector implements CoinSelector {
-        private final Sha256Hash forwardTxId;
-
-        public ForwardingCoinSelector(Transaction transactionToForward) {
-            this.forwardTxId = transactionToForward.getTxId();
-        }
-
-        @Override
-        public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
-            var selected =
-                    candidates.stream()
-                            .filter(output -> output.getParentTransactionHash().equals(forwardTxId))
-                            .collect(Collectors.toList());
+    /**
+     * Create a CoinSelector that only returns outputs from a given parent transaction.
+     * <p>
+     * This is using the idea of partial function application to create a 2-argument function for coin selection
+     * with a third, fixed argument of the transaction id.
+     * @param forwardTxId The parent transaction hash
+     * @return a coin selector
+     */
+    static CoinSelector forwardingCoinSelector(Sha256Hash forwardTxId) {
+        return (target, candidates) -> {
+            var selected = candidates.stream()
+                    .filter(output -> output.getParentTransactionHash().equals(forwardTxId))
+                    .collect(Collectors.toList());
             return new CoinSelection(selected);
-        }
+        };
     }
 }
