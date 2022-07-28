@@ -49,7 +49,8 @@ import static com.google.common.base.Preconditions.checkState;
 public class TransactionBroadcast {
     private static final Logger log = LoggerFactory.getLogger(TransactionBroadcast.class);
 
-    private final CompletableFuture<Transaction> future = new ListenableCompletableFuture<>();
+    // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
+    private final CompletableFuture<Transaction> seenFuture = new ListenableCompletableFuture<>();
     private final PeerGroup peerGroup;
     private final Transaction tx;
     private int minConnections;
@@ -94,8 +95,11 @@ public class TransactionBroadcast {
         };
     }
 
+    /**
+     * @return future that completes when some number of remote peers has rebroadcast the transaction
+     */
     public ListenableCompletableFuture<Transaction> future() {
-        return ListenableCompletableFuture.of(future);
+        return ListenableCompletableFuture.of(seenFuture);
     }
 
     public void setMinConnections(int minConnections) {
@@ -117,7 +121,7 @@ public class TransactionBroadcast {
                     long threshold = Math.round(numWaitingFor / 2.0);
                     if (size > threshold) {
                         log.warn("Threshold for considering broadcast rejected has been reached ({}/{})", size, threshold);
-                        future.completeExceptionally(new RejectedTransactionException(tx, rejectMessage));
+                        seenFuture.completeExceptionally(new RejectedTransactionException(tx, rejectMessage));
                         peerGroup.removePreMessageReceivedEventListener(this);
                     }
                 }
@@ -175,7 +179,7 @@ public class TransactionBroadcast {
                 }
             }
         }, Threading.SAME_THREAD);
-        return ListenableCompletableFuture.of(future);
+        return ListenableCompletableFuture.of(seenFuture);
     }
 
     /**
@@ -222,7 +226,7 @@ public class TransactionBroadcast {
                 log.info("broadcastTransaction: {} complete", tx.getTxId());
                 peerGroup.removePreMessageReceivedEventListener(rejectionListener);
                 conf.removeEventListener(this);
-                future.complete(tx);  // RE-ENTRANCY POINT
+                seenFuture.complete(tx);  // RE-ENTRANCY POINT
             }
         }
     }
