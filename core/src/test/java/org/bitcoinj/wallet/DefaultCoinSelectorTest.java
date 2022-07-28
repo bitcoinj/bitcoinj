@@ -92,8 +92,8 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         // Check we selected just the oldest one.
         DefaultCoinSelector selector = DefaultCoinSelector.get();
         CoinSelection selection = selector.select(COIN, wallet.calculateAllSpendCandidates());
-        assertTrue(selection.gathered.contains(t1.getOutputs().get(0)));
-        assertEquals(COIN, selection.valueGathered);
+        assertTrue(selection.outputs().contains(t1.getOutputs().get(0)));
+        assertEquals(COIN, selection.totalValue());
 
         // Check we ordered them correctly (by depth).
         ArrayList<TransactionOutput> candidates = new ArrayList<>();
@@ -141,6 +141,6 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         DefaultCoinSelector selector = DefaultCoinSelector.get();
         CoinSelection selection = selector.select(COIN.multiply(2), outputs);
 
-        assertTrue(selection.gathered.size() == 4);
+        assertTrue(selection.outputs().size() == 4);
     }
 }
