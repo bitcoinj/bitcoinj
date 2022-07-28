@@ -31,7 +31,7 @@ import java.io.File;
  * WalletAppKit Functional/Integration test. Uses {@link BitcoinNetwork#TESTNET} so is {@code @Ignore}d.
  * To run this test comment-out the {@code @Disabled} annotation.
  */
-@Disabled
+
 public class WalletAppKitTest {
     static final BitcoinNetwork network = BitcoinNetwork.TESTNET;
     static final int MAX_CONNECTIONS = 3;
