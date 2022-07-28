@@ -21,6 +21,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
+import com.google.common.math.LongMath;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
@@ -33,6 +34,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -429,5 +431,27 @@ public class TransactionOutput extends ChildMessage {
     @Override
     public int hashCode() {
         return Objects.hash(value, parent, Arrays.hashCode(scriptBytes));
+    }
+
+    /**
+     * Gets the sum of a collection of outputs as a {@link Coin}
+     * @param outputs collection of transaction outputs
+     * @return the sum
+     * @throws ArithmeticException if overflows occurred in signed {@code long} arithmetic
+     */
+    public static Coin sum(Collection<TransactionOutput> outputs) {
+        return Coin.ofSat(sumSats(outputs));
+    }
+
+    /**
+     * Gets the sum of a collection of outputs in satoshis
+     * @param outputs collection of transaction outputs
+     * @return the sum (in satoshis)
+     * @throws ArithmeticException if overflows occurred in signed {@code long} arithmetic
+     */
+    public static long sumSats(Collection<TransactionOutput> outputs) {
+        return outputs.stream()
+                .mapToLong(output -> output.value)
+                .reduce(0, LongMath::checkedAdd);
     }
 }
