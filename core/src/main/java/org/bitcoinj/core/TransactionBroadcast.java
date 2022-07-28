@@ -62,7 +62,7 @@ public class TransactionBroadcast {
     public static Random random = new Random();
     
     // Tracks which nodes sent us a reject message about this broadcast, if any. Useful for debugging.
-    private Map<Peer, RejectMessage> rejects = Collections.synchronizedMap(new HashMap<Peer, RejectMessage>());
+    private final Map<Peer, RejectMessage> rejects = Collections.synchronizedMap(new HashMap<Peer, RejectMessage>());
 
     TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
         this.peerGroup = peerGroup;
@@ -110,7 +110,7 @@ public class TransactionBroadcast {
         this.dropPeersAfterBroadcast = dropPeersAfterBroadcast;
     }
 
-    private PreMessageReceivedEventListener rejectionListener = new PreMessageReceivedEventListener() {
+    private final PreMessageReceivedEventListener rejectionListener = new PreMessageReceivedEventListener() {
         @Override
         public Message onPreMessageReceived(Peer peer, Message m) {
             if (m instanceof RejectMessage) {
