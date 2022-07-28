@@ -20,8 +20,8 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -29,9 +29,9 @@ import java.io.File;
 
 /**
  * WalletAppKit Functional/Integration test. Uses {@link BitcoinNetwork#TESTNET} so is {@code @Ignore}d.
- * To run this test comment-out the {@code @Ignore} annotation.
+ * To run this test comment-out the {@code @Disabled} annotation.
  */
-@Ignore
+@Disabled
 public class WalletAppKitTest {
     static final BitcoinNetwork network = BitcoinNetwork.TESTNET;
     static final int MAX_CONNECTIONS = 3;
