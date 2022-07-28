@@ -3682,7 +3682,7 @@ public class Wallet extends BaseTaggableObject
             if (balanceType == BalanceType.AVAILABLE || balanceType == BalanceType.AVAILABLE_SPENDABLE) {
                 List<TransactionOutput> candidates = calculateAllSpendCandidates(true, balanceType == BalanceType.AVAILABLE_SPENDABLE);
                 CoinSelection selection = coinSelector.select(BitcoinNetwork.MAX_MONEY, candidates);
-                return selection.valueGathered;
+                return selection.totalValue();
             } else if (balanceType == BalanceType.ESTIMATED || balanceType == BalanceType.ESTIMATED_SPENDABLE) {
                 List<TransactionOutput> all = calculateAllSpendCandidates(false, balanceType == BalanceType.ESTIMATED_SPENDABLE);
                 Coin value = Coin.ZERO;
@@ -3707,7 +3707,7 @@ public class Wallet extends BaseTaggableObject
             checkNotNull(selector);
             List<TransactionOutput> candidates = calculateAllSpendCandidates(true, false);
             CoinSelection selection = selector.select(params.network().maxMoney(), candidates);
-            return selection.valueGathered;
+            return selection.totalValue();
         } finally {
             lock.unlock();
         }
@@ -4233,11 +4233,11 @@ public class Wallet extends BaseTaggableObject
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
                 bestCoinSelection = selector.select(params.network().maxMoney(), candidates);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
-                req.tx.getOutput(0).setValue(bestCoinSelection.valueGathered);
-                log.info("  emptying {}", bestCoinSelection.valueGathered.toFriendlyString());
+                req.tx.getOutput(0).setValue(bestCoinSelection.totalValue());
+                log.info("  emptying {}", bestCoinSelection.totalValue().toFriendlyString());
             }
 
-            for (TransactionOutput output : bestCoinSelection.gathered)
+            for (TransactionOutput output : bestCoinSelection.outputs())
                 req.tx.addInput(output);
 
             if (req.emptyWallet) {
@@ -5066,11 +5066,11 @@ public class Wallet extends BaseTaggableObject
             CoinSelection selection = selector.select(valueNeeded, new LinkedList<>(candidates));
             result.bestCoinSelection = selection;
             // Can we afford this?
-            if (selection.valueGathered.compareTo(valueNeeded) < 0) {
-                Coin valueMissing = valueNeeded.subtract(selection.valueGathered);
+            if (selection.totalValue().compareTo(valueNeeded) < 0) {
+                Coin valueMissing = valueNeeded.subtract(selection.totalValue());
                 throw new InsufficientMoneyException(valueMissing);
             }
-            Coin change = selection.valueGathered.subtract(valueNeeded);
+            Coin change = selection.totalValue().subtract(valueNeeded);
             if (change.isGreaterThan(Coin.ZERO)) {
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
                 // we need to take back some coins ... this is called "change". Add another output that sends the change
@@ -5106,7 +5106,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
 
-            for (TransactionOutput selectedOutput : selection.gathered) {
+            for (TransactionOutput selectedOutput : selection.outputs()) {
                 TransactionInput input = tx.addInput(selectedOutput);
                 // If the scriptBytes don't default to none, our size calculations will be thrown off.
                 checkState(input.getScriptBytes().length == 0);
@@ -5139,7 +5139,7 @@ public class Wallet extends BaseTaggableObject
 
     private int estimateVirtualBytesForSigning(CoinSelection selection) {
         int vsize = 0;
-        for (TransactionOutput output : selection.gathered) {
+        for (TransactionOutput output : selection.outputs()) {
             try {
                 Script script = output.getScriptPubKey();
                 ECKey key = null;
@@ -5453,13 +5453,13 @@ public class Wallet extends BaseTaggableObject
                 selector.excludeOutputsSpentBy(other);
             // TODO: Make this use the standard SendRequest.
             CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
-            if (toMove.valueGathered.equals(Coin.ZERO)) return null;  // Nothing to do.
+            if (toMove.totalValue().equals(Coin.ZERO)) return null;  // Nothing to do.
             Transaction rekeyTx = new Transaction(params);
-            for (TransactionOutput output : toMove.gathered) {
+            for (TransactionOutput output : toMove.outputs()) {
                 rekeyTx.addInput(output);
             }
             // When not signing, don't waste addresses.
-            rekeyTx.addOutput(toMove.valueGathered, sign ? freshReceiveAddress() : currentReceiveAddress());
+            rekeyTx.addOutput(toMove.totalValue(), sign ? freshReceiveAddress() : currentReceiveAddress());
             if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE, true)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
