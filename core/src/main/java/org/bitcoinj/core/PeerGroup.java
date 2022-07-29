@@ -2122,7 +2122,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // eventually be collected. This in turn could result in the transaction not being committed to the wallet
         // at all.
         runningBroadcasts.add(broadcast);
-        broadcast.broadcast();
+        broadcast.broadcastOnly();
         return broadcast;
     }
 
