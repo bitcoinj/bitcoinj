@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
+import org.bitcoinj.net.MessageWriteTarget;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -48,6 +49,10 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class TransactionBroadcast {
     private static final Logger log = LoggerFactory.getLogger(TransactionBroadcast.class);
+
+    // As of bitcoinj 0.17 broadcast() now returns a future that completes when all broadcast messages were sent
+    // This future completes when all broadcast messages were sent and is equivalent to the future returned by broadcast()
+    private final CompletableFuture<TransactionBroadcast> sentFuture = new CompletableFuture<>();
 
     // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
     private final CompletableFuture<Transaction> seenFuture = new ListenableCompletableFuture<>();
@@ -84,8 +89,8 @@ public class TransactionBroadcast {
     public static TransactionBroadcast createMockBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
         return new TransactionBroadcast(tx) {
             @Override
-            public ListenableCompletableFuture<Transaction> broadcast() {
-                return ListenableCompletableFuture.of(future);
+            public CompletableFuture<TransactionBroadcast> broadcast() {
+                return CompletableFuture.completedFuture(this);
             }
 
             @Override
@@ -93,6 +98,13 @@ public class TransactionBroadcast {
                 return ListenableCompletableFuture.of(future);
             }
         };
+    }
+
+    /**
+     * @return future that completes when the transaction has been sent to (outgoing memory buffer) for the required number of peers
+     */
+    public CompletableFuture<TransactionBroadcast> sentFuture() {
+        return sentFuture;
     }
 
     /**
@@ -130,56 +142,102 @@ public class TransactionBroadcast {
         }
     };
 
-    public ListenableCompletableFuture<Transaction> broadcast() {
+    /**
+     * Broadcast this transaction to the proper calculated number of peers. Before the broadcast can even be sent the peerGroup
+     * must wait until {@link #minConnections} peers are connected.
+     * <p>
+     * As of bitcoinj 0.17, this method returns a {@link CompletableFuture} for <i>this</i> {@link TransactionBroadcast} object,
+     * when the {@link Transaction} has been sent to the agreed upon number of peers, but before it has been confirmed that the
+     * transaction has been seen by the agreed upon number of peers. It should further be noted that "sent" in this context means
+     * that {@link MessageWriteTarget#writeBytes} has completed successfully which means the message has been sent to the "OS network
+     * buffer" -- see {@link MessageWriteTarget#writeBytes} or its implementation.
+     * <p>
+     * Note that this method previously returned a {@link com.google.common.util.concurrent.ListenableFuture} that would complete
+     * when the broadcast had been confirmed seen by a number of remote peers. If you need the old-style future, and assuming
+     * you have a {@code TransactionBroadcast} named {@code myBroadcast} you can do the following:
+     * <pre>{@code
+     *  CompletableFuture<Transaction> seenFuture = myBroadcast.broadcast().thenCompose(tb -> tb.seenFuture())
+     * }</pre>
+     * The resulting {@code seenFuture} will complete with a {@code Transaction} when the agreed upon number of remote peers
+     * have confirmed receipt, just as before.
+     * TODO: If this breaking change is too extreme we can provide a deprecated broadcast() method with the old behavior
+     * and rename this new method to sendBroadcast() or something like that.
+     * <p>
+     * TODO: Should this method be moved into the PeerGroup?
+     * 
+     * @return A future that completes when all broadcast messages have been sent (to the "OS network buffer".)
+     */
+    public CompletableFuture<TransactionBroadcast> broadcast() {
         peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, rejectionListener);
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
         final Context context = Context.get();
-        peerGroup.waitForPeers(minConnections).thenRunAsync(() -> {
-            Context.propagate(context);
-            // We now have enough connected peers to send the transaction.
-            // This can be called immediately if we already have enough. Otherwise it'll be called from a peer
-            // thread.
+        return peerGroup.waitForPeers(minConnections)
+            .thenComposeAsync( peerList /* not used */ -> {
+                {
+                    Context.propagate(context);
+                    // We now have enough connected peers to send the transaction.
+                    // This can be called immediately if we already have enough. Otherwise it'll be called from a peer
+                    // thread.
 
-            // We will send the tx simultaneously to half the connected peers and wait to hear back from at least half
-            // of the other half, i.e., with 4 peers connected we will send the tx to 2 randomly chosen peers, and then
-            // wait for it to show up on one of the other two. This will be taken as sign of network acceptance. As can
-            // be seen, 4 peers is probably too little - it doesn't taken many broken peers for tx propagation to have
-            // a big effect.
-            List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
-            // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
-            tx.getConfidence().addEventListener(new ConfidenceChange());
-            // Bitcoin Core sends an inv in this case and then lets the peer request the tx data. We just
-            // blast out the TX here for a couple of reasons. Firstly it's simpler: in the case where we have
-            // just a single connection we don't have to wait for getdata to be received and handled before
-            // completing the future in the code immediately below. Secondly, it's faster. The reason the
-            // Bitcoin Core sends an inv is privacy - it means you can't tell if the peer originated the
-            // transaction or not. However, we are not a fully validating node and this is advertised in
-            // our version message, as SPV nodes cannot relay it doesn't give away any additional information
-            // to skip the inv here - we wouldn't send invs anyway.
-            List<Peer> broadcastPeers = chooseBroadcastPeers(peers);
-            int numToBroadcastTo = broadcastPeers.size();
-            numWaitingFor = (int) Math.ceil((peers.size() - numToBroadcastTo) / 2.0);
-            log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", peers.size(), tx.getTxId());
-            log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, InternalUtils.joiner(",").join(peers));
-            for (final Peer peer : broadcastPeers) {
-                try {
-                    CompletableFuture<Void> future = peer.sendMessage(tx);
-                    if (dropPeersAfterBroadcast) {
-                        // We drop the peer shortly after the transaction has been sent, because this peer will not
-                        // send us back useful broadcast confirmations.
-                        future.thenRunAsync(() -> {
-                            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
-                            peer.close();
-                        }, Threading.THREAD_POOL);
+                    // We will send the tx simultaneously to half the connected peers and wait to hear back from at least half
+                    // of the other half, i.e., with 4 peers connected we will send the tx to 2 randomly chosen peers, and then
+                    // wait for it to show up on one of the other two. This will be taken as sign of network acceptance. As can
+                    // be seen, 4 peers is probably too little - it doesn't taken many broken peers for tx propagation to have
+                    // a big effect.
+                    List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
+                    // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
+                    tx.getConfidence().addEventListener(new ConfidenceChange());
+                    // Bitcoin Core sends an inv in this case and then lets the peer request the tx data. We just
+                    // blast out the TX here for a couple of reasons. Firstly it's simpler: in the case where we have
+                    // just a single connection we don't have to wait for getdata to be received and handled before
+                    // completing the future in the code immediately below. Secondly, it's faster. The reason the
+                    // Bitcoin Core sends an inv is privacy - it means you can't tell if the peer originated the
+                    // transaction or not. However, we are not a fully validating node and this is advertised in
+                    // our version message, as SPV nodes cannot relay it doesn't give away any additional information
+                    // to skip the inv here - we wouldn't send invs anyway.
+                    List<Peer> broadcastPeers = chooseBroadcastPeers(peers);
+                    int numToBroadcastTo = broadcastPeers.size();
+                    numWaitingFor = (int) Math.ceil((peers.size() - numToBroadcastTo) / 2.0);
+                    log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", peers.size(), tx.getTxId());
+                    log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, InternalUtils.joiner(",").join(peers));
+                    CompletableFuture[] sentFutures = new CompletableFuture[broadcastPeers.size()];
+                    int i = 0;
+                    for (final Peer peer : broadcastPeers) {
+                        try {
+                            CompletableFuture<Void> sendMessageFuture = peer.sendMessage(tx);
+                            if (dropPeersAfterBroadcast) {
+                                // We drop the peer shortly after the transaction has been sent, because this peer will not
+                                // send us back useful broadcast confirmations.
+                                sendMessageFuture.thenRunAsync(() -> {
+                                    Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+                                    peer.close();
+                                }, Threading.THREAD_POOL);
+                            }
+                            sentFutures[i] = sendMessageFuture;
+                            i++;
+                            // We don't record the peer as having seen the tx in the memory pool because we want to track only
+                            // how many peers announced to us.
+                        } catch (Exception e) {
+                            // TODO: Put this exception into our returned future
+                            log.error("Caught exception sending to {}", peer, e);
+                        }
                     }
-                    // We don't record the peer as having seen the tx in the memory pool because we want to track only
-                    // how many peers announced to us.
-                } catch (Exception e) {
-                    log.error("Caught exception sending to {}", peer, e);
+                    // Complete successfully if ALL peer.sendMessage complete successfully, fail otherwise
+                    return CompletableFuture.allOf(sentFutures);
                 }
-            }
-        }, Threading.SAME_THREAD);
-        return ListenableCompletableFuture.of(seenFuture);
+            }, Threading.SAME_THREAD)
+            .whenComplete((v, err) -> {
+                // Make sure `sentFuture` is triggered here because some APIs return this TransactionBroadcast
+                // and clients wishing to see when the sends have completed may be using `sentFuture()`
+                if (err == null) {
+                    log.info("broadcast has been written to correct number of peers with peer.sendMessage(tx)");
+                    sentFuture.complete(this);
+                } else {
+                    sentFuture.completeExceptionally(err);
+                }
+            })
+            // Return a future for this TransactionBroadcast
+            .thenApply(v -> this);
     }
 
     /**

@@ -85,7 +85,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
         broadcast.setProgressCallback(lastProgress::set);
-        CompletableFuture<Transaction> future = broadcast.broadcast();
+        CompletableFuture<TransactionBroadcast> future = broadcast.broadcast();
         assertFalse(future.isDone());
         assertEquals(0.0, lastProgress.get(), 0.0);
         // We expect two peers to receive a tx message, and at least one of the others must announce for the future to
@@ -133,7 +133,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
         Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
-        CompletableFuture<Transaction> future = broadcast.broadcast();
+        CompletableFuture<TransactionBroadcast> future = broadcast.broadcast();
         // 0 and 3 are randomly selected to receive the broadcast.
         assertEquals(tx, outbound(channels[1]));
         assertEquals(tx, outbound(channels[2]));
