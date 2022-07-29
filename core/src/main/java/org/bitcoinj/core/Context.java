@@ -62,6 +62,14 @@ public class Context {
     }
 
     /**
+     * @deprecated Use {@link Context#Context()}
+     */
+    @Deprecated
+    public Context(NetworkParameters params) {
+        this();
+    }
+
+    /**
      * Creates a new custom context object. This is mainly meant for unit tests for now.
      *
      * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs. See {@link #getEventHorizon()}.
@@ -75,6 +83,14 @@ public class Context {
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
         lastConstructed = this;
+    }
+
+    /**
+     * @deprecated Use {@link Context#Context(int, Coin, boolean)}
+     */
+    @Deprecated
+    public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
+        this(eventHorizon, feePerKb, ensureMinRequiredFee);
     }
 
     private static volatile Context lastConstructed;
@@ -134,6 +150,14 @@ public class Context {
             return context;
         }
         return context;
+    }
+
+    /**
+     * @deprecated  Use {@link Context#getOrCreate()}
+     */
+    @Deprecated
+    public static Context getOrCreate(NetworkParameters params) {
+        return getOrCreate();
     }
 
     /**
