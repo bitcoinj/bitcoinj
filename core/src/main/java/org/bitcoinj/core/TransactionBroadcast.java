@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
- * (typically by a {@link Wallet} and needs to be sent to the network. A broadcast can succeed or fail. A success is
+ * (typically by a {@link Wallet}) and needs to be sent to the network. A broadcast can succeed or fail. A success is
  * defined as seeing the transaction be announced by peers via inv messages, thus indicating their acceptance. A failure
  * is defined as not reaching acceptance within a timeout period, or getting an explicit reject message from a peer
  * indicating that the transaction was not acceptable.
@@ -49,7 +49,6 @@ import static com.google.common.base.Preconditions.checkState;
 public class TransactionBroadcast {
     private static final Logger log = LoggerFactory.getLogger(TransactionBroadcast.class);
 
-    // TODO: Decide how to make sentFuture publicly available (and possibly use internally)
     // This future completes when all broadcast messages were sent (to a buffer)
     private final CompletableFuture<TransactionBroadcast> sentFuture = new CompletableFuture<>();
 
@@ -137,27 +136,29 @@ public class TransactionBroadcast {
     // TODO: Should this method be moved into the PeerGroup?
     /**
      * Broadcast this transaction to the proper calculated number of peers. Returns a future that completes when the message
-     * has is "seen" by remote peers. The {@link Transaction} itself is the returned type/value for the future.
+     * has been "sent" to a set of remote peers. The {@link TransactionBroadcast} itself is the returned type/value for the future.
      * <p>
-     * The broadcast process includes the following steps:
+     * The complete broadcast process includes the following steps:
      * <ol>
      *     <li>Wait until enough {@link org.bitcoinj.core.Peer}s are connected.</li>
-     *     <li>Broadcast the transaction by a determined number of {@link org.bitcoinj.core.Peer}s</li>
+     *     <li>Broadcast the transaction to a determined number of {@link org.bitcoinj.core.Peer}s</li>
      *     <li>Wait for confirmation from a determined number of remote peers that they have received the broadcast</li>
-     *     <li>Mark {@link TransactionBroadcast#future()} ("sent future") as complete</li>
+     *     <li>Mark {@link TransactionBroadcast#future()} ("seen future") as complete</li>
      * </ol>
+     * The future returned from this method completes when Step 2 is completed.
      * <p>
      * It should further be noted that "broadcast" in this class means that
      * {@link org.bitcoinj.net.MessageWriteTarget#writeBytes} has completed successfully which means the message has
      * been sent to the "OS network buffer" -- see {@link org.bitcoinj.net.MessageWriteTarget#writeBytes} or its implementation.
      * <p>
-     * @return A future that completes when the message has been confirmed as seen by the appropriate number of remote peers
+     * @return A future that completes when the message has been sent (or at least buffered) to the correct number of remote Peers. The future
+     * will complete exceptionally if <i>any</i> of the peer broadcasts fails.
      */
-    public ListenableCompletableFuture<Transaction> broadcast() {
+    public CompletableFuture<TransactionBroadcast> broadcastOnly() {
         peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, rejectionListener);
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
         final Context context = Context.get();
-        peerGroup.waitForPeers(minConnections).thenComposeAsync( peerList /* not used */ -> {
+        return peerGroup.waitForPeers(minConnections).thenComposeAsync( peerList /* not used */ -> {
             Context.propagate(context);
             // We now have enough connected peers to send the transaction.
             // This can be called immediately if we already have enough. Otherwise it'll be called from a peer
@@ -218,8 +219,36 @@ public class TransactionBroadcast {
                 log.error("broadcast - one ore more peers failed to send", err);
                 sentFuture.completeExceptionally(err);
             }
-        });
-        return ListenableCompletableFuture.of(seenFuture);
+        })
+        .thenCompose(v -> sentFuture);
+    }
+
+    /**
+     * Broadcast the transaction and wait for confirmation that the transaction has been received by the appropriate
+     * number of Peers before completing.
+     * @return A future that completes when the message has been relayed by the appropriate number of remote peers
+     */
+    public CompletableFuture<TransactionBroadcast> broadcastAndAwaitRelay() {
+        return broadcastOnly()
+                .thenCompose(broadcast -> this.seenFuture)
+                .thenApply(tx -> this);
+    }
+
+    /**
+     * If you migrate to {@link #broadcastAndAwaitRelay()} and need a {@link CompletableFuture} that returns
+     *  {@link Transaction} you can use:
+     * <pre>{@code
+     *  CompletableFuture<Transaction> seenFuture = broadcast
+     *              .broadcastAndAwaitRelay()
+     *              .thenApply(TransactionBroadcast::transaction);
+     * }</pre>
+     * @deprecated Use {@link #broadcastAndAwaitRelay()} or {@link #broadcastOnly()} as appropriate
+     */
+    @Deprecated
+    public ListenableCompletableFuture<Transaction> broadcast() {
+        return ListenableCompletableFuture.of(
+                broadcastAndAwaitRelay().thenApply(TransactionBroadcast::transaction)
+        );
     }
 
     /**
