@@ -146,7 +146,7 @@ public class BlockingClient implements MessageWriteTarget {
     }
 
     @Override
-    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
+    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) {
         try {
             OutputStream stream = socket.getOutputStream();
             stream.write(message);
@@ -155,7 +155,7 @@ public class BlockingClient implements MessageWriteTarget {
         } catch (IOException e) {
             log.error("Error writing message to connection, closing connection", e);
             closeConnection();
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 

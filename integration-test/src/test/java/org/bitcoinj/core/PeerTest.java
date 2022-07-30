@@ -788,13 +788,13 @@ public class PeerTest extends TestWithNetworkConnections {
         // thread when it disconnects.
         Uninterruptibles.getUninterruptibly(connectedFuture);
         Uninterruptibles.getUninterruptibly(disconnectedFuture);
-        try {
+        //try {
             peer.writeTarget.writeBytes(new byte[1]);
             fail();
-        } catch (IOException e) {
-            assertTrue((e.getCause() != null && e.getCause() instanceof CancelledKeyException)
-                    || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
-        }
+//        } catch (IOException e) {
+//            assertTrue((e.getCause() != null && e.getCause() instanceof CancelledKeyException)
+//                    || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
+//        }
     }
 
     @Test
@@ -862,12 +862,12 @@ public class PeerTest extends TestWithNetworkConnections {
             assertTrue(e.getCause() instanceof ProtocolException);
         }
         peerDisconnected.get();
-        try {
+        //try {
             peer.writeTarget.writeBytes(new byte[1]);
             fail();
-        } catch (IOException e) {
-            assertTrue((e.getCause() != null && e.getCause() instanceof CancelledKeyException)
-                    || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
-        }
+//        } catch (IOException e) {
+//            assertTrue((e.getCause() != null && e.getCause() instanceof CancelledKeyException)
+//                    || (e instanceof SocketException && e.getMessage().equals("Socket is closed")));
+//        }
     }
 }
