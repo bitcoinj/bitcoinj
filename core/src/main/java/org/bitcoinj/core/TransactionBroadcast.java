@@ -32,7 +32,7 @@ import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 
 /**
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
- * (typically by a {@link Wallet} and needs to be sent to the network. A broadcast can succeed or fail. A success is
+ * (typically by a {@link Wallet}) and needs to be sent to the network. A broadcast can succeed or fail. A success is
  * defined as seeing the transaction be announced by peers via inv messages, thus indicating their acceptance. A failure
  * is defined as not reaching acceptance within a timeout period, or getting an explicit reject message from a peer
  * indicating that the transaction was not acceptable.
