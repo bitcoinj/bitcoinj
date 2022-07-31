@@ -27,7 +27,6 @@ import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.utils.FutureUtils;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Before;
@@ -67,7 +66,6 @@ public class ECKeyTest {
     private static CharSequence WRONG_PASSWORD = "it is a snowy day today";
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
     @Before
     public void setUp() {
@@ -405,8 +403,8 @@ public class ECKeyTest {
     public void roundTripDumpedPrivKey() {
         ECKey key = new ECKey();
         assertTrue(key.isCompressed());
-        String base58 = key.getPrivateKeyEncoded(UNITTEST).toString();
-        ECKey key2 = DumpedPrivateKey.fromBase58(UNITTEST, base58).getKey();
+        String base58 = key.getPrivateKeyEncoded(TESTNET).toString();
+        ECKey key2 = DumpedPrivateKey.fromBase58(TESTNET, base58).getKey();
         assertTrue(key2.isCompressed());
         assertArrayEquals(key.getPrivKeyBytes(), key2.getPrivKeyBytes());
         assertArrayEquals(key.getPubKey(), key2.getPubKey());
