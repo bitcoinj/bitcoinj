@@ -187,24 +187,8 @@ public class TransactionBroadcast {
             CompletableFuture[] sentFutures = new CompletableFuture[broadcastPeers.size()];
             int i = 0;
             for (final Peer peer : broadcastPeers) {
-                try {
-                    CompletableFuture<Void> future = peer.sendMessage(tx);
-                    if (dropPeersAfterBroadcast) {
-                        // We drop the peer shortly after the transaction has been sent, because this peer will not
-                        // send us back useful broadcast confirmations.
-                        future.thenRunAsync(() -> {
-                            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
-                            peer.close();
-                        }, Threading.THREAD_POOL);
-                    }
-                    sentFutures[i] = future;
-                    i++;
-                    // We don't record the peer as having seen the tx in the memory pool because we want to track only
-                    // how many peers announced to us.
-                } catch (Exception e) {
-                    // TODO: Put this exception into our returned future
-                    log.error("Caught exception sending to {}", peer, e);
-                }
+                sentFutures[i] = broadcastOne(peer);
+                i++;
             }
             // Complete successfully if ALL peer.sendMessage complete successfully, fail otherwise
             return CompletableFuture.allOf(sentFutures);
@@ -220,6 +204,26 @@ public class TransactionBroadcast {
             }
         });
         return ListenableCompletableFuture.of(seenFuture);
+    }
+
+    private CompletableFuture<Void> broadcastOne(Peer peer) {
+        try {
+            CompletableFuture<Void> future = peer.sendMessage(tx);
+            if (dropPeersAfterBroadcast) {
+                // We drop the peer shortly after the transaction has been sent, because this peer will not
+                // send us back useful broadcast confirmations.
+                future.thenRunAsync(() -> {
+                    Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+                    peer.close();
+                }, Threading.THREAD_POOL);
+            }
+            // We don't record the peer as having seen the tx in the memory pool because we want to track only
+            // how many peers announced to us.
+            return future;
+        } catch (Exception e) {
+            log.error("Caught exception sending to {}", peer, e);
+            return ListenableCompletableFuture.failedFuture(e);
+        }
     }
 
     /**
