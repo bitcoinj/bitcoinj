@@ -19,6 +19,7 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.core.AddressMessage;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
@@ -54,6 +55,7 @@ public class PeerMonitor {
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
+        Context.propagate(new Context());
         new PeerMonitor();
     }
 
