@@ -22,7 +22,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
 
@@ -39,7 +38,6 @@ import static org.junit.Assert.fail;
 public class ChildKeyDerivationTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final NetworkParameters TESTNET = TestNet3Params.get();
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
     private static final int SCRYPT_ITERATIONS = 256;
     private static final int HDW_CHAIN_EXTERNAL = 0;
@@ -281,9 +279,9 @@ public class ChildKeyDerivationTest {
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO_HARDENED);
         DeterministicKey key4 = HDKeyDerivation.deriveChildKey(key3, ChildNumber.ZERO_HARDENED);
         assertEquals(key4.getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serialize(UNITTEST, false), key3).getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serialize(UNITTEST, false), null).getPath().size(), 1);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serialize(UNITTEST, false)).getPath().size(), 1);
+        assertEquals(DeterministicKey.deserialize(TESTNET, key4.serialize(TESTNET, false), key3).getPath().size(), 3);
+        assertEquals(DeterministicKey.deserialize(TESTNET, key4.serialize(TESTNET, false), null).getPath().size(), 1);
+        assertEquals(DeterministicKey.deserialize(TESTNET, key4.serialize(TESTNET, false)).getPath().size(), 1);
     }
 
     /** Reserializing a deserialized key should yield the original input */
