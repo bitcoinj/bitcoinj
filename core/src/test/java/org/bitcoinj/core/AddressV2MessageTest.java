@@ -16,7 +16,7 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import java.net.Inet4Address;
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 
 public class AddressV2MessageTest {
 
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
     // mostly copied from src/test/netbase_tests.cpp#stream_addrv2_hex and src/test/net_tests.cpp
     private static final String MESSAGE_HEX =
             "05" // number of entries
@@ -72,7 +72,7 @@ public class AddressV2MessageTest {
 
     @Test
     public void roundtrip() {
-        AddressMessage message = new AddressV2Message(UNITTEST, HEX.decode(MESSAGE_HEX));
+        AddressMessage message = new AddressV2Message(TESTNET, HEX.decode(MESSAGE_HEX));
 
         List<PeerAddress> addresses = message.getAddresses();
         assertEquals(5, addresses.size());
