@@ -25,6 +25,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
@@ -34,6 +35,11 @@ import static org.junit.Assert.assertNull;
 
 public class TransactionInputTest {
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
+
+    @Before
+    public void setUp() throws Exception {
+        Context.propagate(new Context());
+    }
 
     @Test
     public void testStandardWalletDisconnect() throws Exception {
