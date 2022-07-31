@@ -26,6 +26,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -41,13 +42,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class SPVBlockStoreTest {
-    private static NetworkParameters UNITTEST;
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
     private File blockStoreFile;
 
     @BeforeClass
     public static void setUpClass() {
         Utils.resetMocking();
-        UNITTEST = UnitTestParams.get();
     }
 
     @Before
@@ -85,22 +86,22 @@ public class SPVBlockStoreTest {
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_onSameFile() throws Exception {
-        new SPVBlockStore(UNITTEST, blockStoreFile);
-        new SPVBlockStore(UNITTEST, blockStoreFile);
+        new SPVBlockStore(TESTNET, blockStoreFile);
+        new SPVBlockStore(TESTNET, blockStoreFile);
     }
 
     @Test
     public void twoStores_butSequentially() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
         store.close();
-        store = new SPVBlockStore(UNITTEST, blockStoreFile);
+        store = new SPVBlockStore(TESTNET, blockStoreFile);
     }
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_sequentially_butMismatchingCapacity() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile, 10, false);
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, false);
         store.close();
-        store = new SPVBlockStore(UNITTEST, blockStoreFile, 20, false);
+        store = new SPVBlockStore(TESTNET, blockStoreFile, 20, false);
     }
 
     @Test
@@ -128,9 +129,9 @@ public class SPVBlockStoreTest {
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_sequentially_shrink() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile, 20, true);
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 20, true);
         store.close();
-        store = new SPVBlockStore(UNITTEST, blockStoreFile, 10, true);
+        store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
     }
 
     @Test
@@ -139,11 +140,11 @@ public class SPVBlockStoreTest {
         // us.
         final int ITERATIONS = 100000;
         final long THRESHOLD_MS = 2000;
-        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
         Stopwatch watch = Stopwatch.createStarted();
         for (int i = 0; i < ITERATIONS; i++) {
             // Using i as the nonce so that the block hashes are different.
-            Block block = new Block(UNITTEST, 0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0, 0, i,
+            Block block = new Block(TESTNET, 0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0, 0, i,
                     Collections.emptyList());
             StoredBlock b = new StoredBlock(block, BigInteger.ZERO, i);
             store.put(b);
@@ -173,7 +174,7 @@ public class SPVBlockStoreTest {
 
     @Test
     public void oneStoreDelete() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
         store.close();
         boolean deleted = blockStoreFile.delete();
         if (!Utils.isWindows()) {
