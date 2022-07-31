@@ -28,7 +28,6 @@ import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
@@ -263,8 +262,6 @@ public class KeyChainGroup implements KeyBag {
         if (chains != null) {
             if (lookaheadSize > -1)
                 this.lookaheadSize = lookaheadSize;
-            else if (params.getId().equals(BitcoinNetwork.ID_UNITTESTNET))
-                this.lookaheadSize = 5; // Cut down excess computation for unit tests.
             if (lookaheadThreshold > -1)
                 this.lookaheadThreshold = lookaheadThreshold;
             this.chains = new LinkedList<>(chains);
