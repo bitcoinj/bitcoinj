@@ -102,7 +102,7 @@ public class DefaultCoinSelector implements CoinSelector {
                type.equals(TransactionConfidence.ConfidenceType.PENDING) &&
                confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
                // In regtest mode we expect to have only one peer, so we won't see transactions propagate.
-               (confidence.numBroadcastPeers() > 0 || tx.getParams().getId().equals(BitcoinNetwork.ID_REGTEST));
+               (confidence.numBroadcastPeers() > 0 || tx.getParams().network() == BitcoinNetwork.REGTEST);
     }
 
     private static DefaultCoinSelector instance;
