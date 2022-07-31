@@ -20,7 +20,7 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.wallet.SendRequest;
@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class TransactionInputTest {
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
 
     @Before
     public void setUp() throws Exception {
@@ -43,11 +43,11 @@ public class TransactionInputTest {
 
     @Test
     public void testStandardWalletDisconnect() throws Exception {
-        Wallet w = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
+        Wallet w = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         Address a = w.currentReceiveAddress();
-        Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(UNITTEST, Coin.COIN, a);
+        Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(TESTNET, Coin.COIN, a);
         w.receivePending(tx1, null);
-        Transaction tx2 = new Transaction(UNITTEST);
+        Transaction tx2 = new Transaction(TESTNET);
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         SendRequest req = SendRequest.forTx(tx2);
         req.allowUnconfirmed();
@@ -66,14 +66,14 @@ public class TransactionInputTest {
 
     @Test
     public void testUTXOWalletDisconnect() throws Exception {
-        Wallet w = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
+        Wallet w = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         Address a = w.currentReceiveAddress();
         final UTXO utxo = new UTXO(Sha256Hash.of(new byte[] { 1, 2, 3 }), 1, Coin.COIN, 0, false,
                 ScriptBuilder.createOutputScript(a));
         w.setUTXOProvider(new UTXOProvider() {
             @Override
             public NetworkParameters getParams() {
-                return UNITTEST;
+                return TESTNET;
             }
 
             @Override
@@ -87,7 +87,7 @@ public class TransactionInputTest {
             }
         });
 
-        Transaction tx2 = new Transaction(UNITTEST);
+        Transaction tx2 = new Transaction(TESTNET);
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         w.completeTx(SendRequest.forTx(tx2));
 
