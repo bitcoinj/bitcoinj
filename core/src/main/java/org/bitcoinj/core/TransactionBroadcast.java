@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.utils.ListenableCompletableFuture;
@@ -184,14 +185,11 @@ public class TransactionBroadcast {
             numWaitingFor = (int) Math.ceil((peers.size() - numToBroadcastTo) / 2.0);
             log.info("broadcastTransaction: We have {} peers, adding {} to the memory pool", peers.size(), tx.getTxId());
             log.info("Sending to {} peers, will wait for {}, sending to: {}", numToBroadcastTo, numWaitingFor, InternalUtils.joiner(",").join(peers));
-            CompletableFuture[] sentFutures = new CompletableFuture[broadcastPeers.size()];
-            int i = 0;
-            for (final Peer peer : broadcastPeers) {
-                sentFutures[i] = broadcastOne(peer);
-                i++;
-            }
+            List<CompletableFuture<Void>> sentFutures = broadcastPeers.stream()
+                    .map(this::broadcastOne)
+                    .collect(StreamUtils.toUnmodifiableList());
             // Complete successfully if ALL peer.sendMessage complete successfully, fail otherwise
-            return CompletableFuture.allOf(sentFutures);
+            return CompletableFuture.allOf(sentFutures.toArray(new CompletableFuture[0]));
         }, Threading.SAME_THREAD)
         .whenComplete((v, err) -> {
             // Complete `sentFuture` (even though it is currently unused)
