@@ -90,6 +90,7 @@ public class ParseByteCacheTest {
     @Before
     public void setUp() throws Exception {
         Utils.setMockClock(); // Use mock clock
+        Context.propagate(new Context());
         Wallet wallet = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
         wallet.freshReceiveKey();
 
