@@ -3972,8 +3972,6 @@ public class Wallet extends BaseTaggableObject
     public Transaction createSend(Address address, Coin value, boolean allowUnconfirmed)
             throws InsufficientMoneyException, BadWalletEncryptionKeyException {
         SendRequest req = SendRequest.to(address, value);
-        if (params.getId().equals(BitcoinNetwork.ID_UNITTESTNET))
-            req.shuffleOutputs = false;
         if (allowUnconfirmed)
             req.allowUnconfirmed();
         completeTx(req);

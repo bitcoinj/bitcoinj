@@ -803,7 +803,10 @@ public class WalletTest extends TestWithWallet {
         Coin coinHalf = valueOf(0, 50);
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.UNSPENT));
         assertEquals(1, wallet.getTransactions(true).size());
-        Transaction outbound1 = wallet.createSend(OTHER_ADDRESS, coinHalf);
+        SendRequest req = SendRequest.to(OTHER_ADDRESS, coinHalf);
+        req.shuffleOutputs = false;
+        wallet.completeTx(req);
+        Transaction outbound1 = req.tx;
         wallet.commitTx(outbound1);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, outbound1);
         assertTrue(outbound1.getWalletOutputs(wallet).size() <= 1); //the change address at most
