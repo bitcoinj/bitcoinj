@@ -76,6 +76,7 @@ public class TransactionTest {
     @Before
     public void setUp() {
         tx = FakeTxBuilder.createFakeTx(UNITTEST);
+        Context.propagate(new Context());
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
