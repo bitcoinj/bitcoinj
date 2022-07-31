@@ -352,6 +352,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     protected PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
         checkNotNull(params);
+        Context.getOrCreate(); // create a context for convenience
         this.params = params;
         this.chain = chain;
         fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
