@@ -67,15 +67,14 @@ import static org.junit.Assert.fail;
  * so we make sure to cover it here as well.
  */
 public class TransactionTest {
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private static final NetworkParameters TESTNET = TestNet3Params.get();
-    private static final Address ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
+    private static final Address ADDRESS = LegacyAddress.fromKey(TESTNET, new ECKey());
 
     private Transaction tx;
 
     @Before
     public void setUp() {
-        tx = FakeTxBuilder.createFakeTx(UNITTEST);
+        tx = FakeTxBuilder.createFakeTx(TESTNET);
         Context.propagate(new Context());
     }
 
@@ -148,7 +147,7 @@ public class TransactionTest {
         BlockChain mockBlockChain = createMock(BlockChain.class);
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million
 
         replay(mockBlockChain);
@@ -158,12 +157,12 @@ public class TransactionTest {
 
     @Test
     public void testOptimalEncodingMessageSize() {
-        Transaction tx = new Transaction(UNITTEST);
+        Transaction tx = new Transaction(TESTNET);
 
         int length = tx.length;
 
         // add basic transaction input, check the length
-        tx.addOutput(new TransactionOutput(UNITTEST, null, Coin.COIN, ADDRESS));
+        tx.addOutput(new TransactionOutput(TESTNET, null, Coin.COIN, ADDRESS));
         length += getCombinedLength(tx.getOutputs());
 
         // add basic output, check the length
@@ -181,7 +180,7 @@ public class TransactionTest {
 
     @Test
     public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
-        Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(UNITTEST);
+        Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(TESTNET);
 
         tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
         assertEquals(tx.isMature(), false);
@@ -461,7 +460,7 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         TransactionInput input = tx.getInput(0);
         input.setSequenceNumber(42);
 
@@ -485,8 +484,8 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
-        TransactionInput ti = new TransactionInput(UNITTEST, tx, new byte[0]) {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        TransactionInput ti = new TransactionInput(TESTNET, tx, new byte[0]) {
             @Override
             public Script getScriptSig() throws ScriptException {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "");
@@ -499,19 +498,19 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
-        Transaction tx = new Transaction(UNITTEST);
+        Transaction tx = new Transaction(TESTNET);
         assertEquals(tx.toString().contains("No inputs!"), true);
     }
 
     @Test
     public void testTheTXByHeightComparator() {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(UNITTEST);
+        Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET);
         tx1.getConfidence().setAppearedAtChainHeight(1);
 
-        Transaction tx2 = FakeTxBuilder.createFakeTx(UNITTEST);
+        Transaction tx2 = FakeTxBuilder.createFakeTx(TESTNET);
         tx2.getConfidence().setAppearedAtChainHeight(2);
 
-        Transaction tx3 = FakeTxBuilder.createFakeTx(UNITTEST);
+        Transaction tx3 = FakeTxBuilder.createFakeTx(TESTNET);
         tx3.getConfidence().setAppearedAtChainHeight(3);
 
         SortedSet<Transaction> set = new TreeSet<>(Transaction.SORT_TX_BY_HEIGHT);
@@ -534,10 +533,10 @@ public class TransactionTest {
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();
-        Address addr = LegacyAddress.fromKey(UNITTEST, key);
-        TransactionOutput fakeOutput = FakeTxBuilder.createFakeTx(UNITTEST, Coin.COIN, addr).getOutput(0);
+        Address addr = LegacyAddress.fromKey(TESTNET, key);
+        TransactionOutput fakeOutput = FakeTxBuilder.createFakeTx(TESTNET, Coin.COIN, addr).getOutput(0);
 
-        Transaction tx = new Transaction(UNITTEST);
+        Transaction tx = new Transaction(TESTNET);
         tx.addOutput(fakeOutput);
 
         Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
@@ -547,7 +546,7 @@ public class TransactionTest {
 
     @Test
     public void testPrioSizeCalc() {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(UNITTEST, Coin.COIN, ADDRESS);
+        Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET, Coin.COIN, ADDRESS);
         int size1 = tx1.getMessageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
@@ -565,7 +564,7 @@ public class TransactionTest {
         final byte[] transactionBytes = HEX.decode(
                 "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
         final int height = 300000;
-        final Transaction transaction = UNITTEST.getDefaultSerializer().makeTransaction(transactionBytes);
+        final Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
 
@@ -579,14 +578,14 @@ public class TransactionTest {
         final byte[] transactionBytes = HEX.decode(
             "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3b03ae6c0300044bd7031a0400000000522cfabe6d6d00000000000000b7b8bf0100000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf115515b7c135e779e9f442f88ac00000000");
         final int height = 224430;
-        final Transaction transaction = UNITTEST.getDefaultSerializer().makeTransaction(transactionBytes);
+        final Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
 
     @Test
     public void optInFullRBF() {
         // a standard transaction as wallets would create
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         assertFalse(tx.isOptInFullRBF());
 
         tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
@@ -598,6 +597,7 @@ public class TransactionTest {
      */
     @Test
     public void testHashForSignatureThreadSafety() throws Exception {
+        final NetworkParameters UNITTEST = UnitTestParams.get();
         Block genesis = UNITTEST.getGenesisBlock();
         Block block1 = genesis.createNextBlock(LegacyAddress.fromKey(UNITTEST, new ECKey()),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
@@ -647,10 +647,10 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredInputsSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, true, false, false);
+        Transaction tx = new HugeDeclaredSizeTransaction(TESTNET, true, false, false);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
-            new Transaction(UNITTEST, serializedTx);
+            new Transaction(TESTNET, serializedTx);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
@@ -659,10 +659,10 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredOutputsSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, true, false);
+        Transaction tx = new HugeDeclaredSizeTransaction(TESTNET, false, true, false);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
-            new Transaction(UNITTEST, serializedTx);
+            new Transaction(TESTNET, serializedTx);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
@@ -671,10 +671,10 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredWitnessPushCountSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, false, true);
+        Transaction tx = new HugeDeclaredSizeTransaction(TESTNET, false, false, true);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
-            new Transaction(UNITTEST, serializedTx);
+            new Transaction(TESTNET, serializedTx);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
@@ -749,7 +749,7 @@ public class TransactionTest {
     public void getWeightAndVsize() {
         // example from https://en.bitcoin.it/wiki/Weight_units
         String txHex = "0100000000010115e180dc28a2327e687facc33f10f2a20da717e5548406f7ae8b4c811072f85603000000171600141d7cd6c75c2e86f4cbf98eaed221b30bd9a0b928ffffffff019caef505000000001976a9141d7cd6c75c2e86f4cbf98eaed221b30bd9a0b92888ac02483045022100f764287d3e99b1474da9bec7f7ed236d6c81e793b20c4b5aa1f3051b9a7daa63022016a198031d5554dbb855bdbe8534776a4be6958bd8d530dc001c32b828f6f0ab0121038262a6c6cec93c2d3ecd6c6072efea86d02ff8e3328bbd0242b20af3425990ac00000000";
-        Transaction tx = new Transaction(UNITTEST, HEX.decode(txHex));
+        Transaction tx = new Transaction(TESTNET, HEX.decode(txHex));
         assertEquals(218, tx.getMessageSize());
         assertEquals(542, tx.getWeight());
         assertEquals(136, tx.getVsize());
@@ -759,7 +759,7 @@ public class TransactionTest {
     public void nonSegwitZeroInputZeroOutputTx() {
         // Non segwit tx with zero input and outputs
         String txHex = "010000000000f1f2f3f4";
-        Transaction tx = UNITTEST.getDefaultSerializer().makeTransaction(HEX.decode(txHex));
+        Transaction tx = TESTNET.getDefaultSerializer().makeTransaction(HEX.decode(txHex));
         assertEquals(txHex, tx.toHexString());
     }
 
@@ -767,7 +767,7 @@ public class TransactionTest {
     public void nonSegwitZeroInputOneOutputTx() {
         // Non segwit tx with zero input and one output that has an amount of `0100000000000000` that could confuse
         // a naive segwit parser. This can only be read with segwit disabled
-        MessageSerializer serializer = UNITTEST.getDefaultSerializer();
+        MessageSerializer serializer = TESTNET.getDefaultSerializer();
         String txHex = "0100000000010100000000000000016af1f2f3f4";
         int protoVersionNoWitness = serializer.getProtocolVersion() | Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
         tx = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(HEX.decode(txHex));
