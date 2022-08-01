@@ -20,6 +20,7 @@ package org.bitcoinj.store;
 import com.google.common.base.Stopwatch;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
@@ -53,6 +54,7 @@ public class SPVBlockStoreTest {
 
     @Before
     public void setup() throws Exception {
+        Context.propagate(new Context());
         blockStoreFile = File.createTempFile("spvblockstore", null);
         blockStoreFile.delete();
         blockStoreFile.deleteOnExit();
