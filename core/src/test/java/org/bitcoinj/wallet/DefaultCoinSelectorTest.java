@@ -26,7 +26,6 @@ import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
@@ -46,7 +45,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class DefaultCoinSelectorTest extends TestWithWallet {
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private static final NetworkParameters REGTEST = RegTestParams.get();
 
     @Before
@@ -65,16 +63,16 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Test
     public void selectable() throws Exception {
         Transaction t;
-        t = new Transaction(UNITTEST);
+        t = new Transaction(TESTNET);
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
         assertFalse(DefaultCoinSelector.isSelectable(t));
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
         assertFalse(DefaultCoinSelector.isSelectable(t));
-        t.getConfidence().markBroadcastBy(new PeerAddress(UNITTEST, InetAddress.getByName("1.2.3.4")));
+        t.getConfidence().markBroadcastBy(new PeerAddress(TESTNET, InetAddress.getByName("1.2.3.4")));
         assertTrue(DefaultCoinSelector.isSelectable(t));
-        t.getConfidence().markBroadcastBy(new PeerAddress(UNITTEST, InetAddress.getByName("5.6.7.8")));
+        t.getConfidence().markBroadcastBy(new PeerAddress(TESTNET, InetAddress.getByName("5.6.7.8")));
         assertTrue(DefaultCoinSelector.isSelectable(t));
-        t = new Transaction(UNITTEST);
+        t = new Transaction(TESTNET);
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
         assertTrue(DefaultCoinSelector.isSelectable(t));
         t = new Transaction(REGTEST);
@@ -129,12 +127,12 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Test
     public void identicalInputs() {
         // Add four outputs to a transaction with same value and destination. Select them all.
-        Transaction t = new Transaction(UNITTEST);
+        Transaction t = new Transaction(TESTNET);
         List<TransactionOutput> outputs = Arrays.asList(
-            new TransactionOutput(UNITTEST, t, Coin.valueOf(30302787), myAddress),
-            new TransactionOutput(UNITTEST, t, Coin.valueOf(30302787), myAddress),
-            new TransactionOutput(UNITTEST, t, Coin.valueOf(30302787), myAddress),
-            new TransactionOutput(UNITTEST, t, Coin.valueOf(30302787), myAddress)
+            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress)
         );
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
 

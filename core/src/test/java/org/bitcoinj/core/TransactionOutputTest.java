@@ -57,7 +57,7 @@ public class TransactionOutputTest extends TestWithWallet {
         ECKey otherKey = new ECKey();
 
         // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(UNITTEST);
+        Transaction multiSigTransaction = new Transaction(TESTNET);
         List<ECKey> keys = Arrays.asList(myKey, otherKey);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
@@ -91,11 +91,11 @@ public class TransactionOutputTest extends TestWithWallet {
 
     @Test
     public void getMinNonDustValue() {
-        TransactionOutput p2pk = new TransactionOutput(UNITTEST, null, Coin.COIN, myKey);
+        TransactionOutput p2pk = new TransactionOutput(TESTNET, null, Coin.COIN, myKey);
         assertEquals(Coin.valueOf(576), p2pk.getMinNonDustValue());
-        TransactionOutput p2pkh = new TransactionOutput(UNITTEST, null, Coin.COIN, LegacyAddress.fromKey(UNITTEST, myKey));
+        TransactionOutput p2pkh = new TransactionOutput(TESTNET, null, Coin.COIN, LegacyAddress.fromKey(TESTNET, myKey));
         assertEquals(Coin.valueOf(546), p2pkh.getMinNonDustValue());
-        TransactionOutput p2wpkh = new TransactionOutput(UNITTEST, null, Coin.COIN, SegwitAddress.fromKey(UNITTEST, myKey));
+        TransactionOutput p2wpkh = new TransactionOutput(TESTNET, null, Coin.COIN, SegwitAddress.fromKey(TESTNET, myKey));
         assertEquals(Coin.valueOf(294), p2wpkh.getMinNonDustValue());
     }
 }

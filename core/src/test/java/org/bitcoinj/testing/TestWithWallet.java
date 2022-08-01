@@ -29,7 +29,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -51,8 +51,8 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
  * fee per kilobyte to zero in setUp.
  */
 public class TestWithWallet {
-    protected static NetworkParameters UNITTEST;
-    protected static NetworkParameters MAINNET;
+    protected static final NetworkParameters TESTNET = TestNet3Params.get();
+    protected static final NetworkParameters MAINNET = MainNetParams.get();
 
     protected ECKey myKey;
     protected Address myAddress;
@@ -63,18 +63,16 @@ public class TestWithWallet {
     @BeforeClass
     public static void setUpClass() throws Exception {
         Utils.resetMocking();
-        UNITTEST = UnitTestParams.get();
-        MAINNET = MainNetParams.get();
     }
 
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        Context.propagate(new Context(100, Coin.ZERO, false, false));
-        wallet = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH, KeyChainGroupStructure.BIP32);
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
+        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH, KeyChainGroupStructure.BIP32);
         myKey = wallet.freshReceiveKey();
         myAddress = wallet.freshReceiveAddress(ScriptType.P2PKH);
-        blockStore = new MemoryBlockStore(UNITTEST);
-        chain = new BlockChain(UNITTEST, wallet, blockStore);
+        blockStore = new MemoryBlockStore(TESTNET);
+        chain = new BlockChain(TESTNET, wallet, blockStore);
     }
 
     public void tearDown() throws Exception {
@@ -103,12 +101,12 @@ public class TestWithWallet {
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
-        return sendMoneyToWallet(wallet, type, createFakeTx(UNITTEST, value, toAddress));
+        return sendMoneyToWallet(wallet, type, createFakeTx(TESTNET, value, toAddress));
     }
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, ECKey toPubKey) throws VerificationException {
-        return sendMoneyToWallet(wallet, type, createFakeTx(UNITTEST, value, toPubKey));
+        return sendMoneyToWallet(wallet, type, createFakeTx(TESTNET, value, toPubKey));
     }
 
     @Nullable
