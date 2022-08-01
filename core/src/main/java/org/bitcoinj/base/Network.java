@@ -44,4 +44,11 @@ public interface Network {
      * @return Maximum number of coins for this network
      */
     Monetary maxMoney();
+
+    /**
+     * Check if an amount exceeds the maximum allowed for a network (if the network has one)
+     * @param monetary A monetary amount
+     * @return true if too big, false if an allowed amount
+     */
+    boolean exceedsMaxMoney(Monetary monetary);
 }

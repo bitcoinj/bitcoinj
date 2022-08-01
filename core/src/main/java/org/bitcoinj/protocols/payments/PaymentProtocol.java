@@ -428,7 +428,7 @@ public class PaymentProtocol {
         Protos.Output.Builder output = Protos.Output.newBuilder();
         if (amount != null) {
             final NetworkParameters params = NetworkParameters.of(address.network());
-            if (params.network().hasMaxMoney() && amount.compareTo(params.network().maxMoney()) > 0)
+            if (params.network().exceedsMaxMoney(amount))
                 throw new IllegalArgumentException("Amount too big: " + amount);
             output.setAmount(amount.value);
         } else {

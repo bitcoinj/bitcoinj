@@ -121,6 +121,15 @@ public enum BitcoinNetwork implements Network {
         return MAX_MONEY;
     }
 
+    @Override
+    public boolean exceedsMaxMoney(Monetary amount) {
+        if (amount instanceof Coin) {
+            return ((Coin) amount).compareTo(MAX_MONEY) > 0;
+        } else {
+            throw new IllegalArgumentException("amount must be a Coin type");
+        }
+    }
+
     /**
      * Find the {@code BitcoinNetwork} from a name string, e.g. "mainnet", "testnet" or "signet".
      * A number of common alternate names are allowed too, e.g. "main" or "prod".
