@@ -24,7 +24,6 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
@@ -597,9 +596,9 @@ public class TransactionTest {
      */
     @Test
     public void testHashForSignatureThreadSafety() throws Exception {
-        final NetworkParameters UNITTEST = UnitTestParams.get();
-        Block genesis = UNITTEST.getGenesisBlock();
-        Block block1 = genesis.createNextBlock(LegacyAddress.fromKey(UNITTEST, new ECKey()),
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Block genesis = TESTNET.getGenesisBlock();
+        Block block1 = genesis.createNextBlock(LegacyAddress.fromKey(TESTNET, new ECKey()),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
 
         final Transaction tx = block1.getTransactions().get(1);
