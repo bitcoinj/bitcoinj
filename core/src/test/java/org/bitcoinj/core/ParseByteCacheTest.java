@@ -20,7 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
@@ -80,39 +80,39 @@ public class ParseByteCacheTest {
     private byte[] tx2Bytes;
     private byte[] tx2BytesWithHeader;
 
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(UNITTEST);
+        blockStore = new MemoryBlockStore(TESTNET);
     }
     
     @Before
     public void setUp() throws Exception {
         Utils.setMockClock(); // Use mock clock
-        Context.propagate(new Context());
-        Wallet wallet = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         wallet.freshReceiveKey();
 
         resetBlockStore();
         
-        Transaction tx1 = createFakeTx(UNITTEST,
+        Transaction tx1 = createFakeTx(TESTNET,
                 valueOf(2, 0),
-                LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey()));
+                LegacyAddress.fromKey(TESTNET, wallet.currentReceiveKey()));
         
         // add a second input so can test granularity of byte cache.
-        Transaction prevTx = new Transaction(UNITTEST);
-        TransactionOutput prevOut = new TransactionOutput(UNITTEST, prevTx, COIN, LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey()));
+        Transaction prevTx = new Transaction(TESTNET);
+        TransactionOutput prevOut = new TransactionOutput(TESTNET, prevTx, COIN, LegacyAddress.fromKey(TESTNET, wallet.currentReceiveKey()));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
-        Transaction tx2 = createFakeTx(UNITTEST, COIN,
-                LegacyAddress.fromKey(UNITTEST, new ECKey()));
+        Transaction tx2 = createFakeTx(TESTNET, COIN,
+                LegacyAddress.fromKey(TESTNET, new ECKey()));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 
-        MessageSerializer bs = UNITTEST.getDefaultSerializer();
+        MessageSerializer bs = TESTNET.getDefaultSerializer();
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx1, bos);
@@ -147,15 +147,15 @@ public class ParseByteCacheTest {
     @Test
     public void testTransactionsRetain() throws Exception {
         testTransaction(MAINNET, txMessage, false, true);
-        testTransaction(UNITTEST, tx1BytesWithHeader, false, true);
-        testTransaction(UNITTEST, tx2BytesWithHeader, false, true);
+        testTransaction(TESTNET, tx1BytesWithHeader, false, true);
+        testTransaction(TESTNET, tx2BytesWithHeader, false, true);
     }
     
     @Test
     public void testTransactionsNoRetain() throws Exception {
         testTransaction(MAINNET, txMessage, false, false);
-        testTransaction(UNITTEST, tx1BytesWithHeader, false, false);
-        testTransaction(UNITTEST, tx2BytesWithHeader, false, false);
+        testTransaction(TESTNET, tx1BytesWithHeader, false, false);
+        testTransaction(TESTNET, tx2BytesWithHeader, false, false);
     }
 
     @Test
@@ -167,10 +167,10 @@ public class ParseByteCacheTest {
     public void testBlock(byte[] blockBytes, boolean isChild, boolean retain) throws Exception {
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer bsRef = UNITTEST.getSerializer(false);
+        MessageSerializer bsRef = TESTNET.getSerializer(false);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
-        BitcoinSerializer bs = UNITTEST.getSerializer(retain);
+        BitcoinSerializer bs = TESTNET.getSerializer(retain);
         Block b1;
         Block bRef;
         b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
