@@ -21,12 +21,11 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.params.AbstractBitcoinNetParams;
+import org.bitcoinj.params.BitcoinNetParams;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.SigNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
@@ -172,12 +171,12 @@ public abstract class NetworkParameters {
      * Return network parameters for a network id
      * @param id the network id
      * @return the network parameters for the given string ID or NULL if not recognized
-     * @deprecated Use {@link AbstractBitcoinNetParams#fromID(String)}
+     * @deprecated Use {@link BitcoinNetParams#fromID(String)}
      */
     @Deprecated
     @Nullable
     public static NetworkParameters fromID(String id) {
-        return AbstractBitcoinNetParams.fromID(id);
+        return BitcoinNetParams.fromID(id);
     }
 
     /**

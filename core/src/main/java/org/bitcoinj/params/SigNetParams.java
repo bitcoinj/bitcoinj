@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkState;
  * and testing of applications and new Bitcoin versions.</p>
  * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0325.mediawiki">BIP325</a>
  */
-public class SigNetParams extends AbstractBitcoinNetParams {
+public class SigNetParams extends BitcoinNetParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
