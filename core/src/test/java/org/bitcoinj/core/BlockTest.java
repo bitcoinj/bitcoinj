@@ -25,7 +25,6 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -51,7 +50,6 @@ import static org.junit.Assert.fail;
 
 public class BlockTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private byte[] block700000Bytes;
@@ -85,10 +83,18 @@ public class BlockTest {
         assertEquals("2016-02-13T22:59:39Z", Utils.dateTimeFormat(block700000.getTime()));
     }
 
+    private static class TweakableTestNet3Params extends TestNet3Params {
+        public void setMaxTarget(BigInteger limit) {
+            maxTarget = limit;
+        }
+    }
+
     @Test
     public void testProofOfWork() {
         // This params accepts any difficulty target.
-        Block block = UNITTEST.getDefaultSerializer().makeBlock(block700000Bytes);
+        final TweakableTestNet3Params TWEAK_TESTNET = new TweakableTestNet3Params();
+        TWEAK_TESTNET.setMaxTarget(ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET));
+        Block block = TWEAK_TESTNET.getDefaultSerializer().makeBlock(block700000Bytes);
         block.setNonce(12346);
         try {
             block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
@@ -147,17 +153,18 @@ public class BlockTest {
     
     @Test
     public void testUpdateLength() {
-        Block block = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS);
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Block block = TESTNET.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS);
         assertEquals(block.bitcoinSerialize().length, block.length);
         final int origBlockLen = block.length;
-        Transaction tx = new Transaction(UNITTEST);
+        Transaction tx = new Transaction(TESTNET);
         // this is broken until the transaction has > 1 input + output (which is required anyway...)
         //assertTrue(tx.length == tx.bitcoinSerialize().length && tx.length == 8);
         byte[] outputScript = new byte[10];
         Arrays.fill(outputScript, (byte) ScriptOpCodes.OP_FALSE);
-        tx.addOutput(new TransactionOutput(UNITTEST, null, Coin.SATOSHI, outputScript));
-        tx.addInput(new TransactionInput(UNITTEST, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
-                new TransactionOutPoint(UNITTEST, 0, Sha256Hash.of(new byte[] { 1 }))));
+        tx.addOutput(new TransactionOutput(TESTNET, null, Coin.SATOSHI, outputScript));
+        tx.addInput(new TransactionInput(TESTNET, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
+                new TransactionOutPoint(TESTNET, 0, Sha256Hash.of(new byte[] { 1 }))));
         int origTxLength = 8 + 2 + 8 + 1 + 10 + 40 + 1 + 1;
         assertEquals(tx.unsafeBitcoinSerialize().length, tx.length);
         assertEquals(origTxLength, tx.length);
@@ -171,8 +178,8 @@ public class BlockTest {
         assertEquals(block.length, block.unsafeBitcoinSerialize().length);
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength - 1);
-        block.getTransactions().get(1).addInput(new TransactionInput(UNITTEST, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
-                new TransactionOutPoint(UNITTEST, 0, Sha256Hash.of(new byte[] { 1 }))));
+        block.getTransactions().get(1).addInput(new TransactionInput(TESTNET, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
+                new TransactionOutPoint(TESTNET, 0, Sha256Hash.of(new byte[] { 1 }))));
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
     }
@@ -329,7 +336,8 @@ public class BlockTest {
 
     @Test
     public void parseBlockWithHugeDeclaredTransactionsSize() {
-        Block block = new Block(UNITTEST, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Block block = new Block(TESTNET, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 ByteUtils.uint32ToByteStreamLE(getVersion(), stream);
@@ -354,7 +362,7 @@ public class BlockTest {
         };
         byte[] serializedBlock = block.bitcoinSerialize();
         try {
-            UNITTEST.getDefaultSerializer().makeBlock(serializedBlock, serializedBlock.length);
+            TESTNET.getDefaultSerializer().makeBlock(serializedBlock, serializedBlock.length);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
