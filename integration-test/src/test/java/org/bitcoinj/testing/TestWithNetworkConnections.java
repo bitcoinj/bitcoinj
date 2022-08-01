@@ -40,6 +40,7 @@ import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.NioServer;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.net.StreamConnectionFactory;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -68,6 +69,7 @@ import static com.google.common.base.Preconditions.checkState;
 public class TestWithNetworkConnections {
     public static final int PEER_SERVERS = 5;
     protected static final NetworkParameters UNITTEST = UnitTestParams.get();
+    protected static final NetworkParameters TESTNET = TestNet3Params.get();
     protected BlockStore blockStore;
     protected BlockChain blockChain;
     protected Wallet wallet;
