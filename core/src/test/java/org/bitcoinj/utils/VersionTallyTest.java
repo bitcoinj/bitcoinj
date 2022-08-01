@@ -17,11 +17,12 @@
 package org.bitcoinj.utils;
 
 import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -102,21 +103,21 @@ public class VersionTallyTest {
 
     @Test
     public void testInitialize() throws BlockStoreException {
-        final NetworkParameters UNITTEST = UnitTestParams.get(); // easy difficulty target
-        final BlockStore blockStore = new MemoryBlockStore(UNITTEST);
-        final BlockChain chain = new BlockChain(UNITTEST, blockStore);
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        final BlockStore blockStore = new MemoryBlockStore(TESTNET);
+        final BlockChain chain = new BlockChain(TESTNET, blockStore);
 
         // Build a historical chain of version 2 blocks
         long timeSeconds = 1231006505;
         StoredBlock chainHead = null;
-        for (int height = 0; height < UNITTEST.getMajorityWindow(); height++) {
+        for (int height = 0; height < TESTNET.getMajorityWindow(); height++) {
             chainHead = FakeTxBuilder.createFakeBlock(blockStore, 2, timeSeconds, height).storedBlock;
             assertEquals(2, chainHead.getHeader().getVersion());
             timeSeconds += 60;
         }
 
-        VersionTally instance = new VersionTally(UNITTEST);
+        VersionTally instance = new VersionTally(TESTNET);
         instance.initialize(blockStore, chainHead);
-        assertEquals(UNITTEST.getMajorityWindow(), instance.getCountAtOrAbove(2).intValue());
+        assertEquals(TESTNET.getMajorityWindow(), instance.getCountAtOrAbove(2).intValue());
     }
 }
