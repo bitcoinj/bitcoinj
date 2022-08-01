@@ -22,11 +22,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.AbstractBitcoinNetParams;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.SigNetParams;
-import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
@@ -45,7 +40,7 @@ import java.util.Objects;
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
  *
  * <p>This is an abstract class, concrete instantiations can be found in the params package. There are four:
- * one for the main network ({@link MainNetParams}), one for the public test network, and two others that are
+ * one for the main network ({@link org.bitcoinj.params.MainNetParams}), one for the public test network, and two others that are
  * intended for unit testing and local app development purposes. Although this class contains some aliases for
  * them, you are encouraged to call the static get() methods on each specific params class directly.</p>
  */
@@ -186,17 +181,10 @@ public abstract class NetworkParameters {
      * @return the network parameters for the given string ID
      * @throws IllegalArgumentException if unknown network
      */
-    public static NetworkParameters of(BitcoinNetwork network) {
-        switch (network) {
-            case MAINNET:
-                return MainNetParams.get();
-            case TESTNET:
-                return TestNet3Params.get();
-            case SIGNET:
-                return SigNetParams.get();
-            case REGTEST:
-                return RegTestParams.get();
-            default:
+    public static NetworkParameters of(Network network) {
+        if (network instanceof BitcoinNetwork) {
+            return AbstractBitcoinNetParams.of((BitcoinNetwork) network);
+        } else {
                 throw new IllegalArgumentException("Unknown network");
         }
     }

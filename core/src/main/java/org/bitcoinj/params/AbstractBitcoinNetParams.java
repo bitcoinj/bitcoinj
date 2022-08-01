@@ -96,6 +96,27 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     }
 
     /**
+     * Return network parameters for a {@link BitcoinNetwork} enum
+     * @param network the network
+     * @return the network parameters for the given string ID
+     * @throws IllegalArgumentException if unknown network
+     */
+    public static AbstractBitcoinNetParams of(BitcoinNetwork network) {
+        switch (network) {
+            case MAINNET:
+                return MainNetParams.get();
+            case TESTNET:
+                return TestNet3Params.get();
+            case SIGNET:
+                return SigNetParams.get();
+            case REGTEST:
+                return RegTestParams.get();
+            default:
+                throw new IllegalArgumentException("Unknown network");
+        }
+    }
+
+    /**
      * @return the payment protocol network id string
      * @deprecated Use {@link PaymentProtocol#protocolIdFromParams(NetworkParameters)}
      */
