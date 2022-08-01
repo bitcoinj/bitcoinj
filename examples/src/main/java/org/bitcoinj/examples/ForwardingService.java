@@ -24,6 +24,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.TransactionConfidence;
@@ -37,7 +38,9 @@ import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
+import javax.annotation.Nullable;
 import java.io.File;
+import java.net.InetAddress;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.collectingAndThen;
@@ -48,7 +51,7 @@ import static java.util.stream.Collectors.toList;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService implements AutoCloseable {
-    static final String USAGE = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
+    static final String USAGE = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest] [peer address]";
     static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
     private final BitcoinNetwork network;
@@ -78,16 +81,17 @@ public class ForwardingService implements AutoCloseable {
             address = Address.fromString(null, args[0]);
             network = address.network();
         }
+        var peerAddress = args.length >= 2 ? new PeerAddress(NetworkParameters.of(network), InetAddress.getByName(args[2])) : null;
 
-        forward(new File("."), network, address);
+        forward(new File("."), network, address, peerAddress);
     }
 
-    public static void forward(File directory, BitcoinNetwork network, Address address) {
+    public static void forward(File directory, BitcoinNetwork network, Address address, @Nullable PeerAddress peerAddress) {
         System.out.println("Network: " + network.id());
         System.out.println("Forwarding address: " + address);
 
         // Create the Service (and WalletKit)
-        try (ForwardingService forwardingService = new ForwardingService(directory, address, network)) {
+        try (ForwardingService forwardingService = new ForwardingService(directory, address, network, peerAddress)) {
             // Start the Service (and WalletKit)
             forwardingService.start();
 
@@ -108,7 +112,7 @@ public class ForwardingService implements AutoCloseable {
      * @param forwardingAddress forwarding destination
      * @param network Network to listen on
      */
-    public ForwardingService(File directory, Address forwardingAddress, BitcoinNetwork network) {
+    public ForwardingService(File directory, Address forwardingAddress, BitcoinNetwork network, @Nullable PeerAddress peerAddress) {
         this.forwardingAddress = forwardingAddress;
         this.network = network;
         listener = this::coinsReceivedListener;
@@ -118,6 +122,8 @@ public class ForwardingService implements AutoCloseable {
                 KeyChainGroupStructure.BIP32,
                 directory,
                 getPrefix(network));
+        if (peerAddress != null)
+            kit.setPeerNodes(peerAddress);
     }
 
     /**
