@@ -52,13 +52,14 @@ public class Context {
     final private int eventHorizon;
     final private boolean ensureMinRequiredFee;
     final private Coin feePerKb;
+    final private boolean relaxProofOfWork;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
      * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
      */
     public Context() {
-        this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true);
+        this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true, false);
     }
 
     /**
@@ -76,23 +77,25 @@ public class Context {
      * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs. See {@link #getEventHorizon()}.
      * @param feePerKb The default fee per 1000 virtual bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
      * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
+     * @param relaxProofOfWork If true, proof of work is not enforced. This is useful for unit-testing. See {@link Block#checkProofOfWork(boolean)}.
      */
-    public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
+    public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee, boolean relaxProofOfWork) {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
         this.confidenceTable = new TxConfidenceTable();
         this.eventHorizon = eventHorizon;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
+        this.relaxProofOfWork = relaxProofOfWork;
         lastConstructed = this;
     }
 
     /**
      * Note that NetworkParameters have been removed from this class. Thus, this constructor just swallows them.
-     * @deprecated Use {@link Context#Context(int, Coin, boolean)}
+     * @deprecated Use {@link Context#Context(int, Coin, boolean, boolean)}
      */
     @Deprecated
     public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
-        this(eventHorizon, feePerKb, ensureMinRequiredFee);
+        this(eventHorizon, feePerKb, ensureMinRequiredFee, false);
     }
 
     private static volatile Context lastConstructed;
@@ -204,5 +207,13 @@ public class Context {
      */
     public boolean isEnsureMinRequiredFee() {
         return ensureMinRequiredFee;
+    }
+
+    /**
+     * If this is set to true, proof of work is not enforced. This is useful for unit-testing, as we need to create
+     * and solve fake blocks quite often.
+     */
+    public boolean isRelaxProofOfWork() {
+        return relaxProofOfWork;
     }
 }

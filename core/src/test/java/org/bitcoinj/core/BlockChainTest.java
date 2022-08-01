@@ -86,9 +86,9 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         Utils.setMockClock(); // Use mock clock
-        Context.propagate(new Context(100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false, false));
         testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
-        Context.propagate(new Context(100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false, false));
         NetworkParameters params = TESTNET;
         wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(ScriptType.P2PKH).build()) {
             @Override

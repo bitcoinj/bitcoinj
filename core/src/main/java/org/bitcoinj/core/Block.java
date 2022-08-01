@@ -564,6 +564,10 @@ public class Block extends Message {
 
     /** Returns true if the hash of the block is OK (lower than difficulty target). */
     protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
+        // shortcut for unit-testing
+        if (Context.get().isRelaxProofOfWork())
+            return true;
+
         // This part is key - it is what proves the block was as difficult to make as it claims
         // to be. Note however that in the context of this function, the block can claim to be
         // as difficult as it wants to be .... if somebody was able to take control of our network

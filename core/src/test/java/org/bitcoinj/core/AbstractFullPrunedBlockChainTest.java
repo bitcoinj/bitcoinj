@@ -77,7 +77,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Before
     public void setUp() {
         BriefLogFormatter.init();
-        Context.propagate(new Context(100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false, false));
     }
 
     public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
