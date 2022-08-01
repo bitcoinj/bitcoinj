@@ -1761,7 +1761,7 @@ public class Transaction extends ChildMessage {
             } catch (ArithmeticException e) {
                 throw new VerificationException.ExcessiveValue();
             }
-            if (params.network().hasMaxMoney() && valueOut.compareTo(params.network().maxMoney()) > 0)
+            if (params.network().exceedsMaxMoney(valueOut))
                 throw new VerificationException.ExcessiveValue();
         }
 

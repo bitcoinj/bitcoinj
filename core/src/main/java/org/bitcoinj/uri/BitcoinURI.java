@@ -213,7 +213,7 @@ public class BitcoinURI {
                 // Decode the amount (contains an optional decimal component to 8dp).
                 try {
                     Coin amount = Coin.parseCoin(valueToken);
-                    if (network.hasMaxMoney() && amount.longValue() > network.maxMoney().getValue())
+                    if (network.exceedsMaxMoney(amount))
                         throw new BitcoinURIParseException("Max number of coins exceeded");
                     if (amount.signum() < 0)
                         throw new ArithmeticException("Negative coins specified");

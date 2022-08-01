@@ -410,7 +410,7 @@ public class PaymentSession {
             }
             // This won't ever happen in practice. It would only happen if the user provided outputs
             // that are obviously invalid. Still, we don't want to silently overflow.
-            if (params.network().hasMaxMoney() && totalValue.compareTo(params.network().maxMoney()) > 0)
+            if (params.network().exceedsMaxMoney(totalValue))
                 throw new PaymentProtocolException.InvalidOutputs("The outputs are way too big.");
         } catch (InvalidProtocolBufferException e) {
             throw new PaymentProtocolException(e);
