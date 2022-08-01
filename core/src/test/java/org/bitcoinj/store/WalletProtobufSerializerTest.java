@@ -41,7 +41,6 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.FooWalletExtension;
@@ -84,7 +83,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class WalletProtobufSerializerTest {
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
@@ -262,14 +260,14 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception {
         // Test the TransactionConfidence appearedAtChainHeight, depth and workDone field are stored.
-
-        BlockChain chain = new BlockChain(UNITTEST, myWallet, new MemoryBlockStore(UNITTEST));
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        BlockChain chain = new BlockChain(TESTNET, myWallet, new MemoryBlockStore(TESTNET));
 
         final ArrayList<Transaction> txns = new ArrayList<>(2);
         myWallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txns.add(tx));
 
         // Start by building two blocks on top of the genesis block.
-        Block b1 = UNITTEST.getGenesisBlock().createNextBlock(myAddress);
+        Block b1 = TESTNET.getGenesisBlock().createNextBlock(myAddress);
         BigInteger work1 = b1.getWork();
         assertTrue(work1.signum() > 0);
 
@@ -398,10 +396,11 @@ public class WalletProtobufSerializerTest {
     @Test
     public void coinbaseTxns() throws Exception {
         // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
-        Block b = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Block b = TESTNET.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
         Transaction coinbase = b.getTransactions().get(0);
         assertTrue(coinbase.isCoinBase());
-        BlockChain chain = new BlockChain(UNITTEST, myWallet, new MemoryBlockStore(UNITTEST));
+        BlockChain chain = new BlockChain(TESTNET, myWallet, new MemoryBlockStore(TESTNET));
         assertTrue(chain.add(b));
         // Wallet now has a coinbase tx in it.
         assertEquals(1, myWallet.getTransactions(true).size());
