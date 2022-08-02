@@ -19,7 +19,6 @@ dependencies {
     testImplementation 'org.easymock:easymock:4.3'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2.1'
     testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
-    testImplementation 'com.h2database:h2:1.3.176'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.10'
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
 }

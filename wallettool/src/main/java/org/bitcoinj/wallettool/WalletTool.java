@@ -1001,7 +1001,7 @@ public class WalletTool implements Callable<Integer> {
             }
             chain = new BlockChain(params, wallet, store);
         } else if (mode == ValidationMode.FULL) {
-            store = new H2FullPrunedBlockStore(params, chainFile.getAbsolutePath(), 5000);
+            store = new MemoryFullPrunedBlockStore(params, 5000);
             chain = new FullPrunedBlockChain(params, wallet, (FullPrunedBlockStore) store);
         }
         // This will ensure the wallet is saved when it changes.

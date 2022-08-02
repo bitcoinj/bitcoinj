@@ -23,8 +23,9 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.H2FullPrunedBlockStore;
+import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.MemoryFullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
@@ -77,8 +78,7 @@ public class BitcoindComparisonTool {
         final Iterator<Block> blocks = new BlockFileLoader(PARAMS, Arrays.asList(blockFile));
 
         try {
-            H2FullPrunedBlockStore store = new H2FullPrunedBlockStore(PARAMS, args.length > 0 ? args[0] : "BitcoindComparisonTool", blockList.maximumReorgBlockCount);
-            store.resetStore();
+            FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(PARAMS, store);
         } catch (BlockStoreException e) {
