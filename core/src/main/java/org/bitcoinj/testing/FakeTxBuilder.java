@@ -18,6 +18,7 @@
 package org.bitcoinj.testing;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
@@ -340,6 +341,6 @@ public class FakeTxBuilder {
     }
 
     private static Address randomAddress(NetworkParameters params) {
-        return LegacyAddress.fromKey(params, new ECKey());
+        return new ECKey().toAddress(ScriptType.P2PKH, params.network());
     }
 }
