@@ -410,9 +410,9 @@ public class WalletTool implements Callable<Integer> {
             e.printStackTrace();
             return 1;
         }
-        if (!wallet.getParams().equals(params)) {
-            System.err.println("Wallet does not match requested network parameters: " +
-                    wallet.getParams().getId() + " vs " + params.getId());
+        if (wallet.network() != net) {
+            System.err.println("Wallet does not match requested network: " +
+                    wallet.network() + " vs " + net);
             return 1;
         }
 

@@ -25,6 +25,7 @@ import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
@@ -483,6 +484,10 @@ public class Wallet extends BaseTaggableObject
             }
         };
         acceptRiskyTransactions = false;
+    }
+
+    public Network network() {
+        return params.network();
     }
 
     public NetworkParameters getNetworkParameters() {
