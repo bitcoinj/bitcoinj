@@ -88,14 +88,11 @@ public abstract class Address implements Comparable<Address> {
      * @param outputScriptType
      *            script type the address should use
      * @return constructed address
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, BitcoinNetwork)}
      */
+    @Deprecated
     public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
-        if (outputScriptType == ScriptType.P2PKH)
-            return LegacyAddress.fromKey(params, key);
-        else if (outputScriptType == ScriptType.P2WPKH)
-            return SegwitAddress.fromKey(params, key);
-        else
-            throw new IllegalArgumentException(outputScriptType.toString());
+        return key.toAddress(outputScriptType, params.network());
     }
 
     /**

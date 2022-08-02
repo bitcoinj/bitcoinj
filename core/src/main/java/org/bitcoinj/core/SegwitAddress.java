@@ -237,10 +237,11 @@ public class SegwitAddress extends Address {
      * @param key
      *            only the public part is used
      * @return constructed address
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.BitcoinNetwork)}
      */
+    @Deprecated
     public static SegwitAddress fromKey(NetworkParameters params, ECKey key) {
-        checkArgument(key.isCompressed(), "only compressed keys allowed");
-        return fromHash(params, key.getPubKeyHash());
+        return (SegwitAddress) key.toAddress(ScriptType.P2WPKH, params.network());
     }
 
     /**

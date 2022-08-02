@@ -24,6 +24,7 @@ import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
@@ -415,6 +416,19 @@ public class ECKey implements EncryptableItem {
      */
     public boolean isCompressed() {
         return pub.isCompressed();
+    }
+
+    public Address toAddress(ScriptType scriptType, BitcoinNetwork network) {
+        NetworkParameters params = NetworkParameters.of(network);
+        if (scriptType == ScriptType.P2PKH) {
+            return LegacyAddress.fromPubKeyHash(params, this.getPubKeyHash());
+        }
+        else if (scriptType == ScriptType.P2WPKH) {
+            checkArgument(this.isCompressed(), "only compressed keys allowed");
+            return SegwitAddress.fromHash(params, this.getPubKeyHash());
+        }
+        else
+            throw new IllegalArgumentException(scriptType.toString());
     }
 
     /**
@@ -1202,11 +1216,11 @@ public class ECKey implements EncryptableItem {
                                      NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:");
         if (outputScriptType != null) {
-            builder.append(Address.fromKey(params, this, outputScriptType));
+            builder.append(toAddress(outputScriptType, params.network()));
         } else {
-            builder.append(LegacyAddress.fromKey(params, this));
+            builder.append(toAddress(ScriptType.P2PKH, params.network()));
             if (isCompressed())
-                builder.append(',').append(SegwitAddress.fromKey(params, this));
+                builder.append(',').append(toAddress(ScriptType.P2WPKH, params.network()));
         }
         if (!isCompressed())
             builder.append("  UNCOMPRESSED");
