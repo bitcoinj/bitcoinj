@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;

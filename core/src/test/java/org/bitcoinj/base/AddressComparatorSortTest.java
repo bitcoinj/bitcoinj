@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import org.bitcoinj.base.utils.StreamUtils;
+import org.bitcoinj.core.DefaultAddressParser;
 import org.junit.Test;
 
 import java.util.ArrayList;

@@ -18,7 +18,7 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.DumpedPrivateKey;
@@ -26,7 +26,7 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;

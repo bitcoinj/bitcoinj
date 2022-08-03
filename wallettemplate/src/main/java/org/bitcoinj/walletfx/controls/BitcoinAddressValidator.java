@@ -16,12 +16,11 @@
 
 package org.bitcoinj.walletfx.controls;
 
-import org.bitcoinj.core.Address;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
-import org.bitcoinj.core.AddressParser;
+import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 
 /**

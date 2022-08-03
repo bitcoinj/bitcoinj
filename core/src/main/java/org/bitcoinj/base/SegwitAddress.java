@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import com.google.common.primitives.UnsignedBytes;
-import org.bitcoinj.base.Bech32;
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>

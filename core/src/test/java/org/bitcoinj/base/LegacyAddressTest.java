@@ -15,13 +15,16 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
-import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.DumpedPrivateKey;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.params.TestNet3Params;
@@ -150,10 +153,10 @@ public class LegacyAddressTest {
     public void p2shAddress() {
         // Test that we can construct P2SH addresses
         LegacyAddress mainNetP2SHAddress = LegacyAddress.fromBase58(MainNetParams.get(), "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
-        assertEquals(mainNetP2SHAddress.getVersion(), MAINNET.p2shHeader);
+        assertEquals(mainNetP2SHAddress.getVersion(), MAINNET.getP2SHHeader());
         assertEquals(ScriptType.P2SH, mainNetP2SHAddress.getOutputScriptType());
         LegacyAddress testNetP2SHAddress = LegacyAddress.fromBase58(TestNet3Params.get(), "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
-        assertEquals(testNetP2SHAddress.getVersion(), TESTNET.p2shHeader);
+        assertEquals(testNetP2SHAddress.getVersion(), TESTNET.getP2SHHeader());
         assertEquals(ScriptType.P2SH, testNetP2SHAddress.getOutputScriptType());
 
         // Test that we can determine what network a P2SH address belongs to

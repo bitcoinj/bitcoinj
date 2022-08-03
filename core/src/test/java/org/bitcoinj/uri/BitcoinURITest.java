@@ -17,10 +17,10 @@
 package org.bitcoinj.uri;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;

@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.testing.FakeTxBuilder;
