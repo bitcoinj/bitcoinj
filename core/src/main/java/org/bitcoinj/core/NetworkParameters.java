@@ -21,7 +21,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.params.AbstractBitcoinNetParams;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
@@ -167,12 +167,12 @@ public abstract class NetworkParameters {
      * Return network parameters for a network id
      * @param id the network id
      * @return the network parameters for the given string ID or NULL if not recognized
-     * @deprecated Use {@link AbstractBitcoinNetParams#fromID(String)}
+     * @deprecated Use {@link BitcoinNetworkParams#fromID(String)}
      */
     @Deprecated
     @Nullable
     public static NetworkParameters fromID(String id) {
-        return AbstractBitcoinNetParams.fromID(id);
+        return BitcoinNetworkParams.fromID(id);
     }
 
     /**
@@ -183,7 +183,7 @@ public abstract class NetworkParameters {
      */
     public static NetworkParameters of(Network network) {
         if (network instanceof BitcoinNetwork) {
-            return AbstractBitcoinNetParams.of((BitcoinNetwork) network);
+            return BitcoinNetworkParams.of((BitcoinNetwork) network);
         } else {
                 throw new IllegalArgumentException("Unknown network");
         }

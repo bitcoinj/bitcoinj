@@ -34,7 +34,7 @@ import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.params.AbstractBitcoinNetParams;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.utils.ExchangeRate;
@@ -437,7 +437,7 @@ public class WalletProtobufSerializer {
         try {
             Protos.Wallet walletProto = parseToProto(input);
             final String paramsID = walletProto.getNetworkIdentifier();
-            NetworkParameters params = AbstractBitcoinNetParams.fromID(paramsID);
+            NetworkParameters params = BitcoinNetworkParams.fromID(paramsID);
             if (params == null)
                 throw new UnreadableWalletException("Unknown network parameters ID " + paramsID);
             return readWallet(params, extensions, walletProto, forceReset);
@@ -832,7 +832,7 @@ public class WalletProtobufSerializer {
             if (field != 1) // network_identifier
                 return false;
             final String network = cis.readString();
-            return AbstractBitcoinNetParams.fromID(network) != null;
+            return BitcoinNetworkParams.fromID(network) != null;
         } catch (IOException x) {
             return false;
         }

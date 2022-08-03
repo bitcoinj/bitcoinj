@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Parameters for Bitcoin-like networks.
  */
-public abstract class AbstractBitcoinNetParams extends NetworkParameters {
+public abstract class BitcoinNetworkParams extends NetworkParameters {
 
     /**
      * Scheme part for Bitcoin URIs.
@@ -59,7 +59,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
      */
     public static final int REWARD_HALVING_INTERVAL = 210000;
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractBitcoinNetParams.class);
+    private static final Logger log = LoggerFactory.getLogger(BitcoinNetworkParams.class);
 
     /** lazy-initialized by the first call to {@link NetworkParameters#getGenesisBlock()} */
     protected Block genesisBlock;
@@ -67,7 +67,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     /**
      * No-args constructor
      */
-    public AbstractBitcoinNetParams(BitcoinNetwork network) {
+    public BitcoinNetworkParams(BitcoinNetwork network) {
         super(network);
         interval = INTERVAL;
         subsidyDecreaseBlockCount = REWARD_HALVING_INTERVAL;
@@ -79,7 +79,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
      * @return the network parameters for the given string ID or NULL if not recognized
      */
     @Nullable
-    public static AbstractBitcoinNetParams fromID(String id) {
+    public static BitcoinNetworkParams fromID(String id) {
         if (id.equals(BitcoinNetwork.ID_MAINNET)) {
             return MainNetParams.get();
         } else if (id.equals(BitcoinNetwork.ID_TESTNET)) {
@@ -101,7 +101,7 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
      * @return the network parameters for the given string ID
      * @throws IllegalArgumentException if unknown network
      */
-    public static AbstractBitcoinNetParams of(BitcoinNetwork network) {
+    public static BitcoinNetworkParams of(BitcoinNetwork network) {
         switch (network) {
             case MAINNET:
                 return MainNetParams.get();
