@@ -26,14 +26,17 @@ import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
+import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Base58;
+import org.bitcoinj.core.AddressParser;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -174,8 +177,11 @@ import static com.google.common.base.Preconditions.checkState;
  * for more information about this.</p>
  */
 public class Wallet extends BaseTaggableObject
-    implements NewBestBlockListener, TransactionReceivedInBlockListener, PeerFilterProvider, KeyBag, TransactionBag, ReorganizeListener {
+    implements NewBestBlockListener, TransactionReceivedInBlockListener, PeerFilterProvider,
+        KeyBag, TransactionBag, ReorganizeListener, AddressParser.Strict {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
+    private static final AddressParser addressParser = new DefaultAddressParser();
+
     // Ordering: lock > keyChainGroupLock. KeyChainGroup is protected separately to allow fast querying of current receive address
     // even if the wallet itself is busy e.g. saving or processing a big reorg. Useful for reducing UI latency.
     protected final ReentrantLock lock = Threading.lock(Wallet.class);
@@ -492,6 +498,17 @@ public class Wallet extends BaseTaggableObject
 
     public NetworkParameters getNetworkParameters() {
         return params;
+    }
+
+    /**
+     * Parse an address string using all formats this wallet knows about for the wallet's network type
+     * @param addressString Address string to parse
+     * @return A validated address
+     * @throws AddressFormatException if invalid string
+     */
+    @Override
+    public Address parseAddress(String addressString) throws AddressFormatException {
+        return addressParser.parseAddress(addressString, params.network());
     }
 
     /**

@@ -446,7 +446,7 @@ public class WalletTool implements Callable<Integer> {
                     if (selectAddrStr != null) {
                         Address selectAddr;
                         try {
-                            selectAddr = Address.fromString(params, selectAddrStr);
+                            selectAddr = wallet.parseAddress(selectAddrStr);
                         } catch (AddressFormatException x) {
                             System.err.println("Could not parse given address, or wrong network: " + selectAddrStr);
                             return 1;
@@ -761,7 +761,7 @@ public class WalletTool implements Callable<Integer> {
                 addr = null;
             } else {
                 // Treat as an address.
-                addr = Address.fromString(params, destination);
+                addr = wallet.parseAddress(destination);
                 key = null;
             }
         }
@@ -1228,7 +1228,7 @@ public class WalletTool implements Callable<Integer> {
             key = wallet.findKeyFromPubKey(HEX.decode(pubKeyStr));
         } else {
             try {
-                Address address = Address.fromString(wallet.getParams(), addrStr);
+                Address address = wallet.parseAddress(addrStr);
                 key = wallet.findKeyFromAddress(address);
             } catch (AddressFormatException e) {
                 System.err.println(addrStr + " does not parse as a Bitcoin address of the right network parameters.");

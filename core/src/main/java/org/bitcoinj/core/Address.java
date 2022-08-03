@@ -30,10 +30,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Base class for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
  * <p>
- * Use {@link #fromString(NetworkParameters, String)} to conveniently construct any kind of address from its textual
+ * Use an implementation of {@link AddressParser#parseAddress(String, BitcoinNetwork)} to conveniently construct any kind of address from its textual
  * form.
  */
 public abstract class Address implements Comparable<Address> {
+    protected static final AddressParser addressParser = new DefaultAddressParser();
     protected final NetworkParameters params;
     protected final byte[] bytes;
 
@@ -60,22 +61,14 @@ public abstract class Address implements Comparable<Address> {
      *             if the given string doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
      *             if the given string is valid but not for the expected network (eg testnet vs mainnet)
+     * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String, BitcoinNetwork)}
      */
+    @Deprecated
     public static Address fromString(@Nullable NetworkParameters params, String str)
             throws AddressFormatException {
-        try {
-            return LegacyAddress.fromBase58(params, str);
-        } catch (AddressFormatException.WrongNetwork x) {
-            throw x;
-        } catch (AddressFormatException x) {
-            try {
-                return SegwitAddress.fromBech32(params, str);
-            } catch (AddressFormatException.WrongNetwork x2) {
-                throw x;
-            } catch (AddressFormatException x2) {
-                throw new AddressFormatException(str);
-            }
-        }
+        return (params != null)
+                    ? addressParser.parseAddress(str, params.network())
+                    : addressParser.parseAddressAnyNetwork(str);
     }
 
     /**

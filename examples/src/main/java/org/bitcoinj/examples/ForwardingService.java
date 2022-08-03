@@ -21,9 +21,10 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.AddressParser;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.TransactionConfidence;
@@ -69,13 +70,14 @@ public class ForwardingService implements AutoCloseable {
         // Figure out which network we should connect to. Each network gets its own set of files.
         Address address;
         BitcoinNetwork network;
+        AddressParser addressParser = new DefaultAddressParser();
         if (args.length >= 2) {
             // Verify address belongs to network
             network = BitcoinNetwork.fromString(args[1]).orElseThrow();
-            address = Address.fromString(NetworkParameters.of(network), args[0]);
+            address = addressParser.parseAddress(args[0], network);
         } else {
             // Infer network from address
-            address = Address.fromString(null, args[0]);
+            address = addressParser.parseAddressAnyNetwork(args[0]);
             network = address.network();
         }
 

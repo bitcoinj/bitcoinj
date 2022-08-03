@@ -190,8 +190,7 @@ public class LegacyAddress extends Address {
      */
     @Deprecated
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        // TODO: Provide a `Network`-based mechanism for resolving "alt addresses"
-        return NetworkParameters.fromAddress(LegacyAddress.fromBase58(null, address));
+        return NetworkParameters.fromAddress(Address.addressParser.parseAddressAnyNetwork(address));
     }
 
     @Override

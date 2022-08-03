@@ -60,12 +60,13 @@ public class PrivateKeys {
                 key = ECKey.fromPrivate(privKey);
             }
             System.out.println("Address from private key is: " + SegwitAddress.fromKey(params, key).toString());
-            // And the address ...
-            Address destination = Address.fromString(params, args[1]);
 
             // Import the private key to a fresh wallet.
             Wallet wallet = Wallet.createDeterministic(params, ScriptType.P2PKH);
             wallet.importKey(key);
+
+            // And the address ...
+            Address destination = wallet.parseAddress(args[1]);
 
             // Find the transactions that involve those coins.
             final MemoryBlockStore blockStore = new MemoryBlockStore(params);

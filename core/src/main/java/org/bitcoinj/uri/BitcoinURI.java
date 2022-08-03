@@ -21,6 +21,8 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.AddressParser;
+import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nullable;
@@ -78,6 +80,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki">BIP 0021</a>
  */
 public class BitcoinURI {
+    private AddressParser addressParser = new DefaultAddressParser();
     // Not worth turning into an enum
     public static final String FIELD_MESSAGE = "message";
     public static final String FIELD_LABEL = "label";
@@ -177,7 +180,9 @@ public class BitcoinURI {
         if (!addressToken.isEmpty()) {
             // Attempt to parse the addressToken as a Bitcoin address for this network
             try {
-                Address address = Address.fromString(params, addressToken);
+                Address address = (params != null)
+                        ? addressParser.parseAddress(addressToken, params.network())
+                        : addressParser.parseAddressAnyNetwork(addressToken);
                 putWithValidation(FIELD_ADDRESS, address);
             } catch (final AddressFormatException e) {
                 throw new BitcoinURIParseException("Bad address", e);

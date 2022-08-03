@@ -16,13 +16,12 @@
 
 package org.bitcoinj.walletfx.controls;
 
-import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.core.NetworkParameters;
 
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
+import org.bitcoinj.core.AddressParser;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 
 /**
@@ -30,11 +29,12 @@ import org.bitcoinj.walletfx.utils.TextFieldValidator;
  * if the address is invalid for those params, and enable/disable the nodes.
  */
 public class BitcoinAddressValidator {
-    private BitcoinNetwork network;
+    private final AddressParser.Strict parser;
     private Node[] nodes;
 
-    public BitcoinAddressValidator(BitcoinNetwork network, TextField field, Node... nodes) {
-        this.network = network;
+
+    public BitcoinAddressValidator(AddressParser.Strict parser, TextField field, Node... nodes) {
+        this.parser = parser;
         this.nodes = nodes;
 
         // Handle the red highlighting, but don't highlight in red just when the field is empty because that makes
@@ -52,7 +52,7 @@ public class BitcoinAddressValidator {
 
     private boolean testAddr(String text) {
         try {
-            Address.fromString(NetworkParameters.of(network), text);
+            parser.parseAddress(text);
             return true;
         } catch (AddressFormatException e) {
             return false;
