@@ -69,7 +69,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
         app = WalletApplication.instance();
         Coin balance = app.walletAppKit().wallet().getBalance();
         checkState(!balance.isZero());
-        new BitcoinAddressValidator(app.network(), address, sendBtn);
+        new BitcoinAddressValidator(app.walletAppKit().wallet(), address, sendBtn);
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
@@ -84,7 +84,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
         // Address exception cannot happen as we validated it beforehand.
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
-            Address destination = Address.fromString(NetworkParameters.of(app.network()), address.getText());
+            Address destination = app.walletAppKit().wallet().parseAddress(address.getText());
             SendRequest req;
             if (amount.equals(app.walletAppKit().wallet().getBalance()))
                 req = SendRequest.emptyWallet(destination);

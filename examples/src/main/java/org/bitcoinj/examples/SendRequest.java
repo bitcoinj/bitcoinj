@@ -48,7 +48,7 @@ public class SendRequest {
 
         // To which address you want to send the coins?
         // The Address class represents a Bitcoin address.
-        Address to = Address.fromString(kit.params(), "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2");
+        Address to = kit.wallet().parseAddress("bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2");
         System.out.println("Send money to: " + to.toString());
 
         // There are different ways to create and publish a SendRequest. This is probably the easiest one.
