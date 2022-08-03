@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.params.AbstractBitcoinNetParams;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.script.ScriptPattern;
@@ -507,6 +507,6 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     }
 
     private Coin getBlockInflation(int height) {
-        return ((AbstractBitcoinNetParams) params).getBlockInflation(height);
+        return ((BitcoinNetworkParams) params).getBlockInflation(height);
     }
 }

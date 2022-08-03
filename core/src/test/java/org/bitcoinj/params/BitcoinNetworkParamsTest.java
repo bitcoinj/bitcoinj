@@ -25,8 +25,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class AbstractBitcoinNetParamsTest {
-    private final AbstractBitcoinNetParams BITCOIN_PARAMS = new AbstractBitcoinNetParams(BitcoinNetwork.TESTNET) {
+public class BitcoinNetworkParamsTest {
+    private final BitcoinNetworkParams BITCOIN_PARAMS = new BitcoinNetworkParams(BitcoinNetwork.TESTNET) {
         @Override
         public Block getGenesisBlock() {
             return null;

@@ -27,7 +27,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.X509Utils;
-import org.bitcoinj.params.AbstractBitcoinNetParams;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.SigNetParams;
@@ -444,7 +444,7 @@ public class PaymentProtocol {
      * @return network parameters for the given string paymentProtocolID or NULL if not recognized
      */
     @Nullable
-    public static AbstractBitcoinNetParams paramsFromPmtProtocolID(String pmtProtocolId) {
+    public static BitcoinNetworkParams paramsFromPmtProtocolID(String pmtProtocolId) {
         if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
             return MainNetParams.get();
         } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
