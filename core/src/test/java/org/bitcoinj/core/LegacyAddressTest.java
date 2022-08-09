@@ -132,14 +132,17 @@ public class LegacyAddressTest {
         AltNetwork altNetwork = new AltNetwork();
         // Add new network params
         Networks.register(altNetwork);
-        // Check if can parse address
-        NetworkParameters params = LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-        assertEquals(altNetwork.getId(), params.getId());
-        // Check if main network works as before
-        params = LegacyAddress.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-        assertEquals(MAINNET.getId(), params.getId());
-        // Unregister network
-        Networks.unregister(altNetwork);
+        try {
+            // Check if can parse address
+            NetworkParameters params = LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            assertEquals(altNetwork.getId(), params.getId());
+            // Check if main network works as before
+            params = LegacyAddress.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            assertEquals(MAINNET.getId(), params.getId());
+        } finally {
+            // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
+            Networks.unregister(altNetwork);
+        }
         try {
             LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             fail();
