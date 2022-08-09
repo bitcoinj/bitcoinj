@@ -87,7 +87,7 @@ public abstract class NetworkParameters {
      * by looking at the port number.
      */
     protected String id;
-    protected final BitcoinNetwork network;
+    protected final Network network;
 
     /**
      * The depth of blocks required for a coinbase transaction to be spendable.
@@ -100,7 +100,7 @@ public abstract class NetworkParameters {
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<>();
     protected volatile transient MessageSerializer defaultSerializer = null;
 
-    protected NetworkParameters(BitcoinNetwork network) {
+    protected NetworkParameters(Network network) {
         this.network = network;
     }
 
@@ -141,7 +141,7 @@ public abstract class NetworkParameters {
      * @return Network enum for this network
      */
     public BitcoinNetwork network() {
-        return network;
+        return (BitcoinNetwork) network;
     }
 
     /**
