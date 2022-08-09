@@ -18,6 +18,7 @@ package org.bitcoinj.uri;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.SegwitAddress;
@@ -40,15 +41,15 @@ import static org.junit.Assert.fail;
 public class BitcoinURITest {
     private BitcoinURI testObject = null;
 
-    private static final NetworkParameters MAINNET = MainNetParams.get();
-    private static final NetworkParameters TESTNET = TestNet3Params.get();
+    private static final BitcoinNetwork MAINNET = BitcoinNetwork.MAINNET;
+    private static final BitcoinNetwork TESTNET = BitcoinNetwork.TESTNET;
     private static final String MAINNET_GOOD_ADDRESS = "1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH";
     private static final String MAINNET_GOOD_SEGWIT_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
     private static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
 
     @Test
     public void testConvertToBitcoinURI() {
-        Address goodAddress = LegacyAddress.fromBase58(MAINNET, MAINNET_GOOD_ADDRESS);
+        Address goodAddress = new DefaultAddressParser().parseAddress(MAINNET_GOOD_ADDRESS, MAINNET);
         
         // simple example
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage", BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34"), "Hello", "AMessage"));
@@ -98,8 +99,9 @@ public class BitcoinURITest {
 
     @Test
     public void testConvertToBitcoinURI_segwit() {
+        Address segwitAddress = new DefaultAddressParser().parseAddress(MAINNET_GOOD_SEGWIT_ADDRESS, MAINNET);
         assertEquals("bitcoin:" + MAINNET_GOOD_SEGWIT_ADDRESS + "?message=segwit%20rules", BitcoinURI.convertToBitcoinURI(
-                SegwitAddress.fromBech32(MAINNET, MAINNET_GOOD_SEGWIT_ADDRESS), null, null, "segwit rules"));
+                segwitAddress, null, null, "segwit rules"));
     }
 
     @Test
