@@ -29,6 +29,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
+import org.bitcoinj.testing.MockAltNetParams;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -121,27 +122,19 @@ public class LegacyAddressTest {
     @Test
     public void getAltNetwork() {
         // An alternative network
-        class AltNetwork extends MainNetParams {
-            AltNetwork() {
-                super();
-                id = "alt.network";
-                addressHeader = 48;
-                p2shHeader = 5;
-            }
-        }
-        AltNetwork altNetwork = new AltNetwork();
+        NetworkParameters altNetParams = new MockAltNetParams();
         // Add new network params
-        Networks.register(altNetwork);
+        Networks.register(altNetParams);
         try {
             // Check if can parse address
             NetworkParameters params = LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-            assertEquals(altNetwork.getId(), params.getId());
+            assertEquals(altNetParams.getId(), params.getId());
             // Check if main network works as before
             params = LegacyAddress.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
             assertEquals(MAINNET.getId(), params.getId());
         } finally {
             // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
-            Networks.unregister(altNetwork);
+            Networks.unregister(altNetParams);
         }
         try {
             LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
