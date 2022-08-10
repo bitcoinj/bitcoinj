@@ -16,12 +16,14 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.NetworkParameters;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,6 +39,17 @@ public class Networks {
 
     public static Set<NetworkParameters> get() {
         return networks;
+    }
+
+    /**
+     * Find a {@link NetworkParameters} for a {@link Network}
+     * @param network The network to find (convert)
+     * @return Matching params if one was registered
+     */
+    public static Optional<NetworkParameters> find(Network network) {
+        return networks.stream()
+                .filter(p -> p.getId().equals(network.id()))
+                .findFirst();
     }
 
     /**

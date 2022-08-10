@@ -640,7 +640,7 @@ public class WalletTool implements Callable<Integer> {
             return;
         }
         try {
-            Address address = LegacyAddress.fromBase58(params, addrStr);
+            Address address = LegacyAddress.fromBase58(params.network(), addrStr);
             // If no creation time is specified, assume genesis (zero).
             wallet.addWatchedAddress(address, getCreationTimeSeconds());
         } catch (AddressFormatException e) {

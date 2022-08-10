@@ -420,12 +420,11 @@ public class ECKey implements EncryptableItem {
     }
 
     public Address toAddress(ScriptType scriptType, Network network) {
-        NetworkParameters params = NetworkParameters.of(network);
         if (scriptType == ScriptType.P2PKH) {
-            return LegacyAddress.fromPubKeyHash(params, this.getPubKeyHash());
+            return LegacyAddress.fromPubKeyHash(network, this.getPubKeyHash());
         } else if (scriptType == ScriptType.P2WPKH) {
             checkArgument(this.isCompressed(), "only compressed keys allowed");
-            return SegwitAddress.fromHash(params, this.getPubKeyHash());
+            return SegwitAddress.fromHash(network, this.getPubKeyHash());
         } else {
             throw new IllegalArgumentException(scriptType.toString());
         }

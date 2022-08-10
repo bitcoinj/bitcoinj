@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Bech32;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.params.Networks;
@@ -41,8 +42,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki">BIP350</a> and
  * <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.</p>
  *
- * <p>However, you don't need to care about the internals. Use {@link #fromBech32(NetworkParameters, String)},
- * {@link #fromHash(NetworkParameters, byte[])} or {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}
+ * <p>However, you don't need to care about the internals. Use {@link #fromBech32(Network, String)},
+ * {@link #fromHash(org.bitcoinj.base.Network, byte[])} or {@link ECKey#toAddress(ScriptType, Network)}
  * to construct a native segwit address.</p>
  */
 public class SegwitAddress extends Address {
@@ -53,19 +54,19 @@ public class SegwitAddress extends Address {
     public static final int WITNESS_PROGRAM_MAX_LENGTH = 40;
 
     /**
-     * Private constructor. Use {@link #fromBech32(NetworkParameters, String)},
-     * {@link #fromHash(NetworkParameters, byte[])} or {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}.
+     * Private constructor. Use {@link #fromBech32(Network, String)},
+     * {@link #fromHash(Network, byte[])} or {@link ECKey#toAddress(ScriptType, Network)}.
      * 
-     * @param params
+     * @param network
      *            network this address is valid for
      * @param witnessVersion
      *            version number between 0 and 16
      * @param witnessProgram
      *            hash of pubkey, pubkey or script (depending on version)
      */
-    private SegwitAddress(NetworkParameters params, int witnessVersion, byte[] witnessProgram)
+    private SegwitAddress(Network network, int witnessVersion, byte[] witnessProgram)
             throws AddressFormatException {
-        this(params, encode(witnessVersion, witnessProgram));
+        this(network, encode(witnessVersion, witnessProgram));
     }
 
     /**
@@ -80,18 +81,18 @@ public class SegwitAddress extends Address {
     }
 
     /**
-     * Private constructor. Use {@link #fromBech32(NetworkParameters, String)},
-     * {@link #fromHash(NetworkParameters, byte[])} or {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}.
+     * Private constructor. Use {@link #fromBech32(Network, String)},
+     * {@link #fromHash(Network, byte[])} or {@link ECKey#toAddress(ScriptType, Network)}.
      * 
-     * @param params
+     * @param network
      *            network this address is valid for
      * @param data
      *            in segwit address format, before bit re-arranging and bech32 encoding
      * @throws AddressFormatException
      *             if any of the sanity checks fail
      */
-    private SegwitAddress(NetworkParameters params, byte[] data) throws AddressFormatException {
-        super(params, data);
+    private SegwitAddress(Network network, byte[] data) throws AddressFormatException {
+        super(network, data);
         if (data.length < 1)
             throw new AddressFormatException.InvalidDataLength("Zero data found");
         final int witnessVersion = getWitnessVersion();
@@ -171,25 +172,41 @@ public class SegwitAddress extends Address {
      * @return constructed address
      * @throws AddressFormatException
      *             if something about the given bech32 address isn't right
+     * @deprecated Use {@link #fromBech32(Network, String)}
      */
+    @Deprecated
     public static SegwitAddress fromBech32(@Nullable NetworkParameters params, String bech32)
             throws AddressFormatException {
+        return fromBech32(params != null ? params.network : null, bech32);
+    }
+
+    /**
+     * Construct a {@link SegwitAddress} from its textual form.
+     *
+     * @param network expected network this address is valid for, or null if the network should be derived from the bech32
+     * @param bech32 bech32-encoded textual form of the address
+     * @return constructed address
+     * @throws AddressFormatException if something about the given bech32 address isn't right
+     */
+    public static SegwitAddress fromBech32(@Nullable Network network, String bech32)
+            throws AddressFormatException {
+        NetworkParameters params = (network != null) ? NetworkParameters.of(network) : null;
         Bech32.Bech32Data bechData = Bech32.decode(bech32);
-        if (params == null) {
+        if (network == null) {
             for (NetworkParameters p : Networks.get()) {
                 if (bechData.hrp.equals(p.getSegwitAddressHrp()))
-                    return fromBechData(p, bechData);
+                    return fromBechData(p.network(), bechData);
             }
             throw new AddressFormatException.InvalidPrefix("No network found for " + bech32);
         } else {
             if (bechData.hrp.equals(params.getSegwitAddressHrp()))
-                return fromBechData(params, bechData);
+                return fromBechData(network, bechData);
             throw new AddressFormatException.WrongNetwork(bechData.hrp);
         }
     }
 
-    private static SegwitAddress fromBechData(NetworkParameters params, Bech32.Bech32Data bechData) {
-        final SegwitAddress address = new SegwitAddress(params, bechData.data);
+    private static SegwitAddress fromBechData(Network network, Bech32.Bech32Data bechData) {
+        final SegwitAddress address = new SegwitAddress(network, bechData.data);
         final int witnessVersion = address.getWitnessVersion();
         if ((witnessVersion == 0 && bechData.encoding != Bech32.Encoding.BECH32) ||
                 (witnessVersion != 0 && bechData.encoding != Bech32.Encoding.BECH32M))
@@ -206,9 +223,23 @@ public class SegwitAddress extends Address {
      * @param hash
      *            20-byte pubkey hash or 32-byte script hash
      * @return constructed address
+     * @deprecated Use {@link #fromHash(Network, byte[])}
      */
+    @Deprecated
     public static SegwitAddress fromHash(NetworkParameters params, byte[] hash) {
-        return new SegwitAddress(params, 0, hash);
+        return fromHash(params.network(), hash);
+    }
+
+    /**
+     * Construct a {@link SegwitAddress} that represents the given hash, which is either a pubkey hash or a script hash.
+     * The resulting address will be either a P2WPKH or a P2WSH type of address.
+     *
+     * @param network network this address is valid for
+     * @param hash 20-byte pubkey hash or 32-byte script hash
+     * @return constructed address
+     */
+    public static SegwitAddress fromHash(Network network, byte[] hash) {
+        return new SegwitAddress(network, 0, hash);
     }
 
     /**
@@ -223,9 +254,25 @@ public class SegwitAddress extends Address {
      * @param witnessProgram
      *            version dependent witness program
      * @return constructed address
+     * @deprecated Use {@link #fromProgram(Network, int, byte[])}
      */
+    @Deprecated
     public static SegwitAddress fromProgram(NetworkParameters params, int witnessVersion, byte[] witnessProgram) {
-        return new SegwitAddress(params, witnessVersion, witnessProgram);
+        return fromProgram(params.network(), witnessVersion, witnessProgram);
+    }
+
+    /**
+     * Construct a {@link SegwitAddress} that represents the given program, which is either a pubkey, a pubkey hash
+     * or a script hash – depending on the script version. The resulting address will be either a P2WPKH, a P2WSH or
+     * a P2TR type of address.
+     *
+     * @param network network this address is valid for
+     * @param witnessVersion version number between 0 and 16
+     * @param witnessProgram version dependent witness program
+     * @return constructed address
+     */
+    public static SegwitAddress fromProgram(Network network, int witnessVersion, byte[] witnessProgram) {
+        return new SegwitAddress(network, witnessVersion, witnessProgram);
     }
 
     /**
@@ -250,6 +297,7 @@ public class SegwitAddress extends Address {
      * @return textual form encoded in bech32
      */
     public String toBech32() {
+        NetworkParameters params = NetworkParameters.of(network);
         if (getWitnessVersion() == 0)
             return Bech32.encode(Bech32.Encoding.BECH32, params.getSegwitAddressHrp(), bytes);
         else

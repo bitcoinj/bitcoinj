@@ -103,7 +103,7 @@ public class ScriptTest {
         byte[] pubkeyBytes = HEX.decode(pubkeyProg);
         Script pubkey = new Script(pubkeyBytes);
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
-        Address toAddr = LegacyAddress.fromPubKeyHash(TESTNET, ScriptPattern.extractHashFromP2PKH(pubkey));
+        Address toAddr = LegacyAddress.fromPubKeyHash(BitcoinNetwork.TESTNET, ScriptPattern.extractHashFromP2PKH(pubkey));
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
     }
 
@@ -135,7 +135,7 @@ public class ScriptTest {
 
     @Test
     public void testP2SHOutputScript() {
-        Address p2shAddress = LegacyAddress.fromBase58(MAINNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        Address p2shAddress = LegacyAddress.fromBase58(BitcoinNetwork.MAINNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
         assertTrue(ScriptPattern.isP2SH(ScriptBuilder.createOutputScript(p2shAddress)));
     }
 
@@ -157,7 +157,7 @@ public class ScriptTest {
         Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(bytes);
         TransactionOutput output = transaction.getOutput(1);
         Transaction spendTx = new Transaction(TESTNET);
-        Address address = LegacyAddress.fromBase58(TESTNET, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
+        Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
         Script outputScript = ScriptBuilder.createOutputScript(address);
         spendTx.addOutput(output.getValue(), outputScript);
         spendTx.addInput(output);
@@ -474,7 +474,7 @@ public class ScriptTest {
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
         // pay to script hash
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
-        Address scriptAddress = LegacyAddress.fromScriptHash(TESTNET,
+        Address scriptAddress = LegacyAddress.fromScriptHash(BitcoinNetwork.TESTNET,
                 ScriptPattern.extractHashFromP2SH(p2shScript));
         assertEquals(scriptAddress, p2shScript.getToAddress(TESTNET));
         // P2WPKH
@@ -482,10 +482,10 @@ public class ScriptTest {
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
         // P2WSH
         Script p2wshScript = ScriptBuilder.createP2WSHOutputScript(new byte[32]);
-        scriptAddress = SegwitAddress.fromHash(TESTNET, ScriptPattern.extractHashFromP2WH(p2wshScript));
+        scriptAddress = SegwitAddress.fromHash(BitcoinNetwork.TESTNET, ScriptPattern.extractHashFromP2WH(p2wshScript));
         assertEquals(scriptAddress, p2wshScript.getToAddress(TESTNET));
         // P2TR
-        toAddress = SegwitAddress.fromProgram(TESTNET, 1, new byte[32]);
+        toAddress = SegwitAddress.fromProgram(BitcoinNetwork.TESTNET, 1, new byte[32]);
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
     }
 

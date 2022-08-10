@@ -22,6 +22,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.BitcoinNetworkParams;
+import org.bitcoinj.params.Networks;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
@@ -176,17 +177,17 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * Return network parameters for a {@link BitcoinNetwork} enum
+     * Return network parameters for a {@link Network}.
+     * <p>
+     * Alternative networks will be found if they have been registered with {@link Networks} registry.
      * @param network the network
      * @return the network parameters for the given string ID
      * @throws IllegalArgumentException if unknown network
      */
     public static NetworkParameters of(Network network) {
-        if (network instanceof BitcoinNetwork) {
-            return BitcoinNetworkParams.of((BitcoinNetwork) network);
-        } else {
-                throw new IllegalArgumentException("Unknown network");
-        }
+        return (network instanceof BitcoinNetwork)
+                ? BitcoinNetworkParams.of((BitcoinNetwork) network)
+                : Networks.find(network).orElseThrow(() -> new IllegalArgumentException("Unknown network"));
     }
 
     /**

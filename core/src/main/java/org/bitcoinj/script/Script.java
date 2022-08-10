@@ -19,6 +19,8 @@
 
 package org.bitcoinj.script;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
@@ -393,16 +395,17 @@ public class Script {
      *            showing addresses rather than pubkeys.
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
+        Network network = params.network();
         if (ScriptPattern.isP2PKH(this))
-            return LegacyAddress.fromPubKeyHash(params, ScriptPattern.extractHashFromP2PKH(this));
+            return LegacyAddress.fromPubKeyHash(network, ScriptPattern.extractHashFromP2PKH(this));
         else if (ScriptPattern.isP2SH(this))
-            return LegacyAddress.fromScriptHash(params, ScriptPattern.extractHashFromP2SH(this));
+            return LegacyAddress.fromScriptHash(network, ScriptPattern.extractHashFromP2SH(this));
         else if (forcePayToPubKey && ScriptPattern.isP2PK(this))
-            return ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(this)).toAddress(ScriptType.P2PKH, params.network());
+            return ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(this)).toAddress(ScriptType.P2PKH, network);
         else if (ScriptPattern.isP2WH(this))
-            return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromP2WH(this));
+            return SegwitAddress.fromHash(network, ScriptPattern.extractHashFromP2WH(this));
         else if (ScriptPattern.isP2TR(this))
-            return SegwitAddress.fromProgram(params, 1, ScriptPattern.extractOutputKeyFromP2TR(this));
+            return SegwitAddress.fromProgram(network, 1, ScriptPattern.extractOutputKeyFromP2TR(this));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to an address");
     }

@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public abstract class Address implements Comparable<Address> {
     protected static final AddressParser addressParser = new DefaultAddressParser();
-    protected final NetworkParameters params;
+    protected final Network network;
     protected final byte[] bytes;
 
     /**
@@ -44,9 +44,22 @@ public abstract class Address implements Comparable<Address> {
      *
      * @param params the network this address is valid for
      * @param bytes the binary address data
+     * @deprecated Use {@link Address#Address(Network, byte[])}
      */
+    @Deprecated
     protected Address(NetworkParameters params, byte[] bytes) {
-        this.params = checkNotNull(params);
+        this.network = checkNotNull(params).network();
+        this.bytes = checkNotNull(bytes);
+    }
+
+    /**
+     * Construct an address from its binary form.
+     *
+     * @param network the network this address is valid for
+     * @param bytes the binary address data
+     */
+    protected Address(Network network, byte[] bytes) {
+        this.network = checkNotNull(network);
         this.bytes = checkNotNull(bytes);
     }
 
@@ -95,12 +108,12 @@ public abstract class Address implements Comparable<Address> {
      */
     @Deprecated
     public final NetworkParameters getParameters() {
-        return params;
+        return NetworkParameters.of(network);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, Arrays.hashCode(bytes));
+        return Objects.hash(network, Arrays.hashCode(bytes));
     }
 
     @Override
@@ -108,7 +121,7 @@ public abstract class Address implements Comparable<Address> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Address other = (Address) o;
-        return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
+        return this.network == other.network && Arrays.equals(this.bytes, other.bytes);
     }
 
     /**
@@ -128,7 +141,7 @@ public abstract class Address implements Comparable<Address> {
     /**
      * Comparison field order for addresses is:
      * <ol>
-     *     <li>{@link NetworkParameters#getId()}</li>
+     *     <li>{@link Network#id()}</li>
      *     <li>Legacy vs. Segwit</li>
      *     <li>(Legacy only) Version byte</li>
      *     <li>remaining {@code bytes}</li>
@@ -148,7 +161,7 @@ public abstract class Address implements Comparable<Address> {
      * @return the Network.
      */
     public Network network() {
-        return params.network();
+        return network;
     }
 
     /**
@@ -156,7 +169,7 @@ public abstract class Address implements Comparable<Address> {
      * Used by {@link LegacyAddress#compareTo(Address)} and {@link SegwitAddress#compareTo(Address)}.
      */
     protected static final Comparator<Address> PARTIAL_ADDRESS_COMPARATOR = Comparator
-        .comparing((Address a) -> a.params.getId()) // First compare netParams
+        .comparing((Address a) -> a.network.id())   // First compare network
         .thenComparing(Address::compareTypes);      // Then compare address type (subclass)
 
     private static int compareTypes(Address a, Address b) {
