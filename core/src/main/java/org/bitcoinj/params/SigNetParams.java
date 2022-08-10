@@ -39,7 +39,6 @@ public class SigNetParams extends BitcoinNetworkParams {
 
     public SigNetParams() {
         super(BitcoinNetwork.SIGNET);
-        id = BitcoinNetwork.ID_SIGNET;
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);

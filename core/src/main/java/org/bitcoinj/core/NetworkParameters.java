@@ -83,10 +83,9 @@ public abstract class NetworkParameters {
     protected int majorityWindow;
 
     /**
-     * See getId(). This may be null for old deserialized wallets. In that case we derive it heuristically
-     * by looking at the port number.
+     * See getId()
      */
-    protected String id;
+    protected final String id;
     protected final Network network;
 
     /**
@@ -102,6 +101,7 @@ public abstract class NetworkParameters {
 
     protected NetworkParameters(Network network) {
         this.network = network;
+        this.id = network.id();
     }
 
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
