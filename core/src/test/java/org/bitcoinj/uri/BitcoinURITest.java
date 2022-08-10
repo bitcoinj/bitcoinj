@@ -21,6 +21,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.params.Networks;
 import org.bitcoinj.testing.MockAltNetworkParams;
 import org.junit.Test;
 
@@ -85,8 +86,13 @@ public class BitcoinURITest {
         NetworkParameters alternativeParameters = new MockAltNetworkParams();
         String mockNetGoodAddress = MockAltNetworkParams.MOCKNET_GOOD_ADDRESS;
 
-        assertEquals("mockcoin:" + mockNetGoodAddress + "?amount=12.34&label=Hello&message=AMessage",
-             BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(alternativeParameters, mockNetGoodAddress), parseCoin("12.34"), "Hello", "AMessage"));
+        Networks.register(alternativeParameters);
+        try {
+            assertEquals("mockcoin:" + mockNetGoodAddress + "?amount=12.34&label=Hello&message=AMessage",
+                    BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(alternativeParameters.network(), mockNetGoodAddress), parseCoin("12.34"), "Hello", "AMessage"));
+        } finally {
+            Networks.unregister(alternativeParameters);
+        }
     }
 
     @Test

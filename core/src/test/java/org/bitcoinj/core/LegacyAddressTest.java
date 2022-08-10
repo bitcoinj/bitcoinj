@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
@@ -126,17 +127,17 @@ public class LegacyAddressTest {
         Networks.register(altNetParams);
         try {
             // Check if can parse address
-            NetworkParameters params = LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-            assertEquals(altNetParams.getId(), params.getId());
+            Address altAddress = new DefaultAddressParser().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            assertEquals(altNetParams.getId(), altAddress.network().id());
             // Check if main network works as before
-            params = LegacyAddress.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-            assertEquals(MAINNET.getId(), params.getId());
+            Address mainAddress = new DefaultAddressParser().parseAddressAnyNetwork("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            assertEquals(MAINNET.getId(), mainAddress.network().id());
         } finally {
             // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
             Networks.unregister(altNetParams);
         }
         try {
-            LegacyAddress.getParametersFromAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            new DefaultAddressParser().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             fail();
         } catch (AddressFormatException e) { }
     }
@@ -188,7 +189,7 @@ public class LegacyAddressTest {
     @Test
     public void roundtripBase58() {
         String base58 = "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL";
-        assertEquals(base58, LegacyAddress.fromBase58(null, base58).toBase58());
+        assertEquals(base58, LegacyAddress.fromBase58((Network) null, base58).toBase58());
     }
 
     @Test

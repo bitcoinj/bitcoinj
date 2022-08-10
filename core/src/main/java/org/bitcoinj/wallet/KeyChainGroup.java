@@ -425,7 +425,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose, ScriptType outputScriptType, long keyRotationTimeSecs) {
         DeterministicKeyChain chain = getActiveKeyChain(outputScriptType, keyRotationTimeSecs);
-        return Address.fromKey(params, chain.getKey(purpose), outputScriptType);
+        return chain.getKey(purpose).toAddress(outputScriptType, params.network());
     }
 
     /**
@@ -437,13 +437,13 @@ public class KeyChainGroup implements KeyBag {
         if (chain.isMarried()) {
             Script outputScript = chain.freshOutputScript(purpose);
             checkState(ScriptPattern.isP2SH(outputScript)); // Only handle P2SH for now
-            Address freshAddress = LegacyAddress.fromScriptHash(params,
+            Address freshAddress = LegacyAddress.fromScriptHash(params.network(),
                     ScriptPattern.extractHashFromP2SH(outputScript));
             maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
-            return Address.fromKey(params, freshKey(purpose), outputScriptType);
+            return freshKey(purpose).toAddress(outputScriptType, params.network());
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
         }
