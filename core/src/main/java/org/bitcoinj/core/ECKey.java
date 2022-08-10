@@ -25,6 +25,7 @@ import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
@@ -418,7 +419,7 @@ public class ECKey implements EncryptableItem {
         return pub.isCompressed();
     }
 
-    public Address toAddress(ScriptType scriptType, BitcoinNetwork network) {
+    public Address toAddress(ScriptType scriptType, Network network) {
         NetworkParameters params = NetworkParameters.of(network);
         if (scriptType == ScriptType.P2PKH) {
             return LegacyAddress.fromPubKeyHash(params, this.getPubKeyHash());

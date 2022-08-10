@@ -237,7 +237,7 @@ public class SegwitAddress extends Address {
      * @param key
      *            only the public part is used
      * @return constructed address
-     * @deprecated Use {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.BitcoinNetwork)}
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}
      */
     @Deprecated
     public static SegwitAddress fromKey(NetworkParameters params, ECKey key) {

@@ -78,7 +78,7 @@ public class ForwardingService implements AutoCloseable {
         } else {
             // Infer network from address
             address = addressParser.parseAddressAnyNetwork(args[0]);
-            network = address.network();
+            network = (BitcoinNetwork) address.network();
         }
 
         forward(new File("."), network, address);

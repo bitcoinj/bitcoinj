@@ -140,8 +140,8 @@ public abstract class NetworkParameters {
     /**
      * @return Network enum for this network
      */
-    public BitcoinNetwork network() {
-        return (BitcoinNetwork) network;
+    public Network network() {
+        return network;
     }
 
     /**
@@ -204,7 +204,7 @@ public abstract class NetworkParameters {
     /**
      * Get a NetworkParameters from an Address.
      * Addresses should not be used for storing NetworkParameters. In the future Address will
-     * be an {@code interface} that only makes a {@link BitcoinNetwork} available.
+     * be an {@code interface} that only makes a {@link Network} available.
      * @param address An address
      * @return network parameters
      * @deprecated You should be using {@link Address#network()} instead

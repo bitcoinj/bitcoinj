@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 
@@ -30,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Base class for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
  * <p>
- * Use an implementation of {@link AddressParser#parseAddress(String, BitcoinNetwork)} to conveniently construct any kind of address from its textual
+ * Use an implementation of {@link AddressParser#parseAddress(String, Network)} to conveniently construct any kind of address from its textual
  * form.
  */
 public abstract class Address implements Comparable<Address> {
@@ -61,7 +62,7 @@ public abstract class Address implements Comparable<Address> {
      *             if the given string doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
      *             if the given string is valid but not for the expected network (eg testnet vs mainnet)
-     * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String, BitcoinNetwork)}
+     * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String, Network)}
      */
     @Deprecated
     public static Address fromString(@Nullable NetworkParameters params, String str)
@@ -81,7 +82,7 @@ public abstract class Address implements Comparable<Address> {
      * @param outputScriptType
      *            script type the address should use
      * @return constructed address
-     * @deprecated Use {@link ECKey#toAddress(ScriptType, BitcoinNetwork)}
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
      */
     @Deprecated
     public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
@@ -146,7 +147,7 @@ public abstract class Address implements Comparable<Address> {
      * when you need to know what network an address is for.
      * @return the Network.
      */
-    public BitcoinNetwork network() {
+    public Network network() {
         return params.network();
     }
 
