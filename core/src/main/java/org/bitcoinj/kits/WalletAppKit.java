@@ -116,7 +116,7 @@ public class WalletAppKit extends AbstractIdleService {
      */
     @Deprecated
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(params.network(), ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
+        this((BitcoinNetwork) params.network(), ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
     }
 
     /**
@@ -126,7 +126,7 @@ public class WalletAppKit extends AbstractIdleService {
     @Deprecated
     public WalletAppKit(NetworkParameters params, ScriptType preferredOutputScriptType,
             @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
-        this(params.network(), preferredOutputScriptType, structure, directory, filePrefix);
+        this((BitcoinNetwork) params.network(), preferredOutputScriptType, structure, directory, filePrefix);
     }
 
     /**

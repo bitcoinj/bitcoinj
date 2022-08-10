@@ -20,7 +20,7 @@ package org.bitcoinj.core;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Base58;
-import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.base.ScriptType;
@@ -53,7 +53,7 @@ public class LegacyAddress extends Address {
     /**
      * Private constructor. Use {@link #fromBase58(NetworkParameters, String)},
      * {@link #fromPubKeyHash(NetworkParameters, byte[])}, {@link #fromScriptHash(NetworkParameters, byte[])} or
-     * {@link ECKey#toAddress(ScriptType, BitcoinNetwork)}.
+     * {@link ECKey#toAddress(ScriptType, Network)}.
      * 
      * @param params
      *            network this address is valid for
@@ -93,7 +93,7 @@ public class LegacyAddress extends Address {
      * @param key
      *            only the public part is used
      * @return constructed address
-     * @deprecated Use {@link ECKey#toAddress(ScriptType, BitcoinNetwork)}
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
      */
     @Deprecated
     public static LegacyAddress fromKey(NetworkParameters params, ECKey key) {

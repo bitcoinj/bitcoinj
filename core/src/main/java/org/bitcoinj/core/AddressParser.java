@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 
 
@@ -40,7 +41,7 @@ public interface AddressParser {
      * @return A validated address object
      * @throws AddressFormatException invalid address string or not valid for specified network
      */
-    Address parseAddress(String addressString, BitcoinNetwork network) throws AddressFormatException;
+    Address parseAddress(String addressString, Network network) throws AddressFormatException;
 
     @FunctionalInterface
     interface Strict {

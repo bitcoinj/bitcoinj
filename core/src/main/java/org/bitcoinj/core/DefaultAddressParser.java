@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 
 /**
@@ -29,7 +30,7 @@ public class DefaultAddressParser implements AddressParser {
     }
 
     @Override
-    public Address parseAddress(String addressString, BitcoinNetwork network) throws AddressFormatException {
+    public Address parseAddress(String addressString, Network network) throws AddressFormatException {
         NetworkParameters params = (network != null) ? NetworkParameters.of(network) : null;
         try {
             return LegacyAddress.fromBase58(params, addressString);

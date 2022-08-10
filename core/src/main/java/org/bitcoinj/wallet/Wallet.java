@@ -508,7 +508,7 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     public Address parseAddress(String addressString) throws AddressFormatException {
-        return addressParser.parseAddress(addressString, params.network());
+        return addressParser.parseAddress(addressString, (BitcoinNetwork) params.network());
     }
 
     /**
@@ -3728,7 +3728,7 @@ public class Wallet extends BaseTaggableObject
         try {
             checkNotNull(selector);
             List<TransactionOutput> candidates = calculateAllSpendCandidates(true, false);
-            CoinSelection selection = selector.select(params.network().maxMoney(), candidates);
+            CoinSelection selection = selector.select((Coin) params.network().maxMoney(), candidates);
             return selection.totalValue();
         } finally {
             lock.unlock();
@@ -4251,7 +4251,7 @@ public class Wallet extends BaseTaggableObject
                 // of the total value we can currently spend as determined by the selector, and then subtracting the fee.
                 checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
-                bestCoinSelection = selector.select(params.network().maxMoney(), candidates);
+                bestCoinSelection = selector.select((Coin) params.network().maxMoney(), candidates);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.totalValue());
                 log.info("  emptying {}", bestCoinSelection.totalValue().toFriendlyString());

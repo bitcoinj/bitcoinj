@@ -17,6 +17,7 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ChildNumber;
@@ -41,7 +42,7 @@ public interface KeyChainGroupStructure {
      *  Default to MainNet, BIP-32 Keychains use the same path for MainNet and TestNet
      * @param outputScriptType the script/address type
      * @return account path
-     * @deprecated Use {@link #accountPathFor(ScriptType, BitcoinNetwork)} or {@link #accountPathFor(ScriptType, NetworkParameters)}
+     * @deprecated Use {@link #accountPathFor(ScriptType, Network)} or {@link #accountPathFor(ScriptType, NetworkParameters)}
      */
     @Deprecated
     default HDPath accountPathFor(ScriptType outputScriptType) {
@@ -54,7 +55,7 @@ public interface KeyChainGroupStructure {
      * @param network network/coin type
      * @return The HD Path: purpose / coinType / accountIndex
      */
-    HDPath accountPathFor(ScriptType outputScriptType, BitcoinNetwork network);
+    HDPath accountPathFor(ScriptType outputScriptType, Network network);
 
     /**
      * Map desired output script type and network to an account path
@@ -114,8 +115,11 @@ public interface KeyChainGroupStructure {
      * Return coin type path component for a network id
      * @param network network id string, eg. {@link BitcoinNetwork#ID_MAINNET}
      */
-    static ChildNumber coinType(BitcoinNetwork network) {
-        switch (network) {
+    static ChildNumber coinType(Network network) {
+        if (!(network instanceof BitcoinNetwork)) {
+            throw new IllegalArgumentException("coinType: Unknown network");
+        }
+        switch ((BitcoinNetwork) network) {
             case MAINNET:
                 return ChildNumber.COINTYPE_BTC;
             case TESTNET:
