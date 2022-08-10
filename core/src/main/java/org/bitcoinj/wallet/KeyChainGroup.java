@@ -373,7 +373,7 @@ public class KeyChainGroup implements KeyBag {
             }
             return current;
         } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
-            return Address.fromKey(params, currentKey(purpose), outputScriptType);
+            return currentKey(purpose).toAddress(outputScriptType, params.network());
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
         }
@@ -425,7 +425,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose, ScriptType outputScriptType, long keyRotationTimeSecs) {
         DeterministicKeyChain chain = getActiveKeyChain(outputScriptType, keyRotationTimeSecs);
-        return Address.fromKey(params, chain.getKey(purpose), outputScriptType);
+        return chain.getKey(purpose).toAddress(outputScriptType, params.network());
     }
 
     /**
@@ -443,7 +443,7 @@ public class KeyChainGroup implements KeyBag {
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
-            return Address.fromKey(params, freshKey(purpose), outputScriptType);
+            return freshKey(purpose).toAddress(outputScriptType, params.network());
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
         }

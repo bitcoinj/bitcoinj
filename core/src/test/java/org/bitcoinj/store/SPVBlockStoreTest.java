@@ -18,11 +18,12 @@
 package org.bitcoinj.store;
 
 import com.google.common.base.Stopwatch;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -64,7 +65,7 @@ public class SPVBlockStoreTest {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
 
-        Address to = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
         assertEquals(TESTNET.getGenesisBlock(), genesis.getHeader());
@@ -109,7 +110,7 @@ public class SPVBlockStoreTest {
     @Test
     public void twoStores_sequentially_grow() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Address to = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
         final StoredBlock block0 = store.getChainHead();
         final StoredBlock block1 = block0.build(block0.getHeader().createNextBlock(to).cloneAsHeader());
@@ -164,7 +165,7 @@ public class SPVBlockStoreTest {
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
 
         // Build a new block.
-        Address to = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         StoredBlock genesis = store.getChainHead();
         StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
         store.put(b1);

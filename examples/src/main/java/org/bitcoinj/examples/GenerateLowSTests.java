@@ -27,7 +27,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -87,11 +86,11 @@ public class GenerateLowSTests {
 
         final Transaction outputTransaction = new Transaction(params);
         final Transaction inputTransaction = new Transaction(params);
-        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, LegacyAddress.fromKey(params, key));
+        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, key.toAddress(ScriptType.P2PKH, params.network()));
 
         inputTransaction.addOutput(output);
         outputTransaction.addInput(output);
-        outputTransaction.addOutput(Coin.ZERO, LegacyAddress.fromKey(params, new ECKey(secureRandom)));
+        outputTransaction.addOutput(Coin.ZERO, new ECKey(secureRandom).toAddress(ScriptType.P2PKH, params.network()));
 
         addOutputs(outputTransaction, bag);
 

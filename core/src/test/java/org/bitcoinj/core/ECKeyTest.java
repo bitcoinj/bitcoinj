@@ -18,6 +18,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.ECKey.ECDSASignature;
@@ -185,7 +187,7 @@ public class ECKeyTest {
         String privkey = "92shANodC6Y4evT5kFzjNFQAdjqTtHAnDTLzqBBq4BbKUPyx6CD";
         ECKey key = DumpedPrivateKey.fromBase58(TESTNET, privkey).getKey();
         assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toString());
-        assertEquals(addr, LegacyAddress.fromKey(TESTNET, key).toString());
+        assertEquals(addr, key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
     }
 
     @Test
@@ -213,7 +215,7 @@ public class ECKeyTest {
         ECKey key = new ECKey();
         String message = "聡中本";
         String signatureBase64 = key.signMessage(message);
-        log.info("Message signed with " + LegacyAddress.fromKey(MAINNET, key) + ": " + signatureBase64);
+        log.info("Message signed with " + key.toAddress(ScriptType.P2PKH, BitcoinNetwork.MAINNET) + ": " + signatureBase64);
         // Should verify correctly.
         key.verifyMessage(message, signatureBase64);
         try {
@@ -231,7 +233,7 @@ public class ECKeyTest {
         String sigBase64 = "HxNZdo6ggZ41hd3mM3gfJRqOQPZYcO8z8qdX2BwmpbF11CaOQV+QiZGGQxaYOncKoNW61oRuSMMF8udfK54XqI8=";
         Address expectedAddress = LegacyAddress.fromBase58(MAINNET, "14YPSNPi6NSXnUxtPAsyJSuw3pv7AU3Cag");
         ECKey key = ECKey.signedMessageToKey(message, sigBase64);
-        Address gotAddress = LegacyAddress.fromKey(MAINNET, key);
+        Address gotAddress = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.MAINNET);
         assertEquals(expectedAddress, gotAddress);
     }
 

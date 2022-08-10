@@ -17,11 +17,11 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.primitives.Bytes;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PrefixedChecksummedBytes;
 import org.bitcoinj.base.Sha256Hash;
@@ -123,7 +123,7 @@ public class BIP38PrivateKey extends PrefixedChecksummedBytes {
     public ECKey decrypt(String passphrase) throws BadPassphraseException {
         String normalizedPassphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFC);
         ECKey key = ecMultiply ? decryptEC(normalizedPassphrase) : decryptNoEC(normalizedPassphrase);
-        Sha256Hash hash = Sha256Hash.twiceOf(LegacyAddress.fromKey(params, key).toString().getBytes(StandardCharsets.US_ASCII));
+        Sha256Hash hash = Sha256Hash.twiceOf(key.toAddress(ScriptType.P2PKH, params.network()).toString().getBytes(StandardCharsets.US_ASCII));
         byte[] actualAddressHash = Arrays.copyOfRange(hash.getBytes(), 0, 4);
         if (!Arrays.equals(actualAddressHash, addressHash))
             throw new BadPassphraseException();

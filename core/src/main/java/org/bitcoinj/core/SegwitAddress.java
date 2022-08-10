@@ -42,8 +42,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.</p>
  *
  * <p>However, you don't need to care about the internals. Use {@link #fromBech32(NetworkParameters, String)},
- * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)} to construct a native
- * segwit address.</p>
+ * {@link #fromHash(NetworkParameters, byte[])} or {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}
+ * to construct a native segwit address.</p>
  */
 public class SegwitAddress extends Address {
     public static final int WITNESS_PROGRAM_LENGTH_PKH = 20;
@@ -54,7 +54,7 @@ public class SegwitAddress extends Address {
 
     /**
      * Private constructor. Use {@link #fromBech32(NetworkParameters, String)},
-     * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)}.
+     * {@link #fromHash(NetworkParameters, byte[])} or {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}.
      * 
      * @param params
      *            network this address is valid for
@@ -81,7 +81,7 @@ public class SegwitAddress extends Address {
 
     /**
      * Private constructor. Use {@link #fromBech32(NetworkParameters, String)},
-     * {@link #fromHash(NetworkParameters, byte[])} or {@link #fromKey(NetworkParameters, ECKey)}.
+     * {@link #fromHash(NetworkParameters, byte[])} or {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}.
      * 
      * @param params
      *            network this address is valid for

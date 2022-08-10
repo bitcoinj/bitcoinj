@@ -17,7 +17,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -111,7 +113,8 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         ECKey key1 = new ECKey();
         ECKey key2 = new ECKey();
         Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET, Coin.COIN,  key1);
-        Transaction tx2 = FakeTxBuilder.createFakeTx(TESTNET, Coin.FIFTY_COINS, LegacyAddress.fromKey(TESTNET, key2));
+        Transaction tx2 = FakeTxBuilder.createFakeTx(TESTNET, Coin.FIFTY_COINS, key2.toAddress(ScriptType.P2PKH,
+                BitcoinNetwork.TESTNET));
         Block block = FakeTxBuilder.makeSolvedTestBlock(TESTNET.getGenesisBlock(), LegacyAddress.fromBase58(TESTNET, "msg2t2V2sWNd85LccoddtWysBTR8oPnkzW"), tx1, tx2);
         BloomFilter filter = new BloomFilter(4, 0.1, 1);
         filter.insert(key1);

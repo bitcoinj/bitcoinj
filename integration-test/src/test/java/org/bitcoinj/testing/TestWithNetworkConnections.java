@@ -23,7 +23,6 @@ import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
@@ -113,7 +112,7 @@ public class TestWithNetworkConnections {
                     .fromRandom(ScriptType.P2PKH).build();
             wallet = new Wallet(UNITTEST, kcg);
             key = wallet.freshReceiveKey();
-            address = LegacyAddress.fromKey(UNITTEST, key);
+            address = key.toAddress(ScriptType.P2PKH, UNITTEST.network());
         }
         blockChain = new BlockChain(UNITTEST, wallet, blockStore);
 

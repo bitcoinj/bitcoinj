@@ -19,10 +19,11 @@ package org.bitcoinj.protocols.payments;
 
 import com.google.protobuf.ByteString;
 import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
@@ -88,7 +89,7 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = LegacyAddress.fromKey(TESTNET, serverKey);
+        Address refundAddr = serverKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentLog().get(0).getUrl().toString());
@@ -167,7 +168,7 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = LegacyAddress.fromKey(TESTNET, serverKey);
+        Address refundAddr = serverKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         try {
             paymentSession.sendPayment(txns, refundAddr, paymentMemo).get();
         } catch (InterruptedException e) {

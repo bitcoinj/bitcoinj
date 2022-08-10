@@ -20,10 +20,11 @@ import org.bitcoin.protocols.payments.Protos;
 import org.bitcoin.protocols.payments.Protos.Payment;
 import org.bitcoin.protocols.payments.Protos.PaymentACK;
 import org.bitcoin.protocols.payments.Protos.PaymentRequest;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
@@ -52,7 +53,7 @@ public class PaymentProtocolTest {
 
     // static test data
     private static final Coin AMOUNT = Coin.SATOSHI;
-    private static final Address TO_ADDRESS = LegacyAddress.fromKey(TESTNET, new ECKey());
+    private static final Address TO_ADDRESS = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
     private static final String MEMO = "memo";
     private static final String PAYMENT_URL = "https://example.com";
     private static final byte[] MERCHANT_DATA = { 0, 1, 2 };
@@ -131,7 +132,7 @@ public class PaymentProtocolTest {
         List<Transaction> transactions = new LinkedList<>();
         transactions.add(FakeTxBuilder.createFakeTx(TESTNET, AMOUNT, TO_ADDRESS));
         Coin refundAmount = Coin.SATOSHI;
-        Address refundAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address refundAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Payment payment = PaymentProtocol.createPaymentMessage(transactions, refundAmount, refundAddress, MEMO,
                 MERCHANT_DATA);
         byte[] paymentBytes = payment.toByteArray();

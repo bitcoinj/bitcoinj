@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BloomFilter;
@@ -95,8 +96,8 @@ public class DeterministicKeyChainTest {
         assertFalse(key2.isPubKeyOnly());
 
         final Address address = LegacyAddress.fromBase58(TESTNET, "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
-        assertEquals(address, LegacyAddress.fromKey(TESTNET, key1));
-        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", LegacyAddress.fromKey(TESTNET, key2).toString());
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
@@ -105,7 +106,7 @@ public class DeterministicKeyChainTest {
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertFalse(key3.isPubKeyOnly());
-        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", LegacyAddress.fromKey(TESTNET, key3).toString());
+        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
         assertFalse(key3.isPubKeyOnly());
     }
@@ -128,15 +129,15 @@ public class DeterministicKeyChainTest {
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
         final Address address = LegacyAddress.fromBase58(TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, LegacyAddress.fromKey(TESTNET, key1));
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", LegacyAddress.fromKey(TESTNET, key2).toString());
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", LegacyAddress.fromKey(TESTNET, key3).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
@@ -149,7 +150,7 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
         final Address address = LegacyAddress.fromBase58(TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, LegacyAddress.fromKey(TESTNET, key1));
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
 
         DeterministicKey watching = chain1.getWatchingKey();
 
@@ -158,14 +159,14 @@ public class DeterministicKeyChainTest {
         assertEquals(accountOne, chain1.getAccountPath());
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", LegacyAddress.fromKey(TESTNET, key2).toString());
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", LegacyAddress.fromKey(TESTNET, key3).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
 
         assertEquals(watching, chain1.getWatchingKey());

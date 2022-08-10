@@ -73,7 +73,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
         new TextFieldValidator(amountEdit, text ->
                 !WTUtils.didThrow(() -> checkState(Coin.parseCoin(text).compareTo(balance) <= 0)));
         amountEdit.setText(balance.toPlainString());
-        address.setPromptText(Address.fromKey(NetworkParameters.of(app.network()), new ECKey(), app.preferredOutputScriptType()).toString());
+        address.setPromptText(new ECKey().toAddress(app.preferredOutputScriptType(), app.network()).toString());
     }
 
     public void cancel(ActionEvent event) {

@@ -19,6 +19,7 @@ package org.bitcoinj.store;
 
 import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
@@ -28,7 +29,6 @@ import org.bitcoinj.core.BlockTest;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
@@ -106,11 +106,11 @@ public class WalletProtobufSerializerTest {
         myWatchedKey = new ECKey();
         myKey = new ECKey();
         myKey.setCreationTimeSeconds(123456789L);
-        myAddress = LegacyAddress.fromKey(TESTNET, myKey);
+        myAddress = myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         myWallet = new Wallet(TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build());
         myWallet.importKey(myKey);
         mScriptCreationTime = new Date().getTime() / 1000 - 1234;
-        myWallet.addWatchedAddress(LegacyAddress.fromKey(TESTNET, myWatchedKey), mScriptCreationTime);
+        myWallet.addWatchedAddress(myWatchedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), mScriptCreationTime);
         myWallet.setDescription(WALLET_DESCRIPTION);
     }
 
@@ -127,7 +127,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(mScriptCreationTime,
                 wallet1.getWatchedScripts().get(0).getCreationTimeSeconds());
         assertEquals(1, wallet1.getWatchedScripts().size());
-        assertEquals(ScriptBuilder.createOutputScript(LegacyAddress.fromKey(TESTNET, myWatchedKey)),
+        assertEquals(ScriptBuilder.createOutputScript(myWatchedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)),
                 wallet1.getWatchedScripts().get(0));
         assertEquals(WALLET_DESCRIPTION, wallet1.getDescription());
     }
@@ -202,7 +202,7 @@ public class WalletProtobufSerializerTest {
     public void testKeys() throws Exception {
         for (int i = 0 ; i < 20 ; i++) {
             myKey = new ECKey();
-            myAddress = LegacyAddress.fromKey(TESTNET, myKey);
+            myAddress = myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
             myWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
             myWallet.importKey(myKey);
             Wallet wallet1 = roundTrip(myWallet);

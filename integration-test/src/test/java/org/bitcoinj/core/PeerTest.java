@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
@@ -817,7 +818,7 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         Transaction t1 = new Transaction(TESTNET);
         t1.addInput(new TransactionInput(TESTNET, t1, new byte[]{}));
-        t1.addOutput(COIN, LegacyAddress.fromKey(TESTNET, new ECKey()));
+        t1.addOutput(COIN, new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Transaction t2 = new Transaction(TESTNET);
         t2.addInput(t1.getOutput(0));
         t2.addOutput(COIN, wallet.currentChangeAddress());

@@ -67,7 +67,7 @@ import static org.junit.Assert.fail;
  */
 public class TransactionTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
-    private static final Address ADDRESS = LegacyAddress.fromKey(TESTNET, new ECKey());
+    private static final Address ADDRESS = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
     private Transaction tx;
 
@@ -193,13 +193,13 @@ public class TransactionTest {
 
     @Test
     public void addSignedInput_P2PKH() {
-        final Address toAddr = Address.fromKey(TESTNET, new ECKey(), ScriptType.P2PKH);
+        final Address toAddr = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
         final Coin outAmount = Coin.ofSat(91234);
 
         ECKey fromKey = new ECKey();
-        Address fromAddress = Address.fromKey(TESTNET, fromKey, ScriptType.P2PKH);
+        Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction(TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
         TransactionOutput output = new TransactionOutput(TESTNET, null, inAmount, fromAddress);
@@ -216,13 +216,13 @@ public class TransactionTest {
 
     @Test
     public void addSignedInput_P2WPKH() {
-        final Address toAddr = Address.fromKey(TESTNET, new ECKey(), ScriptType.P2WPKH);
+        final Address toAddr = new ECKey().toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
         final Coin outAmount = Coin.ofSat(91234);
 
         ECKey fromKey = new ECKey();
-        Address fromAddress = Address.fromKey(TESTNET, fromKey, ScriptType.P2WPKH);
+        Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction(TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
         tx.addOutput(outAmount, toAddr);
@@ -532,7 +532,7 @@ public class TransactionTest {
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();
-        Address addr = LegacyAddress.fromKey(TESTNET, key);
+        Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         TransactionOutput fakeOutput = FakeTxBuilder.createFakeTx(TESTNET, Coin.COIN, addr).getOutput(0);
 
         Transaction tx = new Transaction(TESTNET);
@@ -598,7 +598,7 @@ public class TransactionTest {
     public void testHashForSignatureThreadSafety() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Block genesis = TESTNET.getGenesisBlock();
-        Block block1 = genesis.createNextBlock(LegacyAddress.fromKey(TESTNET, new ECKey()),
+        Block block1 = genesis.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
 
         final Transaction tx = block1.getTransactions().get(1);
@@ -691,13 +691,13 @@ public class TransactionTest {
             setSerializer(serializer.withProtocolVersion(
                     NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion()));
             Transaction inputTx = new Transaction(params);
-            inputTx.addOutput(Coin.FIFTY_COINS, LegacyAddress.fromKey(params, ECKey.fromPrivate(BigInteger.valueOf(123456))));
+            inputTx.addOutput(Coin.FIFTY_COINS, ECKey.fromPrivate(BigInteger.valueOf(123456)).toAddress(ScriptType.P2PKH, params.network()));
             this.addInput(inputTx.getOutput(0));
             this.getInput(0).disconnect();
             TransactionWitness witness = new TransactionWitness(1);
             witness.setPush(0, new byte[] {0});
             this.getInput(0).setWitness(witness);
-            Address to = LegacyAddress.fromKey(params, ECKey.fromPrivate(BigInteger.valueOf(1000)));
+            Address to = ECKey.fromPrivate(BigInteger.valueOf(1000)).toAddress(ScriptType.P2PKH, params.network());
             this.addOutput(Coin.COIN, to);
 
             this.hackInputsSize = hackInputsSize;

@@ -274,7 +274,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(100000000);
-        Address address = LegacyAddress.fromKey(PARAMS, toKey);
+        Address address = toKey.toAddress(ScriptType.P2PKH, PARAMS.network());
         Coin totalAmount = Coin.ZERO;
 
         Transaction t = new Transaction(PARAMS);
@@ -342,7 +342,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
-        Address address2 = LegacyAddress.fromKey(PARAMS, toKey2);
+        Address address2 = toKey2.toAddress(ScriptType.P2PKH, PARAMS.network());
         SendRequest req = SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);

@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
@@ -98,17 +99,17 @@ public class ParseByteCacheTest {
         
         Transaction tx1 = createFakeTx(TESTNET,
                 valueOf(2, 0),
-                LegacyAddress.fromKey(TESTNET, wallet.currentReceiveKey()));
+                wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         
         // add a second input so can test granularity of byte cache.
         Transaction prevTx = new Transaction(TESTNET);
-        TransactionOutput prevOut = new TransactionOutput(TESTNET, prevTx, COIN, LegacyAddress.fromKey(TESTNET, wallet.currentReceiveKey()));
+        TransactionOutput prevOut = new TransactionOutput(TESTNET, prevTx, COIN, wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
         Transaction tx2 = createFakeTx(TESTNET, COIN,
-                LegacyAddress.fromKey(TESTNET, new ECKey()));
+                new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 

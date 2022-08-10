@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
@@ -29,7 +30,6 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.core.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
@@ -129,8 +129,8 @@ public class WalletTest extends TestWithWallet {
     private static final CharSequence PASSWORD1 = "my helicopter contains eels";
     private static final CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
 
-    private final Address OTHER_ADDRESS = LegacyAddress.fromKey(TESTNET, new ECKey());
-    private final Address OTHER_SEGWIT_ADDRESS = SegwitAddress.fromKey(TESTNET, new ECKey());
+    private final Address OTHER_ADDRESS = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+    private final Address OTHER_SEGWIT_ADDRESS = new ECKey().toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
 
     @Before
     @Override
@@ -209,7 +209,7 @@ public class WalletTest extends TestWithWallet {
     public void basicSpendingWithEncryptedWallet() throws Exception {
         Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
-        Address myEncryptedAddress = LegacyAddress.fromKey(TESTNET, encryptedWallet.freshReceiveKey());
+        Address myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         basicSpendingCommon(encryptedWallet, myEncryptedAddress, OTHER_ADDRESS, encryptedWallet);
     }
 
@@ -831,7 +831,7 @@ public class WalletTest extends TestWithWallet {
         // Create a send to a merchant of all our coins.
         Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(2, 90));
         // Create a double spend of just the first one.
-        Address BAD_GUY = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address BAD_GUY = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction send2 = wallet.createSend(BAD_GUY, COIN);
         send2 = TESTNET.getDefaultSerializer().makeTransaction(send2.bitcoinSerialize());
         // Broadcast send1, it's now pending.
@@ -913,7 +913,7 @@ public class WalletTest extends TestWithWallet {
         // Create a send to a merchant.
         Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 50));
         // Create a double spend.
-        Address BAD_GUY = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address BAD_GUY = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction send2 = wallet.createSend(BAD_GUY, valueOf(0, 50));
         send2 = TESTNET.getDefaultSerializer().makeTransaction(send2.bitcoinSerialize());
         // Broadcast send1.
@@ -1397,7 +1397,7 @@ public class WalletTest extends TestWithWallet {
         Coin nanos = COIN;
 
         // Create two transactions that share the same input tx.
-        Address badGuy = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address badGuy = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction doubleSpentTx = new Transaction(TESTNET);
         TransactionOutput doubleSpentOut = new TransactionOutput(TESTNET, doubleSpentTx, nanos, badGuy);
         doubleSpentTx.addOutput(doubleSpentOut);
@@ -1603,7 +1603,7 @@ public class WalletTest extends TestWithWallet {
             // Expected
         }
 
-        receiveATransaction(watchingWallet, LegacyAddress.fromKey(TESTNET, myKey));
+        receiveATransaction(watchingWallet, myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         assertEquals(COIN, watchingWallet.getBalance());
         assertEquals(COIN, watchingWallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals(ZERO, watchingWallet.getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE));
@@ -1627,7 +1627,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void watchingScripts() {
         // Verify that pending transactions to watched addresses are relevant
-        Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         Coin value = valueOf(5, 0);
         Transaction t1 = createFakeTx(TESTNET, value, watchedAddress);
@@ -1637,7 +1637,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = InsufficientMoneyException.class)
     public void watchingScriptsConfirmed() throws Exception {
-        Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, CENT, watchedAddress);
         assertEquals(CENT, wallet.getBalance());
@@ -1650,7 +1650,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsSentFrom() {
         int baseElements = wallet.getBloomFilterElementCount();
 
-        Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         assertEquals(baseElements + 1, wallet.getBloomFilterElementCount());
 
@@ -1670,7 +1670,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void watchingScriptsBloomFilter() {
-        Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction t1 = createFakeTx(TESTNET, CENT, watchedAddress);
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, t1);
         wallet.addWatchedAddress(watchedAddress);
@@ -1684,7 +1684,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void getWatchedAddresses() {
-        Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         List<Address> watchedAddresses = wallet.getWatchedAddresses();
         assertEquals(1, watchedAddresses.size());
@@ -1695,7 +1695,7 @@ public class WalletTest extends TestWithWallet {
     public void removeWatchedAddresses() {
         List<Address> addressesForRemoval = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+            Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
             addressesForRemoval.add(watchedAddress);
             wallet.addWatchedAddress(watchedAddress);
         }
@@ -1707,7 +1707,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void removeWatchedAddress() {
-        Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         wallet.removeWatchedAddress(watchedAddress);
         assertFalse(wallet.isAddressWatched(watchedAddress));
@@ -1717,7 +1717,7 @@ public class WalletTest extends TestWithWallet {
     public void removeScriptsBloomFilter() {
         List<Address> addressesForRemoval = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            Address watchedAddress = LegacyAddress.fromKey(TESTNET, new ECKey());
+            Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
             addressesForRemoval.add(watchedAddress);
             wallet.addWatchedAddress(watchedAddress);
         }
@@ -1846,7 +1846,7 @@ public class WalletTest extends TestWithWallet {
         ECKey k2 = wallet.freshReceiveKey();
         Coin v2 = valueOf(0, 50);
         Transaction t2 = new Transaction(TESTNET);
-        TransactionOutput o2 = new TransactionOutput(TESTNET, t2, v2, LegacyAddress.fromKey(TESTNET, k2));
+        TransactionOutput o2 = new TransactionOutput(TESTNET, t2, v2, k2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         t2.addOutput(o2);
         SendRequest req = SendRequest.forTx(t2);
         wallet.completeTx(req);
@@ -1861,7 +1861,7 @@ public class WalletTest extends TestWithWallet {
         ECKey k3 = new ECKey();
         Coin v3 = valueOf(0, 25);
         Transaction t3 = new Transaction(TESTNET);
-        t3.addOutput(v3, LegacyAddress.fromKey(TESTNET, k3));
+        t3.addOutput(v3, k3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         t3.addInput(o2);
         wallet.signTransaction(SendRequest.forTx(t3));
 
@@ -2086,7 +2086,7 @@ public class WalletTest extends TestWithWallet {
         encryptedWallet.importKeysAndEncrypt(Collections.singletonList(key), PASSWORD1);
         assertEquals(1, encryptedWallet.getImportedKeys().size());
         assertEquals(key.getPubKeyPoint(), encryptedWallet.getImportedKeys().get(0).getPubKeyPoint());
-        sendMoneyToWallet(encryptedWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN, LegacyAddress.fromKey(TESTNET, key));
+        sendMoneyToWallet(encryptedWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN, key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         assertEquals(Coin.COIN, encryptedWallet.getBalance());
         SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         req.aesKey = checkNotNull(encryptedWallet.getKeyCrypter()).deriveKey(PASSWORD1);
@@ -2905,9 +2905,9 @@ public class WalletTest extends TestWithWallet {
         key2.setCreationTimeSeconds(Utils.currentTimeSeconds() - 86400);
         wallet.importKey(key1);
         wallet.importKey(key2);
-        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(TESTNET, key1));
-        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(TESTNET, key2));
-        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(TESTNET, key2));
+        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Date compromiseTime = Utils.now();
         assertEquals(0, broadcaster.size());
         assertFalse(wallet.isKeyRotating(key1));
@@ -2938,7 +2938,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(0, broadcaster.size());
 
         // Receive money via a new block on key1 and ensure it shows up as a maintenance task.
-        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(TESTNET, key1));
+        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         wallet.doMaintenance(null, true);
         tx = broadcaster.waitForTransactionAndSucceed();
         assertNotNull(wallet.findKeyFromPubKeyHash(tx.getOutput(0).getScriptPubKey().getPubKeyHash(),
@@ -3002,8 +3002,8 @@ public class WalletTest extends TestWithWallet {
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
-        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(TESTNET, key1));
-        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(TESTNET, key2));
+        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         DeterministicKey watchKey1 = wallet.getWatchingKey();
 
         // A day later, we get compromised.
@@ -3025,7 +3025,7 @@ public class WalletTest extends TestWithWallet {
     public void fragmentedReKeying() {
         // Send lots of small coins and check the fee is correct.
         ECKey key = wallet.freshReceiveKey();
-        Address address = LegacyAddress.fromKey(TESTNET, key);
+        Address address = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Utils.setMockClock();
         Utils.rollMockClock(86400);
         for (int i = 0; i < 800; i++) {
@@ -3136,7 +3136,7 @@ public class WalletTest extends TestWithWallet {
         // Send three transactions, with one being an address type and the other being a raw CHECKSIG type pubkey only,
         // and the final one being a key we do have. We expect the first two inputs to be dummy values and the last
         // to be signed correctly.
-        Transaction t1 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, LegacyAddress.fromKey(TESTNET, pub));
+        Transaction t1 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, pub.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Transaction t2 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, pub);
         Transaction t3 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, priv2);
 
@@ -3506,22 +3506,22 @@ public class WalletTest extends TestWithWallet {
         ECKey p2wpkhKey = p2wpkhChain.getKey(KeyPurpose.RECEIVE_FUNDS);
 
         // Test imported key: it's not limited to script type.
-        assertTrue(wallet.isAddressMine(LegacyAddress.fromKey(TESTNET, importedKey)));
-        assertTrue(wallet.isAddressMine(SegwitAddress.fromKey(TESTNET, importedKey)));
-        assertEquals(importedKey, wallet.findKeyFromAddress(LegacyAddress.fromKey(TESTNET, importedKey)));
-        assertEquals(importedKey, wallet.findKeyFromAddress(SegwitAddress.fromKey(TESTNET, importedKey)));
+        assertTrue(wallet.isAddressMine(importedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)));
+        assertTrue(wallet.isAddressMine(importedKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET)));
+        assertEquals(importedKey, wallet.findKeyFromAddress(importedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)));
+        assertEquals(importedKey, wallet.findKeyFromAddress(importedKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET)));
 
         // Test key from P2PKH chain: it's limited to P2PKH addresses
-        assertTrue(wallet.isAddressMine(LegacyAddress.fromKey(TESTNET, p2pkhKey)));
-        assertFalse(wallet.isAddressMine(SegwitAddress.fromKey(TESTNET, p2pkhKey)));
-        assertEquals(p2pkhKey, wallet.findKeyFromAddress(LegacyAddress.fromKey(TESTNET, p2pkhKey)));
-        assertNull(wallet.findKeyFromAddress(SegwitAddress.fromKey(TESTNET, p2pkhKey)));
+        assertTrue(wallet.isAddressMine(p2pkhKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)));
+        assertFalse(wallet.isAddressMine(p2pkhKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET)));
+        assertEquals(p2pkhKey, wallet.findKeyFromAddress(p2pkhKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)));
+        assertNull(wallet.findKeyFromAddress(p2pkhKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET)));
 
         // Test key from P2WPKH chain: it's limited to P2WPKH addresses
-        assertFalse(wallet.isAddressMine(LegacyAddress.fromKey(TESTNET, p2wpkhKey)));
-        assertTrue(wallet.isAddressMine(SegwitAddress.fromKey(TESTNET, p2wpkhKey)));
-        assertNull(wallet.findKeyFromAddress(LegacyAddress.fromKey(TESTNET, p2wpkhKey)));
-        assertEquals(p2wpkhKey, wallet.findKeyFromAddress(SegwitAddress.fromKey(TESTNET, p2wpkhKey)));
+        assertFalse(wallet.isAddressMine(p2wpkhKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)));
+        assertTrue(wallet.isAddressMine(p2wpkhKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET)));
+        assertNull(wallet.findKeyFromAddress(p2wpkhKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)));
+        assertEquals(p2wpkhKey, wallet.findKeyFromAddress(p2wpkhKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET)));
     }
 
     @Test

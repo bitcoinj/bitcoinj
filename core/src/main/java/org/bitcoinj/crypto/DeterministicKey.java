@@ -21,7 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -677,7 +676,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
                                      NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
-        builder.append("  addr:").append(Address.fromKey(params, this, outputScriptType).toString());
+        builder.append("  addr:").append(toAddress(outputScriptType, params.network()).toString());
         builder.append("  hash160:").append(ByteUtils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());
         if (comment != null)

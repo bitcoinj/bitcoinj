@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.testing.FakeTxBuilder;
@@ -49,8 +51,8 @@ public class TxConfidenceTableTest {
         Context.propagate(context);
         table = context.getConfidenceTable();
 
-        Address to = LegacyAddress.fromKey(TESTNET, new ECKey());
-        Address change = LegacyAddress.fromKey(TESTNET, new ECKey());
+        Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address change = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
         tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(TESTNET, COIN, to, change);
         tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(TESTNET, COIN, to, change);

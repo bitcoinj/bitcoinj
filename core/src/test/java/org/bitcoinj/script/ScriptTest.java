@@ -21,6 +21,8 @@ package org.bitcoinj.script;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Coin;
@@ -466,7 +468,7 @@ public class ScriptTest {
     public void getToAddress() {
         // P2PK
         ECKey toKey = new ECKey();
-        Address toAddress = LegacyAddress.fromKey(TESTNET, toKey);
+        Address toAddress = toKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         assertEquals(toAddress, ScriptBuilder.createP2PKOutputScript(toKey).getToAddress(TESTNET, true));
         // pay to pubkey hash
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
@@ -476,7 +478,7 @@ public class ScriptTest {
                 ScriptPattern.extractHashFromP2SH(p2shScript));
         assertEquals(scriptAddress, p2shScript.getToAddress(TESTNET));
         // P2WPKH
-        toAddress = SegwitAddress.fromKey(TESTNET, toKey);
+        toAddress = toKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
         // P2WSH
         Script p2wshScript = ScriptBuilder.createP2WSHOutputScript(new byte[32]);

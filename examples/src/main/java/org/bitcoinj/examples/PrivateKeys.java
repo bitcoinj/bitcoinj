@@ -26,7 +26,6 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.SegwitAddress;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
@@ -59,7 +58,7 @@ public class PrivateKeys {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
                 key = ECKey.fromPrivate(privKey);
             }
-            System.out.println("Address from private key is: " + SegwitAddress.fromKey(params, key).toString());
+            System.out.println("Address from private key is: " + key.toAddress(ScriptType.P2WPKH, params.network()).toString());
 
             // Import the private key to a fresh wallet.
             Wallet wallet = Wallet.createDeterministic(params, ScriptType.P2PKH);
