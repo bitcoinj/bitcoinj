@@ -22,6 +22,13 @@
  *     <li>No API dependencies on external libraries other than the core JDK</li>
  *     <li>Implementation dependencies on Guava are allowed for now (but should be avoided as much as possible)</li>
  * </ul>
+ * <p>
+ * <b>Temporary exception:</b> In the 0.17 release, we are allowing some dependencies on other packages, e.g. to
+ * {@link org.bitcoinj.core.NetworkParameters} provided that those references are in <b>deprecated</b> methods. This will
+ * smooth migration by allowing users to, for example, replace {@code import org.bitcoinj.base.Address} with
+ * {@code import org.bitcoinj.core.Address} as first step of conversion and remove usages of the deprecated methods in
+ * a second step.
+ * <p>
  * The base package will help us make bitcoinj more modular as we will use it to break circular dependencies
  * between existing packages. We are also considering splitting {@code base} into a separate JAR/module in a
  * future release.
