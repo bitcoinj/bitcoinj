@@ -37,7 +37,6 @@ public class MainNetParams extends BitcoinNetworkParams {
 
     public MainNetParams() {
         super(BitcoinNetwork.MAINNET);
-        id = BitcoinNetwork.ID_MAINNET;
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);

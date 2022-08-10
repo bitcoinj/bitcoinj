@@ -35,7 +35,6 @@ public class UnitTestParams extends BitcoinNetworkParams {
         // Unit Test Params are BY DEFINITION on the Bitcoin TEST network (i.e. not REGTEST or SIGNET)
         // This means that tests that run against UnitTestParams expect TEST network behavior.
         super(BitcoinNetwork.TESTNET);
-        id = BitcoinNetwork.ID_UNITTESTNET;
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);

@@ -34,8 +34,7 @@ public class RegTestParams extends BitcoinNetworkParams {
 
     public RegTestParams() {
         super(BitcoinNetwork.REGTEST);
-        id = BitcoinNetwork.ID_REGTEST;
-        
+
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
         // Difficulty adjustments are disabled for regtest.

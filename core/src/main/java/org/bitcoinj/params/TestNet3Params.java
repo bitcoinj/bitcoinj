@@ -46,7 +46,6 @@ public class TestNet3Params extends BitcoinNetworkParams {
 
     public TestNet3Params() {
         super(BitcoinNetwork.TESTNET);
-        id = BitcoinNetwork.ID_TESTNET;
 
         targetTimespan = TARGET_TIMESPAN;
         maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
