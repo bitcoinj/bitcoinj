@@ -15,28 +15,26 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.Base58;
-import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class Base58DecodeTest {
+public class Base58EncodeTest {
 
-    private String input;
-    private byte[] expected;
+    private byte[] input;
+    private String expected;
 
-    public Base58DecodeTest(String input, byte[] expected) {
+    public Base58EncodeTest(byte[] input, String expected) {
         this.input = input;
         this.expected = expected;
     }
@@ -44,25 +42,16 @@ public class Base58DecodeTest {
     @Parameters
     public static Collection<Object[]> parameters() {
         return Arrays.asList(new Object[][]{
-                {"JxF12TrwUP45BMd", "Hello World".getBytes()},
-                {"1", new byte[1]},
-                {"1111", new byte[4]}
+                {"Hello World".getBytes(), "JxF12TrwUP45BMd"},
+                {BigInteger.valueOf(3471844090L).toByteArray(), "16Ho7Hs"},
+                {new byte[1], "1"},
+                {new byte[7], "1111111"},
+                {new byte[0], ""}
         });
     }
 
     @Test
-    public void testDecode() {
-        byte[] actualBytes = Base58.decode(input);
-        assertArrayEquals(input,  actualBytes, expected);
-    }
-
-    @Test
-    public void testDecode_emptyString() {
-        assertEquals(0, Base58.decode("").length);
-    }
-
-    @Test(expected = AddressFormatException.class)
-    public void testDecode_invalidBase58() {
-        Base58.decode("This isn't valid base58");
+    public void testEncode() {
+        assertEquals(expected, Base58.encode(input));
     }
 }
