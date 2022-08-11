@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.Bech32;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.junit.Test;
 
