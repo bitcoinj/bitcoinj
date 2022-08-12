@@ -22,8 +22,8 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.EncodedPrivateKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.PrefixedChecksummedBytes;
 import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.generators.SCrypt;
 
@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Implementation of <a href="https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki">BIP 38</a>
  * passphrase-protected private keys. Currently, only decryption is supported.
  */
-public class BIP38PrivateKey extends PrefixedChecksummedBytes {
+public class BIP38PrivateKey extends EncodedPrivateKey {
     public final boolean ecMultiply;
     public final boolean compressed;
     public final boolean hasLotAndSequence;

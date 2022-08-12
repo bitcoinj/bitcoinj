@@ -28,7 +28,7 @@ import java.util.Arrays;
  * <p>
  * Note that this is not the same base58 as used by Flickr, which you may find referenced around the Internet.
  * <p>
- * You may want to consider working with {@code org.bitcoinj.core.PrefixedChecksummedBytes} instead, which
+ * You may want to consider working with {@code org.bitcoinj.core.EncodedPrivateKey} instead, which
  * adds support for testing the prefix and suffix bytes commonly found in addresses.
  * <p>
  * Satoshi explains: why base-58 instead of standard base-64 encoding?

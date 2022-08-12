@@ -34,13 +34,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 
 @RunWith(EasyMockRunner.class)
-public class PrefixedChecksummedBytesTest {
+public class EncodedPrivateKeyTest {
 
     @Mock
     NetworkParameters params;
 
-    private static class PrefixedChecksummedBytesToTest extends PrefixedChecksummedBytes {
-        public PrefixedChecksummedBytesToTest(NetworkParameters params, byte[] bytes) {
+    private static class EncodedPrivateKeyToTest extends EncodedPrivateKey {
+        public EncodedPrivateKeyToTest(NetworkParameters params, byte[] bytes) {
             super(params, bytes);
         }
 
@@ -52,7 +52,7 @@ public class PrefixedChecksummedBytesTest {
 
     @Test
     public void equalsContract() {
-        EqualsVerifier.forClass(PrefixedChecksummedBytes.class)
+        EqualsVerifier.forClass(EncodedPrivateKey.class)
                 .withPrefabValues(NetworkParameters.class, MainNetParams.get(), TestNet3Params.get())
                 .suppress(Warning.NULL_FIELDS)
                 .suppress(Warning.TRANSIENT_FIELDS)
@@ -66,10 +66,10 @@ public class PrefixedChecksummedBytesTest {
         expect(params.getAddressHeader()).andReturn(111).andReturn(0);
         replay(params);
 
-        PrefixedChecksummedBytes a = new PrefixedChecksummedBytesToTest(params, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
+        EncodedPrivateKey a = new EncodedPrivateKeyToTest(params, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
         assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
 
-        PrefixedChecksummedBytes b = new PrefixedChecksummedBytesToTest(params, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
+        EncodedPrivateKey b = new EncodedPrivateKeyToTest(params, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
         assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
     }
 }

@@ -23,23 +23,13 @@ import java.util.Objects;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * <p>
- * The following format is often used to represent some type of data (e.g. key or hash of key):
- * </p>
- * 
- * <pre>
- * [prefix] [data bytes] [checksum]
- * </pre>
- * <p>
- * and the result is then encoded with some variant of base. This format is most commonly used for addresses and private
- * keys exported using Bitcoin Core's dumpprivkey command.
- * </p>
+ * Some form of string-encoded private key. This form is useful for noting them down, e.g. on paper wallets.
  */
-public abstract class PrefixedChecksummedBytes {
+public abstract class EncodedPrivateKey {
     protected final NetworkParameters params;
     protected final byte[] bytes;
 
-    protected PrefixedChecksummedBytes(NetworkParameters params, byte[] bytes) {
+    protected EncodedPrivateKey(NetworkParameters params, byte[] bytes) {
         this.params = checkNotNull(params);
         this.bytes = checkNotNull(bytes);
     }
@@ -60,7 +50,7 @@ public abstract class PrefixedChecksummedBytes {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PrefixedChecksummedBytes other = (PrefixedChecksummedBytes) o;
+        EncodedPrivateKey other = (EncodedPrivateKey) o;
         return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
     }
 }
