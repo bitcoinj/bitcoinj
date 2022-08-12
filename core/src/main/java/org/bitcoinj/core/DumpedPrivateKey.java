@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Base58;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.params.Networks;
 
@@ -34,8 +35,8 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
 
     /**
      * Construct a private key from its Base58 representation.
-     * @param params
-     *            The expected NetworkParameters or null if you don't want validation.
+     * @param network
+     *            The expected Network or null if you don't want validation.
      * @param base58
      *            The textual form of the private key.
      * @throws AddressFormatException
@@ -43,33 +44,52 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
      * @throws AddressFormatException.WrongNetwork
      *             if the given private key is valid but for a different chain (eg testnet vs mainnet)
      */
-    public static DumpedPrivateKey fromBase58(@Nullable NetworkParameters params, String base58)
+    public static DumpedPrivateKey fromBase58(@Nullable Network network, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
-        if (params == null) {
+        if (network == null) {
             for (NetworkParameters p : Networks.get())
                 if (version == p.getDumpedPrivateKeyHeader())
-                    return new DumpedPrivateKey(p, bytes);
+                    return new DumpedPrivateKey(p.network(), bytes);
             throw new AddressFormatException.InvalidPrefix("No network found for version " + version);
         } else {
+            NetworkParameters params = NetworkParameters.of(network);
             if (version == params.getDumpedPrivateKeyHeader())
-                return new DumpedPrivateKey(params, bytes);
+                return new DumpedPrivateKey(network, bytes);
             throw new AddressFormatException.WrongNetwork(version);
         }
     }
 
-    private DumpedPrivateKey(NetworkParameters params, byte[] bytes) {
-        super(params, bytes);
+    /**
+     * Construct a private key from its Base58 representation.
+     * @param params
+     *            The expected Network or null if you don't want validation.
+     * @param base58
+     *            The textual form of the private key.
+     * @throws AddressFormatException
+     *             if the given base58 doesn't parse or the checksum is invalid
+     * @throws AddressFormatException.WrongNetwork
+     *             if the given private key is valid but for a different chain (eg testnet vs mainnet)
+     * @deprecated use {@link #fromBase58(Network, String)}
+     */
+    @Deprecated
+    public static DumpedPrivateKey fromBase58(@Nullable NetworkParameters params, String base58)
+            throws AddressFormatException, AddressFormatException.WrongNetwork {
+        return fromBase58(params.network(), base58);
+    }
+
+    private DumpedPrivateKey(Network network, byte[] bytes) {
+        super(network, bytes);
         if (bytes.length != 32 && bytes.length != 33)
             throw new AddressFormatException.InvalidDataLength(
                     "Wrong number of bytes for a private key (32 or 33): " + bytes.length);
     }
 
     // Used by ECKey.getPrivateKeyEncoded()
-    DumpedPrivateKey(NetworkParameters params, byte[] keyBytes, boolean compressed) {
-        this(params, encode(keyBytes, compressed));
+    DumpedPrivateKey(Network network, byte[] keyBytes, boolean compressed) {
+        this(network, encode(keyBytes, compressed));
     }
 
     /**
@@ -78,6 +98,7 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
      * @return textual form
      */
     public String toBase58() {
+        NetworkParameters params = NetworkParameters.of(network);
         return Base58.encodeChecked(params.getDumpedPrivateKeyHeader(), bytes);
     }
 

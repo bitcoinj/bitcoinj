@@ -17,9 +17,10 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Base58;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -31,22 +32,21 @@ import static org.junit.Assert.assertTrue;
 
 public class DumpedPrivateKeyTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
-    private static final NetworkParameters TESTNET = TestNet3Params.get();
 
     @Test
     public void checkNetwork() {
-        DumpedPrivateKey.fromBase58(MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
+        DumpedPrivateKey.fromBase58(BitcoinNetwork.MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
     @Test(expected = AddressFormatException.WrongNetwork.class)
     public void checkNetworkWrong() {
-        DumpedPrivateKey.fromBase58(TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
+        DumpedPrivateKey.fromBase58(BitcoinNetwork.TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
     @Test
     public void roundtripBase58() {
         String base58 = "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk"; // 32-bytes key
-        DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(null, base58);
+        DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58((Network) null, base58);
         assertFalse(dumpedPrivateKey.isPubKeyCompressed());
         assertEquals(base58, dumpedPrivateKey.toBase58());
     }
@@ -54,7 +54,7 @@ public class DumpedPrivateKeyTest {
     @Test
     public void roundtripBase58_compressed() {
         String base58 = "cSthBXr8YQAexpKeh22LB9PdextVE1UJeahmyns5LzcmMDSy59L4"; // 33-bytes, compressed == true
-        DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(null, base58);
+        DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58((Network) null, base58);
         assertTrue(dumpedPrivateKey.isPubKeyCompressed());
         assertEquals(base58, dumpedPrivateKey.toBase58());
     }
@@ -66,19 +66,19 @@ public class DumpedPrivateKeyTest {
         bytes = Arrays.copyOf(bytes, bytes.length + 1); // append a "compress" byte
         bytes[bytes.length - 1] = 0; // set it to false
         base58 = Base58.encode(bytes); // 33-bytes key, compressed == false
-        DumpedPrivateKey.fromBase58(null, base58); // fail
+        DumpedPrivateKey.fromBase58((Network) null, base58); // fail
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBase58_tooShort() {
         String base58 = Base58.encodeChecked(MAINNET.getDumpedPrivateKeyHeader(), new byte[31]);
-        DumpedPrivateKey.fromBase58(null, base58);
+        DumpedPrivateKey.fromBase58((Network) null, base58);
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBase58_tooLong() {
         String base58 = Base58.encodeChecked(MAINNET.getDumpedPrivateKeyHeader(), new byte[34]);
-        DumpedPrivateKey.fromBase58(null, base58);
+        DumpedPrivateKey.fromBase58((Network) null, base58);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class DumpedPrivateKeyTest {
         ECKey k = new ECKey().decompress();
         assertFalse(k.isCompressed());
         assertEquals(k.getPrivKey(),
-                DumpedPrivateKey.fromBase58(null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
+                DumpedPrivateKey.fromBase58((Network) null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
     }
 
     @Test
@@ -94,6 +94,6 @@ public class DumpedPrivateKeyTest {
         ECKey k = new ECKey();
         assertTrue(k.isCompressed());
         assertEquals(k.getPrivKey(),
-                DumpedPrivateKey.fromBase58(null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
+                DumpedPrivateKey.fromBase58((Network) null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
     }
 }

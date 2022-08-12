@@ -74,7 +74,7 @@ public class BloomFilterTest {
     public void walletTest() {
         Context.propagate(new Context());
 
-        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(MAINNET, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
+        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(BitcoinNetwork.MAINNET, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
 
         Address addr = privKey.getKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.MAINNET);
         assertEquals("17Wx1GQfyPTNWpQMHrTwRSMTCAonSiZx9e", addr.toString());

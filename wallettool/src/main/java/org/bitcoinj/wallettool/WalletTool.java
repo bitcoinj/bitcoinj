@@ -1128,7 +1128,7 @@ public class WalletTool implements Callable<Integer> {
         long creationTimeSeconds = getCreationTimeSeconds();
         if (privKeyStr != null) {
             try {
-                DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(params, privKeyStr); // WIF
+                DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(params.network(), privKeyStr); // WIF
                 key = dpk.getKey();
             } catch (AddressFormatException e) {
                 byte[] decode = parseAsHexOrBase58(privKeyStr);

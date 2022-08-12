@@ -974,7 +974,7 @@ public class ECKey implements EncryptableItem {
      * @throws IllegalStateException if the private key is not available.
      */
     public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
-        return new DumpedPrivateKey(params, getPrivKeyBytes(), isCompressed());
+        return new DumpedPrivateKey(params.network(), getPrivKeyBytes(), isCompressed());
     }
 
     /**

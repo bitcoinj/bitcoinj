@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.ByteStreams;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
@@ -231,7 +232,7 @@ public class BlockTest {
         StoredBlock storedBlock = new StoredBlock(block169482, BigInteger.ONE, 169482); // Nonsense work - not used in test.
 
         // Create a wallet contain the miner's key that receives a spend from a coinbase.
-        ECKey miningKey = DumpedPrivateKey.fromBase58(MAINNET, MINING_PRIVATE_KEY).getKey();
+        ECKey miningKey = DumpedPrivateKey.fromBase58(BitcoinNetwork.MAINNET, MINING_PRIVATE_KEY).getKey();
         assertNotNull(miningKey);
         Wallet wallet = Wallet.createDeterministic(MAINNET, ScriptType.P2PKH);
         wallet.importKey(miningKey);

@@ -185,7 +185,7 @@ public class ECKeyTest {
     public void base58Encoding() {
         String addr = "mqAJmaxMcG5pPHHc3H3NtyXzY7kGbJLuMF";
         String privkey = "92shANodC6Y4evT5kFzjNFQAdjqTtHAnDTLzqBBq4BbKUPyx6CD";
-        ECKey key = DumpedPrivateKey.fromBase58(TESTNET, privkey).getKey();
+        ECKey key = DumpedPrivateKey.fromBase58(BitcoinNetwork.TESTNET, privkey).getKey();
         assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toString());
         assertEquals(addr, key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
     }
@@ -193,7 +193,7 @@ public class ECKeyTest {
     @Test
     public void base58Encoding_leadingZero() {
         String privkey = "91axuYLa8xK796DnBXXsMbjuc8pDYxYgJyQMvFzrZ6UfXaGYuqL";
-        ECKey key = DumpedPrivateKey.fromBase58(TESTNET, privkey).getKey();
+        ECKey key = DumpedPrivateKey.fromBase58(BitcoinNetwork.TESTNET, privkey).getKey();
         assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toString());
         assertEquals(0, key.getPrivKeyBytes()[0]);
     }
@@ -203,7 +203,7 @@ public class ECKeyTest {
         // Replace the loop bound with 1000 to get some keys with leading zero byte
         for (int i = 0 ; i < 20 ; i++) {
             ECKey key = new ECKey();
-            ECKey key1 = DumpedPrivateKey.fromBase58(TESTNET,
+            ECKey key1 = DumpedPrivateKey.fromBase58(BitcoinNetwork.TESTNET,
                     key.getPrivateKeyEncoded(TESTNET).toString()).getKey();
             assertEquals(ByteUtils.HEX.encode(key.getPrivKeyBytes()),
                     ByteUtils.HEX.encode(key1.getPrivKeyBytes()));
@@ -406,7 +406,7 @@ public class ECKeyTest {
         ECKey key = new ECKey();
         assertTrue(key.isCompressed());
         String base58 = key.getPrivateKeyEncoded(TESTNET).toString();
-        ECKey key2 = DumpedPrivateKey.fromBase58(TESTNET, base58).getKey();
+        ECKey key2 = DumpedPrivateKey.fromBase58(BitcoinNetwork.TESTNET, base58).getKey();
         assertTrue(key2.isCompressed());
         assertArrayEquals(key.getPrivKeyBytes(), key2.getPrivKeyBytes());
         assertArrayEquals(key.getPubKey(), key2.getPubKey());

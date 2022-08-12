@@ -52,7 +52,7 @@ public class PrivateKeys {
             // compressed pub key. Otherwise assume it's a raw key.
             ECKey key;
             if (args[0].length() == 51 || args[0].length() == 52) {
-                DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(params, args[0]);
+                DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(params.network(), args[0]);
                 key = dumpedPrivateKey.getKey();
             } else {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
