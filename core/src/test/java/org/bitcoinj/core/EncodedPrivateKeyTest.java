@@ -19,37 +19,11 @@ package org.bitcoinj.core;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
-import org.bitcoinj.base.Base58;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.easymock.EasyMockRunner;
-import org.easymock.Mock;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-
-@RunWith(EasyMockRunner.class)
 public class EncodedPrivateKeyTest {
-
-    @Mock
-    NetworkParameters params;
-
-    private static class EncodedPrivateKeyToTest extends EncodedPrivateKey {
-        public EncodedPrivateKeyToTest(NetworkParameters params, byte[] bytes) {
-            super(params, bytes);
-        }
-
-        @Override
-        public String toString() {
-            return Base58.encodeChecked(params.getAddressHeader(), bytes);
-        }
-    }
-
     @Test
     public void equalsContract() {
         EqualsVerifier.forClass(EncodedPrivateKey.class)
@@ -58,18 +32,5 @@ public class EncodedPrivateKeyTest {
                 .suppress(Warning.TRANSIENT_FIELDS)
                 .usingGetClass()
                 .verify();
-    }
-
-    @Test
-    public void stringification() {
-        // Test a testnet address.
-        expect(params.getAddressHeader()).andReturn(111).andReturn(0);
-        replay(params);
-
-        EncodedPrivateKey a = new EncodedPrivateKeyToTest(params, HEX.decode("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc"));
-        assertEquals("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", a.toString());
-
-        EncodedPrivateKey b = new EncodedPrivateKeyToTest(params, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
-        assertEquals("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", b.toString());
     }
 }
