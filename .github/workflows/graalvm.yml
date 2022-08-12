@@ -10,7 +10,7 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
         java: [ 'java17' ]
         graalvm: [ '22.1.0' ]
-        gradle: ['7.4.2']
+        gradle: ['7.5.1']
       fail-fast: false
     name: ${{ matrix.os }} JDK ${{ matrix.graalvm }}.${{ matrix.java }}
     steps:
