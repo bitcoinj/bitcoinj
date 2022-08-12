@@ -41,6 +41,13 @@ public abstract class PrivateKey {
         return params;
     }
 
+    /**
+     * Returns the base58-encoded textual form, including version and checksum bytes.
+     *
+     * @return textual form
+     */
+    public abstract String toBase58();
+
     @Override
     public int hashCode() {
         return Objects.hash(params, Arrays.hashCode(bytes));

@@ -116,6 +116,7 @@ public class BIP38PrivateKey extends PrivateKey {
      * 
      * @return textual form
      */
+    @Override
     public String toBase58() {
         return Base58.encodeChecked(1, bytes);
     }

@@ -77,6 +77,7 @@ public class DumpedPrivateKey extends PrivateKey {
      * 
      * @return textual form
      */
+    @Override
     public String toBase58() {
         return Base58.encodeChecked(params.getDumpedPrivateKeyHeader(), bytes);
     }

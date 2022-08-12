@@ -45,8 +45,13 @@ public class PrivateKeyTest {
         }
 
         @Override
-        public String toString() {
+        public String toBase58() {
             return Base58.encodeChecked(params.getAddressHeader(), bytes);
+        }
+
+        @Override
+        public String toString() {
+            return toBase58();
         }
     }
 
