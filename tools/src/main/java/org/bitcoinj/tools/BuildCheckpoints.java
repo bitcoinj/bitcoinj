@@ -98,7 +98,7 @@ public class BuildCheckpoints implements Callable<Integer> {
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
         final BlockStore store = new MemoryBlockStore(params);
         final BlockChain chain = new BlockChain(params, store);
-        final PeerGroup peerGroup = new PeerGroup(params, chain);
+        final PeerGroup peerGroup = new PeerGroup(net, chain);
 
         final InetAddress ipAddress;
 

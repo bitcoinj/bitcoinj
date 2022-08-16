@@ -58,7 +58,7 @@ public class FetchBlock implements Callable<Integer> {
         final NetworkParameters params = TestNet3Params.get();
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
-        PeerGroup peerGroup = new PeerGroup(params, chain);
+        PeerGroup peerGroup = new PeerGroup(params.network(), chain);
         if (localhost) {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         } else {

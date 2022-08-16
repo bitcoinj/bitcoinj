@@ -42,7 +42,7 @@ public class RefreshWallet {
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
 
-        final PeerGroup peerGroup = new PeerGroup(params, chain);
+        final PeerGroup peerGroup = new PeerGroup(params.network(), chain);
         peerGroup.startAsync();
 
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {

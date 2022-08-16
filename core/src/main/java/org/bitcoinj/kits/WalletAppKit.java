@@ -465,7 +465,7 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     protected PeerGroup createPeerGroup() {
-        return new PeerGroup(params, vChain);
+        return new PeerGroup(network, vChain);
     }
 
     private void installShutdownHook() {

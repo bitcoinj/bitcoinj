@@ -68,7 +68,7 @@ public class PeerMonitor {
 
     private void setupNetwork() {
         params = MainNetParams.get();
-        peerGroup = new PeerGroup(params, null /* no chain */);
+        peerGroup = new PeerGroup(params.network(), null /* no chain */);
         peerGroup.setUserAgent("PeerMonitor", "1.0");
         peerGroup.setMaxConnections(4);
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));

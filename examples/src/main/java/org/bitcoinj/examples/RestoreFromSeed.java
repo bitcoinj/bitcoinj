@@ -63,7 +63,7 @@ public class RestoreFromSeed {
         // Setting up the BlochChain, the BlocksStore and connecting to the network.
         SPVBlockStore chainStore = new SPVBlockStore(params, chainFile);
         BlockChain chain = new BlockChain(params, chainStore);
-        PeerGroup peerGroup = new PeerGroup(params, chain);
+        PeerGroup peerGroup = new PeerGroup(params.network(), chain);
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));
 
         // Now we need to hook the wallet up to the blockchain and the peers. This registers event listeners that notify our wallet about new transactions.

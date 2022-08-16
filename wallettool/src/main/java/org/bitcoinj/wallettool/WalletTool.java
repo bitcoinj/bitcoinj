@@ -1007,7 +1007,7 @@ public class WalletTool implements Callable<Integer> {
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, 5, TimeUnit.SECONDS, null);
         if (peerGroup == null) {
-            peerGroup = new PeerGroup(params, chain);
+            peerGroup = new PeerGroup(net, chain);
         }
         peerGroup.setUserAgent("WalletTool", "1.0");
         if (params == RegTestParams.get())

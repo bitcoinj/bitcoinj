@@ -46,7 +46,7 @@ public class WatchMempool {
 
     public static void main(String[] args) throws InterruptedException {
         BriefLogFormatter.init();
-        PeerGroup peerGroup = new PeerGroup(PARAMS);
+        PeerGroup peerGroup = new PeerGroup(PARAMS.network());
         peerGroup.setMaxConnections(32);
         peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS));
         peerGroup.addOnTransactionBroadcastListener((peer, tx) -> {
