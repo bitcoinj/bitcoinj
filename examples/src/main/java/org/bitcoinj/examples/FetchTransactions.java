@@ -39,7 +39,7 @@ public class FetchTransactions {
 
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
-        PeerGroup peerGroup = new PeerGroup(params, chain);
+        PeerGroup peerGroup = new PeerGroup(params.network(), chain);
         peerGroup.start();
         peerGroup.addAddress(new PeerAddress(params, InetAddress.getLocalHost()));
         peerGroup.waitForPeers(1).get();
