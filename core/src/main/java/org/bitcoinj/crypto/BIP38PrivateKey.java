@@ -103,7 +103,7 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
 
     private BIP38PrivateKey(NetworkParameters params, byte[] bytes, boolean ecMultiply, boolean compressed,
             boolean hasLotAndSequence, byte[] addressHash, byte[] content) throws AddressFormatException {
-        super(params, bytes);
+        super(params.network(), 1, bytes);
         this.ecMultiply = ecMultiply;
         this.compressed = compressed;
         this.hasLotAndSequence = hasLotAndSequence;
@@ -117,13 +117,13 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
      * @return textual form
      */
     public String toBase58() {
-        return Base58.encodeChecked(1, bytes);
+        return Base58.encodeChecked(version, bytes);
     }
 
     public ECKey decrypt(String passphrase) throws BadPassphraseException {
         String normalizedPassphrase = Normalizer.normalize(passphrase, Normalizer.Form.NFC);
         ECKey key = ecMultiply ? decryptEC(normalizedPassphrase) : decryptNoEC(normalizedPassphrase);
-        Sha256Hash hash = Sha256Hash.twiceOf(key.toAddress(ScriptType.P2PKH, params.network()).toString().getBytes(StandardCharsets.US_ASCII));
+        Sha256Hash hash = Sha256Hash.twiceOf(key.toAddress(ScriptType.P2PKH, network).toString().getBytes(StandardCharsets.US_ASCII));
         byte[] actualAddressHash = Arrays.copyOfRange(hash.getBytes(), 0, 4);
         if (!Arrays.equals(actualAddressHash, addressHash))
             throw new BadPassphraseException();

@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -26,24 +28,27 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Some form of string-encoded private key. This form is useful for noting them down, e.g. on paper wallets.
  */
 public abstract class EncodedPrivateKey {
-    protected final NetworkParameters params;
+    protected final transient Network network;
+    protected final int version;
     protected final byte[] bytes;
 
-    protected EncodedPrivateKey(NetworkParameters params, byte[] bytes) {
-        this.params = checkNotNull(params);
+    protected EncodedPrivateKey(Network network, int version, byte[] bytes) {
+        this.network = checkNotNull(network);
+        this.version = version;
         this.bytes = checkNotNull(bytes);
     }
 
     /**
      * @return network this data is valid for
      */
+    @Deprecated
     public final NetworkParameters getParameters() {
-        return params;
+        return NetworkParameters.of(network);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, Arrays.hashCode(bytes));
+        return Objects.hash(version, Arrays.hashCode(bytes));
     }
 
     @Override
@@ -51,6 +56,6 @@ public abstract class EncodedPrivateKey {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EncodedPrivateKey other = (EncodedPrivateKey) o;
-        return this.params.equals(other.params) && Arrays.equals(this.bytes, other.bytes);
+        return this.version == other.version && Arrays.equals(this.bytes, other.bytes);
     }
 }

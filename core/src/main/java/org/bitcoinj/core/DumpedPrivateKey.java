@@ -61,7 +61,7 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
     }
 
     private DumpedPrivateKey(NetworkParameters params, byte[] bytes) {
-        super(params, bytes);
+        super(params.network(), params.getDumpedPrivateKeyHeader(), bytes);
         if (bytes.length != 32 && bytes.length != 33)
             throw new AddressFormatException.InvalidDataLength(
                     "Wrong number of bytes for a private key (32 or 33): " + bytes.length);
@@ -78,7 +78,7 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
      * @return textual form
      */
     public String toBase58() {
-        return Base58.encodeChecked(params.getDumpedPrivateKeyHeader(), bytes);
+        return Base58.encodeChecked(version, bytes);
     }
 
     private static byte[] encode(byte[] keyBytes, boolean compressed) {

@@ -19,15 +19,12 @@ package org.bitcoinj.core;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 public class EncodedPrivateKeyTest {
     @Test
     public void equalsContract() {
         EqualsVerifier.forClass(EncodedPrivateKey.class)
-                .withPrefabValues(NetworkParameters.class, MainNetParams.get(), TestNet3Params.get())
                 .suppress(Warning.NULL_FIELDS)
                 .suppress(Warning.TRANSIENT_FIELDS)
                 .usingGetClass()
