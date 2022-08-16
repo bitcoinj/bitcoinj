@@ -17,6 +17,10 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.crypto.BIP38PrivateKey;
+
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -32,6 +36,27 @@ public abstract class EncodedPrivateKey {
     protected EncodedPrivateKey(NetworkParameters params, byte[] bytes) {
         this.params = checkNotNull(params);
         this.bytes = checkNotNull(bytes);
+    }
+
+    /**
+     * Tries to construct a {@link EncodedPrivateKey} subclass from the textual form. Use the
+     * <code>instanceof</code> operator to determine what type of data was detected.
+     *
+     * @param params expected network this data is valid for, or null if the network should be derived from the
+     *               textual form
+     * @param str    the textual form of the data
+     * @return subclass of {@link EncodedPrivateKey}, containing the data
+     * @throws AddressFormatException              if the given string doesn't parse or the checksum is invalid
+     * @throws AddressFormatException.WrongNetwork if the given string is valid but not for the expected network (eg
+     *                                             testnet vs mainnet)
+     */
+    public static EncodedPrivateKey fromString(@Nullable NetworkParameters params, String str)
+            throws AddressFormatException {
+        try {
+            return DumpedPrivateKey.fromBase58(params, str);
+        } catch (AddressFormatException x) {
+            return BIP38PrivateKey.fromBase58(params, str);
+        }
     }
 
     /**
