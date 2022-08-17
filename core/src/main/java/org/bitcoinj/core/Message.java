@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -356,16 +355,5 @@ public abstract class Message {
     /** Network parameters this message was created with. */
     public NetworkParameters getParams() {
         return params;
-    }
-
-    /**
-     * Set the serializer for this message when deserialized by Java.
-     */
-    private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        if (null != params) {
-            this.serializer = params.getDefaultSerializer();
-        }
     }
 }
