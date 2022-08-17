@@ -24,16 +24,20 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.SigNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 public class SegwitAddressTest {
@@ -90,6 +94,47 @@ public class SegwitAddressTest {
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toBech32());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toString());
+    }
+
+    @Test
+    public void example_p2wpkh_testnet_equality_anomaly() {
+        String bech32 = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
+
+        SegwitAddress a = SegwitAddress.fromBech32(TESTNET, bech32);
+        SegwitAddress b = SegwitAddress.fromBech32(SigNetParams.get(), bech32);
+
+        assertNotEquals(a, b);  // TODO: Passes, but probably shouldn't
+        assertEquals(a.toString(), b.toString());
+    }
+
+    @Test
+    public void example_p2wpkh_regtest() {
+        String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
+
+        SegwitAddress address = SegwitAddress.fromBech32(BitcoinNetwork.REGTEST, bcrt1_bech32);
+
+        assertEquals(RegTestParams.get(), address.getParameters());
+        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
+                ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
+        assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toBech32());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toString());
+    }
+
+    @Test
+    @Ignore("RegTest network not included in Networks.get for 'any-network' call to fromBech32")
+    public void example_p2wpkh_regtest_any_network() {
+        String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
+
+        // TODO: Merge PR #2617, Re-implement string parse using DefaultAddressParser and un-ignore
+        SegwitAddress address = SegwitAddress.fromBech32((Network) null, bcrt1_bech32);
+
+        assertEquals(RegTestParams.get(), address.getParameters());
+        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
+                ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
+        assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toBech32());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toString());
     }
 
     @Test

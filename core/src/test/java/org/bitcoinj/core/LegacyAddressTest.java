@@ -25,6 +25,8 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.Networks;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.SigNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
@@ -40,6 +42,7 @@ import java.util.List;
 
 import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -77,6 +80,19 @@ public class LegacyAddressTest {
 
         LegacyAddress b = LegacyAddress.fromBase58(BitcoinNetwork.MAINNET, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
         assertEquals("4a22c3c4cbb31e4d03b15550636762bda0baf85a", ByteUtils.HEX.encode(b.getHash()));
+    }
+
+    @Test
+    public void equalityAnomaly() {
+        LegacyAddress a = LegacyAddress.fromBase58(TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        LegacyAddress b = LegacyAddress.fromBase58(SigNetParams.get(), "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        LegacyAddress c = LegacyAddress.fromBase58(RegTestParams.get(), "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        assertNotEquals(a, b);  // TODO: Passes, but probably shouldn't
+        assertNotEquals(b, c);  // TODO: Passes, but probably shouldn't
+        assertNotEquals(a, c);  // TODO: Passes, but probably shouldn't
+        assertEquals(a.toString(), b.toString());
+        assertEquals(b.toString(), c.toString());
+        assertEquals(a.toString(), c.toString());
     }
 
     @Test
