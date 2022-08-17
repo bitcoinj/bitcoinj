@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Bech32;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
@@ -69,6 +70,17 @@ public class SegwitAddress extends Address {
         this(network, encode(witnessVersion, witnessProgram));
     }
 
+    private static Network normalizeNetwork(Network network) {
+        // SegwitAddress does not distinguish between the SIGNET and TESTNET, normalize to TESTNET
+        if (network instanceof BitcoinNetwork) {
+            BitcoinNetwork bitcoinNetwork = (BitcoinNetwork) network;
+            if (bitcoinNetwork == BitcoinNetwork.SIGNET) {
+                return BitcoinNetwork.TESTNET;
+            }
+        }
+        return network;
+    }
+
     /**
      * Helper for the above constructor.
      */
@@ -92,7 +104,7 @@ public class SegwitAddress extends Address {
      *             if any of the sanity checks fail
      */
     private SegwitAddress(Network network, byte[] data) throws AddressFormatException {
-        super(network, data);
+        super(normalizeNetwork(network), data);
         if (data.length < 1)
             throw new AddressFormatException.InvalidDataLength("Zero data found");
         final int witnessVersion = getWitnessVersion();

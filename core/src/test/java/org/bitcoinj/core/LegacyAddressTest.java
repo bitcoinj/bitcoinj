@@ -80,6 +80,19 @@ public class LegacyAddressTest {
     }
 
     @Test
+    public void equalityOfEquivalentNetworks() {
+        LegacyAddress a = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        LegacyAddress b = LegacyAddress.fromBase58(BitcoinNetwork.SIGNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        LegacyAddress c = LegacyAddress.fromBase58(BitcoinNetwork.REGTEST, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        assertEquals(a, b);
+        assertEquals(b, c);
+        assertEquals(a, c);
+        assertEquals(a.toString(), b.toString());
+        assertEquals(b.toString(), c.toString());
+        assertEquals(a.toString(), c.toString());
+    }
+
+    @Test
     public void errorPaths() {
         // Check what happens if we try and decode garbage.
         try {

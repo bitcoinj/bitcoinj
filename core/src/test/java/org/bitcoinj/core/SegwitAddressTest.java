@@ -93,6 +93,17 @@ public class SegwitAddressTest {
     }
 
     @Test
+    public void equalityOfEquivalentNetworks() {
+        String bech32 = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
+
+        SegwitAddress a = SegwitAddress.fromBech32(BitcoinNetwork.TESTNET, bech32);
+        SegwitAddress b = SegwitAddress.fromBech32(BitcoinNetwork.SIGNET, bech32);
+
+        assertEquals(a, b);
+        assertEquals(a.toString(), b.toString());
+    }
+
+    @Test
     public void example_p2wsh_testnet() {
         String bech32 = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7";
 
