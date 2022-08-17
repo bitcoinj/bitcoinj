@@ -34,8 +34,8 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -49,8 +49,8 @@ public class PeerMonitor {
     private PeerTableModel peerTableModel;
     private PeerTableRenderer peerTableRenderer;
 
-    private final HashMap<Peer, String> reverseDnsLookups = new HashMap<>();
-    private final HashMap<Peer, AddressMessage> addressMessages = new HashMap<>();
+    private final ConcurrentHashMap<Peer, String> reverseDnsLookups = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Peer, AddressMessage> addressMessages = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
@@ -76,12 +76,8 @@ public class PeerMonitor {
         });
         peerGroup.addDisconnectedEventListener((peer, peerCount) -> {
             refreshUI();
-            synchronized (reverseDnsLookups) {
-                reverseDnsLookups.remove(peer);
-            }
-            synchronized (addressMessages) {
-                addressMessages.remove(peer);
-            }
+            reverseDnsLookups.remove(peer);
+            addressMessages.remove(peer);
         });
     }
 
@@ -89,9 +85,7 @@ public class PeerMonitor {
         new Thread(() -> {
             // This can take a looooong time.
             String reverseDns = peer.getAddress().getAddr().getCanonicalHostName();
-            synchronized (reverseDnsLookups) {
-                reverseDnsLookups.put(peer, reverseDns);
-            }
+            reverseDnsLookups.put(peer, reverseDns);
             refreshUI();
         }).start();
     }
@@ -100,9 +94,7 @@ public class PeerMonitor {
         new Thread(() -> {
             try {
                 AddressMessage addressMessage = peer.getAddr().get(15, TimeUnit.SECONDS);
-                synchronized (addressMessages) {
-                    addressMessages.put(peer, addressMessage);
-                }
+                addressMessages.put(peer, addressMessage);
                 refreshUI();
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 e.printStackTrace();
@@ -262,9 +254,7 @@ public class PeerMonitor {
 
         private Object getAddressForPeer(Peer peer) {
             String s;
-            synchronized (reverseDnsLookups) {
-                s = reverseDnsLookups.get(peer);
-            }
+            s = reverseDnsLookups.get(peer);
             if (s != null)
                 return s;
             else
@@ -272,10 +262,8 @@ public class PeerMonitor {
         }
 
         private String getAddressesForPeer(Peer peer) {
-            synchronized (addressMessages) {
-                AddressMessage addressMessage = addressMessages.get(peer);
-                return addressMessage != null ? addressMessage.toString() : "";
-            }
+            AddressMessage addressMessage = addressMessages.get(peer);
+            return addressMessage != null ? addressMessage.toString() : "";
         }
     }
 
