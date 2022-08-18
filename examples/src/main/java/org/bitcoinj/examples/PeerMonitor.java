@@ -21,6 +21,7 @@ import org.bitcoinj.core.AddressMessage;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
@@ -35,10 +36,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Shows connected peers in a table view, so you can watch as they come and go.
@@ -46,6 +48,7 @@ import java.util.concurrent.TimeoutException;
 public class PeerMonitor {
     private NetworkParameters params;
     private PeerGroup peerGroup;
+    private final Executor reverseDnsThreadPool = Executors.newCachedThreadPool();
     private PeerTableModel peerTableModel;
     private PeerTableRenderer peerTableRenderer;
 
@@ -82,24 +85,34 @@ public class PeerMonitor {
     }
 
     private void lookupReverseDNS(final Peer peer) {
-        new Thread(() -> {
-            // This can take a looooong time.
-            String reverseDns = peer.getAddress().getAddr().getCanonicalHostName();
+        getHostName(peer.getAddress()).thenAccept(reverseDns -> {
             reverseDnsLookups.put(peer, reverseDns);
             refreshUI();
-        }).start();
+        });
     }
 
     private void getAddr(final Peer peer) {
-        new Thread(() -> {
-            try {
-                AddressMessage addressMessage = peer.getAddr().get(15, TimeUnit.SECONDS);
-                addressMessages.put(peer, addressMessage);
-                refreshUI();
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                e.printStackTrace();
-            }
-        }).start();
+        peer.getAddr()
+            .orTimeout(15, TimeUnit.SECONDS)
+            .whenComplete((addressMessage, e) -> {
+                if (addressMessage != null) {
+                    addressMessages.put(peer, addressMessage);
+                    refreshUI();
+                } else {
+                    e.printStackTrace();
+                }
+            });
+    }
+
+    private CompletableFuture<String> getHostName(final PeerAddress peerAddress) {
+        if (peerAddress.getAddr() != null) {
+            // This can take a looooong time.
+            return CompletableFuture.supplyAsync(peerAddress.getAddr()::getCanonicalHostName, reverseDnsThreadPool);
+        } else if (peerAddress.getHostname() != null ){
+            return CompletableFuture.completedFuture(peerAddress.getHostname());
+        }  else {
+            return CompletableFuture.completedFuture("-unavailable-");
+        }
     }
 
     private void refreshUI() {
