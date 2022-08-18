@@ -52,7 +52,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     private final SocketTimeoutTask timeoutTask;
 
     private final MessageSerializer serializer;
-    protected PeerAddress peerAddress;
+    protected final PeerAddress peerAddress;
     // If we close() before we know our writeTarget, set this to true to call writeTarget.closeConnection() right away.
     private boolean closePending = false;
     // writeTarget will be thread-safe, and may call into PeerGroup, which calls us, so we should call it unlocked
