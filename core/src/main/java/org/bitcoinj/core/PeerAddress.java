@@ -46,8 +46,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PeerAddress extends ChildMessage {
-    private InetAddress addr;
-    private String hostname; // Used for .onion addresses
+    private InetAddress addr;   // Used for IPV4, IPV6, null otherwise or if not-yet-parsed
+    private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
     private BigInteger services;
     private long time;
@@ -323,8 +323,11 @@ public class PeerAddress extends ChildMessage {
     public String toString() {
         if (hostname != null) {
             return "[" + hostname + "]:" + port;
+        } else if (addr != null) {
+            return "[" + addr.getHostAddress() + "]:" + port;
+        } else {
+            return "[ PeerAddress of unsupported type ]:" + port;
         }
-        return "[" + addr.getHostAddress() + "]:" + port;
     }
 
     @Override
@@ -332,12 +335,17 @@ public class PeerAddress extends ChildMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PeerAddress other = (PeerAddress) o;
-        return other.addr.equals(addr) && other.port == port && other.services.equals(services);
+        // time is deliberately not included in equals
+        return  Objects.equals(addr, other.addr) &&
+                Objects.equals(hostname, other.hostname) &&
+                port == other.port &&
+                Objects.equals(services, other.services);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(addr, port, services);
+        // time is deliberately not included in hashcode
+        return Objects.hash(addr, hostname, port, services);
     }
     
     public InetSocketAddress toSocketAddress() {
@@ -345,6 +353,7 @@ public class PeerAddress extends ChildMessage {
         if (hostname != null) {
             return InetSocketAddress.createUnresolved(hostname, port);
         } else {
+            // A null addr will create a wildcard InetSocketAddress
             return new InetSocketAddress(addr, port);
         }
     }
