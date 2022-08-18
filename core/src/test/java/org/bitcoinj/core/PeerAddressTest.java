@@ -17,11 +17,14 @@
 
 package org.bitcoinj.core;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -30,6 +33,7 @@ import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(JUnitParamsRunner.class)
 public class PeerAddressTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
@@ -145,5 +149,22 @@ public class PeerAddressTest {
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
         assertEquals(-1, pa2.getTime());
+    }
+
+    @Test
+    @Parameters(method = "deserializeToStringValues")
+    public void deserializeToString(int version, String expectedToString, String hex) {
+        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(version);
+        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(hex), 0, null, serializer);
+
+        assertEquals(expectedToString, pa.toString());
+    }
+
+    private Object[] deserializeToStringValues() {
+        return new Object[]{
+                new Object[]{0, "[10.0.0.1]:8333", "010000000000000000000000000000000000ffff0a000001208d"},
+                new Object[]{0, "[127.0.0.1]:8333", "000000000000000000000000000000000000ffff7f000001208d"},
+                new Object[]{2, "[etj2w3zby7hfaldy34dsuttvjtimywhvqjitk3w75ufprsqe47vr6vyd.onion]:8333", "2b71fd62fd0d04042024d3ab6f21c7ce502c78df072a4e754cd0cc58f58251356edfed0af8ca04e7eb208d"}
+        };
     }
 }
