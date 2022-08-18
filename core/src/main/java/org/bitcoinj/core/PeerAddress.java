@@ -285,7 +285,7 @@ public class PeerAddress extends ChildMessage {
         }
     }
 
-    private byte[] onionChecksum(byte[] pubkey, byte version) {
+    private static byte[] onionChecksum(byte[] pubkey, byte version) {
         if (pubkey.length != 32)
             throw new IllegalArgumentException();
         SHA3.Digest256 digest256 = new SHA3.Digest256();
