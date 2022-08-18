@@ -33,6 +33,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -54,6 +56,28 @@ public class PeerAddress extends ChildMessage {
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = ByteUtils.HEX.decode("fd87d87eeb43");
+
+    // BIP-155 reserved network IDs, see: https://github.com/bitcoin/bips/blob/master/bip-0155.mediawiki
+    private enum NetworkId {
+        IPV4(1),
+        IPV6(2),
+        TORV2(3),
+        TORV3(4),
+        I2P(5),
+        CJDNS(6);
+
+        final int value;
+
+        NetworkId(int value) {
+            this.value = value;
+        }
+
+        static Optional<NetworkId> of(int value) {
+            return Stream.of(values())
+                .filter(id -> id.value == value)
+                .findFirst();
+        }
+    }
 
     /**
      * Construct a peer address from a serialized payload.
@@ -225,35 +249,45 @@ public class PeerAddress extends ChildMessage {
             byte[] addrBytes = readByteArray();
             int addrLen = addrBytes.length;
             length += VarInt.sizeOf(addrLen) + addrLen;
-            if (networkId == 0x01) {
-                // IPv4
-                if (addrLen != 4)
-                    throw new ProtocolException("invalid length of IPv4 address: " + addrLen);
-                addr = getByAddress(addrBytes);
-                hostname = null;
-            } else if (networkId == 0x02) {
-                // IPv6
-                if (addrLen != 16)
-                    throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
-                addr = getByAddress(addrBytes);
-                hostname = null;
-            } else if (networkId == 0x03) {
-                // TORv2
-                if (addrLen != 10)
-                    throw new ProtocolException("invalid length of TORv2 address: " + addrLen);
-                hostname = BASE32.encode(addrBytes) + ".onion";
-                addr = null;
-            } else if (networkId == 0x04) {
-                // TORv3
-                if (addrLen != 32)
-                    throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
-                byte torVersion = 0x03;
-                byte[] onionAddress = new byte[35];
-                System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
-                System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
-                onionAddress[34] = torVersion;
-                hostname = BASE32.encode(onionAddress) + ".onion";
-                addr = null;
+            Optional<NetworkId> id = NetworkId.of(networkId);
+            if (id.isPresent()) {
+                switch(id.get()) {
+                    case IPV4:
+                        if (addrLen != 4)
+                            throw new ProtocolException("invalid length of IPv4 address: " + addrLen);
+                        addr = getByAddress(addrBytes);
+                        hostname = null;
+                        break;
+                    case IPV6:
+                        if (addrLen != 16)
+                            throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
+                        addr = getByAddress(addrBytes);
+                        hostname = null;
+                        break;
+                    case TORV2:
+                        if (addrLen != 10)
+                            throw new ProtocolException("invalid length of TORv2 address: " + addrLen);
+                        hostname = BASE32.encode(addrBytes) + ".onion";
+                        addr = null;
+                        break;
+                    case TORV3:
+                        if (addrLen != 32)
+                            throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
+                        byte torVersion = 0x03;
+                        byte[] onionAddress = new byte[35];
+                        System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
+                        System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
+                        onionAddress[34] = torVersion;
+                        hostname = BASE32.encode(onionAddress) + ".onion";
+                        addr = null;
+                        break;
+                    case I2P:
+                    case CJDNS:
+                        // ignore unimplemented network IDs for now
+                        addr = null;
+                        hostname = null;
+                        break;
+                }
             } else {
                 // ignore unknown network IDs
                 addr = null;
