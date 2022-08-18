@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
@@ -30,7 +32,16 @@ import static org.junit.Assert.assertTrue;
 
 public class PeerAddressTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
-    
+
+    @Test
+    public void equalsContract() {
+        EqualsVerifier.forClass(PeerAddress.class)
+                .suppress(Warning.NONFINAL_FIELDS)
+                .withIgnoredFields("time", "parent", "params", "offset", "cursor", "length", "payload", "recached", "serializer")
+                .usingGetClass()
+                .verify();
+    }
+
     @Test
     public void parse_versionVariant() {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
