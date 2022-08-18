@@ -21,6 +21,7 @@ dependencies {
     testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.10'
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
+    testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
 }
 
 sourceCompatibility = 8
