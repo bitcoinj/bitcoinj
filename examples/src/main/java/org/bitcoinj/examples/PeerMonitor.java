@@ -252,13 +252,11 @@ public class PeerMonitor {
             }
         }
 
-        private Object getAddressForPeer(Peer peer) {
-            String s;
-            s = reverseDnsLookups.get(peer);
-            if (s != null)
-                return s;
-            else
-                return peer.getAddress().getAddr().getHostAddress();
+        private String getAddressForPeer(Peer peer) {
+            String s = reverseDnsLookups.get(peer);
+            return (s != null)
+                ? s
+                : peer.getAddress().getAddr().getHostAddress();
         }
 
         private String getAddressesForPeer(Peer peer) {
