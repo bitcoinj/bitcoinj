@@ -164,7 +164,8 @@ public class PeerAddressTest {
         return new Object[]{
                 new Object[]{0, "[10.0.0.1]:8333", "010000000000000000000000000000000000ffff0a000001208d"},
                 new Object[]{0, "[127.0.0.1]:8333", "000000000000000000000000000000000000ffff7f000001208d"},
-                new Object[]{2, "[etj2w3zby7hfaldy34dsuttvjtimywhvqjitk3w75ufprsqe47vr6vyd.onion]:8333", "2b71fd62fd0d04042024d3ab6f21c7ce502c78df072a4e754cd0cc58f58251356edfed0af8ca04e7eb208d"}
+                new Object[]{2, "[etj2w3zby7hfaldy34dsuttvjtimywhvqjitk3w75ufprsqe47vr6vyd.onion]:8333", "2b71fd62fd0d04042024d3ab6f21c7ce502c78df072a4e754cd0cc58f58251356edfed0af8ca04e7eb208d"},
+                new Object[]{2, "[ PeerAddress of unsupported type ]:8333", "2f29fa62fd0d040610fca6763db6183c48d0d58d902c80e1f2208d"}
         };
     }
 }
