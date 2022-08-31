@@ -39,6 +39,7 @@ import static org.junit.Assert.fail;
 public class SegwitAddressTest {
     private static final MainNetParams MAINNET = MainNetParams.get();
     private static final TestNet3Params TESTNET = TestNet3Params.get();
+    private static final AddressParser addressParser = new DefaultAddressParser();
 
     @Test
     public void equalsContract() {
@@ -120,7 +121,7 @@ public class SegwitAddressTest {
     @Test
     public void validAddresses() {
         for (AddressData valid : VALID_ADDRESSES) {
-            SegwitAddress address = SegwitAddress.fromBech32((Network) null, valid.address);
+            SegwitAddress address = (SegwitAddress) addressParser.parseAddressAnyNetwork(valid.address);
 
             assertEquals(valid.expectedParams, address.getParameters());
             assertEquals(valid.expectedScriptPubKey,
@@ -176,7 +177,7 @@ public class SegwitAddressTest {
     public void invalidAddresses() {
         for (String invalid : INVALID_ADDRESSES) {
             try {
-                SegwitAddress.fromBech32((Network) null, invalid);
+                addressParser.parseAddressAnyNetwork(invalid);
                 fail(invalid);
             } catch (AddressFormatException x) {
                 // expected
@@ -212,17 +213,17 @@ public class SegwitAddressTest {
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBech32_version0_invalidLength() {
-        SegwitAddress.fromBech32((Network) null, "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P");
+        addressParser.parseAddressAnyNetwork("BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P");
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBech32_tooShort() {
-        SegwitAddress.fromBech32((Network) null, "bc1rw5uspcuh");
+        addressParser.parseAddressAnyNetwork("bc1rw5uspcuh");
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBech32_tooLong() {
-        SegwitAddress.fromBech32((Network) null, "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90");
+        addressParser.parseAddressAnyNetwork("bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90");
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
@@ -230,7 +231,7 @@ public class SegwitAddressTest {
         // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
         // (this program is 20 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
         String taprootAddressWith20BytesWitnessProgram = "bc1pqypqzqspqgqsyqgzqypqzqspqgqsyqgzzezy58";
-        SegwitAddress.fromBech32((Network) null, taprootAddressWith20BytesWitnessProgram);
+        SegwitAddress.fromBech32(BitcoinNetwork.MAINNET, taprootAddressWith20BytesWitnessProgram);
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
@@ -238,12 +239,12 @@ public class SegwitAddressTest {
         // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
         // (this program is 40 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
         String taprootAddressWith40BytesWitnessProgram = "bc1p6t0pcqrq3mvedn884lgj9s2cm52xp9vtnlc89cv5x77f5l725rrdjhqrld6m6rza67j62a";
-        SegwitAddress.fromBech32((Network) null, taprootAddressWith40BytesWitnessProgram);
+        SegwitAddress.fromBech32(BitcoinNetwork.MAINNET, taprootAddressWith40BytesWitnessProgram);
     }
 
     @Test(expected = AddressFormatException.InvalidPrefix.class)
     public void fromBech32_invalidHrp() {
-        SegwitAddress.fromBech32((Network) null, "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty");
+        addressParser.parseAddressAnyNetwork("tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty");
     }
 
     @Test(expected = AddressFormatException.WrongNetwork.class)

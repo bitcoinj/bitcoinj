@@ -23,9 +23,9 @@ import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.params.Networks;
 import org.bitcoinj.base.ScriptType;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -169,38 +169,31 @@ public class LegacyAddress extends Address {
     @Deprecated
     public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
-        return fromBase58( (params != null) ? params.network() : null, base58);
+        AddressParser parser = DefaultAddressParser.fromNetworks();
+        return (LegacyAddress) ((params != null)
+                ? parser.parseAddress(base58, params.network())
+                : parser.parseAddressAnyNetwork(base58));
     }
 
     /**
      * Construct a {@link LegacyAddress} from its base58 form.
      *
-     * @param network expected network this address is valid for, or null if the network should be derived from the base58
+     * @param network expected network this address is valid for
      * @param base58 base58-encoded textual form of the address
      * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (eg testnet vs mainnet)
      */
-    public static LegacyAddress fromBase58(@Nullable Network network, String base58)
+    public static LegacyAddress fromBase58(@Nonnull Network network, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
-        NetworkParameters params = (network != null) ? NetworkParameters.of(network) : null;
+        NetworkParameters params = NetworkParameters.of(network);
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
-        if (network == null) {
-            for (NetworkParameters p : Networks.get()) {
-                if (version == p.getAddressHeader())
-                    return new LegacyAddress(p.network(), false, bytes);
-                else if (version == p.getP2SHHeader())
-                    return new LegacyAddress(p.network(), true, bytes);
-            }
-            throw new AddressFormatException.InvalidPrefix("No network found for " + base58);
-        } else {
-            if (version == params.getAddressHeader())
-                return new LegacyAddress(network, false, bytes);
-            else if (version == params.getP2SHHeader())
-                return new LegacyAddress(network, true, bytes);
-            throw new AddressFormatException.WrongNetwork(version);
-        }
+        if (version == params.getAddressHeader())
+            return new LegacyAddress(network, false, bytes);
+        else if (version == params.getP2SHHeader())
+            return new LegacyAddress(network, true, bytes);
+        throw new AddressFormatException.WrongNetwork(version);
     }
 
     /**
@@ -249,7 +242,7 @@ public class LegacyAddress extends Address {
      */
     @Deprecated
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        return NetworkParameters.fromAddress(Address.addressParser.parseAddressAnyNetwork(address));
+        return NetworkParameters.fromAddress(DefaultAddressParser.fromNetworks().parseAddressAnyNetwork(address));
     }
 
     @Override
