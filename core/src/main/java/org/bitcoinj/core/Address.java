@@ -35,7 +35,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * form.
  */
 public abstract class Address implements Comparable<Address> {
-    protected static final AddressParser addressParser = new DefaultAddressParser();
     protected final Network network;
     protected final byte[] bytes;
 
@@ -80,6 +79,7 @@ public abstract class Address implements Comparable<Address> {
     @Deprecated
     public static Address fromString(@Nullable NetworkParameters params, String str)
             throws AddressFormatException {
+        AddressParser addressParser = DefaultAddressParser.fromNetworks();
         return (params != null)
                     ? addressParser.parseAddress(str, params.network())
                     : addressParser.parseAddressAnyNetwork(str);

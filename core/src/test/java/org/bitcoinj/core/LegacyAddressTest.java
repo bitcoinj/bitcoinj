@@ -35,6 +35,7 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -134,14 +135,14 @@ public class LegacyAddressTest {
     }
 
     @Test
-    public void getAltNetwork() {
+    public void getAltNetworkUsingNetworks() {
         // An alternative network
         NetworkParameters altNetParams = new MockAltNetworkParams();
-        // Add new network params
+        // Add new network params, this MODIFIES GLOBAL STATE in `Networks`
         Networks.register(altNetParams);
         try {
             // Check if can parse address
-            Address altAddress = new DefaultAddressParser().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            Address altAddress = DefaultAddressParser.fromNetworks().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             assertEquals(altNetParams.getId(), altAddress.network().id());
             // Check if main network works as before
             Address mainAddress = new DefaultAddressParser().parseAddressAnyNetwork("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
@@ -150,6 +151,40 @@ public class LegacyAddressTest {
             // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
             Networks.unregister(altNetParams);
         }
+        try {
+            DefaultAddressParser.fromNetworks().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            fail();
+        } catch (AddressFormatException e) { }
+    }
+
+    @Test
+    public void getAltNetworkUsingList() {
+        // An alternative network
+        NetworkParameters altNetParams = new MockAltNetworkParams();
+
+        // Create a parser that knows about the new network (this does not modify global state)
+        List<Network> nets = new ArrayList<>(DefaultAddressParser.DEFAULT_NETWORKS_LEGACY);
+        nets.add(altNetParams.network());
+        AddressParser customParser = new DefaultAddressParser(DefaultAddressParser.DEFAULT_NETWORKS_SEGWIT, nets);
+
+        // Unfortunately for NetworkParameters.of() to work properly we still have to modify gobal state
+        Networks.register(altNetParams);
+        try {
+
+            // Check if can parse address
+            Address altAddress = customParser.parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            assertEquals(altNetParams.getId(), altAddress.network().id());
+
+            // Check if main network works with custom parser
+            Address mainAddress = customParser.parseAddressAnyNetwork("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            assertEquals(MAINNET.getId(), mainAddress.network().id());
+
+        } finally {
+            // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
+            Networks.unregister(altNetParams);
+        }
+
+
         try {
             new DefaultAddressParser().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             fail();
@@ -203,7 +238,7 @@ public class LegacyAddressTest {
     @Test
     public void roundtripBase58() {
         String base58 = "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL";
-        assertEquals(base58, LegacyAddress.fromBase58((Network) null, base58).toBase58());
+        assertEquals(base58, LegacyAddress.fromBase58(BitcoinNetwork.MAINNET, base58).toBase58());
     }
 
     @Test

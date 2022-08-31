@@ -22,8 +22,8 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.params.Networks;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
@@ -201,37 +201,33 @@ public class SegwitAddress extends Address {
      * @return constructed address
      * @throws AddressFormatException
      *             if something about the given bech32 address isn't right
-     * @deprecated Use {@link #fromBech32(Network, String)}
+     * @deprecated Use {@link AddressParser#parseAddress(String, Network)} or {@link AddressParser#parseAddressAnyNetwork(String)}
      */
     @Deprecated
     public static SegwitAddress fromBech32(@Nullable NetworkParameters params, String bech32)
             throws AddressFormatException {
-        return fromBech32(params != null ? params.network : null, bech32);
+        AddressParser parser = DefaultAddressParser.fromNetworks();
+        return (SegwitAddress) (params != null
+                ? parser.parseAddress(bech32, params.network())
+                : parser.parseAddressAnyNetwork(bech32)
+        );
     }
 
     /**
      * Construct a {@link SegwitAddress} from its textual form.
      *
-     * @param network expected network this address is valid for, or null if the network should be derived from the bech32
+     * @param network expected network this address is valid for
      * @param bech32 bech32-encoded textual form of the address
      * @return constructed address
      * @throws AddressFormatException if something about the given bech32 address isn't right
      */
-    public static SegwitAddress fromBech32(@Nullable Network network, String bech32)
+    public static SegwitAddress fromBech32(@Nonnull Network network, String bech32)
             throws AddressFormatException {
-        NetworkParameters params = (network != null) ? NetworkParameters.of(network) : null;
+        NetworkParameters params = NetworkParameters.of(network);
         Bech32.Bech32Data bechData = Bech32.decode(bech32);
-        if (network == null) {
-            for (NetworkParameters p : Networks.get()) {
-                if (bechData.hrp.equals(p.getSegwitAddressHrp()))
-                    return fromBechData(p.network(), bechData);
-            }
-            throw new AddressFormatException.InvalidPrefix("No network found for " + bech32);
-        } else {
-            if (bechData.hrp.equals(params.getSegwitAddressHrp()))
-                return fromBechData(network, bechData);
-            throw new AddressFormatException.WrongNetwork(bechData.hrp);
-        }
+        if (bechData.hrp.equals(params.getSegwitAddressHrp()))
+            return fromBechData(network, bechData);
+        throw new AddressFormatException.WrongNetwork(bechData.hrp);
     }
 
     private static SegwitAddress fromBechData(Network network, Bech32.Bech32Data bechData) {
