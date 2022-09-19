@@ -59,17 +59,17 @@ To create a test net wallet file in `~/bitcoinj/bitcoinj-test.wallet`, you would
 mkdir ~/bitcoinj
 ```
 ```
-./wallettool/build/install/wallet-tool/bin/wallet-tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet create
+./wallettool/build/install/wallet-tool/bin/wallet-tool --net=TESTNET --wallet=$HOME/bitcoinj/bitcoinj-test.wallet create
 ```
 
 To sync the newly created wallet in `~/bitcoinj/bitcoinj-test.wallet` with the test net, you would use:
 ```
-./wallettool/build/install/wallet-tool/bin/wallet-tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet sync
+./wallettool/build/install/wallet-tool/bin/wallet-tool --net=TESTNET --wallet=$HOME/bitcoinj/bitcoinj-test.wallet sync
 ```
 
 To dump the state of the wallet in `~/bitcoinj/bitcoinj-test.wallet` with the test net, you would use:
 ```
-./wallettool/build/install/wallet-tool/bin/wallet-tool --net=TEST --wallet=$HOME/bitcoinj/bitcoinj-test.wallet dump
+./wallettool/build/install/wallet-tool/bin/wallet-tool --net=TESTNET --wallet=$HOME/bitcoinj/bitcoinj-test.wallet dump
 ```
 
 NOTE: These instructions are for macOS/Linux, for Windows use the `wallettool/build/install/wallet-tool/bin/wallet-tool.bat` batch file with the equivalent Windows command-line commands and options.
