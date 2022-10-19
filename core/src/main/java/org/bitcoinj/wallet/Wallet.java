@@ -4468,6 +4468,10 @@ public class Wallet extends BaseTaggableObject
         } else if (ScriptPattern.isP2PKH(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script),
                     Script.ScriptType.P2PKH);
+            if (key == null) {
+                key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script),
+                        ScriptType.P2WPKH);
+            }
             return key != null && (key.isEncrypted() || key.hasPrivKey());
         } else if (ScriptPattern.isP2WPKH(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script),
@@ -5198,6 +5202,9 @@ public class Wallet extends BaseTaggableObject
                 Script redeemScript = null;
                 if (ScriptPattern.isP2PKH(script)) {
                     key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), Script.ScriptType.P2PKH);
+                    if (key == null) {
+                        key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), Script.ScriptType.P2WPKH);
+                    }
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 } else if (ScriptPattern.isP2WPKH(script)) {

@@ -313,7 +313,8 @@ public class TransactionOutput extends ChildMessage {
                 return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromP2SH(script));
             else if (ScriptPattern.isP2PKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
-                        Script.ScriptType.P2PKH);
+                        Script.ScriptType.P2PKH) || transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
+                        Script.ScriptType.P2WPKH);
             else if (ScriptPattern.isP2WPKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2WH(script),
                         Script.ScriptType.P2WPKH);
