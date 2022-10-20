@@ -16,19 +16,33 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.utils.*;
-import org.slf4j.*;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.utils.Threading;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
-import java.nio.*;
-import java.nio.channels.*;
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.locks.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 // TODO: Lose the mmap in this class. There are too many platform bugs that require odd workarounds.
 
@@ -159,7 +173,7 @@ public class SPVBlockStore implements BlockStore {
 
     private void initNewStore(NetworkParameters params) throws Exception {
         byte[] header;
-        header = HEADER_MAGIC.getBytes("US-ASCII");
+        header = HEADER_MAGIC.getBytes(StandardCharsets.US_ASCII);
         buffer.put(header);
         // Insert the genesis block.
         lock.lock();
@@ -175,7 +189,7 @@ public class SPVBlockStore implements BlockStore {
     }
 
     /** Returns the size in bytes of the file that is used to store the chain with the current parameters. */
-    public static final int getFileSize(int capacity) {
+    public static int getFileSize(int capacity) {
         return RECORD_SIZE * capacity + FILE_PROLOGUE_BYTES /* extra kilobyte for stuff */;
     }
 

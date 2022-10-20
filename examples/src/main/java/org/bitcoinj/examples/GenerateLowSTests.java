@@ -25,15 +25,15 @@ import java.util.EnumSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.MainNetParams;
@@ -65,7 +65,7 @@ public class GenerateLowSTests {
         final ECKey key = new ECKey(secureRandom);
         final KeyBag bag = new KeyBag() {
             @Override
-            public ECKey findKeyFromPubKeyHash(byte[] pubkeyHash, Script.ScriptType scriptType) {
+            public ECKey findKeyFromPubKeyHash(byte[] pubkeyHash, ScriptType scriptType) {
                 return key;
             }
 
@@ -86,11 +86,11 @@ public class GenerateLowSTests {
 
         final Transaction outputTransaction = new Transaction(params);
         final Transaction inputTransaction = new Transaction(params);
-        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, LegacyAddress.fromKey(params, key));
+        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, key.toAddress(ScriptType.P2PKH, params.network()));
 
         inputTransaction.addOutput(output);
         outputTransaction.addInput(output);
-        outputTransaction.addOutput(Coin.ZERO, LegacyAddress.fromKey(params, new ECKey(secureRandom)));
+        outputTransaction.addOutput(Coin.ZERO, new ECKey(secureRandom).toAddress(ScriptType.P2PKH, params.network()));
 
         addOutputs(outputTransaction, bag);
 
@@ -167,7 +167,7 @@ public class GenerateLowSTests {
                 // Data chunk
                 buf.append("0x")
                     .append(Integer.toString(chunk.opcode, 16)).append(" 0x")
-                    .append(Utils.HEX.encode(chunk.data));
+                    .append(ByteUtils.HEX.encode(chunk.data));
             } else {
                 buf.append(chunk.toString());
             }

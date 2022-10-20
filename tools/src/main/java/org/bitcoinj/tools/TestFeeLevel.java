@@ -16,12 +16,15 @@
 
 package org.bitcoinj.tools;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
 import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 
@@ -33,7 +36,6 @@ import java.util.concurrent.ExecutionException;
  */
 public class TestFeeLevel {
 
-    private static final MainNetParams PARAMS = MainNetParams.get();
     private static final int NUM_OUTPUTS = 2;
     private static WalletAppKit kit;
 
@@ -47,7 +49,7 @@ public class TestFeeLevel {
         Coin feeRateToTest = Coin.valueOf(Long.parseLong(args[0]));
         System.out.println("Fee rate to test is " + feeRateToTest.toFriendlyString() + "/kB");
 
-        kit = new WalletAppKit(PARAMS, new File("."), "testfeelevel");
+        kit = new WalletAppKit(BitcoinNetwork.MAINNET, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "testfeelevel");
         kit.startAsync();
         kit.awaitRunning();
         try {
@@ -74,7 +76,7 @@ public class TestFeeLevel {
 
         Coin value = kit.wallet().getBalance().divide(2); // Keep a chunk for the fee.
         Coin outputValue = value.divide(numOutputs);
-        Transaction transaction = new Transaction(PARAMS);
+        Transaction transaction = new Transaction(kit.params());
         for (int i = 0; i < numOutputs - 1; i++) {
             transaction.addOutput(outputValue, kit.wallet().freshReceiveAddress());
             value = value.subtract(outputValue);

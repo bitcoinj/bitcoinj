@@ -17,6 +17,7 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;

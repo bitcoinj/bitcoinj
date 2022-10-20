@@ -18,6 +18,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -31,6 +33,7 @@ import org.bitcoinj.wallet.WalletTransaction;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +42,11 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.bitcoinj.core.Coin.FIFTY_COINS;
-import static org.junit.Assert.*;
-import org.junit.rules.ExpectedException;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 /**
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
@@ -60,7 +65,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     protected FullPrunedBlockStore store;
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
+    public static void setUpClass() {
         Utils.resetMocking();
         PARAMS = new UnitTestParams() {
             @Override public int getInterval() {
@@ -70,9 +75,9 @@ public abstract class AbstractFullPrunedBlockChainTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         BriefLogFormatter.init();
-        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
+        Context.propagate(new Context(100, Coin.ZERO, false, false));
     }
 
     public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
@@ -183,21 +188,22 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, rollingBlock.getTransactions().get(0).getTxId());
-        byte[] spendableOutputScriptPubKey = rollingBlock.getTransactions().get(0).getOutputs().get(0).getScriptBytes();
+        TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
+        TransactionOutPoint transactionOutPoint = spendableOutput.getOutPointFor();
+        Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
         }
         
         WeakReference<UTXO> out = new WeakReference<>
-                (store.getTransactionOutput(spendableOutput.getHash(), spendableOutput.getIndex()));
+                (store.getTransactionOutput(transactionOutPoint.getHash(), transactionOutPoint.getIndex()));
         rollingBlock = rollingBlock.createNextBlock(null);
         
         Transaction t = new Transaction(PARAMS);
         // Entirely invalid scriptPubKey
         t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[]{}));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        t.addSignedInput(transactionOutPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         
@@ -228,13 +234,12 @@ public abstract class AbstractFullPrunedBlockChainTest {
     
     @Test
     public void testFirst100KBlocks() throws Exception {
-        Context context = new Context(MAINNET);
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(MAINNET, Arrays.asList(blockFile));
         
         store = createStore(MAINNET, 10);
         resetStore(store);
-        chain = new FullPrunedBlockChain(context, store);
+        chain = new FullPrunedBlockChain(MAINNET, store);
         for (Block block : loader)
             chain.add(block);
         try {
@@ -257,8 +262,9 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getTxId());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        TransactionOutput spendableOutput = transaction.getOutput(0);
+        TransactionOutPoint spendableOutputPoint = spendableOutput.getOutPointFor();
+        Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
@@ -268,12 +274,12 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(100000000);
-        Address address = LegacyAddress.fromKey(PARAMS, toKey);
+        Address address = toKey.toAddress(ScriptType.P2PKH, PARAMS.network());
         Coin totalAmount = Coin.ZERO;
 
         Transaction t = new Transaction(PARAMS);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        t.addSignedInput(spendableOutputPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         chain.add(rollingBlock);
@@ -308,8 +314,9 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
-        TransactionOutPoint spendableOutput = new TransactionOutPoint(PARAMS, 0, transaction.getTxId());
-        byte[] spendableOutputScriptPubKey = transaction.getOutputs().get(0).getScriptBytes();
+        TransactionOutput spendableOutput = transaction.getOutput(0);
+        TransactionOutPoint spendableOutPoint = new TransactionOutPoint(PARAMS, 0, transaction.getTxId());
+        Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             chain.add(rollingBlock);
@@ -317,7 +324,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         rollingBlock = rollingBlock.createNextBlock(null);
 
         // Create 1 BTC spend to a key in this wallet (to ourselves).
-        Wallet wallet = Wallet.createDeterministic(PARAMS, Script.ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(PARAMS, ScriptType.P2PKH);
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
@@ -327,7 +334,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         Transaction t = new Transaction(PARAMS);
         t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
-        t.addSignedInput(spendableOutput, new Script(spendableOutputScriptPubKey), outKey);
+        t.addSignedInput(spendableOutPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
         chain.add(rollingBlock);
@@ -335,7 +342,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
-        Address address2 = LegacyAddress.fromKey(PARAMS, toKey2);
+        Address address2 = toKey2.toAddress(ScriptType.P2PKH, PARAMS.network());
         SendRequest req = SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);

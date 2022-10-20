@@ -16,11 +16,12 @@
 
 package org.bitcoinj.utils;
 
-import java.util.Stack;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+
+import java.util.Stack;
 
 /**
  * Caching counter for the block versions within a moving window. This class

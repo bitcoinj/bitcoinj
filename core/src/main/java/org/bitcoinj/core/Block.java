@@ -17,21 +17,35 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.*;
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import org.bitcoinj.params.AbstractBitcoinNetParams;
-import org.bitcoinj.script.*;
-import org.slf4j.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.params.BitcoinNetworkParams;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptOpCodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
-import java.math.*;
-import java.util.*;
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.Sha256Hash.*;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Sha256Hash.hashTwice;
 
 /**
  * <p>A block is a group of transactions, and is one of the fundamental data structures of the Bitcoin system.
@@ -201,10 +215,10 @@ public class Block extends Message {
         this.transactions.addAll(transactions);
     }
 
-    /** @deprecated Use {@link AbstractBitcoinNetParams#getBlockInflation(int)} */
+    /** @deprecated Use {@link BitcoinNetworkParams#getBlockInflation(int)} */
     @Deprecated
     public Coin getBlockInflation(int height) {
-        return ((AbstractBitcoinNetParams) params).getBlockInflation(height);
+        return ((BitcoinNetworkParams) params).getBlockInflation(height);
     }
 
     /**
@@ -273,14 +287,14 @@ public class Block extends Message {
     // A script containing the difficulty bits and the following message:
     //
     //   "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
-    private static final byte[] genesisTxInputScriptBytes = Utils.HEX.decode
+    private static final byte[] genesisTxInputScriptBytes = ByteUtils.HEX.decode
                 ("04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
 
     private static final byte[] genesisTxScriptPubKeyBytes;
     static {
         ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
         try {
-            Script.writeBytes(scriptPubKeyBytes, Utils.HEX.decode
+            Script.writeBytes(scriptPubKeyBytes, ByteUtils.HEX.decode
                     ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
         } catch (IOException e) {
             throw new RuntimeException(e); // Cannot happen.
@@ -304,12 +318,12 @@ public class Block extends Message {
             return;
         }
         // fall back to manual write
-        Utils.uint32ToByteStreamLE(version, stream);
+        ByteUtils.uint32ToByteStreamLE(version, stream);
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
-        Utils.uint32ToByteStreamLE(time, stream);
-        Utils.uint32ToByteStreamLE(difficultyTarget, stream);
-        Utils.uint32ToByteStreamLE(nonce, stream);
+        ByteUtils.uint32ToByteStreamLE(time, stream);
+        ByteUtils.uint32ToByteStreamLE(difficultyTarget, stream);
+        ByteUtils.uint32ToByteStreamLE(nonce, stream);
     }
 
     private void writeTransactions(OutputStream stream) throws IOException {
@@ -495,8 +509,7 @@ public class Block extends Message {
         s.append(" block: \n");
         s.append("   hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
-        String bips = Joiner.on(", ").skipNulls().join(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null,
-                isBIP65() ? "BIP65" : null);
+        String bips = InternalUtils.commaJoin(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null, isBIP65() ? "BIP65" : null);
         if (!bips.isEmpty())
             s.append(" (").append(bips).append(')');
         s.append('\n');
@@ -543,7 +556,7 @@ public class Block extends Message {
      * is thrown.
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
-        BigInteger target = Utils.decodeCompactBits(difficultyTarget);
+        BigInteger target = ByteUtils.decodeCompactBits(difficultyTarget);
         if (target.signum() <= 0 || target.compareTo(params.maxTarget) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
@@ -551,6 +564,10 @@ public class Block extends Message {
 
     /** Returns true if the hash of the block is OK (lower than difficulty target). */
     protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
+        // shortcut for unit-testing
+        if (Context.get().isRelaxProofOfWork())
+            return true;
+
         // This part is key - it is what proves the block was as difficult to make as it claims
         // to be. Note however that in the context of this function, the block can claim to be
         // as difficult as it wants to be .... if somebody was able to take control of our network
@@ -685,9 +702,9 @@ public class Block extends Message {
                 // The right hand node can be the same as the left hand, in the case where we don't have enough
                 // transactions.
                 int right = Math.min(left + 1, levelSize - 1);
-                byte[] leftBytes = Utils.reverseBytes(tree.get(levelOffset + left));
-                byte[] rightBytes = Utils.reverseBytes(tree.get(levelOffset + right));
-                tree.add(Utils.reverseBytes(hashTwice(leftBytes, rightBytes)));
+                byte[] leftBytes = ByteUtils.reverseBytes(tree.get(levelOffset + left));
+                byte[] rightBytes = ByteUtils.reverseBytes(tree.get(levelOffset + right));
+                tree.add(ByteUtils.reverseBytes(hashTwice(leftBytes, rightBytes)));
             }
             // Move to the next level.
             levelOffset += levelSize;
@@ -915,10 +932,10 @@ public class Block extends Message {
         this.hash = null;
     }
 
-    /** Returns an immutable list of transactions held in this block, or null if this object represents just a header. */
+    /** Returns an unmodifiable list of transactions held in this block, or null if this object represents just a header. */
     @Nullable
     public List<Transaction> getTransactions() {
-        return transactions == null ? null : ImmutableList.copyOf(transactions);
+        return transactions == null ? null : Collections.unmodifiableList(transactions);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -993,16 +1010,9 @@ public class Block extends Message {
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
             if (prevOut == null) {
-                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES));
-                // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
-                // but it must be unique to avoid 'different' transactions looking the same.
-                byte[] counter = new byte[32];
-                counter[0] = (byte) txCounter;
-                counter[1] = (byte) (txCounter++ >> 8);
-                input.getOutpoint().setHash(Sha256Hash.wrap(counter));
-            } else {
-                input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
+                prevOut = new TransactionOutPoint(params, 0, nextTestOutPointHash());
             }
+            input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
             t.addInput(input);
             b.addTransaction(t);
         }
@@ -1023,6 +1033,15 @@ public class Block extends Message {
             throw new RuntimeException();
         }
         return b;
+    }
+
+    // Importantly the outpoint hash cannot be zero as that's how we detect a coinbase transaction in isolation
+    // but it must be unique to avoid 'different' transactions looking the same.
+    private Sha256Hash nextTestOutPointHash() {
+        byte[] counter = new byte[32];
+        counter[0] = (byte) txCounter;
+        counter[1] = (byte) (txCounter++ >> 8);
+        return Sha256Hash.wrap(counter);
     }
 
     @VisibleForTesting

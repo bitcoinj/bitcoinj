@@ -17,10 +17,9 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.utils.ByteUtils;
 
 import javax.annotation.Nullable;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +27,15 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.script.ScriptOpCodes.*;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_16;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1NEGATE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.bitcoinj.script.ScriptOpCodes.getOpCodeName;
+import static org.bitcoinj.script.ScriptOpCodes.getPushDataName;
 
 /**
  * A script element that is either a data push (signature, pubkey, etc) or a non-push (logic, numeric, etc) operation.
@@ -113,11 +120,11 @@ public class ScriptChunk {
             } else if (opcode == OP_PUSHDATA2) {
                 checkState(data.length <= 0xFFFF);
                 stream.write(OP_PUSHDATA2);
-                Utils.uint16ToByteStreamLE(data.length, stream);
+                ByteUtils.uint16ToByteStreamLE(data.length, stream);
             } else if (opcode == OP_PUSHDATA4) {
                 checkState(data.length <= Script.MAX_SCRIPT_ELEMENT_SIZE);
                 stream.write(OP_PUSHDATA4);
-                Utils.uint32ToByteStreamLE(data.length, stream);
+                ByteUtils.uint32ToByteStreamLE(data.length, stream);
             } else {
                 throw new RuntimeException("Unimplemented");
             }
@@ -158,7 +165,7 @@ public class ScriptChunk {
     public String toString() {
         if (data == null)
             return getOpCodeName(opcode);
-        return String.format("%s[%s]", getPushDataName(opcode), Utils.HEX.encode(data));
+        return String.format("%s[%s]", getPushDataName(opcode), ByteUtils.HEX.encode(data));
     }
 
     @Override

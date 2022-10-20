@@ -16,8 +16,9 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Joiner;
 import com.google.common.net.InetAddresses;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.internal.InternalUtils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -44,14 +45,12 @@ import java.util.Objects;
 public class VersionMessage extends Message {
 
     /** The version of this library release, as a string. */
-    public static final String BITCOINJ_VERSION = "0.16.1";
+    public static final String BITCOINJ_VERSION = "0.17-SNAPSHOT";
     /** The value that is prepended to the subVer field of this application. */
     public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
 
     /** A service bit that denotes whether the peer has a full copy of the block chain or not. */
     public static final int NODE_NETWORK = 1 << 0;
-    /** A service bit that denotes whether the peer supports the getutxos message or not. */
-    public static final int NODE_GETUTXOS = 1 << 1;
     /** A service bit that denotes whether the peer supports BIP37 bloom filters or not. The service bit is defined in BIP111. */
     public static final int NODE_BLOOM = 1 << 2;
     /** Indicates that a node can be asked for blocks and transactions including witness data. */
@@ -158,24 +157,24 @@ public class VersionMessage extends Message {
 
     @Override
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
-        Utils.uint32ToByteStreamLE(clientVersion, buf);
-        Utils.uint32ToByteStreamLE(localServices, buf);
-        Utils.uint32ToByteStreamLE(localServices >> 32, buf);
-        Utils.uint32ToByteStreamLE(time, buf);
-        Utils.uint32ToByteStreamLE(time >> 32, buf);
+        ByteUtils.uint32ToByteStreamLE(clientVersion, buf);
+        ByteUtils.uint32ToByteStreamLE(localServices, buf);
+        ByteUtils.uint32ToByteStreamLE(localServices >> 32, buf);
+        ByteUtils.uint32ToByteStreamLE(time, buf);
+        ByteUtils.uint32ToByteStreamLE(time >> 32, buf);
         receivingAddr.bitcoinSerializeToStream(buf);
         fromAddr.bitcoinSerializeToStream(buf);
         // Next up is the "local host nonce", this is to detect the case of connecting
         // back to yourself. We don't care about this as we won't be accepting inbound
         // connections.
-        Utils.uint32ToByteStreamLE(0, buf);
-        Utils.uint32ToByteStreamLE(0, buf);
+        ByteUtils.uint32ToByteStreamLE(0, buf);
+        ByteUtils.uint32ToByteStreamLE(0, buf);
         // Now comes subVer.
         byte[] subVerBytes = subVer.getBytes(StandardCharsets.UTF_8);
         buf.write(new VarInt(subVerBytes.length).encode());
         buf.write(subVerBytes);
         // Size of known block chain.
-        Utils.uint32ToByteStreamLE(bestHeight, buf);
+        ByteUtils.uint32ToByteStreamLE(bestHeight, buf);
         if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
             buf.write(relayTxesBeforeFilter ? 1 : 0);
         }
@@ -287,12 +286,6 @@ public class VersionMessage extends Message {
         return false;
     }
 
-    /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
-    public boolean isGetUTXOsSupported() {
-        return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION &&
-                (localServices & NODE_GETUTXOS) == NODE_GETUTXOS;
-    }
-
     /** Returns true if a peer can be asked for blocks and transactions including witness data. */
     public boolean isWitnessSupported() {
         return (localServices & NODE_WITNESS) == NODE_WITNESS;
@@ -317,10 +310,6 @@ public class VersionMessage extends Message {
             strings.add("NETWORK");
             services &= ~NODE_NETWORK;
         }
-        if ((services & NODE_GETUTXOS) == NODE_GETUTXOS) {
-            strings.add("GETUTXOS");
-            services &= ~NODE_GETUTXOS;
-        }
         if ((services & NODE_BLOOM) == NODE_BLOOM) {
             strings.add("BLOOM");
             services &= ~NODE_BLOOM;
@@ -335,6 +324,6 @@ public class VersionMessage extends Message {
         }
         if (services != 0)
             strings.add("remaining: " + Long.toBinaryString(services));
-        return Joiner.on(", ").join(strings);
+        return InternalUtils.joiner(", ").join(strings);
     }
 }

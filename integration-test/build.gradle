@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'eclipse'
+}
+
+dependencies {
+    implementation project(':bitcoinj-core')
+    implementation project(':bitcoinj-examples')
+
+    testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.0"
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.easymock:easymock:4.3'
+    testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.10'
+    testImplementation 'org.hamcrest:hamcrest-library:2.2'
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.0"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.9.0"
+}
+
+sourceCompatibility = 11
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
+compileJava {
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
+test {
+    useJUnitPlatform()
+    exclude 'org/bitcoinj/core/PeerTest*'
+    exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
+}

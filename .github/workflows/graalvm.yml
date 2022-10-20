@@ -1,0 +1,35 @@
+name: GraalVM Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+        java: [ 'java17' ]
+        graalvm: [ '22.1.0' ]
+        gradle: ['7.4.2']
+      fail-fast: false
+    name: ${{ matrix.os }} JDK ${{ matrix.graalvm }}.${{ matrix.java }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v1
+      - name: Set up GraalVM
+        uses: DeLaGuardo/setup-graalvm@4.0
+        with:
+          graalvm: ${{ matrix.graalvm }}
+          java: ${{ matrix.java }}
+      - name: Install native-image plugin
+        run: gu install native-image
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@v1
+        with:
+          gradle-version: ${{ matrix.gradle }}
+          arguments: test nativeCompile --info --stacktrace
+      - name: Upload wallet-tool as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: wallet-tool-${{ matrix.os }}
+          path: wallettool/build/native/nativeCompile/wallet-tool

@@ -16,15 +16,14 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionBroadcast;
+import org.bitcoinj.core.TransactionBroadcaster;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
-
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -40,16 +39,16 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
 
     public static class TxFuturePair {
         public final Transaction tx;
-        public final SettableFuture<Transaction> future;
+        public final CompletableFuture<Transaction> future;
 
-        public TxFuturePair(Transaction tx, SettableFuture<Transaction> future) {
+        public TxFuturePair(Transaction tx, CompletableFuture<Transaction> future) {
             this.tx = tx;
             this.future = future;
         }
 
         /** Tells the broadcasting code that the broadcast was a success, just does future.set(tx) */
         public void succeed() {
-            future.set(tx);
+            future.complete(tx);
         }
     }
 
@@ -74,22 +73,17 @@ public class MockTransactionBroadcaster implements TransactionBroadcaster {
         // Use a lock just to catch lock ordering inversions e.g. wallet->broadcaster.
         lock.lock();
         try {
-            SettableFuture<Transaction> result = SettableFuture.create();
+            CompletableFuture<Transaction> result = new CompletableFuture<>();
             broadcasts.put(new TxFuturePair(tx, result));
-            Futures.addCallback(result, new FutureCallback<Transaction>() {
-                @Override
-                public void onSuccess(Transaction result) {
+            result.whenComplete((transaction, t) -> {
+                if (transaction != null) {
                     try {
-                        wallet.receivePending(result, null);
+                        wallet.receivePending(transaction, null);
                     } catch (VerificationException e) {
                         throw new RuntimeException(e);
                     }
                 }
-
-                @Override
-                public void onFailure(Throwable t) {
-                }
-            }, MoreExecutors.directExecutor());
+            });
             return TransactionBroadcast.createMockBroadcast(tx, result);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);

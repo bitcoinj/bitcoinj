@@ -17,9 +17,11 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
@@ -28,13 +30,16 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.valueOf;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ParseByteCacheTest {
     private static final int BLOCK_HEIGHT_GENESIS = 0;
@@ -76,39 +81,39 @@ public class ParseByteCacheTest {
     private byte[] tx2Bytes;
     private byte[] tx2BytesWithHeader;
 
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(UNITTEST);
+        blockStore = new MemoryBlockStore(TESTNET);
     }
     
     @Before
     public void setUp() throws Exception {
         Utils.setMockClock(); // Use mock clock
-        Context context = new Context(UNITTEST);
-        Wallet wallet = Wallet.createDeterministic(context, Script.ScriptType.P2PKH);
+        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         wallet.freshReceiveKey();
 
         resetBlockStore();
         
-        Transaction tx1 = createFakeTx(UNITTEST,
+        Transaction tx1 = createFakeTx(TESTNET,
                 valueOf(2, 0),
-                LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey()));
+                wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         
         // add a second input so can test granularity of byte cache.
-        Transaction prevTx = new Transaction(UNITTEST);
-        TransactionOutput prevOut = new TransactionOutput(UNITTEST, prevTx, COIN, LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey()));
+        Transaction prevTx = new Transaction(TESTNET);
+        TransactionOutput prevOut = new TransactionOutput(TESTNET, prevTx, COIN, wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);
         
-        Transaction tx2 = createFakeTx(UNITTEST, COIN,
-                LegacyAddress.fromKey(UNITTEST, new ECKey()));
+        Transaction tx2 = createFakeTx(TESTNET, COIN,
+                new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 
-        MessageSerializer bs = UNITTEST.getDefaultSerializer();
+        MessageSerializer bs = TESTNET.getDefaultSerializer();
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bs.serialize(tx1, bos);
@@ -143,15 +148,15 @@ public class ParseByteCacheTest {
     @Test
     public void testTransactionsRetain() throws Exception {
         testTransaction(MAINNET, txMessage, false, true);
-        testTransaction(UNITTEST, tx1BytesWithHeader, false, true);
-        testTransaction(UNITTEST, tx2BytesWithHeader, false, true);
+        testTransaction(TESTNET, tx1BytesWithHeader, false, true);
+        testTransaction(TESTNET, tx2BytesWithHeader, false, true);
     }
     
     @Test
     public void testTransactionsNoRetain() throws Exception {
         testTransaction(MAINNET, txMessage, false, false);
-        testTransaction(UNITTEST, tx1BytesWithHeader, false, false);
-        testTransaction(UNITTEST, tx2BytesWithHeader, false, false);
+        testTransaction(TESTNET, tx1BytesWithHeader, false, false);
+        testTransaction(TESTNET, tx2BytesWithHeader, false, false);
     }
 
     @Test
@@ -163,10 +168,10 @@ public class ParseByteCacheTest {
     public void testBlock(byte[] blockBytes, boolean isChild, boolean retain) throws Exception {
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer bsRef = UNITTEST.getSerializer(false);
+        MessageSerializer bsRef = TESTNET.getSerializer(false);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
-        BitcoinSerializer bs = UNITTEST.getSerializer(retain);
+        BitcoinSerializer bs = TESTNET.getSerializer(retain);
         Block b1;
         Block bRef;
         b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
@@ -446,8 +451,8 @@ public class ParseByteCacheTest {
         if (sup.length < sub.length)
             return false;       
         
-        String superstring = Utils.HEX.encode(sup);
-        String substring = Utils.HEX.encode(sub);
+        String superstring = ByteUtils.HEX.encode(sup);
+        String substring = ByteUtils.HEX.encode(sub);
         
         int ind = superstring.indexOf(substring);
         

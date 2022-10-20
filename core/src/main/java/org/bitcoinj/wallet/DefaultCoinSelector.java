@@ -16,15 +16,18 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.NetworkParameters;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.math.LongMath;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import com.google.common.annotations.VisibleForTesting;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class implements a {@link CoinSelector} which attempts to get the highest priority
@@ -43,8 +46,8 @@ public class DefaultCoinSelector implements CoinSelector {
         ArrayList<TransactionOutput> sortedOutputs = new ArrayList<>(candidates);
         // When calculating the wallet balance, we may be asked to select all possible coins, if so, avoid sorting
         // them in order to improve performance.
-        // TODO: Take in network parameters when instanatiated, and then test against the current network. Or just have a boolean parameter for "give me everything"
-        if (!target.equals(NetworkParameters.MAX_MONEY)) {
+        // TODO: Take in network parameters when instantiated, and then test against the current network. Or just have a boolean parameter for "give me everything"
+        if (!target.equals(BitcoinNetwork.MAX_MONEY)) {
             sortOutputs(sortedOutputs);
         }
         // Now iterate over the sorted outputs until we have got as close to the target as possible or a little
@@ -55,33 +58,30 @@ public class DefaultCoinSelector implements CoinSelector {
             // Only pick chain-included transactions, or transactions that are ours and pending.
             if (!shouldSelect(output.getParentTransaction())) continue;
             selected.add(output);
-            total += output.getValue().value;
+            total = LongMath.checkedAdd(total, output.getValue().value);
         }
         // Total may be lower than target here, if the given candidates were insufficient to create to requested
         // transaction.
-        return new CoinSelection(Coin.valueOf(total), selected);
+        return new CoinSelection(selected);
     }
 
     @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
-        Collections.sort(outputs, new Comparator<TransactionOutput>() {
-            @Override
-            public int compare(TransactionOutput a, TransactionOutput b) {
-                int depth1 = a.getParentTransactionDepthInBlocks();
-                int depth2 = b.getParentTransactionDepthInBlocks();
-                Coin aValue = a.getValue();
-                Coin bValue = b.getValue();
-                BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));
-                BigInteger bCoinDepth = BigInteger.valueOf(bValue.value).multiply(BigInteger.valueOf(depth2));
-                int c1 = bCoinDepth.compareTo(aCoinDepth);
-                if (c1 != 0) return c1;
-                // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.
-                int c2 = bValue.compareTo(aValue);
-                if (c2 != 0) return c2;
-                // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
-                BigInteger aHash = a.getParentTransactionHash().toBigInteger();
-                BigInteger bHash = b.getParentTransactionHash().toBigInteger();
-                return aHash.compareTo(bHash);
-            }
+        Collections.sort(outputs, (a, b) -> {
+            int depth1 = a.getParentTransactionDepthInBlocks();
+            int depth2 = b.getParentTransactionDepthInBlocks();
+            Coin aValue = a.getValue();
+            Coin bValue = b.getValue();
+            BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));
+            BigInteger bCoinDepth = BigInteger.valueOf(bValue.value).multiply(BigInteger.valueOf(depth2));
+            int c1 = bCoinDepth.compareTo(aCoinDepth);
+            if (c1 != 0) return c1;
+            // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.
+            int c2 = bValue.compareTo(aValue);
+            if (c2 != 0) return c2;
+            // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
+            BigInteger aHash = a.getParentTransactionHash().toBigInteger();
+            BigInteger bHash = b.getParentTransactionHash().toBigInteger();
+            return aHash.compareTo(bHash);
         });
     }
 
@@ -102,7 +102,7 @@ public class DefaultCoinSelector implements CoinSelector {
                type.equals(TransactionConfidence.ConfidenceType.PENDING) &&
                confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
                // In regtest mode we expect to have only one peer, so we won't see transactions propagate.
-               (confidence.numBroadcastPeers() > 0 || tx.getParams().getId().equals(NetworkParameters.ID_REGTEST));
+               (confidence.numBroadcastPeers() > 0 || tx.getParams().network() == BitcoinNetwork.REGTEST);
     }
 
     private static DefaultCoinSelector instance;

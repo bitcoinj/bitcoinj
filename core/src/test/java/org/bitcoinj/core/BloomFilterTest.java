@@ -17,15 +17,17 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Test;
 
-import java.util.Arrays;
-
-import static org.bitcoinj.core.Utils.HEX;
-import static org.junit.Assert.*;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class BloomFilterTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
@@ -69,12 +71,12 @@ public class BloomFilterTest {
     }
 
     @Test
-    public void walletTest() throws Exception {
-        Context.propagate(new Context(MAINNET));
+    public void walletTest() {
+        Context.propagate(new Context());
 
-        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(MAINNET, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
+        DumpedPrivateKey privKey = DumpedPrivateKey.fromBase58(BitcoinNetwork.MAINNET, "5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C");
 
-        Address addr = LegacyAddress.fromKey(MAINNET, privKey.getKey());
+        Address addr = privKey.getKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.MAINNET);
         assertEquals("17Wx1GQfyPTNWpQMHrTwRSMTCAonSiZx9e", addr.toString());
 
         KeyChainGroup group = KeyChainGroup.builder(MAINNET).build();

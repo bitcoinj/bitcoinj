@@ -16,20 +16,20 @@
 
 package org.bitcoinj.utils;
 
-import static org.bitcoinj.utils.BtcFormat.COIN_SCALE;
-import static org.bitcoinj.utils.BtcFormat.MICROCOIN_SCALE;
-import static org.bitcoinj.utils.BtcFormat.MILLICOIN_SCALE;
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import static org.bitcoinj.utils.BtcFormat.COIN_SCALE;
+import static org.bitcoinj.utils.BtcFormat.MICROCOIN_SCALE;
+import static org.bitcoinj.utils.BtcFormat.MILLICOIN_SCALE;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public class BtcFixedFormatTest {

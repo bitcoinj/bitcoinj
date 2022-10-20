@@ -16,21 +16,12 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.utils.BtcAutoFormat.Style;
-import static org.bitcoinj.utils.BtcAutoFormat.Style.*;
-
-import org.bitcoinj.core.Coin;
-import java.util.Objects;
-import com.google.common.collect.ImmutableList;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import com.google.common.base.Strings;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.utils.BtcAutoFormat.Style;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
-import static java.math.RoundingMode.HALF_UP;
-
 import java.text.AttributedCharacterIterator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -39,12 +30,20 @@ import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
-
-import java.util.Locale;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static java.math.RoundingMode.HALF_UP;
+import static org.bitcoinj.utils.BtcAutoFormat.Style.CODE;
+import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;
 
 /**
  * <p>Instances of this class format and parse locale-specific numerical
@@ -680,7 +679,7 @@ public abstract class BtcFormat extends Format {
          *  <p>Note that by applying a pattern you override the configured formatting style of
          *  {@link BtcAutoFormat} instances.  */
         public Builder pattern(String val) {
-            if (localizedPattern != "")
+            if (!Strings.isNullOrEmpty(localizedPattern))
                 throw new IllegalStateException("You cannot invoke both pattern() and localizedPattern()");
             pattern = val;
             return this;
@@ -714,7 +713,7 @@ public abstract class BtcFormat extends Format {
          *  <p>Note that by applying a pattern you override the configured formatting style of
          *  {@link BtcAutoFormat} instances.         */
         public Builder localizedPattern(String val) {
-            if (pattern != "")
+            if (!Strings.isNullOrEmpty(pattern))
                 throw new IllegalStateException("You cannot invoke both pattern() and localizedPattern().");
             localizedPattern = val;
             return this;
@@ -724,16 +723,16 @@ public abstract class BtcFormat extends Format {
          *  to the state of this {@code Builder} instance at the time this method is invoked. */
         public BtcFormat build() {
             BtcFormat f = variant.newInstance(this);
-            if (symbol != "" || code != "") { synchronized(f.numberFormat) {
+            if (!Strings.isNullOrEmpty(symbol) || !Strings.isNullOrEmpty(code)) { synchronized(f.numberFormat) {
                 DecimalFormatSymbols defaultSigns = f.numberFormat.getDecimalFormatSymbols();
                 setSymbolAndCode(f.numberFormat,
-                    symbol != "" ? symbol : defaultSigns.getCurrencySymbol(),
-                    code != "" ? code : defaultSigns.getInternationalCurrencySymbol()
+                        !Strings.isNullOrEmpty(symbol) ? symbol : defaultSigns.getCurrencySymbol(),
+                        !Strings.isNullOrEmpty(code) ? code : defaultSigns.getInternationalCurrencySymbol()
                 );
             }}
-            if (localizedPattern != "" || pattern != "") {
+            if (!Strings.isNullOrEmpty(localizedPattern) || !Strings.isNullOrEmpty(pattern)) {
                 int places = f.numberFormat.getMinimumFractionDigits();
-                if (localizedPattern != "") f.numberFormat.applyLocalizedPattern(negify(localizedPattern));
+                if (!Strings.isNullOrEmpty(localizedPattern)) f.numberFormat.applyLocalizedPattern(negify(localizedPattern));
                 else f.numberFormat.applyPattern(negify(pattern));
                 f.numberFormat.setMinimumFractionDigits(places);
                 f.numberFormat.setMaximumFractionDigits(places);
@@ -1235,11 +1234,13 @@ public abstract class BtcFormat extends Format {
     /** Sets the number of fractional decimal places to be displayed on the given
      *  NumberFormat object to the value of the given integer.
      *  @return The minimum and maximum fractional places settings that the
-     *          formatter had before this change, as an ImmutableList. */
-    private static ImmutableList<Integer> setFormatterDigits(DecimalFormat formatter, int min, int max) {
-        ImmutableList<Integer> ante = ImmutableList.of(
-            formatter.getMinimumFractionDigits(),
-            formatter.getMaximumFractionDigits()
+     *          formatter had before this change, as an unmodifiable List. */
+    private static List<Integer> setFormatterDigits(DecimalFormat formatter, int min, int max) {
+        List<Integer> ante = Collections.unmodifiableList(
+            Arrays.asList(
+                formatter.getMinimumFractionDigits(),
+                formatter.getMaximumFractionDigits()
+            )
         );
         formatter.setMinimumFractionDigits(min);
         formatter.setMaximumFractionDigits(max);
@@ -1308,7 +1309,7 @@ public abstract class BtcFormat extends Format {
     @Override
     public final Object parseObject(String source, ParsePosition pos) { return parse(source, pos); }
 
-    private class ScaleMatcher {
+    private static class ScaleMatcher {
         public Pattern pattern;
         public int scale;
         ScaleMatcher(Pattern p, int s) { pattern = p; scale = s; }

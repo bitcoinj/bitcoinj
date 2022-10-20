@@ -16,17 +16,18 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 
 import java.io.File;
 
-import static org.bitcoinj.core.Coin.*;
+import static org.bitcoinj.base.Coin.*;
 
 /**
  * This is a little test app that waits for a coin on a local regtest node, then  generates two transactions that double
@@ -36,8 +37,7 @@ import static org.bitcoinj.core.Coin.*;
 public class DoubleSpend {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        final RegTestParams params = RegTestParams.get();
-        WalletAppKit kit = new WalletAppKit(params, new File("."), "doublespend");
+        WalletAppKit kit = new WalletAppKit(BitcoinNetwork.REGTEST, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
         kit.connectToLocalHost();
         kit.setAutoSave(false);
         kit.startAsync();
@@ -46,8 +46,9 @@ public class DoubleSpend {
         System.out.println(kit.wallet());
 
         kit.wallet().getBalanceFuture(COIN, Wallet.BalanceType.AVAILABLE).get();
-        Transaction tx1 = kit.wallet().createSend(LegacyAddress.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT);
-        Transaction tx2 = kit.wallet().createSend(LegacyAddress.fromBase58(params, "muYPFNCv7KQEG2ZLM7Z3y96kJnNyXJ53wm"), CENT.add(SATOSHI.multiply(10)));
+        Address destinationAddress = kit.wallet().parseAddress("bcrt1qsmf9envp5dphlu6my2tpwfmce0793jvpvlg5ez");
+        Transaction tx1 = kit.wallet().createSend(destinationAddress, CENT);
+        Transaction tx2 = kit.wallet().createSend(destinationAddress, CENT.add(SATOSHI.multiply(10)));
         final Peer peer = kit.peerGroup().getConnectedPeers().get(0);
         peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD,
                 (peer1, m) -> {

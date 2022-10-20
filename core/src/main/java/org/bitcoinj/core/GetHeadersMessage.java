@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+
 /**
  * <p>The "getheaders" command is structurally identical to "getblocks", but has different meaning. On receiving this
  * message a Bitcoin node returns matching blocks up to the limit, but without the bodies. It is useful as an

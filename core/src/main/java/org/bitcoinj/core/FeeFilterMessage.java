@@ -16,6 +16,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.utils.ByteUtils;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -38,7 +41,7 @@ public class FeeFilterMessage extends Message {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         super.bitcoinSerializeToStream(stream);
-        Utils.uint64ToByteStreamLE(BigInteger.valueOf(feeRate.value), stream);
+        ByteUtils.uint64ToByteStreamLE(BigInteger.valueOf(feeRate.value), stream);
     }
 
     @Override

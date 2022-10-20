@@ -21,26 +21,26 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.Utils;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
+import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * <p>An implementation of {@link AbstractPeerDataEventListener} that listens to chain download events and tracks progress
+ * <p>An implementation of {@link BlockchainDownloadEventListener} that listens to chain download events and tracks progress
  * as a percentage. The default implementation prints progress to stdout, but you can subclass it and override the
  * progress method to update a GUI instead.</p>
  */
-public class DownloadProgressTracker extends AbstractPeerDataEventListener {
+public class DownloadProgressTracker implements BlockchainDownloadEventListener {
     private static final Logger log = LoggerFactory.getLogger(DownloadProgressTracker.class);
     private int originalBlocksLeft = -1;
     private int lastPercent = 0;
-    private SettableFuture<Long> future = SettableFuture.create();
+    private final CompletableFuture<Long> future = new CompletableFuture<>();
     private boolean caughtUp = false;
 
     @Override
@@ -55,7 +55,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
             log.info("Chain download switched to {}", peer);
         if (blocksLeft == 0) {
             doneDownload();
-            future.set(peer.getBestHeight());
+            future.complete(peer.getBestHeight());
         }
     }
 
@@ -71,7 +71,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
                 progress(lastPercent, blocksLeft, new Date(block.getTimeSeconds() * 1000));
             }
             doneDownload();
-            future.set(peer.getBestHeight());
+            future.complete(peer.getBestHeight());
             return;
         }
 
@@ -127,7 +127,7 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
      * Returns a listenable future that completes with the height of the best chain (as reported by the peer) once chain
      * download seems to be finished.
      */
-    public ListenableFuture<Long> getFuture() {
-        return future;
+    public ListenableCompletableFuture<Long> getFuture() {
+        return ListenableCompletableFuture.of(future);
     }
 }

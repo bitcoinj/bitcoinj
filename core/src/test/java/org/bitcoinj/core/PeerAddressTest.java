@@ -17,21 +17,37 @@
 
 package org.bitcoinj.core;
 
-import static org.bitcoinj.core.Utils.HEX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.params.MainNetParams;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
 
-import org.bitcoinj.params.MainNetParams;
-import org.junit.Test;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+@RunWith(JUnitParamsRunner.class)
 public class PeerAddressTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
-    
+
     @Test
-    public void parse_versionVariant() throws Exception {
+    public void equalsContract() {
+        EqualsVerifier.forClass(PeerAddress.class)
+                .suppress(Warning.NONFINAL_FIELDS)
+                .withIgnoredFields("time", "parent", "params", "offset", "cursor", "length", "payload", "recached", "serializer")
+                .usingGetClass()
+                .verify();
+    }
+
+    @Test
+    public void parse_versionVariant() {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
         String hex = "010000000000000000000000000000000000ffff0a000001208d";
@@ -48,7 +64,7 @@ public class PeerAddressTest {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, BigInteger.ZERO,
                 serializer);
-        assertEquals("000000000000000000000000000000000000ffff7f000001208d", Utils.HEX.encode(pa.bitcoinSerialize()));
+        assertEquals("000000000000000000000000000000000000ffff7f000001208d", ByteUtils.HEX.encode(pa.bitcoinSerialize()));
         assertEquals(26, pa.length);
     }
 
@@ -133,5 +149,23 @@ public class PeerAddressTest {
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
         assertEquals(-1, pa2.getTime());
+    }
+
+    @Test
+    @Parameters(method = "deserializeToStringValues")
+    public void deserializeToString(int version, String expectedToString, String hex) {
+        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(version);
+        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(hex), 0, null, serializer);
+
+        assertEquals(expectedToString, pa.toString());
+    }
+
+    private Object[] deserializeToStringValues() {
+        return new Object[]{
+                new Object[]{0, "[10.0.0.1]:8333", "010000000000000000000000000000000000ffff0a000001208d"},
+                new Object[]{0, "[127.0.0.1]:8333", "000000000000000000000000000000000000ffff7f000001208d"},
+                new Object[]{2, "[etj2w3zby7hfaldy34dsuttvjtimywhvqjitk3w75ufprsqe47vr6vyd.onion]:8333", "2b71fd62fd0d04042024d3ab6f21c7ce502c78df072a4e754cd0cc58f58251356edfed0af8ca04e7eb208d"},
+                new Object[]{2, "[ PeerAddress of unsupported type ]:8333", "2f29fa62fd0d040610fca6763db6183c48d0d58d902c80e1f2208d"}
+        };
     }
 }

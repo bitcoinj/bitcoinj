@@ -16,27 +16,51 @@
 
 package org.bitcoinj.core;
 
-import javax.annotation.Nullable;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.exceptions.AddressFormatException;
 
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.ScriptType;
+import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Base class for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
  * <p>
- * Use {@link #fromString(NetworkParameters, String)} to conveniently construct any kind of address from its textual
+ * Use an implementation of {@link AddressParser#parseAddress(String, Network)} to conveniently construct any kind of address from its textual
  * form.
  */
-public abstract class Address extends PrefixedChecksummedBytes implements Comparable<Address> {
+public abstract class Address implements Comparable<Address> {
+    protected static final AddressParser addressParser = new DefaultAddressParser();
+    protected final Network network;
+    protected final byte[] bytes;
 
     /**
      * Construct an address from its binary form.
      *
      * @param params the network this address is valid for
      * @param bytes the binary address data
+     * @deprecated Use {@link Address#Address(Network, byte[])}
      */
+    @Deprecated
     protected Address(NetworkParameters params, byte[] bytes) {
-        super(params, bytes);
+        this.network = checkNotNull(params).network();
+        this.bytes = checkNotNull(bytes);
+    }
+
+    /**
+     * Construct an address from its binary form.
+     *
+     * @param network the network this address is valid for
+     * @param bytes the binary address data
+     */
+    protected Address(Network network, byte[] bytes) {
+        this.network = checkNotNull(network);
+        this.bytes = checkNotNull(bytes);
     }
 
     /**
@@ -51,22 +75,14 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      *             if the given string doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
      *             if the given string is valid but not for the expected network (eg testnet vs mainnet)
+     * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String, Network)}
      */
+    @Deprecated
     public static Address fromString(@Nullable NetworkParameters params, String str)
             throws AddressFormatException {
-        try {
-            return LegacyAddress.fromBase58(params, str);
-        } catch (AddressFormatException.WrongNetwork x) {
-            throw x;
-        } catch (AddressFormatException x) {
-            try {
-                return SegwitAddress.fromBech32(params, str);
-            } catch (AddressFormatException.WrongNetwork x2) {
-                throw x;
-            } catch (AddressFormatException x2) {
-                throw new AddressFormatException(str);
-            }
-        }
+        return (params != null)
+                    ? addressParser.parseAddress(str, params.network())
+                    : addressParser.parseAddressAnyNetwork(str);
     }
 
     /**
@@ -79,14 +95,33 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
      * @param outputScriptType
      *            script type the address should use
      * @return constructed address
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
      */
+    @Deprecated
     public static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
-        if (outputScriptType == Script.ScriptType.P2PKH)
-            return LegacyAddress.fromKey(params, key);
-        else if (outputScriptType == Script.ScriptType.P2WPKH)
-            return SegwitAddress.fromKey(params, key);
-        else
-            throw new IllegalArgumentException(outputScriptType.toString());
+        return key.toAddress(outputScriptType, params.network());
+    }
+
+    /**
+     * @return network this data is valid for
+     * @deprecated Use {@link #network()}
+     */
+    @Deprecated
+    public final NetworkParameters getParameters() {
+        return NetworkParameters.of(network);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(network, Arrays.hashCode(bytes));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Address other = (Address) o;
+        return this.network == other.network && Arrays.equals(this.bytes, other.bytes);
     }
 
     /**
@@ -106,13 +141,13 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
     /**
      * Comparison field order for addresses is:
      * <ol>
-     *     <li>{@link NetworkParameters#getId()}</li>
+     *     <li>{@link Network#id()}</li>
      *     <li>Legacy vs. Segwit</li>
      *     <li>(Legacy only) Version byte</li>
      *     <li>remaining {@code bytes}</li>
      * </ol>
      * <p>
-     * Implementations may use {@code compareAddressPartial} for tests 1 and 2.
+     * Implementations use {@link Address#PARTIAL_ADDRESS_COMPARATOR} for tests 1 and 2.
      *
      * @param o other {@code Address} object
      * @return comparison result
@@ -121,25 +156,29 @@ public abstract class Address extends PrefixedChecksummedBytes implements Compar
     abstract public int compareTo(Address o);
 
     /**
+     * Get the network this address works on. Use of {@link BitcoinNetwork} is preferred to use of {@link NetworkParameters}
+     * when you need to know what network an address is for.
+     * @return the Network.
+     */
+    public Network network() {
+        return network;
+    }
+
+    /**
      * Comparator for the first two comparison fields in {@code Address} comparisons, see {@link Address#compareTo(Address)}.
      * Used by {@link LegacyAddress#compareTo(Address)} and {@link SegwitAddress#compareTo(Address)}.
-     *
-     * @param o other {@code Address} object
-     * @return comparison result
      */
-    protected int compareAddressPartial(Address o) {
-        // First compare netParams
-        int result = this.params.getId().compareTo(o.params.getId());
-        if (result != 0) return result;
+    protected static final Comparator<Address> PARTIAL_ADDRESS_COMPARATOR = Comparator
+        .comparing((Address a) -> a.network.id())   // First compare network
+        .thenComparing(Address::compareTypes);      // Then compare address type (subclass)
 
-        // Then compare Legacy vs Segwit
-        if (this instanceof LegacyAddress && o instanceof SegwitAddress) {
+    private static int compareTypes(Address a, Address b) {
+        if (a instanceof LegacyAddress && b instanceof SegwitAddress) {
             return -1;  // Legacy addresses (starting with 1 or 3) come before Segwit addresses.
-        } else if (this instanceof SegwitAddress && o instanceof LegacyAddress) {
+        } else if (a instanceof SegwitAddress && b instanceof LegacyAddress) {
             return 1;
         } else {
-            // If both are the same type, then compareTo for that type will finish the comparison
-            return 0;
+            return 0;   // Both are the same type: additional `thenComparing()` lambda(s) for that type must finish the comparison
         }
     }
 }

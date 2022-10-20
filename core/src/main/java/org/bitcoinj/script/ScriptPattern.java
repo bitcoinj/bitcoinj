@@ -17,17 +17,25 @@
 
 package org.bitcoinj.script;
 
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.SegwitAddress;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.Sha256Hash;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.bitcoinj.script.Script.decodeFromOpN;
-import static org.bitcoinj.script.ScriptOpCodes.*;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_16;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUALVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_HASH160;
 
 /**
  * This is a Script pattern matcher with some typical script patterns
@@ -253,7 +261,7 @@ public class ScriptPattern {
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
     }
 
-    private static final byte[] SEGWIT_COMMITMENT_HEADER = Utils.HEX.decode("aa21a9ed");
+    private static final byte[] SEGWIT_COMMITMENT_HEADER = ByteUtils.HEX.decode("aa21a9ed");
 
     /**
      * Returns whether this script matches the pattern for a segwit commitment (in an output of the coinbase

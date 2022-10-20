@@ -17,15 +17,16 @@
 
 package org.bitcoinj.crypto;
 
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.bitcoinj.core.internal.InternalUtils.WHITESPACE_SPLITTER;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test the various guard clauses of {@link MnemonicCode}.
@@ -39,6 +40,22 @@ public class MnemonicCodeTest {
     @Before
     public void setup() throws IOException {
         mc = new MnemonicCode();
+    }
+
+    @Test
+    public void testGetWordList() {
+        List<String> wordList = mc.getWordList();
+
+        assertEquals(2048, wordList.size());
+        assertEquals("abandon", wordList.get(0));
+        assertEquals("zoo", wordList.get(2047));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testGetWordListUnmodifiable() {
+        List<String> wordList = mc.getWordList();
+
+        wordList.remove(0);
     }
 
     @Test(expected = MnemonicException.MnemonicLengthException.class)
@@ -78,7 +95,7 @@ public class MnemonicCodeTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testNullPassphrase() throws Exception {
+    public void testNullPassphrase() {
         List<String> code = WHITESPACE_SPLITTER.splitToList("legal winner thank year wave sausage worth useful legal winner thank yellow");
         MnemonicCode.toSeed(code, null);
     }

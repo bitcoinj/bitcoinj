@@ -19,11 +19,11 @@ package org.bitcoin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.SecurityException;
-
 /**
  * This class holds the context reference used in native methods to handle ECDSA operations.
+ * @deprecated See https://github.com/bitcoinj/bitcoinj/issues/2267
  */
+@Deprecated
 public class Secp256k1Context {
 
     private static final boolean enabled; // true if the library is loaded

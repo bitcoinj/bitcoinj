@@ -17,11 +17,15 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptPattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +58,6 @@ public class KeyTimeCoinSelector implements CoinSelector {
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         try {
             LinkedList<TransactionOutput> gathered = new LinkedList<>();
-            Coin valueGathered = Coin.ZERO;
             for (TransactionOutput output : candidates) {
                 if (ignorePending && !isConfirmed(output))
                     continue;
@@ -65,12 +68,12 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 if (ScriptPattern.isP2PK(scriptPubKey)) {
                     controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromP2PK(scriptPubKey));
                 } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), Script.ScriptType.P2PKH);
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), ScriptType.P2PKH);
                     if (controllingKey == null) {
-                        controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), Script.ScriptType.P2WPKH);
+                        controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), ScriptType.P2WPKH);
                     }
                 } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), Script.ScriptType.P2WPKH);
+                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), ScriptType.P2WPKH);
                 } else {
                     log.info("Skipping tx output {} because it's not of simple form.", output);
                     continue;
@@ -78,14 +81,13 @@ public class KeyTimeCoinSelector implements CoinSelector {
                 checkNotNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
                 if (controllingKey.getCreationTimeSeconds() >= unixTimeSeconds) continue;
                 // It's older than the cutoff time so select.
-                valueGathered = valueGathered.add(output.getValue());
                 gathered.push(output);
                 if (gathered.size() >= MAX_SIMULTANEOUS_INPUTS) {
                     log.warn("Reached {} inputs, going further would yield a tx that is too large, stopping here.", gathered.size());
                     break;
                 }
             }
-            return new CoinSelection(valueGathered, gathered);
+            return new CoinSelection(gathered);
         } catch (ScriptException e) {
             throw new RuntimeException(e);  // We should never have problems understanding scripts in our wallet.
         }

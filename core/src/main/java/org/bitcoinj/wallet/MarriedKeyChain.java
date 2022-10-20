@@ -16,14 +16,13 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -31,12 +30,14 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bouncycastle.crypto.params.KeyParameter;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -125,7 +126,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
      * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
      * {@link Builder}.
      */
-    protected MarriedKeyChain(DeterministicKey accountKey, Script.ScriptType outputScriptType) {
+    protected MarriedKeyChain(DeterministicKey accountKey, ScriptType outputScriptType) {
         super(accountKey, false, true, outputScriptType);
     }
 
@@ -133,7 +134,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
      * This constructor is not stable across releases! If you need a stable API, use {@link #builder()} to use a
      * {@link Builder}.
      */
-    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, Script.ScriptType outputScriptType, List<ChildNumber> accountPath) {
+    protected MarriedKeyChain(DeterministicSeed seed, KeyCrypter crypter, ScriptType outputScriptType, List<ChildNumber> accountPath) {
         super(seed, crypter, outputScriptType, accountPath);
     }
 
@@ -151,25 +152,26 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     @Override
     public Script freshOutputScript(KeyPurpose purpose) {
         DeterministicKey followedKey = getKey(purpose);
-        ImmutableList.Builder<ECKey> keys = ImmutableList.<ECKey>builder().add(followedKey);
+        List<ECKey> keys = new ArrayList<>();
+        keys.add(followedKey);
         for (DeterministicKeyChain keyChain : followingKeyChains) {
             DeterministicKey followingKey = keyChain.getKey(purpose);
             checkState(followedKey.getChildNumber().equals(followingKey.getChildNumber()), "Following keychains should be in sync");
             keys.add(followingKey);
         }
-        List<ECKey> marriedKeys = keys.build();
+        List<ECKey> marriedKeys = Collections.unmodifiableList(keys);
         Script redeemScript = ScriptBuilder.createRedeemScript(sigsRequiredToSpend, marriedKeys);
         return ScriptBuilder.createP2SHOutputScript(redeemScript);
     }
 
     private List<ECKey> getMarriedKeysWithFollowed(DeterministicKey followedKey) {
-        ImmutableList.Builder<ECKey> keys = ImmutableList.builder();
+        List<ECKey> keys = new ArrayList<>();
         for (DeterministicKeyChain keyChain : followingKeyChains) {
             keyChain.maybeLookAhead();
             keys.add(keyChain.getKeyByPath(followedKey.getPath()));
         }
         keys.add(followedKey);
-        return keys.build();
+        return Collections.unmodifiableList(keys);
     }
 
     /** Get the redeem data for a key in this married chain */
@@ -217,19 +219,21 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         }
     }
 
+    /**
+     * Serialize to list of keys
+     * @return a list of keys (treat as unmodifiable list, will change in future release)
+     */
     @Override
     public List<Protos.Key> serializeToProtobuf() {
-        List<Protos.Key> result = new ArrayList<>();
         lock.lock();
         try {
-            for (DeterministicKeyChain chain : followingKeyChains) {
-                result.addAll(chain.serializeMyselfToProtobuf());
-            }
-            result.addAll(serializeMyselfToProtobuf());
+            Stream<Protos.Key> followingStream = followingKeyChains.stream()
+                    .flatMap(chain -> chain.serializeMyselfToProtobuf().stream());
+            return Stream.concat(followingStream, serializeMyselfToProtobuf().stream())
+                    .collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
-        return result;
     }
 
     @Override
@@ -247,7 +251,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         builder.append("  addr:");
         builder.append(script.getToAddress(params));
         builder.append("  hash160:");
-        builder.append(Utils.HEX.encode(script.getPubKeyHash()));
+        builder.append(ByteUtils.HEX.encode(script.getPubKeyHash()));
         if (script.getCreationTimeSeconds() > 0)
             builder.append("  creationTimeSeconds:").append(script.getCreationTimeSeconds());
         builder.append('\n');

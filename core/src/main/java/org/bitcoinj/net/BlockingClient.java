@@ -16,18 +16,24 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.*;
-import org.slf4j.*;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.utils.ListenableCompletableFuture;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import javax.net.*;
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.util.*;
+import javax.annotation.Nullable;
+import javax.net.SocketFactory;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Creates a simple connection to a server using a {@link StreamConnection} to process data.</p>
@@ -44,7 +50,7 @@ public class BlockingClient implements MessageWriteTarget {
 
     private Socket socket;
     private volatile boolean vCloseRequested = false;
-    private SettableFuture<SocketAddress> connectFuture;
+    private CompletableFuture<SocketAddress> connectFuture;
 
     /**
      * <p>Creates a new client to the given server address using the given {@link StreamConnection} to decode the data.
@@ -61,41 +67,38 @@ public class BlockingClient implements MessageWriteTarget {
     public BlockingClient(final SocketAddress serverAddress, final StreamConnection connection,
                           final int connectTimeoutMillis, final SocketFactory socketFactory,
                           @Nullable final Set<BlockingClient> clientSet) throws IOException {
-        connectFuture = SettableFuture.create();
+        connectFuture = new CompletableFuture<>();
         // Try to fit at least one message in the network buffer, but place an upper and lower limit on its size to make
         // sure it doesn't get too large or have to call read too often.
         connection.setWriteTarget(this);
         socket = socketFactory.createSocket();
         final Context context = Context.get();
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                Context.propagate(context);
-                if (clientSet != null)
-                    clientSet.add(BlockingClient.this);
-                try {
-                    socket.connect(serverAddress, connectTimeoutMillis);
-                    connection.connectionOpened();
-                    connectFuture.set(serverAddress);
-                    InputStream stream = socket.getInputStream();
-                    runReadLoop(stream, connection);
-                } catch (Exception e) {
-                    if (!vCloseRequested) {
-                        log.error("Error trying to open/read from connection: {}: {}", serverAddress, e.getMessage());
-                        connectFuture.setException(e);
-                    }
-                } finally {
-                    try {
-                        socket.close();
-                    } catch (IOException e1) {
-                        // At this point there isn't much we can do, and we can probably assume the channel is closed
-                    }
-                    if (clientSet != null)
-                        clientSet.remove(BlockingClient.this);
-                    connection.connectionClosed();
+        Thread t = new Thread(() -> {
+            Context.propagate(context);
+            if (clientSet != null)
+                clientSet.add(BlockingClient.this);
+            try {
+                socket.connect(serverAddress, connectTimeoutMillis);
+                connection.connectionOpened();
+                connectFuture.complete(serverAddress);
+                InputStream stream = socket.getInputStream();
+                runReadLoop(stream, connection);
+            } catch (Exception e) {
+                if (!vCloseRequested) {
+                    log.error("Error trying to open/read from connection: {}: {}", serverAddress, e.getMessage());
+                    connectFuture.completeExceptionally(e);
                 }
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException e1) {
+                    // At this point there isn't much we can do, and we can probably assume the channel is closed
+                }
+                if (clientSet != null)
+                    clientSet.remove(BlockingClient.this);
+                connection.connectionClosed();
             }
-        };
+        });
         t.setName("BlockingClient network thread for " + serverAddress);
         t.setDaemon(true);
         t.start();
@@ -143,12 +146,12 @@ public class BlockingClient implements MessageWriteTarget {
     }
 
     @Override
-    public synchronized ListenableFuture writeBytes(byte[] message) throws IOException {
+    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
         try {
             OutputStream stream = socket.getOutputStream();
             stream.write(message);
             stream.flush();
-            return Futures.immediateFuture(null);
+            return ListenableCompletableFuture.completedFuture(null);
         } catch (IOException e) {
             log.error("Error writing message to connection, closing connection", e);
             closeConnection();
@@ -157,7 +160,7 @@ public class BlockingClient implements MessageWriteTarget {
     }
 
     /** Returns a future that completes once connection has occurred at the socket level or with an exception if failed to connect. */
-    public ListenableFuture<SocketAddress> getConnectFuture() {
-        return connectFuture;
+    public ListenableCompletableFuture<SocketAddress> getConnectFuture() {
+        return ListenableCompletableFuture.of(connectFuture);
     }
 }

@@ -22,10 +22,8 @@ import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Static utilities used in BIP 32 Hierarchical Deterministic Wallets (HDW).
@@ -59,45 +57,5 @@ public final class HDUtils {
         byte[] bytes = Arrays.copyOfRange(ByteBuffer.allocate(8).putLong(n).array(), 4, 8);
         assert bytes.length == 4 : bytes.length;
         return bytes;
-    }
-
-    /**
-     * Append a derivation level to an existing path
-     *
-     * @deprecated Use {@code HDPath#extend}
-     */
-    @Deprecated
-    public static HDPath append(List<ChildNumber> path, ChildNumber childNumber) {
-        return new HDPath(path).extend(childNumber);
-    }
-
-    /**
-     * Concatenate two derivation paths
-     *
-     * @deprecated Use {@code HDPath#extend}
-     */
-    @Deprecated
-    public static HDPath concat(List<ChildNumber> path, List<ChildNumber> path2) {
-        return new HDPath(path).extend(path2);
-    }
-
-    /**
-     * Convert to a string path, starting with "M/"
-     *
-     * @deprecated Use {@code HDPath#toString}
-     */
-    @Deprecated
-    public static String formatPath(List<ChildNumber> path) {
-        return HDPath.M(path).toString();
-    }
-
-    /**
-     * Create an HDPath from a path string.
-     *
-     * @deprecated Use {@code HDPath.parsePath}
-     */
-    @Deprecated
-    public static HDPath parsePath(@Nonnull String path) {
-        return HDPath.parsePath(path);
     }
 }

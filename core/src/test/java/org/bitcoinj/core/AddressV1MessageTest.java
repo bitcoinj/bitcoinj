@@ -16,21 +16,21 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.util.List;
 
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class AddressV1MessageTest {
 
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
     // mostly copied from src/test/netbase_tests.cpp#stream_addrv1_hex and src/test/net_tests.cpp
     private static final String MESSAGE_HEX =
             "04" // number of entries
@@ -57,7 +57,7 @@ public class AddressV1MessageTest {
 
     @Test
     public void roundtrip() {
-        AddressMessage message = new AddressV1Message(UNITTEST, HEX.decode(MESSAGE_HEX));
+        AddressMessage message = new AddressV1Message(TESTNET, HEX.decode(MESSAGE_HEX));
 
         List<PeerAddress> addresses = message.getAddresses();
         assertEquals(4, addresses.size());

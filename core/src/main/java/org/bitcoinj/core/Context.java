@@ -16,11 +16,13 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.wallet.SendRequest;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 // TODO: Finish adding Context c'tors to all the different objects so we can start deprecating the versions that take NetworkParameters.
 // TODO: Add a working directory notion to Context and make various subsystems that want to use files default to that directory (eg. Orchid, block stores, wallet, etc).
@@ -47,38 +49,53 @@ public class Context {
     public static final int DEFAULT_EVENT_HORIZON = 100;
 
     final private TxConfidenceTable confidenceTable;
-    final private NetworkParameters params;
     final private int eventHorizon;
     final private boolean ensureMinRequiredFee;
     final private Coin feePerKb;
+    final private boolean relaxProofOfWork;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
      * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
-     *
-     * @param params The network parameters that will be associated with this context.
      */
+    public Context() {
+        this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true, false);
+    }
+
+    /**
+     * Note that NetworkParameters have been removed from this class. Thus, this constructor just swallows them.
+     * @deprecated Use {@link Context#Context()}
+     */
+    @Deprecated
     public Context(NetworkParameters params) {
-        this(params, DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true);
+        this();
     }
 
     /**
      * Creates a new custom context object. This is mainly meant for unit tests for now.
      *
-     * @param params The network parameters that will be associated with this context.
      * @param eventHorizon Number of blocks after which the library will delete data and be unable to always process reorgs. See {@link #getEventHorizon()}.
      * @param feePerKb The default fee per 1000 virtual bytes of transaction data to pay when completing transactions. For details, see {@link SendRequest#feePerKb}.
      * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link SendRequest#ensureMinRequiredFee}.
+     * @param relaxProofOfWork If true, proof of work is not enforced. This is useful for unit-testing. See {@link Block#checkProofOfWork(boolean)}.
      */
-    public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
+    public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee, boolean relaxProofOfWork) {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
         this.confidenceTable = new TxConfidenceTable();
-        this.params = params;
         this.eventHorizon = eventHorizon;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
+        this.relaxProofOfWork = relaxProofOfWork;
         lastConstructed = this;
-        slot.set(this);
+    }
+
+    /**
+     * Note that NetworkParameters have been removed from this class. Thus, this constructor just swallows them.
+     * @deprecated Use {@link Context#Context(int, Coin, boolean, boolean)}
+     */
+    @Deprecated
+    public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
+        this(eventHorizon, feePerKb, ensureMinRequiredFee, false);
     }
 
     private static volatile Context lastConstructed;
@@ -128,18 +145,25 @@ public class Context {
     }
 
     // A temporary internal shim designed to help us migrate internally in a way that doesn't wreck source compatibility.
-    public static Context getOrCreate(NetworkParameters params) {
+    public static Context getOrCreate() {
         Context context;
         try {
             context = get();
         } catch (IllegalStateException e) {
             log.warn("Implicitly creating context. This is a migration step and this message will eventually go away.");
-            context = new Context(params);
+            context = new Context();
             return context;
         }
-        if (context.getParams() != params)
-            throw new IllegalStateException("Context does not match implicit network params: " + context.getParams() + " vs " + params);
         return context;
+    }
+
+    /**
+     * Note that NetworkParameters have been removed from this class. Thus, this method just swallows them.
+     * @deprecated Use {@link Context#getOrCreate()}
+     */
+    @Deprecated
+    public static Context getOrCreate(NetworkParameters params) {
+        return getOrCreate();
     }
 
     /**
@@ -163,15 +187,6 @@ public class Context {
     }
 
     /**
-     * Returns the {@link NetworkParameters} specified when this context was (auto) created. The
-     * network parameters defines various hard coded constants for a specific instance of a Bitcoin network, such as
-     * main net, testnet, etc.
-     */
-    public NetworkParameters getParams() {
-        return params;
-    }
-
-    /**
      * The event horizon is the number of blocks after which various bits of the library consider a transaction to be
      * so confirmed that it's safe to delete data. Re-orgs larger than the event horizon will not be correctly
      * processed, so the default value is high (100).
@@ -192,5 +207,13 @@ public class Context {
      */
     public boolean isEnsureMinRequiredFee() {
         return ensureMinRequiredFee;
+    }
+
+    /**
+     * If this is set to true, proof of work is not enforced. This is useful for unit-testing, as we need to create
+     * and solve fake blocks quite often.
+     */
+    public boolean isRelaxProofOfWork() {
+        return relaxProofOfWork;
     }
 }

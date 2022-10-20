@@ -1,0 +1,13 @@
+# Contributing Guidelines
+
+We love https://github.com/bitcoinj/bitcoinj/pulls[pull requests] from everyone! https://github.com/bitcoinj/bitcoinj/issues[Bug reports] are also welcome.
+
+However, if you have a question or would like to start a discussion, please post to one of the following:
+
+* Our https://matrix.org[Matrix] room: https://matrix.to/#/#bitcoinj:matrix.org[#bitcoinj:matrix.org]
+* The https://groups.google.com/forum/#!forum/bitcoinj[bitcoinj google group]
+* https://bitcoin.stackexchange.com/questions/tagged/bitcoinj[Bitcoin stack exchange].
+
+We recommend opening an https://github.com/bitcoinj/bitcoinj/issue[GitHub Issue] or starting a discussion in https://matrix.to/#/#bitcoinj:matrix.org[#bitcoinj:matrix.org] _before_ creating a pull request with a significant change. This will allow other developers to give you feedback on your idea and how it might best align with **bitcoinj** and the development team's future plans for **bitcoinj**.
+
+The https://bitcoinj.org/[bitcoinj.org] documentation website contains useful information, but is out-of-date with respect to the current version of **bitcoinj**. If you would like to help update the documentation website, you can find the source at https://github.com/bitcoinj/bitcoinj.github.io[bitcoinj / bitcoinj.github.io] on GitHub. Pull requests to update the documentation are a great way to get starting contributing and would be greatly appreciated.

@@ -17,7 +17,11 @@
 
 package org.bitcoinj.signers;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -97,7 +101,7 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
 
     protected abstract SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath);
 
-    public class SignatureAndKey {
+    public static class SignatureAndKey {
         public final ECKey.ECDSASignature sig;
         public final ECKey pubKey;
 
@@ -106,7 +110,6 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
             this.pubKey = pubKey;
         }
     }
-
 }
 
 

@@ -17,6 +17,8 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Utils;
 
@@ -24,17 +26,18 @@ import org.bitcoinj.core.Utils;
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link Block#solve()} by setting difficulty to the easiest possible.
  */
-public class UnitTestParams extends AbstractBitcoinNetParams {
+public class UnitTestParams extends BitcoinNetworkParams {
     public static final int UNITNET_MAJORITY_WINDOW = 8;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 6;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 4;
 
     public UnitTestParams() {
-        super();
-        id = ID_UNITTESTNET;
+        // Unit Test Params are BY DEFINITION on the Bitcoin TEST network (i.e. not REGTEST or SIGNET)
+        // This means that tests that run against UnitTestParams expect TEST network behavior.
+        super(BitcoinNetwork.TESTNET);
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
-        maxTarget = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
+        maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
         interval = 10;
         subsidyDecreaseBlockCount = 100;
 
@@ -77,10 +80,5 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
             }
         }
         return genesisBlock;
-    }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_UNIT_TESTS;
     }
 }

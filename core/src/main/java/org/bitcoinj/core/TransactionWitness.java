@@ -14,18 +14,19 @@
 
 package org.bitcoinj.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.Script;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.annotation.Nullable;
-
-import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.Script;
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class TransactionWitness {
     public static final TransactionWitness EMPTY = new TransactionWitness(0);
@@ -94,10 +95,10 @@ public class TransactionWitness {
             } else if (push.length == 0) {
                 stringPushes.add("EMPTY");
             } else {
-                stringPushes.add(Utils.HEX.encode(push));
+                stringPushes.add(ByteUtils.HEX.encode(push));
             }
         }
-        return Utils.SPACE_JOINER.join(stringPushes);
+        return InternalUtils.SPACE_JOINER.join(stringPushes);
     }
 
     @Override

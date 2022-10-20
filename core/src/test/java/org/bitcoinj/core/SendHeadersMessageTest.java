@@ -21,7 +21,7 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertTrue;
 
 public class SendHeadersMessageTest {

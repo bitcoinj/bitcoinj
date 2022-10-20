@@ -17,21 +17,42 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.*;
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.*;
+import com.google.common.base.Preconditions;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.listeners.NewBestBlockListener;
+import org.bitcoinj.core.listeners.ReorganizeListener;
+import org.bitcoinj.core.listeners.TransactionReceivedInBlockListener;
 import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.store.*;
-import org.bitcoinj.utils.*;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.utils.ListenableCompletableFuture;
+import org.bitcoinj.utils.ListenerRegistration;
+import org.bitcoinj.utils.Threading;
+import org.bitcoinj.utils.VersionTally;
 import org.bitcoinj.wallet.Wallet;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.*;
+import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
@@ -52,7 +73,7 @@ import static com.google.common.base.Preconditions.*;
  * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
  * class and implements <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
  * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockChain} paired with a
- * {@link H2FullPrunedBlockStore} implements full verification, which is equivalent to
+ * {@link org.bitcoinj.store.MemoryFullPrunedBlockStore} implements full verification, which is equivalent to
  * Bitcoin Core. To learn more about the alternative security models, please consult the articles on the
  * website.</p>
  *
@@ -108,7 +129,7 @@ public abstract class AbstractBlockChain {
     private final CopyOnWriteArrayList<ListenerRegistration<TransactionReceivedInBlockListener>> transactionReceivedListeners;
 
     // Holds a block header and, optionally, a list of tx hashes or block's transactions
-    class OrphanBlock {
+    static class OrphanBlock {
         final Block block;
         final List<Sha256Hash> filteredTxHashes;
         final Map<Sha256Hash, Transaction> filteredTxn;
@@ -145,22 +166,10 @@ public abstract class AbstractBlockChain {
      */
     public AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
-        this(Context.getOrCreate(params), wallets, blockStore);
-    }
-
-    /**
-     * Constructs a BlockChain connected to the given list of listeners (wallets) and a store.
-     * @param context context for this network
-     * @param wallets list of listeners (wallets)
-     * @param blockStore where to store blocks
-     * @throws BlockStoreException if a failure occurs while storing a block
-     */
-    public AbstractBlockChain(Context context, List<? extends Wallet> wallets,
-                              BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
         log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
-        this.params = context.getParams();
+        this.params = params;
 
         this.newBestBlockListeners = new CopyOnWriteArrayList<>();
         this.reorganizeListeners = new CopyOnWriteArrayList<>();
@@ -169,7 +178,7 @@ public abstract class AbstractBlockChain {
         for (ReorganizeListener l : wallets) addReorganizeListener(Threading.SAME_THREAD, l);
         for (TransactionReceivedInBlockListener l : wallets) addTransactionReceivedListener(Threading.SAME_THREAD, l);
 
-        this.versionTally = new VersionTally(context.getParams());
+        this.versionTally = new VersionTally(params);
         this.versionTally.initialize(blockStore, chainHead);
     }
 
@@ -660,20 +669,17 @@ public abstract class AbstractBlockChain {
             } else {
                 // Listener wants to be run on some other thread, so marshal it across here.
                 final boolean notFirst = !first;
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // We can't do false-positive handling when executing on another thread
-                            Set<Sha256Hash> ignoredFalsePositives = new HashSet<>();
-                            informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
-                                    newStoredBlock, notFirst, registration.listener, ignoredFalsePositives);
-                        } catch (VerificationException e) {
-                            log.error("Block chain listener threw exception: ", e);
-                            // Don't attempt to relay this back to the original peer thread if this was an async
-                            // listener invocation.
-                            // TODO: Make exception reporting a global feature and use it here.
-                        }
+                registration.executor.execute(() -> {
+                    try {
+                        // We can't do false-positive handling when executing on another thread
+                        Set<Sha256Hash> ignoredFalsePositives = new HashSet<>();
+                        informListenerForNewTransactions(block, newBlockType, filteredTxHashList, filteredTxn,
+                                newStoredBlock, notFirst, registration.listener, ignoredFalsePositives);
+                    } catch (VerificationException e) {
+                        log.error("Block chain listener threw exception: ", e);
+                        // Don't attempt to relay this back to the original peer thread if this was an async
+                        // listener invocation.
+                        // TODO: Make exception reporting a global feature and use it here.
                     }
                 });
             }
@@ -686,18 +692,15 @@ public abstract class AbstractBlockChain {
                     registration.listener.notifyNewBestBlock(newStoredBlock);
             } else {
                 // Listener wants to be run on some other thread, so marshal it across here.
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (newBlockType == NewBlockType.BEST_CHAIN)
-                                registration.listener.notifyNewBestBlock(newStoredBlock);
-                        } catch (VerificationException e) {
-                            log.error("Block chain listener threw exception: ", e);
-                            // Don't attempt to relay this back to the original peer thread if this was an async
-                            // listener invocation.
-                            // TODO: Make exception reporting a global feature and use it here.
-                        }
+                registration.executor.execute(() -> {
+                    try {
+                        if (newBlockType == NewBlockType.BEST_CHAIN)
+                            registration.listener.notifyNewBestBlock(newStoredBlock);
+                    } catch (VerificationException e) {
+                        log.error("Block chain listener threw exception: ", e);
+                        // Don't attempt to relay this back to the original peer thread if this was an async
+                        // listener invocation.
+                        // TODO: Make exception reporting a global feature and use it here.
                     }
                 });
             }
@@ -829,14 +832,11 @@ public abstract class AbstractBlockChain {
                 // TODO: Do we really need to do this or should it be irrelevant?
                 registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
             } else {
-                registration.executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
-                        } catch (VerificationException e) {
-                            log.error("Block chain listener threw exception during reorg", e);
-                        }
+                registration.executor.execute(() -> {
+                    try {
+                        registration.listener.reorganize(splitPoint, oldBlocks, newBlocks);
+                    } catch (VerificationException e) {
+                        log.error("Block chain listener threw exception during reorg", e);
                     }
                 });
             }
@@ -1049,21 +1049,19 @@ public abstract class AbstractBlockChain {
      * @param height desired height
      * @return future that will complete when height is reached
      */
-    public ListenableFuture<StoredBlock> getHeightFuture(final int height) {
-        final SettableFuture<StoredBlock> result = SettableFuture.create();
+    public ListenableCompletableFuture<StoredBlock> getHeightFuture(final int height) {
+        final ListenableCompletableFuture<StoredBlock> result = new ListenableCompletableFuture<>();
         addNewBestBlockListener(Threading.SAME_THREAD, new NewBestBlockListener() {
             @Override
             public void notifyNewBestBlock(StoredBlock block) throws VerificationException {
                 if (block.getHeight() >= height) {
                     removeNewBestBlockListener(this);
-                    result.set(block);
+                    result.complete(block);
                 }
             }
         });
         return result;
     }
-
-
 
     /**
      * The false positive rate is the average over all blockchain transactions of:

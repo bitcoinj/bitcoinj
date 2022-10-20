@@ -16,30 +16,38 @@
 
 package org.bitcoinj.protocols.payments;
 
-import org.bitcoinj.core.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
 import org.bitcoinj.uri.BitcoinURI;
+import org.bitcoinj.utils.FutureUtils;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.SendRequest;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import org.bitcoin.protocols.payments.Protos;
-
 import javax.annotation.Nullable;
-
-import java.io.*;
-import java.net.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>Provides a standard implementation of the Payment Protocol (BIP 0070)</p>
@@ -53,7 +61,7 @@ import java.util.concurrent.Callable;
  * </ul>
  *
  * <p>If initialized with a BitcoinURI or a url, a network request is made for the payment request object and a
- * ListenableFuture is returned that will be notified with the PaymentSession object after it is downloaded.</p>
+ * {@link ListenableCompletableFuture} is returned that will be notified with the PaymentSession object after it is downloaded.</p>
  *
  * <p>Once the PaymentSession is initialized, typically a wallet application will prompt the user to confirm that the
  * amount and recipient are correct, perform any additional steps, and then construct a list of transactions to pass to
@@ -61,7 +69,7 @@ import java.util.concurrent.Callable;
  *
  * <p>Call sendPayment with a list of transactions that will be broadcast. A {@link Protos.Payment} message will be sent
  * to the merchant if a payment url is provided in the PaymentRequest. NOTE: sendPayment does NOT broadcast the
- * transactions to the bitcoin network. Instead it returns a ListenableFuture that will be notified when a
+ * transactions to the bitcoin network. Instead it returns a ListenableCompletableFuture that will be notified when a
  * {@link Protos.PaymentACK} is received from the merchant. Typically a wallet will show the message to the user
  * as a confirmation message that the payment is now "processing" or that an error occurred, and then broadcast the
  * tx itself later if needed.</p>
@@ -69,7 +77,7 @@ import java.util.concurrent.Callable;
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
  */
 public class PaymentSession {
-    private static ListeningExecutorService executor = Threading.THREAD_POOL;
+    private final static ListeningExecutorService executor = Threading.THREAD_POOL;
     private NetworkParameters params;
     private Protos.PaymentRequest paymentRequest;
     private Protos.PaymentDetails paymentDetails;
@@ -90,7 +98,7 @@ public class PaymentSession {
      * the signature provided by the payment request. An exception is thrown by the future if the signature cannot
      * be verified.</p>
      */
-    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri) throws PaymentProtocolException {
+    public static ListenableCompletableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri) throws PaymentProtocolException {
         return createFromBitcoinUri(uri, true, null);
     }
 
@@ -102,7 +110,7 @@ public class PaymentSession {
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
      */
-    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki)
+    public static ListenableCompletableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki)
             throws PaymentProtocolException {
         return createFromBitcoinUri(uri, verifyPki, null);
     }
@@ -116,13 +124,13 @@ public class PaymentSession {
      * signature cannot be verified.
      * If trustStoreLoader is null, the system default trust store is used.
      */
-    public static ListenableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
+    public static ListenableCompletableFuture<PaymentSession> createFromBitcoinUri(final BitcoinURI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
             throws PaymentProtocolException {
         String url = uri.getPaymentRequestUrl();
         if (url == null)
             throw new PaymentProtocolException.InvalidPaymentRequestURL("No payment request URL (r= parameter) in BitcoinURI " + uri);
         try {
-            return fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader);
+            return ListenableCompletableFuture.of(fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader));
         } catch (URISyntaxException e) {
             throw new PaymentProtocolException.InvalidPaymentRequestURL(e);
         }
@@ -135,7 +143,7 @@ public class PaymentSession {
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
      */
-    public static ListenableFuture<PaymentSession> createFromUrl(final String url) throws PaymentProtocolException {
+    public static ListenableCompletableFuture<PaymentSession> createFromUrl(final String url) throws PaymentProtocolException {
         return createFromUrl(url, true, null);
     }
 
@@ -146,7 +154,7 @@ public class PaymentSession {
      * be used to verify the signature provided by the payment request. An exception is thrown by the future if the
      * signature cannot be verified.
      */
-    public static ListenableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki)
+    public static ListenableCompletableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki)
             throws PaymentProtocolException {
         return createFromUrl(url, verifyPki, null);
     }
@@ -159,28 +167,25 @@ public class PaymentSession {
      * signature cannot be verified.
      * If trustStoreLoader is null, the system default trust store is used.
      */
-    public static ListenableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
+    public static ListenableCompletableFuture<PaymentSession> createFromUrl(final String url, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader)
             throws PaymentProtocolException {
         if (url == null)
             throw new PaymentProtocolException.InvalidPaymentRequestURL("null paymentRequestUrl");
         try {
-            return fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader);
+            return ListenableCompletableFuture.of(fetchPaymentRequest(new URI(url), verifyPki, trustStoreLoader));
         } catch(URISyntaxException e) {
             throw new PaymentProtocolException.InvalidPaymentRequestURL(e);
         }
     }
 
-    private static ListenableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
-        return executor.submit(new Callable<PaymentSession>() {
-            @Override
-            public PaymentSession call() throws Exception {
-                HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
-                connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
-                connection.setUseCaches(false);
-                Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.parseFrom(connection.getInputStream());
-                return new PaymentSession(paymentRequest, verifyPki, trustStoreLoader);
-            }
-        });
+    private static CompletableFuture<PaymentSession> fetchPaymentRequest(final URI uri, final boolean verifyPki, @Nullable final TrustStoreLoader trustStoreLoader) {
+        return CompletableFuture.supplyAsync((FutureUtils.ThrowingSupplier<PaymentSession>) () -> {
+            HttpURLConnection connection = (HttpURLConnection)uri.toURL().openConnection();
+            connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTREQUEST);
+            connection.setUseCaches(false);
+            Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.parseFrom(connection.getInputStream());
+            return new PaymentSession(paymentRequest, verifyPki, trustStoreLoader);
+        }, executor);
     }
 
     /**
@@ -308,35 +313,39 @@ public class PaymentSession {
      * NOTE: This does not broadcast the transactions to the bitcoin network, it merely sends a Payment message to the
      * merchant confirming the payment.
      * Returns an object wrapping PaymentACK once received.
-     * If the PaymentRequest did not specify a payment_url, returns null and does nothing.
+     * If the PaymentRequest did not specify a payment_url, completes exceptionally.
      * @param txns list of transactions to be included with the Payment message.
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
+     * @return a future for the PaymentACK
      */
-    @Nullable
-    public ListenableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
-            throws PaymentProtocolException, VerificationException, IOException {
-        Protos.Payment payment = getPayment(txns, refundAddr, memo);
+    public ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo) {
+        Protos.Payment payment = null;
+        try {
+            payment = getPayment(txns, refundAddr, memo);
+        } catch (IOException | PaymentProtocolException.InvalidNetwork e) {
+            return ListenableCompletableFuture.failedFuture(e);
+        }
         if (payment == null)
-            return null;
+            return ListenableCompletableFuture.failedFuture(new PaymentProtocolException.InvalidPaymentRequestURL("Missing Payment URL"));
         if (isExpired())
-            throw new PaymentProtocolException.Expired("PaymentRequest is expired");
+            return ListenableCompletableFuture.failedFuture(new PaymentProtocolException.Expired("PaymentRequest is expired"));
         URL url;
         try {
             url = new URL(paymentDetails.getPaymentUrl());
         } catch (MalformedURLException e) {
-            throw new PaymentProtocolException.InvalidPaymentURL(e);
+            return ListenableCompletableFuture.failedFuture(new PaymentProtocolException.InvalidPaymentURL(e));
         }
-        return sendPayment(url, payment);
+        return ListenableCompletableFuture.of(sendPayment(url, payment));
     }
 
     /**
      * Generates a Payment message based on the information in the PaymentRequest.
      * Provide transactions built by the wallet.
-     * If the PaymentRequest did not specify a payment_url, returns null.
      * @param txns list of transactions to be included with the Payment message.
      * @param refundAddr will be used by the merchant to send money back if there was a problem.
      * @param memo is a message to include in the payment message sent to the merchant.
+     * @return Payment message or null (if the PaymentRequest did not specify a payment_url)
      */
     @Nullable
     public Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
@@ -344,7 +353,7 @@ public class PaymentSession {
         if (paymentDetails.hasPaymentUrl()) {
             for (Transaction tx : txns)
                 if (!tx.getParams().equals(params))
-                    throw new PaymentProtocolException.InvalidNetwork(params.getPaymentProtocolId());
+                    throw new PaymentProtocolException.InvalidNetwork(PaymentProtocol.protocolIdFromParams(params));
             return PaymentProtocol.createPaymentMessage(txns, totalValue, refundAddr, memo, getMerchantData());
         } else {
             return null;
@@ -352,30 +361,27 @@ public class PaymentSession {
     }
 
     @VisibleForTesting
-    protected ListenableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
-        return executor.submit(new Callable<PaymentProtocol.Ack>() {
-            @Override
-            public PaymentProtocol.Ack call() throws Exception {
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
-                connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTACK);
-                connection.setRequestProperty("Content-Length", Integer.toString(payment.getSerializedSize()));
-                connection.setUseCaches(false);
-                connection.setDoInput(true);
-                connection.setDoOutput(true);
+    protected CompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        return CompletableFuture.supplyAsync((FutureUtils.ThrowingSupplier<PaymentProtocol.Ack>) () -> {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", PaymentProtocol.MIMETYPE_PAYMENT);
+            connection.setRequestProperty("Accept", PaymentProtocol.MIMETYPE_PAYMENTACK);
+            connection.setRequestProperty("Content-Length", Integer.toString(payment.getSerializedSize()));
+            connection.setUseCaches(false);
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
 
-                // Send request.
-                DataOutputStream outStream = new DataOutputStream(connection.getOutputStream());
-                payment.writeTo(outStream);
-                outStream.flush();
-                outStream.close();
+            // Send request.
+            DataOutputStream outStream = new DataOutputStream(connection.getOutputStream());
+            payment.writeTo(outStream);
+            outStream.flush();
+            outStream.close();
 
-                // Get response.
-                Protos.PaymentACK paymentAck = Protos.PaymentACK.parseFrom(connection.getInputStream());
-                return PaymentProtocol.parsePaymentAck(paymentAck);
-            }
-        });
+            // Get response.
+            Protos.PaymentACK paymentAck = Protos.PaymentACK.parseFrom(connection.getInputStream());
+            return PaymentProtocol.parsePaymentAck(paymentAck);
+        }, executor);
     }
 
     private void parsePaymentRequest(Protos.PaymentRequest request) throws PaymentProtocolException {
@@ -393,7 +399,7 @@ public class PaymentSession {
             if (!paymentDetails.hasNetwork())
                 params = MainNetParams.get();
             else
-                params = NetworkParameters.fromPmtProtocolID(paymentDetails.getNetwork());
+                params = PaymentProtocol.paramsFromPmtProtocolID(paymentDetails.getNetwork());
             if (params == null)
                 throw new PaymentProtocolException.InvalidNetwork("Invalid network " + paymentDetails.getNetwork());
             if (paymentDetails.getOutputsCount() < 1)
@@ -404,7 +410,7 @@ public class PaymentSession {
             }
             // This won't ever happen in practice. It would only happen if the user provided outputs
             // that are obviously invalid. Still, we don't want to silently overflow.
-            if (params.hasMaxMoney() && totalValue.compareTo(params.getMaxMoney()) > 0)
+            if (params.network().exceedsMaxMoney(totalValue))
                 throw new PaymentProtocolException.InvalidOutputs("The outputs are way too big.");
         } catch (InvalidProtocolBufferException e) {
             throw new PaymentProtocolException(e);

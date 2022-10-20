@@ -1,22 +1,23 @@
 plugins {
     id 'java'
-    id 'application'
     id 'eclipse'
 }
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'info.picocli:picocli:4.6.1'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.32'
+    implementation 'info.picocli:picocli:4.6.3'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.36'
 }
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
-mainClassName = "org.bitcoinj.tools.WalletTool"
-applicationName = "wallet-tool"
+compileJava {
+    options.compilerArgs.addAll(['--release', '11'])
+    options.compilerArgs << '-Xlint:deprecation'
+}
 
 task build_checkpoints(type: JavaExec) {
     description = 'Create checkpoint files to use with CheckpointManager.'

@@ -17,11 +17,12 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
-
-import com.google.common.base.MoreObjects;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,7 +32,11 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.lang.Math.*;
+import static java.lang.Math.E;
+import static java.lang.Math.log;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static java.lang.Math.pow;
 
 /**
  * <p>A Bloom filter is a probabilistic data structure which can be sent to another client so that it can avoid
@@ -158,8 +163,8 @@ public class BloomFilter extends Message {
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(new VarInt(data.length).encode());
         stream.write(data);
-        Utils.uint32ToByteStreamLE(hashFuncs, stream);
-        Utils.uint32ToByteStreamLE(nTweak, stream);
+        ByteUtils.uint32ToByteStreamLE(hashFuncs, stream);
+        ByteUtils.uint32ToByteStreamLE(nTweak, stream);
         stream.write(nFlags);
     }
 
@@ -228,7 +233,7 @@ public class BloomFilter extends Message {
      */
     public synchronized boolean contains(byte[] object) {
         for (int i = 0; i < hashFuncs; i++) {
-            if (!Utils.checkBitLE(data, murmurHash3(data, nTweak, i, object)))
+            if (!ByteUtils.checkBitLE(data, murmurHash3(data, nTweak, i, object)))
                 return false;
         }
         return true;
@@ -237,7 +242,7 @@ public class BloomFilter extends Message {
     /** Insert the given arbitrary data into the filter */
     public synchronized void insert(byte[] object) {
         for (int i = 0; i < hashFuncs; i++)
-            Utils.setBitLE(data, murmurHash3(data, nTweak, i, object));
+            ByteUtils.setBitLE(data, murmurHash3(data, nTweak, i, object));
     }
 
     /** Inserts the given key and equivalent hashed form (for the address). */
@@ -319,7 +324,7 @@ public class BloomFilter extends Message {
             Transaction tx = txns.get(i);
             txHashes.add(tx.getTxId());
             if (applyAndUpdate(tx)) {
-                Utils.setBitLE(bits, i);
+                ByteUtils.setBitLE(bits, i);
                 matched.add(tx);
             }
         }

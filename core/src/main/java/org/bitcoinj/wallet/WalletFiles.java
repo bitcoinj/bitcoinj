@@ -17,19 +17,22 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.utils.*;
-import org.slf4j.*;
-
 import com.google.common.base.Stopwatch;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A class that handles atomic and optionally delayed writing of the wallet file to disk. In future: backups too.
@@ -84,21 +87,19 @@ public class WalletFiles {
         this.delay = delay;
         this.delayTimeUnit = checkNotNull(delayTimeUnit);
 
-        this.saver = new Callable<Void>() {
-            @Override public Void call() throws Exception {
-                // Runs in an auto save thread.
-                if (!savePending.getAndSet(false)) {
-                    // Some other scheduled request already beat us to it.
-                    return null;
-                }
-                Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
-                log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
-                        wallet.getLastBlockSeenHeight(),
-                        lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
-                        wallet.getLastBlockSeenHash());
-                saveNowInternal();
+        this.saver = () -> {
+            // Runs in an auto save thread.
+            if (!savePending.getAndSet(false)) {
+                // Some other scheduled request already beat us to it.
                 return null;
             }
+            Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
+            log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
+                    wallet.getLastBlockSeenHeight(),
+                    lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                    wallet.getLastBlockSeenHash());
+            saveNowInternal();
+            return null;
         };
     }
 

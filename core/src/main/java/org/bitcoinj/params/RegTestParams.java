@@ -17,26 +17,26 @@
 
 package org.bitcoinj.params;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.Sha256Hash;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
  */
-public class RegTestParams extends AbstractBitcoinNetParams {
+public class RegTestParams extends BitcoinNetworkParams {
     private static final long GENESIS_TIME = 1296688602;
     private static final long GENESIS_NONCE = 2;
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
 
     public RegTestParams() {
-        super();
-        id = ID_REGTEST;
-        
+        super(BitcoinNetwork.REGTEST);
+
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
+        maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
         // Difficulty adjustments are disabled for regtest.
         // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never
         // changes.
@@ -88,10 +88,5 @@ public class RegTestParams extends AbstractBitcoinNetParams {
             }
         }
         return genesisBlock;
-    }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_REGTEST;
     }
 }

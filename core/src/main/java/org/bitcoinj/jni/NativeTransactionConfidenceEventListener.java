@@ -16,15 +16,17 @@
 
 package org.bitcoinj.jni;
 
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
 import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.core.Transaction;
 
 /**
  * An event listener that relays events to a native C++ object. A pointer to that object is stored in
  * this class using JNI on the native side, thus several instances of this can point to different actual
  * native implementations.
+ * @deprecated See https://github.com/bitcoinj/bitcoinj/issues/2465
  */
+@Deprecated
 public class NativeTransactionConfidenceEventListener implements TransactionConfidenceEventListener {
     public long ptr;
 

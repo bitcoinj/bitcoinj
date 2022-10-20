@@ -17,51 +17,51 @@
 
 package org.bitcoinj.core;
 
-import static org.bitcoinj.core.Utils.HEX;
+import org.bitcoinj.params.TestNet3Params;
+import org.junit.Test;
+
+import java.net.InetAddress;
+
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.net.InetAddress;
-
-import org.bitcoinj.params.UnitTestParams;
-import org.junit.Test;
-
 public class VersionMessageTest {
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
 
     @Test
-    public void decode_noRelay_bestHeight_subVer() throws Exception {
+    public void decode_noRelay_bestHeight_subVer() {
         // Test that we can decode version messages which miss data which some old nodes may not include
         String hex = "7111010000000000000000003334a85500000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d00000000000000000f2f626974636f696e6a3a302e31332f0004000000";
-        VersionMessage ver = new VersionMessage(UNITTEST, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
         assertFalse(ver.relayTxesBeforeFilter);
         assertEquals(1024, ver.bestHeight);
         assertEquals("/bitcoinj:0.13/", ver.subVer);
     }
 
     @Test
-    public void decode_relay_bestHeight_subVer() throws Exception {
+    public void decode_relay_bestHeight_subVer() {
         String hex = "711101000000000000000000a634a85500000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d00000000000000000f2f626974636f696e6a3a302e31332f0004000001";
-        VersionMessage ver = new VersionMessage(UNITTEST, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
         assertTrue(ver.relayTxesBeforeFilter);
         assertEquals(1024, ver.bestHeight);
         assertEquals("/bitcoinj:0.13/", ver.subVer);
     }
 
     @Test
-    public void decode_relay_noBestHeight_subVer() throws Exception {
+    public void decode_relay_noBestHeight_subVer() {
         String hex = "711101000000000000000000c334a85500000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d00000000000000000f2f626974636f696e6a3a302e31332f0000000001";
-        VersionMessage ver = new VersionMessage(UNITTEST, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
         assertTrue(ver.relayTxesBeforeFilter);
         assertEquals(0, ver.bestHeight);
         assertEquals("/bitcoinj:0.13/", ver.subVer);
     }
 
     @Test
-    public void decode_relay_noBestHeight_noSubVer() throws Exception {
+    public void decode_relay_noBestHeight_noSubVer() {
         String hex = "00000000000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000";
-        VersionMessage ver = new VersionMessage(UNITTEST, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
         assertTrue(ver.relayTxesBeforeFilter);
         assertEquals(0, ver.bestHeight);
         assertEquals("", ver.subVer);
@@ -69,17 +69,17 @@ public class VersionMessageTest {
 
     @Test
     public void roundTrip_ipv4() throws Exception {
-        VersionMessage ver = new VersionMessage(UNITTEST, 1234);
+        VersionMessage ver = new VersionMessage(TESTNET, 1234);
         ver.time = 23456;
         ver.subVer = "/bitcoinj/";
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
         ver.localServices = 1;
-        ver.fromAddr = new PeerAddress(UNITTEST, InetAddress.getByName("1.2.3.4"), 3888);
+        ver.fromAddr = new PeerAddress(TESTNET, InetAddress.getByName("1.2.3.4"), 3888);
         ver.fromAddr.setParent(ver);
-        ver.receivingAddr = new PeerAddress(UNITTEST, InetAddress.getByName("4.3.2.1"), 8333);
+        ver.receivingAddr = new PeerAddress(TESTNET, InetAddress.getByName("4.3.2.1"), 8333);
         ver.receivingAddr.setParent(ver);
         byte[] serialized = ver.bitcoinSerialize();
-        VersionMessage ver2 = new VersionMessage(UNITTEST, serialized);
+        VersionMessage ver2 = new VersionMessage(TESTNET, serialized);
         assertEquals(1234, ver2.bestHeight);
         assertEquals(23456, ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);
@@ -93,17 +93,17 @@ public class VersionMessageTest {
 
     @Test
     public void roundTrip_ipv6() throws Exception {
-        VersionMessage ver = new VersionMessage(UNITTEST, 1234);
+        VersionMessage ver = new VersionMessage(TESTNET, 1234);
         ver.time = 23456;
         ver.subVer = "/bitcoinj/";
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
         ver.localServices = 1;
-        ver.fromAddr = new PeerAddress(UNITTEST, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 3888);
+        ver.fromAddr = new PeerAddress(TESTNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 3888);
         ver.fromAddr.setParent(ver);
-        ver.receivingAddr = new PeerAddress(UNITTEST, InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
+        ver.receivingAddr = new PeerAddress(TESTNET, InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
         ver.receivingAddr.setParent(ver);
         byte[] serialized = ver.bitcoinSerialize();
-        VersionMessage ver2 = new VersionMessage(UNITTEST, serialized);
+        VersionMessage ver2 = new VersionMessage(TESTNET, serialized);
         assertEquals(1234, ver2.bestHeight);
         assertEquals(23456, ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);

@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+
 import java.util.Objects;
 
 public class InventoryItem {
@@ -35,7 +37,7 @@ public class InventoryItem {
 
         public final int code;
 
-        private Type(int code) {
+        Type(int code) {
             this.code = code;
         }
 

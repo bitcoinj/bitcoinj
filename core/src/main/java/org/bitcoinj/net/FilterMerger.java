@@ -18,10 +18,11 @@ package org.bitcoinj.net;
 
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.PeerFilterProvider;
-import com.google.common.collect.ImmutableList;
 import org.bitcoinj.core.PeerGroup;
 
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 // This code is unit tested by the PeerGroup tests.
 
@@ -55,7 +56,8 @@ public class FilterMerger {
         public boolean changed;
     }
 
-    public Result calculate(ImmutableList<PeerFilterProvider> providers) {
+    public Result calculate(List<PeerFilterProvider> providerList) {
+        List<PeerFilterProvider> providers = Collections.unmodifiableList(providerList);
         LinkedList<PeerFilterProvider> begunProviders = new LinkedList<>();
         try {
             // All providers must be in a consistent, unchanging state because the filter is a merged one that's
@@ -81,7 +83,7 @@ public class FilterMerger {
                 // it will likely mean we never need to create a filter with different parameters.
                 lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
                 double fpRate = vBloomFilterFPRate;
-                // We now always use UPDATE_ALL because with SegWit there is hardly any wallet that can do without.
+                // We now always use UPDATE_ALL because with segwit there is hardly any wallet that can do without.
                 BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak,
                         BloomFilter.BloomUpdate.UPDATE_ALL);
                 for (PeerFilterProvider p : providers)

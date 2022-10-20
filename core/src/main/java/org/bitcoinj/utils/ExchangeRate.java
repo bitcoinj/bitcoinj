@@ -16,19 +16,18 @@
 
 package org.bitcoinj.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import org.bitcoinj.base.utils.Fiat;
+import org.bitcoinj.base.Coin;
 
-import java.io.Serializable;
 import java.math.BigInteger;
-
-import org.bitcoinj.core.Coin;
-
 import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * An exchange rate is expressed as a ratio of a {@link Coin} and a {@link Fiat} amount.
  */
-public class ExchangeRate implements Serializable {
+public class ExchangeRate {
 
     public final Coin coin;
     public final Fiat fiat;

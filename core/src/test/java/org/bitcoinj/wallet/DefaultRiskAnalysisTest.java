@@ -17,21 +17,35 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.*;
-import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.*;
-import org.bitcoinj.params.*;
-import org.bitcoinj.script.*;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.wallet.DefaultRiskAnalysis.*;
-import org.junit.*;
+import org.bitcoinj.wallet.DefaultRiskAnalysis.RuleViolation;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.script.ScriptOpCodes.*;
-import static org.junit.Assert.*;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 public class DefaultRiskAnalysisTest {
     // Uses mainnet because isStandard checks are disabled on testnet.
@@ -39,11 +53,11 @@ public class DefaultRiskAnalysisTest {
     private Wallet wallet;
     private final int TIMESTAMP = 1384190189;
     private static final ECKey key1 = new ECKey();
-    private final ImmutableList<Transaction> NO_DEPS = ImmutableList.of();
+    private final List<Transaction> NO_DEPS = Collections.emptyList();
 
     @Before
     public void setup() {
-        wallet = new Wallet(new Context(MAINNET));
+        wallet = Wallet.createDeterministic(MAINNET, ScriptType.P2PKH);
         wallet.setLastBlockSeenHeight(1000);
         wallet.setLastBlockSeenTimeSecs(TIMESTAMP);
     }
@@ -59,7 +73,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void nonFinal() throws Exception {
+    public void nonFinal() {
         // Verify that just having a lock time in the future is not enough to be considered risky (it's still final).
         Transaction tx = new Transaction(MAINNET);
         TransactionInput input = tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
@@ -112,7 +126,7 @@ public class DefaultRiskAnalysisTest {
         tx2.addInput(output);
         tx2.addOutput(COIN, new ECKey());
 
-        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, ImmutableList.of(tx1));
+        DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, Collections.singletonList(tx1));
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx1, analysis.getNonFinal());
     }
@@ -178,7 +192,7 @@ public class DefaultRiskAnalysisTest {
                 DefaultRiskAnalysis.isInputStandard(new TransactionInput(MAINNET, null, scriptHighS.getProgram())));
 
         // This is a real transaction. Its signatures S component is "low".
-        Transaction tx1 = new Transaction(MAINNET, Utils.HEX.decode(
+        Transaction tx1 = new Transaction(MAINNET, ByteUtils.HEX.decode(
                 "010000000200a2be4376b7f47250ad9ad3a83b6aa5eb6a6d139a1f50771704d77aeb8ce76c010000006a4730440220055723d363cd2d4fe4e887270ebdf5c4b99eaf233a5c09f9404f888ec8b839350220763c3794d310b384ce86decfb05787e5bfa5d31983db612a2dde5ffec7f396ae012102ef47e27e0c4bdd6dc83915f185d972d5eb8515c34d17bad584a9312e59f4e0bcffffffff52239451d37757eeacb86d32864ec1ee6b6e131d1e3fee6f1cff512703b71014030000006b483045022100ea266ac4f893d98a623a6fc0e6a961cd5a3f32696721e87e7570a68851917e75022056d75c3b767419f6f6cb8189a0ad78d45971523908dc4892f7594b75fd43a8d00121038bb455ca101ebbb0ecf7f5c01fa1dcb7d14fbf6b7d7ea52ee56f0148e72a736cffffffff0630b15a00000000001976a9146ae477b690cf85f21c2c01e2c8639a5c18dc884e88ac4f260d00000000001976a91498d08c02ab92a671590adb726dddb719695ee12e88ac65753b00000000001976a9140b2eb4ba6d364c82092f25775f56bc10cd92c8f188ac65753b00000000001976a914d1cb414e22081c6ba3a935635c0f1d837d3c5d9188ac65753b00000000001976a914df9d137a0d279471a2796291874c29759071340b88ac3d753b00000000001976a91459f5aa4815e3aa8e1720e8b82f4ac8e6e904e47d88ac00000000"));
         assertEquals("2a1c8569b2b01ebac647fb94444d1118d4d00e327456a3c518e40d47d72cd5fe", tx1.getTxId().toString());
 
@@ -186,7 +200,7 @@ public class DefaultRiskAnalysisTest {
 
         // This tx is the same as the above, except for a "high" S component on the signature of input 1.
         // It was part of the Oct 2015 malleability attack.
-        Transaction tx2 = new Transaction(MAINNET, Utils.HEX.decode(
+        Transaction tx2 = new Transaction(MAINNET, ByteUtils.HEX.decode(
                 "010000000200a2be4376b7f47250ad9ad3a83b6aa5eb6a6d139a1f50771704d77aeb8ce76c010000006a4730440220055723d363cd2d4fe4e887270ebdf5c4b99eaf233a5c09f9404f888ec8b839350220763c3794d310b384ce86decfb05787e5bfa5d31983db612a2dde5ffec7f396ae012102ef47e27e0c4bdd6dc83915f185d972d5eb8515c34d17bad584a9312e59f4e0bcffffffff52239451d37757eeacb86d32864ec1ee6b6e131d1e3fee6f1cff512703b71014030000006c493046022100ea266ac4f893d98a623a6fc0e6a961cd5a3f32696721e87e7570a68851917e75022100a928a3c4898be60909347e765f52872a613d8aada66c57a8c8791316d2f298710121038bb455ca101ebbb0ecf7f5c01fa1dcb7d14fbf6b7d7ea52ee56f0148e72a736cffffffff0630b15a00000000001976a9146ae477b690cf85f21c2c01e2c8639a5c18dc884e88ac4f260d00000000001976a91498d08c02ab92a671590adb726dddb719695ee12e88ac65753b00000000001976a9140b2eb4ba6d364c82092f25775f56bc10cd92c8f188ac65753b00000000001976a914d1cb414e22081c6ba3a935635c0f1d837d3c5d9188ac65753b00000000001976a914df9d137a0d279471a2796291874c29759071340b88ac3d753b00000000001976a91459f5aa4815e3aa8e1720e8b82f4ac8e6e904e47d88ac00000000"));
         assertEquals("dbe4147cf89b89fd9fa6c8ce6a3e2adecb234db094ec88301ae09073ca17d61d", tx2.getTxId().toString());
         assertFalse(ECKey.ECDSASignature
@@ -197,7 +211,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void standardOutputs() throws Exception {
+    public void standardOutputs() {
         Transaction tx = new Transaction(MAINNET);
         tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
         // A pay to address output
@@ -206,7 +220,7 @@ public class DefaultRiskAnalysisTest {
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         // 1-of-2 multisig output.
-        ImmutableList<ECKey> keys = ImmutableList.of(key1, new ECKey());
+        List<ECKey> keys = Arrays.asList(key1, new ECKey());
         tx.addOutput(Coin.CENT, ScriptBuilder.createMultiSigOutputScript(1, keys));
         // 2-of-2 multisig output.
         tx.addOutput(Coin.CENT, ScriptBuilder.createMultiSigOutputScript(2, keys));
@@ -218,7 +232,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void optInFullRBF() throws Exception {
+    public void optInFullRBF() {
         Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
         tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
@@ -227,7 +241,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void relativeLockTime() throws Exception {
+    public void relativeLockTime() {
         Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
         tx.setVersion(2);
         checkState(!tx.hasRelativeLockTime());
@@ -243,7 +257,7 @@ public class DefaultRiskAnalysisTest {
     }
 
     @Test
-    public void transactionVersions() throws Exception {
+    public void transactionVersions() {
         Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
         tx.setVersion(1);
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);

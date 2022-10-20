@@ -17,11 +17,10 @@
 
 package org.bitcoinj.wallet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.google.common.base.MoreObjects;
 import org.bitcoin.protocols.payments.Protos.PaymentDetails;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -32,7 +31,7 @@ import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Wallet.MissingSigsMode;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import com.google.common.base.MoreObjects;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A SendRequest gives the wallet information about precisely how to send money to a recipient or set of recipients.
@@ -171,7 +170,7 @@ public class SendRequest {
      */
     public static SendRequest to(Address destination, Coin value) {
         SendRequest req = new SendRequest();
-        final NetworkParameters parameters = destination.getParameters();
+        final NetworkParameters parameters = NetworkParameters.fromAddress(destination);
         checkNotNull(parameters, "Address is for an unknown network");
         req.tx = new Transaction(parameters);
         req.tx.addOutput(value, destination);
@@ -202,7 +201,7 @@ public class SendRequest {
 
     public static SendRequest emptyWallet(Address destination) {
         SendRequest req = new SendRequest();
-        final NetworkParameters parameters = destination.getParameters();
+        final NetworkParameters parameters = NetworkParameters.fromAddress(destination);
         checkNotNull(parameters, "Address is for an unknown network");
         req.tx = new Transaction(parameters);
         req.tx.addOutput(Coin.ZERO, destination);

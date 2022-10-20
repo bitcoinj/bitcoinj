@@ -16,33 +16,39 @@
 
 package org.bitcoinj.uri;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.Address;
+import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
-import com.google.common.collect.ImmutableList;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.params.Networks;
+import org.bitcoinj.testing.MockAltNetworkParams;
 import org.junit.Test;
 
-import static org.bitcoinj.core.Coin.*;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.SegwitAddress;
-
-import static org.junit.Assert.*;
-
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Locale;
+
+import static org.bitcoinj.base.Coin.CENT;
+import static org.bitcoinj.base.Coin.parseCoin;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BitcoinURITest {
     private BitcoinURI testObject = null;
 
-    private static final NetworkParameters MAINNET = MainNetParams.get();
-    private static final NetworkParameters TESTNET = TestNet3Params.get();
+    private static final BitcoinNetwork MAINNET = BitcoinNetwork.MAINNET;
+    private static final BitcoinNetwork TESTNET = BitcoinNetwork.TESTNET;
     private static final String MAINNET_GOOD_ADDRESS = "1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH";
     private static final String MAINNET_GOOD_SEGWIT_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
-    private static final String BITCOIN_SCHEME = MAINNET.getUriScheme();
+    private static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
 
     @Test
-    public void testConvertToBitcoinURI() throws Exception {
-        Address goodAddress = LegacyAddress.fromBase58(MAINNET, MAINNET_GOOD_ADDRESS);
+    public void testConvertToBitcoinURI() {
+        Address goodAddress = new DefaultAddressParser().parseAddress(MAINNET_GOOD_ADDRESS, MAINNET);
         
         // simple example
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage", BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34"), "Hello", "AMessage"));
@@ -77,21 +83,23 @@ public class BitcoinURITest {
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS, BitcoinURI.convertToBitcoinURI(goodAddress, null, "", ""));
 
         // different scheme
-        final NetworkParameters alternativeParameters = new MainNetParams() {
-            @Override
-            public String getUriScheme() {
-                return "test";
-            }
-        };
+        NetworkParameters alternativeParameters = new MockAltNetworkParams();
+        String mockNetGoodAddress = MockAltNetworkParams.MOCKNET_GOOD_ADDRESS;
 
-        assertEquals("test:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage",
-             BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(alternativeParameters, MAINNET_GOOD_ADDRESS), parseCoin("12.34"), "Hello", "AMessage"));
+        Networks.register(alternativeParameters);
+        try {
+            assertEquals("mockcoin:" + mockNetGoodAddress + "?amount=12.34&label=Hello&message=AMessage",
+                    BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(alternativeParameters.network(), mockNetGoodAddress), parseCoin("12.34"), "Hello", "AMessage"));
+        } finally {
+            Networks.unregister(alternativeParameters);
+        }
     }
 
     @Test
-    public void testConvertToBitcoinURI_segwit() throws Exception {
+    public void testConvertToBitcoinURI_segwit() {
+        Address segwitAddress = new DefaultAddressParser().parseAddress(MAINNET_GOOD_SEGWIT_ADDRESS, MAINNET);
         assertEquals("bitcoin:" + MAINNET_GOOD_SEGWIT_ADDRESS + "?message=segwit%20rules", BitcoinURI.convertToBitcoinURI(
-                SegwitAddress.fromBech32(MAINNET, MAINNET_GOOD_SEGWIT_ADDRESS), null, null, "segwit rules"));
+                segwitAddress, null, null, "segwit rules"));
     }
 
     @Test
@@ -284,12 +292,9 @@ public class BitcoinURITest {
 
     /**
      * Handles a badly formatted amount field
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
      */
     @Test
-    public void testBad_Amount() throws BitcoinURIParseException {
+    public void testBad_Amount() {
         // Missing
         try {
             testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
@@ -323,12 +328,9 @@ public class BitcoinURITest {
 
     /**
      * Handles duplicated fields (sneaky address overwrite attack)
-     * 
-     * @throws BitcoinURIParseException
-     *             If something goes wrong
      */
     @Test
-    public void testBad_Duplicated() throws BitcoinURIParseException {
+    public void testBad_Duplicated() {
         try {
             testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                     + "?address=aardvark");
@@ -410,7 +412,7 @@ public class BitcoinURITest {
         // Non-backwards compatible form ...
         BitcoinURI uri = new BitcoinURI(TESTNET, "bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9");
         assertEquals("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9", uri.getPaymentRequestUrl());
-        assertEquals(ImmutableList.of("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9"),
+        assertEquals(Collections.singletonList("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9"),
                 uri.getPaymentRequestUrls());
         assertNull(uri.getAddress());
     }
@@ -419,7 +421,7 @@ public class BitcoinURITest {
     public void testMultiplePaymentProtocolReq() throws Exception {
         BitcoinURI uri = new BitcoinURI(MAINNET,
                 "bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin&r1=bt:112233445566");
-        assertEquals(ImmutableList.of("bt:112233445566", "https://bitcoincore.org/~gavin"), uri.getPaymentRequestUrls());
+        assertEquals(Arrays.asList("bt:112233445566", "https://bitcoincore.org/~gavin"), uri.getPaymentRequestUrls());
         assertEquals("https://bitcoincore.org/~gavin", uri.getPaymentRequestUrl());
     }
 
@@ -427,7 +429,7 @@ public class BitcoinURITest {
     public void testNoPaymentProtocolReq() throws Exception {
         BitcoinURI uri = new BitcoinURI(MAINNET, "bitcoin:" + MAINNET_GOOD_ADDRESS);
         assertNull(uri.getPaymentRequestUrl());
-        assertEquals(ImmutableList.of(), uri.getPaymentRequestUrls());
+        assertEquals(Collections.emptyList(), uri.getPaymentRequestUrls());
         assertNotNull(uri.getAddress());
     }
 
@@ -436,7 +438,7 @@ public class BitcoinURITest {
         BitcoinURI uri = new BitcoinURI(TESTNET,
                 "bitcoin:?r=https://merchant.com/pay.php?h%3D2a8628fc2fbe");
         assertEquals("https://merchant.com/pay.php?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
-        assertEquals(ImmutableList.of("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
+        assertEquals(Collections.singletonList("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
         assertNull(uri.getAddress());
     }
 }

@@ -20,13 +20,16 @@ import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -59,17 +62,15 @@ public class Threading {
      * Put a dummy task into the queue and wait for it to be run. Because it's single threaded, this means all
      * tasks submitted before this point are now completed. Usually you won't want to use this method - it's a
      * convenience primarily used in unit testing. If you want to wait for an event to be called the right thing
-     * to do is usually to create a {@link com.google.common.util.concurrent.SettableFuture} and then call set
-     * on it. You can then either block on that future, compose it, add listeners to it and so on.
+     * to do is usually to create a {@link CompletableFuture} and then call {@link CompletableFuture#complete(Object)}
+     * on it. For example:
+     * <pre>{@code
+     * CompletableFuture f = CompletableFuture.supplyAsync(() -> event, USER_THREAD)
+     * }</pre>
+     * You can then either block on that future, compose it, add listeners to it and so on.
      */
     public static void waitForUserCode() {
-        final CountDownLatch latch = new CountDownLatch(1);
-        USER_THREAD.execute(new Runnable() {
-            @Override public void run() {
-                latch.countDown();
-            }
-        });
-        Uninterruptibles.awaitUninterruptibly(latch);
+        CompletableFuture.runAsync(() -> {}, USER_THREAD).join();
     }
 
     /**
@@ -88,7 +89,7 @@ public class Threading {
         // 10,000 pending tasks is entirely arbitrary and may or may not be appropriate for the device we're
         // running on.
         public static int WARNING_THRESHOLD = 10000;
-        private LinkedBlockingQueue<Runnable> tasks;
+        private final LinkedBlockingQueue<Runnable> tasks;
 
         public UserThread() {
             super("bitcoinj user thread");
@@ -133,12 +134,7 @@ public class Threading {
         throwOnLockCycles();
 
         USER_THREAD = new UserThread();
-        SAME_THREAD = new Executor() {
-            @Override
-            public void execute(@Nonnull Runnable runnable) {
-                runnable.run();
-            }
-        };
+        SAME_THREAD = Runnable::run;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,14 +186,11 @@ public class Threading {
 
     /** A caching thread pool that creates daemon threads, which won't keep the JVM alive waiting for more work. */
     public static ListeningExecutorService THREAD_POOL = MoreExecutors.listeningDecorator(
-            Executors.newCachedThreadPool(new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread t = new Thread(r);
-                    t.setName("Threading.THREAD_POOL worker");
-                    t.setDaemon(true);
-                    return t;
-                }
+            Executors.newCachedThreadPool(r -> {
+                Thread t = new Thread(r);
+                t.setName("Threading.THREAD_POOL worker");
+                t.setDaemon(true);
+                return t;
             })
     );
 }

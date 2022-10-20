@@ -17,15 +17,17 @@
 
 package org.bitcoin;
 
+import com.google.common.base.Preconditions;
+
+import java.math.BigInteger;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import java.math.BigInteger;
-import com.google.common.base.Preconditions;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import static org.bitcoin.NativeSecp256k1Util.*;
+
+import static org.bitcoin.NativeSecp256k1Util.AssertFailException;
+import static org.bitcoin.NativeSecp256k1Util.assertEquals;
 
 /**
  * <p>This class holds native methods to handle ECDSA verification.</p>
@@ -37,7 +39,9 @@ import static org.bitcoin.NativeSecp256k1Util.*;
  * and `make` then copy `.libs/libsecp256k1.so` to your system library path
  * or point the JVM to the folder containing it with -Djava.library.path
  * </p>
+ * @deprecated See https://github.com/bitcoinj/bitcoinj/issues/2267
  */
+@Deprecated
 public class NativeSecp256k1 {
 
     private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();

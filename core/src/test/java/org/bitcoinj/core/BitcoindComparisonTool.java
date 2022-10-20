@@ -17,20 +17,35 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.net.*;
-import org.bitcoinj.params.*;
-import org.bitcoinj.store.*;
-import org.bitcoinj.utils.*;
-import org.slf4j.*;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.net.NioClient;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.FullPrunedBlockStore;
+import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.MemoryFullPrunedBlockStore;
+import org.bitcoinj.utils.BlockFileLoader;
+import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.utils.Threading;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.io.File;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
@@ -54,8 +69,6 @@ public class BitcoindComparisonTool {
         System.out.println("USAGE: bitcoinjBlockStoreLocation runExpensiveTests(1/0) [port=18444]");
         boolean runExpensiveTests = args.length > 1 && Integer.parseInt(args[1]) == 1;
 
-        Context ctx = new Context(PARAMS);
-
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
 
@@ -65,8 +78,7 @@ public class BitcoindComparisonTool {
         final Iterator<Block> blocks = new BlockFileLoader(PARAMS, Arrays.asList(blockFile));
 
         try {
-            H2FullPrunedBlockStore store = new H2FullPrunedBlockStore(PARAMS, args.length > 0 ? args[0] : "BitcoindComparisonTool", blockList.maximumReorgBlockCount);
-            store.resetStore();
+            FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(PARAMS, store);
         } catch (BlockStoreException e) {
@@ -86,118 +98,109 @@ public class BitcoindComparisonTool {
         final Set<Sha256Hash> blocksRequested = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final Set<Sha256Hash> blocksPendingSend = Collections.synchronizedSet(new HashSet<Sha256Hash>());
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
-        final SettableFuture<Void> connectedFuture = SettableFuture.create();
-        bitcoind.addConnectedEventListener(Threading.SAME_THREAD, new PeerConnectedEventListener() {
-            @Override
-            public void onPeerConnected(Peer peer, int peerCount) {
-                if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
-                    System.out.println();
-                    System.out.println("************************************************************************************************************************\n" +
-                                       "WARNING: You appear to be using this to test an alternative implementation with full validation rules. You should go\n" +
-                                       "think hard about what you're doing. Seriously, no one has gotten even close to correctly reimplementing Bitcoin\n" +
-                                       "consensus rules, despite serious investment in trying. It is a huge task and the slightest difference is a huge bug.\n" +
-                                       "Instead, go work on making Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right,\n" +
-                                       "and starting with this tester as a way to try to do so will simply end in pain and lost coins.\n" +
-                                       "************************************************************************************************************************");
-                    System.out.println();
-                }
-                log.info("bitcoind connected");
-                // Make sure bitcoind has no blocks
-                bitcoind.setDownloadParameters(0, false);
-                bitcoind.startBlockChainDownload();
-                connectedFuture.set(null);
+        final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
+        bitcoind.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> {
+            if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
+                System.out.println();
+                System.out.println("************************************************************************************************************************\n" +
+                                   "WARNING: You appear to be using this to test an alternative implementation with full validation rules. You should go\n" +
+                                   "think hard about what you're doing. Seriously, no one has gotten even close to correctly reimplementing Bitcoin\n" +
+                                   "consensus rules, despite serious investment in trying. It is a huge task and the slightest difference is a huge bug.\n" +
+                                   "Instead, go work on making Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right,\n" +
+                                   "and starting with this tester as a way to try to do so will simply end in pain and lost coins.\n" +
+                                   "************************************************************************************************************************");
+                System.out.println();
             }
+            log.info("bitcoind connected");
+            // Make sure bitcoind has no blocks
+            bitcoind.setDownloadParameters(0, false);
+            bitcoind.startBlockChainDownload();
+            connectedFuture.complete(null);
         });
 
-        bitcoind.addDisconnectedEventListener(Threading.SAME_THREAD, new PeerDisconnectedEventListener() {
-            @Override
-            public void onPeerDisconnected(Peer peer, int peerCount) {
-                log.error("bitcoind node disconnected!");
+        bitcoind.addDisconnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> {
+            log.error("bitcoind node disconnected!");
+            System.exit(1);
+        });
+
+        bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, (peer, m) -> {
+            if (m instanceof HeadersMessage) {
+                if (!((HeadersMessage) m).getBlockHeaders().isEmpty()) {
+                    Block b = Iterables.getLast(((HeadersMessage) m).getBlockHeaders());
+                    log.info("Got header from bitcoind " + b.getHashAsString());
+                    bitcoindChainHead = b.getHash();
+                } else
+                    log.info("Got empty header message from bitcoind");
+                return null;
+            } else if (m instanceof Block) {
+                log.error("bitcoind sent us a block it already had, make sure bitcoind has no blocks!");
                 System.exit(1);
-            }
-        });
-
-        bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, new PreMessageReceivedEventListener() {
-            @Override
-            public Message onPreMessageReceived(Peer peer, Message m) {
-                if (m instanceof HeadersMessage) {
-                    if (!((HeadersMessage) m).getBlockHeaders().isEmpty()) {
-                        Block b = Iterables.getLast(((HeadersMessage) m).getBlockHeaders());
-                        log.info("Got header from bitcoind " + b.getHashAsString());
-                        bitcoindChainHead = b.getHash();
-                    } else
-                        log.info("Got empty header message from bitcoind");
-                    return null;
-                } else if (m instanceof Block) {
-                    log.error("bitcoind sent us a block it already had, make sure bitcoind has no blocks!");
-                    System.exit(1);
-                } else if (m instanceof GetDataMessage) {
-                    for (InventoryItem item : ((GetDataMessage) m).items)
-                        if (item.type == InventoryItem.Type.BLOCK) {
-                            log.info("Requested " + item.hash);
-                            if (currentBlock.block.getHash().equals(item.hash))
-                                bitcoind.sendMessage(currentBlock.block);
+            } else if (m instanceof GetDataMessage) {
+                for (InventoryItem item : ((GetDataMessage) m).items)
+                    if (item.type == InventoryItem.Type.BLOCK) {
+                        log.info("Requested " + item.hash);
+                        if (currentBlock.block.getHash().equals(item.hash))
+                            bitcoind.sendMessage(currentBlock.block);
+                        else {
+                            Block nextBlock = preloadedBlocks.get(item.hash);
+                            if (nextBlock != null)
+                                bitcoind.sendMessage(nextBlock);
                             else {
-                                Block nextBlock = preloadedBlocks.get(item.hash);
-                                if (nextBlock != null)
-                                    bitcoind.sendMessage(nextBlock);
-                                else {
-                                    blocksPendingSend.add(item.hash);
-                                    log.info("...which we will not provide yet");
-                                }
+                                blocksPendingSend.add(item.hash);
+                                log.info("...which we will not provide yet");
                             }
-                            blocksRequested.add(item.hash);
                         }
-                    return null;
-                } else if (m instanceof GetHeadersMessage) {
-                    try {
-                        if (currentBlock.block == null) {
-                            log.info("Got a request for a header before we had even begun processing blocks!");
-                            return null;
-                        }
-                        LinkedList<Block> headers = new LinkedList<>();
-                        Block it = blockList.hashHeaderMap.get(currentBlock.block.getHash());
-                        while (it != null) {
-                            headers.addFirst(it);
-                            it = blockList.hashHeaderMap.get(it.getPrevBlockHash());
-                        }
-                        LinkedList<Block> sendHeaders = new LinkedList<>();
-                        boolean found = false;
-                        for (Sha256Hash hash : ((GetHeadersMessage) m).getLocator().getHashes()) {
-                            for (Block b : headers) {
-                                if (found) {
-                                    sendHeaders.addLast(b);
-                                    log.info("Sending header (" + b.getPrevBlockHash() + ") -> " + b.getHash());
-                                    if (b.getHash().equals(((GetHeadersMessage) m).getStopHash()))
-                                        break;
-                                } else if (b.getHash().equals(hash)) {
-                                    log.info("Found header " + b.getHashAsString());
-                                    found = true;
-                                }
+                        blocksRequested.add(item.hash);
+                    }
+                return null;
+            } else if (m instanceof GetHeadersMessage) {
+                try {
+                    if (currentBlock.block == null) {
+                        log.info("Got a request for a header before we had even begun processing blocks!");
+                        return null;
+                    }
+                    LinkedList<Block> headers = new LinkedList<>();
+                    Block it = blockList.hashHeaderMap.get(currentBlock.block.getHash());
+                    while (it != null) {
+                        headers.addFirst(it);
+                        it = blockList.hashHeaderMap.get(it.getPrevBlockHash());
+                    }
+                    LinkedList<Block> sendHeaders = new LinkedList<>();
+                    boolean found = false;
+                    for (Sha256Hash hash : ((GetHeadersMessage) m).getLocator().getHashes()) {
+                        for (Block b : headers) {
+                            if (found) {
+                                sendHeaders.addLast(b);
+                                log.info("Sending header (" + b.getPrevBlockHash() + ") -> " + b.getHash());
+                                if (b.getHash().equals(((GetHeadersMessage) m).getStopHash()))
+                                    break;
+                            } else if (b.getHash().equals(hash)) {
+                                log.info("Found header " + b.getHashAsString());
+                                found = true;
                             }
-                            if (found)
-                                break;
                         }
-                        if (!found)
-                            sendHeaders = headers;
-                        bitcoind.sendMessage(new HeadersMessage(PARAMS, sendHeaders));
-                        InventoryMessage i = new InventoryMessage(PARAMS);
-                        for (Block b : sendHeaders)
-                            i.addBlock(b);
-                        bitcoind.sendMessage(i);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        if (found)
+                            break;
                     }
-                    return null;
-                } else if (m instanceof InventoryMessage) {
-                    if (mostRecentInv != null) {
-                        log.error("Got an inv when we weren't expecting one");
-                        unexpectedInvs.incrementAndGet();
-                    }
-                    mostRecentInv = (InventoryMessage) m;
+                    if (!found)
+                        sendHeaders = headers;
+                    bitcoind.sendMessage(new HeadersMessage(PARAMS, sendHeaders));
+                    InventoryMessage i = new InventoryMessage(PARAMS);
+                    for (Block b : sendHeaders)
+                        i.addBlock(b);
+                    bitcoind.sendMessage(i);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-                return m;
+                return null;
+            } else if (m instanceof InventoryMessage) {
+                if (mostRecentInv != null) {
+                    log.error("Got an inv when we weren't expecting one");
+                    unexpectedInvs.incrementAndGet();
+                }
+                mostRecentInv = (InventoryMessage) m;
             }
+            return m;
         });
         
         bitcoindChainHead = PARAMS.getGenesisBlock().getHash();
@@ -335,19 +338,6 @@ public class BitcoindComparisonTool {
                     rulesSinceFirstFail++;
                 }
                 mostRecentInv = null;
-            } else if (rule instanceof UTXORule) {
-                if (bitcoind.getPeerVersionMessage().isGetUTXOsSupported()) {
-                    UTXORule r = (UTXORule) rule;
-                    UTXOsMessage result = bitcoind.getUTXOs(r.query).get();
-                    if (!result.equals(r.result)) {
-                        log.error("utxo result was not what we expected.");
-                        log.error("Wanted  {}", r.result);
-                        log.error("but got {}", result);
-                        rulesSinceFirstFail++;
-                    } else {
-                        log.info("Successful utxo query {}: {}", r.ruleName, result);
-                    }
-                }
             } else {
                 throw new RuntimeException("Unknown rule");
             }

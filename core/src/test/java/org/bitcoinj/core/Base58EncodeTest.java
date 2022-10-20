@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Base58;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -26,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.runners.Parameterized.*;
+import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class Base58EncodeTest {

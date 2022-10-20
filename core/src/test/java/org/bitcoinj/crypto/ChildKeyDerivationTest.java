@@ -17,13 +17,20 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.params.*;
-import org.junit.*;
-import org.bouncycastle.crypto.params.*;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.junit.Test;
 
-import static org.bitcoinj.core.Utils.*;
-import static org.junit.Assert.*;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * This test is adapted from Armory's BIP 32 tests.
@@ -31,14 +38,13 @@ import static org.junit.Assert.*;
 public class ChildKeyDerivationTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final NetworkParameters TESTNET = TestNet3Params.get();
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
     private static final int SCRYPT_ITERATIONS = 256;
     private static final int HDW_CHAIN_EXTERNAL = 0;
     private static final int HDW_CHAIN_INTERNAL = 1;
 
     @Test
-    public void testChildKeyDerivation() throws Exception {
+    public void testChildKeyDerivation() {
         String[] ckdTestVectors = {
                 // test case 1:
                 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -155,7 +161,7 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void inverseEqualsNormal() throws Exception {
+    public void inverseEqualsNormal() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("Wired / Aug 13th 2014 / Snowden: I Left the NSA Clues, But They Couldn't Find Them".getBytes());
         HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.dropPrivateBytes().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
         HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.dropPrivateBytes().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
@@ -164,7 +170,7 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void encryptedDerivation() throws Exception {
+    public void encryptedDerivation() {
         // Check that encrypting a parent key in the hierarchy and then deriving from it yields a DeterministicKey
         // with no private key component, and that the private key bytes are derived on demand.
         KeyCrypter scrypter = new KeyCrypterScrypt(SCRYPT_ITERATIONS);
@@ -194,7 +200,7 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void pubOnlyDerivation() throws Exception {
+    public void pubOnlyDerivation() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
         assertFalse(key1.isPubKeyOnly());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
@@ -239,8 +245,8 @@ public class ChildKeyDerivationTest {
         {
             final String pub58 = key1.serializePubB58(params);
             final String priv58 = key1.serializePrivB58(params);
-            final byte[] pub = key1.serializePublic(params);
-            final byte[] priv = key1.serializePrivate(params);
+            final byte[] pub = key1.serialize(params, true);
+            final byte[] priv = key1.serialize(params, false);
             assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
             assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
             assertArrayEquals(new byte[]{4, -120, -78, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, -68, 93, -104, -97, 31, -105, -18, 109, 112, 104, 45, -77, -77, 18, 85, -29, -120, 86, -113, 26, 48, -18, -79, -110, -6, -27, 87, 86, 24, 124, 99, 3, 96, -33, -14, 67, -19, -47, 16, 76, -49, -11, -30, -123, 7, 56, 101, 91, 74, 125, -127, 61, 42, -103, 90, -93, 66, -36, 2, -126, -107, 30, 24, -111}, pub);
@@ -257,8 +263,8 @@ public class ChildKeyDerivationTest {
         {
             final String pub58 = key2.serializePubB58(params);
             final String priv58 = key2.serializePrivB58(params);
-            final byte[] pub = key2.serializePublic(params);
-            final byte[] priv = key2.serializePrivate(params);
+            final byte[] pub = key2.serialize(params, true);
+            final byte[] priv = key2.serialize(params, false);
             assertEquals(DeterministicKey.deserializeB58(key1, priv58, params), key2);
             assertEquals(DeterministicKey.deserializeB58(key1, pub58, params).getPubKeyPoint(), key2.getPubKeyPoint());
             assertEquals(DeterministicKey.deserialize(params, priv, key1), key2);
@@ -273,9 +279,9 @@ public class ChildKeyDerivationTest {
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO_HARDENED);
         DeterministicKey key4 = HDKeyDerivation.deriveChildKey(key3, ChildNumber.ZERO_HARDENED);
         assertEquals(key4.getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serializePrivate(UNITTEST), key3).getPath().size(), 3);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serializePrivate(UNITTEST), null).getPath().size(), 1);
-        assertEquals(DeterministicKey.deserialize(UNITTEST, key4.serializePrivate(UNITTEST)).getPath().size(), 1);
+        assertEquals(DeterministicKey.deserialize(TESTNET, key4.serialize(TESTNET, false), key3).getPath().size(), 3);
+        assertEquals(DeterministicKey.deserialize(TESTNET, key4.serialize(TESTNET, false), null).getPath().size(), 1);
+        assertEquals(DeterministicKey.deserialize(TESTNET, key4.serialize(TESTNET, false)).getPath().size(), 1);
     }
 
     /** Reserializing a deserialized key should yield the original input */

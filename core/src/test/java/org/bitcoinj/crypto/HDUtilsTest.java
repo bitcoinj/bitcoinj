@@ -17,14 +17,15 @@
 
 package org.bitcoinj.crypto;
 
-import org.junit.Assert;
 import org.junit.Test;
 
-import static org.bitcoinj.core.Utils.HEX;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class HDUtilsTest {
     @Test
-    public void testHmac() throws Exception {
+    public void testHmac() {
         String[] tv = {
                 "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b" +
                         "0b0b0b0b",
@@ -108,7 +109,7 @@ public class HDUtilsTest {
         };
 
         for (int i = 0; i < tv.length; i += 3) {
-            Assert.assertArrayEquals("Case " + i, getBytes(tv, i + 2), HDUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)));
+            assertArrayEquals("Case " + i, getBytes(tv, i + 2), HDUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)));
         }
     }
 
@@ -117,8 +118,8 @@ public class HDUtilsTest {
     }
 
     @Test
-    public void testLongToByteArray() throws Exception {
+    public void testLongToByteArray() {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
-        Assert.assertEquals("00000402", HEX.encode(bytes));
+        assertEquals("00000402", HEX.encode(bytes));
     }
 }

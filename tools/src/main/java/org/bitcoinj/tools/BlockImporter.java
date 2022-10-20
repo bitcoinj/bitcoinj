@@ -28,9 +28,8 @@ import java.io.File;
 /** Very thin wrapper around {@link BlockFileLoader} */
 public class BlockImporter {
     public static void main(String[] args) throws BlockStoreException, VerificationException, PrunedException {
-        System.out.println("USAGE: BlockImporter (prod|test) (H2|Disk|MemFull|Mem|SPV) [blockStore]");
+        System.out.println("USAGE: BlockImporter (prod|test) (Disk|MemFull|Mem|SPV) [blockStore]");
         System.out.println("       blockStore is required unless type is Mem or MemFull");
-        System.out.println("       eg BlockImporter prod H2 /home/user/bitcoinj.h2store");
         System.out.println("       Does full verification if the store supports it");
         Preconditions.checkArgument(args.length == 2 || args.length == 3);
         
@@ -39,13 +38,9 @@ public class BlockImporter {
             params = TestNet3Params.get();
         else
             params = MainNetParams.get();
-        new Context(params);
-        
+
         BlockStore store;
-        if (args[1].equals("H2")) {
-            Preconditions.checkArgument(args.length == 3);
-            store = new H2FullPrunedBlockStore(params, args[2], 100);
-        } else if (args[1].equals("MemFull")) {
+        if (args[1].equals("MemFull")) {
             Preconditions.checkArgument(args.length == 2);
             store = new MemoryFullPrunedBlockStore(params, 100);
         } else if (args[1].equals("Mem")) {

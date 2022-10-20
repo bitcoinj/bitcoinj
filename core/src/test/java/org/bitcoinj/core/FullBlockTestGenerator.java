@@ -16,8 +16,10 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -25,20 +27,47 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptPattern;
 
-import com.google.common.base.Preconditions;
-
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Random;
+import java.util.Set;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.script.ScriptOpCodes.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.SATOSHI;
+import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2DUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ELSE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ENDIF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_FALSE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_HASH160;
+import static org.bitcoinj.script.ScriptOpCodes.OP_IF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.bitcoinj.script.ScriptOpCodes.OP_RETURN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 
 /**
  * YOU ARE READING THIS CODE BECAUSE EITHER...
@@ -115,23 +144,6 @@ class MemoryPoolState extends Rule {
     }
 }
 
-class UTXORule extends Rule {
-    List<TransactionOutPoint> query;
-    UTXOsMessage result;
-
-    public UTXORule(String ruleName, TransactionOutPoint query, UTXOsMessage result) {
-        super(ruleName);
-        this.query = Collections.singletonList(query);
-        this.result = result;
-    }
-
-    public UTXORule(String ruleName, List<TransactionOutPoint> query, UTXOsMessage result) {
-        super(ruleName);
-        this.query = query;
-        this.result = result;
-    }
-}
-
 class RuleList {
     public List<Rule> list;
     public int maximumReorgBlockCount;
@@ -174,11 +186,11 @@ public class FullBlockTestGenerator {
             public boolean add(Rule element) {
                 if (outStream != null && element instanceof BlockAndValidity) {
                     try {
-                        Utils.uint32ToByteStreamBE(params.getPacketMagic(), outStream);
+                        ByteUtils.uint32ToByteStreamBE(params.getPacketMagic(), outStream);
                         byte[] block = ((BlockAndValidity)element).block.bitcoinSerialize();
                         byte[] length = new byte[4];
-                        Utils.uint32ToByteArrayBE(block.length, length, 0);
-                        outStream.write(Utils.reverseBytes(length));
+                        ByteUtils.uint32ToByteArrayBE(block.length, length, 0);
+                        outStream.write(ByteUtils.reverseBytes(length));
                         outStream.write(block);
                         ((BlockAndValidity)element).block = null;
                     } catch (IOException e) {
@@ -232,17 +244,6 @@ public class FullBlockTestGenerator {
         // Make sure nothing breaks if we add b3 twice
         blocks.add(new BlockAndValidity(b3, true, false, b2.getHash(), chainHeadHeight + 2, "b3"));
 
-        // Do a simple UTXO query.
-        UTXORule utxo1;
-        {
-            Transaction coinbase = b2.block.getTransactions().get(0);
-            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getTxId());
-            long[] heights = {chainHeadHeight + 2};
-            UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(coinbase.getOutput(0)), heights, b2.getHash(), chainHeadHeight + 2);
-            utxo1 = new UTXORule("utxo1", outpoint, result);
-            blocks.add(utxo1);
-        }
-
         // Now we add another block to make the alternative chain longer.
         //
         //     genesis -> b1 (0) -> b2 (1)
@@ -251,18 +252,6 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out2 = checkNotNull(spendableOutputs.poll());
         NewBlock b4 = createNextBlock(b3, chainHeadHeight + 3, out2, null);
         blocks.add(new BlockAndValidity(b4, true, false, b4.getHash(), chainHeadHeight + 3, "b4"));
-
-        // Check that the old coinbase is no longer in the UTXO set and the new one is.
-        {
-            Transaction coinbase = b4.block.getTransactions().get(0);
-            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, coinbase.getTxId());
-            List<TransactionOutPoint> queries = ImmutableList.of(utxo1.query.get(0), outpoint);
-            List<TransactionOutput> results = Lists.asList(null, coinbase.getOutput(0), new TransactionOutput[]{});
-            long[] heights = {chainHeadHeight + 3};
-            UTXOsMessage result = new UTXOsMessage(params, results, heights, b4.getHash(), chainHeadHeight + 3);
-            UTXORule utxo2 = new UTXORule("utxo2", queries, result);
-            blocks.add(utxo2);
-        }
 
         // ... and back to the first chain.
         NewBlock b5 = createNextBlock(b2, chainHeadHeight + 3, out2, null);
@@ -1227,8 +1216,8 @@ public class FullBlockTestGenerator {
 
             byte[] varIntBytes = new byte[9];
             varIntBytes[0] = (byte) 255;
-            Utils.uint32ToByteArrayLE((long)b64Original.block.getTransactions().size(), varIntBytes, 1);
-            Utils.uint32ToByteArrayLE(((long)b64Original.block.getTransactions().size()) >>> 32, varIntBytes, 5);
+            ByteUtils.uint32ToByteArrayLE((long)b64Original.block.getTransactions().size(), varIntBytes, 1);
+            ByteUtils.uint32ToByteArrayLE(((long)b64Original.block.getTransactions().size()) >>> 32, varIntBytes, 5);
             stream.write(varIntBytes);
             checkState(new VarInt(varIntBytes, 0).intValue() == b64Original.block.getTransactions().size());
 
@@ -1386,7 +1375,7 @@ public class FullBlockTestGenerator {
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is too large, the CHECKSIGs after that push are still counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            Utils.uint32ToByteArrayLE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            ByteUtils.uint32ToByteArrayLE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b73);
             b73.addTransaction(tx);
@@ -1452,7 +1441,7 @@ public class FullBlockTestGenerator {
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is filled with CHECKSIGs, they (obviously) arent counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            Utils.uint32ToByteArrayLE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            ByteUtils.uint32ToByteArrayLE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b76);
             b76.addTransaction(tx);
@@ -1514,15 +1503,6 @@ public class FullBlockTestGenerator {
         post82Mempool.add(new InventoryItem(InventoryItem.Type.TRANSACTION, b78tx.getTxId()));
         post82Mempool.add(new InventoryItem(InventoryItem.Type.TRANSACTION, b79tx.getTxId()));
         blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
-
-        // Check the UTXO query takes mempool into account.
-        {
-            TransactionOutPoint outpoint = new TransactionOutPoint(params, 0, b79tx.getTxId());
-            long[] heights = { UTXOsMessage.MEMPOOL_HEIGHT };
-            UTXOsMessage result = new UTXOsMessage(params, ImmutableList.of(b79tx.getOutput(0)), heights, b82.getHash(), chainHeadHeight + 28);
-            UTXORule utxo3 = new UTXORule("utxo3", outpoint, result);
-            blocks.add(utxo3);
-        }
 
         // Test invalid opcodes in dead execution paths.
         // -> b81 (26) -> b82 (27) -> b83 (28)

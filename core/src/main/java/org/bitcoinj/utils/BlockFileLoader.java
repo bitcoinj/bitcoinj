@@ -16,12 +16,10 @@
 
 package org.bitcoinj.utils;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
-import org.bitcoinj.core.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +30,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * <p>This class reads block files stored in the Bitcoin Core format. This is simply a way to concatenate
@@ -156,7 +156,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 }
                 byte[] bytes = new byte[4];
                 currentFileStream.read(bytes, 0, 4);
-                long size = Utils.readUint32BE(Utils.reverseBytes(bytes), 0);
+                long size = ByteUtils.readUint32BE(ByteUtils.reverseBytes(bytes), 0);
                 bytes = new byte[(int) size];
                 currentFileStream.read(bytes, 0, (int) size);
                 try {

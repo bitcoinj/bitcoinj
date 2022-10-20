@@ -16,7 +16,7 @@
 
 package org.bitcoinj.wallet.listeners;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.wallet.Wallet;
 

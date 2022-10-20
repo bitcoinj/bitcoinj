@@ -17,21 +17,17 @@
 
 package org.bitcoinj.params;
 
-import java.net.URI;
-
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.net.discovery.HttpDiscovery;
-
+import org.bitcoinj.base.Sha256Hash;
 
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Parameters for the main production network on which people trade goods and services.
  */
-public class MainNetParams extends AbstractBitcoinNetParams {
+public class MainNetParams extends BitcoinNetworkParams {
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
     public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
@@ -40,11 +36,10 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
 
     public MainNetParams() {
-        super();
-        id = ID_MAINNET;
+        super(BitcoinNetwork.MAINNET);
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+        maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
 
         port = 8333;
         packetMagic = 0xf9beb4d9L;
@@ -81,18 +76,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "seed.btc.petertodd.org",       // Peter Todd
                 "seed.bitcoin.sprovoost.nl",    // Sjors Provoost
                 "dnsseed.emzy.de",              // Stephan Oeste
-        };
-        httpSeeds = new HttpDiscovery.Details[] {
-                // Andreas Schildbach
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode("0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),
-                        URI.create("http://httpseed.bitcoin.schildbach.de/peers")
-                ),
-                // Anton Kumaigorodski
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode("02c682e83db4efac3c841d6fa544211fb1e4a55061060019b3682fc306f228c558")),
-                        URI.create("http://lightning-wallet.com:8081/peers")
-                )
+                "seed.bitcoin.wiz.biz",         // Jason Maurice
         };
 
         // These are in big-endian format, which is what the SeedPeers code expects.
@@ -156,10 +140,5 @@ public class MainNetParams extends AbstractBitcoinNetParams {
             }
         }
         return genesisBlock;
-    }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_MAINNET;
     }
 }

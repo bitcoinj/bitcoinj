@@ -17,12 +17,13 @@
 
 package org.bitcoinj.core;
 
-import javax.annotation.Nullable;
-
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -32,10 +33,10 @@ public interface TransactionBag {
     /**
      * Look for a public key which hashes to the given hash and (optionally) is used for a specific script type.
      * @param pubKeyHash hash of the public key to look for
-     * @param scriptType only look for given usage (currently {@link Script.ScriptType#P2PKH} or {@link Script.ScriptType#P2WPKH}) or {@code null} if we don't care
+     * @param scriptType only look for given usage (currently {@link ScriptType#P2PKH} or {@link ScriptType#P2WPKH}) or {@code null} if we don't care
      * @return true if hash was found
      */
-    boolean isPubKeyHashMine(byte[] pubKeyHash, @Nullable Script.ScriptType scriptType);
+    boolean isPubKeyHashMine(byte[] pubKeyHash, @Nullable ScriptType scriptType);
 
     /** Returns true if this wallet is watching transactions for outputs with the script. */
     boolean isWatchedScript(Script script);

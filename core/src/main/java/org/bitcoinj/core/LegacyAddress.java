@@ -18,14 +18,18 @@
 
 package org.bitcoinj.core;
 
-import java.util.Arrays;
-import java.util.Objects;
+import com.google.common.primitives.UnsignedBytes;
+import org.bitcoinj.base.Base58;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.params.Networks;
+import org.bitcoinj.base.ScriptType;
 
 import javax.annotation.Nullable;
-
-import com.google.common.primitives.UnsignedBytes;
-import org.bitcoinj.params.Networks;
-import org.bitcoinj.script.Script.ScriptType;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
@@ -48,23 +52,34 @@ public class LegacyAddress extends Address {
     public final boolean p2sh;
 
     /**
-     * Private constructor. Use {@link #fromBase58(NetworkParameters, String)},
-     * {@link #fromPubKeyHash(NetworkParameters, byte[])}, {@link #fromScriptHash(NetworkParameters, byte[])} or
-     * {@link #fromKey(NetworkParameters, ECKey)}.
-     * 
-     * @param params
+     * Private constructor. Use {@link #fromBase58(Network, String)},
+     * {@link #fromPubKeyHash(Network, byte[])}, {@link #fromScriptHash(Network, byte[])} or
+     * {@link ECKey#toAddress(ScriptType, Network)}.
+     *
+     * @param network
      *            network this address is valid for
      * @param p2sh
      *            true if hash160 is hash of a script, false if it is hash of a pubkey
      * @param hash160
      *            20-byte hash of pubkey or script
      */
-    private LegacyAddress(NetworkParameters params, boolean p2sh, byte[] hash160) throws AddressFormatException {
-        super(params, hash160);
+    private LegacyAddress(Network network, boolean p2sh, byte[] hash160) throws AddressFormatException {
+        super(normalizeNetwork(network), hash160);
         if (hash160.length != 20)
             throw new AddressFormatException.InvalidDataLength(
                     "Legacy addresses are 20 byte (160 bit) hashes, but got: " + hash160.length);
         this.p2sh = p2sh;
+    }
+
+    private static Network normalizeNetwork(Network network) {
+        // LegacyAddress does not distinguish between the different testnet types, normalize to TESTNET
+        if (network instanceof BitcoinNetwork) {
+            BitcoinNetwork bitcoinNetwork = (BitcoinNetwork) network;
+            if (bitcoinNetwork == BitcoinNetwork.SIGNET || bitcoinNetwork == BitcoinNetwork.REGTEST) {
+                return BitcoinNetwork.TESTNET;
+            }
+        }
+        return network;
     }
 
     /**
@@ -76,9 +91,23 @@ public class LegacyAddress extends Address {
      * @param hash160
      *            20-byte pubkey hash
      * @return constructed address
+     * @deprecated Use {@link #fromPubKeyHash(Network, byte[])}
      */
+    @Deprecated
     public static LegacyAddress fromPubKeyHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return new LegacyAddress(params, false, hash160);
+        return fromPubKeyHash(params.network(), hash160);
+    }
+
+    /**
+     * Construct a {@link LegacyAddress} that represents the given pubkey hash. The resulting address will be a P2PKH type of
+     * address.
+     *
+     * @param network network this address is valid for
+     * @param hash160 20-byte pubkey hash
+     * @return constructed address
+     */
+    public static LegacyAddress fromPubKeyHash(Network network, byte[] hash160) throws AddressFormatException {
+        return new LegacyAddress(network, false, hash160);
     }
 
     /**
@@ -90,9 +119,11 @@ public class LegacyAddress extends Address {
      * @param key
      *            only the public part is used
      * @return constructed address
+     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
      */
+    @Deprecated
     public static LegacyAddress fromKey(NetworkParameters params, ECKey key) {
-        return fromPubKeyHash(params, key.getPubKeyHash());
+        return (LegacyAddress) key.toAddress(ScriptType.P2PKH, params.network());
     }
 
     /**
@@ -103,9 +134,22 @@ public class LegacyAddress extends Address {
      * @param hash160
      *            P2SH script hash
      * @return constructed address
+     * @deprecated Use {@link #fromScriptHash(Network, byte[])}
      */
+    @Deprecated
     public static LegacyAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return new LegacyAddress(params, true, hash160);
+        return fromScriptHash(params.network(), hash160);
+    }
+
+    /**
+     * Construct a {@link LegacyAddress} that represents the given P2SH script hash.
+     *
+     * @param network network this address is valid for
+     * @param hash160 P2SH script hash
+     * @return constructed address
+     */
+    public static LegacyAddress fromScriptHash(Network network, byte[] hash160) throws AddressFormatException {
+        return new LegacyAddress(network, true, hash160);
     }
 
     /**
@@ -120,25 +164,41 @@ public class LegacyAddress extends Address {
      *             if the given base58 doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
      *             if the given address is valid but for a different chain (eg testnet vs mainnet)
+     * @deprecated Use {@link #fromBase58(Network, String)}
      */
+    @Deprecated
     public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
+        return fromBase58( (params != null) ? params.network() : null, base58);
+    }
+
+    /**
+     * Construct a {@link LegacyAddress} from its base58 form.
+     *
+     * @param network expected network this address is valid for, or null if the network should be derived from the base58
+     * @param base58 base58-encoded textual form of the address
+     * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
+     * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (eg testnet vs mainnet)
+     */
+    public static LegacyAddress fromBase58(@Nullable Network network, String base58)
+            throws AddressFormatException, AddressFormatException.WrongNetwork {
+        NetworkParameters params = (network != null) ? NetworkParameters.of(network) : null;
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
-        if (params == null) {
+        if (network == null) {
             for (NetworkParameters p : Networks.get()) {
                 if (version == p.getAddressHeader())
-                    return new LegacyAddress(p, false, bytes);
+                    return new LegacyAddress(p.network(), false, bytes);
                 else if (version == p.getP2SHHeader())
-                    return new LegacyAddress(p, true, bytes);
+                    return new LegacyAddress(p.network(), true, bytes);
             }
             throw new AddressFormatException.InvalidPrefix("No network found for " + base58);
         } else {
             if (version == params.getAddressHeader())
-                return new LegacyAddress(params, false, bytes);
+                return new LegacyAddress(network, false, bytes);
             else if (version == params.getP2SHHeader())
-                return new LegacyAddress(params, true, bytes);
+                return new LegacyAddress(network, true, bytes);
             throw new AddressFormatException.WrongNetwork(version);
         }
     }
@@ -149,6 +209,7 @@ public class LegacyAddress extends Address {
      * @return version header as one byte
      */
     public int getVersion() {
+        NetworkParameters params = NetworkParameters.of(network);
         return p2sh ? params.getP2SHHeader() : params.getAddressHeader();
     }
 
@@ -186,8 +247,9 @@ public class LegacyAddress extends Address {
      * @return network the address is valid for
      * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
      */
+    @Deprecated
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        return LegacyAddress.fromBase58(null, address).getParameters();
+        return NetworkParameters.fromAddress(Address.addressParser.parseAddressAnyNetwork(address));
     }
 
     @Override
@@ -215,6 +277,11 @@ public class LegacyAddress extends Address {
         return (LegacyAddress) super.clone();
     }
 
+    // Comparator for LegacyAddress, left argument must be LegacyAddress, right argument can be any Address
+    private static final Comparator<Address> LEGACY_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
+            .thenComparingInt(a -> ((LegacyAddress) a).getVersion())                    // Then compare Legacy address version byte
+            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Legacy bytes
+
     /**
      * {@inheritDoc}
      *
@@ -223,11 +290,6 @@ public class LegacyAddress extends Address {
      */
     @Override
     public int compareTo(Address o) {
-        int result = compareAddressPartial(o);
-        if (result != 0) return result;
-
-        // Compare version byte and finally the {@code bytes} field itself
-        result = Integer.compare(getVersion(), ((LegacyAddress) o).getVersion());
-        return result != 0 ? result : UnsignedBytes.lexicographicalComparator().compare(this.bytes, o.bytes);
+       return LEGACY_ADDRESS_COMPARATOR.compare(this, o);
     }
 }

@@ -17,13 +17,15 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
-
-import com.google.common.base.Joiner;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -173,7 +175,7 @@ public class TransactionInput extends ChildMessage {
         outpoint.bitcoinSerialize(stream);
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
-        Utils.uint32ToByteStreamLE(sequence, stream);
+        ByteUtils.uint32ToByteStreamLE(sequence, stream);
     }
 
     /**
@@ -539,7 +541,7 @@ public class TransactionInput extends ChildMessage {
                 s.append(": COINBASE");
             } else {
                 s.append(" for [").append(outpoint).append("]: ").append(getScriptSig());
-                String flags = Joiner.on(", ").skipNulls().join(hasWitness() ? "witness" : null,
+                String flags = InternalUtils.commaJoin(hasWitness() ? "witness" : null,
                         hasSequence() ? "sequence: " + Long.toHexString(sequence) : null,
                         isOptInFullRBF() ? "opts into full RBF" : null);
                 if (!flags.isEmpty())

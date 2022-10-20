@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 public abstract class MessageSerializer {
 
     /**
-     * Create a new serializer with a specific protocol version. Mainly used to disable SegWit when parsing transactions.
+     * Create a new serializer with a specific protocol version. Mainly used to disable segwit when parsing transactions.
      */
     public abstract MessageSerializer withProtocolVersion(int protocolVersion);
 

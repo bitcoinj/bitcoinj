@@ -17,17 +17,16 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Base58;
+import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.DumpedPrivateKey;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
 
@@ -53,19 +52,20 @@ public class PrivateKeys {
             // compressed pub key. Otherwise assume it's a raw key.
             ECKey key;
             if (args[0].length() == 51 || args[0].length() == 52) {
-                DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(params, args[0]);
+                DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(params.network(), args[0]);
                 key = dumpedPrivateKey.getKey();
             } else {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
                 key = ECKey.fromPrivate(privKey);
             }
-            System.out.println("Address from private key is: " + LegacyAddress.fromKey(params, key).toString());
-            // And the address ...
-            Address destination = LegacyAddress.fromBase58(params, args[1]);
+            System.out.println("Address from private key is: " + key.toAddress(ScriptType.P2WPKH, params.network()).toString());
 
             // Import the private key to a fresh wallet.
-            Wallet wallet = Wallet.createDeterministic(params, Script.ScriptType.P2PKH);
+            Wallet wallet = Wallet.createDeterministic(params, ScriptType.P2PKH);
             wallet.importKey(key);
+
+            // And the address ...
+            Address destination = wallet.parseAddress(args[1]);
 
             // Find the transactions that involve those coins.
             final MemoryBlockStore blockStore = new MemoryBlockStore(params);

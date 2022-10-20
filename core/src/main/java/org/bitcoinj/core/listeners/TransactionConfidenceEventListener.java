@@ -20,30 +20,34 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.wallet.Wallet;
 
 /**
- * <p>Implementors are called when confidence of a transaction changes.</p>
+ * Implementors are called when confidence of a transaction changes.
  */
 public interface TransactionConfidenceEventListener {
     /**
-     * <p>Called when a transaction changes its confidence level. You can also attach event listeners to
+     * Called when a transaction changes its confidence level. You can also attach event listeners to
      * the individual transactions, if you don't care about all of them. Usually you would save the wallet to disk after
-     * receiving this callback unless you already set up autosaving.</p>
-     *
-     * <p>You should pay attention to this callback in case a transaction becomes <i>dead</i>, that is, a transaction
-     * you believed to be active (send or receive) becomes overridden by the network. This can happen if</p>
+     * receiving this callback unless you already set up autosaving.
+     * <p>
+     * You should pay attention to this callback in case a transaction becomes <i>dead</i>, that is, a transaction
+     * you believed to be active (send or receive) becomes overridden by the network. This can happen if:
      *
      * <ol>
      *     <li>You are sharing keys between wallets and accidentally create/broadcast a double spend.</li>
      *     <li>Somebody is attacking the network and reversing transactions, ie, the user is a victim of fraud.</li>
      *     <li>A bug: for example you create a transaction, broadcast it but fail to commit it. The {@link Wallet}
      *     will then re-use the same outputs when creating the next spend.</li>
-     * </ol><p>
+     * </ol>
      *
-     * <p>To find if the transaction is dead, you can use {@code tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD}.
-     * If it is, you should notify the user in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.</p>
-     *
-     * <p>Note that this callback will be invoked for every transaction in the wallet, for every new block that is
+     * To find if the transaction is dead, you can use:
+     * <pre>
+     * {@code
+     * tx.getConfidence().getConfidenceType() == TransactionConfidence.ConfidenceType.DEAD}
+     * </pre>
+     * If it is, you should notify the user in some way so they know the thing they bought may not arrive/the thing they sold should not be dispatched.
+     * <p>
+     * Note that this callback will be invoked for every transaction in the wallet, for every new block that is
      * received (because the depth has changed). <b>If you want to update a UI view from the contents of the wallet
-     * it is more efficient to use onWalletChanged instead.</b></p>
+     * it is more efficient to use onWalletChanged instead.</b>
      */
     void onTransactionConfidenceChanged(Wallet wallet, Transaction tx);
 }

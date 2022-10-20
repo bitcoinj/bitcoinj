@@ -17,15 +17,16 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.*;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * Downloads the given transaction and its dependencies from a peers memory pool then prints them out.
@@ -45,7 +46,7 @@ public class FetchTransactions {
         Peer peer = peerGroup.getConnectedPeers().get(0);
 
         Sha256Hash txHash = Sha256Hash.wrap(args[0]);
-        ListenableFuture<Transaction> future = peer.getPeerMempoolTransaction(txHash);
+        Future<Transaction> future = peer.getPeerMempoolTransaction(txHash);
         System.out.println("Waiting for node to send us the requested transaction: " + txHash);
         Transaction tx = future.get();
         System.out.println(tx);

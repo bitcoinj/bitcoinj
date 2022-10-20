@@ -8,9 +8,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        java: ['8', '11', '17']
+        java: ['11', '17', '18']
         distribution: ['temurin']
-        gradle: ['7.2']
+        gradle: ['7.4.2']
         include:
           # Special case to test something close to Debian config with the oldest supported (standard) Gradle on Ubuntu
           - os: ubuntu-latest
@@ -20,9 +20,10 @@ jobs:
       fail-fast: false
     name: JAVA ${{ matrix.distribution }} ${{ matrix.java }} OS ${{ matrix.os }} Gradle ${{ matrix.gradle }}
     steps:
-      - uses: actions/checkout@v1
+      - name: Git checkout
+        uses: actions/checkout@v1
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
@@ -30,7 +31,7 @@ jobs:
         uses: gradle/gradle-build-action@v1
         with:
           gradle-version: ${{ matrix.gradle }}
-          arguments: build --stacktrace
+          arguments: -PtestJdk8=true build --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v2
         if: always()
@@ -39,3 +40,7 @@ jobs:
           path: |
             core/build/reports/tests/test/
             core/build/test-results/test/
+            wallettool/build/reports/tests/test/
+            wallettool/build/test-results/test/
+            integration-test/build/reports/tests/test/
+            integration-test/build/test-results/test/

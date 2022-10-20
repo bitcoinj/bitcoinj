@@ -17,26 +17,48 @@
 
 package org.bitcoinj.kits;
 
-import com.google.common.collect.*;
 import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.*;
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.*;
+import com.google.common.util.concurrent.AbstractIdleService;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.CheckpointManager;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.crypto.DeterministicKey;
-import org.bitcoinj.net.discovery.*;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.store.*;
-import org.bitcoinj.wallet.*;
-import org.slf4j.*;
+import org.bitcoinj.net.discovery.DnsDiscovery;
+import org.bitcoinj.net.discovery.PeerDiscovery;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.WalletExtension;
+import org.bitcoinj.wallet.WalletProtobufSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
-import java.net.*;
-import java.nio.channels.*;
-import java.util.*;
-import java.util.concurrent.*;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.channels.FileLock;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory
@@ -63,8 +85,9 @@ import static com.google.common.base.Preconditions.*;
 public class WalletAppKit extends AbstractIdleService {
     protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
+    protected final BitcoinNetwork network;
     protected final NetworkParameters params;
-    protected final Script.ScriptType preferredOutputScriptType;
+    protected final ScriptType preferredOutputScriptType;
     protected final KeyChainGroupStructure structure;
     protected final String filePrefix;
     protected volatile BlockChain vChain;
@@ -77,42 +100,50 @@ public class WalletAppKit extends AbstractIdleService {
 
     protected boolean useAutoSave = true;
     protected PeerAddress[] peerAddresses;
-    protected DownloadProgressTracker downloadListener;
+    protected DownloadProgressTracker downloadListener = new DownloadProgressTracker();
     protected boolean autoStop = true;
     protected InputStream checkpoints;
     protected boolean blockingStartup = true;
     protected String userAgent, version;
-    protected WalletProtobufSerializer.WalletFactory walletFactory;
+    @Nonnull protected WalletProtobufSerializer.WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
     @Nullable protected DeterministicSeed restoreFromSeed;
     @Nullable protected DeterministicKey restoreFromKey;
     @Nullable protected PeerDiscovery discovery;
 
-    protected volatile Context context;
-
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
+     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
      */
+    @Deprecated
     public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this(new Context(params), Script.ScriptType.P2PKH, null, directory, filePrefix);
+        this((BitcoinNetwork) params.network(), ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
     }
 
     /**
      * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
+     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
      */
-    public WalletAppKit(NetworkParameters params, Script.ScriptType preferredOutputScriptType,
+    @Deprecated
+    public WalletAppKit(NetworkParameters params, ScriptType preferredOutputScriptType,
             @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
-        this(new Context(params), preferredOutputScriptType, structure, directory, filePrefix);
+        this((BitcoinNetwork) params.network(), preferredOutputScriptType, structure, directory, filePrefix);
     }
 
     /**
-     * Creates a new WalletAppKit, with the given {@link Context}. Files will be stored in the given directory.
+     * Creates a new WalletAppKit, on the specified {@link BitcoinNetwork}. Files will be stored in the given directory.
+     *
+     * @param network The network the wallet connects to
+     * @param preferredOutputScriptType The output script type (and therefore {@code Address} type) of the wallet
+     * @param structure The keychain group structure (e.g. {@link KeyChainGroupStructure#BIP43} or {@link KeyChainGroupStructure#BIP32}
+     * @param directory The directory for creating {@code .wallet} and {@code .spvchain} files
+     * @param filePrefix The base name for the {@code .wallet} and {@code .spvchain} files
      */
-    public WalletAppKit(Context context, Script.ScriptType preferredOutputScriptType,
-            @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
-        this.context = context;
-        this.params = checkNotNull(context.getParams());
+    public WalletAppKit(BitcoinNetwork network, ScriptType preferredOutputScriptType,
+                        KeyChainGroupStructure structure, File directory, String filePrefix) {
+        this.network = checkNotNull(network);
+        this.params = NetworkParameters.of(this.network);
         this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
-        this.structure = structure != null ? structure : KeyChainGroupStructure.DEFAULT;
+        this.structure = checkNotNull(structure);
         this.directory = checkNotNull(directory);
         this.filePrefix = checkNotNull(filePrefix);
     }
@@ -148,6 +179,7 @@ public class WalletAppKit extends AbstractIdleService {
      * too, due to some missing implementation code.
      */
     public WalletAppKit setDownloadListener(DownloadProgressTracker listener) {
+        checkNotNull(listener);
         this.downloadListener = listener;
         return this;
     }
@@ -194,8 +226,11 @@ public class WalletAppKit extends AbstractIdleService {
 
     /**
      * Sets a wallet factory which will be used when the kit creates a new wallet.
+     * @param walletFactory Factory for making new wallets (Use {@link WalletProtobufSerializer.WalletFactory#DEFAULT} for default behavior)
+     * @return WalletAppKit for method chaining purposes
      */
-    public WalletAppKit setWalletFactory(WalletProtobufSerializer.WalletFactory walletFactory) {
+    public WalletAppKit setWalletFactory(@Nonnull WalletProtobufSerializer.WalletFactory walletFactory) {
+        checkNotNull(walletFactory);
         this.walletFactory = walletFactory;
         return this;
     }
@@ -241,7 +276,7 @@ public class WalletAppKit extends AbstractIdleService {
      * initialized/started.</p>
      */
     protected List<WalletExtension> provideWalletExtensions() throws Exception {
-        return ImmutableList.of();
+        return Collections.emptyList();
     }
 
     /**
@@ -278,100 +313,89 @@ public class WalletAppKit extends AbstractIdleService {
     @Override
     protected void startUp() throws Exception {
         // Runs in a separate thread.
-        Context.propagate(context);
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
                 throw new IOException("Could not create directory " + directory.getAbsolutePath());
             }
         }
         log.info("Starting up with directory = {}", directory);
-        try {
-            File chainFile = new File(directory, filePrefix + ".spvchain");
-            boolean chainFileExists = chainFile.exists();
-            vWalletFile = new File(directory, filePrefix + ".wallet");
-            boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null || restoreFromKey != null;
-            vWallet = createOrLoadWallet(shouldReplayWallet);
 
-            // Initiate Bitcoin network objects (block store, blockchain and peer group)
-            vStore = new SPVBlockStore(params, chainFile);
-            if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
-                if (checkpoints == null && !Utils.isAndroidRuntime()) {
-                    checkpoints = CheckpointManager.openStream(params);
-                }
+        File chainFile = new File(directory, filePrefix + ".spvchain");
+        boolean chainFileExists = chainFile.exists();
+        vWalletFile = new File(directory, filePrefix + ".wallet");
+        boolean shouldReplayWallet = (vWalletFile.exists() && !chainFileExists) || restoreFromSeed != null || restoreFromKey != null;
+        vWallet = createOrLoadWallet(shouldReplayWallet);
 
-                if (checkpoints != null) {
-                    // Initialize the chain file with a checkpoint to speed up first-run sync.
-                    long time;
-                    if (restoreFromSeed != null) {
-                        time = restoreFromSeed.getCreationTimeSeconds();
-                        if (chainFileExists) {
-                            log.info("Clearing the chain file in preparation for restore.");
-                            vStore.clear();
-                        }
-                    } else if (restoreFromKey != null) {
-                        time = restoreFromKey.getCreationTimeSeconds();
-                        if (chainFileExists) {
-                            log.info("Clearing the chain file in preparation for restore.");
-                            vStore.clear();
-                        }
-                    }
-                    else
-                    {
-                        time = vWallet.getEarliestKeyCreationTime();
-                    }
-                    if (time > 0)
-                        CheckpointManager.checkpoint(params, checkpoints, vStore, time);
-                    else
-                        log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");
-                } else if (chainFileExists) {
-                    log.info("Clearing the chain file in preparation for restore.");
-                    vStore.clear();
-                }
+        // Initiate Bitcoin network objects (block store, blockchain and peer group)
+        vStore = new SPVBlockStore(params, chainFile);
+        if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
+            if (checkpoints == null && !Utils.isAndroidRuntime()) {
+                checkpoints = CheckpointManager.openStream(params);
             }
-            vChain = new BlockChain(params, vStore);
-            vPeerGroup = createPeerGroup();
-            if (this.userAgent != null)
-                vPeerGroup.setUserAgent(userAgent, version);
 
-            // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
-            // before we're actually connected the broadcast waits for an appropriate number of connections.
-            if (peerAddresses != null) {
-                for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
-                vPeerGroup.setMaxConnections(peerAddresses.length);
-                peerAddresses = null;
-            } else if (!params.getId().equals(NetworkParameters.ID_REGTEST)) {
-                vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
+            if (checkpoints != null) {
+                // Initialize the chain file with a checkpoint to speed up first-run sync.
+                long time;
+                if (restoreFromSeed != null) {
+                    time = restoreFromSeed.getCreationTimeSeconds();
+                    if (chainFileExists) {
+                        log.info("Clearing the chain file in preparation for restore.");
+                        vStore.clear();
+                    }
+                } else if (restoreFromKey != null) {
+                    time = restoreFromKey.getCreationTimeSeconds();
+                    if (chainFileExists) {
+                        log.info("Clearing the chain file in preparation for restore.");
+                        vStore.clear();
+                    }
+                }
+                else
+                {
+                    time = vWallet.getEarliestKeyCreationTime();
+                }
+                if (time > 0)
+                    CheckpointManager.checkpoint(params, checkpoints, vStore, time);
+                else
+                    log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");
+            } else if (chainFileExists) {
+                log.info("Clearing the chain file in preparation for restore.");
+                vStore.clear();
             }
-            vChain.addWallet(vWallet);
-            vPeerGroup.addWallet(vWallet);
-            onSetupCompleted();
+        }
+        vChain = new BlockChain(params, vStore);
+        vPeerGroup = createPeerGroup();
+        if (this.userAgent != null)
+            vPeerGroup.setUserAgent(userAgent, version);
 
-            if (blockingStartup) {
-                vPeerGroup.start();
-                // Make sure we shut down cleanly.
-                installShutdownHook();
+        // Set up peer addresses or discovery first, so if wallet extensions try to broadcast a transaction
+        // before we're actually connected the broadcast waits for an appropriate number of connections.
+        if (peerAddresses != null) {
+            for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
+            vPeerGroup.setMaxConnections(peerAddresses.length);
+            peerAddresses = null;
+        } else if (params.network() != BitcoinNetwork.REGTEST) {
+            vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
+        }
+        vChain.addWallet(vWallet);
+        vPeerGroup.addWallet(vWallet);
 
-                // TODO: Be able to use the provided download listener when doing a blocking startup.
-                final DownloadProgressTracker listener = new DownloadProgressTracker();
-                vPeerGroup.startBlockChainDownload(listener);
-                listener.await();
+        // vChain, vWallet, and vPeerGroup all initialized; allow subclass (if any) a chance to adjust configuration
+        onSetupCompleted();
+
+        // Start the PeerGroup (asynchronously) and start downloading the blockchain (asynchronously)
+        vPeerGroup.startAsync().whenComplete((result, t) -> {
+            if (t == null) {
+                vPeerGroup.startBlockChainDownload(downloadListener);
             } else {
-                Futures.addCallback(vPeerGroup.startAsync(), new FutureCallback() {
-                    @Override
-                    public void onSuccess(@Nullable Object result) {
-                        final DownloadProgressTracker l = downloadListener == null ? new DownloadProgressTracker() : downloadListener;
-                        vPeerGroup.startBlockChainDownload(l);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        throw new RuntimeException(t);
-
-                    }
-                }, MoreExecutors.directExecutor());
+                throw new RuntimeException(t);
             }
-        } catch (BlockStoreException e) {
-            throw new IOException(e);
+        });
+
+        // Make sure we shut down cleanly.
+        installShutdownHook();
+
+        if (blockingStartup) {
+            downloadListener.await();   // Wait for the blockchain to download
         }
     }
 
@@ -408,21 +432,8 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     private Wallet loadWallet(boolean shouldReplayWallet) throws Exception {
-        Wallet wallet;
-        try (FileInputStream walletStream = new FileInputStream(vWalletFile)) {
-            List<WalletExtension> extensions = provideWalletExtensions();
-            WalletExtension[] extArray = extensions.toArray(new WalletExtension[extensions.size()]);
-            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-            final WalletProtobufSerializer serializer;
-            if (walletFactory != null)
-                serializer = new WalletProtobufSerializer(walletFactory);
-            else
-                serializer = new WalletProtobufSerializer();
-            wallet = serializer.readWallet(params, extArray, proto);
-            if (shouldReplayWallet)
-                wallet.reset();
-        }
-        return wallet;
+        WalletExtension[] extensions = provideWalletExtensions().toArray(new WalletExtension[0]);
+        return Wallet.loadFromFile(vWalletFile, walletFactory, shouldReplayWallet, false, extensions );
     }
 
     protected Wallet createWallet() {
@@ -433,11 +444,8 @@ public class WalletAppKit extends AbstractIdleService {
             kcg.fromKey(restoreFromKey, preferredOutputScriptType).build();
         else
             kcg.fromRandom(preferredOutputScriptType);
-        if (walletFactory != null) {
-            return walletFactory.create(params, kcg.build());
-        } else {
-            return new Wallet(params, kcg.build()); // default
-        }
+
+        return walletFactory.create(params, kcg.build());
     }
 
     private void maybeMoveOldWalletOutOfTheWay() {
@@ -461,23 +469,24 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     private void installShutdownHook() {
-        if (autoStop) Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override public void run() {
-                try {
-                    WalletAppKit.this.stopAsync();
-                    WalletAppKit.this.awaitTerminated();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        if (autoStop) {
+            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook, "shutdownHook"));
+        }
+    }
+
+    private void shutdownHook() {
+        try {
+            stopAsync();
+            awaitTerminated();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
         try {
-            Context.propagate(context);
             vPeerGroup.stop();
             vWallet.saveToFile(vWalletFile);
             vStore.close();
@@ -489,6 +498,10 @@ public class WalletAppKit extends AbstractIdleService {
         } catch (BlockStoreException e) {
             throw new IOException(e);
         }
+    }
+
+    public BitcoinNetwork network() {
+        return network;
     }
 
     public NetworkParameters params() {

@@ -17,22 +17,48 @@
 
 package org.bitcoinj.protocols.payments;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.X509Utils;
-import org.bitcoinj.script.ScriptBuilder;
-
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.X509Utils;
+import org.bitcoinj.params.BitcoinNetworkParams;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.SigNetParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.UnitTestParams;
+import org.bitcoinj.script.ScriptBuilder;
 
 import javax.annotation.Nullable;
-import java.io.Serializable;
-import java.security.*;
-import java.security.cert.*;
+import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
+import java.security.cert.PKIXCertPathValidatorResult;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -51,6 +77,16 @@ public class PaymentProtocol {
     public static final String MIMETYPE_PAYMENT = "application/bitcoin-payment";
     public static final String MIMETYPE_PAYMENTACK = "application/bitcoin-paymentack";
 
+    /** The string used by the payment protocol to represent the main net. */
+    public static final String PAYMENT_PROTOCOL_ID_MAINNET = "main";
+    /** The string used by the payment protocol to represent the test net. */
+    public static final String PAYMENT_PROTOCOL_ID_TESTNET = "test";
+    /** The string used by the payment protocol to represent signet (note that this is non-standard). */
+    public static final String PAYMENT_PROTOCOL_ID_SIGNET = "signet";
+    /** The string used by the payment protocol to represent unit testing (note that this is non-standard). */
+    public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = "unittest";
+    public static final String PAYMENT_PROTOCOL_ID_REGTEST = "regtest";
+
     /**
      * Create a payment request with one standard pay to address output. You may want to sign the request using
      * {@link #signPaymentRequest}. Use {@link Protos.PaymentRequest.Builder#build} to get the actual payment
@@ -67,7 +103,7 @@ public class PaymentProtocol {
     public static Protos.PaymentRequest.Builder createPaymentRequest(NetworkParameters params,
             @Nullable Coin amount, Address toAddress, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
-        return createPaymentRequest(params, ImmutableList.of(createPayToAddressOutput(amount, toAddress)), memo,
+        return createPaymentRequest(params, Collections.singletonList(createPayToAddressOutput(amount, toAddress)), memo,
                 paymentUrl, merchantData);
     }
 
@@ -86,7 +122,7 @@ public class PaymentProtocol {
             List<Protos.Output> outputs, @Nullable String memo, @Nullable String paymentUrl,
             @Nullable byte[] merchantData) {
         final Protos.PaymentDetails.Builder paymentDetails = Protos.PaymentDetails.newBuilder();
-        paymentDetails.setNetwork(params.getPaymentProtocolId());
+        paymentDetails.setNetwork(protocolIdFromParams(params));
         for (Protos.Output output : outputs)
             paymentDetails.addOutputs(output);
         if (memo != null)
@@ -289,7 +325,7 @@ public class PaymentProtocol {
             if (refundAmount == null)
                 throw new IllegalArgumentException("Specify refund amount if refund address is specified.");
             return createPaymentMessage(transactions,
-                    ImmutableList.of(createPayToAddressOutput(refundAmount, refundAddress)), memo, merchantData);
+                    Collections.singletonList(createPayToAddressOutput(refundAmount, refundAddress)), memo, merchantData);
         } else {
             return createPaymentMessage(transactions, null, memo, merchantData);
         }
@@ -391,8 +427,8 @@ public class PaymentProtocol {
     public static Protos.Output createPayToAddressOutput(@Nullable Coin amount, Address address) {
         Protos.Output.Builder output = Protos.Output.newBuilder();
         if (amount != null) {
-            final NetworkParameters params = address.getParameters();
-            if (params.hasMaxMoney() && amount.compareTo(params.getMaxMoney()) > 0)
+            final NetworkParameters params = NetworkParameters.of(address.network());
+            if (params.network().exceedsMaxMoney(amount))
                 throw new IllegalArgumentException("Amount too big: " + amount);
             output.setAmount(amount.value);
         } else {
@@ -403,9 +439,47 @@ public class PaymentProtocol {
     }
 
     /**
+     * Return network parameters for a paymentProtocol ID string
+     * @param pmtProtocolId paymentProtocol ID string
+     * @return network parameters for the given string paymentProtocolID or NULL if not recognized
+     */
+    @Nullable
+    public static BitcoinNetworkParams paramsFromPmtProtocolID(String pmtProtocolId) {
+        if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_MAINNET)) {
+            return MainNetParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_TESTNET)) {
+            return TestNet3Params.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_SIGNET)) {
+            return SigNetParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_REGTEST)) {
+            return RegTestParams.get();
+        } else if (pmtProtocolId.equals(PAYMENT_PROTOCOL_ID_UNIT_TESTS)) {
+            return UnitTestParams.get();
+        } else {
+            return null;
+        }
+    }
+
+    public static String protocolIdFromParams(NetworkParameters params) {
+        if (params instanceof MainNetParams) {
+            return PAYMENT_PROTOCOL_ID_MAINNET;
+        } else if (params instanceof TestNet3Params) {
+            return PAYMENT_PROTOCOL_ID_TESTNET;
+        } else if (params instanceof SigNetParams) {
+            return PAYMENT_PROTOCOL_ID_SIGNET;
+        } else if (params instanceof RegTestParams) {
+            return PAYMENT_PROTOCOL_ID_REGTEST;
+        } else if (params instanceof UnitTestParams) {
+            return PAYMENT_PROTOCOL_ID_UNIT_TESTS;
+        } else {
+            throw new IllegalArgumentException("Unknown network");
+        }
+    }
+
+    /**
      * Value object to hold amount/script pairs.
      */
-    public static class Output implements Serializable {
+    public static class Output {
         @Nullable public final Coin amount;
         public final byte[] scriptData;
 

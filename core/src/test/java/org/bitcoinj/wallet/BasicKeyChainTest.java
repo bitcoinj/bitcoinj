@@ -16,6 +16,7 @@
 
 package org.bitcoinj.wallet;
 
+import com.google.common.collect.Lists;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Utils;
@@ -23,24 +24,26 @@ import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.utils.Threading;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
-import org.bitcoinj.wallet.BasicKeyChain;
-import org.bitcoinj.wallet.KeyChain;
-import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BasicKeyChainTest {
     private BasicKeyChain chain;
@@ -173,17 +176,17 @@ public class BasicKeyChainTest {
     @Test(expected = KeyCrypterException.class)
     public void cannotImportEncryptedKey() {
         final ECKey key1 = new ECKey();
-        chain.importKeys(ImmutableList.of(key1));
+        chain.importKeys(Collections.singletonList(key1));
         chain = chain.toEncrypted("foobar");
         ECKey encryptedKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertTrue(encryptedKey.isEncrypted());
 
         BasicKeyChain chain2 = new BasicKeyChain();
-        chain2.importKeys(ImmutableList.of(encryptedKey));
+        chain2.importKeys(Collections.singletonList(encryptedKey));
     }
 
     @Test(expected = KeyCrypterException.class)
-    public void cannotMixParams() throws Exception {
+    public void cannotMixParams() {
         chain = chain.toEncrypted("foobar");
         KeyCrypterScrypt scrypter = new KeyCrypterScrypt(2);    // Some bogus params.
         ECKey key1 = new ECKey().encrypt(scrypter, scrypter.deriveKey("other stuff"));
@@ -197,7 +200,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = new ECKey();
         Utils.rollMockClock(5000);
         final ECKey key2 = new ECKey();
-        chain.importKeys(ImmutableList.of(key1, key2));
+        chain.importKeys(Arrays.asList(key1, key2));
         List<Protos.Key> keys = chain.serializeToProtobuf();
         assertEquals(2, keys.size());
         assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
@@ -246,23 +249,32 @@ public class BasicKeyChainTest {
     }
 
     @Test
-    public void bloom() throws Exception {
+    public void bloom() {
         ECKey key1 = new ECKey();
         ECKey key2 = new ECKey();
         chain.importKeys(key1, key2);
         assertEquals(2, chain.numKeys());
         assertEquals(4, chain.numBloomFilterEntries());
-        BloomFilter filter = chain.getFilter(4, 0.001, 100);
+        final double FALSE_POSITIVE_RATE = 0.001;
+        BloomFilter filter = chain.getFilter(4, FALSE_POSITIVE_RATE, 100);
         assertTrue(filter.contains(key1.getPubKey()));
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key2.getPubKey()));
         assertTrue(filter.contains(key2.getPubKeyHash()));
-        ECKey key3 = new ECKey();
-        assertFalse(filter.contains(key3.getPubKey()));
+        final int COUNT = 10000;
+        int falsePositives = 0;
+        for (int i = 0; i < COUNT; i++) {
+            ECKey key = new ECKey();
+            if (filter.contains(key.getPubKey()))
+                falsePositives++;
+        }
+        double actualRate = (double) falsePositives / COUNT;
+        assertTrue("roughly expected: " + FALSE_POSITIVE_RATE + ", actual: " + actualRate,
+                actualRate < FALSE_POSITIVE_RATE * 8);
     }
 
     @Test
-    public void keysBeforeAndAfter() throws Exception {
+    public void keysBeforeAndAfter() {
         Utils.setMockClock();
         long now = Utils.currentTimeSeconds();
         final ECKey key1 = new ECKey();

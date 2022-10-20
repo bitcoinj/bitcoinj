@@ -17,17 +17,28 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.script.*;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.Wallet;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
-import java.io.*;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * <p>A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
@@ -102,7 +113,7 @@ public class TransactionOutput extends ChildMessage {
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), "Negative values not allowed");
-        checkArgument(!params.hasMaxMoney() || value.compareTo(params.getMaxMoney()) <= 0, "Values larger than MAX_MONEY not allowed");
+        checkArgument(!params.network().exceedsMaxMoney(value), "Values larger than MAX_MONEY not allowed");
         this.value = value.value;
         this.scriptBytes = scriptBytes;
         setParent(parent);
@@ -117,23 +128,6 @@ public class TransactionOutput extends ChildMessage {
         return scriptPubKey;
     }
 
-    @Nullable
-    @Deprecated
-    public LegacyAddress getAddressFromP2PKHScript(NetworkParameters params) throws ScriptException {
-        if (ScriptPattern.isP2PKH(getScriptPubKey()))
-            return LegacyAddress.fromPubKeyHash(params,
-                    ScriptPattern.extractHashFromP2PKH(getScriptPubKey()));
-        return null;
-    }
-
-    @Nullable
-    @Deprecated
-    public LegacyAddress getAddressFromP2SH(NetworkParameters params) throws ScriptException {
-        if (ScriptPattern.isP2SH(getScriptPubKey()))
-            return LegacyAddress.fromScriptHash(params, ScriptPattern.extractHashFromP2SH(getScriptPubKey()));
-        return null;
-    }
-
     @Override
     protected void parse() throws ProtocolException {
         value = readInt64();
@@ -145,7 +139,7 @@ public class TransactionOutput extends ChildMessage {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         checkNotNull(scriptBytes);
-        Utils.int64ToByteStreamLE(value, stream);
+        ByteUtils.int64ToByteStreamLE(value, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
         stream.write(scriptBytes);
@@ -313,11 +307,11 @@ public class TransactionOutput extends ChildMessage {
                 return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromP2SH(script));
             else if (ScriptPattern.isP2PKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
-                        Script.ScriptType.P2PKH) || transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
-                        Script.ScriptType.P2WPKH);
+                        ScriptType.P2PKH) || transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
+                        ScriptType.P2WPKH);
             else if (ScriptPattern.isP2WPKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2WH(script),
-                        Script.ScriptType.P2WPKH);
+                        ScriptType.P2WPKH);
             else
                 return false;
         } catch (ScriptException e) {
@@ -337,11 +331,11 @@ public class TransactionOutput extends ChildMessage {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
             buf.append(Coin.valueOf(value).toFriendlyString());
-            if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script)
+            if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2TR(script)
                     || ScriptPattern.isP2SH(script))
                 buf.append(" to ").append(script.getToAddress(params));
             else if (ScriptPattern.isP2PK(script))
-                buf.append(" to pubkey ").append(Utils.HEX.encode(ScriptPattern.extractKeyFromP2PK(script)));
+                buf.append(" to pubkey ").append(ByteUtils.HEX.encode(ScriptPattern.extractKeyFromP2PK(script)));
             else if (ScriptPattern.isSentToMultisig(script))
                 buf.append(" to multisig");
             else

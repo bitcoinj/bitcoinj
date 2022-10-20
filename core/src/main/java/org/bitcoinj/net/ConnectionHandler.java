@@ -17,9 +17,8 @@
 package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.bitcoinj.core.Message;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.slf4j.LoggerFactory;
 
@@ -68,9 +67,9 @@ class ConnectionHandler implements MessageWriteTarget {
 
     private static class BytesAndFuture {
         public final ByteBuffer bytes;
-        public final SettableFuture future;
+        public final ListenableCompletableFuture<Void> future;
 
-        public BytesAndFuture(ByteBuffer bytes, SettableFuture future) {
+        public BytesAndFuture(ByteBuffer bytes, ListenableCompletableFuture<Void> future) {
             this.bytes = bytes;
             this.future = future;
         }
@@ -132,7 +131,7 @@ class ConnectionHandler implements MessageWriteTarget {
                 bytesToWriteRemaining -= channel.write(bytesAndFuture.bytes);
                 if (!bytesAndFuture.bytes.hasRemaining()) {
                     iterator.remove();
-                    bytesAndFuture.future.set(null);
+                    bytesAndFuture.future.complete(null);
                 } else {
                     setWriteOps();
                     break;
@@ -148,7 +147,7 @@ class ConnectionHandler implements MessageWriteTarget {
     }
 
     @Override
-    public ListenableFuture writeBytes(byte[] message) throws IOException {
+    public ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
         boolean andUnlock = true;
         lock.lock();
         try {
@@ -161,7 +160,7 @@ class ConnectionHandler implements MessageWriteTarget {
                 throw new IOException("Outbound buffer overflowed");
             // Just dump the message onto the write buffer and call tryWriteBytes
             // TODO: Kill the needless message duplication when the write completes right away
-            final SettableFuture<Object> future = SettableFuture.create();
+            final ListenableCompletableFuture<Void> future = new ListenableCompletableFuture<>();
             bytesToWrite.offer(new BytesAndFuture(ByteBuffer.wrap(Arrays.copyOf(message, message.length)), future));
             bytesToWriteRemaining += message.length;
             setWriteOps();

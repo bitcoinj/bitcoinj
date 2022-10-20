@@ -16,7 +16,7 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.Coin;
+import org.bitcoinj.base.Coin;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,21 +24,42 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.math.BigDecimal;
-import java.text.*;
+import java.text.AttributedCharacterIterator;
 import java.text.AttributedCharacterIterator.Attribute;
+import java.text.CharacterIterator;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-import static org.bitcoinj.core.Coin.*;
-import static org.bitcoinj.core.NetworkParameters.MAX_MONEY;
+import static java.text.NumberFormat.Field.DECIMAL_SEPARATOR;
+import static java.util.Locale.CHINA;
+import static java.util.Locale.FRANCE;
+import static java.util.Locale.GERMANY;
+import static java.util.Locale.ITALY;
+import static java.util.Locale.JAPAN;
+import static java.util.Locale.TAIWAN;
+import static java.util.Locale.US;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.SATOSHI;
+import static org.bitcoinj.base.Coin.SMALLEST_UNIT_EXPONENT;
+import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.base.Coin.parseCoin;
+import static org.bitcoinj.base.Coin.valueOf;
+import static org.bitcoinj.base.BitcoinNetwork.MAX_MONEY;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.CODE;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;
 import static org.bitcoinj.utils.BtcFixedFormat.REPEATING_DOUBLETS;
 import static org.bitcoinj.utils.BtcFixedFormat.REPEATING_TRIPLETS;
-import static java.text.NumberFormat.Field.DECIMAL_SEPARATOR;
-import static java.util.Locale.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class BtcFormatTest {
@@ -724,7 +745,7 @@ public class BtcFormatTest {
     }
 
     @Test
-    public void testGrouping() throws Exception {
+    public void testGrouping() {
         BtcFormat usCoin = BtcFormat.getInstance(0, Locale.US, 1, 2, 3);
         assertEquals("0.1", usCoin.format(Coin.parseCoin("0.1")));
         assertEquals("0.010", usCoin.format(Coin.parseCoin("0.01")));
@@ -1060,7 +1081,7 @@ public class BtcFormatTest {
 
     /* Copied (and modified) from CoinFormatTest.java */
     @Test
-    public void btcRounding() throws Exception {
+    public void btcRounding() {
         BtcFormat coinFormat = BtcFormat.getCoinInstance(Locale.US);
         assertEquals("0", BtcFormat.getCoinInstance(Locale.US, 0).format(ZERO));
         assertEquals("0", coinFormat.format(ZERO, 0));
@@ -1164,7 +1185,7 @@ public class BtcFormatTest {
 
     @Ignore("non-determinism between OpenJDK versions")
     @Test
-    public void negativeTest() throws Exception {
+    public void negativeTest() {
         assertEquals("-1,00 BTC", BtcFormat.getInstance(FRANCE).format(COIN.multiply(-1)));
         assertEquals("BTC -1,00", BtcFormat.getInstance(ITALY).format(COIN.multiply(-1)));
         assertEquals("฿ -1,00", BtcFormat.getSymbolInstance(ITALY).format(COIN.multiply(-1)));
@@ -1274,7 +1295,7 @@ public class BtcFormatTest {
 
     @Ignore("non-determinism between OpenJDK versions")
     @Test
-    public void attributeTest() throws Exception {
+    public void attributeTest() {
         String codePat = BtcFormat.getCodeInstance(Locale.US).pattern();
         assertTrue(codePat.contains("BTC") && ! codePat.contains("(^|[^฿])฿([^฿]|$)") && ! codePat.contains("(^|[^¤])¤([^¤]|$)"));
         String symPat = BtcFormat.getSymbolInstance(Locale.US).pattern();

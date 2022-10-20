@@ -20,15 +20,17 @@ import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import wallettemplate.WalletSetPasswordController;
 
@@ -45,17 +47,23 @@ public abstract class WalletApplication implements AppDelegate {
     private static WalletApplication instance;
     private WalletAppKit walletAppKit;
     private final String applicationName;
-    private final NetworkParameters params;
-    private final Script.ScriptType preferredOutputScriptType;
+    private final BitcoinNetwork network;
+    private final KeyChainGroupStructure keyChainGroupStructure;
+    private final ScriptType preferredOutputScriptType;
     private final String walletFileName;
     private MainWindowController controller;
 
-    public WalletApplication(String applicationName, NetworkParameters params, Script.ScriptType preferredOutputScriptType) {
+    public WalletApplication(String applicationName, BitcoinNetwork network, ScriptType preferredOutputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         instance = this;
         this.applicationName = applicationName;
-        this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + params.getPaymentProtocolId();
-        this.params = params;
+        this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + suffixFromNetwork(network);
+        this.network = network;
         this.preferredOutputScriptType = preferredOutputScriptType;
+        this.keyChainGroupStructure = keyChainGroupStructure;
+    }
+
+    public WalletApplication(String applicationName, BitcoinNetwork network, ScriptType preferredOutputScriptType) {
+        this(applicationName, network, preferredOutputScriptType, KeyChainGroupStructure.BIP43);
     }
 
     public static WalletApplication instance() {
@@ -70,11 +78,20 @@ public abstract class WalletApplication implements AppDelegate {
         return applicationName;
     }
 
+    /**
+     * @return Parameters for network this wallet is running on
+     * @deprecated Use {@link #network} (or {@link NetworkParameters#of} if you really need a {@link NetworkParameters}.)
+     */
+    @Deprecated
     public NetworkParameters params() {
-        return params;
+        return NetworkParameters.of(network);
     }
 
-    public Script.ScriptType preferredOutputScriptType() {
+    public BitcoinNetwork network() {
+        return network;
+    }
+
+    public ScriptType preferredOutputScriptType() {
         return preferredOutputScriptType;
     }
 
@@ -113,6 +130,7 @@ public abstract class WalletApplication implements AppDelegate {
     }
 
     protected void startWalletAppKit(Stage primaryStage) throws IOException {
+        Context.propagate(new Context());
         // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
         // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
         // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
@@ -143,7 +161,7 @@ public abstract class WalletApplication implements AppDelegate {
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(applicationName).toFile();
-        walletAppKit = new WalletAppKit(params, preferredOutputScriptType, null, appDataDirectory, walletFileName) {
+        walletAppKit = new WalletAppKit(network, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, walletFileName) {
             @Override
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);
@@ -151,7 +169,7 @@ public abstract class WalletApplication implements AppDelegate {
         };
         // Now configure and start the appkit. This will take a second or two - we could show a temporary splash screen
         // or progress widget to keep the user engaged whilst we initialise, but we don't.
-        if (params == RegTestParams.get()) {
+        if (network == BitcoinNetwork.REGTEST) {
             walletAppKit.connectToLocalHost();   // You should run a regtest mode bitcoind locally.
         }
         walletAppKit.setDownloadListener(controller.progressBarUpdater())
@@ -167,5 +185,20 @@ public abstract class WalletApplication implements AppDelegate {
         walletAppKit.awaitTerminated();
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
         Runtime.getRuntime().exit(0);
+    }
+
+    protected String suffixFromNetwork(BitcoinNetwork network) {
+        switch(network) {
+            case MAINNET:
+                return "main";
+            case TESTNET:
+                return "test";
+            case SIGNET:
+                return "signet";
+            case REGTEST:
+                return "regtest";
+            default:
+                throw new IllegalArgumentException("Unsupported network");
+        }
     }
 }

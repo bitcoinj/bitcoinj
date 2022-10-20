@@ -16,18 +16,17 @@
 
 package org.bitcoinj.examples;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 
 import java.io.File;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The following example shows you how to create a SendRequest to send coins from a wallet to a given address.
@@ -37,8 +36,7 @@ public class SendRequest {
     public static void main(String[] args) throws Exception {
 
         // We use the WalletAppKit that handles all the boilerplate for us. Have a look at the Kit.java example for more details.
-        NetworkParameters params = TestNet3Params.get();
-        WalletAppKit kit = new WalletAppKit(params, new File("."), "sendrequest-example");
+        WalletAppKit kit = new WalletAppKit(BitcoinNetwork.TESTNET, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "sendrequest-example");
         kit.startAsync();
         kit.awaitRunning();
 
@@ -50,7 +48,7 @@ public class SendRequest {
 
         // To which address you want to send the coins?
         // The Address class represents a Bitcoin address.
-        LegacyAddress to = LegacyAddress.fromBase58(params, "mupBAFeT63hXfeeT4rnAUcpKHDkz1n4fdw");
+        Address to = kit.wallet().parseAddress("bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2");
         System.out.println("Send money to: " + to.toString());
 
         // There are different ways to create and publish a SendRequest. This is probably the easiest one.
@@ -68,21 +66,15 @@ public class SendRequest {
             System.out.println("Send money to: " + kit.wallet().currentReceiveAddress().toString());
 
             // Bitcoinj allows you to define a BalanceFuture to execute a callback once your wallet has a certain balance.
-            // Here we wait until the we have enough balance and display a notice.
-            // Bitcoinj is using the ListenableFutures of the Guava library. Have a look here for more information: https://github.com/google/guava/wiki/ListenableFutureExplained
-            ListenableFuture<Coin> balanceFuture = kit.wallet().getBalanceFuture(value, BalanceType.AVAILABLE);
-            FutureCallback<Coin> callback = new FutureCallback<Coin>() {
-                @Override
-                public void onSuccess(Coin balance) {
+            // Here we wait until we have enough balance and display a notice.
+            CompletableFuture<Coin> balanceFuture = kit.wallet().getBalanceFuture(value, BalanceType.AVAILABLE);
+            balanceFuture.whenComplete((balance, throwable) -> {
+                if (balance != null) {
                     System.out.println("coins arrived and the wallet now has enough balance");
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
+                } else {
                     System.out.println("something went wrong");
                 }
-            };
-            Futures.addCallback(balanceFuture, callback, MoreExecutors.directExecutor());
+            });
         }
 
         // shutting down 

@@ -20,7 +20,7 @@ package org.bitcoinj.net.discovery;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
-import org.bitcoinj.utils.*;
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +29,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
-
-import okhttp3.OkHttpClient;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -51,7 +54,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
 
     /**
      * Builds a suitable set of peer discoveries. Will query them in parallel before producing a merged response.
-     * If specific services are required, DNS is not used as the protocol can't handle it.
      * @param params Network to use.
      * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
      */
@@ -61,7 +63,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
 
     /**
      * Builds a suitable set of peer discoveries.
-     * If specific services are required, DNS is not used as the protocol can't handle it.
      * @param params Network to use.
      * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
      * @param parallelQueries When true, seeds are queried in parallel
@@ -70,12 +71,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     public static MultiplexingDiscovery forServices(NetworkParameters params, long services, boolean parallelQueries,
                                                     boolean shufflePeers) {
         List<PeerDiscovery> discoveries = new ArrayList<>();
-        HttpDiscovery.Details[] httpSeeds = params.getHttpSeeds();
-        if (httpSeeds != null) {
-            OkHttpClient httpClient = new OkHttpClient();
-            for (HttpDiscovery.Details httpSeed : httpSeeds)
-                discoveries.add(new HttpDiscovery(params, httpSeed, httpClient));
-        }
         String[] dnsSeeds = params.getDnsSeeds();
         if (dnsSeeds != null)
             for (String dnsSeed : dnsSeeds)
@@ -106,22 +101,14 @@ public class MultiplexingDiscovery implements PeerDiscovery {
             List<Callable<List<InetSocketAddress>>> tasks = new ArrayList<>();
             if (parallelQueries) {
                 for (final PeerDiscovery seed : seeds) {
-                    tasks.add(new Callable<List<InetSocketAddress>>() {
-                        @Override
-                        public List<InetSocketAddress> call() throws Exception {
-                            return seed.getPeers(services, timeoutValue, timeoutUnit);
-                        }
-                    });
+                    tasks.add(() -> seed.getPeers(services, timeoutValue, timeoutUnit));
                 }
             } else {
-                tasks.add(new Callable<List<InetSocketAddress>>() {
-                    @Override
-                    public List<InetSocketAddress> call() throws Exception {
-                        List<InetSocketAddress> peers = new LinkedList<>();
-                        for (final PeerDiscovery seed : seeds)
-                            peers.addAll(seed.getPeers(services, timeoutValue, timeoutUnit));
-                        return peers;
-                    }
+                tasks.add(() -> {
+                    List<InetSocketAddress> peers = new LinkedList<>();
+                    for (final PeerDiscovery seed : seeds)
+                        peers.addAll(seed.getPeers(services, timeoutValue, timeoutUnit));
+                    return peers;
                 });
             }
             final List<Future<List<InetSocketAddress>>> futures = vThreadPool.invokeAll(tasks, timeoutValue, timeoutUnit);

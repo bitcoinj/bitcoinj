@@ -17,11 +17,13 @@
 
 package org.bitcoinj.protocols.payments;
 
+import com.google.protobuf.ByteString;
+import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Context;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
@@ -30,9 +32,7 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
-import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -41,9 +41,15 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
-import static org.bitcoinj.core.Coin.COIN;
-import static org.junit.Assert.*;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class PaymentSessionTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
@@ -57,14 +63,13 @@ public class PaymentSessionTest {
     private ECKey serverKey;
     private Transaction tx;
     private TransactionOutput outputToMe;
-    private Coin coin = COIN;
+    private final Coin amount = COIN;
 
     @Before
-    public void setUp() throws Exception {
-        new Context(TESTNET);
+    public void setUp() {
         serverKey = new ECKey();
         tx = new Transaction(TESTNET);
-        outputToMe = new TransactionOutput(TESTNET, tx, coin, serverKey);
+        outputToMe = new TransactionOutput(TESTNET, tx, amount, serverKey);
         tx.addOutput(outputToMe);
     }
 
@@ -73,7 +78,7 @@ public class PaymentSessionTest {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
         MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("test"));
         assertEquals(paymentRequestMemo, paymentSession.getMemo());
-        assertEquals(coin, paymentSession.getValue());
+        assertEquals(amount, paymentSession.getValue());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentUrl());
         assertTrue(new Date(time * 1000L).equals(paymentSession.getDate()));
         assertTrue(paymentSession.getSendRequest().tx.equals(tx));
@@ -84,7 +89,7 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = LegacyAddress.fromKey(TESTNET, serverKey);
+        Address refundAddr = serverKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         paymentSession.sendPayment(txns, refundAddr, paymentMemo);
         assertEquals(1, paymentSession.getPaymentLog().size());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentLog().get(0).getUrl().toString());
@@ -92,8 +97,8 @@ public class PaymentSessionTest {
         assertEquals(paymentMemo, payment.getMemo());
         assertEquals(merchantData, payment.getMerchantData());
         assertEquals(1, payment.getRefundToCount());
-        assertEquals(coin.value, payment.getRefundTo(0).getAmount());
-        TransactionOutput refundOutput = new TransactionOutput(TESTNET, null, coin, refundAddr);
+        assertEquals(amount.value, payment.getRefundTo(0).getAmount());
+        TransactionOutput refundOutput = new TransactionOutput(TESTNET, null, amount, refundAddr);
         ByteString refundScript = ByteString.copyFrom(refundOutput.getScriptBytes());
         assertTrue(refundScript.equals(payment.getRefundTo(0).getScript()));
     }
@@ -116,7 +121,7 @@ public class PaymentSessionTest {
     }
 
     @Test
-    public void testExpiredPaymentRequest() throws Exception {
+    public void testExpiredPaymentRequest() throws PaymentProtocolException {
         MockPaymentSession paymentSession = new MockPaymentSession(newExpiredPaymentRequest());
         assertTrue(paymentSession.isExpired());
         // Send the payment and verify that an exception is thrown.
@@ -124,12 +129,19 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
+
+        CompletableFuture<PaymentProtocol.Ack> ack = paymentSession.sendPayment(txns, null, null);
         try {
-            paymentSession.sendPayment(txns, null, null);
-        } catch(PaymentProtocolException.Expired e) {
-            assertEquals(0, paymentSession.getPaymentLog().size());
-            assertEquals(e.getMessage(), "PaymentRequest is expired");
-            return;
+            ack.get();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof PaymentProtocolException.Expired) {
+                PaymentProtocolException.Expired cause = (PaymentProtocolException.Expired) e.getCause();
+                assertEquals(0, paymentSession.getPaymentLog().size());
+                assertEquals(cause.getMessage(), "PaymentRequest is expired");
+                return;
+            }
+        } catch (InterruptedException e) {
+            // Ignore
         }
         fail("Expected exception due to expired PaymentRequest");
     }
@@ -146,7 +158,7 @@ public class PaymentSessionTest {
     }
 
     @Test(expected = PaymentProtocolException.InvalidNetwork.class)
-    public void testWrongNetwork() throws Exception {
+    public void testWrongNetwork() throws Throwable {
         // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
         MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("main"));
         assertEquals(MAINNET, paymentSession.getNetworkParameters());
@@ -156,14 +168,20 @@ public class PaymentSessionTest {
         tx.addInput(new TransactionInput(TESTNET, tx, outputToMe.getScriptBytes()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
-        Address refundAddr = LegacyAddress.fromKey(TESTNET, serverKey);
-        paymentSession.sendPayment(txns, refundAddr, paymentMemo);
-        assertEquals(1, paymentSession.getPaymentLog().size());
+        Address refundAddr = serverKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        try {
+            paymentSession.sendPayment(txns, refundAddr, paymentMemo).get();
+        } catch (InterruptedException e) {
+            fail("Incorrect exception type");
+        } catch (ExecutionException e) {
+            // We're expecting PaymentProtocolException.InvalidNetwork as the cause
+            throw e.getCause();
+        }
     }
 
     private Protos.PaymentRequest newSimplePaymentRequest(String netID) {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
-                .setAmount(coin.value)
+                .setAmount(amount.value)
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork(netID)
@@ -182,7 +200,7 @@ public class PaymentSessionTest {
 
     private Protos.PaymentRequest newExpiredPaymentRequest() {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
-                .setAmount(coin.value)
+                .setAmount(amount.value)
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork("test")
@@ -200,8 +218,8 @@ public class PaymentSessionTest {
                 .build();
     }
 
-    private class MockPaymentSession extends PaymentSession {
-        private ArrayList<PaymentLogItem> paymentLog = new ArrayList<>();
+    private static class MockPaymentSession extends PaymentSession {
+        private final ArrayList<PaymentLogItem> paymentLog = new ArrayList<>();
 
         public MockPaymentSession(Protos.PaymentRequest request) throws PaymentProtocolException {
             super(request);
@@ -212,12 +230,13 @@ public class PaymentSessionTest {
         }
 
         @Override
-        protected ListenableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        protected ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
             paymentLog.add(new PaymentLogItem(url, payment));
-            return null;
+            // Return a completed future that has a `null` value. This will satisfy the current tests.
+            return ListenableCompletableFuture.completedFuture(null);
         }
 
-        public class PaymentLogItem {
+        public static class PaymentLogItem {
             private final URL url;
             private final Protos.Payment payment;
 

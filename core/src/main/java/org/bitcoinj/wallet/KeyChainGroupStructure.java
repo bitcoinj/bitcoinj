@@ -16,24 +16,127 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.script.Script;
 
-/** Defines a structure for hierarchical deterministic wallets. */
+/**
+ *  Defines a structure for hierarchical deterministic wallets.
+ *  <p>
+ *  Use {@link KeyChainGroupStructure#BIP32} for BIP-32 wallets and {@link KeyChainGroupStructure#BIP43} for
+ *  BIP-43-family wallets.
+ *  <p>
+ *  <b>bitcoinj</b> BIP-32 wallets use {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH} for {@link ScriptType#P2PKH}
+ *  and {@link DeterministicKeyChain#ACCOUNT_ONE_PATH} for {@link ScriptType#P2WPKH}
+ *  <p>
+ *  BIP-43-family wallets structured via {@link KeyChainGroupStructure} will always use account number zero. Currently,
+ *  only BIP-44 (P2PKH) and BIP-84 (P2WPKH) are supported.
+ */
 public interface KeyChainGroupStructure {
-    /** Map desired output script type to an account path */
-    HDPath accountPathFor(Script.ScriptType outputScriptType);
 
-    /** Default {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure". */
-    public static final KeyChainGroupStructure DEFAULT = new KeyChainGroupStructure() {
-        @Override
-        public HDPath accountPathFor(Script.ScriptType outputScriptType) {
-            if (outputScriptType == null || outputScriptType == Script.ScriptType.P2PKH)
-                return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
-            else if (outputScriptType == Script.ScriptType.P2WPKH)
-                return DeterministicKeyChain.ACCOUNT_ONE_PATH;
-            else
-                throw new IllegalArgumentException(outputScriptType.toString());
-        }
+    /**
+     *  Map desired output script type to an account path.
+     *  Default to MainNet, BIP-32 Keychains use the same path for MainNet and TestNet
+     * @param outputScriptType the script/address type
+     * @return account path
+     * @deprecated Use {@link #accountPathFor(ScriptType, Network)} or {@link #accountPathFor(ScriptType, NetworkParameters)}
+     */
+    @Deprecated
+    default HDPath accountPathFor(ScriptType outputScriptType) {
+        return accountPathFor(outputScriptType, BitcoinNetwork.MAINNET);
+    }
+
+    /**
+     * Map desired output script type and network to an account path
+     * @param outputScriptType output script type (purpose)
+     * @param network network/coin type
+     * @return The HD Path: purpose / coinType / accountIndex
+     */
+    HDPath accountPathFor(ScriptType outputScriptType, Network network);
+
+    /**
+     * Map desired output script type and network to an account path
+     * @param outputScriptType output script type (purpose)
+     * @param networkParameters network/coin type
+     * @return The HD Path: purpose / coinType / accountIndex
+     */
+    default HDPath accountPathFor(ScriptType outputScriptType, NetworkParameters networkParameters) {
+        return accountPathFor(outputScriptType, networkParameters.network());
+    }
+
+
+    /**
+     * Original <b>bitcoinj</b> {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure".
+     * For this structure {@code network} is ignored
+     */
+    KeyChainGroupStructure BIP32 = (outputScriptType, network) -> {
+        // network is ignored
+        if (outputScriptType == null || outputScriptType == ScriptType.P2PKH)
+            return DeterministicKeyChain.ACCOUNT_ZERO_PATH;
+        else if (outputScriptType == ScriptType.P2WPKH)
+            return DeterministicKeyChain.ACCOUNT_ONE_PATH;
+        else
+            throw new IllegalArgumentException(outputScriptType.toString());
     };
+
+    /**
+     * {@link KeyChainGroupStructure} implementation for BIP-43 family structures.
+     * Currently, BIP-44 and BIP-84 are supported. Account number is hard-coded to zero.
+     */
+    KeyChainGroupStructure BIP43 = (outputScriptType, network) ->
+            purpose(outputScriptType).extend(coinType(network), account(0));
+
+    /**
+     * Default {@link KeyChainGroupStructure} implementation. Alias for {@link KeyChainGroupStructure#BIP32}
+     * @deprecated Use {@link #BIP32} for BIP-32
+     */
+    @Deprecated
+    KeyChainGroupStructure DEFAULT = BIP32;
+
+    /**
+     * Return the (root) path containing "purpose" for the specified scriptType
+     * @param scriptType script/address type
+     * @return An HDPath with a BIP44 "purpose" entry
+     */
+    static HDPath purpose(ScriptType scriptType) {
+        if (scriptType == null || scriptType == ScriptType.P2PKH) {
+            return HDPath.BIP44_PARENT;
+        } else if (scriptType == ScriptType.P2WPKH) {
+            return HDPath.BIP84_PARENT;
+        } else {
+            throw new IllegalArgumentException(scriptType.toString());
+        }
+    }
+
+    /**
+     * Return coin type path component for a network id
+     * @param network network id string, eg. {@link BitcoinNetwork#ID_MAINNET}
+     */
+    static ChildNumber coinType(Network network) {
+        if (!(network instanceof BitcoinNetwork)) {
+            throw new IllegalArgumentException("coinType: Unknown network");
+        }
+        switch ((BitcoinNetwork) network) {
+            case MAINNET:
+                return ChildNumber.COINTYPE_BTC;
+            case TESTNET:
+                return ChildNumber.COINTYPE_TBTC;
+            case REGTEST:
+                return ChildNumber.COINTYPE_TBTC;
+            default:
+                throw new IllegalArgumentException("coinType: Unknown network");
+        }
+    }
+
+    /**
+     * Return path component for an account
+     * @param accountIndex account index
+     * @return A hardened path component
+     */
+    static ChildNumber account(int accountIndex) {
+        return new ChildNumber(accountIndex, true);
+    }
 }

@@ -16,15 +16,18 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Splitter;
+import org.bitcoinj.base.utils.StreamUtils;
+import org.bitcoinj.core.internal.InternalUtils;
 
 import javax.annotation.Nonnull;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path.
@@ -34,9 +37,11 @@ import java.util.List;
  * {@code HDPath} is immutable and uses the {@code Collections.UnmodifiableList} type internally.
  * <p>
  * It implements {@code java.util.List<ChildNumber>} to ease migration
- * from the previous Guava {@code ImmutableList<ChildNumber>}. It should be a minor breaking change
- * to replace {@code ImmutableList<ChildNumber>} with {@code List<ChildNumber>} where necessary in your code. Although
- * it is recommended to use the {@code HDPath} type for clarity and for access to {@code HDPath}-specific functionality.
+ * from the previous implementation. When an {@code HDPath} is returned you can treat it as a {@code List<ChildNumber>}
+ * where necessary in your code. Although it is recommended to use the {@code HDPath} type for clarity and for
+ * access to {@code HDPath}-specific functionality.
+ * <p>
+ * Note that it is possible for {@code HDPath} to be an empty list.
  * <p>
  * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
  * concisely create HDPath objects (especially when statically imported.)
@@ -45,12 +50,21 @@ public class HDPath extends AbstractList<ChildNumber> {
     private static final char PREFIX_PRIVATE = 'm';
     private static final char PREFIX_PUBLIC = 'M';
     private static final char SEPARATOR = '/';
-    private static final Splitter SEPARATOR_SPLITTER = Splitter.on(SEPARATOR).trimResults();
+    private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split("/"))
+            .map(String::trim)
+            .collect(Collectors.toList());
     protected final boolean hasPrivateKey;
     protected final List<ChildNumber> unmodifiableList;
 
+    /** Partial path with BIP44 purpose */
+    public static final HDPath BIP44_PARENT = m(ChildNumber.PURPOSE_BIP44);
+    /** Partial path with BIP84 purpose */
+    public static final HDPath BIP84_PARENT = m(ChildNumber.PURPOSE_BIP84);
+    /** Partial path with BIP86 purpose */
+    public static final HDPath BIP86_PARENT = m(ChildNumber.PURPOSE_BIP86);
+
     /**
-     * Constructs a path for a public or private key.
+     * Constructs a path for a public or private key. Should probably be a private constructor.
      *
      * @param hasPrivateKey Whether it is a path to a private key or not
      * @param list List of children in the path
@@ -64,7 +78,9 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Constructs a path for a public key.
      *
      * @param list List of children in the path
+     * @deprecated Use {@link HDPath#M(List)} or {@link HDPath#m(List)} instead
      */
+    @Deprecated
     public HDPath(List<ChildNumber> list) {
         this(false, list);
     }
@@ -80,6 +96,17 @@ public class HDPath extends AbstractList<ChildNumber> {
     }
 
     /**
+     * Deserialize a list of integers into an HDPath (internal use only)
+     * @param integerList A list of integers (what we use in ProtoBuf for an HDPath)
+     * @return a deserialized HDPath (hasPrivateKey is false/unknown)
+     */
+    public static HDPath deserialize(List<Integer> integerList) {
+        return integerList.stream()
+                .map(ChildNumber::new)
+                .collect(Collectors.collectingAndThen(Collectors.toList(), HDPath::M));
+    }
+
+    /**
      * Returns a path for a public key.
      *
      * @param list List of children in the path
@@ -92,7 +119,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Returns an empty path for a public key.
      */
     public static HDPath M() {
-        return HDPath.M(Collections.<ChildNumber>emptyList());
+        return HDPath.M(Collections.emptyList());
     }
 
     /**
@@ -126,7 +153,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Returns an empty path for a private key.
      */
     public static HDPath m() {
-        return HDPath.m(Collections.<ChildNumber>emptyList());
+        return HDPath.m(Collections.emptyList());
     }
 
     /**
@@ -155,7 +182,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * Where a letter "H" means hardened key. Spaces are ignored.
      */
     public static HDPath parsePath(@Nonnull String path) {
-        List<String> parsedNodes = new LinkedList<>(SEPARATOR_SPLITTER.splitToList(path));
+        List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
         boolean hasPrivateKey = false;
         if (!parsedNodes.isEmpty()) {
             final String firstNode = parsedNodes.get(0);
@@ -220,6 +247,50 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public HDPath extend(List<ChildNumber> path2) {
         return this.extend(HDPath.M(path2));
+    }
+
+    /**
+     * Return a simple list of {@link ChildNumber}
+     * @return an unmodifiable list of {@code ChildNumber}
+     */
+    public List<ChildNumber> list() {
+        return unmodifiableList;
+    }
+
+    /**
+     * Return the parent path.
+     * <p>
+     * Note that this method defines the parent of a root path as the empty path and the parent
+     * of the empty path as the empty path. This behavior is what one would expect
+     * of an unmodifiable, copy-on-modify list. If you need to check for edge cases, you can use
+     * {@link HDPath#isEmpty()} before or after using {@code HDPath#parent()}
+     * @return parent path (which can be empty -- see above)
+     */
+    public HDPath parent() {
+        return unmodifiableList.size() > 1 ?
+                HDPath.of(hasPrivateKey, unmodifiableList.subList(0, unmodifiableList.size() - 1)) :
+                HDPath.of(hasPrivateKey, Collections.emptyList());
+    }
+
+    /**
+     * Return a list of all ancestors of this path
+     * @return unmodifiable list of ancestors
+     */
+    public List<HDPath> ancestors() {
+        return ancestors(false);
+    }
+
+    /**
+     * Return a list of all ancestors of this path
+     * @param includeSelf true if include path for self
+     * @return unmodifiable list of ancestors
+     */
+    public List<HDPath> ancestors(boolean includeSelf) {
+        int endExclusive =  unmodifiableList.size() + (includeSelf ? 1 : 0);
+        return IntStream.range(1, endExclusive)
+                .mapToObj(i -> unmodifiableList.subList(0, i))
+                .map(l -> HDPath.of(hasPrivateKey, l))
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     @Override

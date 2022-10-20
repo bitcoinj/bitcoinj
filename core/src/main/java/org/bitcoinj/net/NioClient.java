@@ -17,13 +17,14 @@
 
 package org.bitcoinj.net;
 
-import com.google.common.base.*;
-import com.google.common.util.concurrent.*;
-import org.slf4j.*;
+import com.google.common.base.Throwables;
+import org.bitcoinj.utils.ListenableCompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 
 /**
  * Creates a simple connection to a server using a {@link StreamConnection} to process data.
@@ -34,21 +35,33 @@ public class NioClient implements MessageWriteTarget {
     private final Handler handler;
     private final NioClientManager manager = new NioClientManager();
 
-    class Handler extends AbstractTimeoutHandler implements StreamConnection {
+    class Handler implements TimeoutHandler, StreamConnection {
         private final StreamConnection upstreamConnection;
+        private final SocketTimeoutTask timeoutTask;
         private MessageWriteTarget writeTarget;
         private boolean closeOnOpen = false;
         private boolean closeCalled = false;
+
         Handler(StreamConnection upstreamConnection, int connectTimeoutMillis) {
             this.upstreamConnection = upstreamConnection;
+            this.timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
             setSocketTimeout(connectTimeoutMillis);
             setTimeoutEnabled(true);
         }
 
-        @Override
-        protected synchronized void timeoutOccurred() {
+        private synchronized void timeoutOccurred() {
             closeOnOpen = true;
             connectionClosed();
+        }
+
+        @Override
+        public void setTimeoutEnabled(boolean timeoutEnabled) {
+            timeoutTask.setTimeoutEnabled(timeoutEnabled);
+        }
+
+        @Override
+        public void setSocketTimeout(int timeoutMillis) {
+            timeoutTask.setSocketTimeout(timeoutMillis);
         }
 
         @Override
@@ -102,16 +115,11 @@ public class NioClient implements MessageWriteTarget {
         manager.startAsync();
         manager.awaitRunning();
         handler = new Handler(parser, connectTimeoutMillis);
-        Futures.addCallback(manager.openConnection(serverAddress, handler), new FutureCallback<SocketAddress>() {
-            @Override
-            public void onSuccess(SocketAddress result) {
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
+        manager.openConnection(serverAddress, handler).whenComplete((result, t) -> {
+            if (t != null) {
                 log.error("Connect to {} failed: {}", serverAddress, Throwables.getRootCause(t));
             }
-        }, MoreExecutors.directExecutor());
+        });
     }
 
     @Override
@@ -120,7 +128,7 @@ public class NioClient implements MessageWriteTarget {
     }
 
     @Override
-    public synchronized ListenableFuture writeBytes(byte[] message) throws IOException {
+    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
         return handler.writeTarget.writeBytes(message);
     }
 }

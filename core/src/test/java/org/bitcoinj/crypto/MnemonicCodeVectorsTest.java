@@ -17,19 +17,19 @@
 
 package org.bitcoinj.crypto;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static org.bitcoinj.core.Utils.HEX;
-import static org.bitcoinj.core.Utils.SPACE_JOINER;
-import static org.bitcoinj.core.Utils.WHITESPACE_SPLITTER;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import static org.bitcoinj.core.internal.InternalUtils.SPACE_JOINER;
+import static org.bitcoinj.core.internal.InternalUtils.WHITESPACE_SPLITTER;
 import static org.junit.Assert.assertEquals;
 
 /**

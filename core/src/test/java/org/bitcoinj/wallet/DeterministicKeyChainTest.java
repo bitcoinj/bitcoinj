@@ -17,49 +17,56 @@
 
 package org.bitcoinj.wallet;
 
+import com.google.common.collect.Lists;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.*;
+import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDKeyDerivation;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.io.Resources;
-
+import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Before;
 import org.junit.Test;
-import org.bouncycastle.crypto.params.KeyParameter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
     private DeterministicKeyChain segwitChain;
     private DeterministicKeyChain bip44chain;
     private final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
-    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
-    private static final List<ChildNumber> BIP44_COIN_1_ACCOUNT_ZERO_PATH = ImmutableList.of(new ChildNumber(44, true),
+    private static final HDPath BIP44_COIN_1_ACCOUNT_ZERO_PATH = HDPath.M(new ChildNumber(44, true),
             new ChildNumber(1, true), ChildNumber.ZERO_HARDENED);
 
     @Before
@@ -69,28 +76,28 @@ public class DeterministicKeyChainTest {
         // serialized data properly.
         long secs = 1389353062L;
         chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs)
-                .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).outputScriptType(Script.ScriptType.P2PKH).build();
+                .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).outputScriptType(ScriptType.P2PKH).build();
         chain.setLookaheadSize(10);
 
         segwitChain = DeterministicKeyChain.builder().entropy(ENTROPY, secs)
-                .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).outputScriptType(Script.ScriptType.P2WPKH).build();
+                .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).outputScriptType(ScriptType.P2WPKH).build();
         segwitChain.setLookaheadSize(10);
 
         bip44chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).accountPath(BIP44_COIN_1_ACCOUNT_ZERO_PATH)
-                .outputScriptType(Script.ScriptType.P2PKH).build();
+                .outputScriptType(ScriptType.P2PKH).build();
         bip44chain.setLookaheadSize(10);
     }
 
     @Test
-    public void derive() throws Exception {
+    public void derive() {
         ECKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key1.isPubKeyOnly());
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key2.isPubKeyOnly());
 
-        final Address address = LegacyAddress.fromBase58(UNITTEST, "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
-        assertEquals(address, LegacyAddress.fromKey(UNITTEST, key1));
-        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", LegacyAddress.fromKey(UNITTEST, key2).toString());
+        final Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
@@ -99,13 +106,13 @@ public class DeterministicKeyChainTest {
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertFalse(key3.isPubKeyOnly());
-        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", LegacyAddress.fromKey(UNITTEST, key3).toString());
+        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
         assertFalse(key3.isPubKeyOnly());
     }
 
     @Test
-    public void getKeys() throws Exception {
+    public void getKeys() {
         chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         chain.getKey(KeyChain.KeyPurpose.CHANGE);
         chain.maybeLookAhead();
@@ -113,37 +120,37 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void deriveAccountOne() throws Exception {
+    public void deriveAccountOne() {
         final long secs = 1389353062L;
-        final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
+        final HDPath accountOne = HDPath.M(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = LegacyAddress.fromBase58(UNITTEST, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, LegacyAddress.fromKey(UNITTEST, key1));
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", LegacyAddress.fromKey(UNITTEST, key2).toString());
+        final Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", LegacyAddress.fromKey(UNITTEST, key3).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
     @Test
     public void serializeAccountOne() throws Exception {
         final long secs = 1389353062L;
-        final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
+        final HDPath accountOne = HDPath.M(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = LegacyAddress.fromBase58(UNITTEST, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, LegacyAddress.fromKey(UNITTEST, key1));
+        final Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
 
         DeterministicKey watching = chain1.getWatchingKey();
 
@@ -152,14 +159,14 @@ public class DeterministicKeyChainTest {
         assertEquals(accountOne, chain1.getAccountPath());
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", LegacyAddress.fromKey(UNITTEST, key2).toString());
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", LegacyAddress.fromKey(UNITTEST, key3).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
 
         assertEquals(watching, chain1.getWatchingKey());
@@ -172,11 +179,11 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void events() throws Exception {
+    public void events() {
         // Check that we get the right events at the right time.
         final List<List<ECKey>> listenerKeys = new ArrayList<>();
         long secs = 1389353062L;
-        chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).outputScriptType(Script.ScriptType.P2PKH)
+        chain = DeterministicKeyChain.builder().entropy(ENTROPY, secs).outputScriptType(ScriptType.P2PKH)
                 .build();
         chain.addEventListener(new AbstractKeyChainEventListener() {
             @Override
@@ -471,7 +478,7 @@ public class DeterministicKeyChainTest {
     @Test
     public void watchingChainAccountOne() throws UnreadableWalletException {
         Utils.setMockClock();
-        final List<ChildNumber> accountOne = ImmutableList.of(ChildNumber.ONE);
+        final HDPath accountOne = HDPath.M(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .seed(chain.getSeed()).build();
         DeterministicKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -520,9 +527,11 @@ public class DeterministicKeyChainTest {
         DeterministicKey key4 = segwitChain.getKey(KeyChain.KeyPurpose.CHANGE);
 
         DeterministicKey watchingKey = segwitChain.getWatchingKey();
-        final String pub58 = watchingKey.serializePubB58(MAINNET, segwitChain.getOutputScriptType());
-        assertEquals("zpub6nywkzAGfYS2siEfJtm9mo3hwDk8eUtL8EJ31XeWSd7C7x7esnfMMWmWiSs8od5jRt11arTjKLLbxCXuWNSXcxpi9PMSAphMt2ZE2gLnXGE", pub58);
-        watchingKey = DeterministicKey.deserializeB58(null, pub58, MAINNET);
+        final String xpub58 = watchingKey.serializePubB58(MAINNET);
+        assertEquals("xpub69KR9epSNBM5B7rReBBuMcrhbHTEmEuLJ1FbSjrjgcMS1kVCNULE7PTEg2wxoomtcbmQ5uGcQ1dWBdJn4ycW2VTWQhxb114PLaRwFYeHuui", xpub58);
+        final String zpub58 = watchingKey.serializePubB58(MAINNET, segwitChain.getOutputScriptType());
+        assertEquals("zpub6nywkzAGfYS2siEfJtm9mo3hwDk8eUtL8EJ31XeWSd7C7x7esnfMMWmWiSs8od5jRt11arTjKLLbxCXuWNSXcxpi9PMSAphMt2ZE2gLnXGE", zpub58);
+        watchingKey = DeterministicKey.deserializeB58(null, xpub58, MAINNET);
         watchingKey.setCreationTimeSeconds(100000);
         segwitChain = DeterministicKeyChain.builder().watch(watchingKey)
                 .outputScriptType(segwitChain.getOutputScriptType()).build();
@@ -546,7 +555,7 @@ public class DeterministicKeyChainTest {
         checkSerialization(serialization, "watching-wallet-p2wpkh-serialization.txt");
         final DeterministicKeyChain chain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
         assertEquals(DeterministicKeyChain.ACCOUNT_ONE_PATH, chain.getAccountPath());
-        assertEquals(Script.ScriptType.P2WPKH, chain.getOutputScriptType());
+        assertEquals(ScriptType.P2WPKH, chain.getOutputScriptType());
         final DeterministicKey rekey4 = segwitChain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(key4.getPubKeyPoint(), rekey4.getPubKeyPoint());
     }
@@ -594,7 +603,7 @@ public class DeterministicKeyChainTest {
     public void spendingChainAccountTwo() throws UnreadableWalletException {
         Utils.setMockClock();
         final long secs = 1389353062L;
-        final List<ChildNumber> accountTwo = ImmutableList.of(new ChildNumber(2, true));
+        final HDPath accountTwo = HDPath.M(new ChildNumber(2, true));
         chain = DeterministicKeyChain.builder().accountPath(accountTwo).entropy(ENTROPY, secs).build();
         DeterministicKey firstReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey secondReceiveKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -702,7 +711,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void watchingCannotEncrypt() throws Exception {
+    public void watchingCannotEncrypt() {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
         chain = DeterministicKeyChain.builder().watch(accountKey.dropPrivateBytes().dropParent())
                 .outputScriptType(chain.getOutputScriptType()).build();
@@ -731,7 +740,7 @@ public class DeterministicKeyChainTest {
     }
 
     @Test
-    public void bloom2() throws Exception {
+    public void bloom2() {
         // Verify that if when we watch a key, the filter contains at least 100 keys.
         DeterministicKey[] keys = new DeterministicKey[100];
         for (int i = 0; i < keys.length; i++)
@@ -747,30 +756,42 @@ public class DeterministicKeyChainTest {
     private String protoToString(List<Protos.Key> keys) {
         StringBuilder sb = new StringBuilder();
         for (Protos.Key key : keys) {
-            try {
-                BufferedReader reader = new BufferedReader(new StringReader(key.toString()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (!line.startsWith("#"))
-                        sb.append(line).append('\n');
-                }
-                sb.append('\n');
-                reader.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e); // cannot happen
-            }
+            String keyString = serializeKey(key);
+            sb.append(keyString);
         }
         return sb.toString().trim();
     }
 
-    private String checkSerialization(List<Protos.Key> keys, String filename) {
+    private String serializeKey(Protos.Key key) {
+        StringBuilder sb = new StringBuilder();
         try {
-            String sb = protoToString(keys);
-            List<String> lines = Resources.readLines(getClass().getResource(filename), StandardCharsets.UTF_8);
-            String expected = Joiner.on('\n').join(lines);
-            assertEquals(expected, sb);
-            return expected;
+            BufferedReader reader = new BufferedReader(new StringReader(key.toString()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("#"))
+                    sb.append(line).append('\n');
+            }
+            sb.append('\n');
+            reader.close();
         } catch (IOException e) {
+            throw new RuntimeException(e); // cannot happen
+        }
+        return sb.toString();
+    }
+
+    private String checkSerialization(List<Protos.Key> keys, String filename) {
+        String sb = protoToString(keys);
+        String expected = readResourceFile(filename);
+        assertEquals(expected, sb);
+        return expected;
+    }
+
+    private String readResourceFile(String filename) {
+        try {
+            Path path = Paths.get(getClass().getResource(filename).toURI());
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            return String.join("\n", lines);
+        } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }

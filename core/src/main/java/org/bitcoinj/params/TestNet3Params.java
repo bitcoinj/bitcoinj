@@ -17,20 +17,18 @@
 
 package org.bitcoinj.params;
 
-import java.math.BigInteger;
-import java.net.URI;
-import java.util.Date;
-
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.net.discovery.HttpDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+
+import java.math.BigInteger;
+import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -38,7 +36,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Parameters for the testnet, a separate public instance of Bitcoin that has relaxed rules suitable for development
  * and testing of applications and new Bitcoin versions.
  */
-public class TestNet3Params extends AbstractBitcoinNetParams {
+public class TestNet3Params extends BitcoinNetworkParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
@@ -47,11 +45,10 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
 
     public TestNet3Params() {
-        super();
-        id = ID_TESTNET;
+        super(BitcoinNetwork.TESTNET);
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = Utils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+        maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
 
         port = 18333;
         packetMagic = 0x0b110907;
@@ -74,14 +71,6 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
                 "seed.tbtc.petertodd.org",               // Peter Todd
                 "seed.testnet.bitcoin.sprovoost.nl",     // Sjors Provoost
                 "testnet-seed.bluematt.me",              // Matt Corallo
-        };
-        httpSeeds = new HttpDiscovery.Details[] {
-                // Andreas Schildbach
-                new HttpDiscovery.Details(
-                        ECKey.fromPublicOnly(Utils.HEX.decode(
-                                "0238746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f")),
-                        URI.create("http://testnet.httpseed.bitcoin.schildbach.de/peers")
-                )
         };
         addrSeeds = null;
 
@@ -107,11 +96,6 @@ public class TestNet3Params extends AbstractBitcoinNetParams {
             }
         }
         return genesisBlock;
-    }
-
-    @Override
-    public String getPaymentProtocolId() {
-        return PAYMENT_PROTOCOL_ID_TESTNET;
     }
 
     // February 16th 2012

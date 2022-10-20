@@ -18,6 +18,8 @@ package org.bitcoinj.core;
 
 // TODO: Rename PrunedException to something like RequiredDataWasPrunedException
 
+import org.bitcoinj.base.Sha256Hash;
+
 /**
  * PrunedException is thrown in cases where a fully verifying node has deleted (pruned) old block data that turned
  * out to be necessary for handling a re-org. Normally this should never happen unless you're playing with the testnet

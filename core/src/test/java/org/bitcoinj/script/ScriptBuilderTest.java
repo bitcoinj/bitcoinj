@@ -16,13 +16,13 @@
 
 package org.bitcoinj.script;
 
+import org.junit.Test;
+
 import static org.bitcoinj.script.ScriptOpCodes.OP_FALSE;
 import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
 
 public class ScriptBuilderTest {
 

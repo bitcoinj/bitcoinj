@@ -18,14 +18,13 @@
 package org.bitcoinj.core;
 
 import com.google.common.primitives.Ints;
+import org.bitcoinj.base.utils.ByteUtils;
 
 /**
  * A variable-length encoded unsigned integer using Satoshi's encoding (a.k.a. "CompactSize").
  */
 public class VarInt {
-    /** @deprecated use {{@link #intValue()} or {{@link #longValue()}}} */
-    @Deprecated
-    public final long value;
+    private final long value;
     private final int originallyEncodedSize;
 
     /**
@@ -50,13 +49,13 @@ public class VarInt {
             value = first;
             originallyEncodedSize = 1; // 1 data byte (8 bits)
         } else if (first == 253) {
-            value = Utils.readUint16(buf, offset + 1);
+            value = ByteUtils.readUint16(buf, offset + 1);
             originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
         } else if (first == 254) {
-            value = Utils.readUint32(buf, offset + 1);
+            value = ByteUtils.readUint32(buf, offset + 1);
             originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
         } else {
-            value = Utils.readInt64(buf, offset + 1);
+            value = ByteUtils.readInt64(buf, offset + 1);
             originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
         }
     }
@@ -111,17 +110,17 @@ public class VarInt {
             case 3:
                 bytes = new byte[3];
                 bytes[0] = (byte) 253;
-                Utils.uint16ToByteArrayLE((int) value, bytes, 1);
+                ByteUtils.uint16ToByteArrayLE((int) value, bytes, 1);
                 return bytes;
             case 5:
                 bytes = new byte[5];
                 bytes[0] = (byte) 254;
-                Utils.uint32ToByteArrayLE(value, bytes, 1);
+                ByteUtils.uint32ToByteArrayLE(value, bytes, 1);
                 return bytes;
             default:
                 bytes = new byte[9];
                 bytes[0] = (byte) 255;
-                Utils.int64ToByteArrayLE(value, bytes, 1);
+                ByteUtils.int64ToByteArrayLE(value, bytes, 1);
                 return bytes;
         }
     }

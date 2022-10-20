@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
 import java.io.IOException;
@@ -32,6 +33,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,14 +48,36 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PeerAddress extends ChildMessage {
-    private InetAddress addr;
-    private String hostname; // Used for .onion addresses
+    private InetAddress addr;   // Used for IPV4, IPV6, null otherwise or if not-yet-parsed
+    private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
     private BigInteger services;
     private long time;
 
-    private static final BaseEncoding BASE32 = BaseEncoding.base32().lowerCase();
-    private static final byte[] ONIONCAT_PREFIX = Utils.HEX.decode("fd87d87eeb43");
+    private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
+    private static final byte[] ONIONCAT_PREFIX = ByteUtils.HEX.decode("fd87d87eeb43");
+
+    // BIP-155 reserved network IDs, see: https://github.com/bitcoin/bips/blob/master/bip-0155.mediawiki
+    private enum NetworkId {
+        IPV4(1),
+        IPV6(2),
+        TORV2(3),
+        TORV3(4),
+        I2P(5),
+        CJDNS(6);
+
+        final int value;
+
+        NetworkId(int value) {
+            this.value = value;
+        }
+
+        static Optional<NetworkId> of(int value) {
+            return Stream.of(values())
+                .filter(id -> id.value == value)
+                .findFirst();
+        }
+    }
 
     /**
      * Construct a peer address from a serialized payload.
@@ -130,7 +155,7 @@ public class PeerAddress extends ChildMessage {
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
         if (protocolVersion >= 1) {
-            Utils.uint32ToByteStreamLE(time, stream);
+            ByteUtils.uint32ToByteStreamLE(time, stream);
         }
         if (protocolVersion == 2) {
             stream.write(new VarInt(services.longValue()).encode());
@@ -172,7 +197,7 @@ public class PeerAddress extends ChildMessage {
                 throw new IllegalStateException();
             }
         } else {
-            Utils.uint64ToByteStreamLE(services, stream);  // nServices.
+            ByteUtils.uint64ToByteStreamLE(services, stream);  // nServices.
             if (addr != null) {
                 // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
                 // hand.
@@ -199,7 +224,7 @@ public class PeerAddress extends ChildMessage {
             }
         }
         // And write out the port. Unlike the rest of the protocol, address and port is in big endian byte order.
-        Utils.uint16ToByteStreamBE(port, stream);
+        ByteUtils.uint16ToByteStreamBE(port, stream);
     }
 
     @Override
@@ -224,35 +249,45 @@ public class PeerAddress extends ChildMessage {
             byte[] addrBytes = readByteArray();
             int addrLen = addrBytes.length;
             length += VarInt.sizeOf(addrLen) + addrLen;
-            if (networkId == 0x01) {
-                // IPv4
-                if (addrLen != 4)
-                    throw new ProtocolException("invalid length of IPv4 address: " + addrLen);
-                addr = getByAddress(addrBytes);
-                hostname = null;
-            } else if (networkId == 0x02) {
-                // IPv6
-                if (addrLen != 16)
-                    throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
-                addr = getByAddress(addrBytes);
-                hostname = null;
-            } else if (networkId == 0x03) {
-                // TORv2
-                if (addrLen != 10)
-                    throw new ProtocolException("invalid length of TORv2 address: " + addrLen);
-                hostname = BASE32.encode(addrBytes) + ".onion";
-                addr = null;
-            } else if (networkId == 0x04) {
-                // TORv3
-                if (addrLen != 32)
-                    throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
-                byte torVersion = 0x03;
-                byte[] onionAddress = new byte[35];
-                System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
-                System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
-                onionAddress[34] = torVersion;
-                hostname = BASE32.encode(onionAddress) + ".onion";
-                addr = null;
+            Optional<NetworkId> id = NetworkId.of(networkId);
+            if (id.isPresent()) {
+                switch(id.get()) {
+                    case IPV4:
+                        if (addrLen != 4)
+                            throw new ProtocolException("invalid length of IPv4 address: " + addrLen);
+                        addr = getByAddress(addrBytes);
+                        hostname = null;
+                        break;
+                    case IPV6:
+                        if (addrLen != 16)
+                            throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
+                        addr = getByAddress(addrBytes);
+                        hostname = null;
+                        break;
+                    case TORV2:
+                        if (addrLen != 10)
+                            throw new ProtocolException("invalid length of TORv2 address: " + addrLen);
+                        hostname = BASE32.encode(addrBytes) + ".onion";
+                        addr = null;
+                        break;
+                    case TORV3:
+                        if (addrLen != 32)
+                            throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
+                        byte torVersion = 0x03;
+                        byte[] onionAddress = new byte[35];
+                        System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
+                        System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
+                        onionAddress[34] = torVersion;
+                        hostname = BASE32.encode(onionAddress) + ".onion";
+                        addr = null;
+                        break;
+                    case I2P:
+                    case CJDNS:
+                        // ignore unimplemented network IDs for now
+                        addr = null;
+                        hostname = null;
+                        break;
+                }
             } else {
                 // ignore unknown network IDs
                 addr = null;
@@ -271,7 +306,7 @@ public class PeerAddress extends ChildMessage {
                 hostname = null;
             }
         }
-        port = Utils.readUint16BE(payload, cursor);
+        port = ByteUtils.readUint16BE(payload, cursor);
         cursor += 2;
         length += 2;
     }
@@ -284,7 +319,7 @@ public class PeerAddress extends ChildMessage {
         }
     }
 
-    private byte[] onionChecksum(byte[] pubkey, byte version) {
+    private static byte[] onionChecksum(byte[] pubkey, byte version) {
         if (pubkey.length != 32)
             throw new IllegalArgumentException();
         SHA3.Digest256 digest256 = new SHA3.Digest256();
@@ -322,8 +357,11 @@ public class PeerAddress extends ChildMessage {
     public String toString() {
         if (hostname != null) {
             return "[" + hostname + "]:" + port;
+        } else if (addr != null) {
+            return "[" + addr.getHostAddress() + "]:" + port;
+        } else {
+            return "[ PeerAddress of unsupported type ]:" + port;
         }
-        return "[" + addr.getHostAddress() + "]:" + port;
     }
 
     @Override
@@ -331,12 +369,17 @@ public class PeerAddress extends ChildMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PeerAddress other = (PeerAddress) o;
-        return other.addr.equals(addr) && other.port == port && other.services.equals(services);
+        // time is deliberately not included in equals
+        return  Objects.equals(addr, other.addr) &&
+                Objects.equals(hostname, other.hostname) &&
+                port == other.port &&
+                Objects.equals(services, other.services);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(addr, port, services);
+        // time is deliberately not included in hashcode
+        return Objects.hash(addr, hostname, port, services);
     }
     
     public InetSocketAddress toSocketAddress() {
@@ -344,6 +387,7 @@ public class PeerAddress extends ChildMessage {
         if (hostname != null) {
             return InetSocketAddress.createUnresolved(hostname, port);
         } else {
+            // A null addr will create a wildcard InetSocketAddress
             return new InetSocketAddress(addr, port);
         }
     }

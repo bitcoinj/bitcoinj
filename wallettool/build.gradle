@@ -1,0 +1,96 @@
+import org.gradle.util.GradleVersion
+
+plugins {
+    id 'java'
+    id 'application'
+    id 'eclipse'
+    id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
+    id 'org.graalvm.buildtools.native' version '0.9.11' apply false
+}
+
+def annotationProcessorMinVersion = GradleVersion.version("4.6")
+boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) >= 0)
+def junit5MinVersion = GradleVersion.version("4.6")
+boolean hasJunit5 = (GradleVersion.current().compareTo(junit5MinVersion) >= 0)
+
+def toolchainsMinVersion = GradleVersion.version("6.8")     // Toolchains with selection by vendor
+boolean hasToolchains = (GradleVersion.current().compareTo(toolchainsMinVersion) >= 0)
+
+dependencies {
+    implementation project(':bitcoinj-core')
+    implementation 'info.picocli:picocli:4.6.3'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.36'
+    if (hasAnnotationProcessor) {
+        annotationProcessor 'info.picocli:picocli-codegen:4.6.3'
+    } else {
+        compileOnly 'info.picocli:picocli-codegen:4.6.3'
+    }
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.0"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.0"
+
+    testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
+}
+
+sourceCompatibility = 11
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
+compileJava {
+    options.compilerArgs.addAll(['--release', '11'])
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
+mainClassName = "org.bitcoinj.wallettool.WalletTool"
+applicationName = "wallet-tool"
+
+// wallettool is using JUnit 5 for testing, if it's not available no tests will be run
+if (hasJunit5) {
+    test {
+        useJUnitPlatform()
+    }
+}
+
+task generateManpageAsciiDoc(type: JavaExec) {
+    dependsOn(classes)
+    group = "Documentation"
+    description = "Generate AsciiDoc manpage"
+    if (hasAnnotationProcessor) {
+        classpath(sourceSets.main.compileClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+    } else {
+        classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
+    }
+    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+    args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
+}
+
+apply plugin: 'org.asciidoctor.jvm.convert'
+asciidoctor {
+    dependsOn(generateManpageAsciiDoc)
+    sourceDir = file("${project.buildDir}/generated-picocli-docs")
+    outputDir = file("${project.buildDir}/docs")
+    logDocuments = true
+    outputOptions {
+        backends = ['manpage', 'html5']
+    }
+}
+
+if (hasToolchains) {
+
+    apply plugin: 'org.graalvm.buildtools.native'
+
+    graalvmNative {
+        binaries {
+            main {
+                imageName = applicationName
+                configurationFileDirectories.from(file('src/main/graal'))
+                buildArgs.add('--allow-incomplete-classpath')
+                javaLauncher = javaToolchains.launcherFor {
+                    languageVersion = JavaLanguageVersion.of(17)
+                    vendor = JvmVendorSpec.matching("GraalVM Community")
+                }
+            }
+        }
+    }
+}

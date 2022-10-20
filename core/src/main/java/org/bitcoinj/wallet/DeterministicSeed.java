@@ -17,24 +17,26 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.*;
-
 import com.google.common.base.MoreObjects;
-import java.util.Objects;
-import com.google.common.base.Splitter;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.crypto.EncryptableItem;
+import org.bitcoinj.crypto.EncryptedData;
+import org.bitcoinj.crypto.KeyCrypter;
+import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.crypto.MnemonicException;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
-
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.bitcoinj.core.Utils.HEX;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 
 /**
  * Holds the seed bytes for the BIP32 deterministic wallet algorithm, inside a
@@ -250,7 +252,7 @@ public class DeterministicSeed implements EncryptableItem {
     /** Get the mnemonic code as string, or null if unknown. */
     @Nullable
     public String getMnemonicString() {
-        return mnemonicCode != null ? Utils.SPACE_JOINER.join(mnemonicCode) : null;
+        return mnemonicCode != null ? InternalUtils.SPACE_JOINER.join(mnemonicCode) : null;
     }
 
     private static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
@@ -258,6 +260,6 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private static List<String> decodeMnemonicCode(String mnemonicCode) {
-        return Splitter.on(" ").splitToList(mnemonicCode);
+        return InternalUtils.WHITESPACE_SPLITTER.splitToList(mnemonicCode);
     }
 }

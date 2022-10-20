@@ -19,11 +19,32 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolException;
+import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.SignatureDecodeException;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.TransactionWitness;
+import org.bitcoinj.core.UnsafeByteArrayOutputStream;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.core.VarInt;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
@@ -33,10 +54,124 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
-import static org.bitcoinj.script.ScriptOpCodes.*;
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
+import static org.bitcoinj.script.ScriptOpCodes.OP_0NOTEQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_10;
+import static org.bitcoinj.script.ScriptOpCodes.OP_11;
+import static org.bitcoinj.script.ScriptOpCodes.OP_12;
+import static org.bitcoinj.script.ScriptOpCodes.OP_13;
+import static org.bitcoinj.script.ScriptOpCodes.OP_14;
+import static org.bitcoinj.script.ScriptOpCodes.OP_15;
+import static org.bitcoinj.script.ScriptOpCodes.OP_16;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1ADD;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1NEGATE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_1SUB;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2DIV;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2DROP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2DUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2MUL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2OVER;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2ROT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_2SWAP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_3;
+import static org.bitcoinj.script.ScriptOpCodes.OP_3DUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_4;
+import static org.bitcoinj.script.ScriptOpCodes.OP_5;
+import static org.bitcoinj.script.ScriptOpCodes.OP_6;
+import static org.bitcoinj.script.ScriptOpCodes.OP_7;
+import static org.bitcoinj.script.ScriptOpCodes.OP_8;
+import static org.bitcoinj.script.ScriptOpCodes.OP_9;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ABS;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ADD;
+import static org.bitcoinj.script.ScriptOpCodes.OP_AND;
+import static org.bitcoinj.script.ScriptOpCodes.OP_BOOLAND;
+import static org.bitcoinj.script.ScriptOpCodes.OP_BOOLOR;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CAT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKLOCKTIMEVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSEQUENCEVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIG;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKSIGVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_CODESEPARATOR;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DEPTH;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DIV;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DROP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_DUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ELSE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ENDIF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_EQUALVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_FROMALTSTACK;
+import static org.bitcoinj.script.ScriptOpCodes.OP_GREATERTHAN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_GREATERTHANOREQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_HASH160;
+import static org.bitcoinj.script.ScriptOpCodes.OP_HASH256;
+import static org.bitcoinj.script.ScriptOpCodes.OP_IF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_IFDUP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_INVERT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_LEFT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_LESSTHAN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_LESSTHANOREQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_LSHIFT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_MAX;
+import static org.bitcoinj.script.ScriptOpCodes.OP_MIN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_MOD;
+import static org.bitcoinj.script.ScriptOpCodes.OP_MUL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NEGATE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NIP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP10;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP4;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP5;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP6;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP7;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP8;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOP9;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NOTIF;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NUMEQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NUMEQUALVERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_NUMNOTEQUAL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_OR;
+import static org.bitcoinj.script.ScriptOpCodes.OP_OVER;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PICK;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA2;
+import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
+import static org.bitcoinj.script.ScriptOpCodes.OP_RETURN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_RIGHT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_RIPEMD160;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ROLL;
+import static org.bitcoinj.script.ScriptOpCodes.OP_ROT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_RSHIFT;
+import static org.bitcoinj.script.ScriptOpCodes.OP_SHA1;
+import static org.bitcoinj.script.ScriptOpCodes.OP_SHA256;
+import static org.bitcoinj.script.ScriptOpCodes.OP_SIZE;
+import static org.bitcoinj.script.ScriptOpCodes.OP_SUB;
+import static org.bitcoinj.script.ScriptOpCodes.OP_SUBSTR;
+import static org.bitcoinj.script.ScriptOpCodes.OP_SWAP;
+import static org.bitcoinj.script.ScriptOpCodes.OP_TOALTSTACK;
+import static org.bitcoinj.script.ScriptOpCodes.OP_TUCK;
+import static org.bitcoinj.script.ScriptOpCodes.OP_VERIFY;
+import static org.bitcoinj.script.ScriptOpCodes.OP_WITHIN;
+import static org.bitcoinj.script.ScriptOpCodes.OP_XOR;
 
 // TODO: Redesign this entire API to be more type safe and organised.
 
@@ -52,22 +187,6 @@ import static com.google.common.base.Preconditions.*;
  * static methods for building scripts.</p>
  */
 public class Script {
-
-    /** Enumeration to encapsulate the type of this script. */
-    public enum ScriptType {
-        P2PKH(1), // pay to pubkey hash (aka pay to address)
-        P2PK(2), // pay to pubkey
-        P2SH(3), // pay to script hash
-        P2WPKH(4), // pay to witness pubkey hash
-        P2WSH(5), // pay to witness script hash
-        P2TR(6); // pay to taproot
-
-        public final int id;
-
-        private ScriptType(int id) {
-            this.id = id;
-        }
-    }
 
     /** Flags to pass to {@link Script#correctlySpends(Transaction, int, TransactionWitness, Coin, Script, Set)}.
      * Note currently only P2SH, DERSIG and NULLDUMMY are actually supported.
@@ -148,7 +267,7 @@ public class Script {
     @Override
     public String toString() {
         if (!chunks.isEmpty())
-            return Utils.SPACE_JOINER.join(chunks);
+            return InternalUtils.SPACE_JOINER.join(chunks);
         else
             return "<empty>";
     }
@@ -207,12 +326,12 @@ public class Script {
             } else if (opcode == OP_PUSHDATA2) {
                 // Read a short, then read that many bytes of data.
                 if (bis.available() < 2) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = Utils.readUint16FromStream(bis);
+                dataToRead = ByteUtils.readUint16FromStream(bis);
             } else if (opcode == OP_PUSHDATA4) {
                 // Read a uint32, then read that many bytes of data.
                 // Though this is allowed, because its value cannot be > 520, it should never actually be used
                 if (bis.available() < 4) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = Utils.readUint32FromStream(bis);
+                dataToRead = ByteUtils.readUint32FromStream(bis);
             }
 
             ScriptChunk chunk;
@@ -276,16 +395,17 @@ public class Script {
      *            showing addresses rather than pubkeys.
      */
     public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
+        Network network = params.network();
         if (ScriptPattern.isP2PKH(this))
-            return LegacyAddress.fromPubKeyHash(params, ScriptPattern.extractHashFromP2PKH(this));
+            return LegacyAddress.fromPubKeyHash(network, ScriptPattern.extractHashFromP2PKH(this));
         else if (ScriptPattern.isP2SH(this))
-            return LegacyAddress.fromScriptHash(params, ScriptPattern.extractHashFromP2SH(this));
+            return LegacyAddress.fromScriptHash(network, ScriptPattern.extractHashFromP2SH(this));
         else if (forcePayToPubKey && ScriptPattern.isP2PK(this))
-            return LegacyAddress.fromKey(params, ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(this)));
+            return ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(this)).toAddress(ScriptType.P2PKH, network);
         else if (ScriptPattern.isP2WH(this))
-            return SegwitAddress.fromHash(params, ScriptPattern.extractHashFromP2WH(this));
+            return SegwitAddress.fromHash(network, ScriptPattern.extractHashFromP2WH(this));
         else if (ScriptPattern.isP2TR(this))
-            return SegwitAddress.fromProgram(params, 1, ScriptPattern.extractOutputKeyFromP2TR(this));
+            return SegwitAddress.fromProgram(network, 1, ScriptPattern.extractOutputKeyFromP2TR(this));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to an address");
     }
@@ -306,7 +426,7 @@ public class Script {
             os.write(buf);
         } else if (buf.length < 65536) {
             os.write(OP_PUSHDATA2);
-            Utils.uint16ToByteStreamLE(buf.length, os);
+            ByteUtils.uint16ToByteStreamLE(buf.length, os);
             os.write(buf);
         } else {
             throw new RuntimeException("Unimplemented");
@@ -479,7 +599,7 @@ public class Script {
             }
         }
 
-        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + Utils.HEX.encode(signatureBytes));
+        throw new IllegalStateException("Could not find matching key for signature on " + hash.toString() + " sig " + ByteUtils.HEX.encode(signatureBytes));
     }
 
 
@@ -656,9 +776,9 @@ public class Script {
             } else if (opcode == OP_PUSHDATA1) {
                 additionalBytes = (0xFF & inputScript[cursor]) + 1;
             } else if (opcode == OP_PUSHDATA2) {
-                additionalBytes = Utils.readUint16(inputScript, cursor) + 2;
+                additionalBytes = ByteUtils.readUint16(inputScript, cursor) + 2;
             } else if (opcode == OP_PUSHDATA4) {
-                additionalBytes = (int) Utils.readUint32(inputScript, cursor) + 4;
+                additionalBytes = (int) ByteUtils.readUint32(inputScript, cursor) + 4;
             }
             if (!skip) {
                 try {
@@ -735,7 +855,7 @@ public class Script {
             }
         }
 
-        return Utils.decodeMPI(Utils.reverseBytes(chunk), false);
+        return ByteUtils.decodeMPI(ByteUtils.reverseBytes(chunk), false);
     }
 
     /** @deprecated use {@link ScriptPattern#isOpReturn(Script)} */
@@ -847,7 +967,7 @@ public class Script {
 
                 // OP_0 is no opcode
                 case OP_1NEGATE:
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE.negate(), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.ONE.negate(), false)));
                     break;
                 case OP_1:
                 case OP_2:
@@ -865,7 +985,7 @@ public class Script {
                 case OP_14:
                 case OP_15:
                 case OP_16:
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(decodeFromOpN(opcode)), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(decodeFromOpN(opcode)), false)));
                     break;
                 case OP_NOP:
                     break;
@@ -956,7 +1076,7 @@ public class Script {
                         stack.add(stack.getLast());
                     break;
                 case OP_DEPTH:
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.size()), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(stack.size()), false)));
                     break;
                 case OP_DROP:
                     if (stack.size() < 1)
@@ -1021,7 +1141,7 @@ public class Script {
                 case OP_SIZE:
                     if (stack.size() < 1)
                         throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SIZE on an empty stack");
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
                     break;
                 case OP_EQUAL:
                     if (stack.size() < 2)
@@ -1074,7 +1194,7 @@ public class Script {
                         throw new AssertionError("Unreachable");
                     }
                     
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPnum, false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(numericOPnum, false)));
                     break;
                 case OP_ADD:
                 case OP_SUB:
@@ -1165,7 +1285,7 @@ public class Script {
                         throw new RuntimeException("Opcode switched at runtime?");
                     }
                     
-                    stack.add(Utils.reverseBytes(Utils.encodeMPI(numericOPresult, false)));
+                    stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(numericOPresult, false)));
                     break;
                 case OP_NUMEQUALVERIFY:
                     if (stack.size() < 2)
@@ -1183,9 +1303,9 @@ public class Script {
                     BigInteger OPWITHINnum2 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
                     BigInteger OPWITHINnum1 = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
                     if (OPWITHINnum2.compareTo(OPWITHINnum1) <= 0 && OPWITHINnum1.compareTo(OPWITHINnum3) < 0)
-                        stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ONE, false)));
+                        stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.ONE, false)));
                     else
-                        stack.add(Utils.reverseBytes(Utils.encodeMPI(BigInteger.ZERO, false)));
+                        stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.ZERO, false)));
                     break;
                 case OP_RIPEMD160:
                     if (stack.size() < 1)
@@ -1533,14 +1653,14 @@ public class Script {
      *                         Accessing txContainingThis from another thread while this method runs results in undefined behavior.
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
-     * @param witness Transaction witness belonging to the transaction input containing this script. Needed for SegWit.
-     * @param value Value of the output. Needed for SegWit scripts.
+     * @param witness Transaction witness belonging to the transaction input containing this script. Needed for segwit.
+     * @param value Value of the output. Needed for segwit scripts.
      * @param verifyFlags Each flag enables one validation rule.
      */
     public void correctlySpends(Transaction txContainingThis, int scriptSigIndex, @Nullable TransactionWitness witness, @Nullable Coin value,
             Script scriptPubKey, Set<VerifyFlag> verifyFlags) throws ScriptException {
         if (ScriptPattern.isP2WPKH(scriptPubKey)) {
-            // For SegWit, full validation isn't implemented. So we simply check the signature. P2SH_P2WPKH is handled
+            // For segwit, full validation isn't implemented. So we simply check the signature. P2SH_P2WPKH is handled
             // by the P2SH code for now.
             if (witness.getPushCount() < 2)
                 throw new ScriptException(ScriptError.SCRIPT_ERR_WITNESS_PROGRAM_WITNESS_EMPTY, witness.toString());
@@ -1671,7 +1791,7 @@ public class Script {
     }
 
     /**
-     * Get the {@link Script.ScriptType}.
+     * Get the {@link ScriptType}.
      * @return The script type, or null if the script is of unknown type
      */
     public @Nullable ScriptType getScriptType() {

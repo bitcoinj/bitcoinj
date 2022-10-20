@@ -2,24 +2,29 @@ plugins {
     id 'java'
     id 'eclipse'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'org.openjfx.javafxplugin' version '0.0.12'
 }
 
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.4.1'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.32'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.36'
 }
 
 javafx {
-    version = '17.0.0.1'
+    version = '17.0.2'
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
-sourceCompatibility = 1.11
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
+
+compileJava {
+    options.compilerArgs.addAll(['--release', '11'])
+    options.compilerArgs << '-Xlint:deprecation'
+}
 
 mainClassName = 'wallettemplate.Main'

@@ -17,10 +17,15 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.core.*;
-import org.bitcoinj.script.Script;
-
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.Base58;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.Utils;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.math.ec.ECPoint;
 
@@ -32,8 +37,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-import static org.bitcoinj.core.Utils.HEX;
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.utils.ByteUtils.HEX;
 
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
@@ -44,13 +51,10 @@ import static com.google.common.base.Preconditions.*;
 public class DeterministicKey extends ECKey {
 
     /** Sorts deterministic keys in the order of their child number. That's <i>usually</i> the order used to derive them. */
-    public static final Comparator<ECKey> CHILDNUM_ORDER = new Comparator<ECKey>() {
-        @Override
-        public int compare(ECKey k1, ECKey k2) {
-            ChildNumber cn1 = ((DeterministicKey) k1).getChildNumber();
-            ChildNumber cn2 = ((DeterministicKey) k2).getChildNumber();
-            return cn1.compareTo(cn2);
-        }
+    public static final Comparator<ECKey> CHILDNUM_ORDER = (k1, k2) -> {
+        ChildNumber cn1 = ((DeterministicKey) k1).getChildNumber();
+        ChildNumber cn2 = ((DeterministicKey) k2).getChildNumber();
+        return cn1.compareTo(cn2);
     };
 
     private final DeterministicKey parent;
@@ -397,7 +401,7 @@ public class DeterministicKey extends ECKey {
             if (decryptedKey.length != 32)
                 throw new KeyCrypterException.InvalidCipherText(
                         "Decrypted key must be 32 bytes long, but is " + decryptedKey.length);
-            return new BigInteger(1, decryptedKey);
+            return ByteUtils.bytesToBigInteger(decryptedKey);
         }
         // Otherwise we don't have it, but maybe we can figure it out from our parents. Walk up the tree looking for
         // the first key that has some encrypted private key data.
@@ -434,7 +438,7 @@ public class DeterministicKey extends ECKey {
 
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
-                cursor.pub, new BigInteger(1, parentalPrivateKeyBytes), cursor.parent);
+                cursor.pub, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
         // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
         // our path with the length of the parents path.
         List<ChildNumber> path = childNumberPath.subList(cursor.getPath().size(), childNumberPath.size());
@@ -470,21 +474,17 @@ public class DeterministicKey extends ECKey {
         return key;
     }
 
-    @Deprecated
-    public byte[] serializePublic(NetworkParameters params) {
-        return serialize(params, true, Script.ScriptType.P2PKH);
+    @VisibleForTesting
+    byte[] serialize(NetworkParameters params, boolean pub) {
+        return serialize(params, pub, ScriptType.P2PKH);
     }
 
-    @Deprecated
-    public byte[] serializePrivate(NetworkParameters params) {
-        return serialize(params, false, Script.ScriptType.P2PKH);
-    }
-
-    private byte[] serialize(NetworkParameters params, boolean pub, Script.ScriptType outputScriptType) {
+    // TODO: remove outputScriptType parameter and merge with the two-param serialize() method. When deprecated serializePubB58/serializePrivB58 methods are removed.
+    private byte[] serialize(NetworkParameters params, boolean pub, ScriptType outputScriptType) {
         ByteBuffer ser = ByteBuffer.allocate(78);
-        if (outputScriptType == Script.ScriptType.P2PKH)
+        if (outputScriptType == ScriptType.P2PKH)
             ser.putInt(pub ? params.getBip32HeaderP2PKHpub() : params.getBip32HeaderP2PKHpriv());
-        else if (outputScriptType == Script.ScriptType.P2WPKH)
+        else if (outputScriptType == ScriptType.P2WPKH)
             ser.putInt(pub ? params.getBip32HeaderP2WPKHpub() : params.getBip32HeaderP2WPKHpriv());
         else
             throw new IllegalStateException(outputScriptType.toString());
@@ -497,20 +497,52 @@ public class DeterministicKey extends ECKey {
         return ser.array();
     }
 
-    public String serializePubB58(NetworkParameters params, Script.ScriptType outputScriptType) {
+    /**
+     * Serialize public key to Base58
+     * <p>
+     * outputScriptType should not be used in generating "xpub" format. (and "ypub", "zpub", etc. should not be used)
+     * @param params Network parameters indicating which network to serialize key for
+     * @param outputScriptType output script type
+     * @return the key serialized as a Base58 address
+     * @see <a href="https://bitcoin.stackexchange.com/questions/89261/why-does-importmulti-not-support-zpub-and-ypub/89281#89281">Why does importmulti not support zpub and ypub?</a>
+     * @deprecated Use a {@link #serializePubB58(NetworkParameters)} or a descriptor if you need output type information
+     */
+    @Deprecated
+    public String serializePubB58(NetworkParameters params, ScriptType outputScriptType) {
         return toBase58(serialize(params, true, outputScriptType));
     }
 
-    public String serializePrivB58(NetworkParameters params, Script.ScriptType outputScriptType) {
+    /**
+     * Serialize public key to Base58
+     * <p>
+     * outputScriptType should not be used in generating "xprv" format. (and "zprv", "vprv", etc. should not be used)
+     * @param params Network parameters indicating which network to serialize key for
+     * @param outputScriptType output script type
+     * @return the key serialized as a Base58 address
+     * @see <a href="https://bitcoin.stackexchange.com/questions/89261/why-does-importmulti-not-support-zpub-and-ypub/89281#89281">Why does importmulti not support zpub and ypub?</a>
+     * @deprecated Use a {@link #serializePrivB58(NetworkParameters)} or a descriptor if you need output type information
+     */
+    @Deprecated
+    public String serializePrivB58(NetworkParameters params, ScriptType outputScriptType) {
         return toBase58(serialize(params, false, outputScriptType));
     }
 
+    /**
+     * Serialize public key to Base58 (either "xpub" or "tpub")
+     * @param params Network parameters indicating which network to serialize key for
+     * @return the key serialized as a Base58 address
+     */
     public String serializePubB58(NetworkParameters params) {
-        return serializePubB58(params, Script.ScriptType.P2PKH);
+        return toBase58(serialize(params, true));
     }
 
+    /**
+     * Serialize private key to Base58 (either "xprv" or "tprv")
+     * @param params Network parameters indicating which network to serialize key for
+     * @return the key serialized as a Base58 address
+     */
     public String serializePrivB58(NetworkParameters params) {
-        return serializePrivB58(params, Script.ScriptType.P2PKH);
+        return toBase58(serialize(params, false));
     }
 
     static String toBase58(byte[] ser) {
@@ -579,7 +611,7 @@ public class DeterministicKey extends ECKey {
         if (pub) {
             return new DeterministicKey(path, chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), data), parent, depth, parentFingerprint);
         } else {
-            return new DeterministicKey(path, chainCode, new BigInteger(1, data), parent, depth, parentFingerprint);
+            return new DeterministicKey(path, chainCode, ByteUtils.bytesToBigInteger(data), parent, depth, parentFingerprint);
         }
     }
 
@@ -629,7 +661,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", Utils.HEX.encode(pub.getEncoded()));
+        helper.add("pub", ByteUtils.HEX.encode(pub.getEncoded()));
         helper.add("chainCode", HEX.encode(chainCode));
         helper.add("path", getPathAsString());
         if (parent != null)
@@ -643,9 +675,9 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
-            NetworkParameters params, Script.ScriptType outputScriptType, @Nullable String comment) {
-        builder.append("  addr:").append(Address.fromKey(params, this, outputScriptType).toString());
-        builder.append("  hash160:").append(Utils.HEX.encode(getPubKeyHash()));
+                                     NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
+        builder.append("  addr:").append(toAddress(outputScriptType, params.network()).toString());
+        builder.append("  hash160:").append(ByteUtils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());
         if (comment != null)
             builder.append(", ").append(comment);

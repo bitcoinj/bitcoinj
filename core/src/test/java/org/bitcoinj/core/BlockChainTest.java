@@ -17,32 +17,41 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
-
-import com.google.common.util.concurrent.ListenableFuture;
-import org.junit.rules.ExpectedException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
-import static org.bitcoinj.core.Coin.*;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.FIFTY_COINS;
+import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 // Handling of chain splits/reorgs are in ChainSplitTests.
 
@@ -77,10 +86,11 @@ public class BlockChainTest {
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
         Utils.setMockClock(); // Use mock clock
-        Context.propagate(new Context(TESTNET, 100, Coin.ZERO, false));
-        testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, Script.ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
-        Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
-        wallet = new Wallet(Context.get()) {
+        Context.propagate(new Context(100, Coin.ZERO, false, false));
+        testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
+        Context.propagate(new Context(100, Coin.ZERO, false, false));
+        NetworkParameters params = TESTNET;
+        wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(ScriptType.P2PKH).build()) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {
@@ -96,13 +106,13 @@ public class BlockChainTest {
         resetBlockStore();
         chain = new BlockChain(UNITTEST, wallet, blockStore);
 
-        coinbaseTo = LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey());
+        coinbaseTo = wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, UNITTEST.network());
     }
 
     @Test
     public void testBasicChaining() throws Exception {
         // Check that we can plug a few blocks together and the futures work.
-        ListenableFuture<StoredBlock> future = testNetChain.getHeightFuture(2);
+        CompletableFuture<StoredBlock> future = testNetChain.getHeightFuture(2);
         // Block 1 from the testnet.
         Block b1 = getBlock1();
         assertTrue(testNetChain.add(b1));
@@ -132,7 +142,7 @@ public class BlockChainTest {
         // Quick check that we can actually receive coins.
         Transaction tx1 = createFakeTx(UNITTEST,
                                        COIN,
-                                       LegacyAddress.fromKey(UNITTEST, wallet.currentReceiveKey()));
+                                       wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, UNITTEST.network()));
         Block b1 = createFakeBlock(blockStore, height, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().signum() > 0);
@@ -295,10 +305,10 @@ public class BlockChainTest {
     public void intraBlockDependencies() throws Exception {
         // Covers issue 166 in which transactions that depend on each other inside a block were not always being
         // considered relevant.
-        Address somebodyElse = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        Address somebodyElse = new ECKey().toAddress(ScriptType.P2PKH, UNITTEST.network());
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(somebodyElse);
         ECKey key = wallet.freshReceiveKey();
-        Address addr = LegacyAddress.fromKey(UNITTEST, key);
+        Address addr = key.toAddress(ScriptType.P2PKH, UNITTEST.network());
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, addr);
         Transaction t2 = new Transaction(UNITTEST);
@@ -316,12 +326,12 @@ public class BlockChainTest {
         // Check that a coinbase transaction is only available to spend after NetworkParameters.getSpendableCoinbaseDepth() blocks.
 
         // Create a second wallet to receive the coinbase spend.
-        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, Script.ScriptType.P2PKH);
+        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
         ECKey receiveKey = wallet2.freshReceiveKey();
         int height = 1;
         chain.addWallet(wallet2);
 
-        Address addressToSendTo = LegacyAddress.fromKey(UNITTEST, receiveKey);
+        Address addressToSendTo = receiveKey.toAddress(ScriptType.P2PKH, UNITTEST.network());
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
         Block b1 = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
@@ -345,7 +355,7 @@ public class BlockChainTest {
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
         for (int i = 0; i < UNITTEST.getSpendableCoinbaseDepth() - 2; i++) {
             // Non relevant tx - just for fake block creation.
-            Transaction tx2 = createFakeTx(UNITTEST, COIN, LegacyAddress.fromKey(UNITTEST, new ECKey()));
+            Transaction tx2 = createFakeTx(UNITTEST, COIN, new ECKey().toAddress(ScriptType.P2PKH, UNITTEST.network()));
 
             Block b2 = createFakeBlock(blockStore, height++, tx2).block;
             chain.add(b2);
@@ -366,7 +376,7 @@ public class BlockChainTest {
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
-        Transaction tx3 = createFakeTx(UNITTEST, COIN, LegacyAddress.fromKey(UNITTEST, new ECKey()));
+        Transaction tx3 = createFakeTx(UNITTEST, COIN, new ECKey().toAddress(ScriptType.P2PKH, UNITTEST.network()));
         Block b3 = createFakeBlock(blockStore, height++, tx3).block;
         chain.add(b3);
 
@@ -422,14 +432,14 @@ public class BlockChainTest {
 
     @Test
     public void estimatedBlockTime() throws Exception {
-        BlockChain prod = new BlockChain(new Context(MAINNET), new MemoryBlockStore(MAINNET));
+        BlockChain prod = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET));
         Date d = prod.estimateBlockTime(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
         assertEquals(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).parse("2012-10-23T08:35:05.000-0700"), d);
     }
 
     @Test
-    public void falsePositives() throws Exception {
+    public void falsePositives() {
         double decay = AbstractBlockChain.FP_ESTIMATOR_ALPHA;
         assertTrue(0 == chain.getFalsePositiveRate()); // Exactly
         chain.trackFalsePositives(55);
