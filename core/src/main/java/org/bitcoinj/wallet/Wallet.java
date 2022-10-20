@@ -17,6 +17,15 @@
 
 package org.bitcoinj.wallet;
 
+import com.google.common.annotations.*;
+import com.google.common.collect.*;
+import com.google.common.math.IntMath;
+import com.google.common.util.concurrent.*;
+import com.google.protobuf.*;
+import net.jcip.annotations.*;
+import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.core.Address;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
@@ -28,6 +37,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.StreamUtils;
+
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.base.Base58;
@@ -4433,6 +4443,10 @@ public class Wallet extends BaseTaggableObject
         } else if (ScriptPattern.isP2PKH(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script),
                     ScriptType.P2PKH);
+            if (key == null) {
+                key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script),
+                        ScriptType.P2WPKH);
+            }
             return key != null && (key.isEncrypted() || key.hasPrivKey());
         } else if (ScriptPattern.isP2WPKH(script)) {
             ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script),
@@ -5166,6 +5180,9 @@ public class Wallet extends BaseTaggableObject
                 Script redeemScript = null;
                 if (ScriptPattern.isP2PKH(script)) {
                     key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), ScriptType.P2PKH);
+                    if (key == null) {
+                        key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), ScriptType.P2WPKH);
+                    }
                     checkNotNull(key, "Coin selection includes unspendable outputs");
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 } else if (ScriptPattern.isP2WPKH(script)) {
