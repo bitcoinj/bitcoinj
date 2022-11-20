@@ -5,7 +5,7 @@ plugins {
     id 'eclipse'
 }
 
-version = '0.16.1'
+version = '0.16.2-SNAPSHOT'
 
 dependencies {
     api 'org.bouncycastle:bcprov-jdk15to18:1.69'
