@@ -23,6 +23,7 @@ import com.google.common.base.Throwables;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
 import org.bitcoinj.core.listeners.GetDataEventListener;
@@ -100,6 +101,8 @@ public class Peer extends PeerSocketHandler {
     private final CopyOnWriteArrayList<ListenerRegistration<PreMessageReceivedEventListener>> preMessageReceivedEventListeners
         = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> onTransactionEventListeners
+        = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<ListenerRegistration<AddressEventListener>> addressEventListeners
         = new CopyOnWriteArrayList<>();
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
@@ -331,6 +334,16 @@ public class Peer extends PeerSocketHandler {
         preMessageReceivedEventListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
+    /** Registers a listener that is called when addr or addrv2 messages are received. */
+    public void addAddressEventListener(AddressEventListener listener) {
+        addAddressEventListener(Threading.USER_THREAD, listener);
+    }
+
+    /** Registers a listener that is called when addr or addrv2 messages are received. */
+    public void addAddressEventListener(Executor executor, AddressEventListener listener) {
+        addressEventListeners.add(new ListenerRegistration<>(listener, executor));
+    }
+
     public boolean removeBlocksDownloadedEventListener(BlocksDownloadedEventListener listener) {
         return ListenerRegistration.removeFromList(listener, blocksDownloadedEventListeners);
     }
@@ -357,6 +370,10 @@ public class Peer extends PeerSocketHandler {
 
     public boolean removePreMessageReceivedEventListener(PreMessageReceivedEventListener listener) {
         return ListenerRegistration.removeFromList(listener, preMessageReceivedEventListeners);
+    }
+
+    public boolean removeAddressEventListener(AddressEventListener listener) {
+        return ListenerRegistration.removeFromList(listener, addressEventListeners);
     }
 
     @Override
@@ -485,14 +502,17 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    private void processAddressMessage(AddressMessage m) {
+    private void processAddressMessage(AddressMessage message) {
+        for (final ListenerRegistration<AddressEventListener> registration : addressEventListeners) {
+            registration.executor.execute(() -> registration.listener.onAddr(Peer.this, message));
+        }
         CompletableFuture<AddressMessage> future;
         synchronized (getAddrFutures) {
             future = getAddrFutures.poll();
             if (future == null)  // Not an addr message we are waiting for.
                 return;
         }
-        future.complete(m);
+        future.complete(message);
     }
 
     private void processVersionMessage(VersionMessage peerVersionMessage) throws ProtocolException {
