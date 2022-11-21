@@ -481,9 +481,6 @@ public class Peer extends PeerSocketHandler {
         } else if (m instanceof GetDataMessage) {
             processGetData((GetDataMessage) m);
         } else if (m instanceof AddressMessage) {
-            // We don't care about addresses of the network right now. But in future,
-            // we should save them in the wallet so we don't put too much load on the seed nodes and can
-            // properly explore the network.
             processAddressMessage((AddressMessage) m);
         } else if (m instanceof HeadersMessage) {
             processHeaders((HeadersMessage) m);

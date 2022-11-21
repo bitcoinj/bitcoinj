@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import net.jcip.annotations.GuardedBy;
+import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlockchainDownloadEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
@@ -186,8 +187,11 @@ public class PeerGroup implements TransactionBroadcaster {
         = new CopyOnWriteArrayList<>();
     protected final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> peersTransactionBroadastEventListeners
         = new CopyOnWriteArrayList<>();
+    // Discover peers via addr and addrv2 messages?
+    private volatile boolean vDiscoverPeersViaP2P = false;
     // Peer discovery sources, will be polled occasionally if there aren't enough inactives.
     private final CopyOnWriteArraySet<PeerDiscovery> peerDiscoverers;
+
     // The version message to use for new connections.
     @GuardedBy("lock") private VersionMessage versionMessage;
     // Maximum depth up to which pending transaction dependencies are downloaded, or 0 for disabled.
@@ -221,6 +225,8 @@ public class PeerGroup implements TransactionBroadcaster {
     private final WalletCoinsReceivedEventListener walletCoinsReceivedEventListener = (wallet, tx, prevBalance, newBalance) -> onCoinsReceivedOrSent(wallet, tx);
 
     private final WalletCoinsSentEventListener walletCoinsSentEventListener = (wallet, tx, prevBalance, newBalance) -> onCoinsReceivedOrSent(wallet, tx);
+
+    public static final int MAX_ADDRESSES_PER_ADDR_MESSAGE = 16;
 
     private void onCoinsReceivedOrSent(Wallet wallet, Transaction tx) {
         // We received a relevant transaction. We MAY need to recalculate and resend the Bloom filter, but only
@@ -269,7 +275,7 @@ public class PeerGroup implements TransactionBroadcaster {
     // in broadcastTransaction.
     private final Set<TransactionBroadcast> runningBroadcasts;
 
-    private class PeerListener implements GetDataEventListener, BlocksDownloadedEventListener {
+    private class PeerListener implements GetDataEventListener, BlocksDownloadedEventListener, AddressEventListener {
 
         public PeerListener() {
         }
@@ -289,6 +295,27 @@ public class PeerGroup implements TransactionBroadcaster {
                 log.info("Force update Bloom filter due to high false positive rate ({} vs {})", rate, target);
                 recalculateFastCatchupAndFilter(FilterRecalculateMode.FORCE_SEND_FOR_REFRESH);
             }
+        }
+
+        @Override
+        public void onAddr(Peer peer, AddressMessage message) {
+            if (!vDiscoverPeersViaP2P)
+                return;
+            List<PeerAddress> addresses = new LinkedList<>(message.getAddresses());
+            // Make sure we pick random addresses.
+            Collections.shuffle(addresses);
+            int numAdded = 0;
+            for (PeerAddress address : addresses) {
+                // Add to inactive pool.
+                boolean added = addInactive(address, 0);
+                if (added)
+                    numAdded++;
+                // Limit addresses picked per message.
+                if (numAdded >= MAX_ADDRESSES_PER_ADDR_MESSAGE)
+                    break;
+            }
+            log.info("{} gossiped {} addresses, added {} of them to the inactive pool", peer.getAddress(),
+                    addresses.size(), numAdded);
         }
     }
 
@@ -963,6 +990,17 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
+     * Setting this to {@code true} will add addresses discovered via P2P {@code addr} and {@code addrv2} messages to
+     * the list of potential peers to connect to. This will automatically be set to true if at least one peer discovery
+     * is added via {@link #addPeerDiscovery(PeerDiscovery)}.
+     *
+     * @param discoverPeersViaP2P true if peers should be discovered from the P2P network
+     */
+    public void setDiscoverPeersViaP2P(boolean discoverPeersViaP2P) {
+        vDiscoverPeersViaP2P = discoverPeersViaP2P;
+    }
+
+    /**
      * Add addresses from a discovery source to the list of potential peers to connect to. If max connections has not
      * been configured, or set to zero, then it's set to the default at this point.
      */
@@ -975,6 +1013,7 @@ public class PeerGroup implements TransactionBroadcaster {
         } finally {
             lock.unlock();
         }
+        setDiscoverPeersViaP2P(true);
     }
 
     /** Returns number of discovered peers. */
@@ -1543,6 +1582,8 @@ public class PeerGroup implements TransactionBroadcaster {
             // Make sure the peer knows how to upload transactions that are requested from us.
             peer.addBlocksDownloadedEventListener(Threading.SAME_THREAD, peerListener);
             peer.addGetDataEventListener(Threading.SAME_THREAD, peerListener);
+            // Discover other peers.
+            peer.addAddressEventListener(Threading.SAME_THREAD, peerListener);
 
             // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
             for (ListenerRegistration<BlocksDownloadedEventListener> registration : peersBlocksDownloadedEventListeners)
@@ -1566,6 +1607,10 @@ public class PeerGroup implements TransactionBroadcaster {
         for (final ListenerRegistration<PeerConnectedEventListener> registration : peerConnectedEventListeners) {
             registration.executor.execute(() -> registration.listener.onPeerConnected(peer, fNewSize));
         }
+
+        // Discovery more peers.
+        if (vDiscoverPeersViaP2P)
+            peer.sendMessage(new GetAddrMessage(params));
     }
 
     @Nullable private volatile ScheduledFuture<?> vPingTask;
@@ -1711,6 +1756,7 @@ public class PeerGroup implements TransactionBroadcaster {
             lock.unlock();
         }
 
+        peer.removeAddressEventListener(peerListener);
         peer.removeBlocksDownloadedEventListener(peerListener);
         peer.removeGetDataEventListener(peerListener);
         for (Wallet wallet : wallets) {
