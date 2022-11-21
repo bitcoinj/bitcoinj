@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Micheal Swiggs
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -35,17 +37,27 @@ import java.util.concurrent.TimeUnit;
  * to the network, in case IRC and DNS fail. The list comes from the Bitcoin C++ source code.
  */
 public class SeedPeers implements PeerDiscovery {
-    private NetworkParameters params;
-    private int[] seedAddrs;
+    private final List<InetSocketAddress> seedAddrs;
     private int pnseedIndex;
 
     private static final Logger log = LoggerFactory.getLogger(SeedPeers.class);
 
     /**
+     * Supports finding peers by IP addresses/ports
+     *
+     * @param seedAddrs IP addresses/ports of seeds.
+     */
+    public SeedPeers(InetSocketAddress[] seedAddrs) {
+        this.seedAddrs = Arrays.asList(seedAddrs);
+    }
+
+    /**
      * Supports finding peers by IP addresses
      *
      * @param params Network parameters to be used for port information.
+     * @deprecated use {@link SeedPeers#SeedPeers(InetSocketAddress[])}
      */
+    @Deprecated
     public SeedPeers(NetworkParameters params) {
         this(params.getAddrSeeds(), params);
     }
@@ -53,12 +65,23 @@ public class SeedPeers implements PeerDiscovery {
     /**
      * Supports finding peers by IP addresses
      *
-     * @param seedAddrs IP addresses for seed addresses.
-     * @param params Network parameters to be used for port information.
+     * @param seedAddrInts IP addresses for seed addresses.
+     * @param params    Network parameters to be used for port information.
+     * @deprecated use {@link SeedPeers#SeedPeers(InetSocketAddress[])}
      */
-    public SeedPeers(int[] seedAddrs, NetworkParameters params) {
-        this.seedAddrs = seedAddrs;
-        this.params = params;
+    @Deprecated
+    public SeedPeers(int[] seedAddrInts, NetworkParameters params) {
+        this.seedAddrs = new LinkedList<>();
+        if (seedAddrInts == null)
+            return;
+        for (int seedAddrInt : seedAddrInts) {
+            try {
+                InetSocketAddress seedAddr = new InetSocketAddress(convertAddress(seedAddrInt), params.getPort());
+                this.seedAddrs.add(seedAddr);
+            } catch (UnknownHostException x) {
+                // swallow
+            }
+        }
     }
 
     /**
@@ -66,25 +89,17 @@ public class SeedPeers implements PeerDiscovery {
      * Once all the list has been iterated, null will be returned for each subsequent query.
      *
      * @return InetSocketAddress - The address/port of the next node.
-     * @throws PeerDiscoveryException
      */
     @Nullable
-    public InetSocketAddress getPeer() throws PeerDiscoveryException {
-        try {
-            return nextPeer();
-        } catch (UnknownHostException e) {
-            throw new PeerDiscoveryException(e);
-        }
+    public InetSocketAddress getPeer() {
+        return nextPeer();
     }
 
     @Nullable
-    private InetSocketAddress nextPeer() throws UnknownHostException, PeerDiscoveryException {
-        if (seedAddrs == null || seedAddrs.length == 0)
-            throw new PeerDiscoveryException("No IP address seeds configured; unable to find any peers");
-
-        if (pnseedIndex >= seedAddrs.length) return null;
-        return new InetSocketAddress(convertAddress(seedAddrs[pnseedIndex++]),
-                params.getPort());
+    private InetSocketAddress nextPeer() {
+        if (pnseedIndex >= seedAddrs.size())
+            return null;
+        return seedAddrs.get(pnseedIndex++);
     }
 
     /**
@@ -96,31 +111,19 @@ public class SeedPeers implements PeerDiscovery {
      * @return the pre-determined list of peers
      */
     @Override
-    public List<InetSocketAddress> getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public List<InetSocketAddress> getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) {
         if (services != 0)
             log.info("Pre-determined peers cannot be filtered by services: {}", services);
-        try {
-            return allPeers();
-        } catch (UnknownHostException e) {
-            throw new PeerDiscoveryException(e);
-        }
-    }
-
-    private List<InetSocketAddress> allPeers() throws UnknownHostException {
-        List<InetSocketAddress> addresses = new ArrayList<>(seedAddrs.length);
-        for (int seedAddr : seedAddrs) {
-            addresses.add(new InetSocketAddress(convertAddress(seedAddr), params.getPort()));
-        }
-        return addresses;
-    }
-
-    private InetAddress convertAddress(int seed) throws UnknownHostException {
-        byte[] v4addr = new byte[4];
-        ByteUtils.uint32ToByteArrayLE(seed, v4addr, 0);
-        return InetAddress.getByAddress(v4addr);
+        return Collections.unmodifiableList(seedAddrs);
     }
 
     @Override
     public void shutdown() {
+    }
+
+    private static InetAddress convertAddress(int seed) throws UnknownHostException {
+        byte[] v4addr = new byte[4];
+        ByteUtils.uint32ToByteArrayLE(seed, v4addr, 0);
+        return InetAddress.getByAddress(v4addr);
     }
 }
