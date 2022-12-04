@@ -18,6 +18,8 @@ package org.bitcoinj.net.discovery;
 
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.net.InetAddress;
@@ -36,6 +38,8 @@ public class SeedPeers implements PeerDiscovery {
     private NetworkParameters params;
     private int[] seedAddrs;
     private int pnseedIndex;
+
+    private static final Logger log = LoggerFactory.getLogger(SeedPeers.class);
 
     /**
      * Supports finding peers by IP addresses
@@ -85,11 +89,16 @@ public class SeedPeers implements PeerDiscovery {
 
     /**
      * Returns all the Bitcoin nodes within the list.
+     *
+     * @param services     ignored
+     * @param timeoutValue ignored
+     * @param timeoutUnit  ignored
+     * @return the pre-determined list of peers
      */
     @Override
     public List<InetSocketAddress> getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
         if (services != 0)
-            throw new PeerDiscoveryException("Pre-determined peers cannot be filtered by services: " + services);
+            log.info("Pre-determined peers cannot be filtered by services: {}", services);
         try {
             return allPeers();
         } catch (UnknownHostException e) {
