@@ -33,6 +33,7 @@ import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.LazyECPoint;
+import org.bitcoinj.utils.MessageVerifyUtils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;
@@ -927,7 +928,11 @@ public class ECKey implements EncryptableItem {
     /**
      * Convenience wrapper around {@link ECKey#signedMessageToKey(String, String)}. If the key derived from the
      * signature is not the same as this one, throws a SignatureException.
+     * @deprecated Use {@link MessageVerifyUtils#verifyMessage(Address, String, String)} instead,
+     * which works with different address types, which works also with legacy segwit (P2SH-P2WPKH, 3…)
+     * and native SegWit addresses (P2WPKH, bc1…).
      */
+    @Deprecated
     public void verifyMessage(String message, String signatureBase64) throws SignatureException {
         ECKey key = ECKey.signedMessageToKey(message, signatureBase64);
         if (!key.pub.equals(pub))
