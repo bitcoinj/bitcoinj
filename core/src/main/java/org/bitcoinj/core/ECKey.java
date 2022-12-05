@@ -24,7 +24,6 @@ import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
-import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
@@ -826,9 +825,8 @@ public class ECKey implements EncryptableItem {
         if (signatureEncoded.length < 65)
             throw new SignatureException("Signature truncated, expected 65 bytes and got " + signatureEncoded.length);
         int header = signatureEncoded[0] & 0xFF;
-        // The header byte: 0x1B = first key with even y, 0x1C = first key with odd y,
-        //                  0x1D = second key with even y, 0x1E = second key with odd y
-        if (header < 27 || header > 34)
+        // allowed range of valid header byte values as defined in BIP 137:
+        if (header < 27 || header > 42)
             throw new SignatureException("Header byte out of range: " + header);
         BigInteger r = ByteUtils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 1, 33));
         BigInteger s = ByteUtils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 33, 65));
@@ -838,10 +836,35 @@ public class ECKey implements EncryptableItem {
         // JSON-SPIRIT hands back. Assume UTF-8 for now.
         Sha256Hash messageHash = Sha256Hash.twiceOf(messageBytes);
         boolean compressed = false;
-        if (header >= 31) {
+        // Meaning of header byte ranges:
+        //  * 27-30: P2PKH uncompressed, recId 0-3
+        //  * 31-34: P2PKH compressed, recId 0-3
+        //  * 35-38: Segwit P2SH (always compressed), recId 0-3
+        //  * 39-42: Segwit Bech32 (always compressed), recId 0-3
+        // as defined in https://github.com/bitcoin/bips/blob/master/bip-0137.mediawiki#procedure-for-signingverifying-a-signature
+
+        // this is a signature created with a Segwit bech32 address
+        if (header >= 39) {
+            header -= 12;
+            compressed = true; // by definition in BIP 141
+        }
+        // this is a signature created with a Segwit p2sh (p2sh-p2wpkh) address
+        else if (header >= 35) {
+            header -= 8;
+            compressed = true; // by definition in BIP 141
+        }
+        // this is a signature created with a compressed p2pkh address
+        else if (header >= 31) {
             compressed = true;
             header -= 4;
         }
+        // else: signature created with an uncompressed p2pkh address
+
+        // As the recovery of a pubkey from an ECDSA signature will recover several possible
+        // public keys, the header byte is used to carry information, which of the possible
+        // keys was the key used to create the signature (see also BIP 137):
+        // header byte:  27 = first key with even y,  28 = first key with odd y,
+        //               29 = second key with even y, 30 = second key with odd y
         int recId = header - 27;
         ECKey key = ECKey.recoverFromSignature(recId, sig, messageHash, compressed);
         if (key == null)
@@ -905,6 +928,7 @@ public class ECKey implements EncryptableItem {
         Preconditions.checkArgument(sig.r.signum() >= 0, "r must be positive");
         Preconditions.checkArgument(sig.s.signum() >= 0, "s must be positive");
         Preconditions.checkNotNull(message);
+        // see https://www.secg.org/sec1-v2.pdf, section 4.1.6
         // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
         //   1.1 Let x = r + jn
         BigInteger n = CURVE.getN();  // Curve order.
