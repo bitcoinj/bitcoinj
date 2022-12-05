@@ -777,9 +777,11 @@ public class ECKey implements EncryptableItem {
      *
      * @throws IllegalStateException if this ECKey does not have the private part.
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
+     * @deprecated use {@link #signMessage(String, ScriptType)} instead and specify the correct script type
      */
+    @Deprecated
     public String signMessage(String message) throws KeyCrypterException {
-        return signMessage(message, null);
+        return signMessage(message, null, ScriptType.P2PKH);
     }
 
     /**
@@ -789,12 +791,62 @@ public class ECKey implements EncryptableItem {
      * @throws IllegalStateException if this ECKey does not have the private part.
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
+    public String signMessage(String message, ScriptType scriptType) throws KeyCrypterException {
+        return signMessage(message, null, scriptType);
+    }
+
+    /**
+     * Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
+     * encoded string.
+     *
+     * @throws IllegalStateException if this ECKey does not have the private part.
+     * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
+     * @deprecated use {@link #signMessage(String, KeyParameter, ScriptType)} instead and specify the correct script type
+     */
+    @Deprecated
     public String signMessage(String message, @Nullable KeyParameter aesKey) throws KeyCrypterException {
+        return signMessage(message, aesKey, ScriptType.P2PKH);
+    }
+
+    /**
+     * Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
+     * encoded string.
+     *
+     * @throws IllegalArgumentException if uncompressed key is used for Segwit scriptType, or unsupported script type is specified
+     * @throws IllegalStateException if this ECKey does not have the private part.
+     * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
+     */
+    public String signMessage(String message, @Nullable KeyParameter aesKey, ScriptType scriptType) throws KeyCrypterException {
+        if (!isCompressed() && (scriptType == ScriptType.P2WPKH || scriptType == ScriptType.P2SH)) {
+            throw new IllegalArgumentException("Segwit P2WPKH and P2SH-P2WPKH script types only can be used with compressed keys. See BIP 141.");
+        }
         byte[] data = formatMessageForSigning(message);
         Sha256Hash hash = Sha256Hash.twiceOf(data);
         ECDSASignature sig = sign(hash, aesKey);
         byte recId = findRecoveryId(hash, sig);
-        int headerByte = recId + 27 + (isCompressed() ? 4 : 0);
+
+        // Meaning of header byte ranges:
+        //  * 27-30: P2PKH uncompressed, recId 0-3
+        //  * 31-34: P2PKH compressed, recId 0-3
+        //  * 35-38: Segwit P2SH (always compressed), recId 0-3
+        //  * 39-42: Segwit Bech32 (always compressed), recId 0-3
+        // as defined in https://github.com/bitcoin/bips/blob/master/bip-0137.mediawiki#procedure-for-signingverifying-a-signature
+
+        int headerByte;
+        switch (scriptType) {
+            case P2PKH:
+                headerByte = recId + 27 + (isCompressed() ? 4 : 0);
+                break;
+            case P2SH: // P2SH-P2WPKH ("legacy-segwit")
+                headerByte = recId + 35;
+                break;
+            case P2WPKH:
+                headerByte = recId + 39;
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported script type for message signing.");
+        }
+
         byte[] sigData = new byte[65];  // 1 header + 32 bytes for R + 32 bytes for S
         sigData[0] = (byte)headerByte;
         System.arraycopy(ByteUtils.bigIntegerToBytes(sig.r, 32), 0, sigData, 1, 32);
