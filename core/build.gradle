@@ -16,7 +16,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation 'net.jcip:jcip-annotations:1.0'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.easymock:easymock:5.0.1'
+    testImplementation 'org.easymock:easymock:5.1.0'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
     testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.11'
