@@ -113,11 +113,28 @@ public class SegwitAddress extends Address {
         byte[] witnessProgram = getWitnessProgram();
         if (witnessProgram.length < WITNESS_PROGRAM_MIN_LENGTH || witnessProgram.length > WITNESS_PROGRAM_MAX_LENGTH)
             throw new AddressFormatException.InvalidDataLength("Invalid length: " + witnessProgram.length);
-        // Check script length for version 0
+        // Check script length for version 0:
+        // BIP 141:
+        // "If the version byte is 0, but the witness program is neither 20 nor 32 bytes, the script must fail."
+        // In other words: coins sent to addresses with other lengths will become unspendable.
         if (witnessVersion == 0 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_PKH
                 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_SH)
             throw new AddressFormatException.InvalidDataLength(
                     "Invalid length for address version 0: " + witnessProgram.length);
+        // Check script length for version 1:
+        // BIP 341:
+        // "A Taproot output is a native SegWit output (see BIP141) with version number 1, and a 32-byte
+        // witness program. Any other outputs, including version 1 outputs with lengths other than 32 bytes,
+        // or P2SH-wrapped version 1 outputs, remain unencumbered."
+        // In other words: other lengths are not valid Taproot scripts but coins sent there won't be
+        // unspendable, quite the contrary, they will be anyone-can-spend. (Not that easy spendable, because still
+        // not-standard outputs and therefore not relayed, but a willing miner could easily spend them.)
+
+        // Rationale for still restricting length here: creating anyone-can-spend Taproot addresses is probably
+        // not that what callers expect.
+        if (witnessVersion == 1 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_TR)
+            throw new AddressFormatException.InvalidDataLength(
+                    "Invalid length for address version 1: " + witnessProgram.length);
     }
 
     /**

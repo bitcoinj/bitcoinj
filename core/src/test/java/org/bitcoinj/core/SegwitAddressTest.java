@@ -162,8 +162,6 @@ public class SegwitAddressTest {
                     "0014751e76e8199196d454941c45d1b3a323f1433bd6", 0),
             new AddressData("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", TESTNET,
                     "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262", 0),
-            new AddressData("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y", MAINNET,
-                    "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6", 1),
             new AddressData("BC1SW50QGDZ25J", MAINNET, "6002751e", 16),
             new AddressData("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", MAINNET, "5210751e76e8199196d454941c45d1b3a323", 2),
             new AddressData("tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", TESTNET,
@@ -225,6 +223,22 @@ public class SegwitAddressTest {
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBech32_tooLong() {
         SegwitAddress.fromBech32((Network) null, "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90");
+    }
+
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBech32m_taprootTooShort() {
+        // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
+        // (this program is 20 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
+        String taprootAddressWith20BytesWitnessProgram = "bc1pqypqzqspqgqsyqgzqypqzqspqgqsyqgzzezy58";
+        SegwitAddress.fromBech32((Network) null, taprootAddressWith20BytesWitnessProgram);
+    }
+
+    @Test(expected = AddressFormatException.InvalidDataLength.class)
+    public void fromBech32m_taprootTooLong() {
+        // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
+        // (this program is 40 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
+        String taprootAddressWith40BytesWitnessProgram = "bc1p6t0pcqrq3mvedn884lgj9s2cm52xp9vtnlc89cv5x77f5l725rrdjhqrld6m6rza67j62a";
+        SegwitAddress.fromBech32((Network) null, taprootAddressWith40BytesWitnessProgram);
     }
 
     @Test(expected = AddressFormatException.InvalidPrefix.class)
