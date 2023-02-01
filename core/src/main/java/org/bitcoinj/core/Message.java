@@ -55,7 +55,6 @@ public abstract class Message {
     // The raw message payload bytes themselves.
     protected byte[] payload;
 
-    protected boolean recached = false;
     protected MessageSerializer serializer;
 
     protected NetworkParameters params;
@@ -112,7 +111,6 @@ public abstract class Message {
      */
     protected void unCache() {
         payload = null;
-        recached = false;
     }
 
     protected void adjustLength(int newArraySize, int adjustment) {
@@ -214,7 +212,6 @@ public abstract class Message {
             payload = stream.toByteArray();
             cursor = cursor - offset;
             offset = 0;
-            recached = true;
             length = payload.length;
             return payload;
         }
