@@ -348,10 +348,6 @@ public abstract class Message {
         return Sha256Hash.wrapReversed(readBytes(32));
     }
 
-    protected boolean hasMoreBytes() {
-        return cursor < payload.length;
-    }
-
     /** Network parameters this message was created with. */
     public NetworkParameters getParams() {
         return params;
