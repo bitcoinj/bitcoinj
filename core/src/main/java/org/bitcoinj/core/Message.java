@@ -138,10 +138,6 @@ public abstract class Message {
         return payload != null;
     }
 
-    public boolean isRecached() {
-        return recached;
-    }
-
     /**
      * Overrides the message serializer.
      * @param serializer the new serializer
