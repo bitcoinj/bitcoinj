@@ -212,13 +212,13 @@ public class BitcoinSerializer extends MessageSerializer {
         }
 
         try {
-            return makeMessage(header.command, header.size, payloadBytes, hash, header.checksum);
+            return makeMessage(header.command, header.size, payloadBytes, hash);
         } catch (Exception e) {
             throw new ProtocolException("Error deserializing message " + HEX.encode(payloadBytes) + "\n", e);
         }
     }
 
-    private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash, byte[] checksum) throws ProtocolException {
+    private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash) throws ProtocolException {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
             return new VersionMessage(params, payloadBytes);
