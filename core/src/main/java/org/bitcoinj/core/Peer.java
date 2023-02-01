@@ -1605,10 +1605,6 @@ public class Peer extends PeerSocketHandler {
         return chainHeight - blockChain.getBestChainHeight();
     }
 
-    private boolean isNotFoundMessageSupported() {
-        return vPeerVersionMessage.clientVersion >= NotFoundMessage.MIN_PROTOCOL_VERSION;
-    }
-
     /**
      * Returns true if this peer will try and download things it is sent in "inv" messages. Normally you only need
      * one peer to be downloading data. Defaults to true.
