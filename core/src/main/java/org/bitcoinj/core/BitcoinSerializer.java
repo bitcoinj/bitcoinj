@@ -402,7 +402,6 @@ public class BitcoinSerializer extends MessageSerializer {
             checksum = new byte[4];
             // Note that the size read above includes the checksum bytes.
             System.arraycopy(header, cursor, checksum, 0, 4);
-            cursor += 4;
         }
     }
 
