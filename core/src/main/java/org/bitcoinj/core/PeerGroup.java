@@ -1668,12 +1668,6 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    /** Use "Context.get().getConfidenceTable()" instead */
-    @Deprecated @Nullable
-    public TxConfidenceTable getMemoryPool() {
-        return Context.get().getConfidenceTable();
-    }
-
     /**
      * Tells the {@link PeerGroup} to download only block headers before a certain time and bodies after that. Call this
      * before starting block chain download.
