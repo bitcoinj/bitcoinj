@@ -28,13 +28,6 @@ public abstract class ChildMessage extends Message {
 
     @Nullable protected Message parent;
 
-    /**
-     * @deprecated Use {@link #ChildMessage(NetworkParameters)} instead.
-     */
-    @Deprecated
-    protected ChildMessage() {
-    }
-
     public ChildMessage(NetworkParameters params) {
         super(params);
     }
