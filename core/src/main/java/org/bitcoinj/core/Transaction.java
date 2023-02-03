@@ -273,12 +273,6 @@ public class Transaction extends ChildMessage {
         return getTxId();
     }
 
-    /** @deprecated use {@link #getTxId()}.toString() */
-    @Deprecated
-    public String getHashAsString() {
-        return getTxId().toString();
-    }
-
     /**
      * Returns the transaction id as you see them in block explorers. It is used as a reference by transaction inputs
      * via outpoints.
