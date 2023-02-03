@@ -266,13 +266,6 @@ public class Transaction extends ChildMessage {
         super(params, payload, 0, parent, setSerializer, length);
     }
 
-    /** @deprecated use {@link #getTxId()} */
-    @Override
-    @Deprecated
-    public Sha256Hash getHash() {
-        return getTxId();
-    }
-
     /**
      * Returns the transaction id as you see them in block explorers. It is used as a reference by transaction inputs
      * via outpoints.
