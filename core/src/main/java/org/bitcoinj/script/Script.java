@@ -352,12 +352,6 @@ public class Script {
         }
     }
 
-    /** @deprecated use {@link ScriptPattern#isP2PK(Script)} */
-    @Deprecated
-    public boolean isSentToRawPubKey() {
-        return ScriptPattern.isP2PK(this);
-    }
-
     /**
      * <p>If the program somehow pays to a hash, returns the hash.</p>
      * 
