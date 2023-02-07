@@ -834,12 +834,6 @@ public class Script {
         return ByteUtils.decodeMPI(ByteUtils.reverseBytes(chunk), false);
     }
 
-    /** @deprecated use {@link ScriptPattern#isOpReturn(Script)} */
-    @Deprecated
-    public boolean isOpReturn() {
-        return ScriptPattern.isOpReturn(this);
-    }
-
     /**
      * Exposes the script interpreter. Normally you should not use this directly, instead use
      * {@link TransactionInput#verify(TransactionOutput)} or
