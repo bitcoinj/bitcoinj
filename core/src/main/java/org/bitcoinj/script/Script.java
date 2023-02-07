@@ -351,18 +351,6 @@ public class Script {
         }
     }
 
-    /** @deprecated use {@link ScriptPattern#isP2PK(Script)} */
-    @Deprecated
-    public boolean isSentToRawPubKey() {
-        return ScriptPattern.isP2PK(this);
-    }
-
-    /** @deprecated use {@link ScriptPattern#isP2PKH(Script)} */
-    @Deprecated
-    public boolean isSentToAddress() {
-        return ScriptPattern.isP2PKH(this);
-    }
-
     /**
      * <p>If the program somehow pays to a hash, returns the hash.</p>
      * 
@@ -736,18 +724,6 @@ public class Script {
         }
     }
 
-    /** @deprecated use {@link ScriptPattern#isP2SH(Script)} */
-    @Deprecated
-    public boolean isPayToScriptHash() {
-        return ScriptPattern.isP2SH(this);
-    }
-
-    /** @deprecated use {@link ScriptPattern#isSentToMultisig(Script)} */
-    @Deprecated
-    public boolean isSentToMultiSig() {
-        return ScriptPattern.isSentToMultisig(this);
-    }
-
     private static boolean equalsRange(byte[] a, int start, byte[] b) {
         if (start + b.length > a.length)
             return false;
@@ -855,12 +831,6 @@ public class Script {
         }
 
         return ByteUtils.decodeMPI(ByteUtils.reverseBytes(chunk), false);
-    }
-
-    /** @deprecated use {@link ScriptPattern#isOpReturn(Script)} */
-    @Deprecated
-    public boolean isOpReturn() {
-        return ScriptPattern.isOpReturn(this);
     }
 
     /**
