@@ -839,26 +839,6 @@ public class Script {
      * {@link Script#correctlySpends(Transaction, int, TransactionWitness, Coin, Script, Set)}. This method
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
-     *
-     * @deprecated Use {@link #executeScript(Transaction, long, Script, LinkedList, Set)}
-     * instead.
-     */
-    @Deprecated
-    public static void executeScript(@Nullable Transaction txContainingThis, long index,
-                                     Script script, LinkedList<byte[]> stack, boolean enforceNullDummy) throws ScriptException {
-        final EnumSet<VerifyFlag> flags = enforceNullDummy
-            ? EnumSet.of(VerifyFlag.NULLDUMMY)
-            : EnumSet.noneOf(VerifyFlag.class);
-
-        executeScript(txContainingThis, index, script, stack, flags);
-    }
-
-    /**
-     * Exposes the script interpreter. Normally you should not use this directly, instead use
-     * {@link TransactionInput#verify(TransactionOutput)} or
-     * {@link Script#correctlySpends(Transaction, int, TransactionWitness, Coin, Script, Set)}. This method
-     * is useful if you need more precise control or access to the final state of the stack. This interface is very
-     * likely to change in future.
      */
     public static void executeScript(@Nullable Transaction txContainingThis, long index,
                                      Script script, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
