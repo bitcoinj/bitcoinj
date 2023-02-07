@@ -358,12 +358,6 @@ public class Script {
         return ScriptPattern.isP2PK(this);
     }
 
-    /** @deprecated use {@link ScriptPattern#isP2PKH(Script)} */
-    @Deprecated
-    public boolean isSentToAddress() {
-        return ScriptPattern.isP2PKH(this);
-    }
-
     /**
      * <p>If the program somehow pays to a hash, returns the hash.</p>
      * 
