@@ -725,12 +725,6 @@ public class Script {
         }
     }
 
-    /** @deprecated use {@link ScriptPattern#isSentToMultisig(Script)} */
-    @Deprecated
-    public boolean isSentToMultiSig() {
-        return ScriptPattern.isSentToMultisig(this);
-    }
-
     private static boolean equalsRange(byte[] a, int start, byte[] b) {
         if (start + b.length > a.length)
             return false;
