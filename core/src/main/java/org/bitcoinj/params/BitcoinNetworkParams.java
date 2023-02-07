@@ -26,8 +26,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.store.BlockStore;
@@ -230,13 +228,6 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
     @Deprecated
     public Coin getMaxMoney() {
         return BitcoinNetwork.MAX_MONEY;
-    }
-
-    /** @deprecated use {@link TransactionOutput#getMinNonDustValue()} */
-    @Override
-    @Deprecated
-    public Coin getMinNonDustOutput() {
-        return Transaction.MIN_NONDUST_OUTPUT;
     }
 
     /**
