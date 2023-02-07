@@ -725,12 +725,6 @@ public class Script {
         }
     }
 
-    /** @deprecated use {@link ScriptPattern#isP2SH(Script)} */
-    @Deprecated
-    public boolean isPayToScriptHash() {
-        return ScriptPattern.isP2SH(this);
-    }
-
     /** @deprecated use {@link ScriptPattern#isSentToMultisig(Script)} */
     @Deprecated
     public boolean isSentToMultiSig() {
