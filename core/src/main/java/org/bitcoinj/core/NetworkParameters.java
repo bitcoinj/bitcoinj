@@ -409,13 +409,6 @@ public abstract class NetworkParameters {
     public abstract Coin getMaxMoney();
 
     /**
-     * @return coin value
-     * @deprecated use {@link TransactionOutput#getMinNonDustValue()}
-     */
-    @Deprecated
-    public abstract Coin getMinNonDustOutput();
-
-    /**
      * The monetary object for this currency.
      * @return formatting utility object
      * @deprecated Get one another way or construct your own {@link MonetaryFormat} as needed.

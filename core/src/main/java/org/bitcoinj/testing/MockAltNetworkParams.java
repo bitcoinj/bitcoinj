@@ -59,11 +59,6 @@ public class MockAltNetworkParams extends NetworkParameters {
     }
 
     @Override
-    public Coin getMinNonDustOutput() {
-        return null;
-    }
-
-    @Override
     public MonetaryFormat getMonetaryFormat() {
         return null;
     }
