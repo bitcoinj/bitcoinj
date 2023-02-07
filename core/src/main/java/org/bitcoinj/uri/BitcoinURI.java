@@ -86,12 +86,6 @@ public class BitcoinURI {
     public static final String FIELD_ADDRESS = "address";
     public static final String FIELD_PAYMENT_REQUEST_URL = "r";
 
-    /**
-     * URI Scheme for Bitcoin network.
-     * @deprecated Use {@link BitcoinNetwork#BITCOIN_SCHEME}.
-     */
-    @Deprecated
-    public static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
     private static final String ENCODED_SPACE_CHARACTER = "%20";
     private static final String AMPERSAND_SEPARATOR = "&";
     private static final String QUESTION_MARK_SEPARATOR = "?";
