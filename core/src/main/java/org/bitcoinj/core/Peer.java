@@ -391,11 +391,6 @@ public class Peer extends PeerSocketHandler {
         return helper.toString();
     }
 
-    @Deprecated
-    public String toStringServices(long services) {
-        return VersionMessage.toStringServices(services);
-    }
-
     @Override
     protected void timeoutOccurred() {
         super.timeoutOccurred();
