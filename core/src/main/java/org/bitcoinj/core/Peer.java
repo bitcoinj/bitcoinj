@@ -723,7 +723,7 @@ public class Peer extends PeerSocketHandler {
             TransactionConfidence confidence = tx.getConfidence();
             confidence.setSource(TransactionConfidence.Source.NETWORK);
             pendingTxDownloads.remove(confidence);
-            if (maybeHandleRequestedData(tx)) {
+            if (maybeHandleRequestedData(tx, tx.getTxId())) {
                 return;
             }
             if (currentFilteredBlock != null) {
@@ -929,7 +929,7 @@ public class Peer extends PeerSocketHandler {
         if (log.isDebugEnabled())
             log.debug("{}: Received broadcast block {}", getAddress(), m.getHashAsString());
         // Was this block requested by getBlock()?
-        if (maybeHandleRequestedData(m)) return;
+        if (maybeHandleRequestedData(m, m.getHash())) return;
         if (blockChain == null) {
             if (log.isDebugEnabled())
                 log.debug("Received block but was not configured with an AbstractBlockChain");
@@ -1096,9 +1096,8 @@ public class Peer extends PeerSocketHandler {
         return exhausted;
     }
 
-    private boolean maybeHandleRequestedData(Message m) {
+    private boolean maybeHandleRequestedData(Message m, Sha256Hash hash) {
         boolean found = false;
-        Sha256Hash hash = m.getHash();
         for (GetDataRequest req : getDataFutures) {
             if (hash.equals(req.hash)) {
                 req.complete(m);
