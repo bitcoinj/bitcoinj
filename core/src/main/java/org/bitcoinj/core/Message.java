@@ -257,10 +257,8 @@ public abstract class Message {
         log.error("Error: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
     }
 
-    /**
-     * This method is a NOP for all classes except Block and Transaction.  It is only declared in Message
-     * so BitcoinSerializer can avoid 2 instanceof checks + a casting.
-     */
+    /** @deprecated use {@link Transaction#getTxId()}, {@link Block#getHash()}, {@link FilteredBlock#getHash()} or {@link TransactionOutPoint#getHash()} */
+    @Deprecated
     public Sha256Hash getHash() {
         throw new UnsupportedOperationException();
     }

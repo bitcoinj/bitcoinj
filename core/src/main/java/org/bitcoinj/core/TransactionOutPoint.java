@@ -201,7 +201,6 @@ public class TransactionOutPoint extends ChildMessage {
     /**
      * Returns the hash of the transaction this outpoint references/spends/is connected to.
      */
-    @Override
     public Sha256Hash getHash() {
         return hash;
     }

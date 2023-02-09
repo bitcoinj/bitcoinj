@@ -458,7 +458,6 @@ public class Block extends Message {
      * Returns the hash of the block (which for a valid, solved block should be
      * below the target). Big endian.
      */
-    @Override
     public Sha256Hash getHash() {
         if (hash == null)
             hash = calculateHash();

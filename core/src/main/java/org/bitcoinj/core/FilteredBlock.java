@@ -98,7 +98,6 @@ public class FilteredBlock extends Message {
     }
     
     /** Gets the hash of the block represented in this Filtered Block */
-    @Override
     public Sha256Hash getHash() {
         return header.getHash();
     }
