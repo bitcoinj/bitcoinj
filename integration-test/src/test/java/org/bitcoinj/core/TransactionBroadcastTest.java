@@ -252,6 +252,6 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
         peerGroup.addWallet(wallet);
         // Transaction announced to the first peer. No extra Bloom filter because no change address was needed.
-        assertEquals(t3.getTxId(), outbound(p1).getHash());
+        assertEquals(t3.getTxId(), ((Transaction) outbound(p1)).getTxId());
     }
 }
