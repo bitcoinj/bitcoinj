@@ -55,6 +55,8 @@ public abstract class Message {
     // The raw message payload bytes themselves.
     protected byte[] payload;
 
+    /** @deprecated will be removed after 0.17 */
+    @Deprecated
     protected boolean recached = false;
     protected MessageSerializer serializer;
 
@@ -138,6 +140,8 @@ public abstract class Message {
         return payload != null;
     }
 
+    /** @deprecated will be removed after 0.17 */
+    @Deprecated
     public boolean isRecached() {
         return recached;
     }
