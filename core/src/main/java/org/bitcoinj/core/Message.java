@@ -138,6 +138,8 @@ public abstract class Message {
         return payload != null;
     }
 
+    /** @deprecated will be removed in the 0.17 release */
+    @Deprecated
     public boolean isRecached() {
         return recached;
     }
