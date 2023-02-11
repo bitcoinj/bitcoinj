@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -131,6 +132,9 @@ public class WalletFiles {
     private void saveNowInternal() throws IOException {
         final Stopwatch watch = Stopwatch.createStarted();
         File directory = file.getAbsoluteFile().getParentFile();
+        if (!directory.exists()) {
+            throw new FileNotFoundException(directory.getPath() + " (wallet directory not found)");
+        }
         File temp = File.createTempFile("wallet", null, directory);
         final Listener listener = vListener;
         if (listener != null)

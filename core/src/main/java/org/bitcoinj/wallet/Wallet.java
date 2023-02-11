@@ -104,6 +104,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1478,6 +1479,12 @@ public class Wallet extends BaseTaggableObject
 
     /** Saves the wallet first to the given temp file, then renames to the dest file. */
     public void saveToFile(File temp, File destFile) throws IOException {
+        if (!temp.getParentFile().exists()) {
+            throw new FileNotFoundException(temp.getParentFile().getPath() + " (wallet directory not found)");
+        }
+        if (!destFile.getParentFile().exists()) {
+            throw new FileNotFoundException(destFile.getParentFile().getPath() + " (wallet directory not found)");
+        }
         FileOutputStream stream = null;
         lock.lock();
         try {
@@ -1518,9 +1525,15 @@ public class Wallet extends BaseTaggableObject
      * Uses protobuf serialization to save the wallet to the given file. To learn more about this file format, see
      * {@link WalletProtobufSerializer}. Writes out first to a temporary file in the same directory and then renames
      * once written.
+     * @param f File to save wallet
+     * @throws FileNotFoundException if directory doesn't exist
+     * @throws IOException if an error occurs while saving
      */
     public void saveToFile(File f) throws IOException {
         File directory = f.getAbsoluteFile().getParentFile();
+        if (!directory.exists()) {
+            throw new FileNotFoundException(directory.getPath() + " (wallet directory not found)");
+        }
         File temp = File.createTempFile("wallet", null, directory);
         saveToFile(temp, f);
     }
