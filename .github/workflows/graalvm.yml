@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        java: [ 'java17' ]
+        java: [ '17' ]
         graalvm: [ '22.1.0' ]
         gradle: ['7.4.2']
       fail-fast: false
@@ -17,12 +17,12 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v1
       - name: Set up GraalVM
-        uses: DeLaGuardo/setup-graalvm@4.0
+        uses: graalvm/setup-graalvm@v1
         with:
-          graalvm: ${{ matrix.graalvm }}
-          java: ${{ matrix.java }}
-      - name: Install native-image plugin
-        run: gu install native-image
+          version: ${{ matrix.graalvm }}
+          java-version: ${{ matrix.java }}
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v1
         with:
