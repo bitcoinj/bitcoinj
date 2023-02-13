@@ -1357,13 +1357,6 @@ public class Script {
                     opCount = executeMultiSig(txContainingThis, (int) index, script, stack, opCount, lastCodeSepLocation, opcode, verifyFlags);
                     break;
                 case OP_CHECKLOCKTIMEVERIFY:
-                    if (!verifyFlags.contains(VerifyFlag.CHECKLOCKTIMEVERIFY)) {
-                        // not enabled; treat as a NOP2
-                        if (verifyFlags.contains(VerifyFlag.DISCOURAGE_UPGRADABLE_NOPS)) {
-                            throw new ScriptException(ScriptError.SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS, "Script used a reserved opcode " + opcode);
-                        }
-                        break;
-                    }
                     executeCheckLockTimeVerify(txContainingThis, (int) index, stack, verifyFlags);
                     break;
                 case OP_CHECKSEQUENCEVERIFY:
