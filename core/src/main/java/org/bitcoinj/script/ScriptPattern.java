@@ -18,8 +18,8 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.LegacyAddress;
-import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.base.LegacyAddress;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
 
 import java.util.Arrays;

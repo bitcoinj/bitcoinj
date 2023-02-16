@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Network;
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.core.DefaultAddressParser;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;

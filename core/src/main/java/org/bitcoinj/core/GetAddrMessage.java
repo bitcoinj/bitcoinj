@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Address;
+
 /**
  * <p>Represents the "getaddr" P2P protocol message, which requests network {@link AddressMessage}s from a peer. Not to
  * be confused with {@link Address} which is sort of like an account number.</p>

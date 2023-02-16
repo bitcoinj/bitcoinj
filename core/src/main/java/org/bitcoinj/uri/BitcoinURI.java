@@ -20,7 +20,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.NetworkParameters;
 

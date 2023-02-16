@@ -16,7 +16,7 @@
 
 package org.bitcoinj.walletfx.utils;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.Wallet;

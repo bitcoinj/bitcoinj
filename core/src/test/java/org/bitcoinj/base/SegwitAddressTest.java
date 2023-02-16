@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import com.google.common.base.MoreObjects;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
+import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Network;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.core.DefaultAddressParser;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;

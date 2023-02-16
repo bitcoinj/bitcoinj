@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
