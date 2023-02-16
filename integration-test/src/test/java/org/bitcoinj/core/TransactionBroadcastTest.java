@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.testing.FakeTxBuilder;

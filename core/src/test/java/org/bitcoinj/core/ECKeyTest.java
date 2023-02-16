@@ -19,8 +19,11 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.ECKey.ECDSASignature;

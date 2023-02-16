@@ -1,6 +1,6 @@
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.AddressParser;
+import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;

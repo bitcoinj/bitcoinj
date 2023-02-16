@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 
-
-// TODO: Move this class to o.b.base
 /**
  * Interface for parsing and validating address strings.
  */

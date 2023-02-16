@@ -2,9 +2,9 @@ package org.bitcoinj.utils;
 
 import com.google.common.primitives.Bytes;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.SegwitAddress;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -39,7 +39,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 
-import org.bitcoinj.core.Address;
+import org.bitcoinj.base.Address;
 import org.bitcoinj.uri.BitcoinURI;
 
 import org.bitcoinj.walletfx.overlay.OverlayController;
