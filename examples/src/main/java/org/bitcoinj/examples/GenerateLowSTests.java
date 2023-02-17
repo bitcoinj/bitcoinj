@@ -25,6 +25,8 @@ import java.util.EnumSet;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.Coin;
@@ -36,7 +38,6 @@ import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
@@ -59,7 +60,8 @@ public class GenerateLowSTests {
 
     public static void main(final String[] argv)
             throws NoSuchAlgorithmException, IOException, VerificationException, SignatureDecodeException {
-        final NetworkParameters params = new MainNetParams();
+        final Network network = BitcoinNetwork.MAINNET;
+        final NetworkParameters params = NetworkParameters.of(network);
         final LocalTransactionSigner signer = new LocalTransactionSigner();
         final SecureRandom secureRandom = SecureRandom.getInstanceStrong();
         final ECKey key = new ECKey(secureRandom);
@@ -86,11 +88,11 @@ public class GenerateLowSTests {
 
         final Transaction outputTransaction = new Transaction(params);
         final Transaction inputTransaction = new Transaction(params);
-        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, key.toAddress(ScriptType.P2PKH, params.network()));
+        final TransactionOutput output = new TransactionOutput(params, inputTransaction, Coin.ZERO, key.toAddress(ScriptType.P2PKH, network));
 
         inputTransaction.addOutput(output);
         outputTransaction.addInput(output);
-        outputTransaction.addOutput(Coin.ZERO, new ECKey(secureRandom).toAddress(ScriptType.P2PKH, params.network()));
+        outputTransaction.addOutput(Coin.ZERO, new ECKey(secureRandom).toAddress(ScriptType.P2PKH, network));
 
         addOutputs(outputTransaction, bag);
 

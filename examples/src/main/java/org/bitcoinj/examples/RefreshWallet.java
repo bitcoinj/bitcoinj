@@ -17,9 +17,10 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.*;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
@@ -38,11 +39,12 @@ public class RefreshWallet {
         System.out.println(wallet.toString());
 
         // Set up the components and link them together.
-        final NetworkParameters params = TestNet3Params.get();
+        final Network network = BitcoinNetwork.TESTNET;
+        final NetworkParameters params = NetworkParameters.of(network);
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, wallet, blockStore);
 
-        final PeerGroup peerGroup = new PeerGroup(params.network(), chain);
+        final PeerGroup peerGroup = new PeerGroup(network, chain);
         peerGroup.startAsync();
 
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {

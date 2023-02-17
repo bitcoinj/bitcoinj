@@ -17,6 +17,8 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.AddressMessage;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
@@ -24,7 +26,6 @@ import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.net.discovery.DnsDiscovery;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 
 import javax.swing.*;
@@ -46,7 +47,6 @@ import java.util.concurrent.TimeUnit;
  * Shows connected peers in a table view, so you can watch as they come and go.
  */
 public class PeerMonitor {
-    private NetworkParameters params;
     private PeerGroup peerGroup;
     private final Executor reverseDnsThreadPool = Executors.newCachedThreadPool();
     private PeerTableModel peerTableModel;
@@ -67,11 +67,11 @@ public class PeerMonitor {
     }
 
     private void setupNetwork() {
-        params = MainNetParams.get();
-        peerGroup = new PeerGroup(params.network(), null /* no chain */);
+        Network network = BitcoinNetwork.MAINNET;
+        peerGroup = new PeerGroup(network, null /* no chain */);
         peerGroup.setUserAgent("PeerMonitor", "1.0");
         peerGroup.setMaxConnections(4);
-        peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+        peerGroup.addPeerDiscovery(new DnsDiscovery(NetworkParameters.of(network)));
         peerGroup.addConnectedEventListener((peer, peerCount) -> {
             refreshUI();
             lookupReverseDNS(peer);
