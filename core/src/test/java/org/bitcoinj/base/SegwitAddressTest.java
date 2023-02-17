@@ -27,16 +27,20 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
+import org.bitcoinj.params.SigNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 public class SegwitAddressTest {
@@ -105,6 +109,34 @@ public class SegwitAddressTest {
 
         assertEquals(a, b);
         assertEquals(a.toString(), b.toString());
+    }
+
+    @Test
+    public void example_p2wpkh_regtest() {
+        String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
+
+        SegwitAddress address = SegwitAddress.fromBech32(BitcoinNetwork.REGTEST, bcrt1_bech32);
+
+        assertEquals(BitcoinNetwork.REGTEST, address.network());
+        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
+                ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
+        assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toBech32());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toString());
+    }
+
+    @Test
+    public void example_p2wpkh_regtest_any_network() {
+        String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
+
+        Address address = addressParser.parseAddressAnyNetwork(bcrt1_bech32);
+
+        assertEquals(BitcoinNetwork.REGTEST, address.network());
+        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
+                ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
+        assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), ((SegwitAddress)address).toBech32());
+        assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toString());
     }
 
     @Test
