@@ -17,6 +17,8 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Base58;
@@ -26,7 +28,6 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
 
@@ -45,20 +46,21 @@ import java.net.InetAddress;
 public class PrivateKeys {
     public static void main(String[] args) throws Exception {
         // TODO: Assumes main network not testnet. Make it selectable.
-        NetworkParameters params = MainNetParams.get();
+        Network network = BitcoinNetwork.MAINNET;
+        NetworkParameters params = NetworkParameters.of(network);
         try {
             // Decode the private key from Satoshis Base58 variant. If 51 characters long then it's from Bitcoins
             // dumpprivkey command and includes a version byte and checksum, or if 52 characters long then it has 
             // compressed pub key. Otherwise assume it's a raw key.
             ECKey key;
             if (args[0].length() == 51 || args[0].length() == 52) {
-                DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(params.network(), args[0]);
+                DumpedPrivateKey dumpedPrivateKey = DumpedPrivateKey.fromBase58(network, args[0]);
                 key = dumpedPrivateKey.getKey();
             } else {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
                 key = ECKey.fromPrivate(privKey);
             }
-            System.out.println("Address from private key is: " + key.toAddress(ScriptType.P2WPKH, params.network()).toString());
+            System.out.println("Address from private key is: " + key.toAddress(ScriptType.P2WPKH, network).toString());
 
             // Import the private key to a fresh wallet.
             Wallet wallet = Wallet.createDeterministic(params, ScriptType.P2PKH);
@@ -71,7 +73,7 @@ public class PrivateKeys {
             final MemoryBlockStore blockStore = new MemoryBlockStore(params);
             BlockChain chain = new BlockChain(params, wallet, blockStore);
 
-            final PeerGroup peerGroup = new PeerGroup(params.network(), chain);
+            final PeerGroup peerGroup = new PeerGroup(network, chain);
             peerGroup.addAddress(new PeerAddress(params, InetAddress.getLocalHost()));
             peerGroup.startAsync();
             peerGroup.downloadBlockChain();

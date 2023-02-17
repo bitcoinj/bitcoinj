@@ -16,11 +16,12 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
@@ -35,7 +36,8 @@ import java.io.File;
 public class RestoreFromSeed {
 
     public static void main(String[] args) throws Exception {
-        NetworkParameters params = TestNet3Params.get();
+        Network network = BitcoinNetwork.TESTNET;
+        NetworkParameters params = NetworkParameters.of(network);
 
         // Bitcoinj supports hierarchical deterministic wallets (or "HD Wallets"): https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
         // HD wallets allow you to restore your wallet simply from a root seed. This seed can be represented using a short mnemonic sentence as described in BIP 39: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
@@ -63,7 +65,7 @@ public class RestoreFromSeed {
         // Setting up the BlochChain, the BlocksStore and connecting to the network.
         SPVBlockStore chainStore = new SPVBlockStore(params, chainFile);
         BlockChain chain = new BlockChain(params, chainStore);
-        PeerGroup peerGroup = new PeerGroup(params.network(), chain);
+        PeerGroup peerGroup = new PeerGroup(network, chain);
         peerGroup.addPeerDiscovery(new DnsDiscovery(params));
 
         // Now we need to hook the wallet up to the blockchain and the peers. This registers event listeners that notify our wallet about new transactions.

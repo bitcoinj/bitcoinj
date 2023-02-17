@@ -17,10 +17,11 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -55,10 +56,11 @@ public class FetchBlock implements Callable<Integer> {
     public Integer call() throws Exception {
         // Connect to testnet and find a peer
         System.out.println("Connecting to node");
-        final NetworkParameters params = TestNet3Params.get();
+        final Network network = BitcoinNetwork.TESTNET;
+        final NetworkParameters params = NetworkParameters.of(network);
         BlockStore blockStore = new MemoryBlockStore(params);
         BlockChain chain = new BlockChain(params, blockStore);
-        PeerGroup peerGroup = new PeerGroup(params.network(), chain);
+        PeerGroup peerGroup = new PeerGroup(network, chain);
         if (localhost) {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         } else {
