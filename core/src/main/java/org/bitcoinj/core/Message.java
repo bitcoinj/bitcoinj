@@ -17,8 +17,10 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.utils.UnknownNetwork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,13 +62,25 @@ public abstract class Message {
     protected boolean recached = false;
     protected MessageSerializer serializer;
 
-    protected NetworkParameters params;
+    private final Network network;
+    final NetworkParameters params;
 
+    @Deprecated
     protected Message() {
+        this(UnknownNetwork.DEPRECATED);
         serializer = DummySerializer.DEFAULT;
     }
 
+    protected Message(Network network) {
+        this.network = network;
+        this.params = network instanceof UnknownNetwork
+                        ? null
+                        : NetworkParameters.of(network);
+        this.serializer = params != null ? params.getDefaultSerializer() : DummySerializer.DEFAULT;
+    }
+
     protected Message(NetworkParameters params) {
+        this.network = params.network();
         this.params = params;
         this.serializer = params.getDefaultSerializer();
     }
@@ -82,8 +96,8 @@ public abstract class Message {
      * @throws ProtocolException
      */
     protected Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
+        this(params);
         this.serializer = serializer;
-        this.params = params;
         this.payload = payload;
         this.cursor = this.offset = offset;
         this.length = length;

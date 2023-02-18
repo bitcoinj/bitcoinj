@@ -149,7 +149,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         InboundMessageQueuer writeTarget = connectPeerWithoutVersionExchange(id);
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
-        writeTarget.sendMessage(new VersionAck());
+        writeTarget.sendMessage(new VersionAck(writeTarget.peer.network()));
         stepThroughInit(versionMessage, writeTarget);
         return writeTarget;
     }
@@ -165,7 +165,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         checkArgument(versionMessage.hasBlockChain());
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
-        writeTarget.sendMessage(new VersionAck());
+        writeTarget.sendMessage(new VersionAck(writeTarget.peer.network()));
         stepThroughInit(versionMessage, writeTarget);
         return writeTarget;
     }

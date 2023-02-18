@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.utils.UnknownNetwork;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,6 +39,7 @@ public class Ping extends Message {
      * Only use this if the remote node has a protocol version greater than 60000
      */
     public Ping(long nonce) {
+        super(UnknownNetwork.UNNECESSARY);
         this.nonce = nonce;
         this.hasNonce = true;
     }
@@ -47,6 +49,7 @@ public class Ping extends Message {
      * Only use this if the remote node has a protocol version lower than or equal 60000
      */
     public Ping() {
+        super(UnknownNetwork.UNNECESSARY);
         this.hasNonce = false;
     }
     

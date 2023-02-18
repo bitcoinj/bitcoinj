@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.utils.UnknownNetwork;
+
 /**
  * <p>
  * A new message, "sendheaders", which indicates that a node prefers to receive new block announcements via a "headers"
@@ -27,10 +29,13 @@ package org.bitcoinj.core;
  * </p>
  */
 public class SendHeadersMessage extends EmptyMessage {
+    @Deprecated
     public SendHeadersMessage() {
+        super(UnknownNetwork.DEPRECATED);
     }
 
     // this is needed by the BitcoinSerializer
     public SendHeadersMessage(NetworkParameters params, byte[] payload) {
+        super(params);
     }
 }

@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.utils.UnknownNetwork;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
@@ -117,6 +118,7 @@ public class BloomFilter extends Message {
     public BloomFilter(int elements, double falsePositiveRate, long randomNonce, BloomUpdate updateFlag) {
         // The following formulas were stolen from Wikipedia's page on Bloom Filters (with the addition of min(..., MAX_...))
         //                        Size required for a given number of elements and false-positive rate
+        super(UnknownNetwork.UNNECESSARY);
         int size = (int)(-1  / (pow(log(2), 2)) * elements * log(falsePositiveRate));
         size = max(1, min(size, (int) MAX_FILTER_SIZE * 8) / 8);
         data = new byte[size];

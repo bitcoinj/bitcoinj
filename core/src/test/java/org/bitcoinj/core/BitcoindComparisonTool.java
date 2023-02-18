@@ -311,7 +311,7 @@ public class BitcoindComparisonTool {
                     preloadedBlocks.remove(nextBlock.getHash());
                 log.info("Block \"" + block.ruleName + "\" completed processing");
             } else if (rule instanceof MemoryPoolState) {
-                MemoryPoolMessage message = new MemoryPoolMessage();
+                MemoryPoolMessage message = new MemoryPoolMessage(PARAMS.network());
                 bitcoind.sendMessage(message);
                 bitcoind.ping().get();
                 if (mostRecentInv == null && !((MemoryPoolState) rule).mempool.isEmpty()) {

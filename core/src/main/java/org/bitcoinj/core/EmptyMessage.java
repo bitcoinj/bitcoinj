@@ -17,6 +17,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.utils.UnknownNetwork;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -28,7 +31,14 @@ import java.io.OutputStream;
  */
 public abstract class EmptyMessage extends Message {
 
+    @Deprecated
     public EmptyMessage() {
+        super(UnknownNetwork.DEPRECATED);
+        length = 0;
+    }
+
+    public EmptyMessage(Network network) {
+        super(network);
         length = 0;
     }
 

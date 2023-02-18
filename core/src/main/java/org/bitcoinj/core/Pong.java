@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.utils.UnknownNetwork;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -37,6 +38,7 @@ public class Pong extends Message {
      * Only use this if the remote node has a protocol version greater than 60000
      */
     public Pong(long nonce) {
+        super(UnknownNetwork.UNNECESSARY);
         this.nonce = nonce;
     }
     

@@ -255,7 +255,7 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("notfound")) {
             return new NotFoundMessage(params, payloadBytes);
         } else if (command.equals("mempool")) {
-            return new MemoryPoolMessage();
+            return new MemoryPoolMessage(params.network());
         } else if (command.equals("reject")) {
             return new RejectMessage(params, payloadBytes);
         } else if (command.equals("sendheaders")) {

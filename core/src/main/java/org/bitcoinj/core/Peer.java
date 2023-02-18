@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
@@ -262,6 +263,10 @@ public class Peer extends PeerSocketHandler {
     public Peer(NetworkParameters params, AbstractBlockChain blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
         this(params, new VersionMessage(params, blockChain.getBestChainHeight()), blockChain, peerAddress);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
+    }
+
+    public Network network() {
+        return params.network();
     }
 
     /** Registers a listener that is invoked when new blocks are downloaded. */
@@ -544,7 +549,7 @@ public class Peer extends PeerSocketHandler {
         // Send a sendaddrv2 message, indicating that we prefer to receive addrv2 messages.
         sendMessage(new SendAddrV2Message(params));
         // Send an ACK message stating we accept the peers protocol version.
-        sendMessage(new VersionAck());
+        sendMessage(new VersionAck(params.network()));
         if (log.isDebugEnabled())
             log.debug("{}: Incoming version handshake complete.", this);
         incomingVersionHandshakeFuture.complete(this);
@@ -1696,7 +1701,7 @@ public class Peer extends PeerSocketHandler {
             log.info("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
             sendMessage(filter);
             if (andQueryMemPool)
-                sendMessage(new MemoryPoolMessage());
+                sendMessage(new MemoryPoolMessage(this.network()));
             maybeRestartChainDownload();
         } else {
             log.info("{}: Peer does not support bloom filtering.", this);

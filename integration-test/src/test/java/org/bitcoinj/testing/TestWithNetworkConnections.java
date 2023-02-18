@@ -190,7 +190,7 @@ public class TestWithNetworkConnections {
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         checkState(!peer.getVersionHandshakeFuture().isDone());
         writeTarget.sendMessage(versionMessage);
-        writeTarget.sendMessage(new VersionAck());
+        writeTarget.sendMessage(new VersionAck(peer.network()));
         try {
             checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
             checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);

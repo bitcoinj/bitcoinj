@@ -16,6 +16,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.utils.UnknownNetwork;
+
 /**
  * <p>The verack message, sent by a client accepting the version message they
  * received from their peer.</p>
@@ -23,10 +26,16 @@ package org.bitcoinj.core;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class VersionAck extends EmptyMessage {
+    @Deprecated
     public VersionAck() {
+        super(UnknownNetwork.DEPRECATED);
     }
 
+    public VersionAck(Network network) {
+        super(network);
+    }
     // this is needed by the BitcoinSerializer
     public VersionAck(NetworkParameters params, byte[] payload) {
+        super(params);
     }
 }

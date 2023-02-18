@@ -17,6 +17,9 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.utils.UnknownNetwork;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -30,6 +33,11 @@ import java.io.OutputStream;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class MemoryPoolMessage extends Message {
+
+    public MemoryPoolMessage(Network network) {
+        super(network);
+    }
+
     @Override
     protected void parse() throws ProtocolException {}
 
