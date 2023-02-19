@@ -71,11 +71,17 @@ public class Bech32Test {
     public void invalid_bech32() {
         for (String invalid : INVALID_BECH32)
             invalid(invalid);
+        // Valid BECH32M codes are invalid BECH32
+        for (String invalid : VALID_BECH32M)
+            invalid(invalid);
     }
 
     @Test
     public void invalid_bech32m() {
         for (String invalid : INVALID_BECH32M)
+            invalid(invalid);
+        // Valid BECH32 codes are invalid BECH32M
+        for (String invalid : VALID_BECH32)
             invalid(invalid);
     }
 
