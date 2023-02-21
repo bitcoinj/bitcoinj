@@ -27,8 +27,10 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>
@@ -59,9 +61,15 @@ public class SegwitAddress extends Address {
      * Human-readable part of Segwit addresses for standard Bitcoin networks
      */
     public enum SegwitHrp {
-        BC,
-        TB,
-        BCRT;
+        BC(MAINNET),
+        TB(TESTNET, SIGNET),
+        BCRT(REGTEST);
+
+        private final BitcoinNetwork[] networks;
+
+        SegwitHrp(BitcoinNetwork... networks) {
+            this.networks = networks;
+        }
 
         /**
          * Get the HRP in lowercase. To get uppercase, use {@link SegwitHrp#name()}
@@ -97,15 +105,15 @@ public class SegwitAddress extends Address {
          * @return the corresponding enum
          */
         public static SegwitHrp ofNetwork(BitcoinNetwork network) {
-            SegwitHrp hrp;
-            switch (network) {
-                case MAINNET:   hrp = BC;   break;
-                case TESTNET:   hrp = TB;   break;
-                case SIGNET:    hrp = TB;   break;
-                case REGTEST:   hrp = BCRT; break;
-                default:        throw new IllegalStateException();
-            }
-            return hrp;
+            return Stream.of(SegwitHrp.values())
+                    .filter(hrp -> hrp.hasNetwork(network))
+                    .findFirst()
+                    .orElseThrow(IllegalStateException::new);
+        }
+
+        private boolean hasNetwork(BitcoinNetwork network) {
+            return Stream.of(networks)
+                    .anyMatch(n -> n == network);
         }
     }
 
