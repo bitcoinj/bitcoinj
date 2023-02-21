@@ -101,6 +101,16 @@ public enum BitcoinNetwork implements Network {
         return id;
     }
 
+
+    /**
+     * Return the standard Bech32 {@link org.bitcoinj.base.SegwitAddress.SegwitHrp} (as a {@code String}) for
+     * this network.
+     * @return The HRP as a (lowercase) string.
+     */
+    public String segwitAddressHrp() {
+        return SegwitAddress.SegwitHrp.ofNetwork(this).toString();
+    }
+
     /**
      * The URI scheme for Bitcoin.
      * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki">BIP 0021</a>

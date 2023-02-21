@@ -27,6 +27,12 @@ public interface Network {
     String id();
 
     /**
+     * Human-readable part (HRP) of bech32 encoded segwit addresses for this network.
+     * @return HRP (lowercase)
+     */
+    String segwitAddressHrp();
+
+    /**
      * The URI scheme for this network. See {@link BitcoinNetwork#uriScheme()}.
      * @return The URI scheme for this network
      */

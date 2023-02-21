@@ -330,7 +330,9 @@ public abstract class NetworkParameters {
     /**
      * Human-readable part of bech32 encoded segwit address.
      * @return the human-readable part value
+     * @deprecated Use {@link Network#segwitAddressHrp()} or {@link org.bitcoinj.base.SegwitAddress.SegwitHrp}
      */
+    @Deprecated
     public String getSegwitAddressHrp() {
         return segwitAddressHrp;
     }
