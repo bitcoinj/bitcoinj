@@ -30,6 +30,11 @@ public class MockAltNetwork implements Network {
     }
 
     @Override
+    public String segwitAddressHrp() {
+        return "mock";
+    }
+
+    @Override
     public String uriScheme() {
         return "mockcoin";
     }

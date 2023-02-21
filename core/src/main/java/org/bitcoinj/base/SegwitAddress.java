@@ -26,15 +26,19 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>
  *
  * <ul>
  * <li>A human-readable part (HRP) which is a string the specifies the network. See
- * {@link NetworkParameters#getSegwitAddressHrp()}.</li>
+ * {@link SegwitAddress.SegwitHrp}.</li>
  * <li>A data part, containing the witness version (encoded as an OP_N operator) and program (encoded by re-arranging
  * bits into groups of 5).</li>
  * </ul>
@@ -52,6 +56,69 @@ public class SegwitAddress extends Address {
     public static final int WITNESS_PROGRAM_LENGTH_TR = 32;
     public static final int WITNESS_PROGRAM_MIN_LENGTH = 2;
     public static final int WITNESS_PROGRAM_MAX_LENGTH = 40;
+
+
+    /**
+     * Human-readable part (HRP) of Segwit addresses for standard Bitcoin networks.
+     * <p>
+     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#user-content-Segwit_address_format">BIP 173 definition of {@code bc} and {@code tb} HRPs</a> and
+     *  <a href="https://github.com/bitcoin/bitcoin/issues/12314">Bitcoin Core Issue 1234 - discussion of {@code bcrt} HRP</a> for details.
+     */
+    public enum SegwitHrp {
+        BC(MAINNET),
+        TB(TESTNET, SIGNET),
+        BCRT(REGTEST);
+
+        private final EnumSet<BitcoinNetwork> networks;
+
+        SegwitHrp(BitcoinNetwork n) {
+            networks = EnumSet.of(n);
+        }
+
+        SegwitHrp(BitcoinNetwork n1, BitcoinNetwork n2) {
+            networks = EnumSet.of(n1, n2);
+        }
+
+        /**
+         * Get the HRP in lowercase. To get uppercase, use {@link SegwitHrp#name()}
+         * @return HRP in lowercase.
+         */
+        public String toString() {
+            return name().toLowerCase();
+        }
+
+        /**
+         * @param hrp uppercase or lowercase HRP
+         * @return the corresponding enum
+         * @throws IllegalArgumentException if unknown string
+         */
+        public static SegwitHrp of(String hrp) {
+            return SegwitHrp.valueOf(hrp.toUpperCase());
+        }
+
+        /**
+         * @param hrp uppercase or lowercase HRP
+         * @return Optional containing the corresponding enum or empty if not found
+         */
+        public static Optional<SegwitHrp> find(String hrp) {
+            try {
+                return Optional.of(SegwitHrp.of(hrp));
+            } catch(IllegalArgumentException iae) {
+                return Optional.empty();
+            }
+        }
+
+        /**
+         * @param network network enum
+         * @return the corresponding enum
+         */
+        public static SegwitHrp ofNetwork(BitcoinNetwork network) {
+            return Stream.of(SegwitHrp.values())
+                    .filter(hrp -> hrp.networks.contains(network))
+                    .findFirst()
+                    .orElseThrow(IllegalStateException::new);
+        }
+    }
 
     /**
      * Private constructor. Use {@link #fromBech32(Network, String)},
@@ -222,9 +289,8 @@ public class SegwitAddress extends Address {
      */
     public static SegwitAddress fromBech32(@Nonnull Network network, String bech32)
             throws AddressFormatException {
-        NetworkParameters params = NetworkParameters.of(network);
         Bech32.Bech32Data bechData = Bech32.decode(bech32);
-        if (bechData.hrp.equals(params.getSegwitAddressHrp()))
+        if (bechData.hrp.equals(network.segwitAddressHrp()))
             return fromBechData(network, bechData);
         throw new AddressFormatException.WrongNetwork(bechData.hrp);
     }
@@ -321,11 +387,10 @@ public class SegwitAddress extends Address {
      * @return textual form encoded in bech32
      */
     public String toBech32() {
-        NetworkParameters params = NetworkParameters.of(network);
         if (getWitnessVersion() == 0)
-            return Bech32.encode(Bech32.Encoding.BECH32, params.getSegwitAddressHrp(), bytes);
+            return Bech32.encode(Bech32.Encoding.BECH32, network.segwitAddressHrp(), bytes);
         else
-            return Bech32.encode(Bech32.Encoding.BECH32M, params.getSegwitAddressHrp(), bytes);
+            return Bech32.encode(Bech32.Encoding.BECH32M, network.segwitAddressHrp(), bytes);
     }
 
     /**
