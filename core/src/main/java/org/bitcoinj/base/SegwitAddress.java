@@ -26,6 +26,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -65,10 +66,14 @@ public class SegwitAddress extends Address {
         TB(TESTNET, SIGNET),
         BCRT(REGTEST);
 
-        private final BitcoinNetwork[] networks;
+        private final EnumSet<BitcoinNetwork> networks;
 
-        SegwitHrp(BitcoinNetwork... networks) {
-            this.networks = networks;
+        SegwitHrp(BitcoinNetwork n) {
+            networks = EnumSet.of(n);
+        }
+
+        SegwitHrp(BitcoinNetwork n1, BitcoinNetwork n2) {
+            networks = EnumSet.of(n1, n2);
         }
 
         /**
@@ -106,14 +111,9 @@ public class SegwitAddress extends Address {
          */
         public static SegwitHrp ofNetwork(BitcoinNetwork network) {
             return Stream.of(SegwitHrp.values())
-                    .filter(hrp -> hrp.hasNetwork(network))
+                    .filter(hrp -> hrp.networks.contains(network))
                     .findFirst()
                     .orElseThrow(IllegalStateException::new);
-        }
-
-        private boolean hasNetwork(BitcoinNetwork network) {
-            return Stream.of(networks)
-                    .anyMatch(n -> n == network);
         }
     }
 
