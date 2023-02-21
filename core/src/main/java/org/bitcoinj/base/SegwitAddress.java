@@ -59,7 +59,10 @@ public class SegwitAddress extends Address {
 
 
     /**
-     * Human-readable part of Segwit addresses for standard Bitcoin networks
+     * Human-readable part (HRP) of Segwit addresses for standard Bitcoin networks.
+     * <p>
+     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#user-content-Segwit_address_format">BIP 173 definition of {@code bc} and {@code tb} HRPs</a> and
+     *  <a href="https://github.com/bitcoin/bitcoin/issues/12314">Bitcoin Core Issue 1234 - discussion of {@code bcrt} HRP</a> for details.
      */
     public enum SegwitHrp {
         BC(MAINNET),
