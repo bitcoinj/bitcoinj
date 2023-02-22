@@ -120,7 +120,7 @@ public class DeterministicKey extends ECKey {
      * root node of the key hierarchy.  Raise an exception if the arguments are inconsistent.
      * This method exists to avoid code repetition in the constructors.
      */
-    private int ascertainParentFingerprint(DeterministicKey parentKey, int parentFingerprint)
+    private int ascertainParentFingerprint(int parentFingerprint)
     throws IllegalArgumentException {
         if (parentFingerprint != 0) {
             if (parent != null)
@@ -148,7 +148,7 @@ public class DeterministicKey extends ECKey {
         this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
     }
 
     /**
@@ -168,7 +168,7 @@ public class DeterministicKey extends ECKey {
         this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
     }
 
     
