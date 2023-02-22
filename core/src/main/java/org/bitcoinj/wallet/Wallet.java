@@ -480,7 +480,7 @@ public class Wallet extends BaseTaggableObject
             if (reason == Listener.ChangeReason.SEEN_PEERS) {
                 lock.lock();
                 try {
-                    checkBalanceFuturesLocked(null);
+                    checkBalanceFuturesLocked();
                     Transaction tx = getTransaction(confidence.getTransactionHash());
                     queueOnTransactionConfidenceChanged(tx);
                     maybeQueueOnWalletChanged();
@@ -2269,7 +2269,7 @@ public class Wallet extends BaseTaggableObject
                     queueOnCoinsSent(tx, prevBalance, newBalance);
                 }
             }
-            checkBalanceFuturesLocked(newBalance);
+            checkBalanceFuturesLocked();
         }
 
         informConfidenceListenersIfNotReorganizing();
@@ -2729,7 +2729,7 @@ public class Wallet extends BaseTaggableObject
                 Coin valueSentFromMe = tx.getValueSentFromMe(this);
                 Coin newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
                 if (valueSentToMe.signum() > 0) {
-                    checkBalanceFuturesLocked(null);
+                    checkBalanceFuturesLocked();
                     queueOnCoinsReceived(tx, balance, newBalance);
                 }
                 if (valueSentFromMe.signum() > 0)
@@ -3796,7 +3796,7 @@ public class Wallet extends BaseTaggableObject
 
     // Runs any balance futures in the user code thread.
     @SuppressWarnings("FieldAccessNotGuarded")
-    private void checkBalanceFuturesLocked(@Nullable Coin avail) {
+    private void checkBalanceFuturesLocked() {
         checkState(lock.isHeldByCurrentThread());
         balanceFutureRequests.forEach(req -> {
             Coin current = getBalance(req.type);   // This could be slow for lots of futures.
@@ -4774,7 +4774,7 @@ public class Wallet extends BaseTaggableObject
             insideReorg = false;
             onWalletChangedSuppressions--;
             maybeQueueOnWalletChanged();
-            checkBalanceFuturesLocked(balance);
+            checkBalanceFuturesLocked();
             informConfidenceListenersIfNotReorganizing();
             saveLater();
         } finally {
