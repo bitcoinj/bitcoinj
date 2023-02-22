@@ -4228,8 +4228,6 @@ public class Wallet extends BaseTaggableObject
                     log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
             value = value.subtract(totalInput);
 
-            List<TransactionInput> originalInputs = new ArrayList<>(req.tx.getInputs());
-
             // Check for dusty sends and the OP_RETURN limit.
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
                 int opReturnCount = 0;
@@ -4254,7 +4252,7 @@ public class Wallet extends BaseTaggableObject
             List<Coin> updatedOutputValues = null;
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, originalInputs, req.ensureMinRequiredFee, candidates);
+                FeeCalculation feeCalculation = calculateFee(req, value, req.ensureMinRequiredFee, candidates);
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
                 updatedOutputValues = feeCalculation.updatedOutputValues;
@@ -5058,8 +5056,7 @@ public class Wallet extends BaseTaggableObject
 
     //region Fee calculation code
 
-    private FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
-                                       boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
+    private FeeCalculation calculateFee(SendRequest req, Coin value, boolean needAtLeastReferenceFee, List<TransactionOutput> candidates) throws InsufficientMoneyException {
         checkState(lock.isHeldByCurrentThread());
         FeeCalculation result;
         Coin fee = Coin.ZERO;
