@@ -361,7 +361,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         hierarchy = new DeterministicHierarchy(key);
         this.accountPath = key.getPath();
         this.outputScriptType = outputScriptType;
-        initializeHierarchyUnencrypted(key);
+        initializeHierarchyUnencrypted();
         this.isFollowing = isFollowing;
     }
 
@@ -392,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             for (HDPath path : getAccountPath().ancestors(true)) {
                 basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
-            initializeHierarchyUnencrypted(rootKey);
+            initializeHierarchyUnencrypted();
         }
         // Else...
         // We can't initialize ourselves with just an encrypted seed, so we expected deserialization code to do the
@@ -462,7 +462,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     // Derives the account path keys and inserts them into the basic key chain. This is important to preserve their
     // order for serialization, amongst other things.
-    private void initializeHierarchyUnencrypted(DeterministicKey baseKey) {
+    private void initializeHierarchyUnencrypted() {
         externalParentKey = hierarchy.deriveChild(getAccountPath(), false, false, ChildNumber.ZERO);
         internalParentKey = hierarchy.deriveChild(getAccountPath(), false, false, ChildNumber.ONE);
         basicKeyChain.importKey(externalParentKey);
