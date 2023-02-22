@@ -1555,7 +1555,6 @@ public abstract class BtcFormat extends Format {
         String moneySep = String.valueOf(s.getMonetaryDecimalSeparator());
         String zero = String.valueOf(s.getZeroDigit());
         String boundary = String.valueOf(s.getPatternSeparator());
-        String minus = String.valueOf(s.getMinusSign());
         String decSep = String.valueOf(s.getDecimalSeparator());
 
         String prefixAndNumber = "(^|" + boundary+ ")" +
