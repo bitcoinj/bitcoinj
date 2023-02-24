@@ -20,7 +20,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
-import org.bitcoinj.core.SignatureDecodeException;
+import org.bitcoinj.crypto.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
