@@ -19,39 +19,30 @@ package org.bitcoinj.base;
 import com.google.common.base.MoreObjects;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
-import org.bitcoinj.base.AddressParser;
-import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.DefaultAddressParser;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.params.SigNetParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
+import static org.bitcoinj.base.BitcoinNetwork.SIGNET;
+import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
 
 public class SegwitAddressTest {
-    private static final MainNetParams MAINNET = MainNetParams.get();
-    private static final TestNet3Params TESTNET = TestNet3Params.get();
     private static final AddressParser addressParser = new DefaultAddressParser();
 
     @Test
     public void equalsContract() {
         EqualsVerifier.forClass(SegwitAddress.class)
-                .withPrefabValues(NetworkParameters.class, MAINNET, TESTNET)
+                .withPrefabValues(BitcoinNetwork.class, MAINNET, TESTNET)
                 .suppress(Warning.NULL_FIELDS)
                 .suppress(Warning.TRANSIENT_FIELDS)
                 .usingGetClass()
@@ -62,9 +53,9 @@ public class SegwitAddressTest {
     public void example_p2wpkh_mainnet() {
         String bech32 = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
 
-        SegwitAddress address = SegwitAddress.fromBech32(BitcoinNetwork.MAINNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(MAINNET, bech32);
 
-        assertEquals(MAINNET, address.getParameters());
+        assertEquals(MAINNET, address.network());
         assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
                 ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
@@ -76,9 +67,9 @@ public class SegwitAddressTest {
     public void example_p2wsh_mainnet() {
         String bech32 = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3";
 
-        SegwitAddress address = SegwitAddress.fromBech32(BitcoinNetwork.MAINNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(MAINNET, bech32);
 
-        assertEquals(MAINNET, address.getParameters());
+        assertEquals(MAINNET, address.network());
         assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
                 ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
         assertEquals(ScriptType.P2WSH, address.getOutputScriptType());
@@ -90,9 +81,9 @@ public class SegwitAddressTest {
     public void example_p2wpkh_testnet() {
         String bech32 = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
 
-        SegwitAddress address = SegwitAddress.fromBech32(BitcoinNetwork.TESTNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(TESTNET, bech32);
 
-        assertEquals(TESTNET, address.getParameters());
+        assertEquals(TESTNET, address.network());
         assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
                 ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
@@ -104,8 +95,8 @@ public class SegwitAddressTest {
     public void equalityOfEquivalentNetworks() {
         String bech32 = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
 
-        SegwitAddress a = SegwitAddress.fromBech32(BitcoinNetwork.TESTNET, bech32);
-        SegwitAddress b = SegwitAddress.fromBech32(BitcoinNetwork.SIGNET, bech32);
+        SegwitAddress a = SegwitAddress.fromBech32(TESTNET, bech32);
+        SegwitAddress b = SegwitAddress.fromBech32(SIGNET, bech32);
 
         assertEquals(a, b);
         assertEquals(a.toString(), b.toString());
@@ -115,9 +106,9 @@ public class SegwitAddressTest {
     public void example_p2wpkh_regtest() {
         String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
 
-        SegwitAddress address = SegwitAddress.fromBech32(BitcoinNetwork.REGTEST, bcrt1_bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(REGTEST, bcrt1_bech32);
 
-        assertEquals(BitcoinNetwork.REGTEST, address.network());
+        assertEquals(REGTEST, address.network());
         assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
                 ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
@@ -131,7 +122,7 @@ public class SegwitAddressTest {
 
         Address address = addressParser.parseAddressAnyNetwork(bcrt1_bech32);
 
-        assertEquals(BitcoinNetwork.REGTEST, address.network());
+        assertEquals(REGTEST, address.network());
         assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
                 ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
@@ -143,9 +134,9 @@ public class SegwitAddressTest {
     public void example_p2wsh_testnet() {
         String bech32 = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7";
 
-        SegwitAddress address = SegwitAddress.fromBech32(BitcoinNetwork.TESTNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(TESTNET, bech32);
 
-        assertEquals(TESTNET, address.getParameters());
+        assertEquals(TESTNET, address.network());
         assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
                 ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
         assertEquals(ScriptType.P2WSH, address.getOutputScriptType());
@@ -158,13 +149,13 @@ public class SegwitAddressTest {
         for (AddressData valid : VALID_ADDRESSES) {
             SegwitAddress address = (SegwitAddress) addressParser.parseAddressAnyNetwork(valid.address);
 
-            assertEquals(valid.expectedParams, address.getParameters());
+            assertEquals(valid.expectedNetwork, address.network());
             assertEquals(valid.expectedScriptPubKey,
                     ByteUtils.HEX.encode(ScriptBuilder.createOutputScript(address).getProgram()));
             assertEquals(valid.address.toLowerCase(Locale.ROOT), address.toBech32());
             if (valid.expectedWitnessVersion == 0) {
                 Script expectedScriptPubKey = new Script(ByteUtils.HEX.decode(valid.expectedScriptPubKey));
-                assertEquals(address, SegwitAddress.fromHash(valid.expectedParams.network(),
+                assertEquals(address, SegwitAddress.fromHash(valid.expectedNetwork,
                         ScriptPattern.extractHashFromP2WH(expectedScriptPubKey)));
             }
             assertEquals(valid.expectedWitnessVersion, address.getWitnessVersion());
@@ -173,21 +164,21 @@ public class SegwitAddressTest {
 
     private static class AddressData {
         final String address;
-        final NetworkParameters expectedParams;
+        final BitcoinNetwork expectedNetwork;
         final String expectedScriptPubKey;
         final int expectedWitnessVersion;
 
-        AddressData(String address, NetworkParameters expectedParams, String expectedScriptPubKey,
+        AddressData(String address, BitcoinNetwork expectedNetwork, String expectedScriptPubKey,
                 int expectedWitnessVersion) {
             this.address = address;
-            this.expectedParams = expectedParams;
+            this.expectedNetwork = expectedNetwork;
             this.expectedScriptPubKey = expectedScriptPubKey;
             this.expectedWitnessVersion = expectedWitnessVersion;
         }
 
         @Override
         public String toString() {
-            return MoreObjects.toStringHelper(this).add("address", address).add("params", expectedParams.getId())
+            return MoreObjects.toStringHelper(this).add("address", address).add("params", expectedNetwork.id())
                     .add("scriptPubKey", expectedScriptPubKey).add("witnessVersion", expectedWitnessVersion).toString();
         }
     }
@@ -266,7 +257,7 @@ public class SegwitAddressTest {
         // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
         // (this program is 20 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
         String taprootAddressWith20BytesWitnessProgram = "bc1pqypqzqspqgqsyqgzqypqzqspqgqsyqgzzezy58";
-        SegwitAddress.fromBech32(BitcoinNetwork.MAINNET, taprootAddressWith20BytesWitnessProgram);
+        SegwitAddress.fromBech32(MAINNET, taprootAddressWith20BytesWitnessProgram);
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
@@ -274,7 +265,7 @@ public class SegwitAddressTest {
         // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
         // (this program is 40 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
         String taprootAddressWith40BytesWitnessProgram = "bc1p6t0pcqrq3mvedn884lgj9s2cm52xp9vtnlc89cv5x77f5l725rrdjhqrld6m6rza67j62a";
-        SegwitAddress.fromBech32(BitcoinNetwork.MAINNET, taprootAddressWith40BytesWitnessProgram);
+        SegwitAddress.fromBech32(MAINNET, taprootAddressWith40BytesWitnessProgram);
     }
 
     @Test(expected = AddressFormatException.InvalidPrefix.class)
@@ -284,6 +275,6 @@ public class SegwitAddressTest {
 
     @Test(expected = AddressFormatException.WrongNetwork.class)
     public void fromBech32_wrongNetwork() {
-        SegwitAddress.fromBech32(BitcoinNetwork.TESTNET, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj");
+        SegwitAddress.fromBech32(TESTNET, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj");
     }
 }
