@@ -39,7 +39,7 @@ import org.bitcoinj.core.UnsafeByteArrayOutputStream;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;

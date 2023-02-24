@@ -17,7 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.VarInt;
-import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.base.internal.InternalUtils;
 
 import java.util.ArrayList;
 

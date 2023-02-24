@@ -21,7 +21,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;

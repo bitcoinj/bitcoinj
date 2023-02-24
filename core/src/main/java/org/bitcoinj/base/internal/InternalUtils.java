@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core.internal;
+package org.bitcoinj.base.internal;
 
 import java.util.Arrays;
 import java.util.List;

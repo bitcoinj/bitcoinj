@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.bitcoinj.base.utils.ByteUtils.HEX;
-import static org.bitcoinj.core.internal.InternalUtils.WHITESPACE_SPLITTER;
+import static org.bitcoinj.base.internal.InternalUtils.WHITESPACE_SPLITTER;
 import static org.junit.Assert.assertEquals;
 
 /**

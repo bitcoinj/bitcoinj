@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 import com.google.common.net.InetAddresses;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.base.internal.InternalUtils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

@@ -19,7 +19,7 @@ package org.bitcoinj.wallet;
 
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.EncryptableItem;
 import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
