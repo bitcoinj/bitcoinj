@@ -23,7 +23,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.core.DefaultAddressParser;
+import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;

@@ -18,7 +18,6 @@ package org.bitcoinj.base;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.core.DefaultAddressParser;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 
