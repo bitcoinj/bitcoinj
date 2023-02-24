@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 

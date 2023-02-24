@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

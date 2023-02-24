@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.utils.ByteUtils;
 
 import java.io.IOException;
