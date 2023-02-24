@@ -18,7 +18,7 @@ package org.bitcoinj.uri;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.core.DefaultAddressParser;
+import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
