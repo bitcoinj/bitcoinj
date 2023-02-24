@@ -34,7 +34,7 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.SignatureDecodeException;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VarInt;
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.utils.MessageVerifyUtils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;

@@ -37,7 +37,7 @@ import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.UnsafeByteArrayOutputStream;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.VarInt;
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;

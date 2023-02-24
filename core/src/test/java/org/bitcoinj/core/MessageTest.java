@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 

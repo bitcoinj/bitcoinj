@@ -22,6 +22,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
 import com.google.common.primitives.Ints;
 import org.bitcoinj.base.utils.ByteUtils;
