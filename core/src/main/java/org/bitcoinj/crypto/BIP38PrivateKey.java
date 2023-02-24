@@ -22,8 +22,6 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Base58;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.EncodedPrivateKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.generators.SCrypt;

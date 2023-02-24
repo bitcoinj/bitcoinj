@@ -28,7 +28,7 @@ import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BlockTest;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;

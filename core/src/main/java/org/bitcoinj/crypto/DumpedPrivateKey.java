@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.crypto;
 
 import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
 
 import javax.annotation.Nullable;

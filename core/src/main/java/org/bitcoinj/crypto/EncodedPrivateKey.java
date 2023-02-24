@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.Network;
+import org.bitcoinj.core.NetworkParameters;
 
 import java.util.Arrays;
 import java.util.Objects;

@@ -24,6 +24,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;

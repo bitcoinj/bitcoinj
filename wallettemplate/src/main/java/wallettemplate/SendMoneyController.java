@@ -20,6 +20,7 @@ import javafx.scene.layout.HBox;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.*;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 

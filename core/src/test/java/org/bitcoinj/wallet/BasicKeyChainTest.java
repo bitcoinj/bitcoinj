@@ -18,7 +18,7 @@ package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;

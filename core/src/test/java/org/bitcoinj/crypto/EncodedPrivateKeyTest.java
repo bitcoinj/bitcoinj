@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.crypto;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.EncodedPrivateKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;

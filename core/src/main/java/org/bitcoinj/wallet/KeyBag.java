@@ -17,7 +17,7 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nullable;
 
