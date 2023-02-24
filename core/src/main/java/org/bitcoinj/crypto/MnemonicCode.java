@@ -21,7 +21,7 @@ import com.google.common.base.Stopwatch;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.Utils;
-import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.base.internal.InternalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

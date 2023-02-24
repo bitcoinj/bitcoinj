@@ -16,7 +16,7 @@
 
 package wallettemplate;
 
-import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.util.concurrent.Service;
