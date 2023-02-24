@@ -17,7 +17,6 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.base.Preconditions;
-import org.bitcoinj.core.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.core.VerificationException;
