@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.crypto;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
@@ -26,11 +26,10 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.ECKey.ECDSASignature;
-import org.bitcoinj.crypto.EncryptedData;
-import org.bitcoinj.crypto.KeyCrypter;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.FutureUtils;

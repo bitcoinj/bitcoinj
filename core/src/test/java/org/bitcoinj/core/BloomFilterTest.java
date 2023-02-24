@@ -20,6 +20,8 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.crypto.DumpedPrivateKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.DumpedPrivateKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 

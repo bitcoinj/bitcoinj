@@ -26,7 +26,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.PeerAddress;

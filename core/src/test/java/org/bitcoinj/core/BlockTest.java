@@ -24,6 +24,8 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
+import org.bitcoinj.crypto.DumpedPrivateKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.ScriptOpCodes;

@@ -16,6 +16,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.internal.InternalUtils;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 

@@ -23,6 +23,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.protocols.payments.PaymentProtocol;

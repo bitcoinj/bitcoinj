@@ -3,7 +3,7 @@ package org.bitcoinj.utils;
 import com.google.common.primitives.Bytes;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.core.Utils;
 import org.slf4j.Logger;

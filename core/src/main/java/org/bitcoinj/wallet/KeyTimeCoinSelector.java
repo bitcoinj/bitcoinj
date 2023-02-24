@@ -19,7 +19,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;

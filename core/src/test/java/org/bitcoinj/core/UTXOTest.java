@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.ScriptBuilder;
 import org.junit.Test;
 
