@@ -21,11 +21,6 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.Networks;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.testing.MockAltNetworkParams;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -119,16 +114,6 @@ public class LegacyAddressTest {
         } catch (AddressFormatException e) {
             fail();
         }
-    }
-
-    @Test
-    @Deprecated
-    // Test a deprecated method just to make sure we didn't break it
-    public void getNetworkViaParameters() {
-        NetworkParameters params = LegacyAddress.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-        assertEquals(MAINNET.id(), params.getId());
-        params = LegacyAddress.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        assertEquals(TESTNET.id(), params.getId());
     }
 
     @Test
