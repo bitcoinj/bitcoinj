@@ -20,8 +20,6 @@ package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -90,22 +88,6 @@ public class LegacyAddress implements Address {
     /**
      * Construct a {@link LegacyAddress} that represents the given pubkey hash. The resulting address will be a P2PKH type of
      * address.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param hash160
-     *            20-byte pubkey hash
-     * @return constructed address
-     * @deprecated Use {@link #fromPubKeyHash(Network, byte[])}
-     */
-    @Deprecated
-    public static LegacyAddress fromPubKeyHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return fromPubKeyHash(params.network(), hash160);
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} that represents the given pubkey hash. The resulting address will be a P2PKH type of
-     * address.
      *
      * @param network network this address is valid for
      * @param hash160 20-byte pubkey hash
@@ -113,37 +95,6 @@ public class LegacyAddress implements Address {
      */
     public static LegacyAddress fromPubKeyHash(Network network, byte[] hash160) throws AddressFormatException {
         return new LegacyAddress(network, false, hash160);
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} that represents the public part of the given {@link ECKey}. Note that an address is
-     * derived from a hash of the public key and is not the public key itself.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param key
-     *            only the public part is used
-     * @return constructed address
-     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
-     */
-    @Deprecated
-    public static LegacyAddress fromKey(NetworkParameters params, ECKey key) {
-        return (LegacyAddress) key.toAddress(ScriptType.P2PKH, params.network());
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} that represents the given P2SH script hash.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param hash160
-     *            P2SH script hash
-     * @return constructed address
-     * @deprecated Use {@link #fromScriptHash(Network, byte[])}
-     */
-    @Deprecated
-    public static LegacyAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return fromScriptHash(params.network(), hash160);
     }
 
     /**
@@ -155,26 +106,6 @@ public class LegacyAddress implements Address {
      */
     public static LegacyAddress fromScriptHash(Network network, byte[] hash160) throws AddressFormatException {
         return new LegacyAddress(network, true, hash160);
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} from its base58 form.
-     * 
-     * @param params
-     *            expected network this address is valid for, or null if the network should be derived from the
-     *            base58
-     * @param base58
-     *            base58-encoded textual form of the address
-     * @throws AddressFormatException
-     *             if the given base58 doesn't parse or the checksum is invalid
-     * @throws AddressFormatException.WrongNetwork
-     *             if the given address is valid but for a different chain (e.g. testnet vs mainnet)
-     * @deprecated Use {@link #fromBase58(String, Network)}
-     */
-    @Deprecated
-    public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
-            throws AddressFormatException, AddressFormatException.WrongNetwork {
-        return (LegacyAddress) AddressParser.getLegacy(params).parseAddress(base58);
     }
 
     /**
@@ -240,19 +171,6 @@ public class LegacyAddress implements Address {
     @Override
     public ScriptType getOutputScriptType() {
         return p2sh ? ScriptType.P2SH : ScriptType.P2PKH;
-    }
-
-    /**
-     * Given an address, examines the version byte and attempts to find a matching NetworkParameters. If you aren't sure
-     * which network the address is intended for (eg, it was provided by a user), you can use this to decide if it is
-     * compatible with the current wallet.
-     * 
-     * @return network the address is valid for
-     * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
-     */
-    @Deprecated
-    public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        return NetworkParameters.fromAddress(AddressParser.getLegacy().parseAddress(address));
     }
 
     @Override
