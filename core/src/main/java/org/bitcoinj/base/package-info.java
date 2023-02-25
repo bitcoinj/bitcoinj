@@ -22,12 +22,6 @@
  *     <li>No API dependencies on external libraries other than the core JDK and {@code slf4j-api}</li>
  * </ul>
  * <p>
- * <b>Temporary exception:</b> In the 0.17 release, we are allowing some dependencies on other packages, e.g. to
- * {@code org.bitcoinj.core.NetworkParameters} or to Guava <i>provided</i> that those references are in <b>deprecated</b> methods.
- * This smooths migration by allowing users to, for example, replace {@code import org.bitcoinj.core.Address} with
- * {@code import org.bitcoinj.base.Address} as first step of conversion and then remove usages of the deprecated methods
- * of {@code Address} in a second step.
- * <p>
  * The base package makes bitcoinj more modular as it breaks circular dependencies between existing packages and provides
  * a "zero-dependency" foundation for the other packages. In a future release {@code base} will be
  * split into a separate JAR/module (tentatively {@code bitcoinj-base}.)

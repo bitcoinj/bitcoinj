@@ -16,9 +16,6 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-
 import java.util.Comparator;
 
 /**
@@ -27,32 +24,6 @@ import java.util.Comparator;
  * Use {@link AddressParser} to construct any kind of address from its textual form.
  */
 public interface Address extends Comparable<Address> {
-    /**
-     * Construct an {@link Address} that represents the public part of the given {@code ECKey}.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param key
-     *            only the public part is used
-     * @param outputScriptType
-     *            script type the address should use
-     * @return constructed address
-     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
-     */
-    @Deprecated
-    static Address fromKey(final NetworkParameters params, final ECKey key, final ScriptType outputScriptType) {
-        return key.toAddress(outputScriptType, params.network());
-    }
-
-    /**
-     * @return network this data is valid for
-     * @deprecated Use {@link #network()}
-     */
-    @Deprecated
-    default NetworkParameters getParameters() {
-        return NetworkParameters.of(network());
-    }
-
     /**
      * Get either the public key hash or script hash that is encoded in the address.
      * 

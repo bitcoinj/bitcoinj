@@ -20,8 +20,6 @@ package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
@@ -87,22 +85,6 @@ public class LegacyAddress implements Address {
     /**
      * Construct a {@link LegacyAddress} that represents the given pubkey hash. The resulting address will be a P2PKH type of
      * address.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param hash160
-     *            20-byte pubkey hash
-     * @return constructed address
-     * @deprecated Use {@link #fromPubKeyHash(Network, byte[])}
-     */
-    @Deprecated
-    public static LegacyAddress fromPubKeyHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return fromPubKeyHash(params.network(), hash160);
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} that represents the given pubkey hash. The resulting address will be a P2PKH type of
-     * address.
      *
      * @param network network this address is valid for
      * @param hash160 20-byte pubkey hash
@@ -110,37 +92,6 @@ public class LegacyAddress implements Address {
      */
     public static LegacyAddress fromPubKeyHash(Network network, byte[] hash160) throws AddressFormatException {
         return new LegacyAddress(network, false, hash160);
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} that represents the public part of the given {@code ECKey}. Note that an address is
-     * derived from a hash of the public key and is not the public key itself.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param key
-     *            only the public part is used
-     * @return constructed address
-     * @deprecated Use {@code ECKey#toAddress(ScriptType, Network)}
-     */
-    @Deprecated
-    public static LegacyAddress fromKey(NetworkParameters params, ECKey key) {
-        return (LegacyAddress) key.toAddress(ScriptType.P2PKH, params.network());
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} that represents the given P2SH script hash.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param hash160
-     *            P2SH script hash
-     * @return constructed address
-     * @deprecated Use {@link #fromScriptHash(Network, byte[])}
-     */
-    @Deprecated
-    public static LegacyAddress fromScriptHash(NetworkParameters params, byte[] hash160) throws AddressFormatException {
-        return fromScriptHash(params.network(), hash160);
     }
 
     /**

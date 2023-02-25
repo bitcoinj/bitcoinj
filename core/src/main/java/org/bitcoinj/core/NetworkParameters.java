@@ -205,19 +205,6 @@ public abstract class NetworkParameters {
         return PaymentProtocol.paramsFromPmtProtocolID(pmtProtocolId);
     }
 
-    /**
-     * Get a NetworkParameters from an Address.
-     * Addresses should not be used for storing NetworkParameters. In the future Address will
-     * be an {@code interface} that only makes a {@link Network} available.
-     * @param address An address
-     * @return network parameters
-     * @deprecated You should be using {@link Address#network()} instead
-     */
-    @Deprecated
-    public static NetworkParameters fromAddress(Address address) {
-        return address.getParameters();
-    }
-
     public int getSpendableCoinbaseDepth() {
         return spendableCoinbaseDepth;
     }
