@@ -84,7 +84,7 @@ import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.MissingSigResolutionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.BaseTaggableObject;
-import org.bitcoinj.utils.FutureUtils;
+import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
@@ -5386,7 +5386,7 @@ public class Wallet extends BaseTaggableObject
                 log.error("Failed to broadcast rekey tx", e);
             }
         }
-        return FutureUtils.allAsList(futures);
+        return ListenableCompletableFuture.of(FutureUtils.allAsList(futures));
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.

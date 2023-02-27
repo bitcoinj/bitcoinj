@@ -32,7 +32,7 @@ import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.utils.FutureUtils;
+import org.bitcoinj.base.internal.FutureUtils;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Before;
 import org.junit.Test;

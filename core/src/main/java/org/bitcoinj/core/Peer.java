@@ -36,7 +36,7 @@ import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.utils.FutureUtils;
+import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
