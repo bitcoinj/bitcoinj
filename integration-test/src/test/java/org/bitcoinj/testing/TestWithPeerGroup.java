@@ -19,13 +19,13 @@ package org.bitcoinj.testing;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.MemoryPoolMessage;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.SendAddrV2Message;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VersionAck;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.net.BlockingClientManager;
@@ -121,7 +121,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
                         if (!blockJobs)
                             return super.schedule(command, delay, unit);
                         return super.schedule(() -> {
-                            Utils.rollMockClockMillis(unit.toMillis(delay));
+                            TimeUtils.rollMockClockMillis(unit.toMillis(delay));
                             command.run();
                             jobBlocks.acquireUninterruptibly();
                         }, 0 /* immediate */, unit);

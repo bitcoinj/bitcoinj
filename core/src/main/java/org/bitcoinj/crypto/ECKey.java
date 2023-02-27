@@ -31,9 +31,9 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.utils.MessageVerifyUtils;
@@ -184,7 +184,7 @@ public class ECKey implements EncryptableItem {
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
         pub = new LazyECPoint(pubParams.getQ(), true);
-        creationTimeSeconds = Utils.currentTimeSeconds();
+        creationTimeSeconds = TimeUtils.currentTimeSeconds();
     }
 
     protected ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
@@ -1354,7 +1354,7 @@ public class ECKey implements EncryptableItem {
         builder.append(ByteUtils.HEX.encode(getPubKeyHash()));
         if (creationTimeSeconds > 0)
             builder.append("  creationTimeSeconds:").append(creationTimeSeconds).append(" [")
-                    .append(Utils.dateTimeFormat(creationTimeSeconds * 1000)).append("]");
+                    .append(TimeUtils.dateTimeFormat(creationTimeSeconds * 1000)).append("]");
         if (comment != null)
             builder.append("  (").append(comment).append(")");
         builder.append("\n");

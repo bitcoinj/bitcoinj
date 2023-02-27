@@ -18,7 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.base.Stopwatch;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +97,7 @@ public class WalletFiles {
             Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
             log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
                     wallet.getLastBlockSeenHeight(),
-                    lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                    lastBlockSeenTime != null ? TimeUtils.dateTimeFormat(lastBlockSeenTime) : "unknown",
                     wallet.getLastBlockSeenHash());
             saveNowInternal();
             return null;
@@ -124,7 +124,7 @@ public class WalletFiles {
             return;
         Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
         log.info("Saving wallet; last seen block is height {}, date {}, hash {}", wallet.getLastBlockSeenHeight(),
-                lastBlockSeenTime != null ? Utils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                lastBlockSeenTime != null ? TimeUtils.dateTimeFormat(lastBlockSeenTime) : "unknown",
                 wallet.getLastBlockSeenHash());
         saveNowInternal();
     }

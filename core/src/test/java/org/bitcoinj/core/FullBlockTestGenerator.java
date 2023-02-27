@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.ECKey;
@@ -174,7 +175,7 @@ public class FullBlockTestGenerator {
         this.params = params;
         coinbaseOutKey = new ECKey();
         coinbaseOutKeyPubKey = coinbaseOutKey.getPubKey();
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
     }
 
     public RuleList getBlocksToTest(boolean runBarelyExpensiveTests, boolean runExpensiveTests, File blockStorageFile) throws ScriptException, ProtocolException, IOException {
@@ -981,7 +982,7 @@ public class FullBlockTestGenerator {
 
         // Block with timestamp > 2h in the future
         NewBlock b48 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
-        b48.block.setTime(Utils.currentTimeSeconds() + 60 * 60 * 3);
+        b48.block.setTime(TimeUtils.currentTimeSeconds() + 60 * 60 * 3);
         b48.solve();
         blocks.add(new BlockAndValidity(b48, false, true, b44.getHash(), chainHeadHeight + 15, "b48"));
 

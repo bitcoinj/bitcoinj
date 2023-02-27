@@ -17,10 +17,10 @@
 
 package org.bitcoinj.core.listeners;
 
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.Peer;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +93,7 @@ public class DownloadProgressTracker implements BlockchainDownloadEventListener 
      */
     protected void progress(double pct, int blocksSoFar, Date date) {
         log.info(String.format(Locale.US, "Chain download %d%% done with %d blocks to go, block date %s", (int) pct, blocksSoFar,
-                Utils.dateTimeFormat(date)));
+                TimeUtils.dateTimeFormat(date)));
     }
 
     /**

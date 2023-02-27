@@ -18,9 +18,9 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.Utils;
 
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
@@ -75,7 +75,7 @@ public class UnitTestParams extends BitcoinNetworkParams {
             if (genesisBlock == null) {
                 genesisBlock = Block.createGenesis(this);
                 genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(Utils.currentTimeSeconds());
+                genesisBlock.setTime(TimeUtils.currentTimeSeconds());
                 genesisBlock.solve();
             }
         }

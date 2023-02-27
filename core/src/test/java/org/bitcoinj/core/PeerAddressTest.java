@@ -21,6 +21,7 @@ import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
@@ -70,7 +71,7 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv4_addressV2Variant() throws Exception {
-        long time = Utils.currentTimeSeconds();
+        long time = TimeUtils.currentTimeSeconds();
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(2);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
                 serializer);
@@ -84,7 +85,7 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv4_addressVariant() throws Exception {
-        long time = Utils.currentTimeSeconds();
+        long time = TimeUtils.currentTimeSeconds();
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(1);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
                 serializer);
@@ -111,7 +112,7 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv6_addressV2Variant() throws Exception {
-        long time = Utils.currentTimeSeconds();
+        long time = TimeUtils.currentTimeSeconds();
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(2);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 BigInteger.ZERO, serializer);
@@ -125,7 +126,7 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv6_addressVariant() throws Exception {
-        long time = Utils.currentTimeSeconds();
+        long time = TimeUtils.currentTimeSeconds();
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(1);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 BigInteger.ZERO, serializer);

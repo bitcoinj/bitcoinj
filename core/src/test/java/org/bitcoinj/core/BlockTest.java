@@ -23,6 +23,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.crypto.DumpedPrivateKey;
@@ -84,7 +85,7 @@ public class BlockTest {
     
     @Test
     public void testDate() {
-        assertEquals("2016-02-13T22:59:39Z", Utils.dateTimeFormat(block700000.getTime()));
+        assertEquals("2016-02-13T22:59:39Z", TimeUtils.dateTimeFormat(block700000.getTime()));
     }
 
     private static class TweakableTestNet3Params extends TestNet3Params {

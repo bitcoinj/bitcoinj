@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.Iterators;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
@@ -303,7 +304,7 @@ public class TransactionConfidence {
      * @return true if marked, false if this address was already seen
      */
     public boolean markBroadcastBy(PeerAddress address) {
-        lastBroadcastedAt = Utils.now();
+        lastBroadcastedAt = TimeUtils.now();
         if (!broadcastBy.addIfAbsent(address))
             return false;  // Duplicate.
         synchronized (this) {
@@ -352,7 +353,7 @@ public class TransactionConfidence {
         if (peers > 0) {
             builder.append("Seen by ").append(peers).append(peers > 1 ? " peers" : " peer");
             if (lastBroadcastedAt != null)
-                builder.append(" (most recently: ").append(Utils.dateTimeFormat(lastBroadcastedAt)).append(")");
+                builder.append(" (most recently: ").append(TimeUtils.dateTimeFormat(lastBroadcastedAt)).append(")");
             builder.append(". ");
         }
         switch (getConfidenceType()) {

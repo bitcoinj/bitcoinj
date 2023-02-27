@@ -23,6 +23,7 @@ import com.google.common.base.Throwables;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
@@ -658,7 +659,7 @@ public class Peer extends PeerSocketHandler {
                     try {
                         log.info(
                                 "Passed the fast catchup time ({}) at height {}, discarding {} headers and requesting full blocks",
-                                Utils.dateTimeFormat(fastCatchupTimeSecs * 1000), blockChain.getBestChainHeight() + 1,
+                                TimeUtils.dateTimeFormat(fastCatchupTimeSecs * 1000), blockChain.getBestChainHeight() + 1,
                                 m.getBlockHeaders().size() - i);
                         this.downloadBlockBodies = true;
                         // Prevent this request being seen as a duplicate.
@@ -1471,12 +1472,12 @@ public class Peer extends PeerSocketHandler {
         public PendingPing(long nonce) {
             this.future = new CompletableFuture<>();
             this.nonce = nonce;
-            this.startTimeMsec = Utils.currentTimeMillis();
+            this.startTimeMsec = TimeUtils.currentTimeMillis();
         }
 
         public void complete() {
             if (!future.isDone()) {
-                long elapsed = Utils.currentTimeMillis() - startTimeMsec;
+                long elapsed = TimeUtils.currentTimeMillis() - startTimeMsec;
                 Peer.this.addPingTimeData(elapsed);
                 if (log.isDebugEnabled())
                     log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed);

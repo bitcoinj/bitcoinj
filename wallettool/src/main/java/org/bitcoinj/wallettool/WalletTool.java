@@ -19,6 +19,7 @@ package org.bitcoinj.wallettool;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.*;
@@ -61,7 +62,6 @@ import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
@@ -589,7 +589,7 @@ public class WalletTool implements Callable<Integer> {
         setup();
         peerGroup.start();
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
-        long rotationTimeSecs = Utils.currentTimeSeconds();
+        long rotationTimeSecs = TimeUtils.currentTimeSeconds();
         if (date != null) {
             rotationTimeSecs = date.getTime() / 1000;
         } else if (unixtime != null) {
@@ -994,7 +994,7 @@ public class WalletTool implements Callable<Integer> {
                             wallet.getEarliestKeyCreationTime());
                     StoredBlock head = store.getChainHead();
                     System.out.println("Skipped to checkpoint " + head.getHeight() + " at "
-                            + Utils.dateTimeFormat(head.getHeader().getTimeSeconds() * 1000));
+                            + TimeUtils.dateTimeFormat(head.getHeader().getTimeSeconds() * 1000));
                 } catch (IOException x) {
                     System.out.println("Could not load checkpoints: " + x.getMessage());
                 }
@@ -1285,7 +1285,7 @@ public class WalletTool implements Callable<Integer> {
                 seed.setCreationTimeSeconds(creationTime);
         }
         if (creationTime > 0)
-            System.out.println("Setting creation time to: " + Utils.dateTimeFormat(creationTime * 1000));
+            System.out.println("Setting creation time to: " + TimeUtils.dateTimeFormat(creationTime * 1000));
         else
             System.out.println("Clearing creation time.");
     }

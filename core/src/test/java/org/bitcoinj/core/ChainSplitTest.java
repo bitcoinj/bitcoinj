@@ -22,6 +22,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.TestNet3Params;
@@ -67,7 +68,7 @@ public class ChainSplitTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.init();
-        Utils.setMockClock(); // Use mock clock
+        TimeUtils.setMockClock(); // Use mock clock
         Context.propagate(new Context(100, Coin.ZERO, false, true));
         MemoryBlockStore blockStore = new MemoryBlockStore(TESTNET);
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);

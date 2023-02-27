@@ -17,6 +17,7 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Block;
@@ -26,7 +27,6 @@ import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -62,7 +62,7 @@ public class TestWithWallet {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Utils.resetMocking();
+        TimeUtils.resetMocking();
     }
 
     public void setUp() throws Exception {

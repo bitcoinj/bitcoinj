@@ -24,6 +24,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
@@ -797,7 +798,7 @@ public class Transaction extends ChildMessage {
             s.append(vsize).append(" virtual bytes, ");
         s.append(size).append(" bytes\n");
         if (updatedAt != null)
-            s.append(indent).append("updated: ").append(Utils.dateTimeFormat(updatedAt)).append('\n');
+            s.append(indent).append("updated: ").append(TimeUtils.dateTimeFormat(updatedAt)).append('\n');
         if (version != 1)
             s.append(indent).append("version ").append(version).append('\n');
 
@@ -807,10 +808,10 @@ public class Transaction extends ChildMessage {
                 s.append("block ").append(lockTime);
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
-                            .append(Utils.dateTimeFormat(chain.estimateBlockTime((int) lockTime))).append(')');
+                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTime((int) lockTime))).append(')');
                 }
             } else {
-                s.append(Utils.dateTimeFormat(lockTime * 1000));
+                s.append(TimeUtils.dateTimeFormat(lockTime * 1000));
             }
             s.append('\n');
         }

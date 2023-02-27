@@ -23,9 +23,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.X509Utils;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.MainNetParams;
@@ -131,7 +131,7 @@ public class PaymentProtocol {
             paymentDetails.setPaymentUrl(paymentUrl);
         if (merchantData != null)
             paymentDetails.setMerchantData(ByteString.copyFrom(merchantData));
-        paymentDetails.setTime(Utils.currentTimeSeconds());
+        paymentDetails.setTime(TimeUtils.currentTimeSeconds());
 
         final Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
         paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());

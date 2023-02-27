@@ -16,12 +16,12 @@
 
 package org.bitcoinj.utils;
 
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -42,7 +42,7 @@ public class VersionTallyTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Utils.resetMocking();
+        TimeUtils.resetMocking();
     }
 
     @Before

@@ -21,6 +21,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -87,7 +88,7 @@ public class BlockChainTest {
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
-        Utils.setMockClock(); // Use mock clock
+        TimeUtils.setMockClock(); // Use mock clock
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
         Context.propagate(new Context(100, Coin.ZERO, false, false));
@@ -170,23 +171,23 @@ public class BlockChainTest {
         // Add a bunch of blocks in a loop until we reach a difficulty transition point. The unit test params have an
         // artificially shortened period.
         Block prev = UNITTEST.getGenesisBlock();
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         for (int height = 0; height < UNITTEST.getInterval() - 1; height++) {
-            Block newBlock = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), height);
+            Block newBlock = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTimeSeconds(), height);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
-            Utils.rollMockClock(2);
+            TimeUtils.rollMockClock(2);
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), UNITTEST.getInterval()));
+            chain.add(prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTimeSeconds(), UNITTEST.getInterval()));
             fail();
         } catch (VerificationException e) {
         }
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
-        Block b = prev.createNextBlock(coinbaseTo, 1, Utils.currentTimeSeconds(), UNITTEST.getInterval() + 1);
+        Block b = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTimeSeconds(), UNITTEST.getInterval() + 1);
         b.setDifficultyTarget(0x201fFFFFL);
         b.solve();
         assertTrue(chain.add(b));

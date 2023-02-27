@@ -20,6 +20,7 @@ package org.bitcoinj.testing;
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.ECKey;
@@ -33,7 +34,6 @@ import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptBuilder;
@@ -289,7 +289,7 @@ public class FakeTxBuilder {
     }
 
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height, Transaction... transactions) {
-        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, Utils.currentTimeSeconds(), height, transactions);
+        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, TimeUtils.currentTimeSeconds(), height, transactions);
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
@@ -304,12 +304,12 @@ public class FakeTxBuilder {
     /** Emulates receiving a valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, int height,
                                             Transaction... transactions) {
-        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), height, transactions);
+        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTimeSeconds(), height, transactions);
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
-        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, Utils.currentTimeSeconds(), 0, transactions);
+        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTimeSeconds(), 0, transactions);
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {

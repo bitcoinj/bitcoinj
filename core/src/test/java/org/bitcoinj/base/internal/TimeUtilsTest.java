@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base.internal;
 
 import org.junit.Test;
 
@@ -26,18 +26,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class UtilsTest {
+public class TimeUtilsTest {
 
     @Test
     public void dateTimeFormat() {
-        assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(1416135273781L));
-        assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(new Date(1416135273781L)));
+        assertEquals("2014-11-16T10:54:33Z", TimeUtils.dateTimeFormat(1416135273781L));
+        assertEquals("2014-11-16T10:54:33Z", TimeUtils.dateTimeFormat(new Date(1416135273781L)));
     }
 
     @Test
     public void testRollMockClock() {
-        Utils.setMockClock(25200);
-        assertEquals(new Date("Thu Jan 01 07:00:08 GMT 1970"), Utils.rollMockClock(8));
-        Utils.resetMocking();
+        TimeUtils.setMockClock(25200);
+        assertEquals(new Date("Thu Jan 01 07:00:08 GMT 1970"), TimeUtils.rollMockClock(8));
+        TimeUtils.resetMocking();
     }
 }

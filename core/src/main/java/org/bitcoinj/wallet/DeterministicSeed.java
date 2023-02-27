@@ -18,7 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.base.MoreObjects;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.EncryptableItem;
 import org.bitcoinj.crypto.EncryptedData;
@@ -94,7 +94,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
      */
     public DeterministicSeed(SecureRandom random, int bits, String passphrase) {
-        this(getEntropy(random, bits), checkNotNull(passphrase), Utils.currentTimeSeconds());
+        this(getEntropy(random, bits), checkNotNull(passphrase), TimeUtils.currentTimeSeconds());
     }
 
     /**

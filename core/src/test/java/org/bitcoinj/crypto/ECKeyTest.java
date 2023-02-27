@@ -24,9 +24,9 @@ import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
@@ -338,7 +338,7 @@ public class ECKeyTest {
 
     @Test
     public void testUnencryptedCreate() {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         ECKey key = new ECKey();
         long time = key.getCreationTimeSeconds();
         assertNotEquals(0, time);

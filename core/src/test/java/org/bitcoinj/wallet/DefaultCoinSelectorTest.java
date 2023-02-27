@@ -16,6 +16,7 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
@@ -24,7 +25,6 @@ import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.TestWithWallet;
@@ -51,7 +51,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        Utils.setMockClock(); // Use mock clock
+        TimeUtils.setMockClock(); // Use mock clock
     }
 
     @After

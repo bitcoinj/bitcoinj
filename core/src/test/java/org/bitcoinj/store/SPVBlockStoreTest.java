@@ -22,6 +22,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.PlatformUtils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
@@ -29,7 +30,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -50,7 +50,7 @@ public class SPVBlockStoreTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Utils.resetMocking();
+        TimeUtils.resetMocking();
     }
 
     @Before

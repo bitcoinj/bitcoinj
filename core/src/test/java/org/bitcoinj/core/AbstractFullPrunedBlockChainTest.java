@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
@@ -68,7 +69,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Utils.resetMocking();
+        TimeUtils.resetMocking();
         PARAMS = new UnitTestParams() {
             @Override public int getInterval() {
                 return 10000;

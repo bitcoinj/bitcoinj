@@ -16,7 +16,7 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.internal.TimeUtils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -74,12 +74,12 @@ public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
     /** Track a success - reset back off interval to the initial value */
     public final void trackSuccess() {
         backoff = params.initial;
-        retryTime = Utils.currentTimeMillis();
+        retryTime = TimeUtils.currentTimeMillis();
     }
 
     /** Track a failure - multiply the back off interval by the multiplier */
     public void trackFailure() {
-        retryTime = Utils.currentTimeMillis() + (long)backoff;
+        retryTime = TimeUtils.currentTimeMillis() + (long)backoff;
         backoff = Math.min(backoff * params.multiplier, params.maximum);
     }
 
