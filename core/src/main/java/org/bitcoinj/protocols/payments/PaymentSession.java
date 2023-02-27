@@ -30,7 +30,7 @@ import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
 import org.bitcoinj.uri.BitcoinURI;
-import org.bitcoinj.utils.FutureUtils;
+import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.SendRequest;
