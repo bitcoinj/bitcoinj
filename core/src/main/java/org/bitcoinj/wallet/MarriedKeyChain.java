@@ -240,7 +240,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
             NetworkParameters params, StringBuilder builder) {
         for (DeterministicKeyChain followingChain : followingKeyChains)
-            builder.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params))
+            builder.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params.network()))
                     .append('\n');
         builder.append('\n');
         for (RedeemData redeemData : marriedKeysRedeemData.values())

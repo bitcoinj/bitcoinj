@@ -19,6 +19,7 @@ package org.bitcoinj.crypto;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.Base58;
@@ -474,12 +475,23 @@ public class DeterministicKey extends ECKey {
     }
 
     @VisibleForTesting
+    byte[] serialize(Network network, boolean pub) {
+        return serialize(network, pub, ScriptType.P2PKH);
+    }
+
+    /**
+     * @deprecated Use {@link #serialize(Network, boolean)}
+     */
+    @VisibleForTesting
+    @Deprecated
     byte[] serialize(NetworkParameters params, boolean pub) {
-        return serialize(params, pub, ScriptType.P2PKH);
+        return serialize(params.network(), pub);
     }
 
     // TODO: remove outputScriptType parameter and merge with the two-param serialize() method. When deprecated serializePubB58/serializePrivB58 methods are removed.
-    private byte[] serialize(NetworkParameters params, boolean pub, ScriptType outputScriptType) {
+    private byte[] serialize(Network network, boolean pub, ScriptType outputScriptType) {
+        // TODO: Remove use of NetworkParameters after we can get BIP32 headers from Network enum
+        NetworkParameters params = NetworkParameters.of(network);
         ByteBuffer ser = ByteBuffer.allocate(78);
         if (outputScriptType == ScriptType.P2PKH)
             ser.putInt(pub ? params.getBip32HeaderP2PKHpub() : params.getBip32HeaderP2PKHpriv());
@@ -500,48 +512,78 @@ public class DeterministicKey extends ECKey {
      * Serialize public key to Base58
      * <p>
      * outputScriptType should not be used in generating "xpub" format. (and "ypub", "zpub", etc. should not be used)
-     * @param params Network parameters indicating which network to serialize key for
+     * @param network which network to serialize key for
      * @param outputScriptType output script type
      * @return the key serialized as a Base58 address
      * @see <a href="https://bitcoin.stackexchange.com/questions/89261/why-does-importmulti-not-support-zpub-and-ypub/89281#89281">Why does importmulti not support zpub and ypub?</a>
-     * @deprecated Use a {@link #serializePubB58(NetworkParameters)} or a descriptor if you need output type information
+     * @deprecated Use a {@link #serializePubB58(Network)} or a descriptor if you need output type information
+     */
+    public String serializePubB58(Network network, ScriptType outputScriptType) {
+        return toBase58(serialize(network, true, outputScriptType));
+    }
+
+    /**
+     * @deprecated Use {@link #serializePubB58(Network, ScriptType)}
      */
     @Deprecated
     public String serializePubB58(NetworkParameters params, ScriptType outputScriptType) {
-        return toBase58(serialize(params, true, outputScriptType));
+        return serializePubB58(params.network(), outputScriptType);
     }
 
     /**
      * Serialize private key to Base58
      * <p>
      * outputScriptType should not be used in generating "xprv" format. (and "zprv", "vprv", etc. should not be used)
-     * @param params Network parameters indicating which network to serialize key for
+     * @param network which network to serialize key for
      * @param outputScriptType output script type
      * @return the key serialized as a Base58 address
      * @see <a href="https://bitcoin.stackexchange.com/questions/89261/why-does-importmulti-not-support-zpub-and-ypub/89281#89281">Why does importmulti not support zpub and ypub?</a>
-     * @deprecated Use a {@link #serializePrivB58(NetworkParameters)} or a descriptor if you need output type information
+     * @deprecated Use a {@link #serializePrivB58(Network)} or a descriptor if you need output type information
+     */
+    public String serializePrivB58(Network network, ScriptType outputScriptType) {
+        return toBase58(serialize(network, false, outputScriptType));
+    }
+
+    /**
+     * @deprecated Use {@link #serializePrivB58(Network, ScriptType)}
      */
     @Deprecated
     public String serializePrivB58(NetworkParameters params, ScriptType outputScriptType) {
-        return toBase58(serialize(params, false, outputScriptType));
+        return serializePrivB58(params.network(), outputScriptType);
     }
 
     /**
      * Serialize public key to Base58 (either "xpub" or "tpub")
-     * @param params Network parameters indicating which network to serialize key for
+     * @param network which network to serialize key for
      * @return the key serialized as a Base58 address
      */
+    public String serializePubB58(Network network) {
+        return toBase58(serialize(network, true));
+    }
+
+    /**
+     * @deprecated Use {@link #serializePubB58(Network)}
+     */
+    @Deprecated
     public String serializePubB58(NetworkParameters params) {
-        return toBase58(serialize(params, true));
+        return serializePubB58(params.network());
     }
 
     /**
      * Serialize private key to Base58 (either "xprv" or "tprv")
-     * @param params Network parameters indicating which network to serialize key for
+     * @param network which network to serialize key for
      * @return the key serialized as a Base58 address
      */
+    public String serializePrivB58(Network network) {
+        return toBase58(serialize(network, false));
+    }
+
+    /**
+     * @deprecated Use {@link #serializePrivB58(Network)}
+     */
+    @Deprecated
     public String serializePrivB58(NetworkParameters params) {
-        return toBase58(serialize(params, false));
+        return serializePrivB58(params.network());
     }
 
     static String toBase58(byte[] ser) {
@@ -549,8 +591,16 @@ public class DeterministicKey extends ECKey {
     }
 
     /** Deserialize a base-58-encoded HD Key with no parent */
+    public static DeterministicKey deserializeB58(String base58, Network network) {
+        return deserializeB58(null, base58, network);
+    }
+
+    /**
+     * @deprecated Use {@link #deserializeB58(String, Network)}
+     */
+    @Deprecated
     public static DeterministicKey deserializeB58(String base58, NetworkParameters params) {
-        return deserializeB58(null, base58, params);
+        return deserializeB58(base58, params.network());
     }
 
     /**
@@ -558,24 +608,43 @@ public class DeterministicKey extends ECKey {
       *  @param parent The parent node in the given key's deterministic hierarchy.
       *  @throws IllegalArgumentException if the base58 encoded key could not be parsed.
       */
+    public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58, Network network) {
+        return deserialize(network, Base58.decodeChecked(base58), parent);
+    }
+
+    /**
+     * @deprecated Use {@link #deserializeB58(DeterministicKey, String, Network)}
+     */
+    @Deprecated
     public static DeterministicKey deserializeB58(@Nullable DeterministicKey parent, String base58, NetworkParameters params) {
-        return deserialize(params, Base58.decodeChecked(base58), parent);
+        return deserializeB58(parent, base58, params.network());
     }
 
     /**
       * Deserialize an HD Key with no parent
       */
+    public static DeterministicKey deserialize(Network network, byte[] serializedKey) {
+        return deserialize(network, serializedKey, null);
+    }
+
+    /**
+     * Deserialize an HD Key with no parent
+     * @deprecated Use {@link #deserialize(Network, byte[])}
+     */
+    @Deprecated
     public static DeterministicKey deserialize(NetworkParameters params, byte[] serializedKey) {
-        return deserialize(params, serializedKey, null);
+        return deserialize(params.network(), serializedKey);
     }
 
     /**
       * Deserialize an HD Key.
      * @param parent The parent node in the given key's deterministic hierarchy.
      */
-    public static DeterministicKey deserialize(NetworkParameters params, byte[] serializedKey, @Nullable DeterministicKey parent) {
+    public static DeterministicKey deserialize(Network network, byte[] serializedKey, @Nullable DeterministicKey parent) {
         ByteBuffer buffer = ByteBuffer.wrap(serializedKey);
         int header = buffer.getInt();
+        // TODO: Remove us of NetworkParameters when we can get BIP32 header info from Network
+        NetworkParameters params = NetworkParameters.of(network);
         final boolean pub = header == params.getBip32HeaderP2PKHpub() || header == params.getBip32HeaderP2WPKHpub();
         final boolean priv = header == params.getBip32HeaderP2PKHpriv() || header == params.getBip32HeaderP2WPKHpriv();
         if (!(pub || priv))
@@ -612,6 +681,17 @@ public class DeterministicKey extends ECKey {
         } else {
             return new DeterministicKey(path, chainCode, ByteUtils.bytesToBigInteger(data), parent, depth, parentFingerprint);
         }
+    }
+
+
+
+    /**
+     * Deserialize an HD Key.
+     * @deprecated Use {@link #deserialize(Network, byte[], DeterministicKey)}
+     */
+    @Deprecated
+    public static DeterministicKey deserialize(NetworkParameters params, byte[] serializedKey, @Nullable DeterministicKey parent) {
+        return deserialize(params.network(), serializedKey, parent);
     }
 
     /**
@@ -674,15 +754,25 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
-                                     NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
-        builder.append("  addr:").append(toAddress(outputScriptType, params.network()).toString());
+                                     Network network, ScriptType outputScriptType, @Nullable String comment) {
+        builder.append("  addr:").append(toAddress(outputScriptType, network).toString());
         builder.append("  hash160:").append(ByteUtils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());
         if (comment != null)
             builder.append(", ").append(comment);
         builder.append(")\n");
         if (includePrivateKeys) {
-            builder.append("  ").append(toStringWithPrivate(aesKey, params)).append("\n");
+            builder.append("  ").append(toStringWithPrivate(aesKey, network)).append("\n");
         }
+    }
+
+    /**
+     * @deprecated Use {@link #formatKeyWithAddress(boolean, KeyParameter, StringBuilder, Network, ScriptType, String)}
+     */
+    @Override
+    @Deprecated
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+                                     NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
+        formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), outputScriptType, comment);
     }
 }

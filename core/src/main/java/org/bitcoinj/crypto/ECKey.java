@@ -25,6 +25,7 @@ import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -1052,12 +1053,26 @@ public class ECKey implements EncryptableItem {
      * Exports the private key in the form used by Bitcoin Core's "dumpprivkey" and "importprivkey" commands. Use
      * the {@link DumpedPrivateKey#toString()} method to get the string.
      *
-     * @param params The network this key is intended for use on.
+     * @param network The network this key is intended for use on.
      * @return Private key bytes as a {@link DumpedPrivateKey}.
      * @throws IllegalStateException if the private key is not available.
      */
+    public DumpedPrivateKey getPrivateKeyEncoded(Network network) {
+        return new DumpedPrivateKey(network, getPrivKeyBytes(), isCompressed());
+    }
+
+    /**
+     * Exports the private key in the form used by Bitcoin Core's "dumpprivkey" and "importprivkey" commands. Use
+     * the {@link DumpedPrivateKey#toString()} method to get the string.
+     *
+     * @param params The network this key is intended for use on.
+     * @return Private key bytes as a {@link DumpedPrivateKey}.
+     * @throws IllegalStateException if the private key is not available.
+     * @deprecated Use {@link #getPrivateKeyEncoded(Network)}
+     */
+    @Deprecated
     public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
-        return new DumpedPrivateKey(params.network(), getPrivKeyBytes(), isCompressed());
+        return getPrivateKeyEncoded(params.network());
     }
 
     /**
@@ -1246,15 +1261,25 @@ public class ECKey implements EncryptableItem {
 
     @Override
     public String toString() {
-        return toString(false, null, null);
+        return toString(false, null, BitcoinNetwork.MAINNET);
     }
 
     /**
      * Produce a string rendering of the ECKey INCLUDING the private key.
      * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
      */
+    public String toStringWithPrivate(@Nullable KeyParameter aesKey, Network network) {
+        return toString(true, aesKey, network);
+    }
+
+    /**
+     * Produce a string rendering of the ECKey INCLUDING the private key.
+     * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
+     * @deprecated Use {@link #toStringWithPrivate(KeyParameter, Network)}
+     */
+    @Deprecated
     public String toStringWithPrivate(@Nullable KeyParameter aesKey, NetworkParameters params) {
-        return toString(true, aesKey, params);
+        return toStringWithPrivate(aesKey, params.network());
     }
 
     public String getPrivateKeyAsHex() {
@@ -1265,18 +1290,27 @@ public class ECKey implements EncryptableItem {
         return ByteUtils.HEX.encode(pub.getEncoded());
     }
 
-    public String getPrivateKeyAsWiF(NetworkParameters params) {
-        return getPrivateKeyEncoded(params).toString();
+
+    public String getPrivateKeyAsWiF(Network network) {
+        return getPrivateKeyEncoded(network).toString();
     }
 
-    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, @Nullable NetworkParameters params) {
+    /**
+     * @deprecated Use {@link #getPrivateKeyEncoded(Network)}
+     */
+    @Deprecated
+    public String getPrivateKeyAsWiF(NetworkParameters params) {
+        return getPrivateKeyAsWiF(params.network());
+    }
+
+    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, Network network) {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
             ECKey decryptedKey = isEncrypted() ? decrypt(checkNotNull(aesKey)) : this;
             try {
                 helper.add("priv HEX", decryptedKey.getPrivateKeyAsHex());
-                helper.add("priv WIF", decryptedKey.getPrivateKeyAsWiF(params));
+                helper.add("priv WIF", decryptedKey.getPrivateKeyAsWiF(network));
             } catch (IllegalStateException e) {
                 // TODO: Make hasPrivKey() work for deterministic keys and fix this.
             } catch (Exception e) {
@@ -1294,15 +1328,25 @@ public class ECKey implements EncryptableItem {
         return helper.toString();
     }
 
+    /**
+     * @deprecated Use {@link #toString(boolean, KeyParameter, Network)}
+     */
+    @Deprecated
+    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, @Nullable NetworkParameters params) {
+        Network network = (params != null) ? params.network() : BitcoinNetwork.MAINNET;
+        return toString(includePrivate, aesKey, network);
+    }
+
+
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
-                                     NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
+                                     Network network, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:");
         if (outputScriptType != null) {
-            builder.append(toAddress(outputScriptType, params.network()));
+            builder.append(toAddress(outputScriptType, network));
         } else {
-            builder.append(toAddress(ScriptType.P2PKH, params.network()));
+            builder.append(toAddress(ScriptType.P2PKH, network));
             if (isCompressed())
-                builder.append(',').append(toAddress(ScriptType.P2WPKH, params.network()));
+                builder.append(',').append(toAddress(ScriptType.P2WPKH, network));
         }
         if (!isCompressed())
             builder.append("  UNCOMPRESSED");
@@ -1316,9 +1360,18 @@ public class ECKey implements EncryptableItem {
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
-            builder.append(toStringWithPrivate(aesKey, params));
+            builder.append(toStringWithPrivate(aesKey, network));
             builder.append("\n");
         }
+    }
+
+    /**
+     * @deprecated Use {@link #formatKeyWithAddress(boolean, KeyParameter, StringBuilder, Network, ScriptType, String)}
+     */
+    @Deprecated
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+                                     NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
+        formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), outputScriptType, comment);
     }
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */

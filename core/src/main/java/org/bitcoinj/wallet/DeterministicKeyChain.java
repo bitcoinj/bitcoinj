@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.utils.StreamUtils;
@@ -80,9 +81,9 @@ import static com.google.common.base.Preconditions.checkState;
  * A watching wallet is not instantiated using the public part of the master key as you may imagine. Instead, you
  * need to take the account key (first child of the master key) and provide the public part of that to the watching
  * wallet instead. You can do this by calling {@link #getWatchingKey()} and then serializing it with
- * {@link DeterministicKey#serializePubB58(NetworkParameters)}. The resulting "xpub..." string encodes
+ * {@link DeterministicKey#serializePubB58(Network)}. The resulting "xpub..." string encodes
  * sufficient information about the account key to create a watching chain via
- * {@link DeterministicKey#deserializeB58(DeterministicKey, String, NetworkParameters)}
+ * {@link DeterministicKey#deserializeB58(DeterministicKey, String, Network)}
  * (with null as the first parameter) and then
  * {@link Builder#watch(DeterministicKey)}.</p>
  *
@@ -1444,7 +1445,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     .append(Utils.dateTimeFormat(watchingKey.getCreationTimeSeconds() * 1000)).append("]\n");
         }
         builder.append("Ouput script type: ").append(outputScriptType).append('\n');
-        builder.append("Key to watch:      ").append(watchingKey.serializePubB58(params, outputScriptType))
+        builder.append("Key to watch:      ").append(watchingKey.serializePubB58(params.network(), outputScriptType))
                 .append('\n');
         builder.append("Lookahead siz/thr: ").append(lookaheadSize).append('/').append(lookaheadThreshold).append('\n');
         formatAddresses(includeLookahead, includePrivateKeys, aesKey, params, builder);
@@ -1467,7 +1468,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 comment = "*";
             else if (externalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedExternalKeys)
                 comment = "*";
-            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params, outputScriptType, comment);
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), outputScriptType, comment);
         }
     }
 
