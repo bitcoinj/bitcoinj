@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.Network;
+import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlockchainDownloadEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
@@ -542,7 +543,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 // First run: try and use a local node if there is one, for the additional security it can provide.
                 // But, not on Android as there are none for this platform: it could only be a malicious app trying
                 // to hijack our traffic.
-                if (!Utils.isAndroidRuntime() && useLocalhostPeerWhenPossible && maybeCheckForLocalhostPeer() && firstRun) {
+                if (!PlatformUtils.isAndroidRuntime() && useLocalhostPeerWhenPossible && maybeCheckForLocalhostPeer() && firstRun) {
                     log.info("Localhost peer detected, trying to use it instead of P2P discovery");
                     maxConnections = 0;
                     connectToLocalHost();

@@ -19,8 +19,8 @@ package org.bitcoinj.crypto;
 
 import com.google.common.base.Stopwatch;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.utils.StreamUtils;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +65,7 @@ public class MnemonicCode {
             INSTANCE = new MnemonicCode();
         } catch (FileNotFoundException e) {
             // We expect failure on Android. The developer has to set INSTANCE themselves.
-            if (!Utils.isAndroidRuntime())
+            if (!PlatformUtils.isAndroidRuntime())
                 log.error("Could not find word list", e);
         } catch (IOException e) {
             log.error("Failed to load word list", e);

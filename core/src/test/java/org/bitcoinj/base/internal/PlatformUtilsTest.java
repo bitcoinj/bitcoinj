@@ -1,7 +1,5 @@
 /*
- * Copyright 2011 Thilo Planz
- * Copyright 2014 Andreas Schildbach
- * Copyright 2017 Nicola Atzei
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +14,21 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base.internal;
 
 import org.junit.Test;
 
-import java.util.Date;
-
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class UtilsTest {
-
+/**
+ * Tests for PlatformUtils
+ */
+public class PlatformUtilsTest {
     @Test
-    public void dateTimeFormat() {
-        assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(1416135273781L));
-        assertEquals("2014-11-16T10:54:33Z", Utils.dateTimeFormat(new Date(1416135273781L)));
-    }
-
-    @Test
-    public void testRollMockClock() {
-        Utils.setMockClock(25200);
-        assertEquals(new Date("Thu Jan 01 07:00:08 GMT 1970"), Utils.rollMockClock(8));
-        Utils.resetMocking();
+    public void runtime() {
+        // This test assumes it is run within a Java runtime for desktop computers.
+        assertTrue(PlatformUtils.isOpenJDKRuntime() || PlatformUtils.isOracleJavaRuntime());
+        assertFalse(PlatformUtils.isAndroidRuntime());
     }
 }

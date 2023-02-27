@@ -17,7 +17,7 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.internal.PlatformUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -33,11 +33,11 @@ public class AppDataDirectoryTest {
     public void worksOnCurrentPlatform() {
         final String appName = "bitcoinj";
         String path = AppDataDirectory.get(appName).toString();
-        if (Utils.isWindows()) {
+        if (PlatformUtils.isWindows()) {
             assertEquals("Path wrong on Windows", winPath(appName), path);
-        } else if (Utils.isMac()) {
+        } else if (PlatformUtils.isMac()) {
             assertEquals("Path wrong on Mac",  macPath(appName), path);
-        } else if (Utils.isLinux()) {
+        } else if (PlatformUtils.isLinux()) {
             assertEquals("Path wrong on Linux",  unixPath(appName), path);
         } else {
             assertEquals("Path wrong on unknown/default",  unixPath(appName), path);
@@ -48,11 +48,11 @@ public class AppDataDirectoryTest {
     public void worksOnCurrentPlatformForBitcoinCore() {
         final String appName = "Bitcoin";
         String path = AppDataDirectory.get(appName).toString();
-        if (Utils.isWindows()) {
+        if (PlatformUtils.isWindows()) {
             assertEquals("Path wrong on Windows", winPath(appName), path);
-        } else if (Utils.isMac()) {
+        } else if (PlatformUtils.isMac()) {
             assertEquals("Path wrong on Mac",  macPath(appName), path);
-        } else if (Utils.isLinux()) {
+        } else if (PlatformUtils.isLinux()) {
             assertEquals("Path wrong on Linux",  unixPath(appName), path);
         } else {
             assertEquals("Path wrong on unknown/default",  unixPath(appName), path);
@@ -62,14 +62,14 @@ public class AppDataDirectoryTest {
     @Test(expected = RuntimeException.class)
     public void throwsIOExceptionIfPathNotFound() {
         // Force exceptions with illegal characters
-        if (Utils.isWindows()) {
+        if (PlatformUtils.isWindows()) {
             AppDataDirectory.get(":");  // Illegal character for Windows
         }
-        if (Utils.isMac()) {
+        if (PlatformUtils.isMac()) {
             // NUL character
             AppDataDirectory.get("\0"); // Illegal character for Mac
         }
-        if (Utils.isLinux()) {
+        if (PlatformUtils.isLinux()) {
             // NUL character
             AppDataDirectory.get("\0"); // Illegal character for Linux
         }

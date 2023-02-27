@@ -162,66 +162,6 @@ public class Utils {
         return iso8601.format(dateTime);
     }
 
-    private enum Runtime {
-        ANDROID, OPENJDK, ORACLE_JAVA
-    }
-
-    private enum OS {
-        LINUX, WINDOWS, MAC_OS
-    }
-
-    private static Runtime runtime = null;
-    private static OS os = null;
-    static {
-        String runtimeProp = System.getProperty("java.runtime.name", "").toLowerCase(Locale.US);
-        if (runtimeProp.equals(""))
-            runtime = null;
-        else if (runtimeProp.contains("android"))
-            runtime = Runtime.ANDROID;
-        else if (runtimeProp.contains("openjdk"))
-            runtime = Runtime.OPENJDK;
-        else if (runtimeProp.contains("java(tm) se"))
-            runtime = Runtime.ORACLE_JAVA;
-        else
-            log.info("Unknown java.runtime.name '{}'", runtimeProp);
-
-        String osProp = System.getProperty("os.name", "").toLowerCase(Locale.US);
-        if (osProp.equals(""))
-            os = null;
-        else if (osProp.contains("linux"))
-            os = OS.LINUX;
-        else if (osProp.contains("win"))
-            os = OS.WINDOWS;
-        else if (osProp.contains("mac"))
-            os = OS.MAC_OS;
-        else
-            log.info("Unknown os.name '{}'", runtimeProp);
-    }
-
-    public static boolean isAndroidRuntime() {
-        return runtime == Runtime.ANDROID;
-    }
-
-    public static boolean isOpenJDKRuntime() {
-        return runtime == Runtime.OPENJDK;
-    }
-
-    public static boolean isOracleJavaRuntime() {
-        return runtime == Runtime.ORACLE_JAVA;
-    }
-
-    public static boolean isLinux() {
-        return os == OS.LINUX;
-    }
-
-    public static boolean isWindows() {
-        return os == OS.WINDOWS;
-    }
-
-    public static boolean isMac() {
-        return os == OS.MAC_OS;
-    }
-
     public static String toString(List<byte[]> stack) {
         List<String> parts = new ArrayList<>(stack.size());
         for (byte[] push : stack)

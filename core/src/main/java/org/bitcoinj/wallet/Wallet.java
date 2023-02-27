@@ -27,6 +27,7 @@ import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
@@ -1495,7 +1496,7 @@ public class Wallet extends BaseTaggableObject
             stream.getFD().sync();
             stream.close();
             stream = null;
-            if (Utils.isWindows()) {
+            if (PlatformUtils.isWindows()) {
                 // Work around an issue on Windows whereby you can't rename over existing files.
                 File canonical = destFile.getCanonicalFile();
                 if (canonical.exists() && !canonical.delete())

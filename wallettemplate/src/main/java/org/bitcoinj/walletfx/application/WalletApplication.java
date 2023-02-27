@@ -22,9 +22,9 @@ import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -118,7 +118,7 @@ public abstract class WalletApplication implements AppDelegate {
         // Make log output concise.
         BriefLogFormatter.init();
 
-        if (Utils.isMac()) {
+        if (PlatformUtils.isMac()) {
             // We could match the Mac Aqua style here, except that (a) Modena doesn't look that bad, and (b)
             // the date picker widget is kinda broken in AquaFx and I can't be bothered fixing it.
             // AquaFx.style();

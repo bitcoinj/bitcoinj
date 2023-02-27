@@ -21,6 +21,7 @@ import com.google.common.base.Stopwatch;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
@@ -182,7 +183,7 @@ public class SPVBlockStoreTest {
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
         store.close();
         boolean deleted = blockStoreFile.delete();
-        if (!Utils.isWindows()) {
+        if (!PlatformUtils.isWindows()) {
             // TODO: Deletion is failing on Windows
             assertTrue(deleted);
         }
