@@ -5,12 +5,13 @@ Other packages that are not significant or are not changing are not shown (and a
 
 ````mermaid
 graph TD
-    B[base] --> G[guava]
-    B --> S[slf4j]
-    B --> A[jcip-annotations]
+    B[base]
     CR[crypto] --> BC[Bouncy Castle]
+    CR --> S[slf4j]
+    CR --> A[jcip-annotations]
     CR --> B
     CO[core] --> CR
+    CO --> G[guava]
     W --> P[ProtoBuf]
     W[wallet] --> CO
     I[integration-test] --> W
