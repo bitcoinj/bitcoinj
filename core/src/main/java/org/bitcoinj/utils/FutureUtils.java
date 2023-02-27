@@ -35,11 +35,11 @@ public class FutureUtils {
      * either be removed or changed to return a generic {@code CompletableFuture}.
      * @param stages A list of {@code CompletionStage}s all returning the same type
      * @param <T> the result type
-     * @return A ListenableCompletableFuture that returns a list of result type
+     * @return A CompletableFuture that returns a list of result type
      */
-    public static <T> ListenableCompletableFuture<List<T>> allAsList(
+    public static <T> CompletableFuture<List<T>> allAsList(
             List<? extends CompletionStage<? extends T>> stages) {
-        return ListenableCompletableFuture.of(FutureUtils.allAsCFList(stages));
+        return FutureUtils.allAsCFList(stages);
     }
 
     /**
@@ -47,11 +47,11 @@ public class FutureUtils {
      * either be removed or changed to return a generic {@code CompletableFuture}.
      * @param stages A list of {@code CompletionStage}s all returning the same type
      * @param <T> the result type
-     * @return A ListenableCompletableFuture that returns a list of result type
+     * @return A CompletableFuture that returns a list of result type
      */
-    public static <T> ListenableCompletableFuture<List<T>> successfulAsList(
+    public static <T> CompletableFuture<List<T>> successfulAsList(
             List<? extends CompletionStage<? extends T>> stages) {
-        return ListenableCompletableFuture.of(FutureUtils.successfulAsCFList(stages));
+        return FutureUtils.successfulAsCFList(stages);
     }
 
     /**

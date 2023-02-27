@@ -5386,7 +5386,7 @@ public class Wallet extends BaseTaggableObject
                 log.error("Failed to broadcast rekey tx", e);
             }
         }
-        return FutureUtils.allAsList(futures);
+        return ListenableCompletableFuture.of(FutureUtils.allAsList(futures));
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
