@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Stopwatch;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.utils.StreamUtils;
@@ -136,11 +135,7 @@ public class MnemonicCode {
         String pass = InternalUtils.SPACE_JOINER.join(words);
         String salt = "mnemonic" + passphrase;
 
-        final Stopwatch watch = Stopwatch.createStarted();
-        byte[] seed = PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
-        watch.stop();
-        log.info("PBKDF2 took {}", watch);
-        return seed;
+        return PBKDF2SHA512.derive(pass, salt, PBKDF2_ROUNDS, 64);
     }
 
     /**
