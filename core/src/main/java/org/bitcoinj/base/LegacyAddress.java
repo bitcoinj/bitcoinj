@@ -20,10 +20,8 @@ package org.bitcoinj.base;
 
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.core.AddressMessage;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.PeerAddress;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,8 +31,8 @@ import java.util.Objects;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
- * plus a set of network parameters. Not to be confused with a {@link PeerAddress} or {@link AddressMessage}
- * which are about network (TCP) addresses.</p>
+ * plus a set of network parameters. Not to be confused with a {@link org.bitcoinj.core.PeerAddress}
+ * or {@link org.bitcoinj.core.AddressMessage} which are about network (TCP) addresses.</p>
  *
  * <p>A standard address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
  * checksum suffix, then encoding it textually as base58. The version prefix is used to both denote the network for
