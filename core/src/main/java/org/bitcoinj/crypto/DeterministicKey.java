@@ -24,7 +24,7 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.math.ec.ECPoint;
 
@@ -223,7 +223,7 @@ public class DeterministicKey extends ECKey {
      * Returns RIPE-MD160(SHA256(pub key bytes)).
      */
     public byte[] getIdentifier() {
-        return Utils.sha256hash160(getPubKey());
+        return CryptoUtils.sha256hash160(getPubKey());
     }
 
     /** Returns the first 32 bits of the result of {@link #getIdentifier()}. */

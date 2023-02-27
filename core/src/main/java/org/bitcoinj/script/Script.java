@@ -41,6 +41,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1283,7 +1284,7 @@ public class Script {
                 case OP_HASH160:
                     if (stack.size() < 1)
                         throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH160 on an empty stack");
-                    stack.add(Utils.sha256hash160(stack.pollLast()));
+                    stack.add(CryptoUtils.sha256hash160(stack.pollLast()));
                     break;
                 case OP_HASH256:
                     if (stack.size() < 1)

@@ -24,6 +24,7 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
@@ -691,7 +692,7 @@ public class FullBlockTestGenerator {
             }
             b39p2shScriptPubKey = p2shScriptPubKey.toByteArray();
 
-            byte[] scriptHash = Utils.sha256hash160(b39p2shScriptPubKey);
+            byte[] scriptHash = CryptoUtils.sha256hash160(b39p2shScriptPubKey);
             UnsafeByteArrayOutputStream scriptPubKey = new UnsafeByteArrayOutputStream(scriptHash.length + 3);
             scriptPubKey.write(OP_HASH160);
             try {

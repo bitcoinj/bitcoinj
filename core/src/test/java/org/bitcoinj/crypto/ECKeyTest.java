@@ -30,6 +30,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.FutureUtils;
@@ -268,7 +269,7 @@ public class ECKeyTest {
         ECKey key = ECKey.signedMessageToKey(message, sigBase64);
         final byte[] segwitV0_OpPush20 = {0x00, 0x14};
         byte[] segwitV0ScriptPubKey = Bytes.concat(segwitV0_OpPush20, key.getPubKeyHash()); // as defined in BIP 141
-        byte[] scriptHashOfSegwitScript = Utils.sha256hash160(segwitV0ScriptPubKey);
+        byte[] scriptHashOfSegwitScript = CryptoUtils.sha256hash160(segwitV0ScriptPubKey);
         Address gotAddress = LegacyAddress.fromScriptHash(BitcoinNetwork.MAINNET, scriptHashOfSegwitScript);
         assertEquals(expectedAddress, gotAddress);
     }

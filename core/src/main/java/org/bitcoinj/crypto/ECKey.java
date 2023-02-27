@@ -34,6 +34,7 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.utils.MessageVerifyUtils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
@@ -384,7 +385,7 @@ public class ECKey implements EncryptableItem {
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
-            pubKeyHash = Utils.sha256hash160(this.pub.getEncoded());
+            pubKeyHash = CryptoUtils.sha256hash160(this.pub.getEncoded());
         return pubKeyHash;
     }
 

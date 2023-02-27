@@ -49,6 +49,7 @@ import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.crypto.MnemonicException;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
@@ -546,7 +547,7 @@ public class WalletTest extends TestWithWallet {
         List<ScriptChunk> scriptSigChunks = t2.getInput(0).getScriptSig().getChunks();
         // check 'from address' -- in a unit test this is fine
         assertEquals(2, scriptSigChunks.size());
-        assertEquals(myAddress, LegacyAddress.fromPubKeyHash(BitcoinNetwork.TESTNET, Utils.sha256hash160(scriptSigChunks.get(1).data)));
+        assertEquals(myAddress, LegacyAddress.fromPubKeyHash(BitcoinNetwork.TESTNET, CryptoUtils.sha256hash160(scriptSigChunks.get(1).data)));
         assertEquals(TransactionConfidence.ConfidenceType.UNKNOWN, t2.getConfidence().getConfidenceType());
 
         // We have NOT proven that the signature is correct!
