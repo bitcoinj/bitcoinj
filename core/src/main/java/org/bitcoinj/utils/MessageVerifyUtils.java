@@ -5,7 +5,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.SegwitAddress;
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,7 +106,7 @@ public class MessageVerifyUtils {
         final byte[] segwitScriptFromSignaturePubKey = wrapPubKeyHashInSegwitScript(pubKeyHashFromSignature);
 
         // and as in a P2SH address only the hash of the script is contained, we also hash this script before comparing:
-        final byte[] scriptHashDerivedFromSig = Utils.sha256hash160(segwitScriptFromSignaturePubKey);
+        final byte[] scriptHashDerivedFromSig = CryptoUtils.sha256hash160(segwitScriptFromSignaturePubKey);
 
         if (!Arrays.equals(scriptHashFromAddress, scriptHashDerivedFromSig)) {
             throw new SignatureException(SIGNATURE_FAILED_ERROR_MESSAGE);

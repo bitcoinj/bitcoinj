@@ -19,10 +19,8 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,18 +61,6 @@ public class Utils {
     public static final int MAX_INITIAL_ARRAY_LENGTH = 20;
 
     private static final Logger log = LoggerFactory.getLogger(Utils.class);
-
-    /**
-     * Calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
-     */
-    public static byte[] sha256hash160(byte[] input) {
-        byte[] sha256 = Sha256Hash.hash(input);
-        RIPEMD160Digest digest = new RIPEMD160Digest();
-        digest.update(sha256, 0, sha256.length);
-        byte[] out = new byte[20];
-        digest.doFinal(out, 0);
-        return out;
-    }
 
     /**
      * If non-null, overrides the return value of now().

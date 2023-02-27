@@ -26,6 +26,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -383,7 +384,7 @@ public class TransactionTest {
         assertEquals("001479091972186c449eb1ded22b78e40d009bdf0089",
                 HEX.encode(redeemScript.getProgram()));
 
-        byte[] p2wpkhHash = Utils.sha256hash160(redeemScript.getProgram());
+        byte[] p2wpkhHash = CryptoUtils.sha256hash160(redeemScript.getProgram());
         Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(p2wpkhHash);
         assertEquals("a9144733f37cf4db86fbc2efed2500b4f4e49f31202387",
                 HEX.encode(scriptPubKey.getProgram()));

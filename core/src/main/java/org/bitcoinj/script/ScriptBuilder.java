@@ -24,9 +24,9 @@ import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -508,7 +508,7 @@ public class ScriptBuilder {
      * @return an output script that sends to the redeem script
      */
     public static Script createP2SHOutputScript(Script redeemScript) {
-        byte[] hash = Utils.sha256hash160(redeemScript.getProgram());
+        byte[] hash = CryptoUtils.sha256hash160(redeemScript.getProgram());
         return ScriptBuilder.createP2SHOutputScript(hash);
     }
 
