@@ -21,13 +21,13 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.net.discovery.DnsDiscovery;
@@ -329,7 +329,7 @@ public class WalletAppKit extends AbstractIdleService {
         // Initiate Bitcoin network objects (block store, blockchain and peer group)
         vStore = new SPVBlockStore(params, chainFile);
         if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
-            if (checkpoints == null && !Utils.isAndroidRuntime()) {
+            if (checkpoints == null && !PlatformUtils.isAndroidRuntime()) {
                 checkpoints = CheckpointManager.openStream(params);
             }
 

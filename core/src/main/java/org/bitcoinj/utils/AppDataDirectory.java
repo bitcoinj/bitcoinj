@@ -16,7 +16,7 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.internal.PlatformUtils;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -64,11 +64,11 @@ public class AppDataDirectory {
     public static Path getPath(String appName) {
         final Path applicationDataDirectory;
 
-        if (Utils.isWindows()) {
+        if (PlatformUtils.isWindows()) {
             applicationDataDirectory = pathOf(System.getenv("APPDATA"), appName.toLowerCase());
-        } else if (Utils.isMac()) {
+        } else if (PlatformUtils.isMac()) {
             applicationDataDirectory = pathOf(System.getProperty("user.home"),"Library/Application Support", appName);
-        } else if (Utils.isLinux()) {
+        } else if (PlatformUtils.isLinux()) {
             applicationDataDirectory = pathOf(System.getProperty("user.home"), "." + appName.toLowerCase());
         } else {
             // Unknown, assume unix-like
