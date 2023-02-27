@@ -372,16 +372,12 @@ public final class MonetaryFormat {
         checkState(maxDecimals <= smallestUnitExponent, () ->
                 "maxDecimals cannot exceed " + smallestUnitExponent + ": " + maxDecimals);
 
-        // rounding
+        // convert to decimal
         long satoshis = Math.abs(monetary.getValue());
         int potentialDecimals = smallestUnitExponent - shift;
-        long precisionDivisor = checkedPow(10, potentialDecimals - maxDecimals);
-        satoshis = Math.multiplyExact(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
-
-        // shifting
-        long shiftDivisor = checkedPow(10, potentialDecimals);
-        long numbers = satoshis / shiftDivisor;
-        long decimals = satoshis % shiftDivisor;
+        DecimalNumber decimal = satoshisToDecimal(satoshis, roundingMode, potentialDecimals, maxDecimals);
+        long numbers = decimal.numbers;
+        long decimals = decimal.decimals;
 
         // formatting
         String decimalsStr = potentialDecimals > 0 ? String.format(Locale.US,
@@ -427,6 +423,36 @@ public final class MonetaryFormat {
             }
         }
         return str;
+    }
+
+    /**
+     * Convert a long number of satoshis to a decimal number of BTC
+     * @param satoshis number of satoshis
+     * @param roundingMode rounding mode
+     * @param potentialDecimals potential decimals
+     * @param maxDecimals maximum decimals
+     * @return private class with two longs
+     */
+    private static DecimalNumber satoshisToDecimal(long satoshis, RoundingMode roundingMode, int potentialDecimals, int maxDecimals) {
+        // rounding
+        long precisionDivisor = checkedPow(10, potentialDecimals - maxDecimals);
+        long roundedSatoshsis = Math.multiplyExact(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
+
+        // shifting
+        long shiftDivisor = checkedPow(10, potentialDecimals);
+        return new DecimalNumber(
+                        roundedSatoshsis / shiftDivisor,
+                        roundedSatoshsis % shiftDivisor);
+    }
+
+    private static class DecimalNumber {
+        final long numbers;
+        final long decimals;
+
+        private DecimalNumber(long numbers, long decimals) {
+            this.numbers = numbers;
+            this.decimals = decimals;
+        }
     }
 
     /**
