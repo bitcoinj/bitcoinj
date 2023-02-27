@@ -17,9 +17,9 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
@@ -66,10 +66,10 @@ public class BasicKeyChainTest {
 
     @Test
     public void importKeys() {
-        Utils.setMockClock();
-        long now = Utils.currentTimeSeconds();
+        TimeUtils.setMockClock();
+        long now = TimeUtils.currentTimeSeconds();
         final ECKey key1 = new ECKey();
-        Utils.rollMockClock(86400);
+        TimeUtils.rollMockClock(86400);
         final ECKey key2 = new ECKey();
         final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
 
@@ -195,10 +195,10 @@ public class BasicKeyChainTest {
 
     @Test
     public void serializationUnencrypted() throws UnreadableWalletException {
-        Utils.setMockClock();
-        Date now = Utils.now();
+        TimeUtils.setMockClock();
+        Date now = TimeUtils.now();
         final ECKey key1 = new ECKey();
-        Utils.rollMockClock(5000);
+        TimeUtils.rollMockClock(5000);
         final ECKey key2 = new ECKey();
         chain.importKeys(Arrays.asList(key1, key2));
         List<Protos.Key> keys = chain.serializeToProtobuf();
@@ -275,10 +275,10 @@ public class BasicKeyChainTest {
 
     @Test
     public void keysBeforeAndAfter() {
-        Utils.setMockClock();
-        long now = Utils.currentTimeSeconds();
+        TimeUtils.setMockClock();
+        long now = TimeUtils.currentTimeSeconds();
         final ECKey key1 = new ECKey();
-        Utils.rollMockClock(86400);
+        TimeUtils.rollMockClock(86400);
         final ECKey key2 = new ECKey();
         final List<ECKey> keys = Lists.newArrayList(key1, key2);
         assertEquals(2, chain.importKeys(keys));

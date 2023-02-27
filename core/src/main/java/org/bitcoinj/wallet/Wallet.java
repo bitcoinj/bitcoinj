@@ -28,6 +28,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.PlatformUtils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
@@ -62,7 +63,6 @@ import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
 import org.bitcoinj.core.UTXOProviderException;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.listeners.ReorganizeListener;
@@ -986,7 +986,7 @@ public class Wallet extends BaseTaggableObject
      * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
      */
     public boolean addWatchedAddress(final Address address) {
-        long now = Utils.currentTimeSeconds();
+        long now = TimeUtils.currentTimeSeconds();
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
 
@@ -2674,7 +2674,7 @@ public class Wallet extends BaseTaggableObject
                 return false;
             log.info("commitTx of {}", tx.getTxId());
             Coin balance = getBalance();
-            tx.setUpdateTime(Utils.now());
+            tx.setUpdateTime(TimeUtils.now());
             // Put any outputs that are sending money back to us into the unspents map, and calculate their total value.
             Coin valueSentToMe = Coin.ZERO;
             for (TransactionOutput o : tx.getOutputs()) {
@@ -3422,7 +3422,7 @@ public class Wallet extends BaseTaggableObject
             builder.append("  ").append(dead.size()).append(" dead\n");
             final Date lastBlockSeenTime = getLastBlockSeenTime();
             builder.append("Last seen best block: ").append(getLastBlockSeenHeight()).append(" (")
-                    .append(lastBlockSeenTime == null ? "time unknown" : Utils.dateTimeFormat(lastBlockSeenTime))
+                    .append(lastBlockSeenTime == null ? "time unknown" : TimeUtils.dateTimeFormat(lastBlockSeenTime))
                     .append("): ").append(getLastBlockSeenHash()).append('\n');
             final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             if (crypter != null)
@@ -3432,11 +3432,11 @@ public class Wallet extends BaseTaggableObject
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            builder.append("Earliest creation time: ").append(Utils.dateTimeFormat(getEarliestKeyCreationTime() * 1000))
+            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTime() * 1000))
                     .append('\n');
             final Date keyRotationTime = getKeyRotationTime();
             if (keyRotationTime != null)
-                builder.append("Key rotation time:      ").append(Utils.dateTimeFormat(keyRotationTime)).append('\n');
+                builder.append("Key rotation time:      ").append(TimeUtils.dateTimeFormat(keyRotationTime)).append('\n');
             builder.append(keyChainGroup.toString(includeLookahead, includePrivateKeys, aesKey));
 
             if (!watchedScripts.isEmpty()) {
@@ -3539,7 +3539,7 @@ public class Wallet extends BaseTaggableObject
             for (Script script : watchedScripts)
                 earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
             if (earliestTime == Long.MAX_VALUE)
-                return Utils.currentTimeSeconds();
+                return TimeUtils.currentTimeSeconds();
             return earliestTime;
         } finally {
             keyChainGroupLock.unlock();
@@ -5295,8 +5295,8 @@ public class Wallet extends BaseTaggableObject
      * </p>
      */
     public void setKeyRotationTime(long unixTimeSeconds) {
-        checkArgument(unixTimeSeconds <= Utils.currentTimeSeconds(), "Given time (%s) cannot be in the future.",
-                Utils.dateTimeFormat(unixTimeSeconds * 1000));
+        checkArgument(unixTimeSeconds <= TimeUtils.currentTimeSeconds(), "Given time (%s) cannot be in the future.",
+                TimeUtils.dateTimeFormat(unixTimeSeconds * 1000));
         vKeyRotationTimestamp = unixTimeSeconds;
         saveNow();
     }

@@ -16,7 +16,7 @@
 
 package org.bitcoinj.utils;
 
-import org.bitcoinj.core.Utils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,31 +30,31 @@ public class ExponentialBackoffTest {
 
     @Before
     public void setUp() {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         params = new ExponentialBackoff.Params();
         backoff = new ExponentialBackoff(params);
     }
 
     @Test
     public void testSuccess() {
-        assertEquals(Utils.currentTimeMillis(), backoff.getRetryTime());
+        assertEquals(TimeUtils.currentTimeMillis(), backoff.getRetryTime());
 
         backoff.trackFailure();
         backoff.trackFailure();
         backoff.trackSuccess();
 
-        assertEquals(Utils.currentTimeMillis(), backoff.getRetryTime());
+        assertEquals(TimeUtils.currentTimeMillis(), backoff.getRetryTime());
     }
 
     @Test
     public void testFailure() {
-        assertEquals(Utils.currentTimeMillis(), backoff.getRetryTime());
+        assertEquals(TimeUtils.currentTimeMillis(), backoff.getRetryTime());
 
         backoff.trackFailure();
         backoff.trackFailure();
         backoff.trackFailure();
 
-        assertEquals(Utils.currentTimeMillis() + 121, backoff.getRetryTime());
+        assertEquals(TimeUtils.currentTimeMillis() + 121, backoff.getRetryTime());
     }
 
     @Test

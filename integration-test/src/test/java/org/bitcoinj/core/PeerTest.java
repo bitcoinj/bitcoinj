@@ -22,6 +22,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.crypto.ECKey;
@@ -445,26 +446,26 @@ public class PeerTest extends TestWithNetworkConnections {
     public void fastCatchup() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         connect();
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         // Check that blocks before the fast catchup point are retrieved using getheaders, and after using getblocks.
         // This test is INCOMPLETE because it does not check we handle >2000 blocks correctly.
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        Utils.rollMockClock(60 * 10);  // 10 minutes later.
+        TimeUtils.rollMockClock(60 * 10);  // 10 minutes later.
         Block b2 = makeSolvedTestBlock(b1);
-        b2.setTime(Utils.currentTimeSeconds());
+        b2.setTime(TimeUtils.currentTimeSeconds());
         b2.solve();
-        Utils.rollMockClock(60 * 10);  // 10 minutes later.
+        TimeUtils.rollMockClock(60 * 10);  // 10 minutes later.
         Block b3 = makeSolvedTestBlock(b2);
-        b3.setTime(Utils.currentTimeSeconds());
+        b3.setTime(TimeUtils.currentTimeSeconds());
         b3.solve();
-        Utils.rollMockClock(60 * 10);
+        TimeUtils.rollMockClock(60 * 10);
         Block b4 = makeSolvedTestBlock(b3);
-        b4.setTime(Utils.currentTimeSeconds());
+        b4.setTime(TimeUtils.currentTimeSeconds());
         b4.solve();
 
         // Request headers until the last 2 blocks.
-        peer.setDownloadParameters(Utils.currentTimeSeconds() - (600*2) + 1, false);
+        peer.setDownloadParameters(TimeUtils.currentTimeSeconds() - (600*2) + 1, false);
         peer.startBlockChainDownload();
         GetHeadersMessage getheaders = (GetHeadersMessage) outbound(writeTarget);
         BlockLocator expectedLocator = new BlockLocator();
@@ -499,7 +500,7 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void pingPong() throws Exception {
         connect();
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         // No ping pong happened yet.
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
@@ -508,7 +509,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
         assertFalse(future.isDone());
         Ping pingMsg = (Ping) outbound(writeTarget);
-        Utils.rollMockClock(5);
+        TimeUtils.rollMockClock(5);
         // The pong is returned.
         inbound(writeTarget, new Pong(pingMsg.getNonce()));
         pingAndWait(writeTarget);
@@ -520,7 +521,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Do it again and make sure it affects the average.
         future = peer.ping();
         pingMsg = (Ping) outbound(writeTarget);
-        Utils.rollMockClock(50);
+        TimeUtils.rollMockClock(50);
         inbound(writeTarget, new Pong(pingMsg.getNonce()));
         elapsed = future.get();
         assertEquals(elapsed, peer.getLastPingTime());

@@ -23,6 +23,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.ECKey;
@@ -140,7 +141,7 @@ public class Block extends Message {
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
         difficultyTarget = 0x1d07fff8L;
-        time = Utils.currentTimeSeconds();
+        time = TimeUtils.currentTimeSeconds();
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
         length = HEADER_SIZE;
@@ -516,7 +517,7 @@ public class Block extends Message {
             s.append(" (").append(bips).append(')');
         s.append('\n');
         s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
-        s.append("   time: ").append(time).append(" (").append(Utils.dateTimeFormat(time * 1000)).append(")\n");
+        s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time * 1000)).append(")\n");
         s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
         if (transactions != null && transactions.size() > 0) {
@@ -593,11 +594,11 @@ public class Block extends Message {
     }
 
     private void checkTimestamp() throws VerificationException {
-        final long allowedTime = Utils.currentTimeSeconds() + ALLOWED_TIME_DRIFT;
+        final long allowedTime = TimeUtils.currentTimeSeconds() + ALLOWED_TIME_DRIFT;
         if (time > allowedTime)
             throw new VerificationException(String.format(Locale.US,
-                    "Block too far in future: %s (%d) vs allowed %s (%d)", Utils.dateTimeFormat(time * 1000), time,
-                    Utils.dateTimeFormat(allowedTime * 1000), allowedTime));
+                    "Block too far in future: %s (%d) vs allowed %s (%d)", TimeUtils.dateTimeFormat(time * 1000), time,
+                    TimeUtils.dateTimeFormat(allowedTime * 1000), allowedTime));
     }
 
     private void checkSigOps() throws VerificationException {
@@ -1064,7 +1065,7 @@ public class Block extends Message {
     @VisibleForTesting
     public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
-                               Utils.currentTimeSeconds(), pubKey, coinbaseValue, height);
+                               TimeUtils.currentTimeSeconds(), pubKey, coinbaseValue, height);
     }
 
     /**
@@ -1074,7 +1075,7 @@ public class Block extends Message {
     @VisibleForTesting
     Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
-                               Utils.currentTimeSeconds(), pubKey, FIFTY_COINS, height);
+                               TimeUtils.currentTimeSeconds(), pubKey, FIFTY_COINS, height);
     }
 
     @VisibleForTesting

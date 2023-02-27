@@ -24,10 +24,10 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.X509Utils;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.protocols.payments.PaymentProtocol.Output;
@@ -101,7 +101,7 @@ public class PaymentProtocolTest {
 
     private Protos.PaymentRequest minimalPaymentRequest() {
         Protos.PaymentDetails.Builder paymentDetails = Protos.PaymentDetails.newBuilder();
-        paymentDetails.setTime(Utils.currentTimeSeconds());
+        paymentDetails.setTime(TimeUtils.currentTimeSeconds());
         Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
         paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());
         return paymentRequest.build();

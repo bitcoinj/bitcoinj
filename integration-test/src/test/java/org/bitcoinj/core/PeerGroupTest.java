@@ -23,6 +23,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
 import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
@@ -428,7 +429,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Check the fast catchup time was initialized to something around the current runtime minus a week.
         // The wallet was already added to the peer in setup.
         final int WEEK = 86400 * 7;
-        final long now = Utils.currentTimeSeconds();
+        final long now = TimeUtils.currentTimeSeconds();
         peerGroup.start();
         assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
         Wallet w2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);

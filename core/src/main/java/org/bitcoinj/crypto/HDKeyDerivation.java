@@ -16,8 +16,8 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.core.Utils;
 import org.bouncycastle.math.ec.ECPoint;
 
 import java.math.BigInteger;
@@ -73,7 +73,7 @@ public final class HDKeyDerivation {
         Arrays.fill(il, (byte)0);
         Arrays.fill(ir, (byte)0);
         // Child deterministic keys will chain up to their parents to find the keys.
-        masterPrivKey.setCreationTimeSeconds(Utils.currentTimeSeconds());
+        masterPrivKey.setCreationTimeSeconds(TimeUtils.currentTimeSeconds());
         return masterPrivKey;
     }
 

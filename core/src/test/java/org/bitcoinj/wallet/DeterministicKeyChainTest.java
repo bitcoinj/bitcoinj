@@ -21,12 +21,12 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDKeyDerivation;
@@ -400,7 +400,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void watchingChain() throws UnreadableWalletException {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -439,7 +439,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void watchingChainArbitraryPath() throws UnreadableWalletException {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         DeterministicKey key1 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -476,7 +476,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void watchingChainAccountOne() throws UnreadableWalletException {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         final HDPath accountOne = HDPath.M(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .seed(chain.getSeed()).build();
@@ -519,7 +519,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void watchingSegwitChain() throws UnreadableWalletException {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         DeterministicKey key1 = segwitChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = segwitChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = segwitChain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -561,7 +561,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void spendingChain() throws UnreadableWalletException {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         DeterministicKey key1 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
@@ -600,7 +600,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void spendingChainAccountTwo() throws UnreadableWalletException {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         final long secs = 1389353062L;
         final HDPath accountTwo = HDPath.M(new ChildNumber(2, true));
         chain = DeterministicKeyChain.builder().accountPath(accountTwo).entropy(ENTROPY, secs).build();
@@ -628,7 +628,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void masterKeyAccount() throws UnreadableWalletException {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         long secs = 1389353062L;
         DeterministicKey firstReceiveKey = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicKey secondReceiveKey = bip44chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);

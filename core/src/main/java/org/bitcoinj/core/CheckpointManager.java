@@ -21,6 +21,7 @@ import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
@@ -147,7 +148,7 @@ public class CheckpointManager {
             }
             Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
             log.info("Read {} checkpoints up to time {}, hash is {}", checkpoints.size(),
-                    Utils.dateTimeFormat(checkpoints.lastEntry().getKey() * 1000), dataHash);
+                    TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey() * 1000), dataHash);
             return dataHash;
         } catch (ProtocolException e) {
             throw new IOException(e);
@@ -184,7 +185,7 @@ public class CheckpointManager {
             }
             HashCode hash = hasher.hash();
             log.info("Read {} checkpoints up to time {}, hash is {}", checkpoints.size(),
-                    Utils.dateTimeFormat(checkpoints.lastEntry().getKey() * 1000), hash);
+                    TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey() * 1000), hash);
             return Sha256Hash.wrap(hash.asBytes());
         }
     }
@@ -233,7 +234,7 @@ public class CheckpointManager {
 
         checkArgument(timeSecs > 0);
         log.info("Attempting to initialize a new block store with a checkpoint for time {} ({})", timeSecs,
-                Utils.dateTimeFormat(timeSecs * 1000));
+                TimeUtils.dateTimeFormat(timeSecs * 1000));
 
         BufferedInputStream stream = new BufferedInputStream(checkpoints);
         CheckpointManager manager = new CheckpointManager(params, stream);

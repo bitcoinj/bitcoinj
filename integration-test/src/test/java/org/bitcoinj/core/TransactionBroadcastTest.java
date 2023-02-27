@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
@@ -67,7 +68,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Override
     @Before
     public void setUp() throws Exception {
-        Utils.setMockClock(); // Use mock clock
+        TimeUtils.setMockClock(); // Use mock clock
         super.setUp();
         // Fix the random permutation that TransactionBroadcast uses to shuffle the peers.
         TransactionBroadcast.random = new Random(0);

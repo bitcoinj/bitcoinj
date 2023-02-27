@@ -19,6 +19,7 @@ package org.bitcoinj.tools;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
@@ -138,13 +139,13 @@ public class BuildCheckpoints implements Callable<Integer> {
         peerGroup.setFastCatchupTimeSecs(now);
 
         final long timeAgo = now - (86400 * days);
-        System.out.println("Checkpointing up to " + Utils.dateTimeFormat(timeAgo * 1000));
+        System.out.println("Checkpointing up to " + TimeUtils.dateTimeFormat(timeAgo * 1000));
 
         chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
             int height = block.getHeight();
             if (height % params.getInterval() == 0 && block.getHeader().getTimeSeconds() <= timeAgo) {
                 System.out.println(String.format("Checkpointing block %s at height %d, time %s",
-                        block.getHeader().getHash(), block.getHeight(), Utils.dateTimeFormat(block.getHeader().getTime())));
+                        block.getHeader().getHash(), block.getHeight(), TimeUtils.dateTimeFormat(block.getHeader().getTime())));
                 checkpoints.put(height, block);
             }
         });

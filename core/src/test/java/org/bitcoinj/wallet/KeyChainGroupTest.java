@@ -18,11 +18,11 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
@@ -66,7 +66,7 @@ public class KeyChainGroupTest {
     @Before
     public void setup() {
         BriefLogFormatter.init();
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE).fromRandom(ScriptType.P2PKH)
                 .build();
         group.getActiveKeyChain();  // Force create a chain.
@@ -256,12 +256,12 @@ public class KeyChainGroupTest {
     }
 
     private void encryption(boolean withImported) {
-        Utils.rollMockClock(0);
-        long now = Utils.currentTimeSeconds();
+        TimeUtils.rollMockClock(0);
+        long now = TimeUtils.currentTimeSeconds();
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(now, group.getEarliestKeyCreationTime());
-        Utils.rollMockClock(-86400);
-        long yesterday = Utils.currentTimeSeconds();
+        TimeUtils.rollMockClock(-86400);
+        long yesterday = TimeUtils.currentTimeSeconds();
         ECKey b = new ECKey();
 
         assertFalse(group.isEncrypted());
@@ -400,12 +400,12 @@ public class KeyChainGroupTest {
 
     @Test
     public void earliestKeyTime() {
-        long now = Utils.currentTimeSeconds();   // mock
+        long now = TimeUtils.currentTimeSeconds();   // mock
         long yesterday = now - 86400;
         assertEquals(now, group.getEarliestKeyCreationTime());
-        Utils.rollMockClock(10000);
+        TimeUtils.rollMockClock(10000);
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        Utils.rollMockClock(10000);
+        TimeUtils.rollMockClock(10000);
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // Check that all keys are assumed to be created at the same instant the seed is.
         assertEquals(now, group.getEarliestKeyCreationTime());

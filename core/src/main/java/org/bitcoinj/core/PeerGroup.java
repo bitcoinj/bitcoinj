@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.PlatformUtils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlockchainDownloadEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
@@ -537,7 +538,7 @@ public class PeerGroup implements TransactionBroadcaster {
             if (!vRunning) return;
 
             boolean doDiscovery = false;
-            long now = Utils.currentTimeMillis();
+            long now = TimeUtils.currentTimeMillis();
             lock.lock();
             try {
                 // First run: try and use a local node if there is one, for the additional security it can provide.
@@ -1477,7 +1478,7 @@ public class PeerGroup implements TransactionBroadcaster {
         checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
-        ver.time = Utils.currentTimeSeconds();
+        ver.time = TimeUtils.currentTimeSeconds();
         ver.receivingAddr = address;
         ver.receivingAddr.setParent(ver);
 

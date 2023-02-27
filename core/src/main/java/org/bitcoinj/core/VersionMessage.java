@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.net.InetAddresses;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 
@@ -108,7 +109,7 @@ public class VersionMessage extends Message {
         super(params);
         clientVersion = serializer.getProtocolVersion();
         localServices = 0;
-        time = Utils.currentTimeSeconds();
+        time = TimeUtils.currentTimeSeconds();
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");

@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
@@ -101,7 +102,7 @@ public class PeerAddress extends ChildMessage {
         this.port = port;
         setSerializer(serializer);
         this.services = services;
-        this.time = Utils.currentTimeSeconds();
+        this.time = TimeUtils.currentTimeSeconds();
     }
 
     /**
@@ -142,7 +143,7 @@ public class PeerAddress extends ChildMessage {
         this.hostname = hostname;
         this.port = port;
         this.services = BigInteger.ZERO;
-        this.time = Utils.currentTimeSeconds();
+        this.time = TimeUtils.currentTimeSeconds();
     }
 
     public static PeerAddress localhost(NetworkParameters params) {

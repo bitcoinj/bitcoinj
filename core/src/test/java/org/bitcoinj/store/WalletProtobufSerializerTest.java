@@ -21,6 +21,7 @@ import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Block;
@@ -37,7 +38,6 @@ import org.bitcoinj.core.Transaction.Purpose;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -96,7 +96,7 @@ public class WalletProtobufSerializerTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Utils.resetMocking();
+        TimeUtils.resetMocking();
         Context.propagate(new Context());
     }
 

@@ -21,12 +21,12 @@ import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.utils.StreamUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicHierarchy;
@@ -1439,10 +1439,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     builder.append("Seed is encrypted\n");
             }
             builder.append("Seed birthday:     ").append(seed.getCreationTimeSeconds()).append("  [")
-                    .append(Utils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)).append("]\n");
+                    .append(TimeUtils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)).append("]\n");
         } else {
             builder.append("Key birthday:      ").append(watchingKey.getCreationTimeSeconds()).append("  [")
-                    .append(Utils.dateTimeFormat(watchingKey.getCreationTimeSeconds() * 1000)).append("]\n");
+                    .append(TimeUtils.dateTimeFormat(watchingKey.getCreationTimeSeconds() * 1000)).append("]\n");
         }
         builder.append("Ouput script type: ").append(outputScriptType).append('\n');
         builder.append("Key to watch:      ").append(watchingKey.serializePubB58(params.network(), outputScriptType))

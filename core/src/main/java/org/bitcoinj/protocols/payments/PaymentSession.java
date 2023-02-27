@@ -22,10 +22,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol.PkiVerificationData;
@@ -273,7 +273,7 @@ public class PaymentSession {
      * This should always be called before attempting to call sendPayment.
      */
     public boolean isExpired() {
-        return paymentDetails.hasExpires() && Utils.currentTimeSeconds() > paymentDetails.getExpires();
+        return paymentDetails.hasExpires() && TimeUtils.currentTimeSeconds() > paymentDetails.getExpires();
     }
 
     /**

@@ -20,6 +20,7 @@ package org.bitcoinj.wallet;
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
@@ -39,7 +40,6 @@ import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
-import org.bitcoinj.core.Utils;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
@@ -1440,9 +1440,9 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void transactionsList() throws Exception {
         // Check the wallet can give us an ordered list of all received transactions.
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         Transaction tx1 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
-        Utils.rollMockClock(60 * 10);
+        TimeUtils.rollMockClock(60 * 10);
         Transaction tx2 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(0, 5));
         // Check we got them back in order.
         List<Transaction> transactions = wallet.getTransactionsByTime();
@@ -1455,7 +1455,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(tx2,  transactions.get(0));
 
         // Create a spend five minutes later.
-        Utils.rollMockClock(60 * 5);
+        TimeUtils.rollMockClock(60 * 5);
         Transaction tx3 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 5));
         // Does not appear in list yet.
         assertEquals(2, wallet.getTransactionsByTime().size());
@@ -1477,22 +1477,22 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void keyCreationTime() {
-        Utils.setMockClock();
-        long now = Utils.currentTimeSeconds();
+        TimeUtils.setMockClock();
+        long now = TimeUtils.currentTimeSeconds();
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
-        Utils.rollMockClock(60);
+        TimeUtils.rollMockClock(60);
         wallet.freshReceiveKey();
         assertEquals(now, wallet.getEarliestKeyCreationTime());
     }
 
     @Test
     public void scriptCreationTime() {
-        Utils.setMockClock();
-        long now = Utils.currentTimeSeconds();
+        TimeUtils.setMockClock();
+        long now = TimeUtils.currentTimeSeconds();
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
-        Utils.rollMockClock(-120);
+        TimeUtils.rollMockClock(-120);
         wallet.addWatchedAddress(OTHER_ADDRESS);
         wallet.freshReceiveKey();
         assertEquals(now - 120, wallet.getEarliestKeyCreationTime());
@@ -2894,27 +2894,27 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void keyRotationRandom() throws Exception {
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         // Start with an empty wallet (no HD chain).
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         // Watch out for wallet-initiated broadcasts.
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
         // Send three cents to two different random keys, then add a key and mark the initial keys as compromised.
         ECKey key1 = new ECKey();
-        key1.setCreationTimeSeconds(Utils.currentTimeSeconds() - (86400 * 2));
+        key1.setCreationTimeSeconds(TimeUtils.currentTimeSeconds() - (86400 * 2));
         ECKey key2 = new ECKey();
-        key2.setCreationTimeSeconds(Utils.currentTimeSeconds() - 86400);
+        key2.setCreationTimeSeconds(TimeUtils.currentTimeSeconds() - 86400);
         wallet.importKey(key1);
         wallet.importKey(key2);
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
-        Date compromiseTime = Utils.now();
+        Date compromiseTime = TimeUtils.now();
         assertEquals(0, broadcaster.size());
         assertFalse(wallet.isKeyRotating(key1));
 
         // We got compromised!
-        Utils.rollMockClock(1);
+        TimeUtils.rollMockClock(1);
         wallet.setKeyRotationTime(compromiseTime);
         assertTrue(wallet.isKeyRotating(key1));
         wallet.doMaintenance(null, true);
@@ -2999,7 +2999,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyRotationHD() throws Exception {
         // Test that if we rotate an HD chain, a new one is created and all arrivals on the old keys are moved.
-        Utils.setMockClock();
+        TimeUtils.setMockClock();
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
@@ -3008,8 +3008,8 @@ public class WalletTest extends TestWithWallet {
         DeterministicKey watchKey1 = wallet.getWatchingKey();
 
         // A day later, we get compromised.
-        Utils.rollMockClock(86400);
-        wallet.setKeyRotationTime(Utils.currentTimeSeconds());
+        TimeUtils.rollMockClock(86400);
+        wallet.setKeyRotationTime(TimeUtils.currentTimeSeconds());
 
         List<Transaction> txns = wallet.doMaintenance(null, false).get();
         assertEquals(1, txns.size());
@@ -3027,16 +3027,16 @@ public class WalletTest extends TestWithWallet {
         // Send lots of small coins and check the fee is correct.
         ECKey key = wallet.freshReceiveKey();
         Address address = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        Utils.setMockClock();
-        Utils.rollMockClock(86400);
+        TimeUtils.setMockClock();
+        TimeUtils.rollMockClock(86400);
         for (int i = 0; i < 800; i++) {
             sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, address);
         }
 
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
 
-        Date compromise = Utils.now();
-        Utils.rollMockClock(86400);
+        Date compromise = TimeUtils.now();
+        TimeUtils.rollMockClock(86400);
         wallet.freshReceiveKey();
         wallet.setKeyRotationTime(compromise);
         wallet.doMaintenance(null, true);
