@@ -186,7 +186,7 @@ public class BitcoinURI {
         }
 
         // Attempt to parse the rest of the URI parameters.
-        parseParameters(network, addressToken, nameValuePairTokens);
+        parseParameters(network, nameValuePairTokens);
 
         if (!addressToken.isEmpty()) {
             // Attempt to parse the addressToken as a Bitcoin address for this network
@@ -208,7 +208,7 @@ public class BitcoinURI {
      * @param nameValuePairTokens The tokens representing the name value pairs (assumed to be
      *                            separated by '=' e.g. 'amount=0.2')
      */
-    private void parseParameters(Network network, String addressToken, String[] nameValuePairTokens) throws BitcoinURIParseException {
+    private void parseParameters(Network network, String[] nameValuePairTokens) throws BitcoinURIParseException {
         // Attempt to decode the rest of the tokens into a parameter map.
         for (String nameValuePairToken : nameValuePairTokens) {
             final int sepIndex = nameValuePairToken.indexOf('=');
