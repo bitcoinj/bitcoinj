@@ -17,13 +17,12 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.Base58;
-import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
+
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.crypto.DumpedPrivateKey;
-import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -34,16 +33,14 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
 public class DumpedPrivateKeyTest {
-    private static final NetworkParameters MAINNET = MainNetParams.get();
-
     @Test
     public void checkNetwork() {
-        DumpedPrivateKey.fromBase58(BitcoinNetwork.MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
+        DumpedPrivateKey.fromBase58(MAINNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
     @Test(expected = AddressFormatException.WrongNetwork.class)
     public void checkNetworkWrong() {
-        DumpedPrivateKey.fromBase58(BitcoinNetwork.TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
+        DumpedPrivateKey.fromBase58(TESTNET, "5HtUCLMFWNueqN9unpgX2DzjMg6SDNZyKRb8s3LJgpFg5ubuMrk");
     }
 
     @Test
@@ -74,13 +71,13 @@ public class DumpedPrivateKeyTest {
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBase58_tooShort() {
-        String base58 = Base58.encodeChecked(MAINNET.getDumpedPrivateKeyHeader(), new byte[31]);
+        String base58 = Base58.encodeChecked(NetworkParameters.of(MAINNET).getDumpedPrivateKeyHeader(), new byte[31]);
         DumpedPrivateKey.fromBase58((Network) null, base58);
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBase58_tooLong() {
-        String base58 = Base58.encodeChecked(MAINNET.getDumpedPrivateKeyHeader(), new byte[34]);
+        String base58 = Base58.encodeChecked(NetworkParameters.of(MAINNET).getDumpedPrivateKeyHeader(), new byte[34]);
         DumpedPrivateKey.fromBase58((Network) null, base58);
     }
 

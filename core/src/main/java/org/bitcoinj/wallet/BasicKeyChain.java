@@ -657,7 +657,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         List<ECKey> keys = getKeys();
         Collections.sort(keys, ECKey.AGE_COMPARATOR);
         for (ECKey key : keys)
-            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params, null, "imported");
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), null, "imported");
         return builder.toString();
     }
 }

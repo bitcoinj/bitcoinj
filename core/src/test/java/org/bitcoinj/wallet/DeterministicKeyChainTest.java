@@ -18,7 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
-import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.core.BloomFilter;
@@ -31,8 +31,6 @@ import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
@@ -52,6 +50,9 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -64,8 +65,6 @@ public class DeterministicKeyChainTest {
     private DeterministicKeyChain segwitChain;
     private DeterministicKeyChain bip44chain;
     private final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
-    private static final NetworkParameters TESTNET = TestNet3Params.get();
-    private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final HDPath BIP44_COIN_1_ACCOUNT_ZERO_PATH = HDPath.M(new ChildNumber(44, true),
             new ChildNumber(1, true), ChildNumber.ZERO_HARDENED);
 
@@ -95,9 +94,9 @@ public class DeterministicKeyChainTest {
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key2.isPubKeyOnly());
 
-        final Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
-        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
-        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
+        final Address address = LegacyAddress.fromBase58(TESTNET, "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
+        assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
@@ -106,7 +105,7 @@ public class DeterministicKeyChainTest {
 
         ECKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertFalse(key3.isPubKeyOnly());
-        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
+        assertEquals("mqumHgVDqNzuXNrszBmi7A2UpmwaPMx4HQ", key3.toAddress(ScriptType.P2PKH, TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
         assertFalse(key3.isPubKeyOnly());
     }
@@ -128,16 +127,16 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
+        final Address address = LegacyAddress.fromBase58(TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
     }
 
@@ -149,8 +148,8 @@ public class DeterministicKeyChainTest {
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
-        assertEquals(address, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        final Address address = LegacyAddress.fromBase58(TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
 
         DeterministicKey watching = chain1.getWatchingKey();
 
@@ -159,14 +158,14 @@ public class DeterministicKeyChainTest {
         assertEquals(accountOne, chain1.getAccountPath());
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
+        assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
 
         ECKey key3 = chain1.getKey(KeyChain.KeyPurpose.CHANGE);
-        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET).toString());
+        assertEquals("mpjRhk13rvV7vmnszcUQVYVQzy4HLTPTQU", key3.toAddress(ScriptType.P2PKH, TESTNET).toString());
         key3.sign(Sha256Hash.ZERO_HASH);
 
         assertEquals(watching, chain1.getWatchingKey());
@@ -568,11 +567,11 @@ public class DeterministicKeyChainTest {
         DeterministicKey key3 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         DeterministicKey key4 = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
-        NetworkParameters params = MainNetParams.get();
+        Network network = MAINNET;
         DeterministicKey watchingKey = chain.getWatchingKey();
-        final String prv58 = watchingKey.serializePrivB58(params);
+        final String prv58 = watchingKey.serializePrivB58(network);
         assertEquals("xprv9vL4k9HYXonmvqGSUrRM6wGEmx3ruGTXi4JxHRiwEvwDwYmTocPbQNpjN89gpqPrFofmfvALwgnNFBCH2grse1YDf8ERAwgdvbjRtoMfsbV", prv58);
-        watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
+        watchingKey = DeterministicKey.deserializeB58(null, prv58, network);
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.builder().spend(watchingKey).outputScriptType(chain.getOutputScriptType())
                 .build();
@@ -610,12 +609,12 @@ public class DeterministicKeyChainTest {
         DeterministicKey firstChangeKey = chain.getKey(KeyChain.KeyPurpose.CHANGE);
         DeterministicKey secondChangeKey = chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
-        NetworkParameters params = MainNetParams.get();
+        Network network = MAINNET;
         DeterministicKey watchingKey = chain.getWatchingKey();
 
-        final String prv58 = watchingKey.serializePrivB58(params);
+        final String prv58 = watchingKey.serializePrivB58(network);
         assertEquals("xprv9vL4k9HYXonmzR7UC1ngJ3hTjxkmjLLUo3RexSfUGSWcACHzghWBLJAwW6xzs59XeFizQxFQWtscoTfrF9PSXrUgAtBgr13Nuojax8xTBRz", prv58);
-        watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
+        watchingKey = DeterministicKey.deserializeB58(null, prv58, network);
         watchingKey.setCreationTimeSeconds(secs);
         chain = DeterministicKeyChain.builder().spend(watchingKey).outputScriptType(chain.getOutputScriptType())
                 .build();
@@ -636,14 +635,14 @@ public class DeterministicKeyChainTest {
         DeterministicKey firstChangeKey = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
         DeterministicKey secondChangeKey = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
-        NetworkParameters params = MainNetParams.get();
+        Network network = MAINNET;
         DeterministicKey watchingKey = bip44chain.getWatchingKey(); //m/44'/1'/0'
         DeterministicKey coinLevelKey = bip44chain.getWatchingKey().getParent(); //m/44'/1'
 
         //Simulate Wallet.fromSpendingKeyB58(PARAMS, prv58, secs)
-        final String prv58 = watchingKey.serializePrivB58(params);
+        final String prv58 = watchingKey.serializePrivB58(network);
         assertEquals("xprv9yYQhynAmWWuz62PScx5Q2frBET2F1raaXna5A2E9Lj8XWgmKBL7S98Yand8F736j9UCTNWQeiB4yL5pLZP7JDY2tY8eszGQkiKDwBkezeS", prv58);
-        watchingKey = DeterministicKey.deserializeB58(null, prv58, params);
+        watchingKey = DeterministicKey.deserializeB58(null, prv58, network);
         watchingKey.setCreationTimeSeconds(secs);
         DeterministicKeyChain fromPrivBase58Chain = DeterministicKeyChain.builder().spend(watchingKey)
                 .outputScriptType(bip44chain.getOutputScriptType()).build();
@@ -657,7 +656,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(coinLevelKey, new ChildNumber(0, true));
         accountKey = accountKey.dropParent();
         accountKey.setCreationTimeSeconds(watchingKey.getCreationTimeSeconds());
-        KeyChainGroup group = KeyChainGroup.builder(params).addChain(DeterministicKeyChain.builder().spend(accountKey)
+        KeyChainGroup group = KeyChainGroup.builder(NetworkParameters.of(network)).addChain(DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(bip44chain.getOutputScriptType()).build()).build();
         DeterministicKeyChain fromMasterKeyChain = group.getActiveKeyChain();
         assertEquals(BIP44_COIN_1_ACCOUNT_ZERO_PATH, fromMasterKeyChain.getAccountPath());

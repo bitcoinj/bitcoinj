@@ -351,7 +351,7 @@ public class WalletProtobufSerializerTest {
         Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET, xpub, creationTimeSeconds);
         Wallet wallet2 = roundTrip(wallet);
         Wallet wallet3 = roundTrip(wallet2);
-        assertEquals(xpub, wallet.getWatchingKey().serializePubB58(TESTNET));
+        assertEquals(xpub, wallet.getWatchingKey().serializePubB58(TESTNET.network()));
         assertEquals(creationTimeSeconds, wallet.getWatchingKey().getCreationTimeSeconds());
         assertEquals(creationTimeSeconds, wallet2.getWatchingKey().getCreationTimeSeconds());
         assertEquals(creationTimeSeconds, wallet3.getWatchingKey().getCreationTimeSeconds());
@@ -365,7 +365,7 @@ public class WalletProtobufSerializerTest {
         // create 2-of-2 married wallet
         myWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         final DeterministicKeyChain partnerChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58(TESTNET), TESTNET);
+        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58(TESTNET.network()), TESTNET.network());
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())
                 .followingKeys(partnerKey)

@@ -18,8 +18,8 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.Base58;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.MainNetParams;
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,6 @@ import static org.junit.Assert.assertEquals;
  */
 public class BIP32Test {
     private static final Logger log = LoggerFactory.getLogger(BIP32Test.class);
-    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     HDWTestVector[] tvs = {
             new HDWTestVector(
