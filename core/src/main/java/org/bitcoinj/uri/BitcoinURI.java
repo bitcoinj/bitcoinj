@@ -191,7 +191,7 @@ public class BitcoinURI {
         if (!addressToken.isEmpty()) {
             // Attempt to parse the addressToken as a Bitcoin address for this network
             try {
-                Address address = new DefaultAddressParser().parseAddress(addressToken, (BitcoinNetwork) network);
+                Address address = new DefaultAddressParser().parseAddress(addressToken, network);
                 putWithValidation(FIELD_ADDRESS, address);
             } catch (final AddressFormatException e) {
                 throw new BitcoinURIParseException("Bad address", e);
