@@ -512,7 +512,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Serialize public key to Base58
+     * Serialize private key to Base58
      * <p>
      * outputScriptType should not be used in generating "xprv" format. (and "zprv", "vprv", etc. should not be used)
      * @param params Network parameters indicating which network to serialize key for
