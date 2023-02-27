@@ -78,7 +78,7 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
     @Deprecated
     public static DumpedPrivateKey fromBase58(@Nullable NetworkParameters params, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
-        return fromBase58(params.network(), base58);
+        return fromBase58(params == null ? null : params.network(), base58);
     }
 
     private DumpedPrivateKey(Network network, byte[] bytes) {
