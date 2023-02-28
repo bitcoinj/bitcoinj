@@ -16,7 +16,6 @@
 
 package org.bitcoinj.base;
 
-import com.google.common.math.LongMath;
 import org.bitcoinj.base.utils.MonetaryFormat;
 
 import java.math.BigDecimal;
@@ -50,7 +49,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
     /**
      * The number of satoshis equal to one bitcoin.
      */
-    private static final long COIN_VALUE = LongMath.pow(10, SMALLEST_UNIT_EXPONENT);
+    private static final long COIN_VALUE = 100_000_000;
 
     /**
      * Zero Bitcoins.
