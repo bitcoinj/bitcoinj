@@ -69,6 +69,9 @@ public class KeyTimeCoinSelector implements CoinSelector {
                     controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromP2PK(scriptPubKey));
                 } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
                     controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), ScriptType.P2PKH);
+                    if (controllingKey == null) {
+                        controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), ScriptType.P2WPKH);
+                    }
                 } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
                     controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), ScriptType.P2WPKH);
                 } else {

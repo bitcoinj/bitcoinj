@@ -214,7 +214,7 @@ public class TransactionOutput extends ChildMessage {
         // 294 satoshis at the default rate of 3000 sat/kB.
         long size = this.unsafeBitcoinSerialize().length;
         final Script script = getScriptPubKey();
-        if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script))
+        if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script) || ScriptPattern.isSentToMultisig(script))
             size += 32 + 4 + 1 + 107 + 4; // 148
         else if (ScriptPattern.isP2WH(script))
             size += 32 + 4 + 1 + (107 / 4) + 4; // 68
@@ -310,7 +310,8 @@ public class TransactionOutput extends ChildMessage {
                 return transactionBag.isPayToScriptHashMine(ScriptPattern.extractHashFromP2SH(script));
             else if (ScriptPattern.isP2PKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
-                        ScriptType.P2PKH);
+                        ScriptType.P2PKH) || transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2PKH(script),
+                        ScriptType.P2WPKH);
             else if (ScriptPattern.isP2WPKH(script))
                 return transactionBag.isPubKeyHashMine(ScriptPattern.extractHashFromP2WH(script),
                         ScriptType.P2WPKH);
