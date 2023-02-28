@@ -17,7 +17,6 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.math.LongMath;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Transaction;
@@ -58,7 +57,7 @@ public class DefaultCoinSelector implements CoinSelector {
             // Only pick chain-included transactions, or transactions that are ours and pending.
             if (!shouldSelect(output.getParentTransaction())) continue;
             selected.add(output);
-            total = LongMath.checkedAdd(total, output.getValue().value);
+            total = Math.addExact(total, output.getValue().value);
         }
         // Total may be lower than target here, if the given candidates were insufficient to create to requested
         // transaction.

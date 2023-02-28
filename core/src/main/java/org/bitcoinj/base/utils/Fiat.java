@@ -16,7 +16,6 @@
 
 package org.bitcoinj.base.utils;
 
-import com.google.common.math.LongMath;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Monetary;
 
@@ -107,16 +106,16 @@ public final class Fiat implements Monetary, Comparable<Fiat> {
 
     public Fiat add(final Fiat value) {
         checkArgument(value.currencyCode.equals(currencyCode));
-        return new Fiat(currencyCode, LongMath.checkedAdd(this.value, value.value));
+        return new Fiat(currencyCode, Math.addExact(this.value, value.value));
     }
 
     public Fiat subtract(final Fiat value) {
         checkArgument(value.currencyCode.equals(currencyCode));
-        return new Fiat(currencyCode, LongMath.checkedSubtract(this.value, value.value));
+        return new Fiat(currencyCode, Math.subtractExact(this.value, value.value));
     }
 
     public Fiat multiply(final long factor) {
-        return new Fiat(currencyCode, LongMath.checkedMultiply(this.value, factor));
+        return new Fiat(currencyCode, Math.multiplyExact(this.value, factor));
     }
 
     public Fiat divide(final long divisor) {

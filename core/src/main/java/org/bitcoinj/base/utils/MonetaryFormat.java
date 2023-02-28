@@ -29,7 +29,6 @@ import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.math.LongMath.checkedMultiply;
 import static com.google.common.math.LongMath.checkedPow;
 import static com.google.common.math.LongMath.divide;
 
@@ -367,7 +366,7 @@ public final class MonetaryFormat {
         long satoshis = Math.abs(monetary.getValue());
         int potentialDecimals = smallestUnitExponent - shift;
         long precisionDivisor = checkedPow(10, potentialDecimals - maxDecimals);
-        satoshis = checkedMultiply(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
+        satoshis = Math.multiplyExact(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
 
         // shifting
         long shiftDivisor = checkedPow(10, potentialDecimals);

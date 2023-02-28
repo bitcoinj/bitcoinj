@@ -217,7 +217,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
     }
 
     public Coin add(final Coin value) {
-        return Coin.valueOf(LongMath.checkedAdd(this.value, value.value));
+        return Coin.valueOf(Math.addExact(this.value, value.value));
     }
 
     /** Alias for add */
@@ -226,7 +226,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
     }
 
     public Coin subtract(final Coin value) {
-        return Coin.valueOf(LongMath.checkedSubtract(this.value, value.value));
+        return Coin.valueOf(Math.subtractExact(this.value, value.value));
     }
 
     /** Alias for subtract */
@@ -235,7 +235,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
     }
 
     public Coin multiply(final long factor) {
-        return Coin.valueOf(LongMath.checkedMultiply(this.value, factor));
+        return Coin.valueOf(Math.multiplyExact(this.value, factor));
     }
 
     /** Alias for multiply */
