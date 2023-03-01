@@ -17,6 +17,7 @@
 package org.bitcoinj.base.utils;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.internal.HexFormat;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,10 +31,26 @@ import static com.google.common.base.Preconditions.checkArgument;
  * from {@code org.bitcoinj.core.Utils}.
  */
 public class ByteUtils {
-    /** Hex encoding used throughout the framework. Use with HEX.encode(byte[]) or HEX.decode(CharSequence). */
+    /**
+     * Hex encoding used throughout the framework. Use with ByteUtils.formatHex(byte[]) or ByteUtils.parseHex(CharSequence).
+     * @deprecated Use {@link ByteUtils#hexFormat} or {@link ByteUtils#parseHex(String)} or other available
+     * options.
+     */
+    @Deprecated
     public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
     // 00000001, 00000010, 00000100, 00001000, ...
     private static final int[] bitMask = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+
+    // This should be functionally equivalent to a subset of JDK 17 HexFormat.of()
+    private static final HexFormat hexFormat = new HexFormat();
+
+    public static String formatHex(byte[] bytes) {
+        return hexFormat.formatHex(bytes);
+    }
+
+    public static byte[] parseHex(String string) {
+        return hexFormat.parseHex(string);
+    }
 
     /**
      * <p>

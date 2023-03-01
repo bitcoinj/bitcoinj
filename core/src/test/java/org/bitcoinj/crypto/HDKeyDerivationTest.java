@@ -50,7 +50,7 @@ public class HDKeyDerivationTest {
         assertFalse(parent.isEncrypted());
 
         DeterministicKey fromPrivate = HDKeyDerivation.deriveChildKeyFromPrivate(parent, CHILD_NUMBER);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPrivate.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPrivate.getChainCode()));
         assertEquals(EXPECTED_CHILD_PRIVATE_KEY, fromPrivate.getPrivateKeyAsHex());
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPrivate.getPublicKeyAsHex());
         assertFalse(fromPrivate.isPubKeyOnly());
@@ -58,7 +58,7 @@ public class HDKeyDerivationTest {
 
         DeterministicKey fromPublic = HDKeyDerivation.deriveChildKeyFromPublic(parent, CHILD_NUMBER,
                 PublicDeriveMode.NORMAL);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublic.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublic.getChainCode()));
         assertEquals(EXPECTED_CHILD_PRIVATE_KEY, fromPublic.getPrivateKeyAsHex());
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublic.getPublicKeyAsHex());
         assertFalse(fromPublic.isPubKeyOnly());
@@ -66,7 +66,7 @@ public class HDKeyDerivationTest {
 
         DeterministicKey fromPublicWithInversion = HDKeyDerivation.deriveChildKeyFromPublic(parent, CHILD_NUMBER,
                 PublicDeriveMode.WITH_INVERSION);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublicWithInversion.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublicWithInversion.getChainCode()));
         assertEquals(EXPECTED_CHILD_PRIVATE_KEY, fromPublicWithInversion.getPrivateKeyAsHex());
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublicWithInversion.getPublicKeyAsHex());
         assertFalse(fromPublicWithInversion.isPubKeyOnly());
@@ -89,14 +89,14 @@ public class HDKeyDerivationTest {
 
         DeterministicKey fromPublic = HDKeyDerivation.deriveChildKeyFromPublic(parent, CHILD_NUMBER,
                 PublicDeriveMode.NORMAL);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublic.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublic.getChainCode()));
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublic.getPublicKeyAsHex());
         assertTrue(fromPublic.isPubKeyOnly());
         assertFalse(fromPublic.isEncrypted());
 
         DeterministicKey fromPublicWithInversion = HDKeyDerivation.deriveChildKeyFromPublic(parent, CHILD_NUMBER,
                 PublicDeriveMode.WITH_INVERSION);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublicWithInversion.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublicWithInversion.getChainCode()));
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublicWithInversion.getPublicKeyAsHex());
         assertTrue(fromPublicWithInversion.isPubKeyOnly());
         assertFalse(fromPublicWithInversion.isEncrypted());
@@ -119,23 +119,23 @@ public class HDKeyDerivationTest {
 
         DeterministicKey fromPublic = HDKeyDerivation.deriveChildKeyFromPublic(parent, CHILD_NUMBER,
                 PublicDeriveMode.NORMAL);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublic.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublic.getChainCode()));
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublic.getPublicKeyAsHex());
         assertTrue(fromPublic.isPubKeyOnly());
         assertTrue(fromPublic.isEncrypted());
         fromPublic = fromPublic.decrypt(AES_KEY);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublic.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublic.getChainCode()));
         assertEquals(EXPECTED_CHILD_PRIVATE_KEY, fromPublic.getPrivateKeyAsHex());
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublic.getPublicKeyAsHex());
 
         DeterministicKey fromPublicWithInversion = HDKeyDerivation.deriveChildKeyFromPublic(parent, CHILD_NUMBER,
                 PublicDeriveMode.WITH_INVERSION);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublicWithInversion.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublicWithInversion.getChainCode()));
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublicWithInversion.getPublicKeyAsHex());
         assertTrue(fromPublicWithInversion.isPubKeyOnly());
         assertTrue(fromPublicWithInversion.isEncrypted());
         fromPublicWithInversion = fromPublicWithInversion.decrypt(AES_KEY);
-        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.HEX.encode(fromPublicWithInversion.getChainCode()));
+        assertEquals(EXPECTED_CHILD_CHAIN_CODE, ByteUtils.formatHex(fromPublicWithInversion.getChainCode()));
         assertEquals(EXPECTED_CHILD_PRIVATE_KEY, fromPublicWithInversion.getPrivateKeyAsHex());
         assertEquals(EXPECTED_CHILD_PUBLIC_KEY, fromPublicWithInversion.getPublicKeyAsHex());
     }

@@ -19,7 +19,7 @@ package org.bitcoinj.crypto;
 
 import org.junit.Test;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -114,12 +114,12 @@ public class HDUtilsTest {
     }
 
     private static byte[] getBytes(String[] hmacTestVectors, int i) {
-        return HEX.decode(hmacTestVectors[i]);
+        return ByteUtils.parseHex(hmacTestVectors[i]);
     }
 
     @Test
     public void testLongToByteArray() {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
-        assertEquals("00000402", HEX.encode(bytes));
+        assertEquals("00000402", ByteUtils.formatHex(bytes));
     }
 }

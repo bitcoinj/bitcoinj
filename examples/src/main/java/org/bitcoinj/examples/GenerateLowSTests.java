@@ -169,7 +169,7 @@ public class GenerateLowSTests {
                 // Data chunk
                 buf.append("0x")
                     .append(Integer.toString(chunk.opcode, 16)).append(" 0x")
-                    .append(ByteUtils.HEX.encode(chunk.data));
+                    .append(ByteUtils.formatHex(chunk.data));
             } else {
                 buf.append(chunk.toString());
             }

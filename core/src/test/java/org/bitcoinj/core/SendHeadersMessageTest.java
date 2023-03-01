@@ -16,15 +16,16 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.io.BaseEncoding;
 import org.bitcoinj.params.RegTestParams;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
 import static org.junit.Assert.assertTrue;
 
 public class SendHeadersMessageTest {
+    private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
     private static final NetworkParameters REGTEST = RegTestParams.get();
 
     @Test

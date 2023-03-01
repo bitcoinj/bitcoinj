@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 
 /**
  * A MnemonicCode object may be used to convert between binary seed values and
@@ -107,7 +107,7 @@ public class MnemonicCode {
         // If a wordListDigest is supplied check to make sure it matches.
         if (wordListDigest != null) {
             byte[] digest = md.digest();
-            String hexdigest = HEX.encode(digest);
+            String hexdigest = ByteUtils.formatHex(digest);
             if (!hexdigest.equals(wordListDigest))
                 throw new IllegalArgumentException("wordlist digest mismatch");
         }

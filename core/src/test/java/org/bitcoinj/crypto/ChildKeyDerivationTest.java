@@ -25,7 +25,7 @@ import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -61,9 +61,9 @@ public class ChildKeyDerivationTest {
         assertEquals(0, ckdTestVectors.length % 3);
 
         for(int i = 0; i < ckdTestVectors.length / 3; i++) {
-            byte[] priv  = HEX.decode(ckdTestVectors[3 * i]);
-            byte[] pub   = HEX.decode(ckdTestVectors[3 * i + 1]);
-            byte[] chain = HEX.decode(ckdTestVectors[3 * i + 2]); // chain code
+            byte[] priv  = ByteUtils.parseHex(ckdTestVectors[3 * i]);
+            byte[] pub   = ByteUtils.parseHex(ckdTestVectors[3 * i + 1]);
+            byte[] chain = ByteUtils.parseHex(ckdTestVectors[3 * i + 2]); // chain code
 
             //////////////////////////////////////////////////////////////////////////
             // Start with an extended PRIVATE key
@@ -317,6 +317,6 @@ public class ChildKeyDerivationTest {
     }
 
     private static String hexEncodePub(DeterministicKey pubKey) {
-        return HEX.encode(pubKey.getPubKey());
+        return ByteUtils.formatHex(pubKey.getPubKey());
     }
 }

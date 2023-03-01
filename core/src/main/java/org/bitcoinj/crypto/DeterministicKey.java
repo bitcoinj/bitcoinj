@@ -40,7 +40,7 @@ import java.util.Objects;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
@@ -740,8 +740,8 @@ public class DeterministicKey extends ECKey {
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", ByteUtils.HEX.encode(pub.getEncoded()));
-        helper.add("chainCode", HEX.encode(chainCode));
+        helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
+        helper.add("chainCode", ByteUtils.formatHex(chainCode));
         helper.add("path", getPathAsString());
         if (parent != null)
             helper.add("creationTimeSeconds", getCreationTimeSeconds() + " (inherited)");
@@ -756,7 +756,7 @@ public class DeterministicKey extends ECKey {
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
                                      Network network, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:").append(toAddress(outputScriptType, network).toString());
-        builder.append("  hash160:").append(ByteUtils.HEX.encode(getPubKeyHash()));
+        builder.append("  hash160:").append(ByteUtils.formatHex(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());
         if (comment != null)
             builder.append(", ").append(comment);
