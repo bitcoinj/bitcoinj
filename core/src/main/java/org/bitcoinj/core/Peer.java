@@ -47,6 +47,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.net.SocketAddress;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1467,21 +1469,21 @@ public class Peer extends PeerSocketHandler {
         // The random nonce that lets us tell apart overlapping pings/pongs.
         public final long nonce;
         // Measurement of the time elapsed.
-        public final long startTimeMsec;
+        public final Instant startTime;
 
         public PendingPing(long nonce) {
             this.future = new CompletableFuture<>();
             this.nonce = nonce;
-            this.startTimeMsec = TimeUtils.currentTimeMillis();
+            this.startTime = TimeUtils.currentTime();
         }
 
         public void complete() {
             if (!future.isDone()) {
-                long elapsed = TimeUtils.currentTimeMillis() - startTimeMsec;
-                Peer.this.addPingTimeData(elapsed);
+                Duration elapsed = TimeUtils.elapsedTime(startTime);
+                Peer.this.addPingTimeData(elapsed.toMillis());
                 if (log.isDebugEnabled())
-                    log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed);
-                future.complete(elapsed);
+                    log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed.toMillis());
+                future.complete(elapsed.toMillis());
             }
         }
     }
