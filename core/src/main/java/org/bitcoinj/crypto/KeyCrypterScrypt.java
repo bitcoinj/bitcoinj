@@ -17,8 +17,8 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Protos.ScryptParameters;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -151,10 +152,9 @@ public class KeyCrypterScrypt implements KeyCrypter {
                 log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
             }
 
-            final Stopwatch watch = Stopwatch.createStarted();
+            Instant start = TimeUtils.currentTime();
             byte[] keyBytes = SCrypt.generate(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
-            watch.stop();
-            log.info("Deriving key took {} for {}.", watch, scryptParametersString());
+            log.info("Deriving key took {} ms for {}.", TimeUtils.elapsedTime(start).toMillis(), scryptParametersString());
             return new KeyParameter(keyBytes);
         } catch (Exception e) {
             throw new KeyCrypterException("Could not generate key from password and salt.", e);

@@ -18,6 +18,8 @@ package org.bitcoinj.base.internal;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -89,6 +91,20 @@ public class TimeUtils {
      */
     public static long currentTimeSeconds() {
         return currentTimeMillis() / 1000;
+    }
+
+    /**
+     * Returns the current time as an Instant, or a mocked out equivalent.
+     */
+    public static Instant currentTime() {
+        return Instant.ofEpochMilli(currentTimeMillis());
+    }
+
+    /**
+     * Returns elapsed time between given start and current time as a Duration.
+     */
+    public static Duration elapsedTime(Instant start) {
+        return Duration.between(start, currentTime());
     }
 
     /**

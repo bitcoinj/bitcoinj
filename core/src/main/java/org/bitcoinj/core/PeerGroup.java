@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
@@ -69,6 +68,7 @@ import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1062,7 +1062,7 @@ public class PeerGroup implements TransactionBroadcaster {
         checkState(!lock.isHeldByCurrentThread());
         int maxPeersToDiscoverCount = this.vMaxPeersToDiscoverCount;
         long peerDiscoveryTimeoutMillis = this.vPeerDiscoveryTimeoutMillis;
-        final Stopwatch watch = Stopwatch.createStarted();
+        Instant start = TimeUtils.currentTime();
         final List<PeerAddress> addressList = new LinkedList<>();
         for (PeerDiscovery peerDiscovery : peerDiscoverers /* COW */) {
             List<InetSocketAddress> addresses;
@@ -1084,9 +1084,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 registration.executor.execute(() -> registration.listener.onPeersDiscovered(peersDiscoveredSet));
             }
         }
-        watch.stop();
-        log.info("Peer discovery took {} and returned {} items from {} discoverers", watch, addressList.size(),
-                peerDiscoverers.size());
+        log.info("Peer discovery took {} ms and returned {} items from {} discoverers",
+                TimeUtils.elapsedTime(start).toMillis(), addressList.size(), peerDiscoverers.size());
         return addressList.size();
     }
 
@@ -1169,7 +1168,7 @@ public class PeerGroup implements TransactionBroadcaster {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             try {
                 log.info("Stopping ...");
-                Stopwatch watch = Stopwatch.createStarted();
+                Instant start = TimeUtils.currentTime();
                 // The log output this creates can be useful.
                 setDownloadPeer(null);
                 // Blocking close of all sockets.
@@ -1179,7 +1178,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     peerDiscovery.shutdown();
                 }
                 vRunning = false;
-                log.info("Stopped, took {}.", watch);
+                log.info("Stopped, took {} ms.", TimeUtils.elapsedTime(start).toMillis());
             } catch (Throwable e) {
                 log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
             }
@@ -1191,11 +1190,11 @@ public class PeerGroup implements TransactionBroadcaster {
     /** Does a blocking stop */
     public void stop() {
         try {
-            Stopwatch watch = Stopwatch.createStarted();
+            Instant start = TimeUtils.currentTime();
             stopAsync();
             log.info("Awaiting PeerGroup shutdown ...");
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-            log.info("... took {}", watch);
+            log.info("... took {} ms", TimeUtils.elapsedTime(start).toMillis());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.base.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.slf4j.Logger;
@@ -27,6 +26,9 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.Time;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -130,7 +132,7 @@ public class WalletFiles {
     }
 
     private void saveNowInternal() throws IOException {
-        final Stopwatch watch = Stopwatch.createStarted();
+        Instant start = TimeUtils.currentTime();
         File directory = file.getAbsoluteFile().getParentFile();
         if (!directory.exists()) {
             throw new FileNotFoundException(directory.getPath() + " (wallet directory not found)");
@@ -142,8 +144,7 @@ public class WalletFiles {
         wallet.saveToFile(temp, file);
         if (listener != null)
             listener.onAfterAutoSave(file);
-        watch.stop();
-        log.info("Save completed in {}", watch);
+        log.info("Save completed in {} ms", TimeUtils.elapsedTime(start).toMillis());
     }
 
     /** Queues up a save in the background. Useful for not very important wallet changes. */

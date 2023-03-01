@@ -17,7 +17,6 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Stopwatch;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -50,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -1242,13 +1242,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         log.info("{} keys needed for {} = {} issued + {} lookahead size + {} lookahead threshold - {} num children",
                 limit, parent.getPathAsString(), issued, lookaheadSize, lookaheadThreshold, numChildren);
 
-        final Stopwatch watch = Stopwatch.createStarted();
+        Instant start = TimeUtils.currentTime();
         List<DeterministicKey> result = HDKeyDerivation.generate(parent, numChildren)
                 .limit(limit)
                 .map(DeterministicKey::dropPrivateBytes)
                 .collect(StreamUtils.toUnmodifiableList());
-        watch.stop();
-        log.info("Took {}", watch);
+        log.info("Took {} ms", TimeUtils.elapsedTime(start).toMillis());
         return result;
     }
 
