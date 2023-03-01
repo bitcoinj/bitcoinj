@@ -17,7 +17,6 @@
 
 package org.bitcoinj.base;
 
-import com.google.common.primitives.Ints;
 import org.bitcoinj.base.utils.ByteUtils;
 
 /**
@@ -65,7 +64,7 @@ public class VarInt {
     }
 
     public int intValue() {
-        return Ints.checkedCast(value);
+        return Math.toIntExact(value);
     }
 
     /**
