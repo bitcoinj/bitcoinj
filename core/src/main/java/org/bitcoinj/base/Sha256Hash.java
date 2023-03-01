@@ -17,14 +17,13 @@
 
 package org.bitcoinj.base;
 
-import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
 import org.bitcoinj.base.utils.ByteUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -123,9 +122,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      * @throws IOException if an error occurs while reading the file
      */
     public static Sha256Hash of(File file) throws IOException {
-        try (FileInputStream in = new FileInputStream(file)) {
-            return of(ByteStreams.toByteArray(in));
-        }
+        return of(Files.readAllBytes(file.toPath()));
     }
 
     /**
