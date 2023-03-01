@@ -97,7 +97,7 @@ public class TransactionWitness {
             } else if (push.length == 0) {
                 stringPushes.add("EMPTY");
             } else {
-                stringPushes.add(ByteUtils.HEX.encode(push));
+                stringPushes.add(ByteUtils.formatHex(push));
             }
         }
         return InternalUtils.SPACE_JOINER.join(stringPushes);

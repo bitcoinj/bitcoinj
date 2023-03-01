@@ -36,7 +36,7 @@ import java.util.Objects;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 
 /**
  * Holds the seed bytes for the BIP32 deterministic wallet algorithm, inside a
@@ -154,7 +154,7 @@ public class DeterministicSeed implements EncryptableItem {
     /** Returns the seed as hex or null if encrypted. */
     @Nullable
     public String toHexString() {
-        return seed != null ? HEX.encode(seed) : null;
+        return seed != null ? ByteUtils.formatHex(seed) : null;
     }
 
     @Nullable

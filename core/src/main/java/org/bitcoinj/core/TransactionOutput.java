@@ -337,7 +337,7 @@ public class TransactionOutput extends ChildMessage {
                     || ScriptPattern.isP2SH(script))
                 buf.append(" to ").append(script.getToAddress(params));
             else if (ScriptPattern.isP2PK(script))
-                buf.append(" to pubkey ").append(ByteUtils.HEX.encode(ScriptPattern.extractKeyFromP2PK(script)));
+                buf.append(" to pubkey ").append(ByteUtils.formatHex(ScriptPattern.extractKeyFromP2PK(script)));
             else if (ScriptPattern.isSentToMultisig(script))
                 buf.append(" to multisig");
             else

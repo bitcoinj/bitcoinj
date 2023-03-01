@@ -68,7 +68,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      *         hex string, or if it does not represent exactly 32 bytes
      */
     public static Sha256Hash wrap(String hexString) {
-        return wrap(ByteUtils.HEX.decode(hexString));
+        return wrap(ByteUtils.parseHex(hexString));
     }
 
     /**
@@ -237,7 +237,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
 
     @Override
     public String toString() {
-        return ByteUtils.HEX.encode(bytes);
+        return ByteUtils.formatHex(bytes);
     }
 
     /**

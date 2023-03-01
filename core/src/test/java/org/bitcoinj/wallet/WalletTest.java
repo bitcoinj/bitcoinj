@@ -103,7 +103,7 @@ import static org.bitcoinj.base.Coin.MILLICOIN;
 import static org.bitcoinj.base.Coin.SATOSHI;
 import static org.bitcoinj.base.Coin.ZERO;
 import static org.bitcoinj.base.Coin.valueOf;
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTxWithoutChangeAddress;
@@ -202,7 +202,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpendingToP2SH() throws Exception {
-        Address destination = LegacyAddress.fromScriptHash(BitcoinNetwork.TESTNET, HEX.decode("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
+        Address destination = LegacyAddress.fromScriptHash(BitcoinNetwork.TESTNET, ByteUtils.parseHex("4a22c3c4cbb31e4d03b15550636762bda0baf85a"));
         basicSpendingCommon(wallet, myAddress, destination, null);
     }
 
@@ -3369,7 +3369,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void createBasicWithKeys() {
-        ECKey key = ECKey.fromPrivate(ByteUtils.HEX.decode("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
+        ECKey key = ECKey.fromPrivate(ByteUtils.parseHex("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
         Wallet wallet = Wallet.createBasic(TESTNET);
         wallet.importKey(key);
         assertEquals(1, wallet.getImportedKeys().size());

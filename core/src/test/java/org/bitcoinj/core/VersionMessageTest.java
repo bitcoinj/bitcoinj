@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -34,7 +34,7 @@ public class VersionMessageTest {
     public void decode_noRelay_bestHeight_subVer() {
         // Test that we can decode version messages which miss data which some old nodes may not include
         String hex = "7111010000000000000000003334a85500000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d00000000000000000f2f626974636f696e6a3a302e31332f0004000000";
-        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, ByteUtils.parseHex(hex));
         assertFalse(ver.relayTxesBeforeFilter);
         assertEquals(1024, ver.bestHeight);
         assertEquals("/bitcoinj:0.13/", ver.subVer);
@@ -43,7 +43,7 @@ public class VersionMessageTest {
     @Test
     public void decode_relay_bestHeight_subVer() {
         String hex = "711101000000000000000000a634a85500000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d00000000000000000f2f626974636f696e6a3a302e31332f0004000001";
-        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, ByteUtils.parseHex(hex));
         assertTrue(ver.relayTxesBeforeFilter);
         assertEquals(1024, ver.bestHeight);
         assertEquals("/bitcoinj:0.13/", ver.subVer);
@@ -52,7 +52,7 @@ public class VersionMessageTest {
     @Test
     public void decode_relay_noBestHeight_subVer() {
         String hex = "711101000000000000000000c334a85500000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d00000000000000000f2f626974636f696e6a3a302e31332f0000000001";
-        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, ByteUtils.parseHex(hex));
         assertTrue(ver.relayTxesBeforeFilter);
         assertEquals(0, ver.bestHeight);
         assertEquals("/bitcoinj:0.13/", ver.subVer);
@@ -61,7 +61,7 @@ public class VersionMessageTest {
     @Test
     public void decode_relay_noBestHeight_noSubVer() {
         String hex = "00000000000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000";
-        VersionMessage ver = new VersionMessage(TESTNET, HEX.decode(hex));
+        VersionMessage ver = new VersionMessage(TESTNET, ByteUtils.parseHex(hex));
         assertTrue(ver.relayTxesBeforeFilter);
         assertEquals(0, ver.bestHeight);
         assertEquals("", ver.subVer);

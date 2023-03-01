@@ -261,7 +261,7 @@ public class ScriptPattern {
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
     }
 
-    private static final byte[] SEGWIT_COMMITMENT_HEADER = ByteUtils.HEX.decode("aa21a9ed");
+    private static final byte[] SEGWIT_COMMITMENT_HEADER = ByteUtils.parseHex("aa21a9ed");
 
     /**
      * Returns whether this script matches the pattern for a segwit commitment (in an output of the coinbase

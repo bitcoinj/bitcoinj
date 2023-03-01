@@ -919,7 +919,7 @@ public class Transaction extends ChildMessage {
      * @return raw transaction in hex format
      */
     public String toHexString() {
-        return ByteUtils.HEX.encode(unsafeBitcoinSerialize());
+        return ByteUtils.formatHex(unsafeBitcoinSerialize());
     }
 
     /**

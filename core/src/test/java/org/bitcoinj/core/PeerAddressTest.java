@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import java.math.BigInteger;
 import java.net.InetAddress;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,7 +52,7 @@ public class PeerAddressTest {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
         String hex = "010000000000000000000000000000000000ffff0a000001208d";
-        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(hex), 0, null,
+        PeerAddress pa = new PeerAddress(MAINNET, ByteUtils.parseHex(hex), 0, null,
                 serializer);
         assertEquals(26, pa.length);
         assertEquals(VersionMessage.NODE_NETWORK, pa.getServices().longValue());
@@ -65,7 +65,7 @@ public class PeerAddressTest {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, BigInteger.ZERO,
                 serializer);
-        assertEquals("000000000000000000000000000000000000ffff7f000001208d", ByteUtils.HEX.encode(pa.bitcoinSerialize()));
+        assertEquals("000000000000000000000000000000000000ffff7f000001208d", ByteUtils.formatHex(pa.bitcoinSerialize()));
         assertEquals(26, pa.length);
     }
 
@@ -156,7 +156,7 @@ public class PeerAddressTest {
     @Parameters(method = "deserializeToStringValues")
     public void deserializeToString(int version, String expectedToString, String hex) {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(version);
-        PeerAddress pa = new PeerAddress(MAINNET, HEX.decode(hex), 0, null, serializer);
+        PeerAddress pa = new PeerAddress(MAINNET, ByteUtils.parseHex(hex), 0, null, serializer);
 
         assertEquals(expectedToString, pa.toString());
     }

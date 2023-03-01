@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -169,7 +169,7 @@ public class BIP32Test {
     private void testVector(int testCase) {
         log.info("=======  Test vector {}", testCase);
         HDWTestVector tv = tvs[testCase];
-        DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(HEX.decode(tv.seed));
+        DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(ByteUtils.parseHex(tv.seed));
         assertEquals(testEncode(tv.priv), testEncode(masterPrivateKey.serializePrivB58(MAINNET)));
         assertEquals(testEncode(tv.pub), testEncode(masterPrivateKey.serializePubB58(MAINNET)));
         DeterministicHierarchy dh = new DeterministicHierarchy(masterPrivateKey);
@@ -185,7 +185,7 @@ public class BIP32Test {
     }
 
     private String testEncode(String what) {
-        return HEX.encode(Base58.decodeChecked(what));
+        return ByteUtils.formatHex(Base58.decodeChecked(what));
     }
 
     static class HDWTestVector {

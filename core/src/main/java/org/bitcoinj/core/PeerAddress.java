@@ -57,7 +57,7 @@ public class PeerAddress extends ChildMessage {
     private long time;
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
-    private static final byte[] ONIONCAT_PREFIX = ByteUtils.HEX.decode("fd87d87eeb43");
+    private static final byte[] ONIONCAT_PREFIX = ByteUtils.parseHex("fd87d87eeb43");
 
     // BIP-155 reserved network IDs, see: https://github.com/bitcoin/bips/blob/master/bip-0155.mediawiki
     private enum NetworkId {

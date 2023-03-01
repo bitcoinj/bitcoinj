@@ -24,7 +24,7 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.util.List;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -73,7 +73,7 @@ public class AddressV2MessageTest {
 
     @Test
     public void roundtrip() {
-        AddressMessage message = new AddressV2Message(TESTNET, HEX.decode(MESSAGE_HEX));
+        AddressMessage message = new AddressV2Message(TESTNET, ByteUtils.parseHex(MESSAGE_HEX));
 
         List<PeerAddress> addresses = message.getAddresses();
         assertEquals(5, addresses.size());
@@ -112,6 +112,6 @@ public class AddressV2MessageTest {
         assertEquals("kpgvmscirrdqpekbqjsvw5teanhatztpp2gl6eee4zkowvwfxwenqaid.onion", a4.getHostname());
         assertEquals(0, a4.getPort());
 
-        assertEquals(MESSAGE_HEX, HEX.encode(message.bitcoinSerialize()));
+        assertEquals(MESSAGE_HEX, ByteUtils.formatHex(message.bitcoinSerialize()));
     }
 }

@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.bitcoinj.base.utils.ByteUtils.readUint32;
 import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteArrayBE;
 
@@ -138,7 +138,7 @@ public class BitcoinSerializer extends MessageSerializer {
         out.write(message);
 
         if (log.isDebugEnabled())
-            log.debug("Sending {} message: {}", name, HEX.encode(header) + HEX.encode(message));
+            log.debug("Sending {} message: {}", name, ByteUtils.formatHex(header) + ByteUtils.formatHex(message));
     }
 
     /**
@@ -202,19 +202,19 @@ public class BitcoinSerializer extends MessageSerializer {
         if (header.checksum[0] != hash[0] || header.checksum[1] != hash[1] ||
                 header.checksum[2] != hash[2] || header.checksum[3] != hash[3]) {
             throw new ProtocolException("Checksum failed to verify, actual " +
-                    HEX.encode(hash) +
-                    " vs " + HEX.encode(header.checksum));
+                    ByteUtils.formatHex(hash) +
+                    " vs " + ByteUtils.formatHex(header.checksum));
         }
 
         if (log.isDebugEnabled()) {
             log.debug("Received {} byte '{}' message: {}", header.size, header.command,
-                    HEX.encode(payloadBytes));
+                    ByteUtils.formatHex(payloadBytes));
         }
 
         try {
             return makeMessage(header.command, header.size, payloadBytes, hash);
         } catch (Exception e) {
-            throw new ProtocolException("Error deserializing message " + HEX.encode(payloadBytes) + "\n", e);
+            throw new ProtocolException("Error deserializing message " + ByteUtils.formatHex(payloadBytes) + "\n", e);
         }
     }
 

@@ -16,7 +16,10 @@
 
 package org.bitcoinj.base.utils;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -24,7 +27,64 @@ import java.util.Random;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+@RunWith(JUnitParamsRunner.class)
 public class ByteUtilsTest {
+
+    @Test
+    @Parameters(method = "bytesToHexStringVectors")
+    public void formatHexValid(byte[] bytes, String expectedHexString) {
+        String actual = ByteUtils.formatHex(bytes);
+        assertEquals("incorrect hex formatted string", expectedHexString, actual);
+    }
+
+    @Test
+    @Parameters(method = "bytesToHexStringVectors")
+    public void parseHexValid(byte[] expectedBytes, String hexString) {
+        byte[] actual = ByteUtils.parseHex(hexString);
+        assertArrayEquals("incorrect hex formatted string", expectedBytes, actual);
+    }
+
+    @Test
+    @Parameters(method = "hexStringToBytesVectors")
+    public void parseHexValidUppercase(String hexString, byte[] expectedBytes) {
+        byte[] actual = ByteUtils.parseHex(hexString);
+        assertArrayEquals("incorrect hex formatted string", expectedBytes, actual);
+    }
+
+    // Two-way test vectors (can be used to validate mapping in both directions)
+    private Object[] bytesToHexStringVectors() {
+        return new Object[]{
+                new Object[]{ new byte[] {}, ""},
+                new Object[]{ new byte[] {0x00}, "00"},
+                new Object[]{ new byte[] {(byte) 0xff}, "ff"},
+                new Object[]{ new byte[] {(byte) 0xab, (byte) 0xcd, (byte) 0xef}, "abcdef"}
+        };
+    }
+
+    // Test vectors for verifying upper-case Strings map properly (only used to map one-way: from string to bytes)
+    private Object[] hexStringToBytesVectors() {
+        return new Object[]{
+                new Object[]{ "AB", new byte[] {(byte) 0xab}},
+                new Object[]{ "FF", new byte[] {(byte) 0xff}},
+                new Object[]{ "ABCDEF", new byte[] {(byte) 0xab, (byte) 0xcd, (byte) 0xef}},
+        };
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Parameters(method = "invalidHexStrings")
+    public void parseHexInvalid(String hexString) {
+        byte[] actual = ByteUtils.parseHex(hexString);
+    }
+
+    private String[] invalidHexStrings() {
+        return new String[]{
+                "a",                    // Odd number of characters
+                "aabbccddeeffa",        // Odd number of characters
+                "0@",                   // Invalid character
+                "$@",                   // Invalid characters
+                "55$@"                  // Invalid characters
+        };
+    }
 
     @Test
     public void testReverseBytes() {
@@ -57,7 +117,7 @@ public class ByteUtilsTest {
         for (int i = 0; i < ITERATIONS; i++) {
             rnd.nextBytes(bytes);
             BigInteger bi = ByteUtils.bytesToBigInteger(bytes);
-            assertArrayEquals(ByteUtils.HEX.encode(bytes), bytes, ByteUtils.bigIntegerToBytes(bi, LENGTH));
+            assertArrayEquals(ByteUtils.formatHex(bytes), bytes, ByteUtils.bigIntegerToBytes(bi, LENGTH));
         }
     }
 

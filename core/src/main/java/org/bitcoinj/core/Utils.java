@@ -60,7 +60,7 @@ public class Utils {
     public static String toString(List<byte[]> stack) {
         List<String> parts = new ArrayList<>(stack.size());
         for (byte[] push : stack)
-            parts.add('[' + ByteUtils.HEX.encode(push) + ']');
+            parts.add('[' + ByteUtils.formatHex(push) + ']');
         return InternalUtils.SPACE_JOINER.join(parts);
     }
 }

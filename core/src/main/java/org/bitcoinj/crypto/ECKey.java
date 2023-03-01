@@ -728,7 +728,7 @@ public class ECKey implements EncryptableItem {
         else if (encoded.length == 65 && encoded[0] == 0x04)
             return false;
         else
-            throw new IllegalArgumentException(ByteUtils.HEX.encode(encoded));
+            throw new IllegalArgumentException(ByteUtils.formatHex(encoded));
     }
 
     private static ECKey extractKeyFromASN1(byte[] asn1privkey) {
@@ -1283,11 +1283,11 @@ public class ECKey implements EncryptableItem {
     }
 
     public String getPrivateKeyAsHex() {
-        return ByteUtils.HEX.encode(getPrivKeyBytes());
+        return ByteUtils.formatHex(getPrivKeyBytes());
     }
 
     public String getPublicKeyAsHex() {
-        return ByteUtils.HEX.encode(pub.getEncoded());
+        return ByteUtils.formatHex(pub.getEncoded());
     }
 
 
@@ -1351,7 +1351,7 @@ public class ECKey implements EncryptableItem {
         if (!isCompressed())
             builder.append("  UNCOMPRESSED");
         builder.append("  hash160:");
-        builder.append(ByteUtils.HEX.encode(getPubKeyHash()));
+        builder.append(ByteUtils.formatHex(getPubKeyHash()));
         if (creationTimeSeconds > 0)
             builder.append("  creationTimeSeconds:").append(creationTimeSeconds).append(" [")
                     .append(TimeUtils.dateTimeFormat(creationTimeSeconds * 1000)).append("]");

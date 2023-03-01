@@ -59,9 +59,9 @@ public class KeyCrypterScryptTest {
 
         // Decrypt.
         byte[] reborn = keyCrypter.decrypt(data, keyCrypter.deriveKey(PASSWORD1));
-        log.debug("Original: " + ByteUtils.HEX.encode(TEST_BYTES1));
-        log.debug("Reborn  : " + ByteUtils.HEX.encode(reborn));
-        assertEquals(ByteUtils.HEX.encode(TEST_BYTES1), ByteUtils.HEX.encode(reborn));
+        log.debug("Original: " + ByteUtils.formatHex(TEST_BYTES1));
+        log.debug("Reborn  : " + ByteUtils.formatHex(reborn));
+        assertEquals(ByteUtils.formatHex(TEST_BYTES1), ByteUtils.formatHex(reborn));
     }
 
     /**
@@ -83,7 +83,7 @@ public class KeyCrypterScryptTest {
             assertNotNull(data);
 
             byte[] reconstructedPlainBytes = keyCrypter.decrypt(data,keyCrypter.deriveKey(password));
-            assertEquals(ByteUtils.HEX.encode(plainText.getBytes()), ByteUtils.HEX.encode(reconstructedPlainBytes));
+            assertEquals(ByteUtils.formatHex(plainText.getBytes()), ByteUtils.formatHex(reconstructedPlainBytes));
         }
     }
 
@@ -118,13 +118,13 @@ public class KeyCrypterScryptTest {
         // Encrypt bytes.
         EncryptedData data = keyCrypter.encrypt(TEST_BYTES1, keyCrypter.deriveKey(PASSWORD1));
         assertNotNull(data);
-        log.debug("\nEncrypterDecrypterTest: cipherBytes = \nlength = " + data.encryptedBytes.length + "\n---------------\n" + ByteUtils.HEX.encode(data.encryptedBytes) + "\n---------------\n");
+        log.debug("\nEncrypterDecrypterTest: cipherBytes = \nlength = " + data.encryptedBytes.length + "\n---------------\n" + ByteUtils.formatHex(data.encryptedBytes) + "\n---------------\n");
 
         byte[] rebornPlainBytes = keyCrypter.decrypt(data, keyCrypter.deriveKey(PASSWORD1));
 
-        log.debug("Original: " + ByteUtils.HEX.encode(TEST_BYTES1));
-        log.debug("Reborn1 : " + ByteUtils.HEX.encode(rebornPlainBytes));
-        assertEquals(ByteUtils.HEX.encode(TEST_BYTES1), ByteUtils.HEX.encode(rebornPlainBytes));
+        log.debug("Original: " + ByteUtils.formatHex(TEST_BYTES1));
+        log.debug("Reborn1 : " + ByteUtils.formatHex(rebornPlainBytes));
+        assertEquals(ByteUtils.formatHex(TEST_BYTES1), ByteUtils.formatHex(rebornPlainBytes));
     }
 
     @Test
@@ -138,13 +138,13 @@ public class KeyCrypterScryptTest {
 
             EncryptedData data = keyCrypter.encrypt(plainBytes, keyCrypter.deriveKey(PASSWORD1));
             assertNotNull(data);
-            //log.debug("\nEncrypterDecrypterTest: cipherBytes = \nlength = " + cipherBytes.length + "\n---------------\n" + Utils.HEX.encode(cipherBytes) + "\n---------------\n");
+            //log.debug("\nEncrypterDecrypterTest: cipherBytes = \nlength = " + cipherBytes.length + "\n---------------\n" + Utils.ByteUtils.formatHex(cipherBytes) + "\n---------------\n");
 
             byte[] rebornPlainBytes = keyCrypter.decrypt(data, keyCrypter.deriveKey(PASSWORD1));
 
-            log.debug("Original: (" + i + ") " + ByteUtils.HEX.encode(plainBytes));
-            log.debug("Reborn1 : (" + i + ") " + ByteUtils.HEX.encode(rebornPlainBytes));
-            assertEquals(ByteUtils.HEX.encode(plainBytes), ByteUtils.HEX.encode(rebornPlainBytes));
+            log.debug("Original: (" + i + ") " + ByteUtils.formatHex(plainBytes));
+            log.debug("Reborn1 : (" + i + ") " + ByteUtils.formatHex(rebornPlainBytes));
+            assertEquals(ByteUtils.formatHex(plainBytes), ByteUtils.formatHex(rebornPlainBytes));
         }
     }
 }

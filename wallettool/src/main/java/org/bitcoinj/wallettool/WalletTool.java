@@ -243,7 +243,6 @@ public class WalletTool implements Callable<Integer> {
     private boolean help;
 
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
-    private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
     private static NetworkParameters params;
     private static BlockStore store;
@@ -545,7 +544,7 @@ public class WalletTool implements Callable<Integer> {
     }
 
     private static ByteString bytesToHex(ByteString bytes) {
-        return ByteString.copyFrom(ByteUtils.HEX.encode(bytes.toByteArray()).getBytes());
+        return ByteString.copyFrom(ByteUtils.formatHex(bytes.toByteArray()).getBytes());
     }
 
     private void marry() {
@@ -1197,7 +1196,7 @@ public class WalletTool implements Callable<Integer> {
      */
     private byte[] parseAsHexOrBase58(String data) {
         try {
-            return ByteUtils.HEX.decode(data);
+            return ByteUtils.parseHex(data);
         } catch (Exception e) {
             // Didn't decode as hex, try base58.
             try {
@@ -1224,7 +1223,7 @@ public class WalletTool implements Callable<Integer> {
         }
         ECKey key;
         if (pubKeyStr != null) {
-            key = wallet.findKeyFromPubKey(HEX.decode(pubKeyStr));
+            key = wallet.findKeyFromPubKey(ByteUtils.parseHex(pubKeyStr));
         } else {
             try {
                 Address address = wallet.parseAddress(addrStr);

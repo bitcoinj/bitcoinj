@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import static org.bitcoinj.base.utils.ByteUtils.HEX;
+import org.bitcoinj.base.utils.ByteUtils;
 import static org.bitcoinj.base.internal.InternalUtils.SPACE_JOINER;
 import static org.bitcoinj.base.internal.InternalUtils.WHITESPACE_SPLITTER;
 import static org.junit.Assert.assertEquals;
@@ -58,13 +58,13 @@ public class MnemonicCodeVectorsTest {
 
     @Test
     public void testMnemonicCode() throws Exception {
-        final List<String> mnemonicCode = mc.toMnemonic(HEX.decode(vectorEntropy));
+        final List<String> mnemonicCode = mc.toMnemonic(ByteUtils.parseHex(vectorEntropy));
         final byte[] seed = MnemonicCode.toSeed(mnemonicCode, vectorPassphrase);
         final byte[] entropy = mc.toEntropy(WHITESPACE_SPLITTER.splitToList(vectorMnemonicCode));
 
-        assertEquals(vectorEntropy, HEX.encode(entropy));
+        assertEquals(vectorEntropy, ByteUtils.formatHex(entropy));
         assertEquals(vectorMnemonicCode, SPACE_JOINER.join(mnemonicCode));
-        assertEquals(vectorSeed, HEX.encode(seed));
+        assertEquals(vectorSeed, ByteUtils.formatHex(seed));
     }
 
     /**

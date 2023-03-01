@@ -165,7 +165,7 @@ public class ScriptChunk {
     public String toString() {
         if (data == null)
             return getOpCodeName(opcode);
-        return String.format("%s[%s]", getPushDataName(opcode), ByteUtils.HEX.encode(data));
+        return String.format("%s[%s]", getPushDataName(opcode), ByteUtils.formatHex(data));
     }
 
     @Override
