@@ -454,15 +454,15 @@ public class PeerTest extends TestWithNetworkConnections {
         blockChain.add(b1);
         TimeUtils.rollMockClock(60 * 10);  // 10 minutes later.
         Block b2 = makeSolvedTestBlock(b1);
-        b2.setTime(TimeUtils.currentTimeSeconds());
+        b2.setTime(TimeUtils.currentTime());
         b2.solve();
         TimeUtils.rollMockClock(60 * 10);  // 10 minutes later.
         Block b3 = makeSolvedTestBlock(b2);
-        b3.setTime(TimeUtils.currentTimeSeconds());
+        b3.setTime(TimeUtils.currentTime());
         b3.solve();
         TimeUtils.rollMockClock(60 * 10);
         Block b4 = makeSolvedTestBlock(b3);
-        b4.setTime(TimeUtils.currentTimeSeconds());
+        b4.setTime(TimeUtils.currentTime());
         b4.solve();
 
         // Request headers until the last 2 blocks.

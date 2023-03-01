@@ -40,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -378,7 +379,7 @@ public class BlockTest {
     public void testGenesisBlock() {
         Block genesisBlock = Block.createGenesis(MainNetParams.get());
         genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setTime(1231006505L);
+        genesisBlock.setTime(Instant.ofEpochSecond(1231006505L));
         genesisBlock.setNonce(2083236893);
         assertEquals(Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"), genesisBlock.getHash());
     }

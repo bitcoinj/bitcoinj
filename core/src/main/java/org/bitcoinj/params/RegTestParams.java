@@ -22,6 +22,8 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
 
+import java.time.Instant;
+
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -82,7 +84,7 @@ public class RegTestParams extends BitcoinNetworkParams {
             if (genesisBlock == null) {
                 genesisBlock = Block.createGenesis(this);
                 genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(GENESIS_TIME);
+                genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
                 genesisBlock.setNonce(GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
             }

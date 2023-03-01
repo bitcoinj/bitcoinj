@@ -43,6 +43,7 @@ import org.bitcoinj.store.BlockStoreException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -270,7 +271,7 @@ public class FakeTxBuilder {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
             Address to = randomAddress(previousBlock.getParams());
-            Block b = previousBlock.createNextBlock(to, version, timeSeconds, height);
+            Block b = previousBlock.createNextBlock(to, version, Instant.ofEpochSecond(timeSeconds), height);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);

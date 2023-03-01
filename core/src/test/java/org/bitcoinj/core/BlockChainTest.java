@@ -40,6 +40,7 @@ import org.junit.rules.ExpectedException;
 
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -173,7 +174,7 @@ public class BlockChainTest {
         Block prev = UNITTEST.getGenesisBlock();
         TimeUtils.setMockClock();
         for (int height = 0; height < UNITTEST.getInterval() - 1; height++) {
-            Block newBlock = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTimeSeconds(), height);
+            Block newBlock = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), height);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
@@ -181,13 +182,13 @@ public class BlockChainTest {
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTimeSeconds(), UNITTEST.getInterval()));
+            chain.add(prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), UNITTEST.getInterval()));
             fail();
         } catch (VerificationException e) {
         }
         // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
         // of time it's supposed to take (set in the unit test network parameters).
-        Block b = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTimeSeconds(), UNITTEST.getInterval() + 1);
+        Block b = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), UNITTEST.getInterval() + 1);
         b.setDifficultyTarget(0x201fFFFFL);
         b.solve();
         assertTrue(chain.add(b));
@@ -204,7 +205,7 @@ public class BlockChainTest {
         bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         // Nonce was just some number that made the hash < difficulty limit set below, it can be anything.
         bad.setNonce(140548933);
-        bad.setTime(1279242649);
+        bad.setTime(Instant.ofEpochSecond(1279242649));
         bad.setPrevBlockHash(b2.getHash());
         // We're going to make this block so easy 50% of solutions will pass, and check it gets rejected for having a
         // bad difficulty target. Unfortunately the encoding mechanism means we cannot make one that accepts all
@@ -413,7 +414,7 @@ public class BlockChainTest {
         Block b2 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
         b2.setMerkleRoot(Sha256Hash.wrap("20222eb90f5895556926c112bb5aa0df4ab5abc3107e21a6950aec3b2e3541e2"));
         b2.setNonce(875942400L);
-        b2.setTime(1296688946L);
+        b2.setTime(Instant.ofEpochSecond(1296688946L));
         b2.setDifficultyTarget(0x1d00ffff);
         b2.setPrevBlockHash(Sha256Hash.wrap("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"));
         assertEquals("000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820", b2.getHashAsString());
@@ -425,7 +426,7 @@ public class BlockChainTest {
         Block b1 = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
         b1.setMerkleRoot(Sha256Hash.wrap("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"));
         b1.setNonce(1924588547);
-        b1.setTime(1296688928);
+        b1.setTime(Instant.ofEpochSecond(1296688928));
         b1.setDifficultyTarget(0x1d00ffff);
         b1.setPrevBlockHash(Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
         assertEquals("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206", b1.getHashAsString());

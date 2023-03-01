@@ -28,6 +28,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -90,7 +91,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
             if (genesisBlock == null) {
                 genesisBlock = Block.createGenesis(this);
                 genesisBlock.setDifficultyTarget(Block.STANDARD_MAX_DIFFICULTY_TARGET);
-                genesisBlock.setTime(GENESIS_TIME);
+                genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
                 genesisBlock.setNonce(GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
             }

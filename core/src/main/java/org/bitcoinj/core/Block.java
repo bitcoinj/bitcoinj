@@ -39,6 +39,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -78,7 +81,7 @@ public class Block extends Message {
     /** How many bytes are required to represent a block header WITHOUT the trailing 00 length byte. */
     public static final int HEADER_SIZE = 80;
 
-    static final long ALLOWED_TIME_DRIFT = 2 * 60 * 60; // Same value as Bitcoin Core.
+    static final Duration ALLOWED_TIME_DRIFT = Duration.ofHours(2); // Same value as Bitcoin Core.
 
     /**
      * A constant shared by the entire network: how large in bytes a block is allowed to be. One day we may have to
@@ -116,7 +119,7 @@ public class Block extends Message {
     private long version;
     private Sha256Hash prevBlockHash;
     private Sha256Hash merkleRoot, witnessRoot;
-    private long time;
+    private Instant time;
     private long difficultyTarget; // "nBits"
     private long nonce;
 
@@ -141,7 +144,7 @@ public class Block extends Message {
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
         difficultyTarget = 0x1d07fff8L;
-        time = TimeUtils.currentTimeSeconds();
+        time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
         length = HEADER_SIZE;
@@ -201,12 +204,12 @@ public class Block extends Message {
      * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
      * @param prevBlockHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
      * @param merkleRoot The root of the merkle tree formed by the transactions.
-     * @param time UNIX time when the block was mined.
+     * @param time time when the block was mined.
      * @param difficultyTarget Number which this block hashes lower than.
      * @param nonce Arbitrary number to make the block hash lower than the target.
      * @param transactions List of transactions including the coinbase.
      */
-    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
+    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
                  long difficultyTarget, long nonce, List<Transaction> transactions) {
         super(params);
         this.version = version;
@@ -217,6 +220,25 @@ public class Block extends Message {
         this.nonce = nonce;
         this.transactions = new LinkedList<>();
         this.transactions.addAll(transactions);
+    }
+
+    /**
+     * Construct a block initialized with all the given fields.
+     * @param params Which network the block is for.
+     * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
+     * @param prevBlockHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
+     * @param merkleRoot The root of the merkle tree formed by the transactions.
+     * @param time UNIX time seconds when the block was mined.
+     * @param difficultyTarget Number which this block hashes lower than.
+     * @param nonce Arbitrary number to make the block hash lower than the target.
+     * @param transactions List of transactions including the coinbase.
+     * @deprecated use {@link #Block(NetworkParameters, long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
+     */
+    @Deprecated
+    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
+                 long difficultyTarget, long nonce, List<Transaction> transactions) {
+        this(params, version, prevBlockHash, merkleRoot, Instant.ofEpochSecond(time), difficultyTarget, nonce,
+                transactions);
     }
 
     /** @deprecated Use {@link BitcoinNetworkParams#getBlockInflation(int)} */
@@ -263,7 +285,7 @@ public class Block extends Message {
         version = readUint32();
         prevBlockHash = readHash();
         merkleRoot = readHash();
-        time = readUint32();
+        time = Instant.ofEpochSecond(readUint32());
         difficultyTarget = readUint32();
         nonce = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
@@ -325,7 +347,7 @@ public class Block extends Message {
         ByteUtils.uint32ToByteStreamLE(version, stream);
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
-        ByteUtils.uint32ToByteStreamLE(time, stream);
+        ByteUtils.uint32ToByteStreamLE(time.getEpochSecond(), stream);
         ByteUtils.uint32ToByteStreamLE(difficultyTarget, stream);
         ByteUtils.uint32ToByteStreamLE(nonce, stream);
     }
@@ -517,7 +539,7 @@ public class Block extends Message {
             s.append(" (").append(bips).append(')');
         s.append('\n');
         s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
-        s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time * 1000)).append(")\n");
+        s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time.toEpochMilli())).append(")\n");
         s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
         if (transactions != null && transactions.size() > 0) {
@@ -594,11 +616,12 @@ public class Block extends Message {
     }
 
     private void checkTimestamp() throws VerificationException {
-        final long allowedTime = TimeUtils.currentTimeSeconds() + ALLOWED_TIME_DRIFT;
-        if (time > allowedTime)
+        final Instant allowedTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS).plus(ALLOWED_TIME_DRIFT);
+        if (time.isAfter(allowedTime))
             throw new VerificationException(String.format(Locale.US,
-                    "Block too far in future: %s (%d) vs allowed %s (%d)", TimeUtils.dateTimeFormat(time * 1000), time,
-                    TimeUtils.dateTimeFormat(allowedTime * 1000), allowedTime));
+                    "Block too far in future: %s (%d) vs allowed %s (%d)",
+                    TimeUtils.dateTimeFormat(time.toEpochMilli()), time.toEpochMilli(),
+                    TimeUtils.dateTimeFormat(allowedTime.toEpochMilli()), allowedTime.toEpochMilli()));
     }
 
     private void checkSigOps() throws VerificationException {
@@ -877,24 +900,35 @@ public class Block extends Message {
     }
 
     /**
-     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node. This
-     * is measured in seconds since the UNIX epoch (midnight Jan 1st 1970).
+     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
      */
-    public long getTimeSeconds() {
+    public Instant getTimeInstant() {
         return time;
     }
 
     /**
-     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
+     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node. This
+     * is measured in seconds since the UNIX epoch (midnight Jan 1st 1970).
+     * @deprecated use {@link #getTimeInstant()}
      */
+    @Deprecated
+    public long getTimeSeconds() {
+        return time.getEpochSecond();
+    }
+
+    /**
+     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
+     * @deprecated use {@link #getTimeInstant()}
+     */
+    @Deprecated
     public Date getTime() {
-        return new Date(getTimeSeconds()*1000);
+        return new Date(getTimeInstant().toEpochMilli());
     }
 
     @VisibleForTesting
-    public void setTime(long time) {
+    public void setTime(Instant time) {
         unCacheHeader();
-        this.time = time;
+        this.time = time.truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
         this.hash = null;
     }
 
@@ -987,7 +1021,7 @@ public class Block extends Message {
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      */
     @VisibleForTesting
-    public Block createNextBlock(Address to, long version, long time, int blockHeight) {
+    public Block createNextBlock(Address to, long version, Instant time, int blockHeight) {
         return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight);
     }
 
@@ -999,7 +1033,7 @@ public class Block extends Message {
      */
     @VisibleForTesting
     Block createNextBlock(@Nullable final Address to, final long version,
-                          @Nullable TransactionOutPoint prevOut, final long time,
+                          @Nullable TransactionOutPoint prevOut, final Instant time,
                           final byte[] pubKey, final Coin coinbaseValue,
                           final int height) {
         Block b = new Block(params, version);
@@ -1022,10 +1056,11 @@ public class Block extends Message {
 
         b.setPrevBlockHash(getHash());
         // Don't let timestamp go backwards
-        if (getTimeSeconds() >= time)
-            b.setTime(getTimeSeconds() + 1);
+        Instant bitcoinTime = time.truncatedTo(ChronoUnit.SECONDS);
+        if (getTimeInstant().compareTo(bitcoinTime) >= 0)
+            b.setTime(getTimeInstant().plusSeconds(1));
         else
-            b.setTime(time);
+            b.setTime(bitcoinTime);
         b.solve();
         try {
             b.verifyHeader();
@@ -1049,12 +1084,12 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeSeconds() + 5, pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeInstant().plusSeconds(5), pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, Coin value) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeSeconds() + 5, pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeInstant().plusSeconds(5), pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
@@ -1065,7 +1100,7 @@ public class Block extends Message {
     @VisibleForTesting
     public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
-                               TimeUtils.currentTimeSeconds(), pubKey, coinbaseValue, height);
+                               TimeUtils.currentTime(), pubKey, coinbaseValue, height);
     }
 
     /**
@@ -1075,7 +1110,7 @@ public class Block extends Message {
     @VisibleForTesting
     Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
-                               TimeUtils.currentTimeSeconds(), pubKey, FIFTY_COINS, height);
+                               TimeUtils.currentTime(), pubKey, FIFTY_COINS, height);
     }
 
     @VisibleForTesting

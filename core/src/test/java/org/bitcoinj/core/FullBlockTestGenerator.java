@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -915,7 +916,7 @@ public class FullBlockTestGenerator {
             b44.addTransaction(t);
 
             b44.setPrevBlockHash(b43.getHash());
-            b44.setTime(b43.block.getTimeSeconds() + 1);
+            b44.setTime(b43.block.getTimeInstant().plusSeconds(1));
         }
         b44.solve();
         blocks.add(new BlockAndValidity(b44, true, false, b44.getHash(), chainHeadHeight + 15, "b44"));
@@ -943,7 +944,7 @@ public class FullBlockTestGenerator {
             b45.addTransaction(t, false);
 
             b45.setPrevBlockHash(b44.getHash());
-            b45.setTime(b44.getTimeSeconds() + 1);
+            b45.setTime(b44.getTimeInstant().plusSeconds(1));
         }
         b45.solve();
         blocks.add(new BlockAndValidity(b45, false, true, b44.getHash(), chainHeadHeight + 15, "b45"));
@@ -956,7 +957,7 @@ public class FullBlockTestGenerator {
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
             b46.setPrevBlockHash(b44.getHash());
-            b46.setTime(b44.getTimeSeconds() + 1);
+            b46.setTime(b44.getTimeInstant().plusSeconds(1));
         }
         b46.solve();
         blocks.add(new BlockAndValidity(b46, false, true, b44.getHash(), chainHeadHeight + 15, "b46"));
@@ -982,7 +983,7 @@ public class FullBlockTestGenerator {
 
         // Block with timestamp > 2h in the future
         NewBlock b48 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
-        b48.block.setTime(TimeUtils.currentTimeSeconds() + 60 * 60 * 3);
+        b48.block.setTime(TimeUtils.currentTime().plusSeconds(60 * 60 * 3));
         b48.solve();
         blocks.add(new BlockAndValidity(b48, false, true, b44.getHash(), chainHeadHeight + 15, "b48"));
 
@@ -1038,13 +1039,13 @@ public class FullBlockTestGenerator {
 
         // Block with invalid timestamp
         NewBlock b54 = createNextBlock(b53, chainHeadHeight + 16, out15, null);
-        b54.block.setTime(b35.block.getTimeSeconds() - 1);
+        b54.block.setTime(b35.block.getTimeInstant().minusSeconds(1));
         b54.solve();
         blocks.add(new BlockAndValidity(b54, false, true, b44.getHash(), chainHeadHeight + 15, "b54"));
 
         // Block with valid timestamp
         NewBlock b55 = createNextBlock(b53, chainHeadHeight + 16, out15, null);
-        b55.block.setTime(b35.block.getTimeSeconds());
+        b55.block.setTime(b35.block.getTimeInstant());
         b55.solve();
         blocks.add(new BlockAndValidity(b55, true, false, b55.getHash(), chainHeadHeight + 16, "b55"));
         spendableOutputs.offer(b55.getCoinbaseOutput());
