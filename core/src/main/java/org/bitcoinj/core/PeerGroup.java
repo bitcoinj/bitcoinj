@@ -68,6 +68,7 @@ import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -139,8 +140,8 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public static final int DEFAULT_CONNECTIONS = 12;
     private volatile int vMaxPeersToDiscoverCount = 100;
-    private static final long DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS = 5000;
-    private volatile long vPeerDiscoveryTimeoutMillis = DEFAULT_PEER_DISCOVERY_TIMEOUT_MILLIS;
+    private static final Duration DEFAULT_PEER_DISCOVERY_TIMEOUT = Duration.ofSeconds(5);
+    private volatile Duration vPeerDiscoveryTimeout = DEFAULT_PEER_DISCOVERY_TIMEOUT;
 
     protected final NetworkParameters params;
     @Nullable protected final AbstractBlockChain chain;
@@ -479,10 +480,19 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * This is how many milliseconds we wait for peer discoveries to return their results.
+     * This is how long we wait for peer discoveries to return their results.
      */
+    public void setPeerDiscoveryTimeout(Duration peerDiscoveryTimeout) {
+        this.vPeerDiscoveryTimeout = peerDiscoveryTimeout;
+    }
+
+    /**
+     * This is how many milliseconds we wait for peer discoveries to return their results.
+     * @deprecated use {@link #setPeerDiscoveryTimeout(Duration)}
+     */
+    @Deprecated
     public void setPeerDiscoveryTimeoutMillis(long peerDiscoveryTimeoutMillis) {
-        this.vPeerDiscoveryTimeoutMillis = peerDiscoveryTimeoutMillis;
+        setPeerDiscoveryTimeout(Duration.ofMillis(peerDiscoveryTimeoutMillis));
     }
 
     /**
@@ -1061,13 +1071,13 @@ public class PeerGroup implements TransactionBroadcaster {
         // Don't hold the lock whilst doing peer discovery: it can take a long time and cause high API latency.
         checkState(!lock.isHeldByCurrentThread());
         int maxPeersToDiscoverCount = this.vMaxPeersToDiscoverCount;
-        long peerDiscoveryTimeoutMillis = this.vPeerDiscoveryTimeoutMillis;
+        Duration peerDiscoveryTimeout = this.vPeerDiscoveryTimeout;
         Instant start = TimeUtils.currentTime();
         final List<PeerAddress> addressList = new LinkedList<>();
         for (PeerDiscovery peerDiscovery : peerDiscoverers /* COW */) {
             List<InetSocketAddress> addresses;
             try {
-                addresses = peerDiscovery.getPeers(requiredServices, peerDiscoveryTimeoutMillis, TimeUnit.MILLISECONDS);
+                addresses = peerDiscovery.getPeers(requiredServices, peerDiscoveryTimeout.toMillis(), TimeUnit.MILLISECONDS);
             } catch (PeerDiscoveryException e) {
                 log.warn(e.getMessage());
                 continue;
