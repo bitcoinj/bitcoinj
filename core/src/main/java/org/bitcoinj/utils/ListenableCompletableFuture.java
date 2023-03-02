@@ -15,6 +15,8 @@
  */
 package org.bitcoinj.utils;
 
+import org.bitcoinj.base.internal.FutureUtils;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -41,20 +43,18 @@ public class ListenableCompletableFuture<V> extends CompletableFuture<V> impleme
     }
 
     /**
-     * Returns a new {@link CompletableFuture} that is already completed exceptionally
-     * the given throwable.
+     * Returns a new {@link ListenableCompletableFuture} that is already completed exceptionally
+     * with the given throwable.
      * <p>
-     * When the migration to {@link CompletableFuture} is finished we'll probably move this
-     * method to FutureUtils as the {@code failedFuture()} is not available until Java 9.
+     * When the migration to {@link CompletableFuture} is finished this can be deprecated
+     * and {@link FutureUtils#failedFuture(Throwable)} can be used instead.
      *
      * @param throwable the exceptions
      * @param <T> the type of the expected value
      * @return the completed CompletableFuture
      */
     public static <T> ListenableCompletableFuture<T> failedFuture(Throwable throwable) {
-        ListenableCompletableFuture<T> future = new ListenableCompletableFuture<>();
-        future.completeExceptionally(throwable);
-        return future;
+        return ListenableCompletableFuture.of(FutureUtils.failedFuture(throwable));
     }
 
     /**
