@@ -29,9 +29,12 @@ import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnitParamsRunner.class)
@@ -71,7 +74,7 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv4_addressV2Variant() throws Exception {
-        long time = TimeUtils.currentTimeSeconds();
+        Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(2);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
                 serializer);
@@ -80,12 +83,12 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTime() >= time && pa2.getTime() < time + 5); // potentially racy
+        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5)));// potentially racy
     }
 
     @Test
     public void roundtrip_ipv4_addressVariant() throws Exception {
-        long time = TimeUtils.currentTimeSeconds();
+        Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(1);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
                 serializer);
@@ -94,7 +97,7 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTime() >= time && pa2.getTime() < time + 5); // potentially racy
+        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -107,12 +110,12 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertEquals(-1, pa2.getTime());
+        assertFalse(pa2.getTimeInstant().isPresent());
     }
 
     @Test
     public void roundtrip_ipv6_addressV2Variant() throws Exception {
-        long time = TimeUtils.currentTimeSeconds();
+        Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(2);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 BigInteger.ZERO, serializer);
@@ -121,12 +124,12 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTime() >= time && pa2.getTime() < time + 5); // potentially racy
+        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
     public void roundtrip_ipv6_addressVariant() throws Exception {
-        long time = TimeUtils.currentTimeSeconds();
+        Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(1);
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 BigInteger.ZERO, serializer);
@@ -135,7 +138,7 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTime() >= time && pa2.getTime() < time + 5); // potentially racy
+        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -149,7 +152,7 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertEquals(-1, pa2.getTime());
+        assertFalse(pa2.getTimeInstant().isPresent());
     }
 
     @Test

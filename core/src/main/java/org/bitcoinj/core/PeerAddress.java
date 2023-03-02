@@ -32,6 +32,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
@@ -54,7 +56,7 @@ public class PeerAddress extends ChildMessage {
     private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
     private BigInteger services;
-    private long time;
+    private Optional<Instant> time;
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = ByteUtils.parseHex("fd87d87eeb43");
@@ -102,7 +104,7 @@ public class PeerAddress extends ChildMessage {
         this.port = port;
         setSerializer(serializer);
         this.services = services;
-        this.time = TimeUtils.currentTimeSeconds();
+        this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
     /**
@@ -143,7 +145,7 @@ public class PeerAddress extends ChildMessage {
         this.hostname = hostname;
         this.port = port;
         this.services = BigInteger.ZERO;
-        this.time = TimeUtils.currentTimeSeconds();
+        this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
@@ -157,7 +159,7 @@ public class PeerAddress extends ChildMessage {
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
         if (protocolVersion >= 1) {
-            ByteUtils.uint32ToByteStreamLE(time, stream);
+            ByteUtils.uint32ToByteStreamLE(time.get().getEpochSecond(), stream);
         }
         if (protocolVersion == 2) {
             stream.write(new VarInt(services.longValue()).encode());
@@ -237,10 +239,10 @@ public class PeerAddress extends ChildMessage {
 
         length = 0;
         if (protocolVersion >= 1) {
-            time = readUint32();
+            time = Optional.of(Instant.ofEpochSecond(readUint32()));
             length += 4;
         } else {
-            time = -1;
+            time = Optional.empty();
         }
         if (protocolVersion == 2) {
             VarInt servicesVarInt = readVarInt();
@@ -351,8 +353,19 @@ public class PeerAddress extends ChildMessage {
         return services;
     }
 
-    public long getTime() {
+    /**
+     * Gets the time that the node was last seen as connected to the network, or empty if that time isn't known (for
+     * old `addr` messages).
+     * @return time that the node was last seen, or empty if unknown
+     */
+    public Optional<Instant> getTimeInstant() {
         return time;
+    }
+
+    /** @deprecated use {@link #getTimeInstant()} */
+    @Deprecated
+    public long getTime() {
+        return time.isPresent() ? time.get().getEpochSecond() : -1;
     }
 
     @Override
