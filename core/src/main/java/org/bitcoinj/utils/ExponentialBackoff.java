@@ -18,6 +18,9 @@ package org.bitcoinj.utils;
 
 import org.bitcoinj.base.internal.TimeUtils;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
@@ -26,43 +29,43 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <p>The retries are exponentially backed off, up to a maximum interval.  On success the back off interval is reset.</p>
  */
 public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
-    public static final int DEFAULT_INITIAL_MILLIS = 100;
+    public static final Duration DEFAULT_INITIAL_INTERVAL = Duration.ofMillis(100);
     public static final float DEFAULT_MULTIPLIER = 1.1f;
-    public static final int DEFAULT_MAXIMUM_MILLIS = 30 * 1000;
+    public static final Duration DEFAULT_MAXIMUM_INTERVAL = Duration.ofSeconds(30);
 
-    private float backoff;
-    private long retryTime;
+    private Duration backoff;
+    private Instant retryTime;
     private final Params params;
 
     /**
      * Parameters to configure a particular kind of exponential backoff.
      */
     public static class Params {
-        private final float initial;
+        private final Duration initialInterval;
         private final float multiplier;
-        private final float maximum;
+        private final Duration maximumInterval;
 
         /**
-         * @param initialMillis the initial interval to wait, in milliseconds
+         * @param initialInterval the initial interval to wait
          * @param multiplier the multiplier to apply on each failure
-         * @param maximumMillis the maximum interval to wait, in milliseconds
+         * @param maximumInterval the maximum interval to wait
          */
-        public Params(long initialMillis, float multiplier, long maximumMillis) {
+        public Params(Duration initialInterval, float multiplier, Duration maximumInterval) {
             checkArgument(multiplier > 1.0f, "multiplier must be greater than 1.0");
-            checkArgument(maximumMillis >= initialMillis, "maximum must not be less than initial");
+            checkArgument(maximumInterval.compareTo(initialInterval) >= 0, "maximum must not be less than initial");
 
-            this.initial = initialMillis;
+            this.initialInterval = initialInterval;
             this.multiplier = multiplier;
-            this.maximum = maximumMillis;
+            this.maximumInterval = maximumInterval;
         }
 
         /**
          * Construct params with default values.
          */
         public Params() {
-            initial = DEFAULT_INITIAL_MILLIS;
+            initialInterval = DEFAULT_INITIAL_INTERVAL;
             multiplier = DEFAULT_MULTIPLIER;
-            maximum = DEFAULT_MAXIMUM_MILLIS;
+            maximumInterval = DEFAULT_MAXIMUM_INTERVAL;
         }
     }
 
@@ -73,29 +76,40 @@ public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
 
     /** Track a success - reset back off interval to the initial value */
     public final void trackSuccess() {
-        backoff = params.initial;
-        retryTime = TimeUtils.currentTimeMillis();
+        backoff = params.initialInterval;
+        retryTime = TimeUtils.currentTime();
     }
 
     /** Track a failure - multiply the back off interval by the multiplier */
     public void trackFailure() {
-        retryTime = TimeUtils.currentTimeMillis() + (long)backoff;
-        backoff = Math.min(backoff * params.multiplier, params.maximum);
+        retryTime = TimeUtils.currentTime().plus(backoff);
+        backoff = Duration.ofMillis((long) (backoff.toMillis() * params.multiplier));
+        if (backoff.compareTo(params.maximumInterval) > 0)
+            backoff = params.maximumInterval;
     }
 
-    /** Get the next time to retry, in milliseconds since the epoch */
-    public long getRetryTime() {
+    /** Get the next time to retry */
+    public Instant getRetryInstant() {
         return retryTime;
+    }
+
+    /**
+     * Get the next time to retry, in milliseconds since the epoch
+     * @deprecated use {@link #getRetryInstant()}
+     **/
+    @Deprecated
+    public long getRetryTime() {
+        return retryTime.toEpochMilli();
     }
 
     @Override
     public int compareTo(ExponentialBackoff other) {
         // note that in this implementation compareTo() is not consistent with equals()
-        return Long.compare(retryTime, other.retryTime);
+        return retryTime.compareTo(other.retryTime);
     }
 
     @Override
     public String toString() {
-        return "ExponentialBackoff retry=" + retryTime + " backoff=" + backoff;
+        return "ExponentialBackoff retry=" + retryTime + " backoff=" + backoff.toMillis() + " ms";
     }
 }
