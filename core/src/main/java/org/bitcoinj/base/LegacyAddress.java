@@ -18,8 +18,8 @@
 
 package org.bitcoinj.base;
 
-import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 
@@ -270,8 +270,8 @@ public class LegacyAddress extends Address {
 
     // Comparator for LegacyAddress, left argument must be LegacyAddress, right argument can be any Address
     private static final Comparator<Address> LEGACY_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
-            .thenComparingInt(a -> ((LegacyAddress) a).getVersion())                    // Then compare Legacy address version byte
-            .thenComparing(a -> a.bytes, UnsignedBytes.lexicographicalComparator());    // Then compare Legacy bytes
+            .thenComparingInt(a -> ((LegacyAddress) a).getVersion())            // Then compare Legacy address version byte
+            .thenComparing(a -> a.bytes, ByteUtils.arrayUnsignedComparator());  // Then compare Legacy bytes
 
     /**
      * {@inheritDoc}

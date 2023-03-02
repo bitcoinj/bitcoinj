@@ -20,7 +20,6 @@ package org.bitcoinj.crypto;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.UnsignedBytes;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
@@ -118,8 +117,8 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class ECKey implements EncryptableItem {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
-    // Note: this can be replaced with Arrays.compare(a, b) once we require Java 9
-    private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = UnsignedBytes.lexicographicalComparator();
+    // Note: this can be replaced with Arrays.compareUnsigned(a, b) once we require Java 9
+    private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = ByteUtils.arrayUnsignedComparator();
 
     /** Sorts oldest keys first, newest last. */
     public static final Comparator<ECKey> AGE_COMPARATOR = Comparator.comparingLong(k -> k.creationTimeSeconds);
