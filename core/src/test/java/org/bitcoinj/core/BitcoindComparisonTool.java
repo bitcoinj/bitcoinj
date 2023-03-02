@@ -302,7 +302,7 @@ public class BitcoindComparisonTool {
                 locator = new BlockLocator();
                 locator = locator.add(bitcoindChainHead);
                 bitcoind.sendMessage(new GetHeadersMessage(PARAMS, locator, hashTo));
-                bitcoind.ping().get();
+                bitcoind.sendPing().get();
                 if (!chain.getChainHead().getHeader().getHash().equals(bitcoindChainHead)) {
                     rulesSinceFirstFail++;
                     log.error("ERROR: bitcoind and bitcoinj acceptance differs on block \"" + block.ruleName + "\"");
@@ -313,7 +313,7 @@ public class BitcoindComparisonTool {
             } else if (rule instanceof MemoryPoolState) {
                 MemoryPoolMessage message = new MemoryPoolMessage();
                 bitcoind.sendMessage(message);
-                bitcoind.ping().get();
+                bitcoind.sendPing().get();
                 if (mostRecentInv == null && !((MemoryPoolState) rule).mempool.isEmpty()) {
                     log.error("ERROR: bitcoind had an empty mempool, but we expected some transactions on rule " + rule.ruleName);
                     rulesSinceFirstFail++;

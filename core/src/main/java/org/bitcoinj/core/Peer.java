@@ -1465,7 +1465,7 @@ public class Peer extends PeerSocketHandler {
 
     private class PendingPing {
         // The future that will be invoked when the pong is heard back.
-        public final CompletableFuture<Long> future;
+        public final CompletableFuture<Duration> future;
         // The random nonce that lets us tell apart overlapping pings/pongs.
         public final long nonce;
         // Measurement of the time elapsed.
@@ -1483,7 +1483,7 @@ public class Peer extends PeerSocketHandler {
                 Peer.this.addPingTimeData(elapsed.toMillis());
                 if (log.isDebugEnabled())
                     log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed.toMillis());
-                future.complete(elapsed.toMillis());
+                future.complete(elapsed);
             }
         }
     }
@@ -1508,20 +1508,20 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * Sends the peer a ping message and returns a future that will be invoked when the pong is received back.
-     * The future provides a number which is the number of milliseconds elapsed between the ping and the pong.
-     * Once the pong is received the value returned by {@link Peer#getLastPingTime()} is
-     * updated.
-     * @throws ProtocolException if the peer version is too low to support measurable pings.
+     * Sends the peer a ping message and returns a future that will be completed when the pong is received back.
+     * The future provides a {@link Duration} which contains the time elapsed between the ping and the pong.
+     * Once the pong is received the value returned by {@link Peer#getLastPingTime()} is updated.
+     * The future completes exceptionally with a {@link ProtocolException} if the peer version is too low to support measurable pings.
+     * @return A future for the duration representing elapsed time
      */
-    public ListenableCompletableFuture<Long> ping() throws ProtocolException {
-        return ping((long) (Math.random() * Long.MAX_VALUE));
+    public CompletableFuture<Duration> sendPing() {
+        return sendPing((long) (Math.random() * Long.MAX_VALUE));
     }
-
-    protected ListenableCompletableFuture<Long> ping(long nonce) throws ProtocolException {
+    
+    protected CompletableFuture<Duration> sendPing(long nonce) {
         final VersionMessage ver = vPeerVersionMessage;
         if (!ver.isPingPongSupported())
-            throw new ProtocolException("Peer version is too low for measurable pings: " + ver);
+            return FutureUtils.failedFuture(new ProtocolException("Peer version is too low for measurable pings: " + ver));
         if (pendingPings.size() > PENDING_PINGS_LIMIT) {
             log.info("{}: Too many pending pings, disconnecting", this);
             close();
@@ -1529,11 +1529,19 @@ public class Peer extends PeerSocketHandler {
         PendingPing pendingPing = new PendingPing(nonce);
         pendingPings.add(pendingPing);
         sendMessage(new Ping(pendingPing.nonce));
-        return ListenableCompletableFuture.of(pendingPing.future);
+        return pendingPing.future;
     }
 
     /**
-     * Returns the elapsed time of the last ping/pong cycle. If {@link Peer#ping()} has never
+     * @deprecated Use {@link #sendPing()}
+     */
+    @Deprecated
+    public ListenableCompletableFuture<Long> ping() {
+        return ListenableCompletableFuture.of(sendPing().thenApply(Duration::toMillis));
+    }
+    
+    /**
+     * Returns the elapsed time of the last ping/pong cycle. If {@link Peer#sendPing()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
      */
     public long getLastPingTime() {
@@ -1548,7 +1556,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * Returns a moving average of the last N ping/pong cycles. If {@link Peer#ping()} has never
+     * Returns a moving average of the last N ping/pong cycles. If {@link Peer#sendPing()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}. The moving average
      * window is 5 buckets.
      */
@@ -1719,7 +1727,7 @@ public class Peer extends PeerSocketHandler {
             }
             // Ping/pong to wait for blocks that are still being streamed to us to finish being downloaded and
             // discarded.
-            ping().thenRunAsync(() -> {
+            sendPing().thenRunAsync(() -> {
                 lock.lock();
                 checkNotNull(awaitingFreshFilter);
                 GetDataMessage getdata = new GetDataMessage(params);

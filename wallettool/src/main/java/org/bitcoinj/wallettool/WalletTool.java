@@ -729,7 +729,7 @@ public class WalletTool implements Callable<Integer> {
             // Hack for regtest/single peer mode, as we're about to shut down and won't get an ACK from the remote end.
             List<Peer> peerList = peerGroup.getConnectedPeers();
             if (peerList.size() == 1)
-                peerList.get(0).ping().get();
+                peerList.get(0).sendPing().get();
         } catch (BlockStoreException | ExecutionException | InterruptedException | KeyCrypterException e) {
             throw new RuntimeException(e);
         } catch (InsufficientMoneyException e) {
