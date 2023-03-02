@@ -55,6 +55,18 @@ public class FutureUtils {
     }
 
     /**
+     * Can be replaced with {@code CompletableFuture.failedFuture(Throwable)} in Java 9+.
+     * @param t Exception that is causing the failure
+     * @return a failed future containing the specified exception
+     * @param <T> the future's return type
+     */
+    public static <T> CompletableFuture<T> failedFuture(Throwable t) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        future.completeExceptionally(t);
+        return future;
+    }
+
+    /**
      * Subinterface of {@link Supplier} for Lambdas which throw exceptions.
      * Can be used for two purposes:
      * 1. To cast a lambda that throws an exception to a {@link Supplier} and
