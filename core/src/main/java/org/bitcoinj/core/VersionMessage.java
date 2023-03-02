@@ -270,7 +270,7 @@ public class VersionMessage extends Message {
 
     /**
      * Returns true if the clientVersion field is {@link NetworkParameters.ProtocolVersion#PONG} or higher.
-     * If it is then {@link Peer#ping()} is usable.
+     * If it is then {@link Peer#sendPing()} is usable.
      */
     public boolean isPingPongSupported() {
         return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);

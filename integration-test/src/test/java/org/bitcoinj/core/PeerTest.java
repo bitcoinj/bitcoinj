@@ -45,6 +45,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -504,7 +505,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // No ping pong happened yet.
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
-        CompletableFuture<Long> future = peer.ping();
+        CompletableFuture<Duration> future = peer.sendPing();
         assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
         assertFalse(future.isDone());
@@ -514,17 +515,17 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, new Pong(pingMsg.getNonce()));
         pingAndWait(writeTarget);
         assertTrue(future.isDone());
-        long elapsed = future.get();
-        assertTrue("" + elapsed, elapsed > 1000);
-        assertEquals(elapsed, peer.getLastPingTime());
-        assertEquals(elapsed, peer.getPingTime());
+        Duration elapsed = future.get();
+        assertTrue(elapsed.toMillis() + " ms", elapsed.toMillis() > 1000);
+        assertEquals(elapsed.toMillis(), peer.getLastPingTime());
+        assertEquals(elapsed.toMillis(), peer.getPingTime());
         // Do it again and make sure it affects the average.
-        future = peer.ping();
+        CompletableFuture<Duration> future2 = peer.sendPing();
         pingMsg = (Ping) outbound(writeTarget);
         TimeUtils.rollMockClock(50);
         inbound(writeTarget, new Pong(pingMsg.getNonce()));
-        elapsed = future.get();
-        assertEquals(elapsed, peer.getLastPingTime());
+        Duration elapsed2 = future2.get();
+        assertEquals(elapsed2.toMillis(), peer.getLastPingTime());
         assertEquals(7250, peer.getPingTime());
     }
 

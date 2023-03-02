@@ -1672,7 +1672,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 for (Peer peer : getConnectedPeers()) {
                     if (peer.getPeerVersionMessage().clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG))
                         continue;
-                    peer.ping();
+                    peer.sendPing();
                 }
             } catch (Throwable e) {
                 log.error("Exception in ping loop", e);  // The executor swallows exceptions :(
@@ -2231,7 +2231,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * times are available via {@link Peer#getLastPingTime()} but it increases load on the
      * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
      * Setting the value to be smaller or equals 0 disables pinging entirely, although you can still request one yourself
-     * using {@link Peer#ping()}.
+     * using {@link Peer#sendPing()}.
      */
     public void setPingIntervalMsec(long pingIntervalMsec) {
         lock.lock();
