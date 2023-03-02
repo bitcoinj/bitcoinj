@@ -28,11 +28,11 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>Supports peer discovery through DNS.</p>
@@ -96,7 +96,7 @@ public class DnsDiscovery extends MultiplexingDiscovery {
         }
 
         @Override
-        public List<InetSocketAddress> getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
+        public List<InetSocketAddress> getPeers(long services, Duration timeout) throws PeerDiscoveryException {
             InetAddress[] response = null;
             if (services != 0) {
                 String hostnameWithServices = "x" + Long.toHexString(services) + "." + hostname;

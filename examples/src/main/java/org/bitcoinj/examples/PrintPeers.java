@@ -32,10 +32,10 @@ import com.google.common.util.concurrent.Futures;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Prints a list of IP addresses obtained from DNS.
@@ -58,7 +58,7 @@ public class PrintPeers {
     private static void printDNS(Network network) throws PeerDiscoveryException {
         long start = System.currentTimeMillis();
         DnsDiscovery dns = new DnsDiscovery(NetworkParameters.of(network));
-        dnsPeers = dns.getPeers(0, 10, TimeUnit.SECONDS);
+        dnsPeers = dns.getPeers(0, Duration.ofSeconds(10));
         printPeers(dnsPeers);
         printElapsed(start);
     }

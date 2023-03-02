@@ -1078,7 +1078,7 @@ public class PeerGroup implements TransactionBroadcaster {
         for (PeerDiscovery peerDiscovery : peerDiscoverers /* COW */) {
             List<InetSocketAddress> addresses;
             try {
-                addresses = peerDiscovery.getPeers(requiredServices, peerDiscoveryTimeout.toMillis(), TimeUnit.MILLISECONDS);
+                addresses = peerDiscovery.getPeers(requiredServices, peerDiscoveryTimeout);
             } catch (PeerDiscoveryException e) {
                 log.warn(e.getMessage());
                 continue;

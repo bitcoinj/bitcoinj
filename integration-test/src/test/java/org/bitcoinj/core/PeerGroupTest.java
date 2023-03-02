@@ -47,6 +47,7 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,7 +175,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final AtomicBoolean result = new AtomicBoolean();
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             @Override
-            public List<InetSocketAddress> getPeers(long services, long unused, TimeUnit unused2) throws PeerDiscoveryException {
+            public List<InetSocketAddress> getPeers(long services, Duration unused) throws PeerDiscoveryException {
                 if (!result.getAndSet(true)) {
                     // Pretend we are not connected to the internet.
                     throw new PeerDiscoveryException("test failure");
@@ -204,7 +205,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
             addresses.add(new InetSocketAddress("localhost", port + addressNr));
         }
         return new PeerDiscovery() {
-            public List<InetSocketAddress> getPeers(long services, long unused, TimeUnit unused2) throws PeerDiscoveryException {
+            public List<InetSocketAddress> getPeers(long services, Duration unused) throws PeerDiscoveryException {
                 return addresses;
             }
             public void shutdown() {
@@ -559,7 +560,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             @Override
-            public List<InetSocketAddress> getPeers(long services, long unused, TimeUnit unused2) throws PeerDiscoveryException {
+            public List<InetSocketAddress> getPeers(long services, Duration unused) throws PeerDiscoveryException {
                 return addresses;
             }
 

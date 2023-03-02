@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -95,23 +96,23 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     }
 
     @Override
-    public List<InetSocketAddress> getPeers(final long services, final long timeoutValue, final TimeUnit timeoutUnit) throws PeerDiscoveryException {
+    public List<InetSocketAddress> getPeers(final long services, final Duration timeout) throws PeerDiscoveryException {
         vThreadPool = createExecutor();
         try {
             List<Callable<List<InetSocketAddress>>> tasks = new ArrayList<>();
             if (parallelQueries) {
                 for (final PeerDiscovery seed : seeds) {
-                    tasks.add(() -> seed.getPeers(services, timeoutValue, timeoutUnit));
+                    tasks.add(() -> seed.getPeers(services, timeout));
                 }
             } else {
                 tasks.add(() -> {
                     List<InetSocketAddress> peers = new LinkedList<>();
                     for (final PeerDiscovery seed : seeds)
-                        peers.addAll(seed.getPeers(services, timeoutValue, timeoutUnit));
+                        peers.addAll(seed.getPeers(services, timeout));
                     return peers;
                 });
             }
-            final List<Future<List<InetSocketAddress>>> futures = vThreadPool.invokeAll(tasks, timeoutValue, timeoutUnit);
+            final List<Future<List<InetSocketAddress>>> futures = vThreadPool.invokeAll(tasks, timeout.toMillis(), TimeUnit.MILLISECONDS);
             List<InetSocketAddress> addrs = new ArrayList<>();
             for (int i = 0; i < futures.size(); i++) {
                 Future<List<InetSocketAddress>> future = futures.get(i);
@@ -130,7 +131,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
             }
             if (addrs.size() == 0)
                 throw new PeerDiscoveryException("No peer discovery returned any results in "
-                        + timeoutUnit.toMillis(timeoutValue) + "ms. Check internet connection?");
+                        + timeout.toMillis() + " ms. Check internet connection?");
             if (shufflePeers)
                 Collections.shuffle(addrs);
             vThreadPool.shutdownNow();
