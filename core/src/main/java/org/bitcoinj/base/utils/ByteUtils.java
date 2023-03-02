@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.Comparator;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -372,5 +373,29 @@ public class ByteUtils {
     /** Sets the given bit in data to one, using little endian (not the same as Java native big endian) */
     public static void setBitLE(byte[] data, int index) {
         data[index >>> 3] |= bitMask[7 & index];
+    }
+
+    /**
+     * Provides a byte array comparator.
+     * @return A comparator for byte[]
+     */
+    public static Comparator<byte[]> arrayUnsignedComparator() {
+        return ARRAY_UNSIGNED_COMPARATOR;
+    }
+
+    // In Java 9, this can be replaced with Arrays.compareUnsigned()
+    private static final Comparator<byte[]> ARRAY_UNSIGNED_COMPARATOR = (a, b) -> {
+        int minLength = Math.min(a.length, b.length);
+        for (int i = 0; i < minLength; i++) {
+            int result = compareUnsigned(a[i], b[i]);
+            if (result != 0) {
+                return result;
+            }
+        }
+        return a.length - b.length;
+    };
+
+    private static int compareUnsigned(byte a, byte b) {
+        return Byte.toUnsignedInt(a) - Byte.toUnsignedInt(b);
     }
 }

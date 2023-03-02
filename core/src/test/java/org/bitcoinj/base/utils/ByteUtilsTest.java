@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
+import java.util.Comparator;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -83,6 +84,44 @@ public class ByteUtilsTest {
                 "0@",                   // Invalid character
                 "$@",                   // Invalid characters
                 "55$@"                  // Invalid characters
+        };
+    }
+
+
+    @Test
+    @Parameters(method = "arrayUnsignedComparatorVectors")
+    public void testArrayUnsignedComparator(String stringA, String stringB, int expectedResult) {
+        Comparator<byte[]> comparator = ByteUtils.arrayUnsignedComparator();
+        byte[] a = ByteUtils.parseHex(stringA);
+        byte[] b = ByteUtils.parseHex(stringB);
+
+        int actual = comparator.compare(a, b);
+
+        assertEquals("", expectedResult, Integer.signum(actual));
+
+    }
+
+    private Object[] arrayUnsignedComparatorVectors() {
+        return new Object[]{
+                new Object[]{ "00", "00", 0},
+                new Object[]{ "FF", "FF", 0},
+                new Object[]{ "00", "01", -1},
+                new Object[]{ "80", "81", -1},
+                new Object[]{ "FE", "FF", -1},
+                new Object[]{ "01", "00", 1},
+                new Object[]{ "81", "80", 1},
+                new Object[]{ "FF", "FE", 1},
+                new Object[]{ "00", "0001", -1},
+                new Object[]{ "FF", "FF00", -1},
+                new Object[]{ "0001", "00", 1},
+                new Object[]{ "FF00", "FF", 1},
+                new Object[]{ "000102030405060708090A", "000102030405060708090A", 0},
+                new Object[]{ "FF0102030405060708090A", "000102030405060708090A", 1},
+                new Object[]{ "000102030405060708090A", "FF0102030405060708090A", -1},
+                new Object[]{ "0001", "000102030405060708090A", -1},
+                new Object[]{ "FF01", "000102030405060708090A", 1},
+                new Object[]{ "0001", "FF0102030405060708090A", -1},
+                new Object[]{ "", "", 0}
         };
     }
 
