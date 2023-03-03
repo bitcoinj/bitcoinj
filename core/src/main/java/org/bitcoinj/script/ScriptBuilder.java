@@ -273,9 +273,9 @@ public class ScriptBuilder {
         if (to instanceof LegacyAddress) {
             ScriptType scriptType = to.getOutputScriptType();
             if (scriptType == ScriptType.P2PKH)
-                return createP2PKHOutputScript(to.getHash());
+                return createP2PKHOutputScript(((LegacyAddress) to).getHash());
             else if (scriptType == ScriptType.P2SH)
-                return createP2SHOutputScript(to.getHash());
+                return createP2SHOutputScript(((LegacyAddress) to).getHash());
             else
                 throw new IllegalStateException("Cannot handle " + scriptType);
         } else if (to instanceof SegwitAddress) {
