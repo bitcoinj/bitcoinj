@@ -1,4 +1,4 @@
-package org.bitcoinj.utils;
+package org.bitcoinj.crypto.utils;
 
 import com.google.common.primitives.Bytes;
 import org.bitcoinj.base.LegacyAddress;

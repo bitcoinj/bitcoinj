@@ -35,7 +35,7 @@ import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
-import org.bitcoinj.utils.MessageVerifyUtils;
+import org.bitcoinj.crypto.utils.MessageVerifyUtils;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;

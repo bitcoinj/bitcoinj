@@ -1,4 +1,4 @@
-package org.bitcoinj.utils;
+package org.bitcoinj.crypto.utils;
 
 import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.base.DefaultAddressParser;
