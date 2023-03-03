@@ -19,7 +19,7 @@ package org.bitcoinj.crypto;
 import com.google.common.primitives.Bytes;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.NetworkParameters;

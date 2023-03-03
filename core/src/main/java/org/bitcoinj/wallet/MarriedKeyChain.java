@@ -20,7 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.crypto.AesKey;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;

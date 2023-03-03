@@ -20,7 +20,7 @@ package org.bitcoinj.base;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;

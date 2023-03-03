@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

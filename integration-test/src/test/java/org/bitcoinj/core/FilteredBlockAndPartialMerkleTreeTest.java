@@ -17,14 +17,13 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -47,7 +46,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteStreamLE;
+import static org.bitcoinj.base.internal.ByteUtils.uint32ToByteStreamLE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

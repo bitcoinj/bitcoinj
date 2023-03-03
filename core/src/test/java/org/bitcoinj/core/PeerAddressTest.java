@@ -22,7 +22,7 @@ import junitparams.Parameters;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +32,6 @@ import java.net.InetAddress;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import org.bitcoinj.base.utils.ByteUtils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

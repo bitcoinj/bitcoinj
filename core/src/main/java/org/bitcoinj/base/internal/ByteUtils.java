@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.base.utils;
+package org.bitcoinj.base.internal;
 
 import com.google.common.io.BaseEncoding;
-import org.bitcoinj.base.internal.HexFormat;
 
 import java.io.IOException;
 import java.io.InputStream;

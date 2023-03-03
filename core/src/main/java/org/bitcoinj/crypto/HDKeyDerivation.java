@@ -17,7 +17,7 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
 import java.math.BigInteger;

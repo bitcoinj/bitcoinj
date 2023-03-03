@@ -17,7 +17,7 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;

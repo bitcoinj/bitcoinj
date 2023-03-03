@@ -20,7 +20,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,9 +29,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static org.bitcoinj.base.utils.ByteUtils.checkBitLE;
-import static org.bitcoinj.base.utils.ByteUtils.reverseBytes;
-import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteStreamLE;
+import static org.bitcoinj.base.internal.ByteUtils.checkBitLE;
+import static org.bitcoinj.base.internal.ByteUtils.reverseBytes;
+import static org.bitcoinj.base.internal.ByteUtils.uint32ToByteStreamLE;
 
 /**
  * <p>A data structure that contains proofs of block inclusion for one or more transactions, in an efficient manner.</p>

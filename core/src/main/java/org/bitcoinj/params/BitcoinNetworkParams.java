@@ -19,7 +19,7 @@ package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
@@ -38,9 +38,6 @@ import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalUnit;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 

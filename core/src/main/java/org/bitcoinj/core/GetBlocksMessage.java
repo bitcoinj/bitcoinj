@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;

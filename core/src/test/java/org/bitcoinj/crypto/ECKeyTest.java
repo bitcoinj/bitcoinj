@@ -25,7 +25,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.bitcoinj.base.utils.ByteUtils.reverseBytes;
+import static org.bitcoinj.base.internal.ByteUtils.reverseBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

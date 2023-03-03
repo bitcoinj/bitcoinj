@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.base.utils;
+package org.bitcoinj.base.internal;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

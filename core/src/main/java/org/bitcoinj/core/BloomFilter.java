@@ -20,7 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;

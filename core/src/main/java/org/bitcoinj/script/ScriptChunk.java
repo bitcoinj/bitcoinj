@@ -17,7 +17,7 @@
 
 package org.bitcoinj.script;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;

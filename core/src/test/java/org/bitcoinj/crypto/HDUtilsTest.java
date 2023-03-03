@@ -19,7 +19,7 @@ package org.bitcoinj.crypto;
 
 import org.junit.Test;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 

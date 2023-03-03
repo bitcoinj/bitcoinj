@@ -24,7 +24,7 @@ import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 
 import org.junit.Test;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

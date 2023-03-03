@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.DumpedPrivateKey;
@@ -65,7 +65,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.bitcoinj.core.Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
-import org.bitcoinj.base.utils.ByteUtils;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.MatcherAssert.assertThat;
