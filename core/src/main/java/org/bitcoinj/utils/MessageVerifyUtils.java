@@ -1,6 +1,7 @@
 package org.bitcoinj.utils;
 
 import com.google.common.primitives.Bytes;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.crypto.ECKey;
@@ -48,7 +49,7 @@ public class MessageVerifyUtils {
                     comparePubKeyHash(address, message, signatureBase64);
                     break;
                 case P2SH:
-                    compareP2SHScriptHashDerivedFromPubKey(address, message, signatureBase64);
+                    compareP2SHScriptHashDerivedFromPubKey((LegacyAddress) address, message, signatureBase64);
                     break;
                 default:
                     throw new SignatureException(SIGNATURE_FAILED_ERROR_MESSAGE);
@@ -85,7 +86,7 @@ public class MessageVerifyUtils {
         }
     }
 
-    private static void compareP2SHScriptHashDerivedFromPubKey(final Address address,
+    private static void compareP2SHScriptHashDerivedFromPubKey(final LegacyAddress address,
                                                                final String message,
                                                                final String signatureBase64) throws SignatureException {
 
