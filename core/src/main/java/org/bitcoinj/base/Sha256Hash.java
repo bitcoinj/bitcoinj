@@ -17,7 +17,7 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.File;
 import java.io.IOException;

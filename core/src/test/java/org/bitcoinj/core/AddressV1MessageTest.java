@@ -24,7 +24,7 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.util.List;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;

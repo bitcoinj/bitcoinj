@@ -17,7 +17,7 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

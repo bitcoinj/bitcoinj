@@ -18,7 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;

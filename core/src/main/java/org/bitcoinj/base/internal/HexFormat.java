@@ -19,7 +19,7 @@ package org.bitcoinj.base.internal;
 /**
  * This class implements a subset of the functionality of the {@code HexFormat} class available in Java 17 and later.
  * Its behavior is the same as an instance of Java 17 {@code HexFormat} created with {@code HexFormat.of()}.
- * It is an internal class to support {@link org.bitcoinj.base.utils.ByteUtils} and may be removed in the future
+ * It is an internal class to support {@link ByteUtils} and may be removed in the future
  * when and if we have a Java 17 baseline.
  * <p>Thanks to this <a href="https://www.baeldung.com/java-byte-arrays-hex-strings">Baeldung article</a>.
  */

@@ -55,8 +55,8 @@ import java.util.concurrent.Executors;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
-import org.bitcoinj.base.utils.ByteUtils;
-import static org.bitcoinj.base.utils.ByteUtils.uint32ToByteStreamLE;
+import org.bitcoinj.base.internal.ByteUtils;
+import static org.bitcoinj.base.internal.ByteUtils.uint32ToByteStreamLE;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;

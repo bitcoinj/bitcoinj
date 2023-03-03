@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

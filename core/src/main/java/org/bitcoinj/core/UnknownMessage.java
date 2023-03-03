@@ -17,7 +17,7 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 
 /**
  * <p>Instances of this class are not safe for use by multiple threads.</p>

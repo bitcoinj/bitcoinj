@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 import static org.bitcoinj.base.internal.InternalUtils.SPACE_JOINER;
 import static org.bitcoinj.base.internal.InternalUtils.WHITESPACE_SPLITTER;
 import static org.junit.Assert.assertEquals;

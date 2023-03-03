@@ -20,8 +20,8 @@ package org.bitcoinj.core;
 import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.crypto.internal.CryptoUtils;
+import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
