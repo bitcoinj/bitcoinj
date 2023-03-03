@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.base;
 
-import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.junit.Test;
 
