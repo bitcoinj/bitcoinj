@@ -127,7 +127,9 @@ public abstract class Address implements Comparable<Address> {
      * Get either the public key hash or script hash that is encoded in the address.
      * 
      * @return hash that is encoded in the address
+     * @deprecated Use {@link LegacyAddress#getHash()} or {@link SegwitAddress#getWitnessProgram()} as appropriate
      */
+    @Deprecated
     public abstract byte[] getHash();
 
     /**

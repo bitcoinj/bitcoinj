@@ -214,7 +214,6 @@ public class LegacyAddress extends Address {
     }
 
     /** The (big endian) 20 byte hash that is the core of a Bitcoin address. */
-    @Override
     public byte[] getHash() {
         return bytes;
     }
