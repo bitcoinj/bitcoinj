@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -113,7 +114,7 @@ public class BitcoindComparisonTool {
             }
             log.info("bitcoind connected");
             // Make sure bitcoind has no blocks
-            bitcoind.setDownloadParameters(0, false);
+            bitcoind.setDownloadParameters(false);
             bitcoind.startBlockChainDownload();
             connectedFuture.complete(null);
         });

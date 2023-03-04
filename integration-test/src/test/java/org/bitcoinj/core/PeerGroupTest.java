@@ -49,6 +49,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -430,23 +431,23 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Check the fast catchup time was initialized to something around the current runtime minus a week.
         // The wallet was already added to the peer in setup.
         final int WEEK = 86400 * 7;
-        final long now = TimeUtils.currentTimeSeconds();
+        final Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         peerGroup.start();
-        assertTrue(peerGroup.getFastCatchupTimeSecs() > now - WEEK - 10000);
+        assertTrue(peerGroup.getFastCatchupTime().isAfter(now.minusSeconds(WEEK).minusSeconds(10000)));
         Wallet w2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
         ECKey key1 = new ECKey();
-        key1.setCreationTimeSeconds(now - 86400);  // One day ago.
+        key1.setCreationTimeSeconds(now.getEpochSecond() - 86400);  // One day ago.
         w2.importKey(key1);
         peerGroup.addWallet(w2);
         peerGroup.waitForJobQueue();
-        assertEquals(peerGroup.getFastCatchupTimeSecs(), now - 86400 - WEEK);
+        assertEquals(peerGroup.getFastCatchupTime(), now.minusSeconds(86400).minusSeconds(WEEK));
         // Adding a key to the wallet should update the fast catchup time, but asynchronously and in the background
         // due to the need to avoid complicated lock inversions.
         ECKey key2 = new ECKey();
-        key2.setCreationTimeSeconds(now - 100000);
+        key2.setCreationTimeSeconds(now.getEpochSecond() - 100000);
         w2.importKey(key2);
         peerGroup.waitForJobQueue();
-        assertEquals(peerGroup.getFastCatchupTimeSecs(), now - WEEK - 100000);
+        assertEquals(peerGroup.getFastCatchupTime(),now.minusSeconds(WEEK).minusSeconds(100000));
     }
 
     @Test

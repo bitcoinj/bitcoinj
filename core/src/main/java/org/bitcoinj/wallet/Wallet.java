@@ -3576,7 +3576,7 @@ public class Wallet extends BaseTaggableObject
      * of {@link ECKey#getCreationTimeSeconds()}. This can return zero if at least one key does
      * not have that data (was created before key timestamping was implemented). <p>
      *
-     * This method is most often used in conjunction with {@link PeerGroup#setFastCatchupTimeSecs(long)} in order to
+     * This method is most often used in conjunction with {@link PeerGroup#setFastCatchupTime(Instant)} in order to
      * optimize chain download for new users of wallet apps. Backwards compatibility notice: if you get zero from this
      * method, you can instead use the time of the first release of your software, as it's guaranteed no users will
      * have wallets pre-dating this time. <p>

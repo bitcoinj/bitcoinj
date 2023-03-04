@@ -466,7 +466,9 @@ public class PeerTest extends TestWithNetworkConnections {
         b4.solve();
 
         // Request headers until the last 2 blocks.
-        peer.setDownloadParameters(TimeUtils.currentTimeSeconds() - (600*2) + 1, false);
+        peer.setFastDownloadParameters(
+                false, TimeUtils.currentTime().minusSeconds(600 * 2).plusSeconds(1)
+        );
         peer.startBlockChainDownload();
         GetHeadersMessage getheaders = (GetHeadersMessage) outbound(writeTarget);
         BlockLocator expectedLocator = new BlockLocator();

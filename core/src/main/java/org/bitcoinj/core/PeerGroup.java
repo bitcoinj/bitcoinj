@@ -213,7 +213,7 @@ public class PeerGroup implements TransactionBroadcaster {
     @GuardedBy("lock") private boolean useLocalhostPeerWhenPossible = true;
     @GuardedBy("lock") private boolean ipv6Unreachable = false;
 
-    @GuardedBy("lock") private long fastCatchupTimeSecs;
+    @GuardedBy("lock") private Instant fastCatchupTime;
     private final CopyOnWriteArrayList<Wallet> wallets;
     private final CopyOnWriteArrayList<PeerFilterProvider> peerFilterProviders;
 
@@ -424,7 +424,7 @@ public class PeerGroup implements TransactionBroadcaster {
         Context.getOrCreate(); // create a context for convenience
         this.params = params;
         this.chain = chain;
-        fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
+        fastCatchupTime = params.getGenesisBlock().getTimeInstant();
         wallets = new CopyOnWriteArrayList<>();
         peerFilterProviders = new CopyOnWriteArrayList<>();
 
@@ -1711,7 +1711,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 }
                 downloadPeer.setDownloadData(true);
                 if (chain != null)
-                    downloadPeer.setDownloadParameters(fastCatchupTimeSecs, bloomFilterMerger.getLastFilter() != null);
+                    downloadPeer.setFastDownloadParameters(bloomFilterMerger.getLastFilter() != null, fastCatchupTime);
             }
         } finally {
             lock.unlock();
@@ -1729,17 +1729,23 @@ public class PeerGroup implements TransactionBroadcaster {
      * before starting block chain download.
      * Do not use a {@code time > NOW - 1} block, as it will break some block download logic.
      */
-    public void setFastCatchupTimeSecs(long secondsSinceEpoch) {
+    public void setFastCatchupTime(Instant fastCatchupTime) {
         lock.lock();
         try {
             checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
-            fastCatchupTimeSecs = secondsSinceEpoch;
+            this.fastCatchupTime = fastCatchupTime;
             if (downloadPeer != null) {
-                downloadPeer.setDownloadParameters(secondsSinceEpoch, bloomFilterMerger.getLastFilter() != null);
+                downloadPeer.setFastDownloadParameters(bloomFilterMerger.getLastFilter() != null, fastCatchupTime);
             }
         } finally {
             lock.unlock();
         }
+    }
+
+    /** @deprecated use {@link #setFastCatchupTime(Instant)} */
+    @Deprecated
+    public void setFastCatchupTimeSecs(long fastCatchupTimeSecs) {
+        setFastCatchupTime(Instant.ofEpochSecond(fastCatchupTimeSecs));
     }
 
     /**
@@ -1748,13 +1754,19 @@ public class PeerGroup implements TransactionBroadcaster {
      * the min of the wallets earliest key times.
      * @return a time in seconds since the epoch
      */
-    public long getFastCatchupTimeSecs() {
+    public Instant getFastCatchupTime() {
         lock.lock();
         try {
-            return fastCatchupTimeSecs;
+            return fastCatchupTime;
         } finally {
             lock.unlock();
         }
+    }
+
+    /** @deprecated use {@link #getFastCatchupTime()} */
+    @Deprecated
+    public long getFastCatchupTimeSecs() {
+        return getFastCatchupTime().getEpochSecond();
     }
 
     protected void handlePeerDeath(final Peer peer, @Nullable Throwable exception) {

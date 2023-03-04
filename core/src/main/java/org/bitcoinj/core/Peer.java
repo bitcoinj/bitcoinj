@@ -123,7 +123,7 @@ public class Peer extends PeerSocketHandler {
     // Each wallet added to the peer will be notified of downloaded transaction data.
     private final CopyOnWriteArrayList<Wallet> wallets;
     // A time before which we only download block headers, after that point we download block bodies.
-    @GuardedBy("lock") private long fastCatchupTimeSecs;
+    @GuardedBy("lock") private Instant fastCatchupTime;
     // Whether we are currently downloading headers only or block bodies. Starts at true. If the fast catchup time is
     // set AND our best block is before that date, switch to false until block headers beyond that point have been
     // received at which point it gets set to true again. This isn't relevant unless vDownloadData is true.
@@ -239,7 +239,7 @@ public class Peer extends PeerSocketHandler {
         this.vDownloadData = chain != null;
         this.getDataFutures = new ConcurrentLinkedQueue<>();
         this.getAddrFutures = new LinkedList<>();
-        this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
+        this.fastCatchupTime = params.getGenesisBlock().getTimeInstant();
         this.pendingPings = new CopyOnWriteArrayList<>();
         this.vMinProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
         this.wallets = new CopyOnWriteArrayList<>();
@@ -617,7 +617,7 @@ public class Peer extends PeerSocketHandler {
         // the chain if it pre-dates the fast catchup time. If we go past it, we can stop processing the headers and
         // request the full blocks from that point on instead.
         boolean downloadBlockBodies;
-        long fastCatchupTimeSecs;
+        Instant fastCatchupTime;
 
         lock.lock();
         try {
@@ -626,7 +626,7 @@ public class Peer extends PeerSocketHandler {
                 log.warn("Received headers when Peer is not configured with a chain.");
                 return;
             }
-            fastCatchupTimeSecs = this.fastCatchupTimeSecs;
+            fastCatchupTime = this.fastCatchupTime;
             downloadBlockBodies = this.downloadBlockBodies;
         } finally {
             lock.unlock();
@@ -639,7 +639,7 @@ public class Peer extends PeerSocketHandler {
                 // Process headers until we pass the fast catchup time, or are about to catch up with the head
                 // of the chain - always process the last block as a full/filtered block to kick us out of the
                 // fast catchup mode (in which we ignore new blocks).
-                boolean passedTime = header.getTimeSeconds() >= fastCatchupTimeSecs;
+                boolean passedTime = header.getTimeInstant().compareTo(fastCatchupTime) >= 0;
                 boolean reachedTop = blockChain.getBestChainHeight() >= vPeerVersionMessage.bestHeight;
                 if (!passedTime && !reachedTop) {
                     if (!vDownloadData) {
@@ -661,7 +661,7 @@ public class Peer extends PeerSocketHandler {
                     try {
                         log.info(
                                 "Passed the fast catchup time ({}) at height {}, discarding {} headers and requesting full blocks",
-                                TimeUtils.dateTimeFormat(fastCatchupTimeSecs * 1000), blockChain.getBestChainHeight() + 1,
+                                TimeUtils.dateTimeFormat(fastCatchupTime.toEpochMilli()), blockChain.getBestChainHeight() + 1,
                                 m.getBlockHeaders().size() - i);
                         this.downloadBlockBodies = true;
                         // Prevent this request being seen as a duplicate.
@@ -1313,25 +1313,45 @@ public class Peer extends PeerSocketHandler {
      * isn't known until their headers are available and they are requested in chunks, so some headers may be downloaded
      * twice using this scheme, but this optimization can still be a large win for newly created wallets.
      *
-     * @param secondsSinceEpoch Time in seconds since the epoch or 0 to reset to always downloading block bodies.
+     * @param useFilteredBlocks whether to request filtered blocks if the protocol version allows for them
+     * @param fastCatchupTime   time before which block bodies are skipped
      */
-    public void setDownloadParameters(long secondsSinceEpoch, boolean useFilteredBlocks) {
+    public void setFastDownloadParameters(boolean useFilteredBlocks, Instant fastCatchupTime) {
         lock.lock();
         try {
-            if (secondsSinceEpoch == 0) {
-                fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
-                downloadBlockBodies = true;
-            } else {
-                fastCatchupTimeSecs = secondsSinceEpoch;
-                // If the given time is before the current chains head block time, then this has no effect (we already
-                // downloaded everything we need).
-                if (blockChain != null && fastCatchupTimeSecs > blockChain.getChainHead().getHeader().getTimeSeconds())
-                    downloadBlockBodies = false;
-            }
+            this.fastCatchupTime = fastCatchupTime;
+            // If the given time is before the current chains head block time, then this has no effect (we already
+            // downloaded everything we need).
+            if (blockChain != null && this.fastCatchupTime.isAfter(blockChain.getChainHead().getHeader().getTimeInstant()))
+                downloadBlockBodies = false;
             this.useFilteredBlocks = useFilteredBlocks;
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Always download full blocks.
+     * @param useFilteredBlocks whether to request filtered blocks if the protocol version allows for them
+     */
+    public void setDownloadParameters(boolean useFilteredBlocks) {
+        lock.lock();
+        try {
+            this.fastCatchupTime = params.getGenesisBlock().getTimeInstant();
+            downloadBlockBodies = true;
+            this.useFilteredBlocks = useFilteredBlocks;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** @deprecated use {@link #setDownloadParameters(boolean)} or {@link #setFastDownloadParameters(boolean, Instant)} */
+    @Deprecated
+    public void setDownloadParameters(long fastCatchupTimeSecs, boolean useFilteredBlocks) {
+        if (fastCatchupTimeSecs > 0)
+            setFastDownloadParameters(useFilteredBlocks, Instant.ofEpochSecond(fastCatchupTimeSecs));
+        else
+            setDownloadParameters(useFilteredBlocks);
     }
 
     /**
