@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.base.utils;
+package org.bitcoinj.base.internal;
 
+import org.bitcoinj.base.internal.StreamUtils;
 import org.junit.Test;
 
 import java.util.Arrays;
