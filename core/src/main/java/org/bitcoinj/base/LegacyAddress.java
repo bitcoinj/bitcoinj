@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
  * plus a set of network parameters. Not to be confused with a {@link org.bitcoinj.core.PeerAddress}
@@ -40,12 +42,14 @@ import java.util.Objects;
  * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
  * type) can contain a hash of a script instead.</p>
  */
-public class LegacyAddress extends Address {
+public class LegacyAddress implements Address {
     /**
      * An address is a RIPEMD160 hash of a public key, therefore is always 160 bits or 20 bytes.
      */
     public static final int LENGTH = 20;
 
+    protected final Network network;
+    protected final byte[] bytes;
     /** True if P2SH, false if P2PKH. */
     public final boolean p2sh;
 
@@ -62,7 +66,8 @@ public class LegacyAddress extends Address {
      *            20-byte hash of pubkey or script
      */
     private LegacyAddress(Network network, boolean p2sh, byte[] hash160) throws AddressFormatException {
-        super(normalizeNetwork(network), hash160);
+        this.network = normalizeNetwork(checkNotNull(network));
+        this.bytes = checkNotNull(hash160);
         if (hash160.length != 20)
             throw new AddressFormatException.InvalidDataLength(
                     "Legacy addresses are 20 byte (160 bit) hashes, but got: " + hash160.length);
@@ -195,6 +200,16 @@ public class LegacyAddress extends Address {
     }
 
     /**
+     * Get the network this address works on. Use of {@link BitcoinNetwork} is preferred to use of {@link NetworkParameters}
+     * when you need to know what network an address is for.
+     * @return the Network.
+     */
+    @Override
+    public Network network() {
+        return network;
+    }
+
+    /**
      * Get the version header of an address. This is the first byte of a base58 encoded address.
      * 
      * @return version header as one byte
@@ -250,12 +265,12 @@ public class LegacyAddress extends Address {
         if (o == null || getClass() != o.getClass())
             return false;
         LegacyAddress other = (LegacyAddress) o;
-        return super.equals(other) && this.p2sh == other.p2sh;
+        return this.network == other.network && Arrays.equals(this.bytes, other.bytes) && this.p2sh == other.p2sh;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), p2sh);
+        return Objects.hash(network, Arrays.hashCode(bytes), p2sh);
     }
 
     @Override
@@ -263,15 +278,10 @@ public class LegacyAddress extends Address {
         return toBase58();
     }
 
-    @Override
-    public LegacyAddress clone() throws CloneNotSupportedException {
-        return (LegacyAddress) super.clone();
-    }
-
     // Comparator for LegacyAddress, left argument must be LegacyAddress, right argument can be any Address
     private static final Comparator<Address> LEGACY_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
             .thenComparingInt(a -> ((LegacyAddress) a).getVersion())            // Then compare Legacy address version byte
-            .thenComparing(a -> a.bytes, ByteUtils.arrayUnsignedComparator());  // Then compare Legacy bytes
+            .thenComparing(a -> ((LegacyAddress) a).bytes, ByteUtils.arrayUnsignedComparator());  // Then compare Legacy bytes
 
     /**
      * {@inheritDoc}
