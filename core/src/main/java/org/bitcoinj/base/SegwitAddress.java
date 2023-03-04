@@ -400,10 +400,8 @@ public class SegwitAddress implements Address {
      * @return textual form encoded in bech32
      */
     public String toBech32() {
-        if (getWitnessVersion() == 0)
-            return Bech32.encode(Bech32.Encoding.BECH32, network.segwitAddressHrp(), appendVersion(witnessVersion, encode8to5(witnessProgram)));
-        else
-            return Bech32.encode(Bech32.Encoding.BECH32M, network.segwitAddressHrp(), appendVersion(witnessVersion, encode8to5(witnessProgram)));
+        Bech32.Encoding encoding = (witnessVersion == 0) ?  Bech32.Encoding.BECH32 : Bech32.Encoding.BECH32M;
+        return Bech32.encode(encoding, network.segwitAddressHrp(), appendVersion(witnessVersion, encode8to5(witnessProgram)));
     }
 
     // Trim the version byte and return the witness program only
