@@ -24,12 +24,14 @@ import org.bitcoinj.core.NetworkParameters;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
@@ -49,7 +51,7 @@ import static org.bitcoinj.base.BitcoinNetwork.*;
  * {@link #fromHash(org.bitcoinj.base.Network, byte[])} or {@link ECKey#toAddress(ScriptType, Network)}
  * to construct a native segwit address.</p>
  */
-public class SegwitAddress extends Address {
+public class SegwitAddress implements Address {
     public static final int WITNESS_PROGRAM_LENGTH_PKH = 20;
     public static final int WITNESS_PROGRAM_LENGTH_SH = 32;
     public static final int WITNESS_PROGRAM_LENGTH_TR = 32;
@@ -119,6 +121,9 @@ public class SegwitAddress extends Address {
         }
     }
 
+    protected final Network network;
+    protected final byte[] bytes;
+
     /**
      * Private constructor. Use {@link #fromBech32(Network, String)},
      * {@link #fromHash(Network, byte[])} or {@link ECKey#toAddress(ScriptType, Network)}.
@@ -169,7 +174,8 @@ public class SegwitAddress extends Address {
      *             if any of the sanity checks fail
      */
     private SegwitAddress(Network network, byte[] data) throws AddressFormatException {
-        super(normalizeNetwork(network), data);
+        this.network = normalizeNetwork(checkNotNull(network));
+        this.bytes = checkNotNull(data);
         if (data.length < 1)
             throw new AddressFormatException.InvalidDataLength("Zero data found");
         final int witnessVersion = getWitnessVersion();
@@ -385,6 +391,29 @@ public class SegwitAddress extends Address {
     }
 
     /**
+     * Get the network this address works on. Use of {@link BitcoinNetwork} is preferred to use of {@link NetworkParameters}
+     * when you need to know what network an address is for.
+     * @return the Network.
+     */
+    @Override
+    public Network network() {
+        return network;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(network, Arrays.hashCode(bytes));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SegwitAddress other = (SegwitAddress) o;
+        return this.network == other.network && Arrays.equals(this.bytes, other.bytes);
+    }
+
+    /**
      * Returns the textual form of the address.
      * 
      * @return textual form encoded in bech32
@@ -430,7 +459,7 @@ public class SegwitAddress extends Address {
 
     // Comparator for SegwitAddress, left argument must be SegwitAddress, right argument can be any Address
     private static final Comparator<Address> SEGWIT_ADDRESS_COMPARATOR = Address.PARTIAL_ADDRESS_COMPARATOR
-            .thenComparing(a -> a.bytes, ByteUtils.arrayUnsignedComparator());  // Then compare Segwit bytes
+            .thenComparing(a -> ((SegwitAddress) a).bytes, ByteUtils.arrayUnsignedComparator());  // Then compare Segwit bytes
 
     /**
      * {@inheritDoc}
