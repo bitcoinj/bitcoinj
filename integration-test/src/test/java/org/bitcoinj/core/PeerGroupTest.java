@@ -436,7 +436,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(peerGroup.getFastCatchupTime().isAfter(now.minusSeconds(WEEK).minusSeconds(10000)));
         Wallet w2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
         ECKey key1 = new ECKey();
-        key1.setCreationTimeSeconds(now.getEpochSecond() - 86400);  // One day ago.
+        key1.setCreationTime(now.minus(1, ChronoUnit.DAYS));  // One day ago.
         w2.importKey(key1);
         peerGroup.addWallet(w2);
         peerGroup.waitForJobQueue();
@@ -444,7 +444,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Adding a key to the wallet should update the fast catchup time, but asynchronously and in the background
         // due to the need to avoid complicated lock inversions.
         ECKey key2 = new ECKey();
-        key2.setCreationTimeSeconds(now.getEpochSecond() - 100000);
+        key2.setCreationTime(now.minusSeconds(100000));
         w2.importKey(key2);
         peerGroup.waitForJobQueue();
         assertEquals(peerGroup.getFastCatchupTime(),now.minusSeconds(WEEK).minusSeconds(100000));

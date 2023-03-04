@@ -29,6 +29,7 @@ import org.bitcoinj.script.ScriptPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -44,14 +45,20 @@ public class KeyTimeCoinSelector implements CoinSelector {
     /** A number of inputs chosen to avoid hitting {@link Transaction#MAX_STANDARD_TX_SIZE} */
     public static final int MAX_SIMULTANEOUS_INPUTS = 600;
 
-    private final long unixTimeSeconds;
+    private final Instant time;
     private final Wallet wallet;
     private final boolean ignorePending;
 
-    public KeyTimeCoinSelector(Wallet wallet, long unixTimeSeconds, boolean ignorePending) {
-        this.unixTimeSeconds = unixTimeSeconds;
+    public KeyTimeCoinSelector(Wallet wallet, Instant time, boolean ignorePending) {
+        this.time = checkNotNull(time);
         this.wallet = wallet;
         this.ignorePending = ignorePending;
+    }
+
+    /** @deprecated use {@link #KeyTimeCoinSelector(Wallet, Instant, boolean)} */
+    @Deprecated
+    public KeyTimeCoinSelector(Wallet wallet, long timeSecs, boolean ignorePending) {
+        this(wallet, Instant.ofEpochSecond(timeSecs), ignorePending);
     }
 
     @Override
@@ -76,7 +83,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
                     continue;
                 }
                 checkNotNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
-                if (controllingKey.getCreationTimeSeconds() >= unixTimeSeconds) continue;
+                if (controllingKey.getCreationTime().orElse(Instant.EPOCH).compareTo(time) >= 0) continue;
                 // It's older than the cutoff time so select.
                 gathered.push(output);
                 if (gathered.size() >= MAX_SIMULTANEOUS_INPUTS) {

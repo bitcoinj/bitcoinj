@@ -88,7 +88,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         }
 
         // Set the date picker to show the birthday of this wallet.
-        Instant creationTime = Instant.ofEpochSecond(seed.getCreationTimeSeconds());
+        Instant creationTime = seed.getCreationTime().get();
         LocalDate origDate = creationTime.atZone(ZoneId.systemDefault()).toLocalDate();
         datePicker.setValue(origDate);
 
@@ -179,7 +179,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         overlayUI.done();
         app.mainWindowController().restoreFromSeedAnimation();
 
-        long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
+        Instant birthday = datePicker.getValue().atStartOfDay().toInstant(ZoneOffset.UTC);
         DeterministicSeed seed = DeterministicSeed.ofMnemonic(InternalUtils.splitter(" ").splitToList(wordsArea.getText()),"", birthday);
         // Shut down bitcoinj and restart it with the new seed.
         app.walletAppKit().addListener(new Service.Listener() {

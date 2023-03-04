@@ -56,6 +56,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
@@ -187,7 +188,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected SecureRandom random;
         protected int bits = DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS;
         protected String passphrase;
-        protected long creationTimeSecs = 0;
+        @Nullable protected Instant creationTime = null;
         protected byte[] entropy;
         protected DeterministicSeed seed;
         protected ScriptType outputScriptType = ScriptType.P2PKH;
@@ -206,13 +207,22 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
         /**
          * Creates a deterministic key chain starting from the given entropy. All keys yielded by this chain will be the same
-         * if the starting entropy is the same. You should provide the creation time in seconds since the UNIX epoch for the
-         * seed: this lets us know from what part of the chain we can expect to see derived keys appear.
+         * if the starting entropy is the same. You should provide the creation time for the
+         * chain: this lets us know from what part of the chain we can expect to see derived keys appear.
+         * @param entropy entropy to create the chain with
+         * @param creationTime creation time for the chain
          */
-        public T entropy(byte[] entropy, long creationTimeSecs) {
+        public T entropy(byte[] entropy, Instant creationTime) {
             this.entropy = entropy;
-            this.creationTimeSecs = creationTimeSecs;
+            this.creationTime = checkNotNull(creationTime);
             return self();
+        }
+
+        /** @deprecated use {@link #entropy(byte[], Instant)} */
+        @Deprecated
+        public T entropy(byte[] entropy, long creationTimeSecs) {
+            checkArgument(creationTimeSecs > 0);
+            return entropy(entropy, Instant.ofEpochSecond(creationTimeSecs));
         }
 
         /**
@@ -311,7 +321,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 return new DeterministicKeyChain(DeterministicSeed.ofRandom(random, bits, getPassphrase()), null,
                         outputScriptType, accountPath);
             else if (entropy != null)
-                return new DeterministicKeyChain(DeterministicSeed.ofEntropy(entropy, getPassphrase(), creationTimeSecs),
+                return new DeterministicKeyChain(DeterministicSeed.ofEntropy(entropy, getPassphrase(), creationTime),
                         null, outputScriptType, accountPath);
             else if (seed != null)
                 return new DeterministicKeyChain(seed, null, outputScriptType, accountPath);
@@ -387,7 +397,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
             rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSeedBytes()));
-            rootKey.setCreationTimeSeconds(seed.getCreationTimeSeconds());
+            Optional<Instant> creationTime = seed.getCreationTime();
+            if (creationTime.isPresent())
+                rootKey.setCreationTime(creationTime.get());
+            else
+                rootKey.clearCreationTime();
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
             for (HDPath path : getAccountPath().ancestors(true)) {
@@ -711,10 +725,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public Instant getEarliestKeyCreationTimeInstant() {
-        return Instant.ofEpochSecond(seed != null ?
-                seed.getCreationTimeSeconds() :
-                getWatchingKey().getCreationTimeSeconds()
-        );
+        return (seed != null ?
+                seed.getCreationTime() :
+                getWatchingKey().getCreationTime()
+        ).orElse(Instant.EPOCH);
     }
 
     @Override
@@ -851,7 +865,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     addChain(chains, chain, lookaheadSize, sigsRequiredToSpend);
                     chain = null;
                 }
-                long timestamp = key.getCreationTimestamp() / 1000;
+                Instant seedCreationTime = Instant.ofEpochMilli(key.getCreationTimestamp());
                 String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
                 if (key.hasSecretBytes()) {
                     if (key.hasEncryptedDeterministicSeed())
@@ -860,7 +874,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     if (key.hasDeterministicSeed()) {
                         seedBytes = key.getDeterministicSeed().toByteArray();
                     }
-                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, timestamp);
+                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, seedCreationTime);
                 } else if (key.hasEncryptedData()) {
                     if (key.hasDeterministicSeed())
                         throw new UnreadableWalletException("Malformed key proto: " + key);
@@ -872,7 +886,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         encryptedSeedBytes = new EncryptedData(encryptedSeed.getInitialisationVector().toByteArray(),
                                 encryptedSeed.getEncryptedPrivateKey().toByteArray());
                     }
-                    seed = new DeterministicSeed(data, encryptedSeedBytes, timestamp);
+                    seed = new DeterministicSeed(data, encryptedSeedBytes, seedCreationTime);
                 } else {
                     throw new UnreadableWalletException("Malformed key proto: " + key);
                 }
@@ -908,12 +922,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     // If this has a private key but no seed, then all we know is the spending key H
                     if (seed == null && key.hasSecretBytes()) {
                         DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, ByteUtils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
-                        accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
+                        accountKey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
                         chain = factory.makeSpendingKeyChain(accountKey, isMarried, outputScriptType);
                         isSpendingKey = true;
                     } else if (seed == null) {
                         DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, null, null);
-                        accountKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
+                        accountKey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
                         chain = factory.makeWatchingKeyChain(accountKey, isFollowingKey, isMarried,
                                 outputScriptType);
                         isWatchingAccountKey = true;
@@ -950,7 +964,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     }
                 }
                 if (key.hasCreationTimestamp())
-                    detkey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
+                    detkey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
                 if (log.isDebugEnabled())
                     log.debug("Deserializing: DETERMINISTIC_KEY: {}", detkey);
                 if (!isWatchingAccountKey) {
@@ -1437,11 +1451,23 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (seed.isEncrypted())
                     builder.append("Seed is encrypted\n");
             }
-            builder.append("Seed birthday:     ").append(seed.getCreationTimeSeconds()).append("  [")
-                    .append(TimeUtils.dateTimeFormat(seed.getCreationTimeSeconds() * 1000)).append("]\n");
+            builder.append("Seed birthday:     ");
+            Optional<Instant> seedCreationTime = seed.getCreationTime();
+            if (seedCreationTime.isPresent())
+                builder.append(seedCreationTime.get().getEpochSecond()).append("  [")
+                        .append(TimeUtils.dateTimeFormat(seedCreationTime.get().toEpochMilli())).append("]");
+            else
+                builder.append("unknown");
+            builder.append("\n");
         } else {
-            builder.append("Key birthday:      ").append(watchingKey.getCreationTimeSeconds()).append("  [")
-                    .append(TimeUtils.dateTimeFormat(watchingKey.getCreationTimeSeconds() * 1000)).append("]\n");
+            builder.append("Key birthday:      ");
+            Optional<Instant> watchingKeyCreationTime = watchingKey.getCreationTime();
+            if (watchingKeyCreationTime.isPresent())
+                builder.append(watchingKeyCreationTime.get().getEpochSecond()).append("  [")
+                        .append(TimeUtils.dateTimeFormat(watchingKeyCreationTime.get().toEpochMilli())).append("]");
+            else
+                builder.append("unknown");
+            builder.append("\n");
         }
         builder.append("Ouput script type: ").append(outputScriptType).append('\n');
         builder.append("Key to watch:      ").append(watchingKey.serializePubB58(params.network(), outputScriptType))

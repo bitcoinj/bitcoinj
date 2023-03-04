@@ -236,7 +236,7 @@ public class ChildKeyDerivationTest {
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
 
         // Creation time can't survive the xpub serialization format unfortunately.
-        key1.setCreationTimeSeconds(0);
+        key1.clearCreationTime();
         Network network = MAINNET;
 
         {

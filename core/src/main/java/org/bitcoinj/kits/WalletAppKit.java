@@ -53,8 +53,10 @@ import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.FileLock;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -335,15 +337,15 @@ public class WalletAppKit extends AbstractIdleService {
 
             if (checkpoints != null) {
                 // Initialize the chain file with a checkpoint to speed up first-run sync.
-                long time;
+                Instant time;
                 if (restoreFromSeed != null) {
-                    time = restoreFromSeed.getCreationTimeSeconds();
+                    time = restoreFromSeed.getCreationTime().orElse(Instant.EPOCH);
                     if (chainFileExists) {
                         log.info("Clearing the chain file in preparation for restore.");
                         vStore.clear();
                     }
                 } else if (restoreFromKey != null) {
-                    time = restoreFromKey.getCreationTimeSeconds();
+                    time = restoreFromKey.getCreationTime().orElse(Instant.EPOCH);
                     if (chainFileExists) {
                         log.info("Clearing the chain file in preparation for restore.");
                         vStore.clear();
@@ -351,9 +353,9 @@ public class WalletAppKit extends AbstractIdleService {
                 }
                 else
                 {
-                    time = vWallet.getEarliestKeyCreationTimeInstant().getEpochSecond();
+                    time = vWallet.getEarliestKeyCreationTimeInstant();
                 }
-                if (time > 0)
+                if (time.isAfter(Instant.EPOCH))
                     CheckpointManager.checkpoint(params, checkpoints, vStore, time);
                 else
                     log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");

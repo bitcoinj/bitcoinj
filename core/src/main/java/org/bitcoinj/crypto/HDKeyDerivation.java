@@ -73,7 +73,7 @@ public final class HDKeyDerivation {
         Arrays.fill(il, (byte)0);
         Arrays.fill(ir, (byte)0);
         // Child deterministic keys will chain up to their parents to find the keys.
-        masterPrivKey.setCreationTimeSeconds(TimeUtils.currentTimeSeconds());
+        masterPrivKey.setCreationTime(TimeUtils.currentTime());
         return masterPrivKey;
     }
 

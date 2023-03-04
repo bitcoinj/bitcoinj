@@ -219,7 +219,7 @@ public class WalletTest extends TestWithWallet {
     public void encryptDecryptWalletWithArbitraryPathAndScriptType() throws Exception {
         final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
         KeyChainGroup keyChainGroup = KeyChainGroup.builder(TESTNET)
-                .addChain(DeterministicKeyChain.builder().seed(DeterministicSeed.ofEntropy(ENTROPY, "", 1389353062L))
+                .addChain(DeterministicKeyChain.builder().seed(DeterministicSeed.ofEntropy(ENTROPY, "", Instant.ofEpochSecond(1389353062L)))
                         .outputScriptType(ScriptType.P2WPKH)
                         .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).build())
                 .build();
@@ -2902,9 +2902,9 @@ public class WalletTest extends TestWithWallet {
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
         // Send three cents to two different random keys, then add a key and mark the initial keys as compromised.
         ECKey key1 = new ECKey();
-        key1.setCreationTimeSeconds(TimeUtils.currentTimeSeconds() - (86400 * 2));
+        key1.setCreationTime(TimeUtils.currentTime().minusSeconds(86400 * 2));
         ECKey key2 = new ECKey();
-        key2.setCreationTimeSeconds(TimeUtils.currentTimeSeconds() - 86400);
+        key2.setCreationTime(TimeUtils.currentTime().minusSeconds(86400));
         wallet.importKey(key1);
         wallet.importKey(key2);
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
@@ -3531,7 +3531,7 @@ public class WalletTest extends TestWithWallet {
         Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
         List<String> mnemonicCode = wallet.getKeyChainSeed().getMnemonicCode();
         final DeterministicSeed clonedSeed = DeterministicSeed.ofMnemonic(mnemonicCode, "",
-                wallet.getEarliestKeyCreationTimeInstant().getEpochSecond());
+                wallet.getEarliestKeyCreationTimeInstant());
         Wallet clone = Wallet.fromSeed(TESTNET, clonedSeed, ScriptType.P2WPKH);
         assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());
         assertEquals(wallet.freshReceiveAddress(ScriptType.P2PKH),

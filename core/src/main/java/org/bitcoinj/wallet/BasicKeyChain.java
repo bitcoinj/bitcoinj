@@ -40,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
@@ -294,8 +295,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             return hashToKeys.values().stream()
-                    .mapToLong(ECKey::getCreationTimeSeconds)
-                    .mapToObj(t -> t == Long.MAX_VALUE ? Instant.MAX : Instant.ofEpochSecond(t))
+                    .map(key -> key.getCreationTime().orElse(Instant.EPOCH))
                     .min(Instant::compareTo)
                     .orElse(Instant.MAX);
         } finally {
@@ -348,7 +348,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     /*package*/ static Protos.Key.Builder serializeEncryptableItem(EncryptableItem item) {
         Protos.Key.Builder proto = Protos.Key.newBuilder();
-        proto.setCreationTimestamp(item.getCreationTimeSeconds() * 1000);
+        item.getCreationTime().ifPresent(creationTime -> proto.setCreationTimestamp(creationTime.toEpochMilli()));
         if (item.isEncrypted() && item.getEncryptedData() != null) {
             // The encrypted data can be missing for an "encrypted" key in the case of a deterministic wallet for
             // which the leaf keys chain to an encrypted parent and rederive their private keys on the fly. In that
@@ -420,7 +420,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     else
                         ecKey = ECKey.fromPublicOnly(pub);
                 }
-                ecKey.setCreationTimeSeconds(key.getCreationTimestamp() / 1000);
+                ecKey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
                 importKeyLocked(ecKey);
             }
         } finally {
@@ -623,33 +623,39 @@ public class BasicKeyChain implements EncryptableKeyChain {
     //
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /** Returns the first ECKey created after the given UNIX time, or null if there is none. */
-    @Nullable
-    public ECKey findOldestKeyAfter(long timeSecs) {
+    /** Returns the first ECKey created after the given time, or empty if there is none. */
+    public Optional<ECKey> findOldestKeyAfter(Instant time) {
         lock.lock();
         try {
             ECKey oldest = null;
             for (ECKey key : hashToKeys.values()) {
-                final long keyTime = key.getCreationTimeSeconds();
-                if (keyTime > timeSecs) {
-                    if (oldest == null || oldest.getCreationTimeSeconds() > keyTime)
+                Instant keyTime = key.getCreationTime().orElse(Instant.EPOCH);
+                if (keyTime.isAfter(time)) {
+                    if (oldest == null || oldest.getCreationTime().orElse(Instant.EPOCH).isAfter(keyTime))
                         oldest = key;
                 }
             }
-            return oldest;
+            return Optional.ofNullable(oldest);
         } finally {
             lock.unlock();
         }
     }
 
-    /** Returns a list of all ECKeys created after the given UNIX time. */
-    public List<ECKey> findKeysBefore(long timeSecs) {
+    /** @deprecated use {@link #findOldestKeyAfter(Instant)} */
+    @Nullable
+    @Deprecated
+    public ECKey findOldestKeyAfter(long timeSecs) {
+        return findOldestKeyAfter(Instant.ofEpochSecond(timeSecs)).orElse(null);
+    }
+
+    /** Returns a list of all ECKeys created after the given time. */
+    public List<ECKey> findKeysBefore(Instant time) {
         lock.lock();
         try {
             List<ECKey> results = new LinkedList<>();
             for (ECKey key : hashToKeys.values()) {
-                final long keyTime = key.getCreationTimeSeconds();
-                if (keyTime < timeSecs) {
+                Instant keyTime = key.getCreationTime().orElse(Instant.EPOCH);
+                if (keyTime.isBefore(time)) {
                     results.add(key);
                 }
             }
@@ -657,6 +663,12 @@ public class BasicKeyChain implements EncryptableKeyChain {
         } finally {
             lock.unlock();
         }
+    }
+
+    /** @deprecated use {@link #findKeysBefore(Instant)} */
+    @Deprecated
+    public List<ECKey> findKeysBefore(long timeSecs) {
+        return findKeysBefore(Instant.ofEpochSecond(timeSecs));
     }
 
     public String toString(boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
