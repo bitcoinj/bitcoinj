@@ -123,7 +123,7 @@ public class SegwitAddress implements Address {
 
     protected final Network network;
     protected final short witnessVersion;
-    protected final byte[] witnessProgram;          // Currently this is in 5-bit Bech32 form
+    protected final byte[] witnessProgram;          // In 8-bits per byte format
 
     private static Network normalizeNetwork(Network network) {
         // SegwitAddress does not distinguish between the SIGNET and TESTNET, normalize to TESTNET
@@ -186,7 +186,7 @@ public class SegwitAddress implements Address {
                     "Invalid length for address version 1: " + witnessProgram.length);
         this.network = normalizeNetwork(checkNotNull(network));
         this.witnessVersion = (short) witnessVersion;
-        this.witnessProgram = encode8to5(checkNotNull(witnessProgram));
+        this.witnessProgram = checkNotNull(witnessProgram);
     }
 
     /**
@@ -205,7 +205,7 @@ public class SegwitAddress implements Address {
      */
     public byte[] getWitnessProgram() {
         // no version byte
-        return decode5to8(witnessProgram);
+        return witnessProgram;
     }
 
     @Override
@@ -401,9 +401,9 @@ public class SegwitAddress implements Address {
      */
     public String toBech32() {
         if (getWitnessVersion() == 0)
-            return Bech32.encode(Bech32.Encoding.BECH32, network.segwitAddressHrp(), appendVersion(witnessVersion, witnessProgram));
+            return Bech32.encode(Bech32.Encoding.BECH32, network.segwitAddressHrp(), appendVersion(witnessVersion, encode8to5(witnessProgram)));
         else
-            return Bech32.encode(Bech32.Encoding.BECH32M, network.segwitAddressHrp(), appendVersion(witnessVersion, witnessProgram));
+            return Bech32.encode(Bech32.Encoding.BECH32M, network.segwitAddressHrp(), appendVersion(witnessVersion, encode8to5(witnessProgram)));
     }
 
     // Trim the version byte and return the witness program only
