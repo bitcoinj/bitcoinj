@@ -96,6 +96,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -641,7 +642,9 @@ public class WalletTool implements Callable<Integer> {
         try {
             Address address = LegacyAddress.fromBase58(params.network(), addrStr);
             // If no creation time is specified, assume genesis (zero).
-            wallet.addWatchedAddress(address, Instant.ofEpochSecond(getCreationTimeSeconds()));
+            getCreationTime().ifPresentOrElse(
+                    creationTime -> wallet.addWatchedAddress(address, creationTime),
+                    () -> wallet.addWatchedAddress(address));
         } catch (AddressFormatException e) {
             System.err.println("Could not parse given address, or wrong network: " + addrStr);
         }
@@ -1070,15 +1073,13 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
             return;
         }
-        long creationTimeSecs = getCreationTimeSeconds();
-        if (creationTimeSecs == 0)
-            creationTimeSecs = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
+        Instant creationTime = getCreationTime().orElse(Instant.ofEpochSecond(MnemonicCode.BIP39_STANDARDISATION_TIME_SECS));
         if (seedStr != null) {
             DeterministicSeed seed;
             // Parse as mnemonic code.
             final List<String> split = splitMnemonic(seedStr);
             String passphrase = ""; // TODO allow user to specify a passphrase
-            seed = DeterministicSeed.ofMnemonic(split, passphrase, creationTimeSecs);
+            seed = DeterministicSeed.ofMnemonic(split, passphrase, creationTime);
             try {
                 seed.check();
             } catch (MnemonicException.MnemonicLengthException e) {
@@ -1096,7 +1097,7 @@ public class WalletTool implements Callable<Integer> {
             }
             wallet = Wallet.fromSeed(params, seed, outputScriptType, keyChainGroupStructure);
         } else if (watchKeyStr != null) {
-            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, Instant.ofEpochSecond(creationTimeSecs));
+            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, creationTime);
         } else {
             wallet = Wallet.createDeterministic(params, outputScriptType, keyChainGroupStructure);
         }
@@ -1124,7 +1125,7 @@ public class WalletTool implements Callable<Integer> {
 
     private void addKey() {
         ECKey key;
-        long creationTimeSeconds = getCreationTimeSeconds();
+        Optional<Instant> creationTime = getCreationTime();
         if (privKeyStr != null) {
             try {
                 DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(params.network(), privKeyStr); // WIF
@@ -1141,11 +1142,11 @@ public class WalletTool implements Callable<Integer> {
                 // Give the user a hint.
                 System.out.println("You don't have to specify --pubkey when a private key is supplied.");
             }
-            key.setCreationTimeSeconds(creationTimeSeconds);
+            creationTime.ifPresentOrElse(key::setCreationTime, key::clearCreationTime);
         } else if (pubKeyStr != null) {
             byte[] pubkey = parseAsHexOrBase58(pubKeyStr);
             key = ECKey.fromPublicOnly(pubkey);
-            key.setCreationTimeSeconds(creationTimeSeconds);
+            creationTime.ifPresentOrElse(key::setCreationTime, key::clearCreationTime);
         } else {
             System.err.println("Either --privkey or --pubkey must be specified.");
             return;
@@ -1207,13 +1208,13 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private long getCreationTimeSeconds() {
+    private Optional<Instant> getCreationTime() {
         if (unixtime != null)
-            return unixtime;
+            return Optional.of(Instant.ofEpochSecond(unixtime));
         else if (date != null)
-            return date.getTime() / 1000;
+            return Optional.of(date.toInstant());
         else
-            return 0;
+            return Optional.empty();
     }
 
     private void deleteKey() {
@@ -1275,18 +1276,18 @@ public class WalletTool implements Callable<Integer> {
     }
 
     private void setCreationTime() {
-        long creationTime = getCreationTimeSeconds();
+        Optional<Instant> creationTime = getCreationTime();
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
             DeterministicSeed seed = chain.getSeed();
             if (seed == null)
                 System.out.println("Active chain does not have a seed: " + chain);
             else
-                seed.setCreationTimeSeconds(creationTime);
+                creationTime.ifPresentOrElse(seed::setCreationTime, seed::clearCreationTime);
+
         }
-        if (creationTime > 0)
-            System.out.println("Setting creation time to: " + TimeUtils.dateTimeFormat(creationTime * 1000));
-        else
-            System.out.println("Clearing creation time.");
+        creationTime.ifPresentOrElse(
+                time -> System.out.println("Setting creation time to: " + TimeUtils.dateTimeFormat(time.toEpochMilli())),
+                () -> System.out.println("Clearing creation time."));
     }
 
     private synchronized void onChange(final CountDownLatch latch) {

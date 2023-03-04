@@ -78,9 +78,12 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -120,7 +123,7 @@ public class ECKey implements EncryptableItem {
     private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = ByteUtils.arrayUnsignedComparator();
 
     /** Sorts oldest keys first, newest last. */
-    public static final Comparator<ECKey> AGE_COMPARATOR = Comparator.comparingLong(k -> k.creationTimeSeconds);
+    public static final Comparator<ECKey> AGE_COMPARATOR = Comparator.comparing(ecKey -> ecKey.getCreationTime().orElse(Instant.EPOCH));
 
     /** Compares by extracting pub key as a {@code byte[]} and using a lexicographic comparator */
     public static final Comparator<ECKey> PUBKEY_COMPARATOR = Comparator.comparing(ECKey::getPubKey, LEXICOGRAPHICAL_COMPARATOR);
@@ -152,9 +155,9 @@ public class ECKey implements EncryptableItem {
     @Nullable protected final BigInteger priv;  // A field element.
     protected final LazyECPoint pub;
 
-    // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
+    // Creation time of the key, or null if the key was deserialized from a version that did
     // not have this field.
-    protected long creationTimeSeconds;
+    @Nullable protected Instant creationTime = null;
 
     protected KeyCrypter keyCrypter;
     protected EncryptedData encryptedPrivateKey;
@@ -182,7 +185,7 @@ public class ECKey implements EncryptableItem {
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
         pub = new LazyECPoint(pubParams.getQ(), true);
-        creationTimeSeconds = TimeUtils.currentTimeSeconds();
+        creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
     protected ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
@@ -1074,22 +1077,40 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Returns the creation time of this key or zero if the key was deserialized from a version that did not store
+     * Returns the creation time of this key, or empty if the key was deserialized from a version that did not store
      * that data.
      */
     @Override
-    public long getCreationTimeSeconds() {
-        return creationTimeSeconds;
+    public Optional<Instant> getCreationTime() {
+        return Optional.ofNullable(creationTime);
     }
 
     /**
-     * Sets the creation time of this key. Zero is a convention to mean "unavailable". This method can be useful when
+     * Sets the creation time of this key. This method can be useful when
      * you have a raw key you are importing from somewhere else.
+     * @param creationTime creation time of this key
      */
-    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
-        if (newCreationTimeSeconds < 0)
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
-        creationTimeSeconds = newCreationTimeSeconds;
+    public void setCreationTime(Instant creationTime) {
+        this.creationTime = checkNotNull(creationTime);
+    }
+
+    /**
+     * Clears the creation time of this key. This is mainly used deserialization and cloning. Normally you should not
+     * need to use this, as keys should have proper creation times whenever possible.
+     */
+    public void clearCreationTime() {
+        this.creationTime = null;
+    }
+
+    /** @deprecated use {@link #setCreationTime(Instant)} */
+    @Deprecated
+    public void setCreationTimeSeconds(long creationTimeSecs) {
+        if (creationTimeSecs > 0)
+            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
+        else if (creationTimeSecs == 0)
+            clearCreationTime();
+        else
+            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
     }
 
     /**
@@ -1105,7 +1126,10 @@ public class ECKey implements EncryptableItem {
         final byte[] privKeyBytes = getPrivKeyBytes();
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
-        result.setCreationTimeSeconds(creationTimeSeconds);
+        if (creationTime != null)
+            result.setCreationTime(creationTime);
+        else
+            result.clearCreationTime();
         return result;
     }
 
@@ -1130,7 +1154,10 @@ public class ECKey implements EncryptableItem {
         ECKey key = ECKey.fromPrivate(unencryptedPrivateKey, isCompressed());
         if (!Arrays.equals(key.getPubKey(), getPubKey()))
             throw new KeyCrypterException("Provided AES key is wrong");
-        key.setCreationTimeSeconds(creationTimeSeconds);
+        if (creationTime != null)
+            key.setCreationTime(creationTime);
+        else
+            key.clearCreationTime();
         return key;
     }
 
@@ -1247,7 +1274,7 @@ public class ECKey implements EncryptableItem {
         ECKey other = (ECKey) o;
         return Objects.equals(this.priv, other.priv)
                 && Objects.equals(this.pub, other.pub)
-                && Objects.equals(this.creationTimeSeconds, other.creationTimeSeconds)
+                && Objects.equals(this.creationTime, other.creationTime)
                 && Objects.equals(this.keyCrypter, other.keyCrypter)
                 && Objects.equals(this.encryptedPrivateKey, other.encryptedPrivateKey);
     }
@@ -1316,8 +1343,8 @@ public class ECKey implements EncryptableItem {
                 helper.add("priv EXCEPTION", e.getClass().getName() + (message != null ? ": " + message : ""));
             }
         }
-        if (creationTimeSeconds > 0)
-            helper.add("creationTimeSeconds", creationTimeSeconds);
+        if (creationTime != null)
+            helper.add("creationTime", creationTime);
         helper.add("keyCrypter", keyCrypter);
         if (includePrivate)
             helper.add("encryptedPrivateKey", encryptedPrivateKey);
@@ -1350,9 +1377,9 @@ public class ECKey implements EncryptableItem {
             builder.append("  UNCOMPRESSED");
         builder.append("  hash160:");
         builder.append(ByteUtils.formatHex(getPubKeyHash()));
-        if (creationTimeSeconds > 0)
-            builder.append("  creationTimeSeconds:").append(creationTimeSeconds).append(" [")
-                    .append(TimeUtils.dateTimeFormat(creationTimeSeconds * 1000)).append("]");
+        if (creationTime != null)
+            builder.append("  creationTime:").append(creationTime).append(" [")
+                    .append(TimeUtils.dateTimeFormat(creationTime.toEpochMilli())).append("]");
         if (comment != null)
             builder.append("  (").append(comment).append(")");
         builder.append("\n");

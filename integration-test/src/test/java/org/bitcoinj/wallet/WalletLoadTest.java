@@ -21,6 +21,7 @@ import org.bitcoinj.crypto.HDPath;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -30,14 +31,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class WalletLoadTest {
     private static final File walletFile = new File("src/test/resources/org/bitcoinj/wallet/panda-test-wallet.wallet");
     private static final String testWalletMnemonic = "panda diary marriage suffer basic glare surge auto scissors describe sell unique";
-    private static final long testWalletCreation = 1554102000;
+    private static final Instant testWalletCreation = Instant.ofEpochSecond(1554102000);
 
     @Test
     void basicWalletLoadTest() throws UnreadableWalletException {
         Context.propagate(new Context());
         Wallet wallet = Wallet.loadFromFile(walletFile);
 
-        long creation = wallet.getKeyChainSeed().getCreationTimeSeconds();
+        Instant creation = wallet.getKeyChainSeed().getCreationTime().get();
         assertEquals(testWalletCreation, creation, "unexpected creation timestamp");
 
         String mnemonic = wallet.getKeyChainSeed().getMnemonicString();

@@ -38,8 +38,10 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -338,12 +340,12 @@ public class ECKeyTest {
     public void testUnencryptedCreate() {
         TimeUtils.setMockClock();
         ECKey key = new ECKey();
-        long time = key.getCreationTimeSeconds();
-        assertNotEquals(0, time);
+        Optional<Instant> time = key.getCreationTime();
+        assertTrue(time.isPresent());
         assertTrue(!key.isEncrypted());
         byte[] originalPrivateKeyBytes = key.getPrivKeyBytes();
         ECKey encryptedKey = key.encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
-        assertEquals(time, encryptedKey.getCreationTimeSeconds());
+        assertEquals(time, encryptedKey.getCreationTime());
         assertTrue(encryptedKey.isEncrypted());
         assertNull(encryptedKey.getSecretBytes());
         key = encryptedKey.decrypt(keyCrypter.deriveKey(PASSWORD1));

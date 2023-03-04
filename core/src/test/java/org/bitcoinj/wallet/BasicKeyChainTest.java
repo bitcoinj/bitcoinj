@@ -279,19 +279,19 @@ public class BasicKeyChainTest {
     @Test
     public void keysBeforeAndAfter() {
         TimeUtils.setMockClock();
-        long now = TimeUtils.currentTimeSeconds();
+        Instant now = TimeUtils.currentTime();
         final ECKey key1 = new ECKey();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = new ECKey();
         final List<ECKey> keys = Lists.newArrayList(key1, key2);
         assertEquals(2, chain.importKeys(keys));
 
-        assertNull(chain.findOldestKeyAfter(now + 86400 * 2));
-        assertEquals(key1, chain.findOldestKeyAfter(now - 1));
-        assertEquals(key2, chain.findOldestKeyAfter(now + 86400 - 1));
+        assertFalse(chain.findOldestKeyAfter(now.plus(2, ChronoUnit.DAYS)).isPresent());
+        assertEquals(key1, chain.findOldestKeyAfter(now.minusSeconds(1)).get());
+        assertEquals(key2, chain.findOldestKeyAfter(now.plus(1, ChronoUnit.DAYS).minusSeconds(1)).get());
 
-        assertEquals(2, chain.findKeysBefore(now + 86400 * 2).size());
-        assertEquals(1, chain.findKeysBefore(now + 1).size());
-        assertEquals(0, chain.findKeysBefore(now - 1).size());
+        assertEquals(2, chain.findKeysBefore(now.plus(2, ChronoUnit.DAYS)).size());
+        assertEquals(1, chain.findKeysBefore(now.plusSeconds(1)).size());
+        assertEquals(0, chain.findKeysBefore(now.minusSeconds(1)).size());
     }
 }

@@ -105,7 +105,7 @@ public class KeyChainGroupTest {
 
     private MarriedKeyChain createMarriedKeyChain() {
         byte[] entropy = Sha256Hash.hash("don't use a seed like this in real life".getBytes());
-        DeterministicSeed seed = DeterministicSeed.ofEntropy(entropy, "", MnemonicCode.BIP39_STANDARDISATION_TIME_SECS);
+        DeterministicSeed seed = DeterministicSeed.ofEntropy(entropy, "", Instant.ofEpochSecond(MnemonicCode.BIP39_STANDARDISATION_TIME_SECS));
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .seed(seed)
                 .followingKeys(watchingAccountKey)
@@ -403,19 +403,20 @@ public class KeyChainGroupTest {
 
     @Test
     public void earliestKeyTime() {
-        long now = TimeUtils.currentTimeSeconds();   // mock
-        long yesterday = now - 86400;
-        assertEquals(now, group.getEarliestKeyCreationTime());
+        Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
+        TimeUtils.setMockClock(now);
+        assertEquals(now, group.getEarliestKeyCreationTimeInstant());
         TimeUtils.rollMockClock(Duration.ofSeconds(10000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         TimeUtils.rollMockClock(Duration.ofSeconds(10000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // Check that all keys are assumed to be created at the same instant the seed is.
-        assertEquals(now, group.getEarliestKeyCreationTime());
+        assertEquals(now, group.getEarliestKeyCreationTimeInstant());
         ECKey key = new ECKey();
-        key.setCreationTimeSeconds(yesterday);
+        Instant yesterday = now.minus(1, ChronoUnit.DAYS);
+        key.setCreationTime(yesterday);
         group.importKeys(key);
-        assertEquals(yesterday, group.getEarliestKeyCreationTime());
+        assertEquals(yesterday, group.getEarliestKeyCreationTimeInstant());
     }
 
     @Test
@@ -520,7 +521,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void addAndActivateHDChain_freshCurrentAddress() {
-        DeterministicSeed seed = DeterministicSeed.ofEntropy(ENTROPY, "", 0);
+        DeterministicSeed seed = DeterministicSeed.ofEntropy(ENTROPY, "");
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().seed(seed)
                 .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).outputScriptType(ScriptType.P2PKH).build();
         group = KeyChainGroup.builder(MAINNET).addChain(chain1).build();
@@ -637,7 +638,7 @@ public class KeyChainGroupTest {
     @Test
     public void segwitKeyChainGroup() throws Exception {
         group = KeyChainGroup.builder(MAINNET).lookaheadSize(LOOKAHEAD_SIZE)
-                .addChain(DeterministicKeyChain.builder().entropy(ENTROPY, 0).outputScriptType(ScriptType.P2WPKH)
+                .addChain(DeterministicKeyChain.builder().entropy(ENTROPY, TimeUtils.currentTime()).outputScriptType(ScriptType.P2WPKH)
                         .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).build())
                 .build();
         assertEquals(ScriptType.P2WPKH, group.getActiveKeyChain().getOutputScriptType());

@@ -42,7 +42,7 @@ public class BackupToMnemonicSeed {
         DeterministicSeed seed = wallet.getKeyChainSeed();
         System.out.println("seed: " + seed.toString());
 
-        System.out.println("creation time: " + seed.getCreationTimeSeconds());
+        System.out.println("creation time: " + seed.getCreationTime().get().getEpochSecond());
         System.out.println("mnemonicCode: " + InternalUtils.SPACE_JOINER.join(seed.getMnemonicCode()));
     }
 }

@@ -403,7 +403,7 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, Instant creationTime) {
         final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params.network());
-        watchKey.setCreationTimeSeconds(creationTime.getEpochSecond());
+        watchKey.setCreationTime(creationTime);
         return fromWatchingKey(params, watchKey, outputScriptTypeFromB58(params, watchKeyB58));
     }
 
@@ -448,7 +448,7 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, Instant creationTime) {
         final DeterministicKey spendKey = DeterministicKey.deserializeB58(null, spendingKeyB58, params.network());
-        spendKey.setCreationTimeSeconds(creationTime.getEpochSecond());
+        spendKey.setCreationTime(creationTime);
         return fromSpendingKey(params, spendKey, outputScriptTypeFromB58(params, spendingKeyB58));
     }
 
@@ -481,7 +481,11 @@ public class Wallet extends BaseTaggableObject
                                        ScriptType outputScriptType, ChildNumber accountNumber) {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
         accountKey = accountKey.dropParent();
-        accountKey.setCreationTimeSeconds(masterKey.getCreationTimeSeconds());
+        Optional<Instant> creationTime = masterKey.getCreationTime();
+        if (creationTime.isPresent())
+            accountKey.setCreationTime(creationTime.get());
+        else
+            accountKey.clearCreationTime();
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(outputScriptType).build();
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
@@ -3606,8 +3610,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Returns the earliest creation time of keys or watched scripts in this wallet, in seconds since the epoch, ie the min
-     * of {@link ECKey#getCreationTimeSeconds()}. This can return {@link Instant#EPOCH} if at least one key does
+     * Returns the earliest creation time of keys or watched scripts in this wallet, ie the min
+     * of {@link ECKey#getCreationTime()}. This can return {@link Instant#EPOCH} if at least one key does
      * not have that data (e.g. is an imported key with unknown timestamp). <p>
      *
      * This method is most often used in conjunction with {@link PeerGroup#setFastCatchupTime(Instant)} in order to
@@ -5408,7 +5412,7 @@ public class Wallet extends BaseTaggableObject
     /** Returns whether the keys creation time is before the key rotation time, if one was set. */
     public boolean isKeyRotating(ECKey key) {
         Instant keyRotationTime = vKeyRotationTime;
-        return keyRotationTime != null && Instant.ofEpochSecond(key.getCreationTimeSeconds()).isBefore(keyRotationTime);
+        return keyRotationTime != null && key.getCreationTime().orElse(Instant.EPOCH).isBefore(keyRotationTime);
     }
 
     /**
@@ -5569,7 +5573,7 @@ public class Wallet extends BaseTaggableObject
             // have already got stuck double spends in their wallet due to the Bloom-filtering block reordering
             // bug that was fixed in 0.10, thus, making a re-key transaction depend on those would cause it to
             // never confirm at all.
-            CoinSelector keyTimeSelector = new KeyTimeCoinSelector(this, time.getEpochSecond(), true);
+            CoinSelector keyTimeSelector = new KeyTimeCoinSelector(this, time, true);
             FilteringCoinSelector selector = new FilteringCoinSelector(keyTimeSelector);
             for (Transaction other : others)
                 selector.excludeOutputsSpentBy(other);

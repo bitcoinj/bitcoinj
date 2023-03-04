@@ -107,7 +107,7 @@ public class WalletProtobufSerializerTest {
         BriefLogFormatter.initVerbose();
         myWatchedKey = new ECKey();
         myKey = new ECKey();
-        myKey.setCreationTimeSeconds(123456789L);
+        myKey.setCreationTime(Instant.ofEpochSecond(123456789L));
         myAddress = myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         myWallet = new Wallet(TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build());
         myWallet.importKey(myKey);
@@ -125,7 +125,7 @@ public class WalletProtobufSerializerTest {
         ECKey foundKey = wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash(), null);
         assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
-        assertEquals(myKey.getCreationTimeSeconds(), foundKey.getCreationTimeSeconds());
+        assertEquals(myKey.getCreationTime(), foundKey.getCreationTime());
         assertEquals(mScriptCreationTime.truncatedTo(ChronoUnit.MILLIS),
                 wallet1.getWatchedScripts().get(0).getCreationTime().get());
         assertEquals(1, wallet1.getWatchedScripts().size());
@@ -343,7 +343,7 @@ public class WalletProtobufSerializerTest {
         ECKey foundKey = wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash(), null);
         assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
-        assertEquals(myKey.getCreationTimeSeconds(), foundKey.getCreationTimeSeconds());
+        assertEquals(myKey.getCreationTime(), foundKey.getCreationTime());
     }
 
     @Test
@@ -354,9 +354,9 @@ public class WalletProtobufSerializerTest {
         Wallet wallet2 = roundTrip(wallet);
         Wallet wallet3 = roundTrip(wallet2);
         assertEquals(xpub, wallet.getWatchingKey().serializePubB58(TESTNET.network()));
-        assertEquals(creationTime.getEpochSecond(), wallet.getWatchingKey().getCreationTimeSeconds());
-        assertEquals(creationTime.getEpochSecond(), wallet2.getWatchingKey().getCreationTimeSeconds());
-        assertEquals(creationTime.getEpochSecond(), wallet3.getWatchingKey().getCreationTimeSeconds());
+        assertEquals(creationTime, wallet.getWatchingKey().getCreationTime().get());
+        assertEquals(creationTime, wallet2.getWatchingKey().getCreationTime().get());
+        assertEquals(creationTime, wallet3.getWatchingKey().getCreationTime().get());
         assertEquals(creationTime, wallet.getEarliestKeyCreationTimeInstant());
         assertEquals(creationTime, wallet2.getEarliestKeyCreationTimeInstant());
         assertEquals(creationTime, wallet3.getEarliestKeyCreationTimeInstant());

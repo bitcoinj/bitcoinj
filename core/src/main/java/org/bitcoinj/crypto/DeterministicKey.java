@@ -31,10 +31,12 @@ import org.bouncycastle.math.ec.ECPoint;
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -307,8 +309,13 @@ public class DeterministicKey extends ECKey {
         checkState(privKeyBytes != null, "Private key is not available");
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
-        if (newParent == null)
-            key.setCreationTimeSeconds(getCreationTimeSeconds());
+        if (newParent == null) {
+            Optional<Instant> creationTime = getCreationTime();
+            if (creationTime.isPresent())
+                key.setCreationTime(creationTime.get());
+            else
+                key.clearCreationTime();
+        }
         return key;
     }
 
@@ -382,8 +389,13 @@ public class DeterministicKey extends ECKey {
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, privKey, parent);
         if (!Arrays.equals(key.getPubKey(), getPubKey()))
             throw new KeyCrypterException.PublicPrivateMismatch("Provided AES key is wrong");
-        if (parent == null)
-            key.setCreationTimeSeconds(getCreationTimeSeconds());
+        if (parent == null) {
+            Optional<Instant> creationTime = getCreationTime();
+            if (creationTime.isPresent())
+                key.setCreationTime(creationTime.get());
+            else
+                key.clearCreationTime();
+        }
         return key;
     }
 
@@ -695,26 +707,50 @@ public class DeterministicKey extends ECKey {
 
     /**
      * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
-     * in which case the time is stored alongside the key as per normal, see {@link ECKey#getCreationTimeSeconds()}.
+     * in which case the time is stored alongside the key as per normal, see {@link ECKey#getCreationTime()}.
      */
     @Override
-    public long getCreationTimeSeconds() {
+    public Optional<Instant> getCreationTime() {
         if (parent != null)
-            return parent.getCreationTimeSeconds();
+            return parent.getCreationTime();
         else
-            return super.getCreationTimeSeconds();
+            return super.getCreationTime();
     }
 
     /**
      * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree.
      * Thus, setting the creation time on a leaf is forbidden.
+     * @param creationTime creation time of this key
      */
     @Override
-    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
+    public void setCreationTime(Instant creationTime) {
         if (parent != null)
             throw new IllegalStateException("Creation time can only be set on root keys.");
         else
-            super.setCreationTimeSeconds(newCreationTimeSeconds);
+            super.setCreationTime(creationTime);
+    }
+
+    /**
+     * Clears the creation time of this key. This is mainly used deserialization and cloning. Normally you should not
+     * need to use this, as keys should have proper creation times whenever possible.
+     */
+    @Override
+    public void clearCreationTime() {
+        if (parent != null)
+            throw new IllegalStateException("Creation time can only be cleared on root keys.");
+        else
+            super.clearCreationTime();
+    }
+
+    /** @deprecated use {@link #setCreationTime(Instant)} */
+    @Deprecated
+    public void setCreationTimeSeconds(long creationTimeSecs) {
+        if (creationTimeSecs > 0)
+            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
+        else if (creationTimeSecs == 0)
+            clearCreationTime();
+        else
+            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
     }
 
     /**
@@ -742,10 +778,13 @@ public class DeterministicKey extends ECKey {
         helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
         helper.add("chainCode", ByteUtils.formatHex(chainCode));
         helper.add("path", getPathAsString());
-        if (parent != null)
-            helper.add("creationTimeSeconds", getCreationTimeSeconds() + " (inherited)");
+        Optional<Instant> creationTime = getCreationTime();
+        if (!creationTime.isPresent())
+            helper.add("creationTimeSeconds", "unknown");
+        else if (parent != null)
+            helper.add("creationTimeSeconds", creationTime.get().getEpochSecond() + " (inherited)");
         else
-            helper.add("creationTimeSeconds", getCreationTimeSeconds());
+            helper.add("creationTimeSeconds", creationTime.get().getEpochSecond());
         helper.add("isEncrypted", isEncrypted());
         helper.add("isPubKeyOnly", isPubKeyOnly());
         return helper.toString();
