@@ -1,6 +1,7 @@
 package org.bitcoinj.utils;
 
 import com.google.common.primitives.Bytes;
+import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.crypto.ECKey;
@@ -78,7 +79,9 @@ public class MessageVerifyUtils {
         }
 
         final byte[] pubKeyHashFromSignature = ECKey.signedMessageToKey(message, signatureBase64).getPubKeyHash();
-        final byte[] pubKeyHashFromAddress = address.getHash();
+        final byte[] pubKeyHashFromAddress = (address instanceof SegwitAddress)
+                            ? ((SegwitAddress) address).getWitnessProgram()
+                            : ((LegacyAddress) address).getHash();
 
         if (!Arrays.equals(pubKeyHashFromAddress, pubKeyHashFromSignature)) {
             throw new SignatureException(SIGNATURE_FAILED_ERROR_MESSAGE);

@@ -26,6 +26,7 @@ import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -1147,14 +1148,20 @@ public class Wallet extends BaseTaggableObject
      */
     public boolean isAddressMine(Address address) {
         final ScriptType scriptType = address.getOutputScriptType();
-        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
-            return isPubKeyHashMine(address.getHash(), scriptType);
-        else if (scriptType == ScriptType.P2SH)
-            return isPayToScriptHashMine(address.getHash());
-        else if (scriptType == ScriptType.P2WSH || scriptType == ScriptType.P2TR)
-            return false;
-        else
-            throw new IllegalArgumentException(address.toString());
+        switch (scriptType) {
+            case P2PKH:
+                return isPubKeyHashMine(((LegacyAddress) address).getHash(), scriptType);
+            case P2SH:
+                return isPayToScriptHashMine(((LegacyAddress) address).getHash());
+            case P2WPKH:
+                return isPubKeyHashMine(((SegwitAddress) address).getWitnessProgram(), scriptType);
+            case P2WSH:
+                return false;
+            case P2TR:
+                return false;
+            default:
+                throw new IllegalArgumentException(address.toString());
+        }
     }
 
     @Override
@@ -1178,10 +1185,14 @@ public class Wallet extends BaseTaggableObject
      */
     public ECKey findKeyFromAddress(Address address) {
         final ScriptType scriptType = address.getOutputScriptType();
-        if (scriptType == ScriptType.P2PKH || scriptType == ScriptType.P2WPKH)
-            return findKeyFromPubKeyHash(address.getHash(), scriptType);
-        else
-            return null;
+        switch (scriptType) {
+            case P2PKH:
+                return findKeyFromPubKeyHash(((LegacyAddress) address).getHash(), scriptType);
+            case P2WPKH:
+                return findKeyFromPubKeyHash(((SegwitAddress) address).getWitnessProgram(), scriptType);
+            default:
+                return null;
+        }
     }
 
     /**

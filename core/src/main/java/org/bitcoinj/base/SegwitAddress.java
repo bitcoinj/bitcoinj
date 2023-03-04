@@ -221,7 +221,11 @@ public class SegwitAddress extends Address {
         return convertBits(bytes, 1, bytes.length - 1, 5, 8, false);
     }
 
+    /**
+     * @deprecated Use {@link #getWitnessProgram()} (if you're sure that's what you need)
+     */
     @Override
+    @Deprecated
     public byte[] getHash() {
         return getWitnessProgram();
     }
