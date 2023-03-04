@@ -16,22 +16,6 @@
 
 package org.bitcoinj.base;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import nl.jqno.equalsverifier.Warning;
-import org.bitcoinj.base.Address;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
-import org.junit.Test;
-
+// TODO: Maybe add some tests here. Address has minimal functionality now, however -- see LegacyAddress and SegwitAddress
 public class AddressTest {
-    @Test
-    public void equalsContract() {
-        EqualsVerifier.forClass(Address.class)
-                .withPrefabValues(NetworkParameters.class, MainNetParams.get(), TestNet3Params.get())
-                .suppress(Warning.NULL_FIELDS)
-                .suppress(Warning.TRANSIENT_FIELDS)
-                .usingGetClass()
-                .verify();
-    }
 }
