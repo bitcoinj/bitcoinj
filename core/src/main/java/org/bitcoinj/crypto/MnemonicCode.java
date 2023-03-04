@@ -20,7 +20,7 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.utils.StreamUtils;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

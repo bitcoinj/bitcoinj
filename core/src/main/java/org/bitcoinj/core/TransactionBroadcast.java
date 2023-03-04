@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.base.internal.FutureUtils;
-import org.bitcoinj.base.utils.StreamUtils;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.utils.ListenableCompletableFuture;

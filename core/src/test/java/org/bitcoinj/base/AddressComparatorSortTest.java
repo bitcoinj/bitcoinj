@@ -16,7 +16,7 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.utils.StreamUtils;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.junit.Test;
 
 import java.util.ArrayList;

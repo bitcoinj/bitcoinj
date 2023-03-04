@@ -17,7 +17,7 @@
 package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.base.utils.StreamUtils;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
 

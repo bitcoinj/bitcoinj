@@ -29,7 +29,7 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.utils.StreamUtils;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Base58;
