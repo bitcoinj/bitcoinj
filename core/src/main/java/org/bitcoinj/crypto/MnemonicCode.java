@@ -55,7 +55,13 @@ public class MnemonicCode {
     private static final String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
 
     /** UNIX time for when the BIP39 standard was finalised. This can be used as a default seed birthday. */
-    public static long BIP39_STANDARDISATION_TIME_SECS = 1381276800;
+    public static final Instant BIP39_STANDARDISATION_TIME = Instant.ofEpochSecond(1369267200);
+
+    /**
+     * @deprecated Use {@link #BIP39_STANDARDISATION_TIME}
+     */
+    @Deprecated
+    public static final int BIP39_STANDARDISATION_TIME_SECS = Math.toIntExact(BIP39_STANDARDISATION_TIME.getEpochSecond());
 
     private static final int PBKDF2_ROUNDS = 2048;
 
