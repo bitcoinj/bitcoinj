@@ -113,6 +113,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1600,29 +1601,26 @@ public class Wallet extends BaseTaggableObject
      * consistency. After connecting to a file, you no longer need to save the wallet manually, it will do it
      * whenever necessary. Protocol buffer serialization will be used.</p>
      *
-     * <p>If delayTime is set, a background thread will be created and the wallet will only be saved to
-     * disk every so many time units. If no changes have occurred for the given time period, nothing will be written.
+     * <p>A background thread will be created and the wallet will only be saved to
+     * disk every periodically. If no changes have occurred for the given time period, nothing will be written.
      * In this way disk IO can be rate limited. It's a good idea to set this as otherwise the wallet can change very
      * frequently, eg if there are a lot of transactions in it or during block sync, and there will be a lot of redundant
      * writes. Note that when a new key is added, that always results in an immediate save regardless of
      * delayTime. <b>You should still save the wallet manually using {@link Wallet#saveToFile(File)} when your program
      * is about to shut down as the JVM will not wait for the background thread.</b></p>
      *
-     * <p>An event listener can be provided. If a delay greater than 0 was specified, it will be called on a background thread
-     * with the wallet locked when an auto-save occurs. If delay is zero or you do something that always triggers
-     * an immediate save, like adding a key, the event listener will be invoked on the calling threads.</p>
+     * <p>An event listener can be provided. It will be called on a background thread
+     * with the wallet locked when an auto-save occurs.</p>
      *
      * @param f The destination file to save to.
-     * @param delayTime How many time units to wait until saving the wallet on a background thread.
-     * @param timeUnit the unit of measurement for delayTime.
+     * @param delay How much time to wait until saving the wallet on a background thread.
      * @param eventListener callback to be informed when the auto-save thread does things, or null
      */
-    public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit,
-                                      @Nullable WalletFiles.Listener eventListener) {
+    public WalletFiles autosaveToFile(File f, Duration delay, @Nullable WalletFiles.Listener eventListener) {
         lock.lock();
         try {
             checkState(vFileManager == null, "Already auto saving this wallet.");
-            WalletFiles manager = new WalletFiles(this, f, delayTime, timeUnit);
+            WalletFiles manager = new WalletFiles(this, f, delay);
             if (eventListener != null)
                 manager.setListener(eventListener);
             vFileManager = manager;
@@ -1630,6 +1628,12 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
+    }
+
+    /** @deprecated use {@link #autosaveToFile(File, Optional, WalletFiles.Listener)} */
+    @Deprecated
+    public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit, @Nullable WalletFiles.Listener eventListener) {
+        return autosaveToFile(f, Duration.ofMillis(timeUnit.toMillis(delayTime)), eventListener);
     }
 
     /**
