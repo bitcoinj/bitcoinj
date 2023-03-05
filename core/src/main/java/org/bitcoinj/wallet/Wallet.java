@@ -113,6 +113,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -126,6 +127,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -391,8 +393,17 @@ public class Wallet extends BaseTaggableObject
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. The
      * account path is specified. The key is specified in base58 notation and the creation time of the key. If you don't
-     * know the creation time, you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     * know the creation time, you can pass empty and it will use {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
      */
+    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, Optional<Instant> creationTime) {
+        if (creationTime.isPresent())
+            return fromWatchingKeyB58(params, watchKeyB58, creationTime.get().getEpochSecond());
+        else
+            return fromWatchingKeyB58(params, watchKeyB58, DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS);
+    }
+
+    /** @deprecated use {@link #fromWatchingKeyB58(NetworkParameters, String, Optional)} */
+    @Deprecated
     public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
         final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params);
         watchKey.setCreationTimeSeconds(creationTimeSeconds);
@@ -413,8 +424,17 @@ public class Wallet extends BaseTaggableObject
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
      * The key is specified in base58 notation and the creation time of the key. If you don't know the creation time,
-     * you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     * you can pass empty and it will use {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
      */
+    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, Optional<Instant> creationTime) {
+        if (creationTime.isPresent())
+            return fromSpendingKeyB58(params, spendingKeyB58, creationTime.get().getEpochSecond());
+        else
+            return fromSpendingKeyB58(params, spendingKeyB58, DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS);
+    }
+
+    /** @deprecated use {@link #fromSpendingKeyB58(NetworkParameters, String, Optional)} */
+    @Deprecated
     public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, long creationTimeSeconds) {
         final DeterministicKey spendKey = DeterministicKey.deserializeB58(null, spendingKeyB58, params);
         spendKey.setCreationTimeSeconds(creationTimeSeconds);
