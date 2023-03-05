@@ -82,6 +82,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -2910,7 +2911,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
-        Date compromiseTime = TimeUtils.now();
+        Instant compromiseTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         assertEquals(0, broadcaster.size());
         assertFalse(wallet.isKeyRotating(key1));
 
@@ -2963,7 +2964,7 @@ public class WalletTest extends TestWithWallet {
         checkNotNull(tx);
         assertEquals(Transaction.Purpose.KEY_ROTATION, tx.getPurpose());
         // Have to divide here to avoid mismatch due to second-level precision in serialisation.
-        assertEquals(compromiseTime.getTime() / 1000, wallet.getKeyRotationTime().getTime() / 1000);
+        assertEquals(compromiseTime, wallet.getKeyRotationTimeInstant().get());
 
         // Make a normal spend and check it's all ok.
         wallet.sendCoins(broadcaster, OTHER_ADDRESS, wallet.getBalance());
@@ -3010,7 +3011,7 @@ public class WalletTest extends TestWithWallet {
 
         // A day later, we get compromised.
         TimeUtils.rollMockClock(86400);
-        wallet.setKeyRotationTime(TimeUtils.currentTimeSeconds());
+        wallet.setKeyRotationTime(TimeUtils.currentTime());
 
         List<Transaction> txns = wallet.doMaintenance(null, false).get();
         assertEquals(1, txns.size());
@@ -3036,7 +3037,7 @@ public class WalletTest extends TestWithWallet {
 
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
 
-        Date compromise = TimeUtils.now();
+        Instant compromise = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.rollMockClock(86400);
         wallet.freshReceiveKey();
         wallet.setKeyRotationTime(compromise);

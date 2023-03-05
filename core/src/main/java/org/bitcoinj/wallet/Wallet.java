@@ -128,6 +128,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -286,9 +287,9 @@ public class Wallet extends BaseTaggableObject
     protected volatile WalletFiles vFileManager;
     // Object that is used to send transactions asynchronously when the wallet requires it.
     protected volatile TransactionBroadcaster vTransactionBroadcaster;
-    // UNIX time in seconds. Money controlled by keys created before this time will be automatically respent to a key
+    // Money controlled by keys created before this time will be automatically respent to a key
     // that was created after it. Useful when you believe some keys have been compromised.
-    private volatile long vKeyRotationTimestamp;
+    private volatile Optional<Instant> vKeyRotationTime = Optional.empty();
 
     protected final CoinSelector coinSelector = DefaultCoinSelector.get();
 
@@ -567,8 +568,8 @@ public class Wallet extends BaseTaggableObject
     public List<DeterministicKeyChain> getActiveKeyChains() {
         keyChainGroupLock.lock();
         try {
-            long keyRotationTimeSecs = vKeyRotationTimestamp;
-            return keyChainGroup.getActiveKeyChains(keyRotationTimeSecs);
+            Optional<Instant> keyRotationTime = vKeyRotationTime;
+            return keyChainGroup.getActiveKeyChains(keyRotationTime);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -736,8 +737,8 @@ public class Wallet extends BaseTaggableObject
         Address address;
         keyChainGroupLock.lock();
         try {
-            long keyRotationTimeSecs = vKeyRotationTimestamp;
-            address = keyChainGroup.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS, scriptType, keyRotationTimeSecs);
+            Optional<Instant> keyRotationTime = vKeyRotationTime;
+            address = keyChainGroup.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS, scriptType, keyRotationTime);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -753,8 +754,8 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             List<ECKey> keys = new LinkedList<>();
-            long keyRotationTimeSecs = vKeyRotationTimestamp;
-            for (final DeterministicKeyChain chain : keyChainGroup.getActiveKeyChains(keyRotationTimeSecs))
+            Optional<Instant> keyRotationTime = vKeyRotationTime;
+            for (final DeterministicKeyChain chain : keyChainGroup.getActiveKeyChains(keyRotationTime))
                 keys.addAll(chain.getIssuedReceiveKeys());
             return keys;
         } finally {
@@ -770,8 +771,8 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             List<Address> addresses = new ArrayList<>();
-            long keyRotationTimeSecs = vKeyRotationTimestamp;
-            for (final DeterministicKeyChain chain : keyChainGroup.getActiveKeyChains(keyRotationTimeSecs)) {
+            Optional<Instant> keyRotationTime = vKeyRotationTime;
+            for (final DeterministicKeyChain chain : keyChainGroup.getActiveKeyChains(keyRotationTime)) {
                 ScriptType outputScriptType = chain.getOutputScriptType();
                 for (ECKey key : chain.getIssuedReceiveKeys())
                     addresses.add(key.toAddress(outputScriptType, network()));
@@ -805,8 +806,8 @@ public class Wallet extends BaseTaggableObject
                                        @Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
         keyChainGroupLock.lock();
         try {
-            long keyRotationTimeSecs = vKeyRotationTimestamp;
-            keyChainGroup.upgradeToDeterministic(outputScriptType, structure, keyRotationTimeSecs, aesKey);
+            Optional<Instant> keyRotationTime = vKeyRotationTime;
+            keyChainGroup.upgradeToDeterministic(outputScriptType, structure, keyRotationTime, aesKey);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -820,8 +821,8 @@ public class Wallet extends BaseTaggableObject
     public boolean isDeterministicUpgradeRequired(ScriptType outputScriptType) {
         keyChainGroupLock.lock();
         try {
-            long keyRotationTimeSecs = vKeyRotationTimestamp;
-            return keyChainGroup.isDeterministicUpgradeRequired(outputScriptType, keyRotationTimeSecs);
+            Optional<Instant> keyRotationTime = vKeyRotationTime;
+            return keyChainGroup.isDeterministicUpgradeRequired(outputScriptType, keyRotationTime);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -3486,9 +3487,9 @@ public class Wallet extends BaseTaggableObject
             builder.append("\nKeys:\n");
             builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTime() * 1000))
                     .append('\n');
-            final Date keyRotationTime = getKeyRotationTime();
-            if (keyRotationTime != null)
-                builder.append("Key rotation time:      ").append(TimeUtils.dateTimeFormat(keyRotationTime)).append('\n');
+            final Optional<Instant> keyRotationTime = getKeyRotationTimeInstant();
+            if (keyRotationTime.isPresent())
+                builder.append("Key rotation time:      ").append(TimeUtils.dateTimeFormat(keyRotationTime.get().toEpochMilli())).append('\n');
             builder.append(keyChainGroup.toString(includeLookahead, includePrivateKeys, aesKey));
 
             if (!watchedScripts.isEmpty()) {
@@ -5311,28 +5312,6 @@ public class Wallet extends BaseTaggableObject
      * When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
      * respent to any key that was created after T. This can be used to recover from a situation where a set of keys is
      * believed to be compromised. The rotation time is persisted to the wallet. You can stop key rotation by calling
-     * this method again with {@code null} as the argument.
-     * </p>
-     *
-     * <p>
-     * Once set up, calling {@link #doMaintenance(KeyParameter, boolean)} will create and possibly send rotation
-     * transactions: but it won't be done automatically (because you might have to ask for the users password). This may
-     * need to be repeated regularly in case new coins keep coming in on rotating addresses/keys.
-     * </p>
-     *
-     * <p>
-     * The given time cannot be in the future.
-     * </p>
-     */
-    public void setKeyRotationTime(@Nullable Date time) {
-        setKeyRotationTime(time != null ? time.getTime() / 1000 : 0);
-    }
-
-    /**
-     * <p>
-     * When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
-     * respent to any key that was created after T. This can be used to recover from a situation where a set of keys is
-     * believed to be compromised. The rotation time is persisted to the wallet. You can stop key rotation by calling
      * this method again with {@code 0} as the argument.
      * </p>
      * 
@@ -5346,29 +5325,55 @@ public class Wallet extends BaseTaggableObject
      * The given time cannot be in the future.
      * </p>
      */
-    public void setKeyRotationTime(long unixTimeSeconds) {
-        checkArgument(unixTimeSeconds <= TimeUtils.currentTimeSeconds(), "Given time (%s) cannot be in the future.",
-                TimeUtils.dateTimeFormat(unixTimeSeconds * 1000));
-        vKeyRotationTimestamp = unixTimeSeconds;
+    public void setKeyRotationTime(Instant keyRotationTime) {
+        checkArgument(keyRotationTime.compareTo(TimeUtils.currentTime()) <= 0,
+                "Given time (%s) cannot be in the future.",
+                TimeUtils.dateTimeFormat(keyRotationTime.toEpochMilli()));
+        vKeyRotationTime = Optional.of(keyRotationTime);
         saveNow();
     }
 
+    /** @deprecated use {@link #setKeyRotationTime(Instant)} */
+    @Deprecated
+    public void setKeyRotationTime(long timeSecs) {
+        if (timeSecs == 0)
+            vKeyRotationTime = Optional.empty();
+        else
+            setKeyRotationTime(Instant.ofEpochSecond(timeSecs));
+    }
+
+    /** @deprecated use {@link #setKeyRotationTime(Instant)} */
+    @Deprecated
+    public void setKeyRotationTime(@Nullable Date time) {
+        if (time == null)
+            vKeyRotationTime = Optional.empty();
+        else
+            setKeyRotationTime(Instant.ofEpochMilli(time.getTime()));
+    }
+
     /**
-     * Returns the key rotation time, or null if unconfigured. See {@link #setKeyRotationTime(Date)} for a description
+     * Returns the key rotation time, or null if unconfigured. See {@link #setKeyRotationTime(Instant)} for a description
      * of the field.
      */
+    public Optional<Instant> getKeyRotationTimeInstant() {
+        Optional<Instant> keyRotationTime = vKeyRotationTime;
+        return keyRotationTime;
+    }
+
+    /** @deprecated use {@link #getKeyRotationTimeInstant()} */
+    @Deprecated
     public @Nullable Date getKeyRotationTime() {
-        final long keyRotationTimestamp = vKeyRotationTimestamp;
-        if (keyRotationTimestamp != 0)
-            return new Date(keyRotationTimestamp * 1000);
+        Optional<Instant> keyRotationTime = vKeyRotationTime;
+        if (keyRotationTime.isPresent())
+            return new Date(keyRotationTime.get().toEpochMilli());
         else
             return null;
     }
 
     /** Returns whether the keys creation time is before the key rotation time, if one was set. */
     public boolean isKeyRotating(ECKey key) {
-        long time = vKeyRotationTimestamp;
-        return time != 0 && key.getCreationTimeSeconds() < time;
+        Optional<Instant> keyRotationTime = vKeyRotationTime;
+        return keyRotationTime.isPresent() && Instant.ofEpochSecond(key.getCreationTimeSeconds()).isBefore(keyRotationTime.get());
     }
 
     /**
@@ -5447,15 +5452,15 @@ public class Wallet extends BaseTaggableObject
         checkState(keyChainGroupLock.isHeldByCurrentThread());
         List<Transaction> results = new LinkedList<>();
         // TODO: Handle chain replays here.
-        final long keyRotationTimestamp = vKeyRotationTimestamp;
-        if (keyRotationTimestamp == 0) return results;  // Nothing to do.
+        Optional<Instant> keyRotationTime = vKeyRotationTime;
+        if (!keyRotationTime.isPresent()) return results;  // Nothing to do.
 
         // We might have to create a new HD hierarchy if the previous ones are now rotating.
         boolean allChainsRotating = true;
         ScriptType preferredScriptType = ScriptType.P2PKH;
         if (keyChainGroup.supportsDeterministicChains()) {
             for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
-                if (chain.getEarliestKeyCreationTime() >= keyRotationTimestamp)
+                if (chain.getEarliestKeyCreationTime() >= keyRotationTime.get().getEpochSecond())
                     allChainsRotating = false;
                 else
                     preferredScriptType = chain.getOutputScriptType();
@@ -5474,16 +5479,16 @@ public class Wallet extends BaseTaggableObject
                             throw new DeterministicUpgradeRequiresPassword();
                         KeyCrypter keyCrypter = keyChainGroup.getKeyCrypter();
                         keyChainGroup.decrypt(aesKey);
-                        keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                        keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTime);
                         keyChainGroup.encrypt(keyCrypter, aesKey);
                     } else {
-                        keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                        keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTime);
                     }
                 } else {
                     log.info(
                             "All deterministic chains are currently rotating, creating a new {} one from the next oldest non-rotating key material...",
                             preferredScriptType);
-                    keyChainGroup.upgradeToDeterministic(preferredScriptType, structure, keyRotationTimestamp, aesKey);
+                    keyChainGroup.upgradeToDeterministic(preferredScriptType, structure, keyRotationTime, aesKey);
                     log.info("...upgraded to HD again, based on next best oldest key.");
                 }
             } catch (AllRandomKeysRotating rotating) {
@@ -5497,10 +5502,10 @@ public class Wallet extends BaseTaggableObject
                         throw new DeterministicUpgradeRequiresPassword();
                     KeyCrypter keyCrypter = keyChainGroup.getKeyCrypter();
                     keyChainGroup.decrypt(aesKey);
-                    keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                    keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTime);
                     keyChainGroup.encrypt(keyCrypter, aesKey);
                 } else {
-                    keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTimestamp);
+                    keyChainGroup.mergeActiveKeyChains(newChains, keyRotationTime);
                 }
             }
             saveNow();
@@ -5511,14 +5516,14 @@ public class Wallet extends BaseTaggableObject
         // fully done, at least for now (we may still get more transactions later and this method will be reinvoked).
         Transaction tx;
         do {
-            tx = rekeyOneBatch(keyRotationTimestamp, aesKey, results, sign);
+            tx = rekeyOneBatch(keyRotationTime.get(), aesKey, results, sign);
             if (tx != null) results.add(tx);
         } while (tx != null && tx.getInputs().size() == KeyTimeCoinSelector.MAX_SIMULTANEOUS_INPUTS);
         return results;
     }
 
     @Nullable
-    private Transaction rekeyOneBatch(long timeSecs, @Nullable KeyParameter aesKey, List<Transaction> others, boolean sign) {
+    private Transaction rekeyOneBatch(Instant time, @Nullable KeyParameter aesKey, List<Transaction> others, boolean sign) {
         lock.lock();
         try {
             // Build the transaction using some custom logic for our special needs. Last parameter to
@@ -5529,7 +5534,7 @@ public class Wallet extends BaseTaggableObject
             // have already got stuck double spends in their wallet due to the Bloom-filtering block reordering
             // bug that was fixed in 0.10, thus, making a re-key transaction depend on those would cause it to
             // never confirm at all.
-            CoinSelector keyTimeSelector = new KeyTimeCoinSelector(this, timeSecs, true);
+            CoinSelector keyTimeSelector = new KeyTimeCoinSelector(this, time.getEpochSecond(), true);
             FilteringCoinSelector selector = new FilteringCoinSelector(keyTimeSelector);
             for (Transaction other : others)
                 selector.excludeOutputsSpentBy(other);

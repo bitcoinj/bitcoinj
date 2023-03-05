@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A coin selector that takes all coins assigned to keys created before the given timestamp.
- * Used as part of the implementation of {@link Wallet#setKeyRotationTime(java.util.Date)}.
+ * Used as part of the implementation of {@link Wallet#setKeyRotationTime(java.time.Instant)}.
  */
 public class KeyTimeCoinSelector implements CoinSelector {
     private static final Logger log = LoggerFactory.getLogger(KeyTimeCoinSelector.class);
