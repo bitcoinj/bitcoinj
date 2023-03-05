@@ -50,8 +50,7 @@ public class WalletFiles {
     private final ScheduledThreadPoolExecutor executor;
     private final File file;
     private final AtomicBoolean savePending;
-    private final long delay;
-    private final TimeUnit delayTimeUnit;
+    private final Duration delay;
     private final Callable<Void> saver;
 
     private volatile Listener vListener;
@@ -77,7 +76,7 @@ public class WalletFiles {
      * saved automatically. The {@link Wallet} calls {@link #saveNow()} or {@link #saveLater()} as wallet state changes,
      * depending on the urgency of the changes.
      */
-    public WalletFiles(final Wallet wallet, File file, long delay, TimeUnit delayTimeUnit) {
+    public WalletFiles(final Wallet wallet, File file, Duration delay) {
         // An executor that starts up threads when needed and shuts them down later.
         this.executor = new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("Wallet autosave thread", Thread.MIN_PRIORITY));
         this.executor.setKeepAliveTime(5, TimeUnit.SECONDS);
@@ -87,8 +86,7 @@ public class WalletFiles {
         // File must only be accessed from the auto-save executor from now on, to avoid simultaneous access.
         this.file = checkNotNull(file);
         this.savePending = new AtomicBoolean();
-        this.delay = delay;
-        this.delayTimeUnit = checkNotNull(delayTimeUnit);
+        this.delay = checkNotNull(delay);
 
         this.saver = () -> {
             // Runs in an auto save thread.
@@ -104,6 +102,12 @@ public class WalletFiles {
             saveNowInternal();
             return null;
         };
+    }
+
+    /** @deprecated use {@link #WalletFiles(Wallet, File, Duration)} */
+    @Deprecated
+    public WalletFiles(final Wallet wallet, File file, long delayTime, TimeUnit timeUnit) {
+        this(wallet, file, Duration.ofMillis(timeUnit.toMillis(delayTime)));
     }
 
     /** Get the {@link Wallet} this {@link WalletFiles} is managing. */
@@ -151,7 +155,7 @@ public class WalletFiles {
     public void saveLater() {
         if (executor.isShutdown() || savePending.getAndSet(true))
             return;   // Already pending.
-        executor.schedule(saver, delay, delayTimeUnit);
+        executor.schedule(saver, delay.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     /** Shut down auto-saving. */
