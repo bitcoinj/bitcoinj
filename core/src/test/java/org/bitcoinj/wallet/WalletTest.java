@@ -81,6 +81,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1614,7 +1615,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingWalletWithCreationTime() {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(TESTNET.network());
-        Wallet watchingWallet = Wallet.fromWatchingKeyB58(TESTNET, serialized, 1415282801);
+        Wallet watchingWallet = Wallet.fromWatchingKeyB58(TESTNET, serialized, Instant.ofEpochSecond(1415282801));
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
 
@@ -3290,7 +3291,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingMarriedWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(TESTNET.network());
-        Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET, serialized, 0);
+        Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET, serialized);
         blockStore = new MemoryBlockStore(TESTNET);
         chain = new BlockChain(TESTNET, wallet, blockStore);
 

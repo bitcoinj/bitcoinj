@@ -114,6 +114,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -389,15 +390,39 @@ public class Wallet extends BaseTaggableObject
         return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
     }
 
+     /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. The
+     * account path is specified.
+     * @param params The network
+     * @param watchKeyB58 The key in base58 notation
+     * @param creationTime creation time of the key (if unknown use {@link #fromWatchingKeyB58(NetworkParameters, String)}
+     * @return a new wallet
+     */
+    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, Instant creationTime) {
+        final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params.network());
+        watchKey.setCreationTimeSeconds(creationTime.getEpochSecond());
+        return fromWatchingKey(params, watchKey, outputScriptTypeFromB58(params, watchKeyB58));
+    }
+
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. The
-     * account path is specified. The key is specified in base58 notation and the creation time of the key. If you don't
-     * know the creation time, you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     * account path is specified. They key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}
+     * @param params The network
+     * @param watchKeyB58 The key in base58 notation
+     * @return a new wallet
      */
+    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58) {
+        return fromWatchingKeyB58(params, watchKeyB58, Instant.ofEpochSecond(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS));
+    }
+
+    /**
+     * @deprecated Use {@link #fromWatchingKeyB58(NetworkParameters, String, Instant)} or {@link #fromWatchingKeyB58(NetworkParameters, String)}
+     */
+    @Deprecated
     public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
-        final DeterministicKey watchKey = DeterministicKey.deserializeB58(null, watchKeyB58, params);
-        watchKey.setCreationTimeSeconds(creationTimeSeconds);
-        return fromWatchingKey(params, watchKey, outputScriptTypeFromB58(params, watchKeyB58));
+        return (creationTimeSeconds == 0)
+                ? fromWatchingKeyB58(params, watchKeyB58)
+                : fromWatchingKeyB58(params, watchKeyB58, Instant.ofEpochSecond(creationTimeSeconds));
     }
 
     /**
@@ -413,13 +438,36 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
-     * The key is specified in base58 notation and the creation time of the key. If you don't know the creation time,
-     * you can pass {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     * @param params The network
+     * @param spendingKeyB58 The key in base58 notation
+     * @param creationTime creation time of the key (if unknown use {@link #fromWatchingKeyB58(NetworkParameters, String)}
+     * @return a new wallet
      */
-    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, long creationTimeSeconds) {
-        final DeterministicKey spendKey = DeterministicKey.deserializeB58(null, spendingKeyB58, params);
-        spendKey.setCreationTimeSeconds(creationTimeSeconds);
+    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, Instant creationTime) {
+        final DeterministicKey spendKey = DeterministicKey.deserializeB58(null, spendingKeyB58, params.network());
+        spendKey.setCreationTimeSeconds(creationTime.getEpochSecond());
         return fromSpendingKey(params, spendKey, outputScriptTypeFromB58(params, spendingKeyB58));
+    }
+
+    /**
+     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
+     * They key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     * @param params The network
+     * @param spendingKeyB58 The key in base58 notation
+     * @return a new wallet
+     */
+    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58) {
+        return fromSpendingKeyB58(params, spendingKeyB58, Instant.ofEpochSecond(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS));
+    }
+
+    /**
+     * @deprecated Use {@link #fromSpendingKeyB58(NetworkParameters, String, Instant)} or {@link #fromSpendingKeyB58(NetworkParameters, String)}
+     */
+    @Deprecated
+    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, long creationTimeSeconds) {
+        return (creationTimeSeconds == 0)
+                ? fromSpendingKeyB58(params, spendingKeyB58)
+                : fromSpendingKeyB58(params, spendingKeyB58, Instant.ofEpochSecond(creationTimeSeconds));
     }
 
     /**

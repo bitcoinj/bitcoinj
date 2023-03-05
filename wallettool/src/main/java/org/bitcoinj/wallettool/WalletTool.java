@@ -90,6 +90,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -1096,7 +1097,7 @@ public class WalletTool implements Callable<Integer> {
             }
             wallet = Wallet.fromSeed(params, seed, outputScriptType, keyChainGroupStructure);
         } else if (watchKeyStr != null) {
-            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, creationTimeSecs);
+            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, Instant.ofEpochSecond(creationTimeSecs));
         } else {
             wallet = Wallet.createDeterministic(params, outputScriptType, keyChainGroupStructure);
         }
