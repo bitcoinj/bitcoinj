@@ -539,7 +539,7 @@ public class Block extends Message {
             s.append(" (").append(bips).append(')');
         s.append('\n');
         s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
-        s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time.toEpochMilli())).append(")\n");
+        s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time)).append(")\n");
         s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
         if (transactions != null && transactions.size() > 0) {
@@ -620,8 +620,8 @@ public class Block extends Message {
         if (time.isAfter(allowedTime))
             throw new VerificationException(String.format(Locale.US,
                     "Block too far in future: %s (%d) vs allowed %s (%d)",
-                    TimeUtils.dateTimeFormat(time.toEpochMilli()), time.toEpochMilli(),
-                    TimeUtils.dateTimeFormat(allowedTime.toEpochMilli()), allowedTime.toEpochMilli()));
+                    TimeUtils.dateTimeFormat(time), time.toEpochMilli(),
+                    TimeUtils.dateTimeFormat(allowedTime), allowedTime.toEpochMilli()));
     }
 
     private void checkSigOps() throws VerificationException {

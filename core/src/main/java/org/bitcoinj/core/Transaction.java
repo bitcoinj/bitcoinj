@@ -831,7 +831,7 @@ public class Transaction extends ChildMessage {
             s.append(vsize).append(" virtual bytes, ");
         s.append(size).append(" bytes\n");
         getUpdateTimeInstant().ifPresent(
-                time -> s.append(indent).append("updated: ").append(TimeUtils.dateTimeFormat(time.toEpochMilli())).append('\n'));
+                time -> s.append(indent).append("updated: ").append(TimeUtils.dateTimeFormat(time)).append('\n'));
         if (version != 1)
             s.append(indent).append("version ").append(version).append('\n');
 
@@ -841,10 +841,10 @@ public class Transaction extends ChildMessage {
                 s.append("block ").append(lockTime);
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
-                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant((int) lockTime).toEpochMilli())).append(')');
+                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant((int) lockTime))).append(')');
                 }
             } else {
-                s.append(TimeUtils.dateTimeFormat(lockTime * 1000));
+                s.append(TimeUtils.dateTimeFormat(Instant.ofEpochSecond(lockTime)));
             }
             s.append('\n');
         }

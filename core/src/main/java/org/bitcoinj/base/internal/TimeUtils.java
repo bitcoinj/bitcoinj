@@ -16,13 +16,11 @@
 
 package org.bitcoinj.base.internal;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -124,21 +122,9 @@ public class TimeUtils {
 
     /**
      * Formats a given date+time value to an ISO 8601 string.
-     * @param dateTime value to format, as a Date
+     * @param time date and time to format
      */
-    public static String dateTimeFormat(Date dateTime) {
-        DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        iso8601.setTimeZone(UTC);
-        return iso8601.format(dateTime);
-    }
-
-    /**
-     * Formats a given date+time value to an ISO 8601 string.
-     * @param dateTime value to format, unix time (ms)
-     */
-    public static String dateTimeFormat(long dateTime) {
-        DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        iso8601.setTimeZone(UTC);
-        return iso8601.format(dateTime);
+    public static String dateTimeFormat(Instant time) {
+        return DateTimeFormatter.ISO_INSTANT.format(time);
     }
 }

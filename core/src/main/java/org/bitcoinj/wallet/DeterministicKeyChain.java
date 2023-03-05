@@ -1455,7 +1455,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Optional<Instant> seedCreationTime = seed.getCreationTime();
             if (seedCreationTime.isPresent())
                 builder.append(seedCreationTime.get().getEpochSecond()).append("  [")
-                        .append(TimeUtils.dateTimeFormat(seedCreationTime.get().toEpochMilli())).append("]");
+                        .append(TimeUtils.dateTimeFormat(seedCreationTime.get())).append("]");
             else
                 builder.append("unknown");
             builder.append("\n");
@@ -1464,7 +1464,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Optional<Instant> watchingKeyCreationTime = watchingKey.getCreationTime();
             if (watchingKeyCreationTime.isPresent())
                 builder.append(watchingKeyCreationTime.get().getEpochSecond()).append("  [")
-                        .append(TimeUtils.dateTimeFormat(watchingKeyCreationTime.get().toEpochMilli())).append("]");
+                        .append(TimeUtils.dateTimeFormat(watchingKeyCreationTime.get())).append("]");
             else
                 builder.append("unknown");
             builder.append("\n");

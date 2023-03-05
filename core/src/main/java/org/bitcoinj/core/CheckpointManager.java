@@ -150,7 +150,7 @@ public class CheckpointManager {
             }
             Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
             log.info("Read {} checkpoints up to time {}, hash is {}", checkpoints.size(),
-                    TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey().toEpochMilli()), dataHash);
+                    TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey()), dataHash);
             return dataHash;
         } catch (ProtocolException e) {
             throw new IOException(e);
@@ -187,7 +187,7 @@ public class CheckpointManager {
             }
             HashCode hash = hasher.hash();
             log.info("Read {} checkpoints up to time {}, hash is {}", checkpoints.size(),
-                    TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey().toEpochMilli()), hash);
+                    TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey()), hash);
             return Sha256Hash.wrap(hash.asBytes());
         }
     }
@@ -241,7 +241,7 @@ public class CheckpointManager {
         time = time.minus(7, ChronoUnit.WEEKS);
 
         log.info("Attempting to initialize a new block store with a checkpoint for time {} ({})", time.getEpochSecond(),
-                TimeUtils.dateTimeFormat(time.toEpochMilli()));
+                TimeUtils.dateTimeFormat(time));
 
         BufferedInputStream stream = new BufferedInputStream(checkpoints);
         CheckpointManager manager = new CheckpointManager(params, stream);

@@ -85,7 +85,7 @@ public class BlockTest {
     
     @Test
     public void testDate() {
-        assertEquals("2016-02-13T22:59:39Z", TimeUtils.dateTimeFormat(block700000.getTime()));
+        assertEquals("2016-02-13T22:59:39Z", TimeUtils.dateTimeFormat(block700000.getTimeInstant()));
     }
 
     private static class TweakableTestNet3Params extends TestNet3Params {
