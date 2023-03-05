@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -68,7 +69,7 @@ public class DownloadProgressTracker implements BlockchainDownloadEventListener 
             caughtUp = true;
             if (lastPercent != 100) {
                 lastPercent = 100;
-                progress(lastPercent, blocksLeft, new Date(block.getTimeSeconds() * 1000));
+                progress(lastPercent, blocksLeft, block.getTimeInstant());
             }
             doneDownload();
             future.complete(peer.getBestHeight());
@@ -80,7 +81,7 @@ public class DownloadProgressTracker implements BlockchainDownloadEventListener 
 
         double pct = 100.0 - (100.0 * (blocksLeft / (double) originalBlocksLeft));
         if ((int) pct != lastPercent) {
-            progress(pct, blocksLeft, new Date(block.getTimeSeconds() * 1000));
+            progress(pct, blocksLeft, block.getTimeInstant());
             lastPercent = (int) pct;
         }
     }
@@ -89,11 +90,11 @@ public class DownloadProgressTracker implements BlockchainDownloadEventListener 
      * Called when download progress is made.
      *
      * @param pct  the percentage of chain downloaded, estimated
-     * @param date the date of the last block downloaded
+     * @param time the time of the last block downloaded
      */
-    protected void progress(double pct, int blocksSoFar, Date date) {
+    protected void progress(double pct, int blocksSoFar, Instant time) {
         log.info(String.format(Locale.US, "Chain download %d%% done with %d blocks to go, block date %s", (int) pct, blocksSoFar,
-                TimeUtils.dateTimeFormat(date)));
+                TimeUtils.dateTimeFormat(time.toEpochMilli())));
     }
 
     /**

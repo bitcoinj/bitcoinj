@@ -26,6 +26,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.time.Instant;
 import java.util.Date;
 
 /**
@@ -61,8 +62,8 @@ public class BitcoinUIModel {
 
     private class ProgressBarUpdater extends DownloadProgressTracker {
         @Override
-        protected void progress(double pct, int blocksLeft, Date date) {
-            super.progress(pct, blocksLeft, date);
+        protected void progress(double pct, int blocksLeft, Instant time) {
+            super.progress(pct, blocksLeft, time);
             Platform.runLater(() -> syncProgress.set(pct / 100.0));
         }
 
