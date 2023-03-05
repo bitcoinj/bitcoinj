@@ -97,7 +97,7 @@ public class WalletFiles {
             log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
                     wallet.getLastBlockSeenHeight(),
                     wallet.getLastBlockSeenTimeInstant()
-                            .map(time -> TimeUtils.dateTimeFormat(time.toEpochMilli()))
+                            .map(time -> TimeUtils.dateTimeFormat(time))
                             .orElse("unknown"),
                     wallet.getLastBlockSeenHash());
             saveNowInternal();
@@ -131,7 +131,7 @@ public class WalletFiles {
             return;
         log.info("Saving wallet; last seen block is height {}, date {}, hash {}", wallet.getLastBlockSeenHeight(),
                 wallet.getLastBlockSeenTimeInstant()
-                        .map(time -> TimeUtils.dateTimeFormat(time.toEpochMilli()))
+                        .map(time -> TimeUtils.dateTimeFormat(time))
                         .orElse("unknown"),
                 wallet.getLastBlockSeenHash());
         saveNowInternal();

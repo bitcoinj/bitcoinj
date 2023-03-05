@@ -94,7 +94,7 @@ public class DownloadProgressTracker implements BlockchainDownloadEventListener 
      */
     protected void progress(double pct, int blocksSoFar, Instant time) {
         log.info(String.format(Locale.US, "Chain download %d%% done with %d blocks to go, block date %s", (int) pct, blocksSoFar,
-                TimeUtils.dateTimeFormat(time.toEpochMilli())));
+                TimeUtils.dateTimeFormat(time)));
     }
 
     /**

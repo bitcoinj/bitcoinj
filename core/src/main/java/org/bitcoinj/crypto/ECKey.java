@@ -1379,7 +1379,7 @@ public class ECKey implements EncryptableItem {
         builder.append(ByteUtils.formatHex(getPubKeyHash()));
         if (creationTime != null)
             builder.append("  creationTime:").append(creationTime).append(" [")
-                    .append(TimeUtils.dateTimeFormat(creationTime.toEpochMilli())).append("]");
+                    .append(TimeUtils.dateTimeFormat(creationTime)).append("]");
         if (comment != null)
             builder.append("  (").append(comment).append(")");
         builder.append("\n");

@@ -29,13 +29,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TimeUtilsTest {
-
-    @Test
-    public void dateTimeFormat() {
-        assertEquals("2014-11-16T10:54:33Z", TimeUtils.dateTimeFormat(1416135273781L));
-        assertEquals("2014-11-16T10:54:33Z", TimeUtils.dateTimeFormat(new Date(1416135273781L)));
-    }
-
     @Test
     public void setAndRollMockClock() {
         TimeUtils.setMockClock(Instant.ofEpochSecond(25200));
@@ -47,6 +40,12 @@ public class TimeUtilsTest {
     @Test(expected = IllegalStateException.class)
     public void rollMockClock_uninitialized() {
         TimeUtils.rollMockClock(Duration.ofMinutes(1));
+    }
+
+    @Test
+    public void dateTimeFormat() {
+        long ms = 1416135273781L;
+        assertEquals("2014-11-16T10:54:33.781Z", TimeUtils.dateTimeFormat(Instant.ofEpochMilli(ms)));
     }
 
     @Test

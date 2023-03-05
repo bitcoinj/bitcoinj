@@ -142,14 +142,14 @@ public class BuildCheckpoints implements Callable<Integer> {
         peerGroup.setFastCatchupTime(now);
 
         Instant timeAgo = now.minus(days, ChronoUnit.DAYS);
-        System.out.println("Checkpointing up to " + TimeUtils.dateTimeFormat(timeAgo.toEpochMilli()));
+        System.out.println("Checkpointing up to " + TimeUtils.dateTimeFormat(timeAgo));
 
         chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
             int height = block.getHeight();
             if (height % params.getInterval() == 0 && timeAgo.isAfter(block.getHeader().getTimeInstant())) {
                 System.out.println(String.format("Checkpointing block %s at height %d, time %s",
                         block.getHeader().getHash(), block.getHeight(),
-                        TimeUtils.dateTimeFormat(block.getHeader().getTimeInstant().toEpochMilli())));
+                        TimeUtils.dateTimeFormat(block.getHeader().getTimeInstant())));
                 checkpoints.put(height, block);
             }
         });

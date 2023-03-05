@@ -3520,7 +3520,7 @@ public class Wallet extends BaseTaggableObject
             builder.append("  ").append(dead.size()).append(" dead\n");
             builder.append("Last seen best block: ").append(getLastBlockSeenHeight()).append(" (")
                     .append(getLastBlockSeenTimeInstant()
-                            .map(instant -> TimeUtils.dateTimeFormat(instant.toEpochMilli()))
+                            .map(instant -> TimeUtils.dateTimeFormat(instant))
                             .orElse("time unknown"))
                     .append("): ").append(getLastBlockSeenHash()).append('\n');
             final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
@@ -3531,11 +3531,11 @@ public class Wallet extends BaseTaggableObject
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTimeInstant().toEpochMilli()))
+            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTimeInstant()))
                     .append('\n');
             final Optional<Instant> keyRotationTime = getKeyRotationTimeInstant();
             if (keyRotationTime.isPresent())
-                builder.append("Key rotation time:      ").append(TimeUtils.dateTimeFormat(keyRotationTime.get().toEpochMilli())).append('\n');
+                builder.append("Key rotation time:      ").append(TimeUtils.dateTimeFormat(keyRotationTime.get())).append('\n');
             builder.append(keyChainGroup.toString(includeLookahead, includePrivateKeys, aesKey));
 
             if (!watchedScripts.isEmpty()) {
@@ -5390,7 +5390,7 @@ public class Wallet extends BaseTaggableObject
     public void setKeyRotationTime(@Nullable Instant keyRotationTime) {
         checkArgument(keyRotationTime == null || keyRotationTime.compareTo(TimeUtils.currentTime()) <= 0,
                 "Given time (%s) cannot be in the future.",
-                TimeUtils.dateTimeFormat(keyRotationTime.toEpochMilli()));
+                TimeUtils.dateTimeFormat(keyRotationTime));
         vKeyRotationTime = keyRotationTime;
         saveNow();
     }

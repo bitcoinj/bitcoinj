@@ -375,7 +375,7 @@ public class TransactionConfidence {
         if (peers > 0) {
             builder.append("Seen by ").append(peers).append(peers > 1 ? " peers" : " peer");
             if (lastBroadcastTime != null)
-                builder.append(" (most recently: ").append(TimeUtils.dateTimeFormat(lastBroadcastTime.toEpochMilli())).append(")");
+                builder.append(" (most recently: ").append(TimeUtils.dateTimeFormat(lastBroadcastTime)).append(")");
             builder.append(". ");
         }
         switch (getConfidenceType()) {
