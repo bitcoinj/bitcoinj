@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -423,9 +424,16 @@ public class KeyChainGroup implements KeyBag {
      * using {@link #freshAddress(KeyChain.KeyPurpose)} or
      * {@link #currentAddress(KeyChain.KeyPurpose)}.</p>
      */
-    public Address freshAddress(KeyChain.KeyPurpose purpose, ScriptType outputScriptType, long keyRotationTimeSecs) {
-        DeterministicKeyChain chain = getActiveKeyChain(outputScriptType, keyRotationTimeSecs);
+    public Address freshAddress(KeyChain.KeyPurpose purpose, ScriptType outputScriptType, @Nullable Instant keyRotationTime) {
+        DeterministicKeyChain chain = getActiveKeyChain(outputScriptType, keyRotationTime);
         return chain.getKey(purpose).toAddress(outputScriptType, params.network());
+    }
+
+    /** @deprecated use {@link #freshAddress(KeyChain.KeyPurpose, ScriptType, Instant)} */
+    @Deprecated
+    public Address freshAddress(KeyChain.KeyPurpose purpose, ScriptType outputScriptType, long keyRotationTimeSecs) {
+        Instant keyRotationTime = keyRotationTimeSecs > 0 ? Instant.ofEpochSecond(keyRotationTimeSecs) : null;
+        return freshAddress(purpose, outputScriptType, keyRotationTime);
     }
 
     /**
@@ -452,29 +460,44 @@ public class KeyChainGroup implements KeyBag {
     /**
      * Returns the key chains that are used for generation of fresh/current keys, in the order of how they
      * were added. The default active chain will come last in the list.
+     * @param keyRotationTime key rotation to take into account
      */
-    public List<DeterministicKeyChain> getActiveKeyChains(long keyRotationTimeSecs) {
+    public List<DeterministicKeyChain> getActiveKeyChains(@Nullable Instant keyRotationTime) {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         List<DeterministicKeyChain> activeChains = new LinkedList<>();
         for (DeterministicKeyChain chain : chains)
-            if (chain.getEarliestKeyCreationTime() >= keyRotationTimeSecs)
+            if (keyRotationTime == null || chain.getEarliestKeyCreationTime() >= keyRotationTime.getEpochSecond())
                 activeChains.add(chain);
         return activeChains;
+    }
+
+    /** @deprecated use {@link #getActiveKeyChains(Instant)} */
+    @Deprecated
+    public List<DeterministicKeyChain> getActiveKeyChains(long keyRotationTimeSecs) {
+        Instant keyRotationTime = keyRotationTimeSecs > 0 ? Instant.ofEpochSecond(keyRotationTimeSecs) : null;
+        return getActiveKeyChains(keyRotationTime);
     }
 
     /**
      * Returns the key chain that's used for generation of fresh/current keys of the given type. If it's not the default
      * type and no active chain for this type exists, {@code null} is returned. No upgrade or downgrade is tried.
      */
-    public final DeterministicKeyChain getActiveKeyChain(ScriptType outputScriptType, long keyRotationTimeSecs) {
+    public final DeterministicKeyChain getActiveKeyChain(ScriptType outputScriptType, Instant keyRotationTime) {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         List<DeterministicKeyChain> chainsReversed = new ArrayList<>(chains);
         Collections.reverse(chainsReversed);
         for (DeterministicKeyChain chain : chainsReversed)
             if (chain.getOutputScriptType() == outputScriptType
-                    && chain.getEarliestKeyCreationTime() >= keyRotationTimeSecs)
+                    && (keyRotationTime == null || chain.getEarliestKeyCreationTime() >= keyRotationTime.getEpochSecond()))
                 return chain;
         return null;
+    }
+
+    /** @deprecated use {@link #getActiveKeyChain(ScriptType, Instant)} */
+    @Deprecated
+    public final DeterministicKeyChain getActiveKeyChain(ScriptType outputScriptType, long keyRotationTimeSecs) {
+        Instant keyRotationTime = keyRotationTimeSecs > 0 ? Instant.ofEpochSecond(keyRotationTimeSecs) : null;
+        return getActiveKeyChain(outputScriptType, keyRotationTime);
     }
 
     /**
@@ -492,10 +515,17 @@ public class KeyChainGroup implements KeyBag {
     /**
      * Merge all active chains from the given keychain group into this keychain group.
      */
-    public final void mergeActiveKeyChains(KeyChainGroup from, long keyRotationTimeSecs) {
+    public final void mergeActiveKeyChains(KeyChainGroup from, Instant keyRotationTime) {
         checkArgument(isEncrypted() == from.isEncrypted(), "encrypted and non-encrypted keychains cannot be mixed");
-        for (DeterministicKeyChain chain : from.getActiveKeyChains(keyRotationTimeSecs))
+        for (DeterministicKeyChain chain : from.getActiveKeyChains(keyRotationTime))
             addAndActivateHDChain(chain);
+    }
+
+    /** @deprecated use {@link #mergeActiveKeyChains(KeyChainGroup, Instant)} */
+    @Deprecated
+    public final void mergeActiveKeyChains(KeyChainGroup from, long keyRotationTimeSecs) {
+        Instant keyRotationTime = keyRotationTimeSecs > 0 ? Instant.ofEpochSecond(keyRotationTimeSecs) : null;
+        mergeActiveKeyChains(from, keyRotationTime);
     }
 
     /**
@@ -968,8 +998,8 @@ public class KeyChainGroup implements KeyBag {
      *
      * @param preferredScriptType desired script type for the active keychain
      * @param structure keychain group structure to derive an account path from
-     * @param keyRotationTimeSecs If non-zero, UNIX time for which keys created before this are assumed to be
-     *                            compromised or weak, those keys will not be used for deterministic upgrade.
+     * @param keyRotationTime If non-empty, time for which keys created before this are assumed to be
+     *                        compromised or weak, those keys will not be used for deterministic upgrade.
      * @param aesKey If non-null, the encryption key the keychain is encrypted under. If the keychain is encrypted
      *               and this is not supplied, an exception is thrown letting you know you should ask the user for
      *               their password, turn it into a key, and then try again.
@@ -981,18 +1011,17 @@ public class KeyChainGroup implements KeyBag {
      *         and you should provide the users encryption key.
      */
     public void upgradeToDeterministic(ScriptType preferredScriptType, KeyChainGroupStructure structure,
-                                       long keyRotationTimeSecs, @Nullable KeyParameter aesKey)
+                                       @Nullable Instant keyRotationTime, @Nullable KeyParameter aesKey)
             throws DeterministicUpgradeRequiresPassword {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         checkNotNull(structure);
-        checkArgument(keyRotationTimeSecs >= 0);
-        if (!isDeterministicUpgradeRequired(preferredScriptType, keyRotationTimeSecs))
+        if (!isDeterministicUpgradeRequired(preferredScriptType, keyRotationTime))
             return; // Nothing to do.
 
         // P2PKH --> P2WPKH upgrade
         if (preferredScriptType == ScriptType.P2WPKH
-                && getActiveKeyChain(ScriptType.P2WPKH, keyRotationTimeSecs) == null) {
-            DeterministicSeed seed = getActiveKeyChain(ScriptType.P2PKH, keyRotationTimeSecs).getSeed();
+                && getActiveKeyChain(ScriptType.P2WPKH, keyRotationTime) == null) {
+            DeterministicSeed seed = getActiveKeyChain(ScriptType.P2PKH, keyRotationTime).getSeed();
             boolean seedWasEncrypted = seed.isEncrypted();
             if (seedWasEncrypted) {
                 if (aesKey == null)
@@ -1009,16 +1038,31 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
+    /** @deprecated use {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, Instant, KeyParameter)} */
+    @Deprecated
+    public void upgradeToDeterministic(ScriptType preferredScriptType, KeyChainGroupStructure structure,
+                                       long keyRotationTimeSecs, @Nullable KeyParameter aesKey) {
+        Instant keyRotationTime = keyRotationTimeSecs > 0 ? Instant.ofEpochSecond(keyRotationTimeSecs) : null;
+        upgradeToDeterministic(preferredScriptType, structure, keyRotationTime, aesKey);
+    }
+
     /**
      * Returns true if a call to {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, KeyParameter)} is required
      * in order to have an active deterministic keychain of the desired script type.
      */
-    public boolean isDeterministicUpgradeRequired(ScriptType preferredScriptType, long keyRotationTimeSecs) {
+    public boolean isDeterministicUpgradeRequired(ScriptType preferredScriptType, @Nullable Instant keyRotationTime) {
         if (!supportsDeterministicChains())
             return false;
-        if (getActiveKeyChain(preferredScriptType, keyRotationTimeSecs) == null)
+        if (getActiveKeyChain(preferredScriptType, keyRotationTime) == null)
             return true;
         return false;
+    }
+
+    /** @deprecated use {@link #isDeterministicUpgradeRequired(ScriptType, Instant)} */
+    @Deprecated
+    public boolean isDeterministicUpgradeRequired(ScriptType preferredScriptType, long keyRotationTimeSecs) {
+        Instant keyRotationTime = keyRotationTimeSecs > 0 ? Instant.ofEpochSecond(keyRotationTimeSecs) : null;
+        return isDeterministicUpgradeRequired(preferredScriptType, keyRotationTime);
     }
 
     private static EnumMap<KeyChain.KeyPurpose, DeterministicKey> createCurrentKeysMap(List<DeterministicKeyChain> chains) {

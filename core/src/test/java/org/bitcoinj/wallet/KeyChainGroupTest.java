@@ -89,7 +89,7 @@ public class KeyChainGroupTest {
         Address address = kcg.currentAddress(KeyPurpose.RECEIVE_FUNDS);
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
         // check fallback (this will go away at some point)
-        address = kcg.freshAddress(KeyPurpose.RECEIVE_FUNDS, ScriptType.P2PKH, 0);
+        address = kcg.freshAddress(KeyPurpose.RECEIVE_FUNDS, ScriptType.P2PKH, null);
         assertEquals(ScriptType.P2PKH, address.getOutputScriptType());
     }
 
@@ -541,8 +541,8 @@ public class KeyChainGroupTest {
         // Check that if we try to use HD features in a KCG that only has random keys, we get an exception.
         group = KeyChainGroup.builder(MAINNET).build();
         group.importKeys(new ECKey(), new ECKey());
-        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, 0));
-        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, 0));
+        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, null));
+        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, null));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);   // throws
     }
 
@@ -551,19 +551,19 @@ public class KeyChainGroupTest {
         group = KeyChainGroup.builder(MAINNET).fromRandom(ScriptType.P2PKH).lookaheadSize(LOOKAHEAD_SIZE).build();
 
         List<Protos.Key> protobufs = group.serializeToProtobuf();
-        group.upgradeToDeterministic(ScriptType.P2PKH, KeyChainGroupStructure.BIP32, 0, null);
+        group.upgradeToDeterministic(ScriptType.P2PKH, KeyChainGroupStructure.BIP32, null, null);
         assertFalse(group.isEncrypted());
-        assertFalse(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, 0));
-        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, 0));
+        assertFalse(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, null));
+        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, null));
         DeterministicKey dkey1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicSeed seed1 = group.getActiveKeyChain().getSeed();
         assertNotNull(seed1);
 
         group = KeyChainGroup.fromProtobufUnencrypted(MAINNET, protobufs);
-        group.upgradeToDeterministic(ScriptType.P2PKH, KeyChainGroupStructure.BIP32, 0, null);  // Should give same result as last time.
+        group.upgradeToDeterministic(ScriptType.P2PKH, KeyChainGroupStructure.BIP32, null, null);  // Should give same result as last time.
         assertFalse(group.isEncrypted());
-        assertFalse(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, 0));
-        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, 0));
+        assertFalse(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, null));
+        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, null));
         DeterministicKey dkey2 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         DeterministicSeed seed2 = group.getActiveKeyChain().getSeed();
         assertEquals(seed1, seed2);
@@ -575,8 +575,8 @@ public class KeyChainGroupTest {
         group = KeyChainGroup.builder(MAINNET).fromRandom(ScriptType.P2PKH).build();
         group.encrypt(KEY_CRYPTER, AES_KEY);
         assertTrue(group.isEncrypted());
-        assertFalse(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, 0));
-        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, 0));
+        assertFalse(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, null));
+        assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, null));
         final DeterministicSeed deterministicSeed = group.getActiveKeyChain().getSeed();
         assertNotNull(deterministicSeed);
         assertTrue(deterministicSeed.isEncrypted());

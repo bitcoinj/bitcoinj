@@ -53,12 +53,14 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -219,8 +221,9 @@ public class WalletProtobufSerializer {
             }
         }
 
-        if (wallet.getKeyRotationTime() != null) {
-            long timeSecs = wallet.getKeyRotationTime().getTime() / 1000;
+        Optional<Instant> keyRotationTime = wallet.getKeyRotationTimeInstant();
+        if (keyRotationTime.isPresent()) {
+            long timeSecs = keyRotationTime.get().getEpochSecond();
             walletBuilder.setKeyRotationTime(timeSecs);
         }
 
@@ -546,7 +549,7 @@ public class WalletProtobufSerializer {
             wallet.setLastBlockSeenTimeSecs(walletProto.getLastSeenBlockTimeSecs());
 
             if (walletProto.hasKeyRotationTime()) {
-                wallet.setKeyRotationTime(new Date(walletProto.getKeyRotationTime() * 1000));
+                wallet.setKeyRotationTime(Instant.ofEpochSecond(walletProto.getKeyRotationTime()));
             }
         }
 
