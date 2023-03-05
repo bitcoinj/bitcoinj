@@ -16,6 +16,7 @@
 
 package org.bitcoinj.crypto;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,7 +45,13 @@ public class DeterministicHierarchy {
     // Keep track of how many child keys each node has. This is kind of weak.
     private final Map<HDPath, ChildNumber> lastChildNumbers = new HashMap<>();
 
-    public static final int BIP32_STANDARDISATION_TIME_SECS = 1369267200;
+    public static final Instant BIP32_STANDARDISATION_TIME = Instant.ofEpochSecond(1369267200);
+
+    /**
+     * @deprecated Use {@link #BIP32_STANDARDISATION_TIME}
+     */
+    @Deprecated
+    public static final int BIP32_STANDARDISATION_TIME_SECS = Math.toIntExact(BIP32_STANDARDISATION_TIME.getEpochSecond());
 
     /**
      * Constructs a new hierarchy rooted at the given key. Note that this does not have to be the top of the tree.

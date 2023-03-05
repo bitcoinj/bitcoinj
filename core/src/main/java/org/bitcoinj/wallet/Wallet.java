@@ -406,13 +406,13 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. The
-     * account path is specified. They key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}
+     * account path is specified. The key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME}
      * @param params The network
      * @param watchKeyB58 The key in base58 notation
      * @return a new wallet
      */
     public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58) {
-        return fromWatchingKeyB58(params, watchKeyB58, Instant.ofEpochSecond(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS));
+        return fromWatchingKeyB58(params, watchKeyB58, DeterministicHierarchy.BIP32_STANDARDISATION_TIME);
     }
 
     /**
@@ -451,13 +451,13 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
-     * They key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME_SECS}.
+     * The key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME}.
      * @param params The network
      * @param spendingKeyB58 The key in base58 notation
      * @return a new wallet
      */
     public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58) {
-        return fromSpendingKeyB58(params, spendingKeyB58, Instant.ofEpochSecond(DeterministicHierarchy.BIP32_STANDARDISATION_TIME_SECS));
+        return fromSpendingKeyB58(params, spendingKeyB58, DeterministicHierarchy.BIP32_STANDARDISATION_TIME);
     }
 
     /**
