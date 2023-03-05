@@ -1096,7 +1096,7 @@ public class WalletTool implements Callable<Integer> {
             }
             wallet = Wallet.fromSeed(params, seed, outputScriptType, keyChainGroupStructure);
         } else if (watchKeyStr != null) {
-            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, creationTimeSecs);
+            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, Instant.ofEpochSecond(creationTimeSecs));
         } else {
             wallet = Wallet.createDeterministic(params, outputScriptType, keyChainGroupStructure);
         }

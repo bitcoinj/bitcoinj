@@ -66,6 +66,7 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -347,17 +348,17 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testRoundTripWatchingWallet() throws Exception {
         final String xpub = "tpubD9LrDvFDrB6wYNhbR2XcRRaT4yCa37TjBR3YthBQvrtEwEq6CKeEXUs3TppQd38rfxmxD1qLkC99iP3vKcKwLESSSYdFAftbrpuhSnsw6XM";
-        final long creationTimeSeconds = 1457019819;
-        Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET, xpub, creationTimeSeconds);
+        final Instant creationTime = Instant.ofEpochSecond(1457019819);
+        Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET, xpub, creationTime);
         Wallet wallet2 = roundTrip(wallet);
         Wallet wallet3 = roundTrip(wallet2);
         assertEquals(xpub, wallet.getWatchingKey().serializePubB58(TESTNET.network()));
-        assertEquals(creationTimeSeconds, wallet.getWatchingKey().getCreationTimeSeconds());
-        assertEquals(creationTimeSeconds, wallet2.getWatchingKey().getCreationTimeSeconds());
-        assertEquals(creationTimeSeconds, wallet3.getWatchingKey().getCreationTimeSeconds());
-        assertEquals(creationTimeSeconds, wallet.getEarliestKeyCreationTime());
-        assertEquals(creationTimeSeconds, wallet2.getEarliestKeyCreationTime());
-        assertEquals(creationTimeSeconds, wallet3.getEarliestKeyCreationTime());
+        assertEquals(creationTime.getEpochSecond(), wallet.getWatchingKey().getCreationTimeSeconds());
+        assertEquals(creationTime.getEpochSecond(), wallet2.getWatchingKey().getCreationTimeSeconds());
+        assertEquals(creationTime.getEpochSecond(), wallet3.getWatchingKey().getCreationTimeSeconds());
+        assertEquals(creationTime.getEpochSecond(), wallet.getEarliestKeyCreationTime());
+        assertEquals(creationTime.getEpochSecond(), wallet2.getEarliestKeyCreationTime());
+        assertEquals(creationTime.getEpochSecond(), wallet3.getEarliestKeyCreationTime());
     }
 
     @Test
