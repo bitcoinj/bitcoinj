@@ -170,7 +170,7 @@ public class SendRequest {
      */
     public static SendRequest to(Address destination, Coin value) {
         SendRequest req = new SendRequest();
-        final NetworkParameters parameters = NetworkParameters.fromAddress(destination);
+        final NetworkParameters parameters = NetworkParameters.of(destination.network());
         checkNotNull(parameters, "Address is for an unknown network");
         req.tx = new Transaction(parameters);
         req.tx.addOutput(value, destination);
@@ -201,7 +201,7 @@ public class SendRequest {
 
     public static SendRequest emptyWallet(Address destination) {
         SendRequest req = new SendRequest();
-        final NetworkParameters parameters = NetworkParameters.fromAddress(destination);
+        final NetworkParameters parameters = NetworkParameters.of(destination.network());
         checkNotNull(parameters, "Address is for an unknown network");
         req.tx = new Transaction(parameters);
         req.tx.addOutput(Coin.ZERO, destination);
