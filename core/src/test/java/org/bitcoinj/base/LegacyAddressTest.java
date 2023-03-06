@@ -21,11 +21,8 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bitcoinj.crypto.DumpedPrivateKey;
-import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.MockAltNetworkParams;
@@ -226,23 +223,6 @@ public class LegacyAddressTest {
         LegacyAddress c = LegacyAddress.fromScriptHash(MAINNET,
                 ScriptPattern.extractHashFromP2SH(ScriptBuilder.createP2SHOutputScript(hex)));
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
-    }
-
-    @Test
-    public void p2shAddressCreationFromKeys() {
-        // import some keys from this example: https://gist.github.com/gavinandresen/3966071
-        ECKey key1 = DumpedPrivateKey.fromBase58(MAINNET, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();
-        key1 = ECKey.fromPrivate(key1.getPrivKeyBytes());
-        ECKey key2 = DumpedPrivateKey.fromBase58(MAINNET, "5Jb7fCeh1Wtm4yBBg3q3XbT6B525i17kVhy3vMC9AqfR6FH2qGk").getKey();
-        key2 = ECKey.fromPrivate(key2.getPrivKeyBytes());
-        ECKey key3 = DumpedPrivateKey.fromBase58(MAINNET, "5JFjmGo5Fww9p8gvx48qBYDJNAzR9pmH5S389axMtDyPT8ddqmw").getKey();
-        key3 = ECKey.fromPrivate(key3.getPrivKeyBytes());
-
-        List<ECKey> keys = Arrays.asList(key1, key2, key3);
-        Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
-        LegacyAddress address = LegacyAddress.fromScriptHash(MAINNET,
-                ScriptPattern.extractHashFromP2SH(p2shScript));
-        assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
     }
 
     @Test
