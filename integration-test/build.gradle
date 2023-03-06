@@ -31,5 +31,5 @@ compileJava {
 test {
     useJUnitPlatform()
     exclude 'org/bitcoinj/core/PeerTest*'
-    exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
+    //exclude 'org/bitcoinj/core/TransactionBroadcastTest*'
 }

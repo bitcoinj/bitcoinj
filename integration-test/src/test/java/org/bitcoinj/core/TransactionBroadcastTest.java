@@ -197,7 +197,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Set up connections and block chain.
         VersionMessage ver = new VersionMessage(TESTNET, 2);
         ver.localServices = VersionMessage.NODE_NETWORK;
-        InboundMessageQueuer p1 = connectPeer(1, ver);
+        InboundMessageQueuer p1 = connectPeer(1 /*, ver */);
         InboundMessageQueuer p2 = connectPeer(2);
 
         // Send ourselves a bit of money.
