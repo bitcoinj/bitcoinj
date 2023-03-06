@@ -808,7 +808,7 @@ public class Transaction extends ChildMessage {
                 s.append("block ").append(lockTime);
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
-                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTime((int) lockTime))).append(')');
+                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant((int) lockTime).toEpochMilli())).append(')');
                 }
             } else {
                 s.append(TimeUtils.dateTimeFormat(lockTime * 1000));
@@ -1823,7 +1823,7 @@ public class Transaction extends ChildMessage {
      */
     public Date estimateLockTime(AbstractBlockChain chain) {
         if (lockTime < LOCKTIME_THRESHOLD)
-            return chain.estimateBlockTime((int)getLockTime());
+            return Date.from(chain.estimateBlockTimeInstant((int) getLockTime()));
         else
             return new Date(getLockTime()*1000);
     }
