@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -84,7 +85,7 @@ public class TransactionConfidence {
     private CopyOnWriteArrayList<PeerAddress> broadcastBy;
     /** The time the transaction was last announced to us. */
     @Nullable
-    private Instant lastBroadcastedAt = null;
+    private Instant lastBroadcastTime = null;
     /** The Transaction that this confidence object is associated with. */
     private final Sha256Hash hash;
     // Lazily created listeners array.
@@ -306,7 +307,7 @@ public class TransactionConfidence {
      * @return true if marked, false if this address was already seen
      */
     public boolean markBroadcastBy(PeerAddress address) {
-        lastBroadcastedAt = TimeUtils.currentTime();
+        lastBroadcastTime = TimeUtils.currentTime();
         if (!broadcastBy.addIfAbsent(address))
             return false;  // Duplicate.
         synchronized (this) {
@@ -338,28 +339,33 @@ public class TransactionConfidence {
         return broadcastBy.contains(address);
     }
 
-    /** Return the time the transaction was last announced to us. */
-    @Nullable
-    public Instant getLastBroadcastedAtInstant() {
-        return lastBroadcastedAt;
+    /**
+     * Return the time the transaction was last announced to us, or empty if unknown.
+     * @return time the transaction was last announced to us, or empty if unknown
+     */
+    public Optional<Instant> getLastBroadcastTime() {
+        return Optional.ofNullable(lastBroadcastTime);
     }
 
-    /** @deprecated use {@link #getLastBroadcastedAtInstant()} */
+    /** @deprecated use {@link #getLastBroadcastTime()} */
     @Deprecated
     @Nullable
     public Date getLastBroadcastedAt() {
-        return lastBroadcastedAt != null ? Date.from(lastBroadcastedAt) : null;
+        return lastBroadcastTime != null ? Date.from(lastBroadcastTime) : null;
     }
 
-    /** Set the time the transaction was last announced to us. */
-    public void setLastBroadcastedAt(Instant lastBroadcastedAt) {
-        this.lastBroadcastedAt = lastBroadcastedAt;
+    /**
+     * Set the time the transaction was last announced to us.
+     * @param lastBroadcastTime time the transaction was last announced to us
+     */
+    public void setLastBroadcastTime(Instant lastBroadcastTime) {
+        this.lastBroadcastTime = checkNotNull(lastBroadcastTime);
     }
 
-    /** @deprecated use {@link #setLastBroadcastedAt(Instant)} */
+    /** @deprecated use {@link #setLastBroadcastTime(Instant)} */
     @Deprecated
     public void setLastBroadcastedAt(Date lastBroadcastedAt) {
-        setLastBroadcastedAt(Instant.ofEpochMilli(lastBroadcastedAt.getTime()));
+        setLastBroadcastTime(lastBroadcastedAt.toInstant());
     }
 
     @Override
@@ -368,8 +374,8 @@ public class TransactionConfidence {
         int peers = numBroadcastPeers();
         if (peers > 0) {
             builder.append("Seen by ").append(peers).append(peers > 1 ? " peers" : " peer");
-            if (lastBroadcastedAt != null)
-                builder.append(" (most recently: ").append(TimeUtils.dateTimeFormat(lastBroadcastedAt.toEpochMilli())).append(")");
+            if (lastBroadcastTime != null)
+                builder.append(" (most recently: ").append(TimeUtils.dateTimeFormat(lastBroadcastTime.toEpochMilli())).append(")");
             builder.append(". ");
         }
         switch (getConfidenceType()) {
@@ -433,7 +439,7 @@ public class TransactionConfidence {
     public void clearBroadcastBy() {
         checkState(getConfidenceType() != ConfidenceType.PENDING);
         broadcastBy.clear();
-        lastBroadcastedAt = null;
+        lastBroadcastTime = null;
     }
 
     /**
@@ -466,7 +472,7 @@ public class TransactionConfidence {
     public TransactionConfidence duplicate() {
         TransactionConfidence c = new TransactionConfidence(hash);
         c.broadcastBy.addAll(broadcastBy);
-        c.lastBroadcastedAt = lastBroadcastedAt;
+        c.lastBroadcastTime = lastBroadcastTime;
         synchronized (this) {
             c.confidenceType = confidenceType;
             c.overridingTransaction = overridingTransaction;
