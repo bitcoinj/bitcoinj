@@ -1479,24 +1479,24 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyCreationTime() {
         TimeUtils.setMockClock();
-        long now = TimeUtils.currentTimeSeconds();
+        Instant now = TimeUtils.currentTime();
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
-        assertEquals(now, wallet.getEarliestKeyCreationTime());
+        assertEquals(now, wallet.getEarliestKeyCreationInstant());
         TimeUtils.rollMockClock(60);
         wallet.freshReceiveKey();
-        assertEquals(now, wallet.getEarliestKeyCreationTime());
+        assertEquals(now, wallet.getEarliestKeyCreationInstant());
     }
 
     @Test
     public void scriptCreationTime() {
         TimeUtils.setMockClock();
-        long now = TimeUtils.currentTimeSeconds();
+        Instant now = TimeUtils.currentTime();
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
-        assertEquals(now, wallet.getEarliestKeyCreationTime());
+        assertEquals(now, wallet.getEarliestKeyCreationInstant());
         TimeUtils.rollMockClock(-120);
         wallet.addWatchedAddress(OTHER_ADDRESS);
         wallet.freshReceiveKey();
-        assertEquals(now - 120, wallet.getEarliestKeyCreationTime());
+        assertEquals(now.minusSeconds(120), wallet.getEarliestKeyCreationInstant());
     }
 
     @Test
@@ -3531,7 +3531,7 @@ public class WalletTest extends TestWithWallet {
         Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
         List<String> mnemonicCode = wallet.getKeyChainSeed().getMnemonicCode();
         final DeterministicSeed clonedSeed = new DeterministicSeed(mnemonicCode, null, "",
-                wallet.getEarliestKeyCreationTime());
+                wallet.getEarliestKeyCreationInstant().getEpochSecond());
         Wallet clone = Wallet.fromSeed(TESTNET, clonedSeed, ScriptType.P2WPKH);
         assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());
         assertEquals(wallet.freshReceiveAddress(ScriptType.P2PKH),

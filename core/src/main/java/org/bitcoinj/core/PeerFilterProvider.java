@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import java.time.Instant;
+
 /**
  * An interface which provides the information required to properly filter data downloaded from Peers. Note that an
  * implementer is responsible for calling
@@ -25,11 +27,25 @@ package org.bitcoinj.core;
  */
 public interface PeerFilterProvider {
     /**
+     * Returns the earliest timestamp for which full/bloom-filtered blocks must be downloaded.
+     * Blocks with timestamps before this time will only have headers downloaded. {@code 0} requires that all
+     * blocks be downloaded, and thus this should default to {@link System#currentTimeMillis()}/1000.
+     * @return Earliest key creation timestamp or ?? or ?? TODO: fix this comment
+     */
+    Instant getEarliestKeyCreationInstant();
+
+
+    /**
      * Returns the earliest timestamp (seconds since epoch) for which full/bloom-filtered blocks must be downloaded.
      * Blocks with timestamps before this time will only have headers downloaded. {@code 0} requires that all
      * blocks be downloaded, and thus this should default to {@link System#currentTimeMillis()}/1000.
+     * @deprecated Use {@link #getEarliestKeyCreationInstant()}
      */
-    long getEarliestKeyCreationTime();
+    @Deprecated
+    default long getEarliestKeyCreationTime() {
+        return getEarliestKeyCreationInstant().getEpochSecond();
+    }
+
 
     /**
      * Called on all registered filter providers before {@link #getBloomFilterElementCount()} and

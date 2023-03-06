@@ -126,4 +126,8 @@ public class TimeUtils {
         iso8601.setTimeZone(UTC);
         return iso8601.format(dateTime);
     }
+
+    public static Instant minInstant(Instant a, Instant b) {
+        return a.isBefore(b) ? a : b;
+    }
 }

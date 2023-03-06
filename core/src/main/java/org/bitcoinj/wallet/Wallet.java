@@ -3491,7 +3491,7 @@ public class Wallet extends BaseTaggableObject
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTime() * 1000))
+            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationInstant().toEpochMilli()))
                     .append('\n');
             final Date keyRotationTime = getKeyRotationTime();
             if (keyRotationTime != null)
@@ -3591,14 +3591,14 @@ public class Wallet extends BaseTaggableObject
      * If there are no keys in the wallet, the current time is returned.
      */
     @Override
-    public long getEarliestKeyCreationTime() {
+    public Instant getEarliestKeyCreationInstant() {
         keyChainGroupLock.lock();
         try {
-            long earliestTime = keyChainGroup.getEarliestKeyCreationTime();
+            Instant earliestTime = Instant.ofEpochSecond(keyChainGroup.getEarliestKeyCreationTime());
             for (Script script : watchedScripts)
-                earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
-            if (earliestTime == Long.MAX_VALUE)
-                return TimeUtils.currentTimeSeconds();
+                earliestTime = TimeUtils.minInstant(Instant.ofEpochSecond(script.getCreationTimeSeconds()), earliestTime);
+            if (earliestTime == Instant.MAX)
+                return Instant.now();
             return earliestTime;
         } finally {
             keyChainGroupLock.unlock();
