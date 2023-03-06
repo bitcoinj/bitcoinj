@@ -289,6 +289,7 @@ public class Wallet extends BaseTaggableObject
     protected volatile TransactionBroadcaster vTransactionBroadcaster;
     // Money controlled by keys created before this time will be automatically respent to a key
     // that was created after it. Useful when you believe some keys have been compromised.
+    // Null means no key rotation is configured.
     @Nullable
     private volatile Instant vKeyRotationTime = null;
 
@@ -5313,7 +5314,7 @@ public class Wallet extends BaseTaggableObject
      * When a key rotation time is set, any money controlled by keys created before the given timestamp T will be
      * respent to any key that was created after T. This can be used to recover from a situation where a set of keys is
      * believed to be compromised. The rotation time is persisted to the wallet. You can stop key rotation by calling
-     * this method again with {@code 0} as the argument.
+     * this method again with {@code null} as the argument.
      * </p>
      * 
      * <p>
@@ -5325,9 +5326,10 @@ public class Wallet extends BaseTaggableObject
      * <p>
      * The given time cannot be in the future.
      * </p>
+     * @param keyRotationTime rotate any keys created before this time, or null for no rotation
      */
-    public void setKeyRotationTime(Instant keyRotationTime) {
-        checkArgument(keyRotationTime.compareTo(TimeUtils.currentTime()) <= 0,
+    public void setKeyRotationTime(@Nullable Instant keyRotationTime) {
+        checkArgument(keyRotationTime == null || keyRotationTime.compareTo(TimeUtils.currentTime()) <= 0,
                 "Given time (%s) cannot be in the future.",
                 TimeUtils.dateTimeFormat(keyRotationTime.toEpochMilli()));
         vKeyRotationTime = keyRotationTime;
@@ -5338,7 +5340,7 @@ public class Wallet extends BaseTaggableObject
     @Deprecated
     public void setKeyRotationTime(long timeSecs) {
         if (timeSecs == 0)
-            vKeyRotationTime = null;
+            setKeyRotationTime((Instant) null);
         else
             setKeyRotationTime(Instant.ofEpochSecond(timeSecs));
     }
@@ -5347,7 +5349,7 @@ public class Wallet extends BaseTaggableObject
     @Deprecated
     public void setKeyRotationTime(@Nullable Date time) {
         if (time == null)
-            vKeyRotationTime = null;
+            setKeyRotationTime((Instant) null);
         else
             setKeyRotationTime(Instant.ofEpochMilli(time.getTime()));
     }
@@ -5357,8 +5359,7 @@ public class Wallet extends BaseTaggableObject
      * of the field.
      */
     public Optional<Instant> getKeyRotationTimeInstant() {
-        Optional<Instant> keyRotationTime = Optional.ofNullable(vKeyRotationTime);
-        return keyRotationTime;
+        return Optional.ofNullable(vKeyRotationTime);
     }
 
     /** @deprecated use {@link #getKeyRotationTimeInstant()} */
