@@ -35,6 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -1032,15 +1034,20 @@ public abstract class AbstractBlockChain {
      * the past will still be estimated, even though the time of solving is actually known (we won't scan backwards
      * through the chain to obtain the right answer).
      * @param height block time to estimate
-     * @return estimated date block will be mined
+     * @return estimated time block will be mined
      */
-    public Date estimateBlockTime(int height) {
+    public Instant estimateBlockTimeInstant(int height) {
         synchronized (chainHeadLock) {
             long offset = height - chainHead.getHeight();
-            long headTime = chainHead.getHeader().getTimeSeconds();
-            long estimated = (headTime * 1000) + (1000L * 60L * 10L * offset);
-            return new Date(estimated);
+            Instant headTime = chainHead.getHeader().getTimeInstant();
+            return headTime.plus(10 * offset, ChronoUnit.MINUTES);
         }
+    }
+
+    /** @deprecated use {@link #estimateBlockTimeInstant(int)} */
+    @Deprecated
+    public Date estimateBlockTime(int height) {
+        return Date.from(estimateBlockTimeInstant(height));
     }
 
     /**

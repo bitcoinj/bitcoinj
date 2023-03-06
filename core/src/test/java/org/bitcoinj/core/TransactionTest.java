@@ -23,6 +23,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -40,6 +41,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -145,17 +147,17 @@ public class TransactionTest {
     @Test
     public void testEstimatedLockTime_WhenParameterSignifiesBlockHeight() {
         int TEST_LOCK_TIME = 20;
-        Date now = Calendar.getInstance().getTime();
+        Instant now = TimeUtils.currentTime();
 
         BlockChain mockBlockChain = createMock(BlockChain.class);
-        EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
+        EasyMock.expect(mockBlockChain.estimateBlockTimeInstant(TEST_LOCK_TIME)).andReturn(now);
 
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million
 
         replay(mockBlockChain);
 
-        assertEquals(tx.estimateLockTime(mockBlockChain), now);
+        assertEquals(tx.estimateLockTime(mockBlockChain).toInstant(), now);
     }
 
     @Test
@@ -475,7 +477,7 @@ public class TransactionTest {
         cal.set(Calendar.MILLISECOND, 0);
 
         BlockChain mockBlockChain = createMock(BlockChain.class);
-        EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(cal.getTime());
+        EasyMock.expect(mockBlockChain.estimateBlockTimeInstant(TEST_LOCK_TIME)).andReturn(Instant.ofEpochMilli(cal.getTimeInMillis()));
 
         replay(mockBlockChain);
 
