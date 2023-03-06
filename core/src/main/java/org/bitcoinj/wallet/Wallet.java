@@ -5366,7 +5366,7 @@ public class Wallet extends BaseTaggableObject
     public @Nullable Date getKeyRotationTime() {
         Instant keyRotationTime = vKeyRotationTime;
         if (keyRotationTime != null)
-            return new Date(keyRotationTime.toEpochMilli());
+            return Date.from(keyRotationTime);
         else
             return null;
     }
