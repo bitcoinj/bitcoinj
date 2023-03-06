@@ -1678,7 +1678,7 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** @deprecated use {@link #autosaveToFile(File, Optional, WalletFiles.Listener)} */
+    /** @deprecated use {@link #autosaveToFile(File, Duration, WalletFiles.Listener)} */
     @Deprecated
     public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit, @Nullable WalletFiles.Listener eventListener) {
         return autosaveToFile(f, Duration.ofMillis(timeUnit.toMillis(delayTime)), eventListener);
