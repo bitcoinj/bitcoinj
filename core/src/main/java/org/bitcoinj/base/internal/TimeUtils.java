@@ -23,81 +23,86 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Utilities for time and mock time.
  */
 public class TimeUtils {
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
+    // TODO: See if java.time.Clock can help us in our mocking
     /**
      * If non-null, overrides the return value of now().
      */
-    private static volatile Date mockTime;
+    private static final AtomicReference<Instant> mockTime = new AtomicReference<>(null);
 
     /**
      * Advances (or rewinds) the mock clock by the given number of seconds.
      */
     public static Date rollMockClock(int seconds) {
-        return rollMockClockMillis(seconds * 1000);
+        return rollMockClockMillis(seconds * 1000L);
     }
 
     /**
      * Advances (or rewinds) the mock clock by the given number of milliseconds.
      */
     public static Date rollMockClockMillis(long millis) {
-        if (mockTime == null)
+        if (mockTime.get() == null)
             throw new IllegalStateException("You need to use setMockClock() first.");
-        mockTime = new Date(mockTime.getTime() + millis);
-        return mockTime;
+        // TODO: Fix this race condition. It's probably ok to remove the check (at least I'm pretty sure updateAndGet will throw an RTE if mockTime is null)
+        return Date.from(
+                mockTime.updateAndGet(mt -> mt.plusMillis(millis))
+        );
     }
 
     /**
      * Sets the mock clock to the current time.
      */
     public static void setMockClock() {
-        mockTime = new Date();
+        mockTime.set(Instant.now());
     }
 
     /**
      * Sets the mock clock to the given time (in seconds).
      */
     public static void setMockClock(long mockClockSeconds) {
-        mockTime = new Date(mockClockSeconds * 1000);
+        mockTime.set(Instant.ofEpochSecond(mockClockSeconds));
     }
 
     /**
      * Clears the mock clock and sleep
      */
     public static void resetMocking() {
-        mockTime = null;
+        mockTime.set(null);
     }
 
     /**
      * Returns the current time, or a mocked out equivalent.
      */
     public static Date now() {
-        return mockTime != null ? mockTime : new Date();
+        return Date.from(currentTime());
     }
 
     /**
      * Returns the current time in milliseconds since the epoch, or a mocked out equivalent.
      */
     public static long currentTimeMillis() {
-        return mockTime != null ? mockTime.getTime() : System.currentTimeMillis();
+        return currentTime().toEpochMilli();
     }
 
     /**
      * Returns the current time in seconds since the epoch, or a mocked out equivalent.
      */
     public static long currentTimeSeconds() {
-        return currentTimeMillis() / 1000;
+        return currentTime().getEpochSecond();
     }
 
     /**
      * Returns the current time as an Instant, or a mocked out equivalent.
      */
     public static Instant currentTime() {
-        return Instant.ofEpochMilli(currentTimeMillis());
+        Instant gotten = mockTime.get();
+        return gotten != null ? gotten : Instant.now();
     }
 
     /**
