@@ -53,6 +53,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -388,9 +389,9 @@ public class WalletProtobufSerializer {
                     .build();
             confidenceBuilder.addBroadcastBy(proto);
         }
-        Date lastBroadcastedAt = confidence.getLastBroadcastedAt();
+        Instant lastBroadcastedAt = confidence.getLastBroadcastedAtInstant();
         if (lastBroadcastedAt != null)
-            confidenceBuilder.setLastBroadcastedAt(lastBroadcastedAt.getTime());
+            confidenceBuilder.setLastBroadcastedAt(lastBroadcastedAt.toEpochMilli());
         txBuilder.setConfidence(confidenceBuilder);
     }
 
@@ -807,7 +808,7 @@ public class WalletProtobufSerializer {
             confidence.markBroadcastBy(address);
         }
         if (confidenceProto.hasLastBroadcastedAt())
-            confidence.setLastBroadcastedAt(new Date(confidenceProto.getLastBroadcastedAt()));
+            confidence.setLastBroadcastedAt(Instant.ofEpochMilli(confidenceProto.getLastBroadcastedAt()));
         switch (confidenceProto.getSource()) {
             case SOURCE_SELF: confidence.setSource(TransactionConfidence.Source.SELF); break;
             case SOURCE_NETWORK: confidence.setSource(TransactionConfidence.Source.NETWORK); break;

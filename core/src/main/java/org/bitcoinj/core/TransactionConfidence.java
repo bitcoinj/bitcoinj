@@ -27,6 +27,7 @@ import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.Wallet;
 
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -82,7 +83,8 @@ public class TransactionConfidence {
      */
     private CopyOnWriteArrayList<PeerAddress> broadcastBy;
     /** The time the transaction was last announced to us. */
-    private Date lastBroadcastedAt;
+    @Nullable
+    private Instant lastBroadcastedAt = null;
     /** The Transaction that this confidence object is associated with. */
     private final Sha256Hash hash;
     // Lazily created listeners array.
@@ -304,7 +306,7 @@ public class TransactionConfidence {
      * @return true if marked, false if this address was already seen
      */
     public boolean markBroadcastBy(PeerAddress address) {
-        lastBroadcastedAt = TimeUtils.now();
+        lastBroadcastedAt = TimeUtils.currentTime();
         if (!broadcastBy.addIfAbsent(address))
             return false;  // Duplicate.
         synchronized (this) {
@@ -337,13 +339,27 @@ public class TransactionConfidence {
     }
 
     /** Return the time the transaction was last announced to us. */
-    public Date getLastBroadcastedAt() {
+    @Nullable
+    public Instant getLastBroadcastedAtInstant() {
         return lastBroadcastedAt;
     }
 
+    /** @deprecated use {@link #getLastBroadcastedAtInstant()} */
+    @Deprecated
+    @Nullable
+    public Date getLastBroadcastedAt() {
+        return lastBroadcastedAt != null ? Date.from(lastBroadcastedAt) : null;
+    }
+
     /** Set the time the transaction was last announced to us. */
-    public void setLastBroadcastedAt(Date lastBroadcastedAt) {
+    public void setLastBroadcastedAt(Instant lastBroadcastedAt) {
         this.lastBroadcastedAt = lastBroadcastedAt;
+    }
+
+    /** @deprecated use {@link #setLastBroadcastedAt(Instant)} */
+    @Deprecated
+    public void setLastBroadcastedAt(Date lastBroadcastedAt) {
+        setLastBroadcastedAt(Instant.ofEpochMilli(lastBroadcastedAt.getTime()));
     }
 
     @Override
@@ -353,7 +369,7 @@ public class TransactionConfidence {
         if (peers > 0) {
             builder.append("Seen by ").append(peers).append(peers > 1 ? " peers" : " peer");
             if (lastBroadcastedAt != null)
-                builder.append(" (most recently: ").append(TimeUtils.dateTimeFormat(lastBroadcastedAt)).append(")");
+                builder.append(" (most recently: ").append(TimeUtils.dateTimeFormat(lastBroadcastedAt.toEpochMilli())).append(")");
             builder.append(". ");
         }
         switch (getConfidenceType()) {
