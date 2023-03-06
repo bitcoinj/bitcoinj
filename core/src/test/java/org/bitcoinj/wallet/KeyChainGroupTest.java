@@ -102,7 +102,7 @@ public class KeyChainGroupTest {
 
     private MarriedKeyChain createMarriedKeyChain() {
         byte[] entropy = Sha256Hash.hash("don't use a seed like this in real life".getBytes());
-        DeterministicSeed seed = new DeterministicSeed(entropy, "", MnemonicCode.BIP39_STANDARDISATION_TIME_SECS);
+        DeterministicSeed seed = new DeterministicSeed(entropy, "", MnemonicCode.BIP39_STANDARDISATION_TIME.getEpochSecond());
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .seed(seed)
                 .followingKeys(watchingAccountKey)
