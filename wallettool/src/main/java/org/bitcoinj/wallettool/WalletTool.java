@@ -642,7 +642,7 @@ public class WalletTool implements Callable<Integer> {
         try {
             Address address = LegacyAddress.fromBase58(params.network(), addrStr);
             // If no creation time is specified, assume genesis (zero).
-            wallet.addWatchedAddress(address, getCreationTimeSeconds());
+            wallet.addWatchedAddress(address, getCreationTime().getEpochSecond());
         } catch (AddressFormatException e) {
             System.err.println("Could not parse given address, or wrong network: " + addrStr);
         }
@@ -1071,9 +1071,7 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
             return;
         }
-        Instant creationTime = (getCreationTimeSeconds() == 0)
-                                    ? Instant.ofEpochSecond(getCreationTimeSeconds())
-                                    : MnemonicCode.BIP39_STANDARDISATION_TIME;
+        Instant creationTime = getCreationTime();
         if (seedStr != null) {
             DeterministicSeed seed;
             // Parse as mnemonic code.
@@ -1125,7 +1123,7 @@ public class WalletTool implements Callable<Integer> {
 
     private void addKey() {
         ECKey key;
-        long creationTimeSeconds = getCreationTimeSeconds();
+        Instant creationTime = getCreationTime();
         if (privKeyStr != null) {
             try {
                 DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(params.network(), privKeyStr); // WIF
@@ -1142,11 +1140,11 @@ public class WalletTool implements Callable<Integer> {
                 // Give the user a hint.
                 System.out.println("You don't have to specify --pubkey when a private key is supplied.");
             }
-            key.setCreationTimeSeconds(creationTimeSeconds);
+            key.setCreationTimeSeconds(creationTime.getEpochSecond());
         } else if (pubKeyStr != null) {
             byte[] pubkey = parseAsHexOrBase58(pubKeyStr);
             key = ECKey.fromPublicOnly(pubkey);
-            key.setCreationTimeSeconds(creationTimeSeconds);
+            key.setCreationTimeSeconds(creationTime.getEpochSecond());
         } else {
             System.err.println("Either --privkey or --pubkey must be specified.");
             return;
@@ -1208,13 +1206,14 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private long getCreationTimeSeconds() {
+
+    private Instant getCreationTime() {
         if (unixtime != null)
-            return unixtime;
+            return Instant.ofEpochSecond(unixtime);
         else if (date != null)
-            return date.getTime() / 1000;
+            return date.toInstant();
         else
-            return 0;
+            return DeterministicHierarchy.BIP32_STANDARDISATION_TIME;
     }
 
     private void deleteKey() {
@@ -1276,16 +1275,16 @@ public class WalletTool implements Callable<Integer> {
     }
 
     private void setCreationTime() {
-        long creationTime = getCreationTimeSeconds();
+        Instant creationTime = getCreationTime();
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
             DeterministicSeed seed = chain.getSeed();
             if (seed == null)
                 System.out.println("Active chain does not have a seed: " + chain);
             else
-                seed.setCreationTimeSeconds(creationTime);
+                seed.setCreationTimeSeconds(creationTime.getEpochSecond());
         }
-        if (creationTime > 0)
-            System.out.println("Setting creation time to: " + TimeUtils.dateTimeFormat(creationTime * 1000));
+        if (creationTime.isAfter(Instant.EPOCH))
+            System.out.println("Setting creation time to: " + TimeUtils.dateTimeFormat(creationTime.toEpochMilli()));
         else
             System.out.println("Clearing creation time.");
     }
