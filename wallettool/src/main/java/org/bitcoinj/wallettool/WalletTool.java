@@ -1071,15 +1071,15 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
             return;
         }
-        long creationTimeSecs = getCreationTimeSeconds();
-        if (creationTimeSecs == 0)
-            creationTimeSecs = MnemonicCode.BIP39_STANDARDISATION_TIME_SECS;
+        Instant creationTime = (getCreationTimeSeconds() == 0)
+                                    ? Instant.ofEpochSecond(getCreationTimeSeconds())
+                                    : MnemonicCode.BIP39_STANDARDISATION_TIME;
         if (seedStr != null) {
             DeterministicSeed seed;
             // Parse as mnemonic code.
             final List<String> split = splitMnemonic(seedStr);
             String passphrase = ""; // TODO allow user to specify a passphrase
-            seed = new DeterministicSeed(split, null, passphrase, creationTimeSecs);
+            seed = new DeterministicSeed(split, null, passphrase, creationTime.getEpochSecond());
             try {
                 seed.check();
             } catch (MnemonicException.MnemonicLengthException e) {
@@ -1097,7 +1097,7 @@ public class WalletTool implements Callable<Integer> {
             }
             wallet = Wallet.fromSeed(params, seed, outputScriptType, keyChainGroupStructure);
         } else if (watchKeyStr != null) {
-            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, Instant.ofEpochSecond(creationTimeSecs));
+            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, creationTime);
         } else {
             wallet = Wallet.createDeterministic(params, outputScriptType, keyChainGroupStructure);
         }
