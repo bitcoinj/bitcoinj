@@ -59,7 +59,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
     /**
      * One Bitcoin.
      */
-    public static final Coin COIN = Coin.valueOf(COIN_VALUE);
+    public static final Coin COIN = Coin.ofBtc(1);
 
     /**
      * 0.01 Bitcoins. This unit is not really used much.
@@ -81,7 +81,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
      */
     public static final Coin SATOSHI = Coin.valueOf(1);
 
-    public static final Coin FIFTY_COINS = COIN.multiply(50);
+    public static final Coin FIFTY_COINS = Coin.ofBtc(50);
 
     /**
      * Represents a monetary value of minus one satoshi.
@@ -132,7 +132,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
         checkArgument(cents < 100);
         checkArgument(cents >= 0);
         checkArgument(coins >= 0);
-        final Coin coin = COIN.multiply(coins).add(CENT.multiply(cents));
+        final Coin coin = ofBtc(coins).add(CENT.multiply(cents));
         return coin;
     }
 
@@ -145,6 +145,17 @@ public final class Coin implements Monetary, Comparable<Coin> {
      */
     public static long btcToSatoshi(BigDecimal coins) throws ArithmeticException {
         return coins.movePointRight(SMALLEST_UNIT_EXPONENT).longValueExact();
+    }
+
+    /**
+     * Convert {@code long} amount of BTC into satoshis.
+     *
+     * @param coins number of coins
+     * @return number of satoshis
+     * @throws ArithmeticException if conversion (via multiplication) results in overflow
+     */
+    public static long btcToSatoshi(long coins) {
+        return LongMath.checkedMultiply(coins, Coin.COIN_VALUE);
     }
 
     /**
@@ -165,6 +176,16 @@ public final class Coin implements Monetary, Comparable<Coin> {
      * @throws ArithmeticException if value has too much precision or will not fit in a long
      */
     public static Coin ofBtc(BigDecimal coins) throws ArithmeticException {
+        return Coin.valueOf(btcToSatoshi(coins));
+    }
+
+    /**
+     * Create a {@code Coin} from a decimal amount of BTC.
+     *
+     * @param coins number of coins (in BTC)
+     * @return {@code Coin} object containing value in satoshis
+     */
+    public static Coin ofBtc(long coins) {
         return Coin.valueOf(btcToSatoshi(coins));
     }
 
