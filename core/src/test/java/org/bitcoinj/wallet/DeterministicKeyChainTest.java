@@ -47,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -413,7 +414,7 @@ public class DeterministicKeyChainTest {
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.builder().watch(watchingKey).outputScriptType(chain.getOutputScriptType())
                 .build();
-        assertEquals(100000, chain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(100000), chain.getEarliestKeyCreationTimeInstant());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
 
@@ -450,7 +451,7 @@ public class DeterministicKeyChainTest {
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.builder().watch(watchingKey).outputScriptType(bip44chain.getOutputScriptType())
                 .build();
-        assertEquals(100000, chain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(100000), chain.getEarliestKeyCreationTimeInstant());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
 
@@ -493,7 +494,7 @@ public class DeterministicKeyChainTest {
         chain = DeterministicKeyChain.builder().watch(watchingKey).outputScriptType(chain1.getOutputScriptType())
                 .build();
         assertEquals(accountOne, chain.getAccountPath());
-        assertEquals(100000, chain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(100000), chain.getEarliestKeyCreationTimeInstant());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
 
@@ -534,7 +535,7 @@ public class DeterministicKeyChainTest {
         watchingKey.setCreationTimeSeconds(100000);
         segwitChain = DeterministicKeyChain.builder().watch(watchingKey)
                 .outputScriptType(segwitChain.getOutputScriptType()).build();
-        assertEquals(100000, segwitChain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(100000), segwitChain.getEarliestKeyCreationTimeInstant());
         segwitChain.setLookaheadSize(10);
         segwitChain.maybeLookAhead();
 
@@ -575,7 +576,7 @@ public class DeterministicKeyChainTest {
         watchingKey.setCreationTimeSeconds(100000);
         chain = DeterministicKeyChain.builder().spend(watchingKey).outputScriptType(chain.getOutputScriptType())
                 .build();
-        assertEquals(100000, chain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(100000), chain.getEarliestKeyCreationTimeInstant());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
 
@@ -619,7 +620,7 @@ public class DeterministicKeyChainTest {
         chain = DeterministicKeyChain.builder().spend(watchingKey).outputScriptType(chain.getOutputScriptType())
                 .build();
         assertEquals(accountTwo, chain.getAccountPath());
-        assertEquals(secs, chain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(secs), chain.getEarliestKeyCreationTimeInstant());
         chain.setLookaheadSize(10);
         chain.maybeLookAhead();
 
@@ -646,7 +647,7 @@ public class DeterministicKeyChainTest {
         watchingKey.setCreationTimeSeconds(secs);
         DeterministicKeyChain fromPrivBase58Chain = DeterministicKeyChain.builder().spend(watchingKey)
                 .outputScriptType(bip44chain.getOutputScriptType()).build();
-        assertEquals(secs, fromPrivBase58Chain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(secs), fromPrivBase58Chain.getEarliestKeyCreationTimeInstant());
         fromPrivBase58Chain.setLookaheadSize(10);
         fromPrivBase58Chain.maybeLookAhead();
 
@@ -660,7 +661,7 @@ public class DeterministicKeyChainTest {
                 .outputScriptType(bip44chain.getOutputScriptType()).build()).build();
         DeterministicKeyChain fromMasterKeyChain = group.getActiveKeyChain();
         assertEquals(BIP44_COIN_1_ACCOUNT_ZERO_PATH, fromMasterKeyChain.getAccountPath());
-        assertEquals(secs, fromMasterKeyChain.getEarliestKeyCreationTime());
+        assertEquals(Instant.ofEpochSecond(secs), fromMasterKeyChain.getEarliestKeyCreationTimeInstant());
         fromMasterKeyChain.setLookaheadSize(10);
         fromMasterKeyChain.maybeLookAhead();
 
@@ -700,11 +701,11 @@ public class DeterministicKeyChainTest {
         checkSerialization(serialization, serializationFile);
 
         // Check that the second change key matches after loading from the serialization, serializing and deserializing
-        long secs = keyChain.getEarliestKeyCreationTime();
+        Instant secs = keyChain.getEarliestKeyCreationTimeInstant();
         keyChain = DeterministicKeyChain.fromProtobuf(serialization, null).get(0);
         serialization = keyChain.serializeToProtobuf();
         checkSerialization(serialization, serializationFile);
-        assertEquals(secs, keyChain.getEarliestKeyCreationTime());
+        assertEquals(secs, keyChain.getEarliestKeyCreationTimeInstant());
         final DeterministicKey nextChangeKey = keyChain.getKey(KeyChain.KeyPurpose.CHANGE);
         assertEquals(secondChangeKey.getPubKeyPoint(), nextChangeKey.getPubKeyPoint());
     }

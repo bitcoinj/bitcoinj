@@ -102,6 +102,13 @@ public class TimeUtils {
     }
 
     /**
+     * Determines the earlier of two instants.
+     */
+    public static Instant earlier(Instant time1, Instant time2) {
+        return time1.isBefore(time2) ? time1 : time2;
+    }
+
+    /**
      * Formats a given date+time value to an ISO 8601 string.
      * @param dateTime value to format, as a Date
      */

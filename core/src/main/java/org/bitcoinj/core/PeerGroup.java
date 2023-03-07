@@ -1397,7 +1397,7 @@ public class PeerGroup implements TransactionBroadcaster {
                         chain.resetFalsePositiveEstimate();
                 }
                 // Do this last so that bloomFilter is already set when it gets called.
-                setFastCatchupTimeSecs(result.earliestKeyTimeSecs);
+                setFastCatchupTime(result.earliestKeyTime);
                 synchronized (inFlightRecalculations) {
                     inFlightRecalculations.put(mode, null);
                 }

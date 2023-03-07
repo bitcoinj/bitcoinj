@@ -20,6 +20,7 @@ import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -76,11 +77,19 @@ public interface KeyChain {
     int numBloomFilterEntries();
 
     /**
-     * <p>Returns the earliest creation time of keys in this chain, in seconds since the epoch. This can return zero
-     * if at least one key does not have that data (was created before key timestamping was implemented). If there
-     * are no keys in the wallet, {@link Long#MAX_VALUE} is returned.</p>
+     * Returns the earliest creation time of keys in this chain.
+     * @return earliest creation times of keys in this chain,
+     *         {@link Instant#EPOCH} if at least one time is unknown,
+     *         {@link Instant#MAX} if no keys in this chain
      */
-    long getEarliestKeyCreationTime();
+    Instant getEarliestKeyCreationTimeInstant();
+
+    /** @deprecated use {@link #getEarliestKeyCreationTimeInstant()} */
+    @Deprecated
+    default long getEarliestKeyCreationTime() {
+        Instant earliestKeyCreationTime = getEarliestKeyCreationTimeInstant();
+        return earliestKeyCreationTime.equals(Instant.MAX) ? Long.MAX_VALUE : earliestKeyCreationTime.getEpochSecond();
+    }
 
     /**
      * <p>Gets a bloom filter that contains all of the public keys from this chain, and which will provide the given

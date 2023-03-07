@@ -351,7 +351,7 @@ public class WalletAppKit extends AbstractIdleService {
                 }
                 else
                 {
-                    time = vWallet.getEarliestKeyCreationTime();
+                    time = vWallet.getEarliestKeyCreationTimeInstant().getEpochSecond();
                 }
                 if (time > 0)
                     CheckpointManager.checkpoint(params, checkpoints, vStore, time);

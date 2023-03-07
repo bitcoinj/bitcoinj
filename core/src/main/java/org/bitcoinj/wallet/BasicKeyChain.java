@@ -32,6 +32,7 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -282,14 +283,21 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    /**
+     * Returns the earliest creation time of keys in this chain.
+     * @return earliest creation times of keys in this chain,
+     *         {@link Instant#EPOCH} if at least one time is unknown,
+     *         {@link Instant#MAX} if no keys in this chain
+     */
     @Override
-    public long getEarliestKeyCreationTime() {
+    public Instant getEarliestKeyCreationTimeInstant() {
         lock.lock();
         try {
             return hashToKeys.values().stream()
                     .mapToLong(ECKey::getCreationTimeSeconds)
-                    .min()
-                    .orElse(Long.MAX_VALUE);
+                    .mapToObj(t -> t == Long.MAX_VALUE ? Instant.MAX : Instant.ofEpochSecond(t))
+                    .min(Instant::compareTo)
+                    .orElse(Instant.MAX);
         } finally {
             lock.unlock();
         }

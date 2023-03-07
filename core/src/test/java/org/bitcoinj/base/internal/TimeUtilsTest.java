@@ -48,4 +48,14 @@ public class TimeUtilsTest {
     public void rollMockClock_uninitialized() {
         TimeUtils.rollMockClock(Duration.ofMinutes(1));
     }
+
+    @Test
+    public void earlier() {
+        Instant t1 = Instant.now(); // earlier
+        Instant t2 = t1.plusSeconds(1); // later
+        assertEquals(t1, TimeUtils.earlier(t1, t2));
+        assertEquals(t1, TimeUtils.earlier(t2, t1));
+        assertEquals(t1, TimeUtils.earlier(t1, t1));
+        assertEquals(t2, TimeUtils.earlier(t2, t2));
+    }
 }

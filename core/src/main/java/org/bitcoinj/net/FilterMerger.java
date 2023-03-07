@@ -16,10 +16,13 @@
 
 package org.bitcoinj.net;
 
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.PeerFilterProvider;
 import org.bitcoinj.core.PeerGroup;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,7 +55,7 @@ public class FilterMerger {
 
     public static class Result {
         public BloomFilter filter;
-        public long earliestKeyTimeSecs;
+        public Instant earliestKeyTime;
         public boolean changed;
     }
 
@@ -69,10 +72,10 @@ public class FilterMerger {
                 begunProviders.add(provider);
             }
             Result result = new Result();
-            result.earliestKeyTimeSecs = Long.MAX_VALUE;
+            result.earliestKeyTime = Instant.MAX;
             int elements = 0;
             for (PeerFilterProvider p : providers) {
-                result.earliestKeyTimeSecs = Math.min(result.earliestKeyTimeSecs, p.getEarliestKeyCreationTime());
+                result.earliestKeyTime = TimeUtils.earlier(result.earliestKeyTime, p.getEarliestKeyCreationTimeInstant());
                 elements += p.getBloomFilterElementCount();
             }
 
@@ -95,7 +98,7 @@ public class FilterMerger {
             // Now adjust the earliest key time backwards by a week to handle the case of clock drift. This can occur
             // both in block header timestamps and if the users clock was out of sync when the key was first created
             // (to within a small amount of tolerance).
-            result.earliestKeyTimeSecs -= 86400 * 7;
+            result.earliestKeyTime = result.earliestKeyTime.minus(7, ChronoUnit.DAYS);
             return result;
         } finally {
             for (PeerFilterProvider provider : begunProviders) {

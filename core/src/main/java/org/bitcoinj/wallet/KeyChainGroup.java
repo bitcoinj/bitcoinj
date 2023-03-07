@@ -20,6 +20,7 @@ package org.bitcoinj.wallet;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
@@ -466,7 +467,7 @@ public class KeyChainGroup implements KeyBag {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         List<DeterministicKeyChain> activeChains = new LinkedList<>();
         for (DeterministicKeyChain chain : chains)
-            if (keyRotationTime == null || chain.getEarliestKeyCreationTime() >= keyRotationTime.getEpochSecond())
+            if (keyRotationTime == null || chain.getEarliestKeyCreationTimeInstant().compareTo(keyRotationTime) >= 0)
                 activeChains.add(chain);
         return activeChains;
     }
@@ -488,7 +489,7 @@ public class KeyChainGroup implements KeyBag {
         Collections.reverse(chainsReversed);
         for (DeterministicKeyChain chain : chainsReversed)
             if (chain.getOutputScriptType() == outputScriptType
-                    && (keyRotationTime == null || chain.getEarliestKeyCreationTime() >= keyRotationTime.getEpochSecond()))
+                    && (keyRotationTime == null || chain.getEarliestKeyCreationTimeInstant().compareTo(keyRotationTime) >= 0))
                 return chain;
         return null;
     }
@@ -844,19 +845,29 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /**
-     * @return Long.MAX_VALUE if empty
+     * Gets the earliest time for which full block must be downloaded.
+     * @return earliest creation times of keys in this group,
+     *         {@link Instant#EPOCH} if at least one time is unknown,
+     *         {@link Instant#MAX} if no keys in this group
      */
-    public long getEarliestKeyCreationTime() {
-        return Math.min(basic.getEarliestKeyCreationTime(), getEarliestChainsCreationTime());
+    public Instant getEarliestKeyCreationTimeInstant() {
+        return TimeUtils.earlier(basic.getEarliestKeyCreationTimeInstant(), getEarliestChainsCreationTime());
     }
 
-    private long getEarliestChainsCreationTime() {
+    /** @deprecated use {@link #getEarliestKeyCreationTimeInstant()} */
+    @Deprecated
+    public long getEarliestKeyCreationTime() {
+        Instant earliestKeyCreationTime = getEarliestKeyCreationTimeInstant();
+        return earliestKeyCreationTime.equals(Instant.MAX) ? Long.MAX_VALUE : earliestKeyCreationTime.getEpochSecond();
+    }
+
+    private Instant getEarliestChainsCreationTime() {
         if (chains == null)
-            return Long.MAX_VALUE;
+            return Instant.MAX;
         return chains.stream()
-                .mapToLong(DeterministicKeyChain::getEarliestKeyCreationTime)
-                .min()
-                .orElse(Long.MAX_VALUE);
+                .map(DeterministicKeyChain::getEarliestKeyCreationTimeInstant)
+                .min(Instant::compareTo)
+                .orElse(Instant.MAX);
     }
 
     public int getBloomFilterElementCount() {

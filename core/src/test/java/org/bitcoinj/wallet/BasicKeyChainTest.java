@@ -29,6 +29,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,8 +69,8 @@ public class BasicKeyChainTest {
 
     @Test
     public void importKeys() {
-        TimeUtils.setMockClock();
-        long now = TimeUtils.currentTimeSeconds();
+        Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
+        TimeUtils.setMockClock(now);
         final ECKey key1 = new ECKey();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = new ECKey();
@@ -79,7 +81,7 @@ public class BasicKeyChainTest {
         assertEquals(2, chain.numKeys());
         assertTrue(onKeysAddedRan.getAndSet(false));
         assertArrayEquals(keys.toArray(), onKeysAdded.get().toArray());
-        assertEquals(now, chain.getEarliestKeyCreationTime());
+        assertEquals(now, chain.getEarliestKeyCreationTimeInstant());
         // Check we ignore duplicates.
         final ECKey newKey = new ECKey();
         keys.add(newKey);

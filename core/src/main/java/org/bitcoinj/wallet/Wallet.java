@@ -3487,7 +3487,7 @@ public class Wallet extends BaseTaggableObject
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTime() * 1000))
+            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTimeInstant().toEpochMilli()))
                     .append('\n');
             final Optional<Instant> keyRotationTime = getKeyRotationTimeInstant();
             if (keyRotationTime.isPresent())
@@ -3576,25 +3576,27 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Returns the earliest creation time of keys or watched scripts in this wallet, in seconds since the epoch, ie the min
-     * of {@link ECKey#getCreationTimeSeconds()}. This can return zero if at least one key does
-     * not have that data (was created before key timestamping was implemented). <p>
+     * of {@link ECKey#getCreationTimeSeconds()}. This can return {@link Instant#EPOCH} if at least one key does
+     * not have that data (e.g. is an imported key with unknown timestamp). <p>
      *
      * This method is most often used in conjunction with {@link PeerGroup#setFastCatchupTime(Instant)} in order to
-     * optimize chain download for new users of wallet apps. Backwards compatibility notice: if you get zero from this
+     * optimize chain download for new users of wallet apps. Backwards compatibility notice: if you get {@link Instant#EPOCH} from this
      * method, you can instead use the time of the first release of your software, as it's guaranteed no users will
      * have wallets pre-dating this time. <p>
      *
-     * If there are no keys in the wallet, the current time is returned.
+     * If there are no keys in the wallet, {@link Instant#MAX} is returned.
+     *
+     * @return earliest creation times of keys in this wallet,
+     *         {@link Instant#EPOCH} if at least one time is unknown,
+     *         {@link Instant#MAX} if no keys in this wallet
      */
     @Override
-    public long getEarliestKeyCreationTime() {
+    public Instant getEarliestKeyCreationTimeInstant() {
         keyChainGroupLock.lock();
         try {
-            long earliestTime = keyChainGroup.getEarliestKeyCreationTime();
+            Instant earliestTime = keyChainGroup.getEarliestKeyCreationTimeInstant();
             for (Script script : watchedScripts)
-                earliestTime = Math.min(script.getCreationTimeSeconds(), earliestTime);
-            if (earliestTime == Long.MAX_VALUE)
-                return TimeUtils.currentTimeSeconds();
+                earliestTime = TimeUtils.earlier(Instant.ofEpochSecond(script.getCreationTimeSeconds()), earliestTime);
             return earliestTime;
         } finally {
             keyChainGroupLock.unlock();
@@ -5462,7 +5464,7 @@ public class Wallet extends BaseTaggableObject
         ScriptType preferredScriptType = ScriptType.P2PKH;
         if (keyChainGroup.supportsDeterministicChains()) {
             for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
-                if (chain.getEarliestKeyCreationTime() >= keyRotationTime.getEpochSecond())
+                if (chain.getEarliestKeyCreationTimeInstant().compareTo(keyRotationTime) >= 0)
                     allChainsRotating = false;
                 else
                     preferredScriptType = chain.getOutputScriptType();
