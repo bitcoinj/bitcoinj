@@ -80,6 +80,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @After
     public void tearDown() {
         super.tearDown();
+        TimeUtils.resetMocking();
     }
 
     @Test

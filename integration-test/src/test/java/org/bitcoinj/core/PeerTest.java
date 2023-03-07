@@ -498,6 +498,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, b3);
         pingAndWait(writeTarget);
         closePeer(peer);
+        TimeUtils.resetMocking();
     }
 
     @Test
@@ -529,6 +530,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Duration elapsed2 = future2.get();
         assertEquals(elapsed2.toMillis(), peer.getLastPingTime());
         assertEquals(7250, peer.getPingTime());
+        TimeUtils.resetMocking();
     }
 
     @Test
