@@ -154,7 +154,7 @@ public interface OutputDescriptor {
 
         private static DeterministicKey deserializeBase58(String keyString) {
             BitcoinNetwork network = keyString.startsWith("x") ? BitcoinNetwork.MAINNET : BitcoinNetwork.TESTNET;
-            return DeterministicKey.deserializeB58(keyString, NetworkParameters.of(network));
+            return DeterministicKey.deserializeB58(keyString, network);
         }
     }
 }
