@@ -16,6 +16,8 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.Base58;
+import org.bitcoinj.base.Bech32;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.NetworkParameters;
@@ -98,9 +100,9 @@ public interface OutputDescriptor {
         static final String scriptPattern = "(pkh|wpkh)";
         static final String fingerPrintPattern = "[A-Fa-f0-9]{8}";
         static final String acctPathPattern = "(/[0-9]{1,4}[hH']?)*";
-        static final String xpubPattern = "(x|t)pub[1-9A-HJ-NP-Za-km-z]{20,200}";
+        static final String xpubPattern = String.format("(x|t)pub[%s]{20,200}", Base58.CHARSET);
         static final String childPathPattern = "(/[0-9]{1,4}[hH']?|)*(/\\*)?";
-        static final String checksumPattern = "[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{8}";
+        static final String checksumPattern = String.format("[%s]{8}", Bech32.CHARSET);
 
         static final String scriptCapture = namedCapture("script", scriptPattern);
         static final String fingerprintCapture = namedCapture("fingerprint", fingerPrintPattern);
