@@ -18,6 +18,7 @@ package org.bitcoinj.base.internal;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -29,75 +30,68 @@ import java.util.TimeZone;
  */
 public class TimeUtils {
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-    /**
-     * If non-null, overrides the return value of now().
-     */
-    private static volatile Date mockTime;
+    // Clock to be used for the return value of now() and currentTime() variants
+    private static volatile Clock clock = Clock.systemUTC();
 
     /**
-     * Advances (or rewinds) the mock clock by the given number of seconds.
-     */
-    public static Date rollMockClock(int seconds) {
-        return rollMockClockMillis(seconds * 1000);
-    }
-
-    /**
-     * Advances (or rewinds) the mock clock by the given number of milliseconds.
-     */
-    public static Date rollMockClockMillis(long millis) {
-        if (mockTime == null)
-            throw new IllegalStateException("You need to use setMockClock() first.");
-        mockTime = new Date(mockTime.getTime() + millis);
-        return mockTime;
-    }
-
-    /**
-     * Sets the mock clock to the current time.
+     * Sets the mock clock to the current time as a fixed instant.
      */
     public static void setMockClock() {
-        mockTime = new Date();
+        setMockClock(Instant.now());
     }
 
     /**
-     * Sets the mock clock to the given time (in seconds).
+     * Sets the mock clock to a fixed instant.
+     * @param fixedInstant a fixed instant
      */
-    public static void setMockClock(long mockClockSeconds) {
-        mockTime = new Date(mockClockSeconds * 1000);
+    public static void setMockClock(Instant fixedInstant) {
+        clock = Clock.fixed(fixedInstant, UTC.toZoneId());
     }
 
     /**
-     * Clears the mock clock and sleep
+     * Rolls an already set mock clock by the given duration.
+     * @param delta amount to roll the mock clock, can be negative
+     * @throws IllegalStateException if the mock clock isn't set
      */
-    public static void resetMocking() {
-        mockTime = null;
+    public static void rollMockClock(Duration delta) {
+        if (clock.equals(Clock.systemUTC()))
+            throw new IllegalStateException("You need to use setMockClock() first.");
+        setMockClock(clock.instant().plus(delta));
+    }
+
+    /**
+     * Clears the mock clock and causes time to tick again.
+     */
+    public static void clearMockClock() {
+        clock = Clock.systemUTC();
     }
 
     /**
      * Returns the current time, or a mocked out equivalent.
      */
     public static Date now() {
-        return mockTime != null ? mockTime : new Date();
+        return Date.from(currentTime());
     }
 
     /**
      * Returns the current time in milliseconds since the epoch, or a mocked out equivalent.
      */
     public static long currentTimeMillis() {
-        return mockTime != null ? mockTime.getTime() : System.currentTimeMillis();
+        return currentTime().toEpochMilli();
     }
 
     /**
      * Returns the current time in seconds since the epoch, or a mocked out equivalent.
      */
     public static long currentTimeSeconds() {
-        return currentTimeMillis() / 1000;
+        return currentTime().getEpochSecond();
     }
 
     /**
      * Returns the current time as an Instant, or a mocked out equivalent.
      */
     public static Instant currentTime() {
-        return Instant.ofEpochMilli(currentTimeMillis());
+        return Instant.now(clock);
     }
 
     /**

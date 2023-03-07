@@ -452,15 +452,15 @@ public class PeerTest extends TestWithNetworkConnections {
         // This test is INCOMPLETE because it does not check we handle >2000 blocks correctly.
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        TimeUtils.rollMockClock(60 * 10);  // 10 minutes later.
+        TimeUtils.rollMockClock(Duration.ofMinutes(10));  // 10 minutes later.
         Block b2 = makeSolvedTestBlock(b1);
         b2.setTime(TimeUtils.currentTime());
         b2.solve();
-        TimeUtils.rollMockClock(60 * 10);  // 10 minutes later.
+        TimeUtils.rollMockClock(Duration.ofMinutes(10));  // 10 minutes later.
         Block b3 = makeSolvedTestBlock(b2);
         b3.setTime(TimeUtils.currentTime());
         b3.solve();
-        TimeUtils.rollMockClock(60 * 10);
+        TimeUtils.rollMockClock(Duration.ofMinutes(10));
         Block b4 = makeSolvedTestBlock(b3);
         b4.setTime(TimeUtils.currentTime());
         b4.solve();
@@ -498,7 +498,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, b3);
         pingAndWait(writeTarget);
         closePeer(peer);
-        TimeUtils.resetMocking();
+        TimeUtils.clearMockClock();
     }
 
     @Test
@@ -513,7 +513,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(Long.MAX_VALUE, peer.getPingTime());
         assertFalse(future.isDone());
         Ping pingMsg = (Ping) outbound(writeTarget);
-        TimeUtils.rollMockClock(5);
+        TimeUtils.rollMockClock(Duration.ofSeconds(5));
         // The pong is returned.
         inbound(writeTarget, new Pong(pingMsg.getNonce()));
         pingAndWait(writeTarget);
@@ -525,12 +525,12 @@ public class PeerTest extends TestWithNetworkConnections {
         // Do it again and make sure it affects the average.
         CompletableFuture<Duration> future2 = peer.sendPing();
         pingMsg = (Ping) outbound(writeTarget);
-        TimeUtils.rollMockClock(50);
+        TimeUtils.rollMockClock(Duration.ofSeconds(50));
         inbound(writeTarget, new Pong(pingMsg.getNonce()));
         Duration elapsed2 = future2.get();
         assertEquals(elapsed2.toMillis(), peer.getLastPingTime());
         assertEquals(7250, peer.getPingTime());
-        TimeUtils.resetMocking();
+        TimeUtils.clearMockClock();
     }
 
     @Test

@@ -62,7 +62,7 @@ public class TestWithWallet {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        TimeUtils.resetMocking();
+        TimeUtils.clearMockClock();
     }
 
     public void setUp() throws Exception {

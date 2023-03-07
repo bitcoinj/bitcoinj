@@ -42,7 +42,7 @@ public class VersionTallyTest {
 
     @BeforeClass
     public static void setUpClass() {
-        TimeUtils.resetMocking();
+        TimeUtils.clearMockClock();
     }
 
     @Before

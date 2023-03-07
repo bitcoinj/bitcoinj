@@ -69,7 +69,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     @BeforeClass
     public static void setUpClass() {
-        TimeUtils.resetMocking();
+        TimeUtils.clearMockClock();
         PARAMS = new UnitTestParams() {
             @Override public int getInterval() {
                 return 10000;

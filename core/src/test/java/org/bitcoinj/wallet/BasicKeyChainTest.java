@@ -28,6 +28,7 @@ import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -69,7 +70,7 @@ public class BasicKeyChainTest {
         TimeUtils.setMockClock();
         long now = TimeUtils.currentTimeSeconds();
         final ECKey key1 = new ECKey();
-        TimeUtils.rollMockClock(86400);
+        TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = new ECKey();
         final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
 
@@ -198,7 +199,7 @@ public class BasicKeyChainTest {
         TimeUtils.setMockClock();
         Date now = TimeUtils.now();
         final ECKey key1 = new ECKey();
-        TimeUtils.rollMockClock(5000);
+        TimeUtils.rollMockClock(Duration.ofSeconds(5000));
         final ECKey key2 = new ECKey();
         chain.importKeys(Arrays.asList(key1, key2));
         List<Protos.Key> keys = chain.serializeToProtobuf();
@@ -278,7 +279,7 @@ public class BasicKeyChainTest {
         TimeUtils.setMockClock();
         long now = TimeUtils.currentTimeSeconds();
         final ECKey key1 = new ECKey();
-        TimeUtils.rollMockClock(86400);
+        TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = new ECKey();
         final List<ECKey> keys = Lists.newArrayList(key1, key2);
         assertEquals(2, chain.importKeys(keys));

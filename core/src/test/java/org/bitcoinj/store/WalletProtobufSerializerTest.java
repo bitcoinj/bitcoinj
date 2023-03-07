@@ -97,7 +97,7 @@ public class WalletProtobufSerializerTest {
 
     @BeforeClass
     public static void setUpClass() {
-        TimeUtils.resetMocking();
+        TimeUtils.clearMockClock();
         Context.propagate(new Context());
     }
 

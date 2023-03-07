@@ -20,6 +20,8 @@ package org.bitcoinj.base.internal;
 
 import org.junit.Test;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
@@ -35,9 +37,15 @@ public class TimeUtilsTest {
     }
 
     @Test
-    public void testRollMockClock() {
-        TimeUtils.setMockClock(25200);
-        assertEquals(new Date("Thu Jan 01 07:00:08 GMT 1970"), TimeUtils.rollMockClock(8));
-        TimeUtils.resetMocking();
+    public void setAndRollMockClock() {
+        TimeUtils.setMockClock(Instant.ofEpochSecond(25200));
+        assertEquals(new Date("Thu Jan 01 07:00:00 GMT 1970"), TimeUtils.now());
+        TimeUtils.rollMockClock(Duration.ofSeconds(8));
+        assertEquals(new Date("Thu Jan 01 07:00:08 GMT 1970"), TimeUtils.now());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void rollMockClock_uninitialized() {
+        TimeUtils.rollMockClock(Duration.ofMinutes(1));
     }
 }

@@ -40,6 +40,7 @@ import org.junit.rules.ExpectedException;
 
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Locale;
@@ -178,7 +179,7 @@ public class BlockChainTest {
             assertTrue(chain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
-            TimeUtils.rollMockClock(2);
+            TimeUtils.rollMockClock(Duration.ofSeconds(2));
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {

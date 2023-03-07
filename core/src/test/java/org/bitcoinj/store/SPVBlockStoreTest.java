@@ -39,7 +39,6 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -51,7 +50,7 @@ public class SPVBlockStoreTest {
 
     @BeforeClass
     public static void setUpClass() {
-        TimeUtils.resetMocking();
+        TimeUtils.clearMockClock();
     }
 
     @Before

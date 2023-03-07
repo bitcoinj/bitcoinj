@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -147,7 +148,7 @@ public class TransactionTest {
     @Test
     public void testEstimatedLockTime_WhenParameterSignifiesBlockHeight() {
         int TEST_LOCK_TIME = 20;
-        Instant now = TimeUtils.currentTime();
+        Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
 
         BlockChain mockBlockChain = createMock(BlockChain.class);
         EasyMock.expect(mockBlockChain.estimateBlockTimeInstant(TEST_LOCK_TIME)).andReturn(now);

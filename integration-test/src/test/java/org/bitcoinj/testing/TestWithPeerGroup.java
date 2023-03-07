@@ -39,6 +39,7 @@ import org.junit.rules.Timeout;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.Semaphore;
@@ -121,7 +122,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
                         if (!blockJobs)
                             return super.schedule(command, delay, unit);
                         return super.schedule(() -> {
-                            TimeUtils.rollMockClockMillis(unit.toMillis(delay));
+                            TimeUtils.rollMockClock(Duration.ofMillis(unit.toMillis(delay)));
                             command.run();
                             jobBlocks.acquireUninterruptibly();
                         }, 0 /* immediate */, unit);

@@ -38,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -256,11 +257,11 @@ public class KeyChainGroupTest {
     }
 
     private void encryption(boolean withImported) {
-        TimeUtils.rollMockClock(0);
+        TimeUtils.setMockClock();
         long now = TimeUtils.currentTimeSeconds();
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(now, group.getEarliestKeyCreationTime());
-        TimeUtils.rollMockClock(-86400);
+        TimeUtils.rollMockClock(Duration.ofDays(-1));
         long yesterday = TimeUtils.currentTimeSeconds();
         ECKey b = new ECKey();
 
@@ -403,9 +404,9 @@ public class KeyChainGroupTest {
         long now = TimeUtils.currentTimeSeconds();   // mock
         long yesterday = now - 86400;
         assertEquals(now, group.getEarliestKeyCreationTime());
-        TimeUtils.rollMockClock(10000);
+        TimeUtils.rollMockClock(Duration.ofSeconds(10000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        TimeUtils.rollMockClock(10000);
+        TimeUtils.rollMockClock(Duration.ofSeconds(10000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // Check that all keys are assumed to be created at the same instant the seed is.
         assertEquals(now, group.getEarliestKeyCreationTime());

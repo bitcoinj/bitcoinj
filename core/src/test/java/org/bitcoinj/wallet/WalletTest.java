@@ -81,6 +81,7 @@ import java.io.File;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -1444,7 +1445,7 @@ public class WalletTest extends TestWithWallet {
         // Check the wallet can give us an ordered list of all received transactions.
         TimeUtils.setMockClock();
         Transaction tx1 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN);
-        TimeUtils.rollMockClock(60 * 10);
+        TimeUtils.rollMockClock(Duration.ofMinutes(10));
         Transaction tx2 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(0, 5));
         // Check we got them back in order.
         List<Transaction> transactions = wallet.getTransactionsByTime();
@@ -1457,7 +1458,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(tx2,  transactions.get(0));
 
         // Create a spend five minutes later.
-        TimeUtils.rollMockClock(60 * 5);
+        TimeUtils.rollMockClock(Duration.ofMinutes(5));
         Transaction tx3 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 5));
         // Does not appear in list yet.
         assertEquals(2, wallet.getTransactionsByTime().size());
@@ -1483,7 +1484,7 @@ public class WalletTest extends TestWithWallet {
         long now = TimeUtils.currentTimeSeconds();
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
-        TimeUtils.rollMockClock(60);
+        TimeUtils.rollMockClock(Duration.ofMinutes(1));
         wallet.freshReceiveKey();
         assertEquals(now, wallet.getEarliestKeyCreationTime());
     }
@@ -1494,7 +1495,7 @@ public class WalletTest extends TestWithWallet {
         long now = TimeUtils.currentTimeSeconds();
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         assertEquals(now, wallet.getEarliestKeyCreationTime());
-        TimeUtils.rollMockClock(-120);
+        TimeUtils.rollMockClock(Duration.ofMinutes(-2));
         wallet.addWatchedAddress(OTHER_ADDRESS);
         wallet.freshReceiveKey();
         assertEquals(now - 120, wallet.getEarliestKeyCreationTime());
@@ -2916,7 +2917,7 @@ public class WalletTest extends TestWithWallet {
         assertFalse(wallet.isKeyRotating(key1));
 
         // We got compromised!
-        TimeUtils.rollMockClock(1);
+        TimeUtils.rollMockClock(Duration.ofSeconds(1));
         wallet.setKeyRotationTime(compromiseTime);
         assertTrue(wallet.isKeyRotating(key1));
         wallet.doMaintenance(null, true);
@@ -3010,7 +3011,7 @@ public class WalletTest extends TestWithWallet {
         DeterministicKey watchKey1 = wallet.getWatchingKey();
 
         // A day later, we get compromised.
-        TimeUtils.rollMockClock(86400);
+        TimeUtils.rollMockClock(Duration.ofDays(1));
         wallet.setKeyRotationTime(TimeUtils.currentTime());
 
         List<Transaction> txns = wallet.doMaintenance(null, false).get();
@@ -3030,7 +3031,7 @@ public class WalletTest extends TestWithWallet {
         ECKey key = wallet.freshReceiveKey();
         Address address = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         TimeUtils.setMockClock();
-        TimeUtils.rollMockClock(86400);
+        TimeUtils.rollMockClock(Duration.ofDays(1));
         for (int i = 0; i < 800; i++) {
             sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, address);
         }
@@ -3038,7 +3039,7 @@ public class WalletTest extends TestWithWallet {
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
 
         Instant compromise = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        TimeUtils.rollMockClock(86400);
+        TimeUtils.rollMockClock(Duration.ofDays(1));
         wallet.freshReceiveKey();
         wallet.setKeyRotationTime(compromise);
         wallet.doMaintenance(null, true);
