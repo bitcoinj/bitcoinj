@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class Bech32 {
     /** The Bech32 character set for encoding. */
-    private static final String CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+    public static final String CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
     /** The Bech32 character set for decoding. */
     private static final byte[] CHARSET_REV = {

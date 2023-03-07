@@ -48,7 +48,8 @@ import java.util.Arrays;
  * numbers), and finally represent the resulting base-58 digits as alphanumeric ASCII characters.
  */
 public class Base58 {
-    public static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
+    public static final String CHARSET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    public static final char[] ALPHABET = CHARSET.toCharArray();
     private static final char ENCODED_ZERO = ALPHABET[0];
     private static final int[] INDEXES = new int[128];
     static {
