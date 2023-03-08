@@ -43,7 +43,6 @@ import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1261,12 +1260,9 @@ public class Script {
                 case OP_RIPEMD160:
                     if (stack.size() < 1)
                         throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_RIPEMD160 on an empty stack");
-                    RIPEMD160Digest digest = new RIPEMD160Digest();
                     byte[] dataToHash = stack.pollLast();
-                    digest.update(dataToHash, 0, dataToHash.length);
-                    byte[] ripmemdHash = new byte[20];
-                    digest.doFinal(ripmemdHash, 0);
-                    stack.add(ripmemdHash);
+                    byte[] ripmeMdHash = CryptoUtils.digestRipeMd160(dataToHash);
+                    stack.add(ripmeMdHash);
                     break;
                 case OP_SHA1:
                     if (stack.size() < 1)

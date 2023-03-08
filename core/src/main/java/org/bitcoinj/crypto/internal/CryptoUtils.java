@@ -23,14 +23,25 @@ import org.bouncycastle.crypto.digests.RIPEMD160Digest;
  */
 public class CryptoUtils {
     /**
-     * Calculates RIPEMD160(SHA256(input)). This is used in Address calculations.
+     * Calculate RIPEMD160(SHA256(input)). This is used in Address calculations.
+     * @param input bytes to hash
+     * @return RIPEMD160(SHA256(input))
      */
     public static byte[] sha256hash160(byte[] input) {
         byte[] sha256 = Sha256Hash.hash(input);
+        return digestRipeMd160(sha256);
+    }
+
+    /**
+     * Calculate RIPEMD160(input).
+     * @param input bytes to hash
+     * @return RIPEMD160(input)
+     */
+    public static byte[] digestRipeMd160(byte[] input) {
         RIPEMD160Digest digest = new RIPEMD160Digest();
-        digest.update(sha256, 0, sha256.length);
-        byte[] out = new byte[20];
-        digest.doFinal(out, 0);
-        return out;
+        digest.update(input, 0, input.length);
+        byte[] ripmemdHash = new byte[20];
+        digest.doFinal(ripmemdHash, 0);
+        return ripmemdHash;
     }
 }
