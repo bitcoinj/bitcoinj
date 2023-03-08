@@ -17,6 +17,10 @@ package org.bitcoinj.crypto.internal;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.bouncycastle.jcajce.provider.digest.SHA3;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * Utilities for the crypto module (e.g. using Bouncy Castle)
@@ -32,5 +36,18 @@ public class CryptoUtils {
         byte[] out = new byte[20];
         digest.doFinal(out, 0);
         return out;
+    }
+
+    /**
+     * Calculate TOR Onion Checksum (used by PeerAddress)
+     */
+    public static byte[] onionChecksum(byte[] pubkey, byte version) {
+        if (pubkey.length != 32)
+            throw new IllegalArgumentException();
+        SHA3.Digest256 digest256 = new SHA3.Digest256();
+        digest256.update(".onion checksum".getBytes(StandardCharsets.US_ASCII));
+        digest256.update(pubkey);
+        digest256.update(version);
+        return Arrays.copyOf(digest256.digest(), 2);
     }
 }

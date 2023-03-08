@@ -21,7 +21,7 @@ import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.utils.ByteUtils;
-import org.bouncycastle.jcajce.provider.digest.SHA3;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,7 +31,6 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -191,7 +190,7 @@ public class PeerAddress extends ChildMessage {
                     byte torVersion = onionAddress[34];
                     if (torVersion != 0x03)
                         throw new IllegalStateException("version");
-                    if (!Arrays.equals(checksum, onionChecksum(pubkey, torVersion)))
+                    if (!Arrays.equals(checksum, CryptoUtils.onionChecksum(pubkey, torVersion)))
                         throw new IllegalStateException("checksum");
                     stream.write(pubkey);
                 } else {
@@ -280,7 +279,7 @@ public class PeerAddress extends ChildMessage {
                         byte torVersion = 0x03;
                         byte[] onionAddress = new byte[35];
                         System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
-                        System.arraycopy(onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
+                        System.arraycopy(CryptoUtils.onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
                         onionAddress[34] = torVersion;
                         hostname = BASE32.encode(onionAddress) + ".onion";
                         addr = null;
@@ -321,16 +320,6 @@ public class PeerAddress extends ChildMessage {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-    }
-
-    private static byte[] onionChecksum(byte[] pubkey, byte version) {
-        if (pubkey.length != 32)
-            throw new IllegalArgumentException();
-        SHA3.Digest256 digest256 = new SHA3.Digest256();
-        digest256.update(".onion checksum".getBytes(StandardCharsets.US_ASCII));
-        digest256.update(pubkey);
-        digest256.update(version);
-        return Arrays.copyOf(digest256.digest(), 2);
     }
 
     public String getHostname() {
