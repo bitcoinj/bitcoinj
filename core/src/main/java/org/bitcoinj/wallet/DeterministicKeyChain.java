@@ -711,10 +711,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public Instant getEarliestKeyCreationTimeInstant() {
-        if (seed != null)
-            return Instant.ofEpochSecond(seed.getCreationTimeSeconds());
-        else
-            return Instant.ofEpochSecond(getWatchingKey().getCreationTimeSeconds());
+        return Instant.ofEpochSecond(seed != null ?
+                seed.getCreationTimeSeconds() :
+                getWatchingKey().getCreationTimeSeconds()
+        );
     }
 
     @Override
