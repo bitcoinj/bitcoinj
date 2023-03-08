@@ -862,12 +862,12 @@ public class KeyChainGroup implements KeyBag {
     }
 
     private Instant getEarliestChainsCreationTime() {
-        if (chains == null)
-            return Instant.MAX;
-        return chains.stream()
-                .map(DeterministicKeyChain::getEarliestKeyCreationTimeInstant)
-                .min(Instant::compareTo)
-                .orElse(Instant.MAX);
+        return chains == null ?
+                Instant.MAX :
+                chains.stream()
+                        .map(DeterministicKeyChain::getEarliestKeyCreationTimeInstant)
+                        .min(Instant::compareTo)
+                        .orElse(Instant.MAX);
     }
 
     public int getBloomFilterElementCount() {
