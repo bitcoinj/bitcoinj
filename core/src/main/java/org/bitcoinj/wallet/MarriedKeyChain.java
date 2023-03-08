@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
@@ -28,7 +29,6 @@ import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -237,7 +237,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     @Override
-    protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
+    protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey,
             NetworkParameters params, StringBuilder builder) {
         for (DeterministicKeyChain followingChain : followingKeyChains)
             builder.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params.network()))

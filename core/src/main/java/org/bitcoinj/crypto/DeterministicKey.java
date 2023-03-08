@@ -26,7 +26,6 @@ import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.internal.CryptoUtils;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.math.ec.ECPoint;
 
 import javax.annotation.Nullable;
@@ -295,11 +294,11 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
-    public DeterministicKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+    public DeterministicKey encrypt(KeyCrypter keyCrypter, AesKey aesKey) throws KeyCrypterException {
         throw new UnsupportedOperationException("Must supply a new parent for encryption");
     }
 
-    public DeterministicKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey, @Nullable DeterministicKey newParent) throws KeyCrypterException {
+    public DeterministicKey encrypt(KeyCrypter keyCrypter, AesKey aesKey, @Nullable DeterministicKey newParent) throws KeyCrypterException {
         // Same as the parent code, except we construct a DeterministicKey instead of an ECKey.
         checkNotNull(keyCrypter);
         if (newParent != null)
@@ -357,7 +356,7 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
-    public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
+    public ECDSASignature sign(Sha256Hash input, @Nullable AesKey aesKey) throws KeyCrypterException {
         if (isEncrypted()) {
             // If the key is encrypted, ECKey.sign will decrypt it first before rerunning sign. Decryption walks the
             // key hierarchy to find the private key (see below), so, we can just run the inherited method.
@@ -374,7 +373,7 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
-    public DeterministicKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+    public DeterministicKey decrypt(KeyCrypter keyCrypter, AesKey aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
@@ -389,13 +388,13 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
-    public DeterministicKey decrypt(KeyParameter aesKey) throws KeyCrypterException {
+    public DeterministicKey decrypt(AesKey aesKey) throws KeyCrypterException {
         return (DeterministicKey) super.decrypt(aesKey);
     }
 
     // For when a key is encrypted, either decrypt our encrypted private key bytes, or work up the tree asking parents
     // to decrypt and re-derive.
-    private BigInteger findOrDeriveEncryptedPrivateKey(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    private BigInteger findOrDeriveEncryptedPrivateKey(KeyCrypter keyCrypter, AesKey aesKey) {
         if (encryptedPrivateKey != null) {
             byte[] decryptedKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
             if (decryptedKey.length != 32)
@@ -753,7 +752,7 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
-    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
                                      Network network, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:").append(toAddress(outputScriptType, network).toString());
         builder.append("  hash160:").append(ByteUtils.formatHex(getPubKeyHash()));
@@ -767,11 +766,11 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * @deprecated Use {@link #formatKeyWithAddress(boolean, KeyParameter, StringBuilder, Network, ScriptType, String)}
+     * @deprecated Use {@link #formatKeyWithAddress(boolean, AesKey, StringBuilder, Network, ScriptType, String)}
      */
     @Override
     @Deprecated
-    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
                                      NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
         formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), outputScriptType, comment);
     }

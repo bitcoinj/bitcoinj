@@ -16,18 +16,17 @@
 
 package wallettemplate;
 
-import javafx.application.*;
 import javafx.event.*;
 import javafx.fxml.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.*;
 import org.bitcoinj.wallet.*;
 import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.*;
-import org.bouncycastle.crypto.params.*;
 
 import com.google.protobuf.ByteString;
 
@@ -124,7 +123,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
         // Deriving the actual key runs on a background thread. 500msec is empirical on my laptop (actual val is more like 333 but we give padding time).
         KeyDerivationTasks tasks = new KeyDerivationTasks(scrypt, password, estimatedKeyDerivationTime) {
             @Override
-            protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
+            protected final void onFinish(AesKey aesKey, int timeTakenMsec) {
                 // Write the target time to the wallet so we can make the progress bar work when entering the password.
                 WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.

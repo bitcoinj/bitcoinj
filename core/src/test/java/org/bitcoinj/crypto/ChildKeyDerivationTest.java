@@ -22,7 +22,6 @@ import org.bitcoinj.base.Sha256Hash;
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Test;
 
 import org.bitcoinj.base.utils.ByteUtils;
@@ -172,7 +171,7 @@ public class ChildKeyDerivationTest {
         // Check that encrypting a parent key in the hierarchy and then deriving from it yields a DeterministicKey
         // with no private key component, and that the private key bytes are derived on demand.
         KeyCrypter scrypter = new KeyCrypterScrypt(SCRYPT_ITERATIONS);
-        KeyParameter aesKey = scrypter.deriveKey("we never went to the moon");
+        AesKey aesKey = scrypter.deriveKey("we never went to the moon");
 
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
         DeterministicKey encryptedKey1 = key1.encrypt(scrypter, aesKey, null);

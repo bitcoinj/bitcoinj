@@ -21,6 +21,7 @@ import com.google.common.base.MoreObjects;
 import org.bitcoin.protocols.payments.Protos.PaymentDetails;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -29,7 +30,6 @@ import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Wallet.MissingSigsMode;
-import org.bouncycastle.crypto.params.KeyParameter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -109,7 +109,7 @@ public class SendRequest {
      * If null then no decryption will be performed and if decryption is required an exception will be thrown.
      * You can get this from a password by doing wallet.getKeyCrypter().deriveKey(password).
      */
-    public KeyParameter aesKey = null;
+    public AesKey aesKey = null;
 
     /**
      * If not null, the {@link CoinSelector} to use instead of the wallets default. Coin selectors are

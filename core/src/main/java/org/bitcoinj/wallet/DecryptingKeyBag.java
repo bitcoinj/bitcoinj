@@ -17,8 +17,8 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.ECKey;
-import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -33,9 +33,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class DecryptingKeyBag implements KeyBag {
     protected final KeyBag target;
-    protected final KeyParameter aesKey;
+    protected final AesKey aesKey;
 
-    public DecryptingKeyBag(KeyBag target, @Nullable KeyParameter aesKey) {
+    public DecryptingKeyBag(KeyBag target, @Nullable AesKey aesKey) {
         this.target = checkNotNull(target);
         this.aesKey = aesKey;
     }

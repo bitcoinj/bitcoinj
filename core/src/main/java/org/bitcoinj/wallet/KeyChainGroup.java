@@ -20,6 +20,7 @@ package org.bitcoinj.wallet;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
@@ -36,7 +37,6 @@ import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +71,7 @@ import static com.google.common.base.Preconditions.checkState;
  * (see {@link #getActiveKeyChain(ScriptType, long)}) are meant as fallback for if a sender doesn't understand a
  * certain new script type (e.g. P2WPKH which comes with the new Bech32 address format). Active keychains
  * share the same seed, so that upgrading the wallet
- * (see {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, KeyParameter)}) to understand
+ * (see {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, AesKey)}) to understand
  * a new script type doesn't require a fresh backup.</p>
  *
  * <p>If a key rotation time is set, it may be necessary to add a new DeterministicKeyChain with a fresh seed
@@ -569,7 +569,7 @@ public class KeyChainGroup implements KeyBag {
         return checkAESKey(keyCrypter.deriveKey(password));
     }
 
-    public boolean checkAESKey(KeyParameter aesKey) {
+    public boolean checkAESKey(AesKey aesKey) {
         checkState(keyCrypter != null, "Not encrypted");
         if (basic.numKeys() > 0)
             return basic.checkAESKey(aesKey);
@@ -577,7 +577,7 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /** Imports the given unencrypted keys into the basic chain, encrypting them along the way with the given key. */
-    public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
+    public int importKeysAndEncrypt(final List<ECKey> keys, AesKey aesKey) {
         // TODO: Firstly check if the aes key can decrypt any of the existing keys successfully.
         checkState(keyCrypter != null, "Not encrypted");
         LinkedList<ECKey> encryptedKeys = new LinkedList<>();
@@ -756,7 +756,7 @@ public class KeyChainGroup implements KeyBag {
      *         leaving the group unchanged.
      * @throws DeterministicUpgradeRequiredException Thrown if there are random keys but no HD chain.
      */
-    public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    public void encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
         checkNotNull(keyCrypter);
         checkNotNull(aesKey);
         checkState((chains != null && !chains.isEmpty()) || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
@@ -783,7 +783,7 @@ public class KeyChainGroup implements KeyBag {
      *
      * @throws org.bitcoinj.crypto.KeyCrypterException Thrown if the wallet decryption fails for some reason, leaving the group unchanged.
      */
-    public void decrypt(KeyParameter aesKey) {
+    public void decrypt(AesKey aesKey) {
         checkNotNull(aesKey);
 
         BasicKeyChain newBasic = basic.toDecrypted(aesKey);
@@ -1011,7 +1011,7 @@ public class KeyChainGroup implements KeyBag {
      *         and you should provide the users encryption key.
      */
     public void upgradeToDeterministic(ScriptType preferredScriptType, KeyChainGroupStructure structure,
-                                       @Nullable Instant keyRotationTime, @Nullable KeyParameter aesKey)
+                                       @Nullable Instant keyRotationTime, @Nullable AesKey aesKey)
             throws DeterministicUpgradeRequiresPassword {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         checkNotNull(structure);
@@ -1038,16 +1038,16 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    /** @deprecated use {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, Instant, KeyParameter)} */
+    /** @deprecated use {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, Instant, AesKey)} */
     @Deprecated
     public void upgradeToDeterministic(ScriptType preferredScriptType, KeyChainGroupStructure structure,
-                                       long keyRotationTimeSecs, @Nullable KeyParameter aesKey) {
+                                       long keyRotationTimeSecs, @Nullable AesKey aesKey) {
         Instant keyRotationTime = keyRotationTimeSecs > 0 ? Instant.ofEpochSecond(keyRotationTimeSecs) : null;
         upgradeToDeterministic(preferredScriptType, structure, keyRotationTime, aesKey);
     }
 
     /**
-     * Returns true if a call to {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, KeyParameter)} is required
+     * Returns true if a call to {@link #upgradeToDeterministic(ScriptType, KeyChainGroupStructure, long, AesKey)} is required
      * in order to have an active deterministic keychain of the desired script type.
      */
     public boolean isDeterministicUpgradeRequired(ScriptType preferredScriptType, @Nullable Instant keyRotationTime) {
@@ -1108,7 +1108,7 @@ public class KeyChainGroup implements KeyBag {
         }
     }
 
-    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey) {
+    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null)
             builder.append(basic.toString(includePrivateKeys, aesKey, params));

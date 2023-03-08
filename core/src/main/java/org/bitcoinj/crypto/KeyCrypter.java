@@ -17,7 +17,6 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
-import org.bouncycastle.crypto.params.KeyParameter;
 
 /**
  * <p>A KeyCrypter can be used to encrypt and decrypt a message. The sequence of events to encrypt and then decrypt
@@ -41,19 +40,19 @@ public interface KeyCrypter {
     EncryptionType getUnderstoodEncryptionType();
 
     /**
-     * Create a KeyParameter (which typically contains an AES key)
+     * Create an AESKey (which typically contains an AES key)
      * @param password
-     * @return KeyParameter The KeyParameter which typically contains the AES key to use for encrypting and decrypting
+     * @return AESKey which typically contains the AES key to use for encrypting and decrypting
      * @throws KeyCrypterException
      */
-    KeyParameter deriveKey(CharSequence password) throws KeyCrypterException;
+    AesKey deriveKey(CharSequence password) throws KeyCrypterException;
 
     /**
      * Decrypt the provided encrypted bytes, converting them into unencrypted bytes.
      *
      * @throws KeyCrypterException if decryption was unsuccessful.
      */
-    byte[] decrypt(EncryptedData encryptedBytesToDecode, KeyParameter aesKey) throws KeyCrypterException;
+    byte[] decrypt(EncryptedData encryptedBytesToDecode, AesKey aesKey) throws KeyCrypterException;
 
     /**
      * Encrypt the supplied bytes, converting them into ciphertext.
@@ -61,5 +60,5 @@ public interface KeyCrypter {
      * @return encryptedPrivateKey An encryptedPrivateKey containing the encrypted bytes and an initialisation vector.
      * @throws KeyCrypterException if encryption was unsuccessful
      */
-    EncryptedData encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException;
+    EncryptedData encrypt(byte[] plainBytes, AesKey aesKey) throws KeyCrypterException;
 }

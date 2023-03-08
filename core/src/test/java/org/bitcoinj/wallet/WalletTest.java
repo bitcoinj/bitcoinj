@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
@@ -69,7 +70,6 @@ import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -87,7 +87,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -106,7 +105,6 @@ import static org.bitcoinj.base.Coin.MILLICOIN;
 import static org.bitcoinj.base.Coin.SATOSHI;
 import static org.bitcoinj.base.Coin.ZERO;
 import static org.bitcoinj.base.Coin.valueOf;
-import org.bitcoinj.base.utils.ByteUtils;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTxWithoutChangeAddress;
@@ -389,8 +387,8 @@ public class WalletTest extends TestWithWallet {
 
         if (encryptedWallet != null) {
             KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
-            KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
-            KeyParameter wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
+            AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
+            AesKey wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
 
             // Try to create a send with a fee but no password (this should fail).
             try {
@@ -504,7 +502,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, txns.size());
     }
 
-    private Wallet spendUnconfirmedChange(Wallet wallet, Transaction t2, KeyParameter aesKey) throws Exception {
+    private Wallet spendUnconfirmedChange(Wallet wallet, Transaction t2, AesKey aesKey) throws Exception {
         if (wallet.getTransactionSigners().size() == 1)   // don't bother reconfiguring the p2sh wallet
             wallet = roundTrip(wallet);
         Coin v3 = valueOf(0, 50);
@@ -1924,7 +1922,7 @@ public class WalletTest extends TestWithWallet {
         Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
-        KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+        AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
 
         assertEquals(EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
         assertTrue(encryptedWallet.checkPassword(PASSWORD1));
@@ -1965,7 +1963,7 @@ public class WalletTest extends TestWithWallet {
         Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
-        KeyParameter wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
+        AesKey wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
 
         // Check the wallet is currently encrypted
         assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
@@ -1996,10 +1994,10 @@ public class WalletTest extends TestWithWallet {
         encryptedWallet.encrypt(PASSWORD1);
 
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
-        KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+        AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
 
         CharSequence newPassword = "My name is Tom";
-        KeyParameter newAesKey = keyCrypter.deriveKey(newPassword);
+        AesKey newAesKey = keyCrypter.deriveKey(newPassword);
 
         encryptedWallet.changeEncryptionKey(keyCrypter, aesKey, newAesKey);
 
@@ -2012,7 +2010,7 @@ public class WalletTest extends TestWithWallet {
         Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
-        KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+        AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
 
         // Check the wallet is currently encrypted
         assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
@@ -2071,7 +2069,7 @@ public class WalletTest extends TestWithWallet {
         Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
-        KeyParameter aesKey = keyCrypter.deriveKey(PASSWORD1);
+        AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
 
         // Try added an ECKey that was encrypted with a differenct ScryptParameters (i.e. a non-homogenous key).
         // This is not allowed as the ScryptParameters is stored at the Wallet level.
@@ -3247,7 +3245,7 @@ public class WalletTest extends TestWithWallet {
         assertFalse(wallet.isDeterministicUpgradeRequired(ScriptType.P2PKH));
         assertTrue(wallet.isDeterministicUpgradeRequired(ScriptType.P2WPKH));
 
-        KeyParameter aesKey = new KeyCrypterScrypt(SCRYPT_ITERATIONS).deriveKey("abc");
+        AesKey aesKey = new KeyCrypterScrypt(SCRYPT_ITERATIONS).deriveKey("abc");
         wallet.encrypt(new KeyCrypterScrypt(), aesKey);
         assertTrue(wallet.isEncrypted());
         assertEquals(ScriptType.P2PKH, wallet.currentReceiveAddress().getOutputScriptType());

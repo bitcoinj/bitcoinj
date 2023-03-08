@@ -30,7 +30,6 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -48,7 +47,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.bitcoinj.base.utils.ByteUtils;
 import static org.bitcoinj.base.utils.ByteUtils.reverseBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -415,7 +413,7 @@ public class ECKeyTest {
     @Test
     public void keyRecoveryWithEncryptedKey() {
         ECKey unencryptedKey = new ECKey();
-        KeyParameter aesKey =  keyCrypter.deriveKey(PASSWORD1);
+        AesKey aesKey =  keyCrypter.deriveKey(PASSWORD1);
         ECKey encryptedKey = unencryptedKey.encrypt(keyCrypter, aesKey);
 
         String message = "Goodbye Jupiter!";
