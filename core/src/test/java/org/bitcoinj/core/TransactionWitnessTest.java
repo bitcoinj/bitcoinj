@@ -19,7 +19,6 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.SignatureDecodeException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
