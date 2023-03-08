@@ -25,6 +25,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
@@ -40,7 +41,6 @@ import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1188,7 +1188,7 @@ public class Transaction extends ChildMessage {
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
     public TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                   @Nullable KeyParameter aesKey,
+                                                   @Nullable AesKey aesKey,
                                                    byte[] redeemScript,
                                                    SigHash hashType, boolean anyoneCanPay) {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript, hashType, anyoneCanPay);
@@ -1209,7 +1209,7 @@ public class Transaction extends ChildMessage {
      * @return A newly calculated signature object that wraps the r, s and sighash components.
      */
     public TransactionSignature calculateSignature(int inputIndex, ECKey key,
-                                                   @Nullable KeyParameter aesKey,
+                                                   @Nullable AesKey aesKey,
                                                    Script redeemScript,
                                                    SigHash hashType, boolean anyoneCanPay) {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
@@ -1372,7 +1372,7 @@ public class Transaction extends ChildMessage {
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
-            @Nullable KeyParameter aesKey,
+            @Nullable AesKey aesKey,
             byte[] scriptCode,
             Coin value,
             SigHash hashType,
@@ -1384,7 +1384,7 @@ public class Transaction extends ChildMessage {
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
-            @Nullable KeyParameter aesKey,
+            @Nullable AesKey aesKey,
             Script scriptCode,
             Coin value,
             SigHash hashType,

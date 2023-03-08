@@ -17,6 +17,7 @@
 package wallettemplate;
 
 import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.util.concurrent.Service;
@@ -32,7 +33,6 @@ import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 
 import javax.annotation.Nullable;
@@ -61,7 +61,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> overlayUI;
 
-    private KeyParameter aesKey;
+    private AesKey aesKey;
 
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> ui) {
@@ -70,7 +70,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     }
 
     // Note: NOT called by FXMLLoader!
-    public void initialize(@Nullable KeyParameter aesKey) {
+    public void initialize(@Nullable AesKey aesKey) {
         app = WalletApplication.instance();
         DeterministicSeed seed = app.walletAppKit().wallet().getKeyChainSeed();
         if (aesKey == null) {

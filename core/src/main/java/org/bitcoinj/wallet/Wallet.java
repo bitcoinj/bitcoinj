@@ -30,6 +30,7 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.StreamUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Base58;
@@ -98,7 +99,6 @@ import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
 import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -792,7 +792,7 @@ public class Wallet extends BaseTaggableObject
      * to do this will result in an exception being thrown. For non-encrypted wallets, the upgrade will be done for
      * you automatically the first time a new key is requested (this happens when spending due to the change address).
      */
-    public void upgradeToDeterministic(ScriptType outputScriptType, @Nullable KeyParameter aesKey)
+    public void upgradeToDeterministic(ScriptType outputScriptType, @Nullable AesKey aesKey)
             throws DeterministicUpgradeRequiresPassword {
         upgradeToDeterministic(outputScriptType, KeyChainGroupStructure.BIP32, aesKey);
     }
@@ -805,7 +805,7 @@ public class Wallet extends BaseTaggableObject
      * you automatically the first time a new key is requested (this happens when spending due to the change address).
      */
     public void upgradeToDeterministic(ScriptType outputScriptType, KeyChainGroupStructure structure,
-                                       @Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
+                                       @Nullable AesKey aesKey) throws DeterministicUpgradeRequiresPassword {
         keyChainGroupLock.lock();
         try {
             Instant keyRotationTime = vKeyRotationTime;
@@ -817,7 +817,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Returns true if the wallet contains random keys and no HD chains, in which case you should call
-     * {@link #upgradeToDeterministic(ScriptType, KeyParameter)} before attempting to do anything
+     * {@link #upgradeToDeterministic(ScriptType, AesKey)} before attempting to do anything
      * that would require a new address or key.
      */
     public boolean isDeterministicUpgradeRequired(ScriptType outputScriptType) {
@@ -945,7 +945,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Takes a list of keys and an AES key, then encrypts and imports them in one step using the current keycrypter. */
-    public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
+    public int importKeysAndEncrypt(final List<ECKey> keys, AesKey aesKey) {
         keyChainGroupLock.lock();
         try {
             checkNoDeterministicKeys(keys);
@@ -1341,7 +1341,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Convenience wrapper around {@link Wallet#encrypt(KeyCrypter,
-     * org.bouncycastle.crypto.params.KeyParameter)} which uses the default Scrypt key derivation algorithm and
+     * AesKey)} which uses the default Scrypt key derivation algorithm and
      * parameters to derive a key from the given password.
      */
     public void encrypt(CharSequence password) {
@@ -1363,7 +1363,7 @@ public class Wallet extends BaseTaggableObject
      * @param aesKey AES key to use (normally created using KeyCrypter#deriveKey and cached as it is time consuming to create from a password)
      * @throws KeyCrypterException Thrown if the wallet encryption fails. If so, the wallet state is unchanged.
      */
-    public void encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    public void encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
         keyChainGroupLock.lock();
         try {
             keyChainGroup.encrypt(keyCrypter, aesKey);
@@ -1399,7 +1399,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException Thrown if the given aesKey is wrong. If so, the wallet state is unchanged.
      * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
      */
-    public void decrypt(KeyParameter aesKey) throws BadWalletEncryptionKeyException {
+    public void decrypt(AesKey aesKey) throws BadWalletEncryptionKeyException {
         keyChainGroupLock.lock();
         try {
             keyChainGroup.decrypt(aesKey);
@@ -1432,7 +1432,7 @@ public class Wallet extends BaseTaggableObject
      *
      *  @return boolean true if AES key supplied can decrypt the first encrypted private key in the wallet, false otherwise.
      */
-    public boolean checkAESKey(KeyParameter aesKey) {
+    public boolean checkAESKey(AesKey aesKey) {
         keyChainGroupLock.lock();
         try {
             return keyChainGroup.checkAESKey(aesKey);
@@ -1498,7 +1498,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException Thrown if the given currentAesKey is wrong. If so, the wallet state is unchanged.
      * @throws KeyCrypterException Thrown if the wallet decryption fails. If so, the wallet state is unchanged.
      */
-    public void changeEncryptionKey(KeyCrypter keyCrypter, KeyParameter currentAesKey, KeyParameter newAesKey) throws BadWalletEncryptionKeyException {
+    public void changeEncryptionKey(KeyCrypter keyCrypter, AesKey currentAesKey, AesKey newAesKey) throws BadWalletEncryptionKeyException {
         keyChainGroupLock.lock();
         try {
             decrypt(currentAesKey);
@@ -3458,7 +3458,7 @@ public class Wallet extends BaseTaggableObject
      * @param chain If set, will be used to estimate lock times for block time-locked transactions.
      * @return Human-readable wallet debugging information
      */
-    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
+    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey,
             boolean includeTransactions, boolean includeExtensions, @Nullable AbstractBlockChain chain) {
         lock.lock();
         keyChainGroupLock.lock();
@@ -5318,7 +5318,7 @@ public class Wallet extends BaseTaggableObject
      * </p>
      * 
      * <p>
-     * Once set up, calling {@link #doMaintenance(KeyParameter, boolean)} will create and possibly send rotation
+     * Once set up, calling {@link #doMaintenance(AesKey, boolean)} will create and possibly send rotation
      * transactions: but it won't be done automatically (because you might have to ask for the users password). This may
      * need to be repeated regularly in case new coins keep coming in on rotating addresses/keys.
      * </p>
@@ -5392,7 +5392,7 @@ public class Wallet extends BaseTaggableObject
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableCompletableFuture<List<Transaction>> doMaintenance(@Nullable KeyParameter aesKey, boolean signAndSend)
+    public ListenableCompletableFuture<List<Transaction>> doMaintenance(@Nullable AesKey aesKey, boolean signAndSend)
             throws DeterministicUpgradeRequiresPassword {
         return doMaintenance(KeyChainGroupStructure.BIP32, aesKey, signAndSend);
     }
@@ -5413,7 +5413,7 @@ public class Wallet extends BaseTaggableObject
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
     public ListenableCompletableFuture<List<Transaction>> doMaintenance(KeyChainGroupStructure structure,
-            @Nullable KeyParameter aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
+            @Nullable AesKey aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
         keyChainGroupLock.lock();
@@ -5448,7 +5448,7 @@ public class Wallet extends BaseTaggableObject
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.
     @GuardedBy("keyChainGroupLock")
-    private List<Transaction> maybeRotateKeys(KeyChainGroupStructure structure, @Nullable KeyParameter aesKey,
+    private List<Transaction> maybeRotateKeys(KeyChainGroupStructure structure, @Nullable AesKey aesKey,
             boolean sign) throws DeterministicUpgradeRequiresPassword {
         checkState(lock.isHeldByCurrentThread());
         checkState(keyChainGroupLock.isHeldByCurrentThread());
@@ -5525,7 +5525,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     @Nullable
-    private Transaction rekeyOneBatch(Instant time, @Nullable KeyParameter aesKey, List<Transaction> others, boolean sign) {
+    private Transaction rekeyOneBatch(Instant time, @Nullable AesKey aesKey, List<Transaction> others, boolean sign) {
         lock.lock();
         try {
             // Build the transaction using some custom logic for our special needs. Last parameter to

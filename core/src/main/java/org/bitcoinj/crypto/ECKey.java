@@ -59,7 +59,6 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.ECAlgorithms;
@@ -570,7 +569,7 @@ public class ECKey implements EncryptableItem {
      * @throws KeyCrypterException if there's something wrong with aesKey.
      * @throws ECKey.MissingPrivateKeyException if this key cannot sign because it's pubkey only.
      */
-    public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
+    public ECDSASignature sign(Sha256Hash input, @Nullable AesKey aesKey) throws KeyCrypterException {
         KeyCrypter crypter = getKeyCrypter();
         if (crypter != null) {
             if (aesKey == null)
@@ -804,10 +803,10 @@ public class ECKey implements EncryptableItem {
      *
      * @throws IllegalStateException if this ECKey does not have the private part.
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
-     * @deprecated use {@link #signMessage(String, KeyParameter, ScriptType)} instead and specify the correct script type
+     * @deprecated use {@link #signMessage(String, AesKey, ScriptType)} instead and specify the correct script type
      */
     @Deprecated
-    public String signMessage(String message, @Nullable KeyParameter aesKey) throws KeyCrypterException {
+    public String signMessage(String message, @Nullable AesKey aesKey) throws KeyCrypterException {
         return signMessage(message, aesKey, ScriptType.P2PKH);
     }
 
@@ -819,7 +818,7 @@ public class ECKey implements EncryptableItem {
      * @throws IllegalStateException if this ECKey does not have the private part.
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
-    public String signMessage(String message, @Nullable KeyParameter aesKey, ScriptType scriptType) throws KeyCrypterException {
+    public String signMessage(String message, @Nullable AesKey aesKey, ScriptType scriptType) throws KeyCrypterException {
         if (!isCompressed() && (scriptType == ScriptType.P2WPKH || scriptType == ScriptType.P2SH)) {
             throw new IllegalArgumentException("Segwit P2WPKH and P2SH-P2WPKH script types only can be used with compressed keys. See BIP 141.");
         }
@@ -1101,7 +1100,7 @@ public class ECKey implements EncryptableItem {
      * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached as it is slow to create).
      * @return encryptedKey
      */
-    public ECKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+    public ECKey encrypt(KeyCrypter keyCrypter, AesKey aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
         final byte[] privKeyBytes = getPrivKeyBytes();
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
@@ -1118,7 +1117,7 @@ public class ECKey implements EncryptableItem {
      * @param keyCrypter The keyCrypter that specifies exactly how the decrypted bytes are created.
      * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
      */
-    public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+    public ECKey decrypt(KeyCrypter keyCrypter, AesKey aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
@@ -1142,7 +1141,7 @@ public class ECKey implements EncryptableItem {
      *
      * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
      */
-    public ECKey decrypt(KeyParameter aesKey) throws KeyCrypterException {
+    public ECKey decrypt(AesKey aesKey) throws KeyCrypterException {
         final KeyCrypter crypter = getKeyCrypter();
         if (crypter == null)
             throw new KeyCrypterException("No key crypter available");
@@ -1152,7 +1151,7 @@ public class ECKey implements EncryptableItem {
     /**
      * Creates decrypted private key if needed.
      */
-    public ECKey maybeDecrypt(@Nullable KeyParameter aesKey) throws KeyCrypterException {
+    public ECKey maybeDecrypt(@Nullable AesKey aesKey) throws KeyCrypterException {
         return isEncrypted() && aesKey != null ? decrypt(aesKey) : this;
     }
 
@@ -1163,11 +1162,11 @@ public class ECKey implements EncryptableItem {
      * bitcoins controlled by the private key) you can use this method to check when you *encrypt* a wallet that
      * it can definitely be decrypted successfully.</p>
      *
-     * <p>See {@link Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey)} for example usage.</p>
+     * <p>See {@link Wallet#encrypt(KeyCrypter keyCrypter, AesKey aesKey)} for example usage.</p>
      *
      * @return true if the encrypted key can be decrypted back to the original key successfully.
      */
-    public static boolean encryptionIsReversible(ECKey originalKey, ECKey encryptedKey, KeyCrypter keyCrypter, KeyParameter aesKey) {
+    public static boolean encryptionIsReversible(ECKey originalKey, ECKey encryptedKey, KeyCrypter keyCrypter, AesKey aesKey) {
         try {
             ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, aesKey);
             byte[] originalPrivateKeyBytes = originalKey.getPrivKeyBytes();
@@ -1267,17 +1266,17 @@ public class ECKey implements EncryptableItem {
      * Produce a string rendering of the ECKey INCLUDING the private key.
      * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
      */
-    public String toStringWithPrivate(@Nullable KeyParameter aesKey, Network network) {
+    public String toStringWithPrivate(@Nullable AesKey aesKey, Network network) {
         return toString(true, aesKey, network);
     }
 
     /**
      * Produce a string rendering of the ECKey INCLUDING the private key.
      * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
-     * @deprecated Use {@link #toStringWithPrivate(KeyParameter, Network)}
+     * @deprecated Use {@link #toStringWithPrivate(AesKey, Network)}
      */
     @Deprecated
-    public String toStringWithPrivate(@Nullable KeyParameter aesKey, NetworkParameters params) {
+    public String toStringWithPrivate(@Nullable AesKey aesKey, NetworkParameters params) {
         return toStringWithPrivate(aesKey, params.network());
     }
 
@@ -1302,7 +1301,7 @@ public class ECKey implements EncryptableItem {
         return getPrivateKeyAsWiF(params.network());
     }
 
-    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, Network network) {
+    private String toString(boolean includePrivate, @Nullable AesKey aesKey, Network network) {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
@@ -1328,16 +1327,16 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * @deprecated Use {@link #toString(boolean, KeyParameter, Network)}
+     * @deprecated Use {@link #toString(boolean, AesKey, Network)}
      */
     @Deprecated
-    private String toString(boolean includePrivate, @Nullable KeyParameter aesKey, @Nullable NetworkParameters params) {
+    private String toString(boolean includePrivate, @Nullable AesKey aesKey, @Nullable NetworkParameters params) {
         Network network = (params != null) ? params.network() : BitcoinNetwork.MAINNET;
         return toString(includePrivate, aesKey, network);
     }
 
 
-    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
                                      Network network, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:");
         if (outputScriptType != null) {
@@ -1365,10 +1364,10 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * @deprecated Use {@link #formatKeyWithAddress(boolean, KeyParameter, StringBuilder, Network, ScriptType, String)}
+     * @deprecated Use {@link #formatKeyWithAddress(boolean, AesKey, StringBuilder, Network, ScriptType, String)}
      */
     @Deprecated
-    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
                                      NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
         formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), outputScriptType, comment);
     }

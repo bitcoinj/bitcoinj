@@ -135,11 +135,11 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * This is a very slow operation compared to encrypt/ decrypt so it is normally worth caching the result.
      *
      * @param password    The password to use in key generation
-     * @return            The KeyParameter containing the created AES key
+     * @return            The AesKey containing the created AES key
      * @throws            KeyCrypterException
      */
     @Override
-    public KeyParameter deriveKey(CharSequence password) throws KeyCrypterException {
+    public AesKey deriveKey(CharSequence password) throws KeyCrypterException {
         byte[] passwordBytes = null;
         try {
             passwordBytes = convertToByteArray(password);
@@ -155,7 +155,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             Instant start = TimeUtils.currentTime();
             byte[] keyBytes = SCrypt.generate(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
             log.info("Deriving key took {} ms for {}.", TimeUtils.elapsedTime(start).toMillis(), scryptParametersString());
-            return new KeyParameter(keyBytes);
+            return new AesKey(keyBytes);
         } catch (Exception e) {
             throw new KeyCrypterException("Could not generate key from password and salt.", e);
         } finally {
@@ -170,7 +170,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * Password based encryption using AES - CBC 256 bits.
      */
     @Override
-    public EncryptedData encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
+    public EncryptedData encrypt(byte[] plainBytes, AesKey aesKey) throws KeyCrypterException {
         checkNotNull(plainBytes);
         checkNotNull(aesKey);
 
@@ -179,7 +179,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             byte[] iv = new byte[BLOCK_LENGTH];
             secureRandom.nextBytes(iv);
 
-            ParametersWithIV keyWithIv = new ParametersWithIV(aesKey, iv);
+            ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.bytes()), iv);
 
             // Encrypt using AES.
             BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
@@ -203,12 +203,12 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * @throws                 KeyCrypterException if bytes could not be decrypted
      */
     @Override
-    public byte[] decrypt(EncryptedData dataToDecrypt, KeyParameter aesKey) throws KeyCrypterException {
+    public byte[] decrypt(EncryptedData dataToDecrypt, AesKey aesKey) throws KeyCrypterException {
         checkNotNull(dataToDecrypt);
         checkNotNull(aesKey);
 
         try {
-            ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.getKey()), dataToDecrypt.initialisationVector);
+            ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.bytes()), dataToDecrypt.initialisationVector);
 
             // Decrypt the message.
             BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));

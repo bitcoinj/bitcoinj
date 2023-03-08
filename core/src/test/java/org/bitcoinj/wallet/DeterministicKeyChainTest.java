@@ -22,6 +22,7 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
@@ -34,7 +35,6 @@ import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -356,7 +356,7 @@ public class DeterministicKeyChainTest {
         assertFalse(key1.isEncrypted());
         assertTrue(encKey1.isEncrypted());
         assertEquals(encKey1.getPubKeyPoint(), key1.getPubKeyPoint());
-        final KeyParameter aesKey = checkNotNull(encChain.getKeyCrypter()).deriveKey("open secret");
+        final AesKey aesKey = checkNotNull(encChain.getKeyCrypter()).deriveKey("open secret");
         encKey1.sign(Sha256Hash.ZERO_HASH, aesKey);
         encKey2.sign(Sha256Hash.ZERO_HASH, aesKey);
         assertTrue(encChain.checkAESKey(aesKey));

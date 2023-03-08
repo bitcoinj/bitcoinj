@@ -20,12 +20,12 @@ package org.bitcoinj.wallet;
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.EncryptableItem;
 import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
-import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
@@ -193,7 +193,7 @@ public class DeterministicSeed implements EncryptableItem {
         this.creationTimeSeconds = creationTimeSeconds;
     }
 
-    public DeterministicSeed encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    public DeterministicSeed encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
         checkState(encryptedMnemonicCode == null, "Trying to encrypt seed twice");
         checkState(mnemonicCode != null, "Mnemonic missing so cannot encrypt");
         EncryptedData encryptedMnemonic = keyCrypter.encrypt(getMnemonicAsBytes(), aesKey);
@@ -205,7 +205,7 @@ public class DeterministicSeed implements EncryptableItem {
         return getMnemonicString().getBytes(StandardCharsets.UTF_8);
     }
 
-    public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, KeyParameter aesKey) {
+    public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, AesKey aesKey) {
         checkState(isEncrypted());
         checkNotNull(encryptedMnemonicCode);
         List<String> mnemonic = decodeMnemonicCode(crypter.decrypt(encryptedMnemonicCode, aesKey));

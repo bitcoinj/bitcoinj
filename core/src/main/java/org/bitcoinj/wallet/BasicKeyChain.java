@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.protobuf.ByteString;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -29,12 +30,10 @@ import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bouncycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -462,7 +461,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     /**
      * Convenience wrapper around {@link #toEncrypted(KeyCrypter,
-     * org.bouncycastle.crypto.params.KeyParameter)} which uses the default Scrypt key derivation algorithm and
+     * AesKey)} which uses the default Scrypt key derivation algorithm and
      * parameters, derives a key from the given password and returns the created key.
      */
     @Override
@@ -470,7 +469,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         checkNotNull(password);
         checkArgument(password.length() > 0);
         KeyCrypter scrypt = new KeyCrypterScrypt();
-        KeyParameter derivedKey = scrypt.deriveKey(password);
+        AesKey derivedKey = scrypt.deriveKey(password);
         return toEncrypted(scrypt, derivedKey);
     }
 
@@ -484,7 +483,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @throws KeyCrypterException Thrown if the wallet encryption fails. If so, the wallet state is unchanged.
      */
     @Override
-    public BasicKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    public BasicKeyChain toEncrypted(KeyCrypter keyCrypter, AesKey aesKey) {
         lock.lock();
         try {
             checkNotNull(keyCrypter);
@@ -513,12 +512,12 @@ public class BasicKeyChain implements EncryptableKeyChain {
     @Override
     public BasicKeyChain toDecrypted(CharSequence password) {
         checkNotNull(keyCrypter, "Wallet is already decrypted");
-        KeyParameter aesKey = keyCrypter.deriveKey(password);
+        AesKey aesKey = keyCrypter.deriveKey(password);
         return toDecrypted(aesKey);
     }
 
     @Override
-    public BasicKeyChain toDecrypted(KeyParameter aesKey) {
+    public BasicKeyChain toDecrypted(AesKey aesKey) {
         lock.lock();
         try {
             checkState(keyCrypter != null, "Wallet is already decrypted");
@@ -555,7 +554,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @return true if AES key supplied can decrypt the first encrypted private key in the wallet, false otherwise.
      */
     @Override
-    public boolean checkAESKey(KeyParameter aesKey) {
+    public boolean checkAESKey(AesKey aesKey) {
         lock.lock();
         try {
             // If no keys then cannot decrypt.
@@ -652,7 +651,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    public String toString(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
+    public String toString(boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
         final StringBuilder builder = new StringBuilder();
         List<ECKey> keys = getKeys();
         Collections.sort(keys, ECKey.AGE_COMPARATOR);

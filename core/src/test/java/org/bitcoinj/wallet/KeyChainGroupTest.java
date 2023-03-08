@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -33,7 +34,6 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,7 +59,7 @@ public class KeyChainGroupTest {
     private static final String XPUB = "xpub68KFnj3bqUx1s7mHejLDBPywCAKdJEu1b49uniEEn2WSbHmZ7xbLqFTjJbtx1LUcAt1DwhoqWHmo2s5WMJp6wi38CiF2hYD49qVViKVvAoi";
     private static final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
     private static final KeyCrypterScrypt KEY_CRYPTER = new KeyCrypterScrypt(2);
-    private static final KeyParameter AES_KEY = KEY_CRYPTER.deriveKey("password");
+    private static final AesKey AES_KEY = KEY_CRYPTER.deriveKey("password");
     private KeyChainGroup group;
     private DeterministicKey watchingAccountKey;
 

@@ -20,6 +20,7 @@ package org.bitcoinj.wallettool;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.*;
@@ -38,7 +39,6 @@ import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
 
-import com.google.common.io.BaseEncoding;
 import com.google.common.io.Resources;
 import com.google.protobuf.ByteString;
 
@@ -78,7 +78,6 @@ import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
 import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.bouncycastle.crypto.params.KeyParameter;
 import picocli.CommandLine;
 
 import javax.annotation.Nullable;
@@ -574,7 +573,7 @@ public class WalletTool implements Callable<Integer> {
                             + " to " + outputScriptType);
             return;
         }
-        KeyParameter aesKey = null;
+        AesKey aesKey = null;
         if (wallet.isEncrypted()) {
             aesKey = passwordToKey(true);
             if (aesKey == null)
@@ -597,7 +596,7 @@ public class WalletTool implements Callable<Integer> {
         }
         log.info("Setting wallet key rotation time to {}", rotationTimeSecs);
         wallet.setKeyRotationTime(rotationTimeSecs);
-        KeyParameter aesKey = null;
+        AesKey aesKey = null;
         if (wallet.isEncrypted()) {
             aesKey = passwordToKey(true);
             if (aesKey == null)
@@ -1157,7 +1156,7 @@ public class WalletTool implements Callable<Integer> {
         }
         try {
             if (wallet.isEncrypted()) {
-                KeyParameter aesKey = passwordToKey(true);
+                AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return;   // Error message already printed.
                 key = key.encrypt(checkNotNull(wallet.getKeyCrypter()), aesKey);
@@ -1177,7 +1176,7 @@ public class WalletTool implements Callable<Integer> {
     }
 
     @Nullable
-    private KeyParameter passwordToKey(boolean printError) {
+    private AesKey passwordToKey(boolean printError) {
         if (password == null) {
             if (printError)
                 System.err.println("You must provide a password.");
@@ -1258,7 +1257,7 @@ public class WalletTool implements Callable<Integer> {
 
         if (dumpPrivKeys && wallet.isEncrypted()) {
             if (password != null) {
-                final KeyParameter aesKey = passwordToKey(true);
+                final AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return; // Error message already printed.
                 printWallet( aesKey);
@@ -1271,7 +1270,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void printWallet(@Nullable KeyParameter aesKey) {
+    private void printWallet(@Nullable AesKey aesKey) {
         System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, aesKey, true, true, chain));
     }
 

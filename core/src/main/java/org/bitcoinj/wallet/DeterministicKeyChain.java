@@ -21,6 +21,7 @@ import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.utils.ByteUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.core.BloomFilter;
@@ -42,7 +43,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -401,12 +401,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /**
-     * For use in encryption when {@link #toEncrypted(KeyCrypter, KeyParameter)} is called, so that
+     * For use in encryption when {@link #toEncrypted(KeyCrypter, AesKey)} is called, so that
      * subclasses can override that method and create an instance of the right class.
      *
      * See also {@link #makeKeyChainFromSeed(DeterministicSeed, List, ScriptType)}
      */
-    protected DeterministicKeyChain(KeyCrypter crypter, KeyParameter aesKey, DeterministicKeyChain chain) {
+    protected DeterministicKeyChain(KeyCrypter crypter, AesKey aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
         checkNotNull(chain.rootKey);
         checkNotNull(chain.seed);
@@ -453,7 +453,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return outputScriptType;
     }
 
-    private DeterministicKey encryptNonLeaf(KeyParameter aesKey, DeterministicKeyChain chain,
+    private DeterministicKey encryptNonLeaf(AesKey aesKey, DeterministicKeyChain chain,
                                             DeterministicKey parent, List<ChildNumber> path) {
         DeterministicKey key = chain.hierarchy.get(path, false, false);
         key = key.encrypt(checkNotNull(basicKeyChain.getKeyCrypter()), aesKey, parent);
@@ -1017,12 +1017,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(seed != null, "Attempt to encrypt a watching chain.");
         checkState(!seed.isEncrypted());
         KeyCrypter scrypt = new KeyCrypterScrypt();
-        KeyParameter derivedKey = scrypt.deriveKey(password);
+        AesKey derivedKey = scrypt.deriveKey(password);
         return toEncrypted(scrypt, derivedKey);
     }
 
     @Override
-    public DeterministicKeyChain toEncrypted(KeyCrypter keyCrypter, KeyParameter aesKey) {
+    public DeterministicKeyChain toEncrypted(KeyCrypter keyCrypter, AesKey aesKey) {
         return new DeterministicKeyChain(keyCrypter, aesKey, this);
     }
 
@@ -1032,12 +1032,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkArgument(password.length() > 0);
         KeyCrypter crypter = getKeyCrypter();
         checkState(crypter != null, "Chain not encrypted");
-        KeyParameter derivedKey = crypter.deriveKey(password);
+        AesKey derivedKey = crypter.deriveKey(password);
         return toDecrypted(derivedKey);
     }
 
     @Override
-    public DeterministicKeyChain toDecrypted(KeyParameter aesKey) {
+    public DeterministicKeyChain toDecrypted(AesKey aesKey) {
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
         checkState(seed != null, "Can't decrypt a watching chain");
         checkState(seed.isEncrypted());
@@ -1080,7 +1080,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     @Override
-    public boolean checkAESKey(KeyParameter aesKey) {
+    public boolean checkAESKey(AesKey aesKey) {
         checkState(rootKey != null, "Can't check password for a watching chain");
         checkNotNull(aesKey);
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
@@ -1422,7 +1422,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return helper.toString();
     }
 
-    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params) {
+    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
         final DeterministicKey watchingKey = getWatchingKey();
         final StringBuilder builder = new StringBuilder();
         if (seed != null) {
@@ -1451,7 +1451,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return builder.toString();
     }
 
-    protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable KeyParameter aesKey,
+    protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey,
             NetworkParameters params, StringBuilder builder) {
         for (DeterministicKey key : getKeys(includeLookahead, true)) {
             String comment = null;

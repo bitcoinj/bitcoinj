@@ -17,6 +17,7 @@
 package wallettemplate;
 
 import javafx.application.Platform;
+import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -35,7 +36,6 @@ import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
 
 import java.time.Duration;
@@ -61,7 +61,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> overlayUI;
 
-    private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
+    private SimpleObjectProperty<AesKey> aesKey = new SimpleObjectProperty<>();
 
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> ui) {
@@ -86,7 +86,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
-            protected final void onFinish(KeyParameter aesKey, int timeTakenMsec) {
+            protected final void onFinish(AesKey aesKey, int timeTakenMsec) {
                 checkGuiThread();
                 if (app.walletAppKit().wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
@@ -114,7 +114,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
         overlayUI.done();
     }
 
-    public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty() {
+    public ReadOnlyObjectProperty<AesKey> aesKeyProperty() {
         return aesKey;
     }
 
