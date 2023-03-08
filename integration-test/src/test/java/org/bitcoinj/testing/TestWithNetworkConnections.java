@@ -22,7 +22,6 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
@@ -72,7 +71,6 @@ public class TestWithNetworkConnections {
     protected BlockStore blockStore;
     protected BlockChain blockChain;
     protected Wallet wallet;
-    protected ECKey key;
     protected Address address;
     protected SocketAddress socketAddress;
 
@@ -111,8 +109,7 @@ public class TestWithNetworkConnections {
             KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST).lookaheadSize(4).lookaheadThreshold(2)
                     .fromRandom(ScriptType.P2PKH).build();
             wallet = new Wallet(UNITTEST, kcg);
-            key = wallet.freshReceiveKey();
-            address = key.toAddress(ScriptType.P2PKH, UNITTEST.network());
+            address = wallet.freshReceiveAddress(ScriptType.P2PKH);
         }
         blockChain = new BlockChain(UNITTEST, wallet, blockStore);
 
