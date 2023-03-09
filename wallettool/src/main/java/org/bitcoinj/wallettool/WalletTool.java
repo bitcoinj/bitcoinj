@@ -1078,7 +1078,7 @@ public class WalletTool implements Callable<Integer> {
             // Parse as mnemonic code.
             final List<String> split = splitMnemonic(seedStr);
             String passphrase = ""; // TODO allow user to specify a passphrase
-            seed = DeterministicSeed.fromMnemonic(split, passphrase, creationTimeSecs);
+            seed = DeterministicSeed.ofMnemonic(split, passphrase, creationTimeSecs);
             try {
                 seed.check();
             } catch (MnemonicException.MnemonicLengthException e) {

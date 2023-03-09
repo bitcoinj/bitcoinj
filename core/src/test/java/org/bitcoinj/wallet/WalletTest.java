@@ -219,7 +219,7 @@ public class WalletTest extends TestWithWallet {
     public void encryptDecryptWalletWithArbitraryPathAndScriptType() throws Exception {
         final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
         KeyChainGroup keyChainGroup = KeyChainGroup.builder(TESTNET)
-                .addChain(DeterministicKeyChain.builder().seed(DeterministicSeed.fromEntropy(ENTROPY, "", 1389353062L))
+                .addChain(DeterministicKeyChain.builder().seed(DeterministicSeed.ofEntropy(ENTROPY, "", 1389353062L))
                         .outputScriptType(ScriptType.P2WPKH)
                         .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).build())
                 .build();
@@ -3530,7 +3530,7 @@ public class WalletTest extends TestWithWallet {
     public void roundtripViaMnemonicCode() {
         Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
         List<String> mnemonicCode = wallet.getKeyChainSeed().getMnemonicCode();
-        final DeterministicSeed clonedSeed = DeterministicSeed.fromMnemonic(mnemonicCode, "",
+        final DeterministicSeed clonedSeed = DeterministicSeed.ofMnemonic(mnemonicCode, "",
                 wallet.getEarliestKeyCreationTimeInstant().getEpochSecond());
         Wallet clone = Wallet.fromSeed(TESTNET, clonedSeed, ScriptType.P2WPKH);
         assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());

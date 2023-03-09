@@ -47,7 +47,7 @@ public class RestoreFromSeed {
         String passphrase = "";
         Long creationtime = 1409478661L;
 
-        DeterministicSeed seed = DeterministicSeed.fromMnemonic(seedCode, passphrase, creationtime);
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic(seedCode, passphrase, creationtime);
 
         // The wallet class provides a easy fromSeed() function that loads a new wallet from a given seed.
         Wallet wallet = Wallet.fromSeed(params, seed, ScriptType.P2PKH);

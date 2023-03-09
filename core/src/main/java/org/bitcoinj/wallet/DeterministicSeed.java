@@ -61,7 +61,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      * @param creationTimeSecs when the seed was originally created, UNIX time in seconds
      */
-    public static DeterministicSeed fromMnemonic(String mnemonicCode, String passphrase, long creationTimeSecs) {
+    public static DeterministicSeed ofMnemonic(String mnemonicCode, String passphrase, long creationTimeSecs) {
         return new DeterministicSeed(mnemonicCode, null, passphrase, creationTimeSecs);
     }
 
@@ -72,7 +72,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      * @param creationTimeSecs when the seed was originally created, UNIX time in seconds
      */
-    public static DeterministicSeed fromMnemonic(List<String> mnemonicCode, String passphrase, long creationTimeSecs) {
+    public static DeterministicSeed ofMnemonic(List<String> mnemonicCode, String passphrase, long creationTimeSecs) {
         return new DeterministicSeed(mnemonicCode, null, passphrase, creationTimeSecs);
     }
 
@@ -83,7 +83,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      * @param creationTimeSecs when the seed was originally created, UNIX time in seconds
      */
-    public static DeterministicSeed fromEntropy(byte[] entropy, String passphrase, long creationTimeSecs) {
+    public static DeterministicSeed ofEntropy(byte[] entropy, String passphrase, long creationTimeSecs) {
         return new DeterministicSeed(entropy, passphrase, creationTimeSecs);
     }
 
@@ -94,13 +94,13 @@ public class DeterministicSeed implements EncryptableItem {
      * @param bits number of bits of entropy, must be at least 128 bits and a multiple of 32 bits
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
-    public static DeterministicSeed fromRandom(SecureRandom random, int bits, String passphrase) {
+    public static DeterministicSeed ofRandom(SecureRandom random, int bits, String passphrase) {
         return new DeterministicSeed(random, bits, passphrase);
     }
 
     /**
      * Internal use only – will be restricted to private in a future release.
-     * Use {@link #fromMnemonic(String, String, long)}  instead.
+     * Use {@link #ofMnemonic(String, String, long)}  instead.
      */
     public DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, long creationTimeSeconds) {
         this(decodeMnemonicCode(mnemonicString), seed, passphrase, creationTimeSeconds);
@@ -126,7 +126,7 @@ public class DeterministicSeed implements EncryptableItem {
 
     /**
      * Internal use only – will be restricted to private in a future release.
-     * Use {@link #fromMnemonic(List, String, long)}  instead.
+     * Use {@link #ofMnemonic(List, String, long)}  instead.
      */
     public DeterministicSeed(List<String> mnemonicCode, @Nullable byte[] seed, String passphrase, long creationTimeSeconds) {
         this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, checkNotNull(passphrase))), mnemonicCode, creationTimeSeconds);
@@ -134,7 +134,7 @@ public class DeterministicSeed implements EncryptableItem {
 
     /**
      * Internal use only – will be restricted to private in a future release.
-     * Use {@link #fromRandom(SecureRandom, int, String)} instead.
+     * Use {@link #ofRandom(SecureRandom, int, String)} instead.
      */
     public DeterministicSeed(SecureRandom random, int bits, String passphrase) {
         this(getEntropy(random, bits), checkNotNull(passphrase), TimeUtils.currentTimeSeconds());
@@ -142,7 +142,7 @@ public class DeterministicSeed implements EncryptableItem {
 
     /**
      * Internal use only – will be restricted to private in a future release.
-     * Use {@link #fromEntropy(byte[], String, long)}  instead.
+     * Use {@link #ofEntropy(byte[], String, long)}  instead.
      */
     public DeterministicSeed(byte[] entropy, String passphrase, long creationTimeSeconds) {
         checkArgument(entropy.length * 8 >= DEFAULT_SEED_ENTROPY_BITS, "entropy size too small");

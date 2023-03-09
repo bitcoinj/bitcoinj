@@ -180,7 +180,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         app.mainWindowController().restoreFromSeedAnimation();
 
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
-        DeterministicSeed seed = DeterministicSeed.fromMnemonic(InternalUtils.splitter(" ").splitToList(wordsArea.getText()),"", birthday);
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic(InternalUtils.splitter(" ").splitToList(wordsArea.getText()),"", birthday);
         // Shut down bitcoinj and restart it with the new seed.
         app.walletAppKit().addListener(new Service.Listener() {
             @Override
