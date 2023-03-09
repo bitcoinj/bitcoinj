@@ -61,7 +61,7 @@ task generateManpageAsciiDoc(type: JavaExec) {
     } else {
         classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
     }
-    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+    mainClass = 'picocli.codegen.docgen.manpage.ManPageGenerator'
     args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
 }
 
