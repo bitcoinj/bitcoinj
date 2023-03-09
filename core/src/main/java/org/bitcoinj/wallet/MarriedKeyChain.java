@@ -103,9 +103,9 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
             MarriedKeyChain chain;
             if (random != null)
-                chain = new MarriedKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null, outputScriptType, accountPath);
+                chain = new MarriedKeyChain(DeterministicSeed.ofRandom(random, bits, getPassphrase()), null, outputScriptType, accountPath);
             else if (entropy != null)
-                chain = new MarriedKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs), null,
+                chain = new MarriedKeyChain(DeterministicSeed.ofEntropy(entropy, getPassphrase(), creationTimeSecs), null,
                         outputScriptType, accountPath);
             else if (seed != null)
                 chain = new MarriedKeyChain(seed, null, outputScriptType, accountPath);
