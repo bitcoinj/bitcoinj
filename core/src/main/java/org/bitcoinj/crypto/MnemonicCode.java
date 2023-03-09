@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.bitcoinj.base.utils.ByteUtils;
 
@@ -201,13 +202,11 @@ public class MnemonicCode {
 
     /**
      * Convert entropy data to mnemonic word list.
+     * @param entropy entropy bits, length must be a multiple of 32 bits
      */
-    public List<String> toMnemonic(byte[] entropy) throws MnemonicException.MnemonicLengthException {
-        if (entropy.length % 4 > 0)
-            throw new MnemonicException.MnemonicLengthException("Entropy length not multiple of 32 bits.");
-
-        if (entropy.length == 0)
-            throw new MnemonicException.MnemonicLengthException("Entropy is empty.");
+    public List<String> toMnemonic(byte[] entropy) {
+        checkArgument(entropy.length % 4 == 0, "entropy length not multiple of 32 bits");
+        checkArgument(entropy.length > 0, "entropy is empty");
 
         // We take initial entropy of ENT bits and compute its
         // checksum by taking first ENT / 32 bits of its SHA256 hash.

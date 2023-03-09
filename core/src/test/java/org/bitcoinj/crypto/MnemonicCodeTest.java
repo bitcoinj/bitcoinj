@@ -58,7 +58,7 @@ public class MnemonicCodeTest {
         wordList.remove(0);
     }
 
-    @Test(expected = MnemonicException.MnemonicLengthException.class)
+    @Test(expected = RuntimeException.class)
     public void testBadEntropyLength() throws Exception {
         byte[] entropy = ByteUtils.parseHex("7f7f7f7f7f7f7f7f7f7f7f7f7f7f");
         mc.toMnemonic(entropy);
@@ -88,7 +88,7 @@ public class MnemonicCodeTest {
         mc.check(words);
     }
 
-    @Test(expected = MnemonicException.MnemonicLengthException.class)
+    @Test(expected = RuntimeException.class)
     public void testEmptyEntropy() throws Exception {
         byte[] entropy = {};
         mc.toMnemonic(entropy);
