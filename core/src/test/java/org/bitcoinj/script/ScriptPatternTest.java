@@ -19,12 +19,17 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.utils.ByteUtils;
+import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -91,5 +96,20 @@ public class ScriptPatternTest {
         assertTrue(ScriptPattern.isOpReturn(
                 ScriptBuilder.createOpReturnScript(new byte[10])
         ));
+    }
+
+    @Test
+    public void p2shScriptHashFromKeys() {
+        // import some keys from this example: https://gist.github.com/gavinandresen/3966071
+        ECKey key1 = DumpedPrivateKey.fromBase58(MAINNET, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();
+        key1 = ECKey.fromPrivate(key1.getPrivKeyBytes());
+        ECKey key2 = DumpedPrivateKey.fromBase58(MAINNET, "5Jb7fCeh1Wtm4yBBg3q3XbT6B525i17kVhy3vMC9AqfR6FH2qGk").getKey();
+        key2 = ECKey.fromPrivate(key2.getPrivKeyBytes());
+        ECKey key3 = DumpedPrivateKey.fromBase58(MAINNET, "5JFjmGo5Fww9p8gvx48qBYDJNAzR9pmH5S389axMtDyPT8ddqmw").getKey();
+        key3 = ECKey.fromPrivate(key3.getPrivKeyBytes());
+        List<ECKey> keys = Arrays.asList(key1, key2, key3);
+        Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
+        byte[] p2shScriptHash = ScriptPattern.extractHashFromP2SH(p2shScript);
+        assertEquals("defdb71910720a2c854529019189228b4245eddd", ByteUtils.formatHex(p2shScriptHash));
     }
 }
