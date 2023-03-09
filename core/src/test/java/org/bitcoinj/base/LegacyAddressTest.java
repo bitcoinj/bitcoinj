@@ -229,7 +229,7 @@ public class LegacyAddressTest {
     }
 
     @Test
-    public void p2shAddressCreationFromKeys() {
+    public void p2shScriptHashFromKeys() {
         // import some keys from this example: https://gist.github.com/gavinandresen/3966071
         ECKey key1 = DumpedPrivateKey.fromBase58(MAINNET, "5JaTXbAUmfPYZFRwrYaALK48fN6sFJp4rHqq2QSXs8ucfpE4yQU").getKey();
         key1 = ECKey.fromPrivate(key1.getPrivKeyBytes());
@@ -237,11 +237,16 @@ public class LegacyAddressTest {
         key2 = ECKey.fromPrivate(key2.getPrivKeyBytes());
         ECKey key3 = DumpedPrivateKey.fromBase58(MAINNET, "5JFjmGo5Fww9p8gvx48qBYDJNAzR9pmH5S389axMtDyPT8ddqmw").getKey();
         key3 = ECKey.fromPrivate(key3.getPrivKeyBytes());
-
         List<ECKey> keys = Arrays.asList(key1, key2, key3);
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
-        LegacyAddress address = LegacyAddress.fromScriptHash(MAINNET,
-                ScriptPattern.extractHashFromP2SH(p2shScript));
+        byte[] p2shScriptHash = ScriptPattern.extractHashFromP2SH(p2shScript);
+        assertEquals("defdb71910720a2c854529019189228b4245eddd", ByteUtils.formatHex(p2shScriptHash));
+    }
+
+    @Test
+    public void p2shAddressFromScriptHash() {
+        byte[] p2shScriptHash = ByteUtils.parseHex("defdb71910720a2c854529019189228b4245eddd");
+        LegacyAddress address = LegacyAddress.fromScriptHash(MAINNET, p2shScriptHash);
         assertEquals("3N25saC4dT24RphDAwLtD8LUN4E2gZPJke", address.toString());
     }
 
