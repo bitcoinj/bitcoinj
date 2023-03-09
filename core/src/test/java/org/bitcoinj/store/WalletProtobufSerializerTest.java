@@ -67,6 +67,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -93,7 +94,7 @@ public class WalletProtobufSerializerTest {
     private Wallet myWallet;
 
     public static String WALLET_DESCRIPTION  = "The quick brown fox lives in \u4f26\u6566"; // Beijing in Chinese
-    private long mScriptCreationTime;
+    private Instant mScriptCreationTime;
 
     @BeforeClass
     public static void setUpClass() {
@@ -110,7 +111,7 @@ public class WalletProtobufSerializerTest {
         myAddress = myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         myWallet = new Wallet(TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build());
         myWallet.importKey(myKey);
-        mScriptCreationTime = new Date().getTime() / 1000 - 1234;
+        mScriptCreationTime = TimeUtils.currentTime().minusSeconds(1234);
         myWallet.addWatchedAddress(myWatchedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), mScriptCreationTime);
         myWallet.setDescription(WALLET_DESCRIPTION);
     }
@@ -125,8 +126,8 @@ public class WalletProtobufSerializerTest {
         assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
         assertEquals(myKey.getCreationTimeSeconds(), foundKey.getCreationTimeSeconds());
-        assertEquals(mScriptCreationTime,
-                wallet1.getWatchedScripts().get(0).getCreationTimeSeconds());
+        assertEquals(mScriptCreationTime.truncatedTo(ChronoUnit.MILLIS),
+                wallet1.getWatchedScripts().get(0).getCreationTime().get());
         assertEquals(1, wallet1.getWatchedScripts().size());
         assertEquals(ScriptBuilder.createOutputScript(myWatchedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)),
                 wallet1.getWatchedScripts().get(0));

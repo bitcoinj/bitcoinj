@@ -641,7 +641,7 @@ public class WalletTool implements Callable<Integer> {
         try {
             Address address = LegacyAddress.fromBase58(params.network(), addrStr);
             // If no creation time is specified, assume genesis (zero).
-            wallet.addWatchedAddress(address, getCreationTimeSeconds());
+            wallet.addWatchedAddress(address, Instant.ofEpochSecond(getCreationTimeSeconds()));
         } catch (AddressFormatException e) {
             System.err.println("Could not parse given address, or wrong network: " + addrStr);
         }

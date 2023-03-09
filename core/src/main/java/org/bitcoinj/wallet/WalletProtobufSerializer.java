@@ -189,7 +189,7 @@ public class WalletProtobufSerializer {
             Protos.Script protoScript =
                     Protos.Script.newBuilder()
                             .setProgram(ByteString.copyFrom(script.getProgram()))
-                            .setCreationTimestamp(script.getCreationTimeSeconds() * 1000)
+                            .setCreationTimestamp(script.getCreationTime().orElse(Instant.EPOCH).toEpochMilli())
                             .build();
 
             walletBuilder.addWatchedScript(protoScript);
@@ -502,9 +502,13 @@ public class WalletProtobufSerializer {
         List<Script> scripts = new ArrayList<>();
         for (Protos.Script protoScript : walletProto.getWatchedScriptList()) {
             try {
-                Script script =
-                        new Script(protoScript.getProgram().toByteArray(),
-                                protoScript.getCreationTimestamp() / 1000);
+                long creationTimestamp = protoScript.getCreationTimestamp();
+                byte[] programBytes = protoScript.getProgram().toByteArray();
+                Script script;
+                if (creationTimestamp > 0)
+                    script = new Script(programBytes, Instant.ofEpochMilli(creationTimestamp));
+                else
+                    script = new Script(programBytes);
                 scripts.add(script);
             } catch (ScriptException e) {
                 throw new UnreadableWalletException("Unparseable script in wallet");

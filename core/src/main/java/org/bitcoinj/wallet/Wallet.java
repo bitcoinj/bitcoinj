@@ -1038,36 +1038,67 @@ public class Wallet extends BaseTaggableObject
      * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
      */
     public boolean addWatchedAddress(final Address address) {
-        long now = TimeUtils.currentTimeSeconds();
+        Instant now = TimeUtils.currentTime();
         return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
     }
 
     /**
      * Adds the given address to the wallet to be watched. Outputs can be retrieved by {@link #getWatchedOutputs(boolean)}.
      *
-     * @param creationTime creation time in seconds since the epoch, for scanning the blockchain
+     * @param creationTime creation time, for scanning the blockchain
      * @return whether the address was added successfully (not already present)
      */
-    public boolean addWatchedAddress(final Address address, long creationTime) {
+    public boolean addWatchedAddress(final Address address, Instant creationTime) {
         return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
     }
 
+    /** @deprecated use {@link #addWatchedAddress(Address, Instant)} or {@link #addWatchedAddress(Address)} */
+    @Deprecated
+    public boolean addWatchedAddress(final Address address, long creationTime) {
+        return creationTime > 0 ?
+                addWatchedAddress(address, Instant.ofEpochSecond(creationTime)) :
+                addWatchedAddress(address);
+    }
+
     /**
-     * Adds the given address to the wallet to be watched. Outputs can be retrieved
+     * Adds the given addresses to the wallet to be watched. Outputs can be retrieved
      * by {@link #getWatchedOutputs(boolean)}.
-     *
+     * @param addresses addresses to be watched
+     * @param creationTime creation time of the addresses
      * @return how many addresses were added successfully
      */
-    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
+    public int addWatchedAddresses(final List<Address> addresses, Instant creationTime) {
         List<Script> scripts = new ArrayList<>();
-
         for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
-            script.setCreationTimeSeconds(creationTime);
+            script.setCreationTime(creationTime);
             scripts.add(script);
         }
-
         return addWatchedScripts(scripts);
+    }
+
+    /**
+     * Adds the given addresses to the wallet to be watched. Outputs can be retrieved
+     * by {@link #getWatchedOutputs(boolean)}. Use this if the creation time of the addresses is unknown.
+     * @param addresses addresses to be watched
+     * @return how many addresses were added successfully
+     */
+    public int addWatchedAddresses(final List<Address> addresses) {
+        List<Script> scripts = new ArrayList<>();
+        for (Address address : addresses) {
+            Script script = ScriptBuilder.createOutputScript(address);
+            script.clearCreationTime();
+            scripts.add(script);
+        }
+        return addWatchedScripts(scripts);
+    }
+
+    /** @deprecated use {@link #addWatchedAddresses(List, Instant)} or {@link #addWatchedAddresses(List)} */
+    @Deprecated
+    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
+        return creationTime > 0 ?
+                addWatchedAddresses(addresses, creationTime) :
+                addWatchedAddresses(addresses);
     }
 
     /**
@@ -1088,7 +1119,7 @@ public class Wallet extends BaseTaggableObject
                 // a script in the wallet with an incorrect creation time.
                 if (watchedScripts.contains(script))
                     watchedScripts.remove(script);
-                if (script.getCreationTimeSeconds() == 0)
+                if (!script.getCreationTime().isPresent())
                     log.warn("Adding a script to the wallet with a creation time of zero, this will disable the checkpointing optimization!    {}", script);
                 watchedScripts.add(script);
                 added++;
@@ -3596,7 +3627,7 @@ public class Wallet extends BaseTaggableObject
         try {
             Instant earliestTime = keyChainGroup.getEarliestKeyCreationTimeInstant();
             for (Script script : watchedScripts)
-                earliestTime = TimeUtils.earlier(Instant.ofEpochSecond(script.getCreationTimeSeconds()), earliestTime);
+                earliestTime = TimeUtils.earlier(script.getCreationTime().orElse(Instant.EPOCH), earliestTime);
             return earliestTime;
         } finally {
             keyChainGroupLock.unlock();

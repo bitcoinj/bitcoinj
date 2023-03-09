@@ -54,6 +54,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,6 +62,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -222,8 +224,8 @@ public class Script {
     // must preserve the exact bytes that we read off the wire, along with the parsed form.
     protected byte[] program;
 
-    // Creation time of the associated keys in seconds since the epoch.
-    private long creationTimeSeconds;
+    // Creation time of the associated keys, or null if unknown.
+    @Nullable private Instant creationTime;
 
     /** Creates an empty script that serializes to nothing. */
     private Script() {
@@ -233,32 +235,71 @@ public class Script {
     // Used from ScriptBuilder.
     Script(List<ScriptChunk> chunks) {
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
-        creationTimeSeconds = TimeUtils.currentTimeSeconds();
+        creationTime = TimeUtils.currentTime();
+    }
+
+    /**
+     * Construct a Script that copies and wraps the programBytes array. The array is parsed and checked for syntactic
+     * validity. Use this if the creation time is not known.
+     * @param programBytes Array of program bytes from a transaction.
+     */
+    public Script(byte[] programBytes) throws ScriptException {
+        this.program = programBytes;
+        parse(programBytes);
+        this.creationTime = null;
     }
 
     /**
      * Construct a Script that copies and wraps the programBytes array. The array is parsed and checked for syntactic
      * validity.
      * @param programBytes Array of program bytes from a transaction.
+     * @param creationTime creation time of the script
      */
-    public Script(byte[] programBytes) throws ScriptException {
-        program = programBytes;
+    public Script(byte[] programBytes, Instant creationTime) throws ScriptException {
+        this.program = programBytes;
         parse(programBytes);
-        creationTimeSeconds = 0;
+        this.creationTime = checkNotNull(creationTime);
     }
 
-    public Script(byte[] programBytes, long creationTimeSeconds) throws ScriptException {
-        program = programBytes;
-        parse(programBytes);
-        this.creationTimeSeconds = creationTimeSeconds;
+    /**
+     * Gets the creation time of this script, or empty if unknown.
+     * @return creation time of this script, or empty if unknown
+     */
+    public Optional<Instant> getCreationTime() {
+        return Optional.ofNullable(creationTime);
     }
 
+    /** @deprecated use {@link #getCreationTime()} */
+    @Deprecated
     public long getCreationTimeSeconds() {
-        return creationTimeSeconds;
+        return getCreationTime().orElse(Instant.EPOCH).getEpochSecond();
     }
 
-    public void setCreationTimeSeconds(long creationTimeSeconds) {
-        this.creationTimeSeconds = creationTimeSeconds;
+    /**
+     * Sets the creation time of this script.
+     * @param creationTime creation time of this script
+     */
+    public void setCreationTime(Instant creationTime) {
+        this.creationTime = checkNotNull(creationTime);
+    }
+
+    /**
+     * Clears the creation time of this script. This is mainly used deserialization and cloning. Normally you should not
+     * need to usethis, as keys should have proper creation times whenever possible.
+     */
+    public void clearCreationTime() {
+        this.creationTime = null;
+    }
+
+    /** @deprecated use {@link #setCreationTime(Instant)} */
+    @Deprecated
+    public void setCreationTimeSeconds(long creationTimeSecs) {
+        if (creationTimeSecs > 0)
+            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
+        else if (creationTimeSecs == 0)
+            clearCreationTime();
+        else
+            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
     }
 
     /**
