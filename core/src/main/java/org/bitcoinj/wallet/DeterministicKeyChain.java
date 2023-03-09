@@ -308,10 +308,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
             if (random != null)
                 // Default passphrase to "" if not specified
-                return new DeterministicKeyChain(new DeterministicSeed(random, bits, getPassphrase()), null,
+                return new DeterministicKeyChain(DeterministicSeed.fromRandom(random, bits, getPassphrase()), null,
                         outputScriptType, accountPath);
             else if (entropy != null)
-                return new DeterministicKeyChain(new DeterministicSeed(entropy, getPassphrase(), creationTimeSecs),
+                return new DeterministicKeyChain(DeterministicSeed.fromEntropy(entropy, getPassphrase(), creationTimeSecs),
                         null, outputScriptType, accountPath);
             else if (seed != null)
                 return new DeterministicKeyChain(seed, null, outputScriptType, accountPath);
