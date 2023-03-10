@@ -58,4 +58,24 @@ public class TimeUtilsTest {
         assertEquals(t1, TimeUtils.earlier(t1, t1));
         assertEquals(t2, TimeUtils.earlier(t2, t2));
     }
+
+    @Test
+    public void later() {
+        Instant t1 = Instant.now(); // earlier
+        Instant t2 = t1.plusSeconds(1); // later
+        assertEquals(t2, TimeUtils.later(t1, t2));
+        assertEquals(t2, TimeUtils.later(t2, t1));
+        assertEquals(t1, TimeUtils.later(t1, t1));
+        assertEquals(t2, TimeUtils.later(t2, t2));
+    }
+
+    @Test
+    public void longest() {
+        Duration d1 = Duration.ofMinutes(1); // shorter
+        Duration d2 = Duration.ofMinutes(1); // longer
+        assertEquals(d2, TimeUtils.longest(d1, d2));
+        assertEquals(d2, TimeUtils.longest(d2, d1));
+        assertEquals(d1, TimeUtils.longest(d1, d1));
+        assertEquals(d2, TimeUtils.longest(d2, d2));
+    }
 }

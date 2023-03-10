@@ -534,7 +534,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     private Runnable triggerConnectionsJob = new Runnable() {
         private boolean firstRun = true;
-        private final static long MIN_PEER_DISCOVERY_INTERVAL = 1000L;
+        private final Duration MIN_PEER_DISCOVERY_INTERVAL = Duration.ofSeconds(1);
 
         @Override
         public void run() {
@@ -549,7 +549,7 @@ public class PeerGroup implements TransactionBroadcaster {
             if (!vRunning) return;
 
             boolean doDiscovery = false;
-            long now = TimeUtils.currentTimeMillis();
+            Instant now = TimeUtils.currentTime();
             lock.lock();
             try {
                 // First run: try and use a local node if there is one, for the additional security it can provide.
@@ -562,7 +562,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     return;
                 }
 
-                boolean havePeerWeCanTry = !inactives.isEmpty() && backoffMap.get(inactives.peek()).getRetryTime() <= now;
+                boolean havePeerWeCanTry = !inactives.isEmpty() && backoffMap.get(inactives.peek()).getRetryInstant().isBefore(now);
                 doDiscovery = !havePeerWeCanTry;
             } finally {
                 firstRun = false;
@@ -589,10 +589,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 // Inactives is sorted by backoffMap time.
                 if (inactives.isEmpty()) {
                     if (countConnectedAndPendingPeers() < getMaxConnections()) {
-                        long interval = Math.max(groupBackoff.getRetryTime() - now, MIN_PEER_DISCOVERY_INTERVAL);
+                        Duration interval = TimeUtils.longest(Duration.between(now, groupBackoff.getRetryInstant()), MIN_PEER_DISCOVERY_INTERVAL);
                         log.info("Peer discovery didn't provide us any more peers, will try again in "
-                            + interval + "ms.");
-                        executor.schedule(this, interval, TimeUnit.MILLISECONDS);
+                            + interval.toMillis() + " ms.");
+                        executor.schedule(this, interval.toMillis(), TimeUnit.MILLISECONDS);
                     } else {
                         // We have enough peers and discovery provided no more, so just settle down. Most likely we
                         // were given a fixed set of addresses in some test scenario.
@@ -608,13 +608,13 @@ public class PeerGroup implements TransactionBroadcaster {
                     // Most likely we were given a fixed set of addresses in some test scenario.
                     return;
                 }
-                long retryTime = backoffMap.get(addrToTry).getRetryTime();
-                retryTime = Math.max(retryTime, groupBackoff.getRetryTime());
-                if (retryTime > now) {
-                    long delay = retryTime - now;
-                    log.info("Waiting {} ms before next connect attempt to {}", delay, addrToTry);
+                Instant retryTime = backoffMap.get(addrToTry).getRetryInstant();
+                retryTime = TimeUtils.later(retryTime, groupBackoff.getRetryInstant());
+                if (retryTime.isAfter(now)) {
+                    Duration delay = Duration.between(now, retryTime);
+                    log.info("Waiting {} ms before next connect attempt to {}", delay.toMillis(), addrToTry);
                     inactives.add(addrToTry);
-                    executor.schedule(this, delay, TimeUnit.MILLISECONDS);
+                    executor.schedule(this, delay.toMillis(), TimeUnit.MILLISECONDS);
                     return;
                 }
                 connectTo(addrToTry, false, vConnectTimeoutMillis);
