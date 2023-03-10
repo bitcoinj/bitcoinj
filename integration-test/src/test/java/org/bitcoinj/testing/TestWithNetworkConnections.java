@@ -54,6 +54,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -66,7 +67,9 @@ import static com.google.common.base.Preconditions.checkState;
  * Utility class that makes it easy to work with mock NetworkConnections.
  */
 public class TestWithNetworkConnections {
+    protected static final int TCP_PORT_BASE = 10000 + new Random().nextInt(40000);
     public static final int PEER_SERVERS = 5;
+
     protected static final NetworkParameters UNITTEST = UnitTestParams.get();
     protected static final NetworkParameters TESTNET = TestNet3Params.get();
     protected BlockStore blockStore;
@@ -145,7 +148,7 @@ public class TestWithNetworkConnections {
                     }
                 };
             }
-        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000 + i));
+        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i));
         peerServers[i].startAsync();
         peerServers[i].awaitRunning();
     }
