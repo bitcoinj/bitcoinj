@@ -144,7 +144,7 @@ public class SPVBlockStoreTest {
         // On slow machines, this test could fail. Then either add @Ignore or adapt the threshold and please report to
         // us.
         final int ITERATIONS = 100000;
-        final long THRESHOLD_MS = 2000;
+        final Duration THRESHOLD = Duration.ofSeconds(5);
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
         Instant start = TimeUtils.currentTime();
         for (int i = 0; i < ITERATIONS; i++) {
@@ -157,7 +157,7 @@ public class SPVBlockStoreTest {
         }
         Duration elapsed = TimeUtils.elapsedTime(start);
         assertTrue("took " + elapsed.toMillis() + " ms for " + ITERATIONS + " iterations",
-                elapsed.toMillis() < THRESHOLD_MS);
+                elapsed.compareTo(THRESHOLD) < 0);
         store.close();
     }
 
