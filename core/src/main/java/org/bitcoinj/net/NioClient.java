@@ -107,9 +107,9 @@ public class NioClient implements MessageWriteTarget {
      * The given connection <b>MUST</b> be unique to this object. This does not block while waiting for the connection to
      * open, but will call either the {@link StreamConnection#connectionOpened()} or
      * {@link StreamConnection#connectionClosed()} callback on the created network event processing thread.</p>
-     *
-     * @param connectTimeoutMillis The connect timeout set on the connection (in milliseconds). 0 is interpreted as no
-     *                             timeout.
+     * @param serverAddress socket address of the server to connect to
+     * @param parser parses data from the server
+     * @param connectTimeout timeout for establishing a connection to the server, or ZERO for no timeout
      */
     public NioClient(final SocketAddress serverAddress, final StreamConnection parser,
                      final Duration connectTimeout) throws IOException {

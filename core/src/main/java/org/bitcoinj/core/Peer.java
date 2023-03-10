@@ -204,7 +204,7 @@ public class Peer extends PeerSocketHandler {
      * connection. If you want to create a one-off connection, create a Peer and pass it to
      * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
      * or
-     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
+     * {@link NioClient#NioClient(SocketAddress, StreamConnection, Duration)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -223,7 +223,7 @@ public class Peer extends PeerSocketHandler {
      * connection. If you want to create a one-off connection, create a Peer and pass it to
      * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
      * or
-     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
+     * {@link NioClient#NioClient(SocketAddress, StreamConnection, Duration)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -257,7 +257,7 @@ public class Peer extends PeerSocketHandler {
      * connection. If you want to create a one-off connection, create a Peer and pass it to
      * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
      * or
-     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
+     * {@link NioClient#NioClient(SocketAddress, StreamConnection, Duration)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
