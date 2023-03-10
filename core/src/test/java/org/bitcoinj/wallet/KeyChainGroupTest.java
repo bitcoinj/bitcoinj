@@ -398,7 +398,10 @@ public class KeyChainGroupTest {
             assertTrue("key " + i, filter.contains(address.getHash()));
         }
         // We ran ahead of the lookahead buffer.
-        assertFalse(filter.contains(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash()));
+        // We try two fresh addresses because of expected false positives. Note that the test could still fail.
+        Address fresh1 = group.freshAddress(KeyPurpose.RECEIVE_FUNDS);
+        Address fresh2 = group.freshAddress(KeyPurpose.RECEIVE_FUNDS);
+        assertFalse(filter.contains(fresh1.getHash()) && filter.contains(fresh2.getHash()));
     }
 
     @Test
