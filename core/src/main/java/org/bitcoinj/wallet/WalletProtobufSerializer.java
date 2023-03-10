@@ -201,8 +201,8 @@ public class WalletProtobufSerializer {
             walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
             walletBuilder.setLastSeenBlockHeight(wallet.getLastBlockSeenHeight());
         }
-        if (wallet.getLastBlockSeenTimeSecs() > 0)
-            walletBuilder.setLastSeenBlockTimeSecs(wallet.getLastBlockSeenTimeSecs());
+        wallet.getLastBlockSeenTimeInstant().ifPresent(
+                time -> walletBuilder.setLastSeenBlockTimeSecs(time.getEpochSecond()));
 
         // Populate the scrypt parameters.
         KeyCrypter keyCrypter = wallet.getKeyCrypter();
@@ -525,7 +525,7 @@ public class WalletProtobufSerializer {
             // Should mirror Wallet.reset()
             wallet.setLastBlockSeenHash(null);
             wallet.setLastBlockSeenHeight(-1);
-            wallet.setLastBlockSeenTimeSecs(0);
+            wallet.clearLastBlockSeenTime();
         } else {
             // Read all transactions and insert into the txMap.
             for (Protos.Transaction txProto : walletProto.getTransactionList()) {
@@ -550,7 +550,7 @@ public class WalletProtobufSerializer {
                 wallet.setLastBlockSeenHeight(walletProto.getLastSeenBlockHeight());
             }
             // Will default to zero if not present.
-            wallet.setLastBlockSeenTimeSecs(walletProto.getLastSeenBlockTimeSecs());
+            wallet.setLastBlockSeenTime(Instant.ofEpochSecond(walletProto.getLastSeenBlockTimeSecs()));
 
             if (walletProto.hasKeyRotationTime()) {
                 wallet.setKeyRotationTime(Instant.ofEpochSecond(walletProto.getKeyRotationTime()));
