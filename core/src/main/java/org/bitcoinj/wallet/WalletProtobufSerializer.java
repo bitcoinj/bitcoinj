@@ -258,9 +258,8 @@ public class WalletProtobufSerializer {
                  .setHash(hashToByteString(tx.getTxId()))
                  .setVersion((int) tx.getVersion());
 
-        if (tx.getUpdateTime() != null) {
-            txBuilder.setUpdatedAt(tx.getUpdateTime().getTime());
-        }
+        tx.getUpdateTimeInstant().ifPresent(
+                time -> txBuilder.setUpdatedAt(time.toEpochMilli()));
 
         if (tx.getLockTime() > 0) {
             txBuilder.setLockTime((int)tx.getLockTime());
@@ -628,7 +627,11 @@ public class WalletProtobufSerializer {
         tx.setVersion(txProto.getVersion());
 
         if (txProto.hasUpdatedAt()) {
-            tx.setUpdateTime(new Date(txProto.getUpdatedAt()));
+            long updatedAt = txProto.getUpdatedAt();
+            if (updatedAt > 0)
+                tx.setUpdateTime(Instant.ofEpochMilli(updatedAt));
+            else
+                tx.clearUpdateTime();
         }
 
         for (Protos.TransactionOutput outputProto : txProto.getTransactionOutputList()) {
