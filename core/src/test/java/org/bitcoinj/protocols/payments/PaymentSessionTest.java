@@ -39,6 +39,8 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
@@ -59,7 +61,7 @@ public class PaymentSessionTest {
     private static final String paymentRequestMemo = "send coinz noa plz kthx";
     private static final String paymentMemo = "take ze coinz";
     private static final ByteString merchantData = ByteString.copyFromUtf8("merchant data");
-    private static final long time = TimeUtils.currentTimeSeconds();
+    private static final Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     private ECKey serverKey;
     private Transaction tx;
     private TransactionOutput outputToMe;
@@ -80,7 +82,7 @@ public class PaymentSessionTest {
         assertEquals(paymentRequestMemo, paymentSession.getMemo());
         assertEquals(amount, paymentSession.getValue());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentUrl());
-        assertTrue(new Date(time * 1000L).equals(paymentSession.getDate()));
+        assertEquals(time, paymentSession.getTime());
         assertTrue(paymentSession.getSendRequest().tx.equals(tx));
         assertFalse(paymentSession.isExpired());
 
@@ -108,7 +110,7 @@ public class PaymentSessionTest {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
-                .setTime(time)
+                .setTime(time.getEpochSecond())
                 .addOutputs(outputBuilder)
                 .build();
         Protos.PaymentRequest paymentRequest = Protos.PaymentRequest.newBuilder()
@@ -185,7 +187,7 @@ public class PaymentSessionTest {
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork(netID)
-                .setTime(time)
+                .setTime(time.getEpochSecond())
                 .setPaymentUrl(simplePaymentUrl)
                 .addOutputs(outputBuilder)
                 .setMemo(paymentRequestMemo)
@@ -204,8 +206,8 @@ public class PaymentSessionTest {
                 .setScript(ByteString.copyFrom(outputToMe.getScriptBytes()));
         Protos.PaymentDetails paymentDetails = Protos.PaymentDetails.newBuilder()
                 .setNetwork("test")
-                .setTime(time - 10)
-                .setExpires(time - 1)
+                .setTime(time.minusSeconds(10).getEpochSecond())
+                .setExpires(time.minusSeconds(1).getEpochSecond())
                 .setPaymentUrl(simplePaymentUrl)
                 .addOutputs(outputBuilder)
                 .setMemo(paymentRequestMemo)

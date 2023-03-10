@@ -843,7 +843,7 @@ public class WalletTool implements Callable<Integer> {
     private void send(PaymentSession session) {
         System.out.println("Payment Request");
         System.out.println("Coin: " + session.getValue().toFriendlyString());
-        System.out.println("Date: " + session.getDate());
+        System.out.println("Date: " + session.getTime());
         System.out.println("Memo: " + session.getMemo());
         if (session.pkiVerificationData != null) {
             System.out.println("Pki-Verified Name: " + session.pkiVerificationData.displayName);
