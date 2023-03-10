@@ -2702,7 +2702,9 @@ public class WalletTest extends TestWithWallet {
         int vsize = request.tx.getVsize();
         Coin feePerVkb = fee.multiply(1000).divide(vsize);
         assertEquals(Coin.valueOf(14100), fee);
-        assertEquals(Transaction.DEFAULT_TX_FEE, feePerVkb);
+        // due to shorter than expected signature encoding, in rare cases we overpay a little
+        Coin overpaidFee = Transaction.DEFAULT_TX_FEE.add(valueOf(714));
+        assertTrue(feePerVkb.toString(),feePerVkb.equals(Transaction.DEFAULT_TX_FEE) || feePerVkb.equals(overpaidFee));
     }
 
     @Test
