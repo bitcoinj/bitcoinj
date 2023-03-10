@@ -31,7 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -91,21 +93,23 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         if (wallet == null)
             return null;
 
+
         final int height = wallet.getLastBlockSeenHeight();
-        final long time = wallet.getLastBlockSeenTimeSecs();
-        if (time == 0)
+        final Optional<Instant> time = wallet.getLastBlockSeenTimeInstant();
+        if (!time.isPresent())
             return null;
 
         // If the transaction has a lock time specified in blocks, we consider that if the tx would become final in the
         // next block it is not risky (as it would confirm normally).
         final int adjustedHeight = height + 1;
+        final long timeSecs = time.get().getEpochSecond();
 
-        if (!tx.isFinal(adjustedHeight, time)) {
+        if (!tx.isFinal(adjustedHeight, timeSecs)) {
             nonFinal = tx;
             return Result.NON_FINAL;
         }
         for (Transaction dep : dependencies) {
-            if (!dep.isFinal(adjustedHeight, time)) {
+            if (!dep.isFinal(adjustedHeight, timeSecs)) {
                 nonFinal = dep;
                 return Result.NON_FINAL;
             }

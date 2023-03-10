@@ -37,6 +37,7 @@ import org.bitcoinj.wallet.DefaultRiskAnalysis.RuleViolation;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +62,7 @@ public class DefaultRiskAnalysisTest {
         Context.propagate(new Context());
         wallet = Wallet.createDeterministic(MAINNET, ScriptType.P2PKH);
         wallet.setLastBlockSeenHeight(1000);
-        wallet.setLastBlockSeenTimeSecs(TIMESTAMP);
+        wallet.setLastBlockSeenTime(Instant.ofEpochSecond(TIMESTAMP));
     }
 
     @Test(expected = IllegalStateException.class)

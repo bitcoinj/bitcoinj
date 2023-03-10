@@ -249,7 +249,7 @@ public class Wallet extends BaseTaggableObject
 
     @Nullable private Sha256Hash lastBlockSeenHash;
     private int lastBlockSeenHeight;
-    private long lastBlockSeenTimeSecs;
+    @Nullable private Instant lastBlockSeenTime;
 
     private final List<ListenerRegistration<WalletChangeEventListener>> changeListeners
         = new CopyOnWriteArrayList<>();
@@ -2447,7 +2447,7 @@ public class Wallet extends BaseTaggableObject
             // Store the new block hash.
             setLastBlockSeenHash(newBlockHash);
             setLastBlockSeenHeight(block.getHeight());
-            setLastBlockSeenTimeSecs(block.getHeader().getTimeSeconds());
+            setLastBlockSeenTime(block.getHeader().getTimeInstant());
             // Notify all the BUILDING transactions of the new block.
             // This is so that they can update their depth.
             Set<Transaction> transactions = getTransactions(true);
@@ -3292,7 +3292,7 @@ public class Wallet extends BaseTaggableObject
             clearTransactions();
             lastBlockSeenHash = null;
             lastBlockSeenHeight = -1; // Magic value for 'never'.
-            lastBlockSeenTimeSecs = 0;
+            lastBlockSeenTime = null;
             saveLater();
             maybeQueueOnWalletChanged();
         } finally {
@@ -3510,9 +3510,10 @@ public class Wallet extends BaseTaggableObject
             builder.append("  ").append(unspent.size()).append(" unspent\n");
             builder.append("  ").append(spent.size()).append(" spent\n");
             builder.append("  ").append(dead.size()).append(" dead\n");
-            final Date lastBlockSeenTime = getLastBlockSeenTime();
             builder.append("Last seen best block: ").append(getLastBlockSeenHeight()).append(" (")
-                    .append(lastBlockSeenTime == null ? "time unknown" : TimeUtils.dateTimeFormat(lastBlockSeenTime))
+                    .append(getLastBlockSeenTimeInstant()
+                            .map(instant -> TimeUtils.dateTimeFormat(instant.toEpochMilli()))
+                            .orElse("time unknown"))
                     .append("): ").append(getLastBlockSeenHash()).append('\n');
             final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             if (crypter != null)
@@ -3667,45 +3668,58 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    public void setLastBlockSeenTimeSecs(long timeSecs) {
+    public void setLastBlockSeenTime(Instant time) {
         lock.lock();
         try {
-            lastBlockSeenTimeSecs = timeSecs;
+            lastBlockSeenTime = checkNotNull(time);
         } finally {
             lock.unlock();
         }
     }
 
+    public void clearLastBlockSeenTime() {
+        lock.lock();
+        try {
+            lastBlockSeenTime = null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /** @deprecated use {@link #setLastBlockSeenTime(Instant)} or {@link #clearLastBlockSeenTime()} */
+    @Deprecated
+    public void setLastBlockSeenTimeSecs(long timeSecs) {
+        checkArgument(timeSecs > 0);
+        setLastBlockSeenTime(Instant.ofEpochSecond(timeSecs));
+    }
+
     /**
-     * Returns the UNIX time in seconds since the epoch extracted from the last best seen block header. This timestamp
+     * Returns time extracted from the last best seen block header, or empty. This timestamp
      * is <b>not</b> the local time at which the block was first observed by this application but rather what the block
      * (i.e. miner) self declares. It is allowed to have some significant drift from the real time at which the block
      * was found, although most miners do use accurate times. If this wallet is old and does not have a recorded
      * time then this method returns zero.
      */
-    public long getLastBlockSeenTimeSecs() {
+    public Optional<Instant> getLastBlockSeenTimeInstant() {
         lock.lock();
         try {
-            return lastBlockSeenTimeSecs;
+            return Optional.ofNullable(lastBlockSeenTime);
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * Returns a {@link Date} representing the time extracted from the last best seen block header. This timestamp
-     * is <b>not</b> the local time at which the block was first observed by this application but rather what the block
-     * (i.e. miner) self declares. It is allowed to have some significant drift from the real time at which the block
-     * was found, although most miners do use accurate times. If this wallet is old and does not have a recorded
-     * time then this method returns null.
-     */
+    /** @deprecated use {@link #getLastBlockSeenTimeInstant()} */
+    @Deprecated
+    public long getLastBlockSeenTimeSecs() {
+        return getLastBlockSeenTimeInstant().map(Instant::getEpochSecond).orElse((long) 0);
+    }
+
+    /** @deprecated use {@link #getLastBlockSeenTimeInstant()} */
+    @Deprecated
     @Nullable
     public Date getLastBlockSeenTime() {
-        final long secs = getLastBlockSeenTimeSecs();
-        if (secs == 0)
-            return null;
-        else
-            return new Date(secs * 1000);
+        return getLastBlockSeenTimeInstant().map(time -> Date.from(time)).orElse(null);
     }
 
     /**

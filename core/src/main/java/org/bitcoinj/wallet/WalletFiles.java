@@ -94,10 +94,11 @@ public class WalletFiles {
                 // Some other scheduled request already beat us to it.
                 return null;
             }
-            Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
             log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
                     wallet.getLastBlockSeenHeight(),
-                    lastBlockSeenTime != null ? TimeUtils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                    wallet.getLastBlockSeenTimeInstant()
+                            .map(time -> TimeUtils.dateTimeFormat(time.toEpochMilli()))
+                            .orElse("unknown"),
                     wallet.getLastBlockSeenHash());
             saveNowInternal();
             return null;
@@ -128,9 +129,10 @@ public class WalletFiles {
         // but they will serialize (using different temp files).
         if (executor.isShutdown())
             return;
-        Date lastBlockSeenTime = wallet.getLastBlockSeenTime();
         log.info("Saving wallet; last seen block is height {}, date {}, hash {}", wallet.getLastBlockSeenHeight(),
-                lastBlockSeenTime != null ? TimeUtils.dateTimeFormat(lastBlockSeenTime) : "unknown",
+                wallet.getLastBlockSeenTimeInstant()
+                        .map(time -> TimeUtils.dateTimeFormat(time.toEpochMilli()))
+                        .orElse("unknown"),
                 wallet.getLastBlockSeenHash());
         saveNowInternal();
     }
