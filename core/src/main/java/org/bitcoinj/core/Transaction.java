@@ -87,29 +87,34 @@ import static org.bitcoinj.base.internal.ByteUtils.uint64ToByteStreamLE;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class Transaction extends ChildMessage {
+    private static final Comparator<Transaction> SORT_TX_BY_ID = Comparator.comparing(Transaction::getTxId);
+
     /**
      * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
      * into the past.
      */
-    public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = (tx1, tx2) -> {
-        Instant t1 = tx1.getUpdateTimeInstant().orElse(Instant.EPOCH);
-        Instant t2 = tx2.getUpdateTimeInstant().orElse(Instant.EPOCH);
-        final int updateTimeComparison = -(t1.compareTo(t2));
-        //If time1==time2, compare by tx hash to make comparator consistent with equals
-        return updateTimeComparison != 0 ? updateTimeComparison : tx1.getTxId().compareTo(tx2.getTxId());
-    };
-    /** A comparator that can be used to sort transactions by their chain height. */
-    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = (tx1, tx2) -> {
-        final TransactionConfidence confidence1 = tx1.getConfidence();
-        final int height1 = confidence1.getConfidenceType() == ConfidenceType.BUILDING
-                ? confidence1.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
-        final TransactionConfidence confidence2 = tx2.getConfidence();
-        final int height2 = confidence2.getConfidenceType() == ConfidenceType.BUILDING
-                ? confidence2.getAppearedAtChainHeight() : Block.BLOCK_HEIGHT_UNKNOWN;
-        final int heightComparison = -(Integer.compare(height1, height2));
-        //If height1==height2, compare by tx hash to make comparator consistent with equals
-        return heightComparison != 0 ? heightComparison : tx1.getTxId().compareTo(tx2.getTxId());
-    };
+    public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = Comparator.comparing(
+                    Transaction::sortableUpdateTime,
+                    Comparator.reverseOrder())
+            .thenComparing(SORT_TX_BY_ID);
+    private static Instant sortableUpdateTime(Transaction tx) {
+        return tx.getUpdateTimeInstant().orElse(Instant.EPOCH);
+    }
+
+    /**
+     * A comparator that can be used to sort transactions by their chain height.
+     */
+    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = Comparator.comparing(
+                    Transaction::sortableBlockHeight,
+                    Comparator.reverseOrder())
+            .thenComparing(SORT_TX_BY_ID);
+    private static int sortableBlockHeight(Transaction tx) {
+        TransactionConfidence confidence = tx.getConfidence();
+        return confidence.getConfidenceType() == ConfidenceType.BUILDING ?
+                confidence.getAppearedAtChainHeight() :
+                Block.BLOCK_HEIGHT_UNKNOWN;
+    }
+
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
 
     /**
