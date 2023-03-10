@@ -1285,9 +1285,9 @@ public class WalletTool implements Callable<Integer> {
                 creationTime.ifPresentOrElse(seed::setCreationTime, seed::clearCreationTime);
 
         }
-        creationTime.ifPresentOrElse(
-                time -> System.out.println("Setting creation time to: " + TimeUtils.dateTimeFormat(time.toEpochMilli())),
-                () -> System.out.println("Clearing creation time."));
+        System.out.println(creationTime
+                .map(time -> "Setting creation time to: " + TimeUtils.dateTimeFormat(time.toEpochMilli()))
+                .orElse("Clearing creation time."));
     }
 
     private synchronized void onChange(final CountDownLatch latch) {
