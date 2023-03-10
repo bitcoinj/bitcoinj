@@ -93,6 +93,9 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
         final int height = wallet.getLastBlockSeenHeight();
         final long time = wallet.getLastBlockSeenTimeSecs();
+        if (time == 0)
+            return null;
+
         // If the transaction has a lock time specified in blocks, we consider that if the tx would become final in the
         // next block it is not risky (as it would confirm normally).
         final int adjustedHeight = height + 1;
