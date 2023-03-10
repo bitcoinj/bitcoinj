@@ -1743,15 +1743,16 @@ public class WalletTest extends TestWithWallet {
         createMarriedWallet(2, 2);
         Address address = wallet.currentReceiveAddress();
 
-        assertTrue(wallet.getBloomFilter(0.001).contains(address.getHash()));
+        double falsePositiveRate = 0.00001;
+        assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(address.getHash()));
 
         Transaction t1 = createFakeTx(TESTNET, CENT, address);
         TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, t1);
 
-        assertFalse(wallet.getBloomFilter(0.001).contains(outPoint.unsafeBitcoinSerialize()));
+        assertFalse(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.unsafeBitcoinSerialize()));
 
         sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, t1);
-        assertTrue(wallet.getBloomFilter(0.001).contains(outPoint.unsafeBitcoinSerialize()));
+        assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.unsafeBitcoinSerialize()));
     }
 
     @Test
