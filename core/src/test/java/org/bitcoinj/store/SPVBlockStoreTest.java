@@ -140,7 +140,7 @@ public class SPVBlockStoreTest {
         // On slow machines, this test could fail. Then either add @Ignore or adapt the threshold and please report to
         // us.
         final int ITERATIONS = 100000;
-        final long THRESHOLD_MS = 2000;
+        final long THRESHOLD_MS = 5000;
         SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
         Stopwatch watch = Stopwatch.createStarted();
         for (int i = 0; i < ITERATIONS; i++) {
