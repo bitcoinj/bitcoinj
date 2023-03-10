@@ -109,6 +109,20 @@ public class TimeUtils {
     }
 
     /**
+     * Determines the later of two instants.
+     */
+    public static Instant later(Instant time1, Instant time2) {
+        return time1.isAfter(time2) ? time1 : time2;
+    }
+
+    /**
+     * Determines the longest of two durations.
+     */
+    public static Duration longest(Duration duration1, Duration duration2) {
+        return duration1.compareTo(duration2) > 0 ? duration1 : duration2;
+    }
+
+    /**
      * Formats a given date+time value to an ISO 8601 string.
      * @param dateTime value to format, as a Date
      */
