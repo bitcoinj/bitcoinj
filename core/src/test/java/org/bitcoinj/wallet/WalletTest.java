@@ -1468,8 +1468,8 @@ public class WalletTest extends TestWithWallet {
 
         // Verify we can handle the case of older wallets in which the timestamp is null (guessed from the
         // block appearances list).
-        tx1.setUpdateTime(null);
-        tx3.setUpdateTime(null);
+        tx1.clearUpdateTime();
+        tx3.clearUpdateTime();
         // Check we got them back in order.
         transactions = wallet.getTransactionsByTime();
         assertEquals(tx2,  transactions.get(0));

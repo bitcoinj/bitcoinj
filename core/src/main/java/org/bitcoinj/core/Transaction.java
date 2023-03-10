@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -59,6 +60,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -90,9 +92,9 @@ public class Transaction extends ChildMessage {
      * into the past.
      */
     public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = (tx1, tx2) -> {
-        final long time1 = tx1.getUpdateTime().getTime();
-        final long time2 = tx2.getUpdateTime().getTime();
-        final int updateTimeComparison = -(Long.compare(time1, time2));
+        Instant t1 = tx1.getUpdateTimeInstant().orElse(Instant.EPOCH);
+        Instant t2 = tx2.getUpdateTimeInstant().orElse(Instant.EPOCH);
+        final int updateTimeComparison = -(t1.compareTo(t2));
         //If time1==time2, compare by tx hash to make comparator consistent with equals
         return updateTimeComparison != 0 ? updateTimeComparison : tx1.getTxId().compareTo(tx2.getTxId());
     };
@@ -146,7 +148,7 @@ public class Transaction extends ChildMessage {
     // block in which it was included. Note that this can be changed by re-orgs so the wallet may update this field.
     // Old serialized transactions don't have this field, thus null is valid. It is used for returning an ordered
     // list of transactions from a wallet, which is helpful for presenting to users.
-    private Date updatedAt;
+    @Nullable private Instant updateTime = null;
 
     // These are in memory helpers only. They contain the transaction hashes without and with witness.
     private Sha256Hash cachedTxId;
@@ -402,9 +404,9 @@ public class Transaction extends ChildMessage {
      * @param relativityOffset A number that disambiguates the order of transactions within a block.
      */
     public void setBlockAppearance(StoredBlock block, boolean bestChain, int relativityOffset) {
-        long blockTime = block.getHeader().getTimeSeconds() * 1000;
-        if (bestChain && (updatedAt == null || updatedAt.getTime() == 0 || updatedAt.getTime() > blockTime)) {
-            updatedAt = new Date(blockTime);
+        Instant blockTime = block.getHeader().getTimeInstant();
+        if (bestChain && (updateTime == null || updateTime.equals(Instant.EPOCH) || updateTime.isAfter(blockTime))) {
+            updateTime = blockTime;
         }
 
         addBlockAppearance(block.getHeader().getHash(), relativityOffset);
@@ -520,18 +522,40 @@ public class Transaction extends ChildMessage {
 
     /**
      * Returns the earliest time at which the transaction was seen (broadcast or included into the chain),
-     * or the epoch if that information isn't available.
+     * or empty if that information isn't available.
      */
-    public Date getUpdateTime() {
-        if (updatedAt == null) {
-            // Older wallets did not store this field. Set to the epoch.
-            updatedAt = new Date(0);
-        }
-        return updatedAt;
+    public Optional<Instant> getUpdateTimeInstant() {
+        return Optional.ofNullable(updateTime);
     }
 
-    public void setUpdateTime(Date updatedAt) {
-        this.updatedAt = updatedAt;
+    /** @deprecated use {@link #getUpdateTimeInstant()} */
+    @Deprecated
+    public Date getUpdateTime() {
+        return Date.from(getUpdateTimeInstant().orElse(Instant.EPOCH));
+    }
+
+    /**
+     * Sets the update time of this transaction.
+     * @param updateTime update time
+     */
+    public void setUpdateTime(Instant updateTime) {
+        this.updateTime = checkNotNull(updateTime);
+    }
+
+    /**
+     * Clears the update time of this transaction.
+     */
+    public void clearUpdateTime() {
+        this.updateTime = null;
+    }
+
+    /** @deprecated use {@link #setUpdateTime(Instant)} or {@link #clearUpdateTime()} */
+    @Deprecated
+    public void setUpdateTime(Date updateTime) {
+        if (updateTime != null && updateTime.getTime() > 0)
+            setUpdateTime(updateTime.toInstant());
+        else
+            clearUpdateTime();
     }
 
     /**
@@ -781,9 +805,8 @@ public class Transaction extends ChildMessage {
      * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
      * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
-    public String toString(@Nullable AbstractBlockChain chain, @Nullable CharSequence indent) {
-        if (indent == null)
-            indent = "";
+    public String toString(@Nullable AbstractBlockChain chain, @Nullable CharSequence nullableIndent) {
+        final CharSequence indent = nullableIndent != null ? nullableIndent : "";
         StringBuilder s = new StringBuilder();
         Sha256Hash txId = getTxId(), wTxId = getWTxId();
         s.append(indent).append(txId);
@@ -797,8 +820,8 @@ public class Transaction extends ChildMessage {
         if (size != vsize)
             s.append(vsize).append(" virtual bytes, ");
         s.append(size).append(" bytes\n");
-        if (updatedAt != null)
-            s.append(indent).append("updated: ").append(TimeUtils.dateTimeFormat(updatedAt)).append('\n');
+        getUpdateTimeInstant().ifPresent(
+                time -> s.append(indent).append("updated: ").append(TimeUtils.dateTimeFormat(time.toEpochMilli())).append('\n'));
         if (version != 1)
             s.append(indent).append("version ").append(version).append('\n');
 

@@ -2017,7 +2017,11 @@ public class Wallet extends BaseTaggableObject
                 // two wallets depend on the same transaction.
                 Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
                 cloneTx.setPurpose(tx.getPurpose());
-                cloneTx.setUpdateTime(tx.getUpdateTime());
+                Optional<Instant> updateTime = tx.getUpdateTimeInstant();
+                if (updateTime.isPresent())
+                    cloneTx.setUpdateTime(updateTime.get());
+                else
+                    cloneTx.clearUpdateTime();
 
                 riskDropped.put(cloneTx.getTxId(), cloneTx);
                 log.warn("There are now {} risk dropped transactions being kept in memory", riskDropped.size());
@@ -2036,7 +2040,11 @@ public class Wallet extends BaseTaggableObject
             // two wallets depend on the same transaction.
             Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
             cloneTx.setPurpose(tx.getPurpose());
-            cloneTx.setUpdateTime(tx.getUpdateTime());
+            Optional<Instant> updateTime = tx.getUpdateTimeInstant();
+            if (updateTime.isPresent())
+                cloneTx.setUpdateTime(updateTime.get());
+            else
+                cloneTx.clearUpdateTime();
 
             // If this tx spends any of our unspent outputs, mark them as spent now, then add to the pending pool. This
             // ensures that if some other client that has our keys broadcasts a spend we stay in sync. Also updates the
@@ -2764,7 +2772,7 @@ public class Wallet extends BaseTaggableObject
                 return false;
             log.info("commitTx of {}", tx.getTxId());
             Coin balance = getBalance();
-            tx.setUpdateTime(TimeUtils.now());
+            tx.setUpdateTime(TimeUtils.currentTime());
             // Put any outputs that are sending money back to us into the unspents map, and calculate their total value.
             Coin valueSentToMe = Coin.ZERO;
             for (TransactionOutput o : tx.getOutputs()) {
