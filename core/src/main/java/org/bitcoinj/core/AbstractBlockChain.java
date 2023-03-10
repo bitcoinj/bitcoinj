@@ -42,7 +42,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1064,12 +1063,6 @@ public abstract class AbstractBlockChain {
             Instant headTime = chainHead.getHeader().time();
             return headTime.plus(10 * offset, ChronoUnit.MINUTES);
         }
-    }
-
-    /** @deprecated use {@link #estimateBlockTimeInstant(int)} */
-    @Deprecated
-    public Date estimateBlockTime(int height) {
-        return Date.from(estimateBlockTimeInstant(height));
     }
 
     /**

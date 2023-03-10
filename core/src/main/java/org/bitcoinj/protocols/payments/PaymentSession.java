@@ -45,7 +45,6 @@ import java.net.URL;
 import java.security.KeyStoreException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -261,12 +260,6 @@ public class PaymentSession {
         return Instant.ofEpochSecond(paymentDetails.getTime());
     }
 
-    /** @deprecated use {@link #time()} */
-    @Deprecated
-    public Date getDate() {
-        return Date.from(time());
-    }
-
     /**
      * Returns the expires time of the payment request, or empty if none.
      */
@@ -275,15 +268,6 @@ public class PaymentSession {
             return Optional.of(Instant.ofEpochSecond(paymentDetails.getExpires()));
         else
             return Optional.empty();
-    }
-
-    /** @deprecated use {@link #expires()} */
-    @Nullable
-    @Deprecated
-    public Date getExpires() {
-        return expires()
-                .map(Date::from)
-                .orElse(null);
     }
 
     /**
