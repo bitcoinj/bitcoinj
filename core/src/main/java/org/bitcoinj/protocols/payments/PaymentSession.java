@@ -44,9 +44,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.KeyStoreException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -253,27 +255,44 @@ public class PaymentSession {
     }
 
     /**
-     * Returns the date that the payment request was generated.
+     * Returns the time that the payment request was generated.
      */
+    public Instant getTime() {
+        return Instant.ofEpochSecond(paymentDetails.getTime());
+    }
+
+    /** @deprecated use {@link #getTime()} */
+    @Deprecated
     public Date getDate() {
-        return new Date(paymentDetails.getTime() * 1000);
+        return Date.from(getTime());
     }
 
     /**
-     * Returns the expires time of the payment request, or null if none.
+     * Returns the expires time of the payment request, or empty if none.
      */
-    @Nullable public Date getExpires() {
+    public Optional<Instant> getExpiresInstant() {
         if (paymentDetails.hasExpires())
-            return new Date(paymentDetails.getExpires() * 1000);
+            return Optional.of(Instant.ofEpochSecond(paymentDetails.getExpires()));
         else
-            return null;
+            return Optional.empty();
+    }
+
+    /** @deprecated use {@link #getExpiresInstant()} */
+    @Nullable
+    @Deprecated
+    public Date getExpires() {
+        return getExpiresInstant()
+                .map(Date::from)
+                .orElse(null);
     }
 
     /**
      * This should always be called before attempting to call sendPayment.
      */
     public boolean isExpired() {
-        return paymentDetails.hasExpires() && TimeUtils.currentTimeSeconds() > paymentDetails.getExpires();
+        return getExpiresInstant()
+                .map(time -> TimeUtils.currentTime().isAfter(time))
+                .orElse(false);
     }
 
     /**
