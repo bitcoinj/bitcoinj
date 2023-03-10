@@ -118,7 +118,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -3885,13 +3884,6 @@ public class Wallet extends BaseTaggableObject
         return lastBlockSeenTime().map(Instant::getEpochSecond).orElse((long) 0);
     }
 
-    /** @deprecated use {@link #lastBlockSeenTime()} */
-    @Deprecated
-    @Nullable
-    public Date getLastBlockSeenTime() {
-        return lastBlockSeenTime().map(Date::from).orElse(null);
-    }
-
     /**
      * Returns the height of the last seen best-chain block. Can be 0 if a wallet is brand new or -1 if the wallet
      * is old and doesn't have that data.
@@ -5684,31 +5676,12 @@ public class Wallet extends BaseTaggableObject
             setKeyRotationTime(Instant.ofEpochSecond(timeSecs));
     }
 
-    /** @deprecated use {@link #setKeyRotationTime(Instant)} */
-    @Deprecated
-    public void setKeyRotationTime(@Nullable Date time) {
-        if (time == null)
-            setKeyRotationTime((Instant) null);
-        else
-            setKeyRotationTime(Instant.ofEpochMilli(time.getTime()));
-    }
-
     /**
      * Returns the key rotation time, or empty if unconfigured. See {@link #setKeyRotationTime(Instant)} for a description
      * of the field.
      */
     public Optional<Instant> keyRotationTime() {
         return Optional.ofNullable(vKeyRotationTime);
-    }
-
-    /** @deprecated use {@link #keyRotationTime()} */
-    @Deprecated
-    public @Nullable Date getKeyRotationTime() {
-        Instant keyRotationTime = vKeyRotationTime;
-        if (keyRotationTime != null)
-            return Date.from(keyRotationTime);
-        else
-            return null;
     }
 
     /** Returns whether the keys creation time is before the key rotation time, if one was set. */

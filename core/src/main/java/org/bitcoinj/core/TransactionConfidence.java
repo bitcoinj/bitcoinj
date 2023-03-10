@@ -30,7 +30,6 @@ import org.bitcoinj.wallet.Wallet;
 import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
@@ -347,25 +346,12 @@ public class TransactionConfidence {
         return Optional.ofNullable(lastBroadcastTime);
     }
 
-    /** @deprecated use {@link #getLastBroadcastTime()} */
-    @Deprecated
-    @Nullable
-    public Date getLastBroadcastedAt() {
-        return lastBroadcastTime != null ? Date.from(lastBroadcastTime) : null;
-    }
-
     /**
      * Set the time the transaction was last announced to us.
      * @param lastBroadcastTime time the transaction was last announced to us
      */
     public void setLastBroadcastTime(Instant lastBroadcastTime) {
         this.lastBroadcastTime = Objects.requireNonNull(lastBroadcastTime);
-    }
-
-    /** @deprecated use {@link #setLastBroadcastTime(Instant)} */
-    @Deprecated
-    public void setLastBroadcastedAt(Date lastBroadcastedAt) {
-        setLastBroadcastTime(lastBroadcastedAt.toInstant());
     }
 
     @Override

@@ -59,7 +59,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -569,12 +568,6 @@ public class Transaction extends BaseMessage {
         return Optional.ofNullable(updateTime);
     }
 
-    /** @deprecated use {@link #updateTime()} */
-    @Deprecated
-    public Date getUpdateTime() {
-        return Date.from(updateTime().orElse(Instant.EPOCH));
-    }
-
     /**
      * Sets the update time of this transaction.
      * @param updateTime update time
@@ -588,15 +581,6 @@ public class Transaction extends BaseMessage {
      */
     public void clearUpdateTime() {
         this.updateTime = null;
-    }
-
-    /** @deprecated use {@link #setUpdateTime(Instant)} or {@link #clearUpdateTime()} */
-    @Deprecated
-    public void setUpdateTime(Date updateTime) {
-        if (updateTime != null && updateTime.getTime() > 0)
-            setUpdateTime(updateTime.toInstant());
-        else
-            clearUpdateTime();
     }
 
     /**
@@ -1735,12 +1719,6 @@ public class Transaction extends BaseMessage {
         return locktime instanceof HeightLock ?
                 chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight()) :
                 ((TimeLock) locktime).timestamp();
-    }
-
-    /** @deprecated use {@link #estimateUnlockTime(AbstractBlockChain)} */
-    @Deprecated
-    public Date estimateLockTime(AbstractBlockChain chain) {
-        return Date.from(estimateUnlockTime(chain));
     }
 
     /**

@@ -48,7 +48,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -737,15 +736,6 @@ public class Block extends BaseMessage {
     @Deprecated
     public long getTimeSeconds() {
         return time.getEpochSecond();
-    }
-
-    /**
-     * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
-     * @deprecated use {@link #time()}
-     */
-    @Deprecated
-    public Date getTime() {
-        return Date.from(time());
     }
 
     // For testing only
