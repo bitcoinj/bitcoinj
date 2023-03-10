@@ -525,9 +525,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void peerTimeoutTest() throws Exception {
-        final int timeout = 100;
+        final Duration timeout = Duration.ofMillis(100);
         peerGroup.start();
-        peerGroup.setConnectTimeoutMillis(timeout);
+        peerGroup.setConnectTimeout(timeout);
 
         final CompletableFuture<Void> peerConnectedFuture = new CompletableFuture<>();
         final CompletableFuture<Void> peerDisconnectedFuture = new CompletableFuture<>();
@@ -538,13 +538,14 @@ public class PeerGroupTest extends TestWithPeerGroup {
         connectPeerWithoutVersionExchange(0);
         // wait for disconnect (plus a bit more, in case test server is overloaded)
         try {
-            peerDisconnectedFuture.get(timeout + 200, TimeUnit.MILLISECONDS);
+            peerDisconnectedFuture.get(timeout.plusMillis(200).toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             // the checks below suffice for this case too
         }
         // check things after disconnect
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
-        assertTrue(TimeUtils.elapsedTime(start).toMillis() >= timeout); // should not disconnect before timeout
+        Duration elapsed = TimeUtils.elapsedTime(start);
+        assertTrue(elapsed.toMillis() + " ms",elapsed.compareTo(timeout) >= 0); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 

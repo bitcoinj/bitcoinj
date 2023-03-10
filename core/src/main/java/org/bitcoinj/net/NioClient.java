@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 
 /**
  * Creates a simple connection to a server using a {@link StreamConnection} to process data.
@@ -42,10 +43,10 @@ public class NioClient implements MessageWriteTarget {
         private boolean closeOnOpen = false;
         private boolean closeCalled = false;
 
-        Handler(StreamConnection upstreamConnection, int connectTimeoutMillis) {
+        Handler(StreamConnection upstreamConnection, Duration connectTimeout) {
             this.upstreamConnection = upstreamConnection;
             this.timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
-            setSocketTimeout(connectTimeoutMillis);
+            setSocketTimeout(connectTimeout);
             setTimeoutEnabled(true);
         }
 
@@ -60,8 +61,8 @@ public class NioClient implements MessageWriteTarget {
         }
 
         @Override
-        public void setSocketTimeout(int timeoutMillis) {
-            timeoutTask.setSocketTimeout(timeoutMillis);
+        public void setSocketTimeout(Duration timeout) {
+            timeoutTask.setSocketTimeout(timeout);
         }
 
         @Override
@@ -111,10 +112,10 @@ public class NioClient implements MessageWriteTarget {
      *                             timeout.
      */
     public NioClient(final SocketAddress serverAddress, final StreamConnection parser,
-                     final int connectTimeoutMillis) throws IOException {
+                     final Duration connectTimeout) throws IOException {
         manager.startAsync();
         manager.awaitRunning();
-        handler = new Handler(parser, connectTimeoutMillis);
+        handler = new Handler(parser, connectTimeout);
         manager.openConnection(serverAddress, handler).whenComplete((result, t) -> {
             if (t != null) {
                 log.error("Connect to {} failed: {}", serverAddress, Throwables.getRootCause(t));

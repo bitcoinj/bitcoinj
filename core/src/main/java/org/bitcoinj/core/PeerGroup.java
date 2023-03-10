@@ -355,9 +355,9 @@ public class PeerGroup implements TransactionBroadcaster {
     private final FilterMerger bloomFilterMerger;
 
     /** The default timeout between when a connection attempt begins and version message exchange completes */
-    public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 5000;
-    private volatile int vConnectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MILLIS;
-    
+    public static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private volatile Duration vConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
+
     /** Whether bloom filter support is enabled when using a non FullPrunedBlockchain*/
     private volatile boolean vBloomFilteringEnabled = true;
 
@@ -617,7 +617,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     executor.schedule(this, delay.toMillis(), TimeUnit.MILLISECONDS);
                     return;
                 }
-                connectTo(addrToTry, false, vConnectTimeoutMillis);
+                connectTo(addrToTry, false, vConnectTimeout);
             } finally {
                 lock.unlock();
             }
@@ -1128,7 +1128,7 @@ public class PeerGroup implements TransactionBroadcaster {
             // Do a fast blocking connect to see if anything is listening.
             try (Socket socket = new Socket()) {
                 socket.connect(new InetSocketAddress(InetAddress.getLoopbackAddress(), params.getPort()),
-                        vConnectTimeoutMillis);
+                        Math.toIntExact(vConnectTimeout.toMillis()));
                 localhostCheckState = LocalhostCheckState.FOUND;
                 return true;
             } catch (IOException e) {
@@ -1454,7 +1454,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             PeerAddress peerAddress = new PeerAddress(params, address);
             backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
-            return connectTo(peerAddress, true, vConnectTimeoutMillis);
+            return connectTo(peerAddress, true, vConnectTimeout);
         } finally {
             lock.unlock();
         }
@@ -1469,7 +1469,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             final PeerAddress localhost = PeerAddress.localhost(params);
             backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
-            return connectTo(localhost, true, vConnectTimeoutMillis);
+            return connectTo(localhost, true, vConnectTimeout);
         } finally {
             lock.unlock();
         }
@@ -1481,10 +1481,11 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param address Remote network address
      * @param incrementMaxConnections Whether to consider this connection an attempt to fill our quota, or something
      *                                explicitly requested.
+     * @param connectTimeout timeout for establishing the connection to peers
      * @return Peer or null.
      */
     @Nullable @GuardedBy("lock")
-    protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, int connectTimeoutMillis) {
+    protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, Duration connectTimeout) {
         checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
@@ -1510,7 +1511,7 @@ public class PeerGroup implements TransactionBroadcaster {
             handlePeerDeath(peer, cause);
             return null;
         }
-        peer.setSocketTimeout(connectTimeoutMillis);
+        peer.setSocketTimeout(connectTimeout);
         // When the channel has connected and version negotiated successfully, handleNewPeer will end up being called on
         // a worker thread.
         if (incrementMaxConnections) {
@@ -1530,9 +1531,16 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * Sets the timeout between when a connection attempt to a peer begins and when the version message exchange
      * completes. This does not apply to currently pending peers.
+     * @param connectTimeout timeout for estiablishing the connection to peers
      */
+    public void setConnectTimeout(Duration connectTimeout) {
+        this.vConnectTimeout = connectTimeout;
+    }
+
+    /** @deprecated use {@link #setConnectTimeout(Duration)} */
+    @Deprecated
     public void setConnectTimeoutMillis(int connectTimeoutMillis) {
-        this.vConnectTimeoutMillis = connectTimeoutMillis;
+        setConnectTimeout(Duration.ofMillis(connectTimeoutMillis));
     }
 
     /**

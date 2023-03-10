@@ -36,6 +36,7 @@ import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
+import java.time.Duration;
 import java.util.concurrent.locks.Lock;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -82,8 +83,8 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     }
 
     @Override
-    public void setSocketTimeout(int timeoutMillis) {
-        timeoutTask.setSocketTimeout(timeoutMillis);
+    public void setSocketTimeout(Duration timeout) {
+        timeoutTask.setSocketTimeout(timeout);
     }
 
     /**

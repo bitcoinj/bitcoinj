@@ -22,6 +22,7 @@ import org.bitcoinj.utils.ListenableCompletableFuture;
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -40,7 +41,7 @@ public class BlockingClientManager extends AbstractIdleService implements Client
     private final SocketFactory socketFactory;
     private final Set<BlockingClient> clients = Collections.synchronizedSet(new HashSet<BlockingClient>());
 
-    private int connectTimeoutMillis = 1000;
+    private Duration connectTimeout = Duration.ofSeconds(1);
 
     public BlockingClientManager() {
         socketFactory = SocketFactory.getDefault();
@@ -59,15 +60,24 @@ public class BlockingClientManager extends AbstractIdleService implements Client
         try {
             if (!isRunning())
                 throw new IllegalStateException();
-            return new BlockingClient(serverAddress, connection, connectTimeoutMillis, socketFactory, clients).getConnectFuture();
+            return new BlockingClient(serverAddress, connection, connectTimeout, socketFactory, clients).getConnectFuture();
         } catch (IOException e) {
             throw new RuntimeException(e); // This should only happen if we are, eg, out of system resources
         }
     }
 
-    /** Sets the number of milliseconds to wait before giving up on a connect attempt */
+    /**
+     * Sets the number of milliseconds to wait before giving up on a connect attempt
+     * @param timeout timeout for establishing a connection to the client
+     */
+    public void setConnectTimeout(Duration connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    /** @deprecated use {@link #setConnectTimeout(Duration)} */
+    @Deprecated
     public void setConnectTimeoutMillis(int connectTimeoutMillis) {
-        this.connectTimeoutMillis = connectTimeoutMillis;
+        setConnectTimeout(Duration.ofMillis(connectTimeoutMillis));
     }
 
     @Override

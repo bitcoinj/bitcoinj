@@ -16,6 +16,8 @@
 
 package org.bitcoinj.net;
 
+import java.time.Duration;
+
 /**
  * Provides basic support for socket timeouts. It is used instead of integrating timeouts into the
  * NIO select thread both for simplicity and to keep code shared between NIO and blocking sockets as much as possible.
@@ -25,21 +27,21 @@ public interface TimeoutHandler {
      * <p>Enables or disables the timeout entirely. This may be useful if you want to store the timeout value but wish
      * to temporarily disable/enable timeouts.</p>
      *
-     * <p>The default is for timeoutEnabled to be true but timeoutMillis to be set to 0 (ie disabled).</p>
+     * <p>The default is for timeoutEnabled to be true but timeout to be set to 0 (ie disabled).</p>
      *
      * <p>This call will reset the current progress towards the timeout.</p>
      */
     void setTimeoutEnabled(boolean timeoutEnabled);
 
     /**
-     * <p>Sets the receive timeout to the given number of milliseconds, automatically killing the connection if no
+     * <p>Sets the receive timeout, automatically killing the connection if no
      * messages are received for this long</p>
      *
-     * <p>A timeout of 0 is interpreted as no timeout.</p>
+     * <p>A timeout of {@link Duration#ZERO} is interpreted as no timeout.</p>
      *
-     * <p>The default is for timeoutEnabled to be true but timeoutMillis to be set to 0 (ie disabled).</p>
+     * <p>The default is for timeoutEnabled to be true but timeout to be set to {@link Duration#ZERO} (ie disabled).</p>
      *
      * <p>This call will reset the current progress towards the timeout.</p>
      */
-    void setSocketTimeout(int timeoutMillis);
+    void setSocketTimeout(Duration timeout);
 }
