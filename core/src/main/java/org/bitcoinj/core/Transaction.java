@@ -91,23 +91,28 @@ public class Transaction extends ChildMessage {
 
     /**
      * A comparator that can be used to sort transactions by their updateTime field. The ordering goes from most recent
-     * into the past.
+     * into the past. Transactions with an unknown update time will go to the end.
      */
     public static final Comparator<Transaction> SORT_TX_BY_UPDATE_TIME = Comparator.comparing(
                     Transaction::sortableUpdateTime,
                     Comparator.reverseOrder())
             .thenComparing(SORT_TX_BY_ID);
+
+    // helps the above comparator by handling transactions with unknown update time
     private static Instant sortableUpdateTime(Transaction tx) {
         return tx.getUpdateTimeInstant().orElse(Instant.EPOCH);
     }
 
     /**
-     * A comparator that can be used to sort transactions by their chain height.
+     * A comparator that can be used to sort transactions by their chain height. Unconfirmed transactions will go to
+     * the end.
      */
     public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = Comparator.comparing(
                     Transaction::sortableBlockHeight,
                     Comparator.reverseOrder())
             .thenComparing(SORT_TX_BY_ID);
+
+    // helps the above comparator by handling unconfirmed transactions
     private static int sortableBlockHeight(Transaction tx) {
         TransactionConfidence confidence = tx.getConfidence();
         return confidence.getConfidenceType() == ConfidenceType.BUILDING ?
