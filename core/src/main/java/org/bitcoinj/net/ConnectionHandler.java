@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
@@ -46,7 +47,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Used only by the NioClient and NioServer classes
  */
 class ConnectionHandler implements MessageWriteTarget {
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(ConnectionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(ConnectionHandler.class);
     // We lock when touching local flags and when writing data, but NEVER when calling any methods which leave this
     // class into non-Java classes.
     private final ReentrantLock lock = Threading.lock(ConnectionHandler.class);
