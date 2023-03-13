@@ -70,6 +70,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1489,7 +1490,7 @@ public class PeerGroup implements TransactionBroadcaster {
         checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
-        ver.time = TimeUtils.currentTimeSeconds();
+        ver.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         ver.receivingAddr = address;
         ver.receivingAddr.setParent(ver);
 

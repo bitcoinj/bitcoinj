@@ -28,6 +28,8 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -71,9 +73,9 @@ public class VersionMessage extends Message {
      */
     public long localServices;
     /**
-     * What the other side believes the current time to be, in seconds.
+     * What the other side believes the current time to be.
      */
-    public long time;
+    public Instant time;
     /**
      * The network address of the node receiving this message.
      */
@@ -109,7 +111,7 @@ public class VersionMessage extends Message {
         super(params);
         clientVersion = serializer.getProtocolVersion();
         localServices = 0;
-        time = TimeUtils.currentTimeSeconds();
+        time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
@@ -127,7 +129,7 @@ public class VersionMessage extends Message {
     protected void parse() throws ProtocolException {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
-        time = readUint64().longValue();
+        time = Instant.ofEpochSecond(readUint64().longValue());
         receivingAddr = new PeerAddress(params, payload, cursor, this, serializer.withProtocolVersion(0));
         cursor += receivingAddr.getMessageSize();
         if (clientVersion >= 106) {
@@ -162,6 +164,7 @@ public class VersionMessage extends Message {
         ByteUtils.uint32ToByteStreamLE(clientVersion, buf);
         ByteUtils.uint32ToByteStreamLE(localServices, buf);
         ByteUtils.uint32ToByteStreamLE(localServices >> 32, buf);
+        long time = this.time.getEpochSecond();
         ByteUtils.uint32ToByteStreamLE(time, buf);
         ByteUtils.uint32ToByteStreamLE(time >> 32, buf);
         receivingAddr.bitcoinSerializeToStream(buf);
@@ -190,7 +193,7 @@ public class VersionMessage extends Message {
         return other.bestHeight == bestHeight &&
                 other.clientVersion == clientVersion &&
                 other.localServices == localServices &&
-                other.time == time &&
+                other.time.equals(time) &&
                 other.subVer.equals(subVer) &&
                 other.receivingAddr.equals(receivingAddr) &&
                 other.fromAddr.equals(fromAddr) &&
@@ -211,7 +214,7 @@ public class VersionMessage extends Message {
         if (localServices != 0)
             builder.append(" (").append(toStringServices(localServices)).append(")");
         builder.append("\n");
-        builder.append("time:           ").append(time).append("\n");
+        builder.append("time:           ").append(TimeUtils.dateTimeFormat(time.toEpochMilli())).append("\n");
         builder.append("receiving addr: ").append(receivingAddr).append("\n");
         builder.append("from addr:      ").append(fromAddr).append("\n");
         builder.append("sub version:    ").append(subVer).append("\n");

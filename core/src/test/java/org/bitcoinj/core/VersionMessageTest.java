@@ -21,6 +21,7 @@ import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import java.net.InetAddress;
+import java.time.Instant;
 
 import org.bitcoinj.base.internal.ByteUtils;
 import static org.junit.Assert.assertEquals;
@@ -70,7 +71,7 @@ public class VersionMessageTest {
     @Test
     public void roundTrip_ipv4() throws Exception {
         VersionMessage ver = new VersionMessage(TESTNET, 1234);
-        ver.time = 23456;
+        ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
         ver.localServices = 1;
@@ -81,7 +82,7 @@ public class VersionMessageTest {
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(TESTNET, serialized);
         assertEquals(1234, ver2.bestHeight);
-        assertEquals(23456, ver2.time);
+        assertEquals(Instant.ofEpochSecond(23456), ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), ver2.clientVersion);
         assertEquals(1, ver2.localServices);
@@ -94,7 +95,7 @@ public class VersionMessageTest {
     @Test
     public void roundTrip_ipv6() throws Exception {
         VersionMessage ver = new VersionMessage(TESTNET, 1234);
-        ver.time = 23456;
+        ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
         ver.localServices = 1;
@@ -105,7 +106,7 @@ public class VersionMessageTest {
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(TESTNET, serialized);
         assertEquals(1234, ver2.bestHeight);
-        assertEquals(23456, ver2.time);
+        assertEquals(Instant.ofEpochSecond(23456), ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), ver2.clientVersion);
         assertEquals(1, ver2.localServices);
