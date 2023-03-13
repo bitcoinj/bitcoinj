@@ -388,8 +388,7 @@ public class Peer extends PeerSocketHandler {
         String servicesStr = Strings.emptyToNull(VersionMessage.toStringServices(vPeerVersionMessage.localServices));
         helper.add("services",
                 vPeerVersionMessage.localServices + (servicesStr != null ? " (" + servicesStr + ")" : ""));
-        long peerTime = vPeerVersionMessage.time * 1000;
-        helper.add("time", String.format(Locale.US, "%tF %tT", peerTime, peerTime));
+        helper.add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time));
         helper.add("height", vPeerVersionMessage.bestHeight);
         return helper.toString();
     }
