@@ -1851,14 +1851,20 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * Returns either the lock time as a date, if it was specified in seconds, or an estimate based on the time in
+     * Returns either the lock time, if it was specified in seconds, or an estimate based on the time in
      * the current head block if it was specified as a block time.
      */
+    public Instant estimateLockTimeInstant(AbstractBlockChain chain) {
+        long lockTime = getLockTime();
+        return lockTime < LOCKTIME_THRESHOLD ?
+                chain.estimateBlockTimeInstant(Math.toIntExact(lockTime)) :
+                Instant.ofEpochSecond(lockTime);
+    }
+
+    /** @deprecated use {@link #estimateLockTimeInstant(AbstractBlockChain)} */
+    @Deprecated
     public Date estimateLockTime(AbstractBlockChain chain) {
-        if (lockTime < LOCKTIME_THRESHOLD)
-            return Date.from(chain.estimateBlockTimeInstant((int) getLockTime()));
-        else
-            return new Date(getLockTime()*1000);
+        return Date.from(estimateLockTimeInstant(chain));
     }
 
     /**

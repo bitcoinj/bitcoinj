@@ -158,7 +158,7 @@ public class TransactionTest {
 
         replay(mockBlockChain);
 
-        assertEquals(tx.estimateLockTime(mockBlockChain).toInstant(), now);
+        assertEquals(tx.estimateLockTimeInstant(mockBlockChain), now);
     }
 
     @Test
