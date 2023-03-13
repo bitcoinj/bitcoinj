@@ -20,6 +20,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
@@ -31,7 +35,7 @@ import java.util.logging.Logger;
  * A Java logging formatter that writes more compact output than the default.
  */
 public class BriefLogFormatter extends Formatter {
-    private static final MessageFormat messageFormat = new MessageFormat("{3,date,HH:mm:ss} {0} {1}.{2}: {4}\n{5}");
+    private static final MessageFormat messageFormat = new MessageFormat("{3} {0} {1}.{2}: {4}\n{5}");
 
     // OpenJDK made a questionable, backwards incompatible change to the Logger implementation. It internally uses
     // weak references now which means simply fetching the logger and changing its configuration won't work. We must
@@ -66,7 +70,8 @@ public class BriefLogFormatter extends Formatter {
         String className = fullClassName.substring(lastDot + 1);
         arguments[1] = className;
         arguments[2] = logRecord.getSourceMethodName();
-        arguments[3] = new Date(logRecord.getMillis());
+        arguments[3] = DateTimeFormatter.ISO_LOCAL_TIME.format(
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(logRecord.getMillis()), ZoneOffset.UTC));
         arguments[4] = logRecord.getMessage();
         if (logRecord.getThrown() != null) {
             Writer result = new StringWriter();
