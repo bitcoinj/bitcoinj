@@ -101,7 +101,7 @@ public class PaymentProtocolTest {
 
     private Protos.PaymentRequest minimalPaymentRequest() {
         Protos.PaymentDetails.Builder paymentDetails = Protos.PaymentDetails.newBuilder();
-        paymentDetails.setTime(TimeUtils.currentTimeSeconds());
+        paymentDetails.setTime(TimeUtils.currentTime().getEpochSecond());
         Protos.PaymentRequest.Builder paymentRequest = Protos.PaymentRequest.newBuilder();
         paymentRequest.setSerializedPaymentDetails(paymentDetails.build().toByteString());
         return paymentRequest.build();

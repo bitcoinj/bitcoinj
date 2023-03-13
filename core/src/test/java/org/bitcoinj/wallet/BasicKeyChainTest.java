@@ -199,7 +199,7 @@ public class BasicKeyChainTest {
     @Test
     public void serializationUnencrypted() throws UnreadableWalletException {
         TimeUtils.setMockClock();
-        Date now = TimeUtils.now();
+        Instant now = TimeUtils.currentTime();
         final ECKey key1 = new ECKey();
         TimeUtils.rollMockClock(Duration.ofSeconds(5000));
         final ECKey key2 = new ECKey();
@@ -210,9 +210,9 @@ public class BasicKeyChainTest {
         assertArrayEquals(key2.getPubKey(), keys.get(1).getPublicKey().toByteArray());
         assertArrayEquals(key1.getPrivKeyBytes(), keys.get(0).getSecretBytes().toByteArray());
         assertArrayEquals(key2.getPrivKeyBytes(), keys.get(1).getSecretBytes().toByteArray());
-        long normTime = (long) (Math.floor(now.getTime() / 1000) * 1000);
-        assertEquals(normTime, keys.get(0).getCreationTimestamp());
-        assertEquals(normTime + 5000 * 1000, keys.get(1).getCreationTimestamp());
+        Instant normTime = now.truncatedTo(ChronoUnit.SECONDS);
+        assertEquals(normTime, Instant.ofEpochMilli(keys.get(0).getCreationTimestamp()));
+        assertEquals(normTime.plusSeconds(5000), Instant.ofEpochMilli(keys.get(1).getCreationTimestamp()));
 
         chain = BasicKeyChain.fromProtobufUnencrypted(keys);
         assertEquals(2, chain.getKeys().size());
