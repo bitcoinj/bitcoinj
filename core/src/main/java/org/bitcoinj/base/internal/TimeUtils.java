@@ -20,7 +20,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -62,27 +61,6 @@ public class TimeUtils {
      */
     public static void clearMockClock() {
         clock = Clock.systemUTC();
-    }
-
-    /**
-     * Returns the current time, or a mocked out equivalent.
-     */
-    public static Date now() {
-        return Date.from(currentTime());
-    }
-
-    /**
-     * Returns the current time in milliseconds since the epoch, or a mocked out equivalent.
-     */
-    public static long currentTimeMillis() {
-        return currentTime().toEpochMilli();
-    }
-
-    /**
-     * Returns the current time in seconds since the epoch, or a mocked out equivalent.
-     */
-    public static long currentTimeSeconds() {
-        return currentTime().getEpochSecond();
     }
 
     /**

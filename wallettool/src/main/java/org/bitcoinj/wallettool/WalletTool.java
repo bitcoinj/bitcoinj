@@ -589,14 +589,14 @@ public class WalletTool implements Callable<Integer> {
         setup();
         peerGroup.start();
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
-        long rotationTimeSecs = TimeUtils.currentTimeSeconds();
+        Instant rotationTime = TimeUtils.currentTime();
         if (date != null) {
-            rotationTimeSecs = date.getTime() / 1000;
+            rotationTime = date.toInstant();
         } else if (unixtime != null) {
-            rotationTimeSecs = unixtime;
+            rotationTime = Instant.ofEpochSecond(unixtime);
         }
-        log.info("Setting wallet key rotation time to {}", rotationTimeSecs);
-        wallet.setKeyRotationTime(rotationTimeSecs);
+        log.info("Setting wallet key rotation time to {}", TimeUtils.dateTimeFormat(rotationTime));
+        wallet.setKeyRotationTime(rotationTime);
         AesKey aesKey = null;
         if (wallet.isEncrypted()) {
             aesKey = passwordToKey(true);

@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
@@ -32,9 +33,9 @@ public class TimeUtilsTest {
     @Test
     public void setAndRollMockClock() {
         TimeUtils.setMockClock(Instant.ofEpochSecond(25200));
-        assertEquals(new Date("Thu Jan 01 07:00:00 GMT 1970"), TimeUtils.now());
+        assertEquals(Instant.from(DateTimeFormatter.ISO_INSTANT.parse("1970-01-01T07:00:00Z")), TimeUtils.currentTime());
         TimeUtils.rollMockClock(Duration.ofSeconds(8));
-        assertEquals(new Date("Thu Jan 01 07:00:08 GMT 1970"), TimeUtils.now());
+        assertEquals(Instant.from(DateTimeFormatter.ISO_INSTANT.parse("1970-01-01T07:00:08Z")), TimeUtils.currentTime());
     }
 
     @Test(expected = IllegalStateException.class)
