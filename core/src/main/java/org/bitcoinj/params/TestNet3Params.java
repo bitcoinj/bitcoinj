@@ -29,7 +29,6 @@ import org.bitcoinj.store.BlockStoreException;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -100,12 +99,12 @@ public class TestNet3Params extends BitcoinNetworkParams {
     }
 
     // February 16th 2012
-    private static final Date testnetDiffDate = new Date(1329264000000L);
+    private static final Instant testnetDiffDate = Instant.ofEpochMilli(1329264000000L);
 
     @Override
     public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
         final BlockStore blockStore) throws VerificationException, BlockStoreException {
-        if (!isDifficultyTransitionPoint(storedPrev.getHeight()) && nextBlock.getTime().after(testnetDiffDate)) {
+        if (!isDifficultyTransitionPoint(storedPrev.getHeight()) && nextBlock.getTimeInstant().isAfter(testnetDiffDate)) {
             Block prev = storedPrev.getHeader();
 
             // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
