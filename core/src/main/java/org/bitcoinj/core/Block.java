@@ -922,7 +922,7 @@ public class Block extends Message {
      */
     @Deprecated
     public Date getTime() {
-        return new Date(getTimeInstant().toEpochMilli());
+        return Date.from(getTimeInstant());
     }
 
     @VisibleForTesting
