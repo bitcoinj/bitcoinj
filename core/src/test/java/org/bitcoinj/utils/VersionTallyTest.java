@@ -31,6 +31,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -108,12 +111,12 @@ public class VersionTallyTest {
         final BlockChain chain = new BlockChain(TESTNET, blockStore);
 
         // Build a historical chain of version 2 blocks
-        long timeSeconds = 1231006505;
+        Instant time = Instant.ofEpochSecond(1231006505);
         StoredBlock chainHead = null;
         for (int height = 0; height < TESTNET.getMajorityWindow(); height++) {
-            chainHead = FakeTxBuilder.createFakeBlock(blockStore, 2, timeSeconds, height).storedBlock;
+            chainHead = FakeTxBuilder.createFakeBlock(blockStore, 2, time, height).storedBlock;
             assertEquals(2, chainHead.getHeader().getVersion());
-            timeSeconds += 60;
+            time = time.plus(1, ChronoUnit.MINUTES);
         }
 
         VersionTally instance = new VersionTally(TESTNET);

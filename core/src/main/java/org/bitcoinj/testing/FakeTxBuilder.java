@@ -260,18 +260,24 @@ public class FakeTxBuilder {
 
     /** Emulates receiving a valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, long version,
-                                            long timeSeconds, Transaction... transactions) {
-        return createFakeBlock(blockStore, version, timeSeconds, 0, transactions);
+                                            Instant time, Transaction... transactions) {
+        return createFakeBlock(blockStore, version, time, 0, transactions);
+    }
+
+    /** @deprecated use {@link #createFakeBlock(BlockStore, long, Instant, Transaction...)} */
+    @Deprecated
+    public static BlockPair createFakeBlock(BlockStore blockStore, long version,
+                                            long timeSecs, Transaction... transactions) {
+        return createFakeBlock(blockStore, version, Instant.ofEpochSecond(timeSecs), transactions);
     }
 
     /** Emulates receiving a valid block */
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, long version,
-                                            long timeSeconds, int height,
-                                            Transaction... transactions) {
+                                            Instant time, int height, Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
             Address to = randomAddress(previousBlock.getParams());
-            Block b = previousBlock.createNextBlock(to, version, Instant.ofEpochSecond(timeSeconds), height);
+            Block b = previousBlock.createNextBlock(to, version, time, height);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -289,28 +295,42 @@ public class FakeTxBuilder {
         }
     }
 
+    /** @deprecated use {@link #createFakeBlock(BlockStore, StoredBlock, long, Instant, int, Transaction...)} */
+    @Deprecated
+    public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, long version,
+                                            long timeSecs, int height, Transaction... transactions) {
+        return createFakeBlock(blockStore, previousStoredBlock, version, Instant.ofEpochSecond(timeSecs), height,
+                transactions);
+    }
+
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height, Transaction... transactions) {
-        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, TimeUtils.currentTimeSeconds(), height, transactions);
+        return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, TimeUtils.currentTime(), height, transactions);
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSeconds, int height, Transaction... transactions) {
+    public static BlockPair createFakeBlock(BlockStore blockStore, long version, Instant time, int height, Transaction... transactions) {
         try {
-            return createFakeBlock(blockStore, blockStore.getChainHead(), version, timeSeconds, height, transactions);
+            return createFakeBlock(blockStore, blockStore.getChainHead(), version, time, height, transactions);
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
 
+    /** @deprecated use {@link #createFakeBlock(BlockStore, long, Instant, int, Transaction...)} */
+    @Deprecated
+    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSecs, int height, Transaction... transactions) {
+        return createFakeBlock(blockStore, version, Instant.ofEpochSecond(timeSecs), height, transactions);
+    }
+
     /** Emulates receiving a valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, int height,
                                             Transaction... transactions) {
-        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTimeSeconds(), height, transactions);
+        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTime(), height, transactions);
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
-        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTimeSeconds(), 0, transactions);
+        return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTime(), 0, transactions);
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {

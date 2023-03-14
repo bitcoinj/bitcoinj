@@ -42,6 +42,7 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -260,24 +261,24 @@ public class BlockChainTest {
         final BlockChain versionChain = new BlockChain(UNITTEST, versionBlockStore);
 
         // Build a historical chain of version 3 blocks
-        long timeSeconds = 1231006505;
+        Instant time = Instant.ofEpochSecond(1231006505);
         int height = 0;
         FakeTxBuilder.BlockPair chainHead = null;
 
         // Put in just enough v2 blocks to be a minority
         for (height = 0; height < (UNITTEST.getMajorityWindow() - UNITTEST.getMajorityRejectBlockOutdated()); height++) {
-            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, deprecatedVersion, timeSeconds, height);
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, deprecatedVersion, time, height);
             versionChain.add(chainHead.block);
-            timeSeconds += 60;
+            time = time.plus(1, ChronoUnit.MINUTES);
         }
         // Fill the rest of the window with v3 blocks
         for (; height < UNITTEST.getMajorityWindow(); height++) {
-            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, newVersion, timeSeconds, height);
+            chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, newVersion, time, height);
             versionChain.add(chainHead.block);
-            timeSeconds += 60;
+            time = time.plus(1, ChronoUnit.MINUTES);
         }
 
-        chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, deprecatedVersion, timeSeconds, height);
+        chainHead = FakeTxBuilder.createFakeBlock(versionBlockStore, deprecatedVersion, time, height);
         // Trying to add a new v2 block should result in rejection
         thrown.expect(VerificationException.BlockVersionOutOfDate.class);
         try {
