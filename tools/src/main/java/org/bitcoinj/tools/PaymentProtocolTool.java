@@ -16,6 +16,7 @@
 
 package org.bitcoinj.tools;
 
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.protocols.payments.PaymentProtocolException;
@@ -31,6 +32,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
@@ -78,7 +80,7 @@ public class PaymentProtocolTool {
                 output.append(format("Signed by: %s%nIdentity verified by: %s%n", pki.displayName, pki.rootAuthorityName));
             }
             if (session.getPaymentDetails().hasExpires()) {
-                output.append(format("Expires: %s%n", new Date(session.getPaymentDetails().getExpires() * 1000)));
+                output.append(format("Expires: %s%n", TimeUtils.dateTimeFormat(Instant.ofEpochSecond(session.getPaymentDetails().getExpires()))));
             }
             if (session.getMemo() != null) {
                 output.append(format("Memo: %s%n", session.getMemo()));
