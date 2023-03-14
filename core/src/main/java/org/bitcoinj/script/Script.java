@@ -25,6 +25,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.LockTime;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
@@ -207,6 +208,7 @@ public class Script {
         CHECKSEQUENCEVERIFY // Enable CHECKSEQUENCEVERIFY operation
     }
     public static final EnumSet<VerifyFlag> ALL_VERIFY_FLAGS = EnumSet.allOf(VerifyFlag.class);
+    private static final BigInteger LOCKTIME_THRESHOLD_BIG = BigInteger.valueOf(Transaction.LOCKTIME_THRESHOLD);
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
@@ -1403,15 +1405,16 @@ public class Script {
             throw new ScriptException(ScriptError.SCRIPT_ERR_NEGATIVE_LOCKTIME, "Negative locktime");
 
         // There are two kinds of nLockTime, need to ensure we're comparing apples-to-apples
+        LockTime txContainingThisLockTime = txContainingThis.lockTime();
         if (!(
-            ((txContainingThis.getLockTime() <  Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) < 0) ||
-            ((txContainingThis.getLockTime() >= Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) >= 0))
+            ((txContainingThisLockTime.isBlockHeight()) && (nLockTime.compareTo(LOCKTIME_THRESHOLD_BIG)) < 0) ||
+            ((txContainingThisLockTime.isTimestamp()) && (nLockTime.compareTo(LOCKTIME_THRESHOLD_BIG)) >= 0))
         )
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Lock time requirement type mismatch");
 
         // Now that we know we're comparing apples-to-apples, the
         // comparison is a simple numeric one.
-        if (nLockTime.compareTo(BigInteger.valueOf(txContainingThis.getLockTime())) > 0)
+        if (nLockTime.compareTo(BigInteger.valueOf(txContainingThisLockTime.rawValue())) > 0)
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Lock time requirement not satisfied");
 
         // Finally the nLockTime feature can be disabled and thus

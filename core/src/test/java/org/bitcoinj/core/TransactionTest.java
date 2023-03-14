@@ -747,7 +747,7 @@ public class TransactionTest {
                 }
             }
             // lock_time
-            uint32ToByteStreamLE(getLockTime(), stream);
+            uint32ToByteStreamLE(lockTime().rawValue(), stream);
         }
     }
 

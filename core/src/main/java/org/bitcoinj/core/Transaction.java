@@ -128,10 +128,13 @@ public class Transaction extends ChildMessage {
      */
     public static final int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
-    /** Threshold for lockTime: below this value it is interpreted as block number, otherwise as timestamp. **/
-    public static final int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
-    /** Same but as a BigInteger for CHECKLOCKTIMEVERIFY */
-    public static final BigInteger LOCKTIME_THRESHOLD_BIG = BigInteger.valueOf(LOCKTIME_THRESHOLD);
+    /**
+     * @deprecated use {@link LockTime#THRESHOLD},
+     *                 {@link LockTime#isBlockHeight()} or
+     *                 {@link LockTime#isTimestamp()}
+     **/
+    @Deprecated
+    public static final int LOCKTIME_THRESHOLD = (int) LockTime.THRESHOLD;
 
     /** How many bytes a transaction can be before it won't be relayed anymore. Currently 100kb. */
     public static final int MAX_STANDARD_TX_SIZE = 100000;
@@ -152,7 +155,7 @@ public class Transaction extends ChildMessage {
     private ArrayList<TransactionInput> inputs;
     private ArrayList<TransactionOutput> outputs;
 
-    private long lockTime;
+    private volatile LockTime vLockTime;
 
     // This is either the time the transaction was broadcast as measured from the local clock, or the time from the
     // block in which it was included. Note that this can be changed by re-orgs so the wallet may update this field.
@@ -229,6 +232,7 @@ public class Transaction extends ChildMessage {
         outputs = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         length = 8; // 8 for std fields
+        vLockTime = LockTime.unset();
     }
 
     /**
@@ -695,7 +699,7 @@ public class Transaction extends ChildMessage {
             throw new ProtocolException("Unknown transaction optional data");
         }
         // lock_time
-        lockTime = readUint32();
+        vLockTime = LockTime.of(readUint32());
         optimalEncodingMessageSize += 4;
 
         length = cursor - offset;
@@ -837,14 +841,14 @@ public class Transaction extends ChildMessage {
 
         if (isTimeLocked()) {
             s.append(indent).append("time locked until ");
-            if (lockTime < LOCKTIME_THRESHOLD) {
-                s.append("block ").append(lockTime);
+            LockTime locktime = lockTime();
+            s.append(locktime);
+            if (locktime.isBlockHeight()) {
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
-                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant((int) lockTime))).append(')');
+                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(locktime.blockHeight())))
+                            .append(')');
                 }
-            } else {
-                s.append(TimeUtils.dateTimeFormat(Instant.ofEpochSecond(lockTime)));
             }
             s.append('\n');
         }
@@ -1521,7 +1525,7 @@ public class Transaction extends ChildMessage {
             uint64ToByteStreamLE(BigInteger.valueOf(prevValue.getValue()), bos);
             uint32ToByteStreamLE(inputs.get(inputIndex).getSequenceNumber(), bos);
             bos.write(hashOutputs);
-            uint32ToByteStreamLE(this.lockTime, bos);
+            uint32ToByteStreamLE(this.vLockTime.rawValue(), bos);
             uint32ToByteStreamLE(0x000000ff & sigHashType, bos);
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
@@ -1564,22 +1568,29 @@ public class Transaction extends ChildMessage {
             }
         }
         // lock_time
-        uint32ToByteStreamLE(lockTime, stream);
+        uint32ToByteStreamLE(vLockTime.rawValue(), stream);
     }
 
     /**
-     * Transactions can have an associated lock time, specified either as a block height or in seconds since the
-     * UNIX epoch. A transaction is not allowed to be confirmed by miners until the lock time is reached, and
+     * Transactions can have an associated lock time, specified either as a block height or as a timestamp (in seconds
+     * since epoch). A transaction is not allowed to be confirmed by miners until the lock time is reached, and
      * since Bitcoin 0.8+ a transaction that did not end its lock period (non final) is considered to be non
      * standard and won't be relayed or included in the memory pool either.
+     * @return lock time, wrapped in a {@link LockTime}
      */
+    public LockTime lockTime() {
+        return vLockTime;
+    }
+
+    /** @deprecated use {@link #lockTime()} */
+    @Deprecated
     public long getLockTime() {
-        return lockTime;
+        return lockTime().rawValue();
     }
 
     /**
-     * Transactions can have an associated lock time, specified either as a block height or in seconds since the
-     * UNIX epoch. A transaction is not allowed to be confirmed by miners until the lock time is reached, and
+     * Transactions can have an associated lock time, specified either as a block height or as a timestamp (in seconds
+     * since epoch). A transaction is not allowed to be confirmed by miners until the lock time is reached, and
      * since Bitcoin 0.8+ a transaction that did not end its lock period (non final) is considered to be non
      * standard and won't be relayed or included in the memory pool either.
      */
@@ -1597,7 +1608,7 @@ public class Transaction extends ChildMessage {
             // For instance one of them can be set to zero to make this feature work.
             log.warn("You are setting the lock time on a transaction but none of the inputs have non-default sequence numbers. This will not do what you expect!");
         }
-        this.lockTime = lockTime;
+        this.vLockTime = LockTime.of(lockTime);
     }
 
     public long getVersion() {
@@ -1803,7 +1814,7 @@ public class Transaction extends ChildMessage {
      * </p>
      */
     public boolean isTimeLocked() {
-        if (getLockTime() == 0)
+        if (!lockTime().isSet())
             return false;
         for (TransactionInput input : getInputs())
             if (input.hasSequence())
@@ -1846,19 +1857,20 @@ public class Transaction extends ChildMessage {
      * re-activated before this functionality is useful.</p>
      */
     public boolean isFinal(int height, long blockTimeSeconds) {
-        long time = getLockTime();
-        return time < (time < LOCKTIME_THRESHOLD ? height : blockTimeSeconds) || !isTimeLocked();
+        LockTime locktime = lockTime();
+        return locktime.rawValue() < (locktime.isBlockHeight() ? height : blockTimeSeconds) ||
+                !isTimeLocked();
     }
 
     /**
-     * Returns either the lock time, if it was specified in seconds, or an estimate based on the time in
-     * the current head block if it was specified as a block time.
+     * Returns either the lock time, if it was specified as a timestamp, or an estimate based on the time in
+     * the current head block if it was specified as a block height.
      */
     public Instant estimateLockTimeInstant(AbstractBlockChain chain) {
-        long lockTime = getLockTime();
-        return lockTime < LOCKTIME_THRESHOLD ?
-                chain.estimateBlockTimeInstant(Math.toIntExact(lockTime)) :
-                Instant.ofEpochSecond(lockTime);
+        LockTime locktime = lockTime();
+        return locktime.isBlockHeight() ?
+                chain.estimateBlockTimeInstant(locktime.blockHeight()) :
+                locktime.timestamp();
     }
 
     /** @deprecated use {@link #estimateLockTimeInstant(AbstractBlockChain)} */

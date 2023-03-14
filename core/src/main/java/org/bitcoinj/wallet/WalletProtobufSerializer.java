@@ -22,6 +22,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.WireFormat;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.LockTime;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
@@ -261,8 +262,9 @@ public class WalletProtobufSerializer {
         tx.getUpdateTimeInstant().ifPresent(
                 time -> txBuilder.setUpdatedAt(time.toEpochMilli()));
 
-        if (tx.getLockTime() > 0) {
-            txBuilder.setLockTime((int)tx.getLockTime());
+        LockTime locktime = tx.lockTime();
+        if (locktime.isSet()) {
+            txBuilder.setLockTime((int) locktime.rawValue());
         }
 
         // Handle inputs.
