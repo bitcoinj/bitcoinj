@@ -39,12 +39,10 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import static org.bitcoinj.base.Coin.COIN;
@@ -441,8 +439,7 @@ public class BlockChainTest {
         BlockChain prod = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET));
         Instant t = prod.estimateBlockTimeInstant(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
-        Instant expected = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US)
-                .parse("2012-10-23T08:35:05.000-0700").toInstant();
+        Instant expected = Instant.from(DateTimeFormatter.ISO_INSTANT.parse("2012-10-23T15:35:05Z"));
         assertEquals(expected, t);
     }
 
