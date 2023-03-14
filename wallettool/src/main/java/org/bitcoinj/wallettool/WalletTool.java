@@ -88,14 +88,15 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -187,7 +188,7 @@ public class WalletTool implements Callable<Integer> {
     @CommandLine.Option(names = "--output-script-type", description = "Provide an output script type to any action that requires one. Valid values: P2PKH, P2WPKH. Default: ${DEFAULT-VALUE}")
     private ScriptType outputScriptType = ScriptType.P2PKH;
     @CommandLine.Option(names = "--date", description = "Provide a date in form YYYY-MM-DD to any action that requires one.")
-    private Date date = null;
+    private LocalDate date = null;
     @CommandLine.Option(names = "--unixtime", description = "Provide a date in seconds since epoch.")
     private Long unixtime = null;
     @CommandLine.Option(names = "--waitfor", description = "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new blocks will be processed during this time. When the waited for condition is met, the tx/block hash will be printed. Waiting occurs after the --action is performed, if any is specified. Valid values:%n" +
@@ -591,7 +592,7 @@ public class WalletTool implements Callable<Integer> {
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
         long rotationTimeSecs = TimeUtils.currentTimeSeconds();
         if (date != null) {
-            rotationTimeSecs = date.getTime() / 1000;
+            rotationTimeSecs = date.toEpochSecond(LocalTime.MIDNIGHT, ZoneOffset.UTC);
         } else if (unixtime != null) {
             rotationTimeSecs = unixtime;
         }
@@ -778,9 +779,8 @@ public class WalletTool implements Callable<Integer> {
      */
     private static long parseLockTimeStr(String lockTimeStr) throws ParseException {
         if (lockTimeStr.contains("/")) {
-            SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd", Locale.US);
-            Date date = format.parse(lockTimeStr);
-            return date.getTime() / 1000;
+            Instant time = Instant.from(DateTimeFormatter.ofPattern("yyyy/MM/dd").parse(lockTimeStr));
+            return time.getEpochSecond();
         }
         return Long.parseLong(lockTimeStr);
     }
@@ -1212,7 +1212,7 @@ public class WalletTool implements Callable<Integer> {
         if (unixtime != null)
             return Optional.of(Instant.ofEpochSecond(unixtime));
         else if (date != null)
-            return Optional.of(date.toInstant());
+            return Optional.of(Instant.from(date));
         else
             return Optional.empty();
     }
