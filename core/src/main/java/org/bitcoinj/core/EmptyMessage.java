@@ -37,8 +37,8 @@ public abstract class EmptyMessage extends Message {
         length = 0;
     }
 
-    public EmptyMessage(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public EmptyMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
         length = 0;
     }
 

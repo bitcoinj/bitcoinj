@@ -79,8 +79,8 @@ public class RejectMessage extends Message {
     private RejectCode code;
     private Sha256Hash messageHash;
 
-    public RejectMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public RejectMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */
@@ -94,12 +94,13 @@ public class RejectMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        message = readStr();
-        code = RejectCode.fromCode(readBytes(1)[0]);
-        reason = readStr();
+        int offset = payload.cursor();
+        message = payload.readStr();
+        code = RejectCode.fromCode(payload.readBytes(1)[0]);
+        reason = payload.readStr();
         if (message.equals("block") || message.equals("tx"))
-            messageHash = readHash();
-        length = cursor - offset;
+            messageHash = payload.readHash();
+        length = payload.cursor() - offset;
     }
 
     @Override

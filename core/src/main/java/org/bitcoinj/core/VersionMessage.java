@@ -99,8 +99,8 @@ public class VersionMessage extends Message {
      */
     public boolean relayTxesBeforeFilter;
 
-    public VersionMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public VersionMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     // It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
@@ -127,25 +127,24 @@ public class VersionMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        clientVersion = (int) readUint32();
-        localServices = readUint64().longValue();
-        time = Instant.ofEpochSecond(readUint64().longValue());
-        receivingAddr = new PeerAddress(params, payload, cursor, this, serializer.withProtocolVersion(0));
-        cursor += receivingAddr.getMessageSize();
+        int offset = payload.cursor();
+        clientVersion = (int) payload.readUint32();
+        localServices = payload.readUint64().longValue();
+        time = Instant.ofEpochSecond(payload.readUint64().longValue());
+        receivingAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
         if (clientVersion >= 106) {
-            fromAddr = new PeerAddress(params, payload, cursor, this, serializer.withProtocolVersion(0));
-            cursor += fromAddr.getMessageSize();
+            fromAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
             // uint64 localHostNonce (random data)
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
             // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
             // irrelevant.
-            readUint64();
+            payload.readUint64();
             // string subVer (currently "")
-            subVer = readStr();
+            subVer = payload.readStr();
             // int bestHeight (size of known block chain).
-            bestHeight = readUint32();
+            bestHeight = payload.readUint32();
             if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
-                relayTxesBeforeFilter = readBytes(1)[0] != 0;
+                relayTxesBeforeFilter = payload.readBytes(1)[0] != 0;
             } else {
                 relayTxesBeforeFilter = true;
             }
@@ -156,7 +155,7 @@ public class VersionMessage extends Message {
             bestHeight = 0;
             relayTxesBeforeFilter = true;
         }
-        length = cursor - offset;
+        length = payload.cursor() - offset;
     }
 
     @Override

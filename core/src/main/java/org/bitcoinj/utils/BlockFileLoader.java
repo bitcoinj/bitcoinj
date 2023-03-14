@@ -19,6 +19,7 @@ package org.bitcoinj.utils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Payload;
 import org.bitcoinj.core.ProtocolException;
 
 import java.io.File;
@@ -160,7 +161,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 bytes = new byte[(int) size];
                 currentFileStream.read(bytes, 0, (int) size);
                 try {
-                    nextBlock = params.getDefaultSerializer().makeBlock(bytes);
+                    nextBlock = params.getDefaultSerializer().makeBlock(Payload.of(bytes));
                 } catch (ProtocolException e) {
                     nextBlock = null;
                     continue;

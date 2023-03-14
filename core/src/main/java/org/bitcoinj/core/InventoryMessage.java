@@ -31,8 +31,8 @@ public class InventoryMessage extends ListMessage {
     /** A hard coded constant in the protocol. */
     public static final int MAX_INV_SIZE = 50000;
 
-    public InventoryMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
-        super(params, bytes);
+    public InventoryMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
@@ -44,7 +44,7 @@ public class InventoryMessage extends ListMessage {
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public InventoryMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer, int length)
+    public InventoryMessage(NetworkParameters params, Payload payload, MessageSerializer serializer, int length)
             throws ProtocolException {
         super(params, payload, serializer, length);
     }

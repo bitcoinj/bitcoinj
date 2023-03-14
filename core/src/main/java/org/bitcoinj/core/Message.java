@@ -45,16 +45,10 @@ public abstract class Message {
 
     public static final int UNKNOWN_LENGTH = Integer.MIN_VALUE;
 
-    // The offset is how many bytes into the provided byte array this message payload starts at.
-    protected int offset;
-    // The cursor keeps track of where we are in the byte array as we parse it.
-    // Note that it's relative to the start of the array NOT the start of the message payload.
-    protected int cursor;
-
     protected int length = UNKNOWN_LENGTH;
 
     // The raw message payload bytes themselves.
-    protected byte[] payload;
+    protected Payload payload;
 
     /** @deprecated will be removed after 0.17 */
     @Deprecated
@@ -76,17 +70,15 @@ public abstract class Message {
      * 
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @param length The length of message payload if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    protected Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
+    protected Message(NetworkParameters params, Payload payload, MessageSerializer serializer, int length) throws ProtocolException {
         this.serializer = serializer;
         this.params = params;
         this.payload = payload;
-        this.cursor = this.offset = offset;
         this.length = length;
 
         parse();
@@ -99,8 +91,8 @@ public abstract class Message {
             this.payload = null;
     }
 
-    protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        this(params, payload, offset, params.getDefaultSerializer(), UNKNOWN_LENGTH);
+    protected Message(NetworkParameters params, Payload payload) throws ProtocolException {
+        this(params, payload, params.getDefaultSerializer(), UNKNOWN_LENGTH);
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
@@ -192,14 +184,14 @@ public abstract class Message {
     public byte[] unsafeBitcoinSerialize() {
         // 1st attempt to use a cached array.
         if (payload != null) {
-            if (offset == 0 && length == payload.length) {
+            if (length == payload.length()) {
                 // Cached byte array is the entire message with no extras so we can return as is and avoid an array
                 // copy.
-                return payload;
+                return payload.bytes();
             }
 
             byte[] buf = new byte[length];
-            System.arraycopy(payload, offset, buf, 0, length);
+            System.arraycopy(payload.bytes(), 0, buf, 0, length);
             return buf;
         }
 
@@ -220,12 +212,10 @@ public abstract class Message {
             // merkle root calls this method.  It is will frequently happen prior to serializing the block
             // which means another call to bitcoinSerialize is coming.  If we didn't recache then internal
             // serialization would occur a 2nd time and every subsequent time the message is serialized.
-            payload = stream.toByteArray();
-            cursor = cursor - offset;
-            offset = 0;
+            payload = Payload.of(stream.toByteArray());
             recached = true;
-            length = payload.length;
-            return payload;
+            length = payload.length();
+            return payload.bytes();
         }
         // Record length. If this Message wasn't parsed from a byte stream it won't have length field
         // set (except for static length message types).  Setting it makes future streaming more efficient
@@ -244,7 +234,7 @@ public abstract class Message {
     public final void bitcoinSerialize(OutputStream stream) throws IOException {
         // 1st check for cached bytes.
         if (payload != null && length != UNKNOWN_LENGTH) {
-            stream.write(payload, offset, length);
+            stream.write(payload.bytes(), 0, length);
             return;
         }
 
@@ -271,84 +261,6 @@ public abstract class Message {
         if (length == UNKNOWN_LENGTH)
             checkState(false, "Length field has not been set in %s.", getClass().getSimpleName());
         return length;
-    }
-
-    protected long readUint32() throws ProtocolException {
-        try {
-            long u = ByteUtils.readUint32(payload, cursor);
-            cursor += 4;
-            return u;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new ProtocolException(e);
-        }
-    }
-
-    protected long readInt64() throws ProtocolException {
-        try {
-            long u = ByteUtils.readInt64(payload, cursor);
-            cursor += 8;
-            return u;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new ProtocolException(e);
-        }
-    }
-
-    protected BigInteger readUint64() throws ProtocolException {
-        // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
-        return new BigInteger(ByteUtils.reverseBytes(readBytes(8)));
-    }
-
-    protected VarInt readVarInt() throws ProtocolException {
-        return readVarInt(0);
-    }
-
-    protected VarInt readVarInt(int offset) throws ProtocolException {
-        try {
-            VarInt varint = new VarInt(payload, cursor + offset);
-            cursor += offset + varint.getOriginalSizeInBytes();
-            return varint;
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new ProtocolException(e);
-        }
-    }
-
-    private void checkReadLength(int length) throws ProtocolException {
-        if ((length > MAX_SIZE) || (cursor + length > payload.length)) {
-            throw new ProtocolException("Claimed value length too large: " + length);
-        }
-    }
-
-    protected byte[] readBytes(int length) throws ProtocolException {
-        checkReadLength(length);
-        try {
-            byte[] b = new byte[length];
-            System.arraycopy(payload, cursor, b, 0, length);
-            cursor += length;
-            return b;
-        } catch (IndexOutOfBoundsException e) {
-            throw new ProtocolException(e);
-        }
-    }
-
-    protected byte readByte() throws ProtocolException {
-        checkReadLength(1);
-        return payload[cursor++];
-    }
-
-    protected byte[] readByteArray() throws ProtocolException {
-        final int length = readVarInt().intValue();
-        return readBytes(length);
-    }
-
-    protected String readStr() throws ProtocolException {
-        int length = readVarInt().intValue();
-        return length == 0 ? "" : new String(readBytes(length), StandardCharsets.UTF_8); // optimization for empty strings
-    }
-
-    protected Sha256Hash readHash() throws ProtocolException {
-        // We have to flip it around, as it's been read off the wire in little endian.
-        // Not the most efficient way to do this but the clearest.
-        return Sha256Hash.wrapReversed(readBytes(32));
     }
 
     /** Network parameters this message was created with. */

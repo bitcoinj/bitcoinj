@@ -84,8 +84,8 @@ public class TransactionOutPoint extends ChildMessage {
     /**
      * Deserializes the message. This is usually part of a transaction message.
      */
-    public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public TransactionOutPoint(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
@@ -95,15 +95,15 @@ public class TransactionOutPoint extends ChildMessage {
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer, MESSAGE_LENGTH);
+    public TransactionOutPoint(NetworkParameters params, Payload payload, Message parent, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, parent, serializer, MESSAGE_LENGTH);
     }
 
     @Override
     protected void parse() throws ProtocolException {
         length = MESSAGE_LENGTH;
-        hash = readHash();
-        index = readUint32();
+        hash = payload.readHash();
+        index = payload.readUint32();
     }
 
     @Override

@@ -240,23 +240,14 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
-    public Transaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
-    }
-
-    /**
-     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
-     */
-    public Transaction(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
-        // inputs/outputs will be created in parse()
+    public Transaction(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param parent The parent of the transaction.
      * @param setSerializer The serializer to use for this transaction.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
@@ -266,9 +257,9 @@ public class Transaction extends ChildMessage {
      * is performed on this hash.
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent,
+    public Transaction(NetworkParameters params, Payload payload, @Nullable Message parent,
             MessageSerializer setSerializer, int length, @Nullable byte[] hashFromHeader) throws ProtocolException {
-        super(params, payload, offset, parent, setSerializer, length);
+        super(params, payload, parent, setSerializer, length);
         if (hashFromHeader != null) {
             cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
             if (!hasWitnesses())
@@ -279,9 +270,9 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
+    public Transaction(NetworkParameters params, Payload payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
             throws ProtocolException {
-        super(params, payload, 0, parent, setSerializer, length);
+        super(params, payload, parent, setSerializer, length);
     }
 
     /**
@@ -660,19 +651,19 @@ public class Transaction extends ChildMessage {
      */
     @Override
     protected void parse() throws ProtocolException {
+        int offset = payload.cursor();
         boolean allowWitness = allowWitness();
 
-        cursor = offset;
         optimalEncodingMessageSize = 4;
 
         // version
-        version = readUint32();
+        version = payload.readUint32();
         byte flags = 0;
         // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
         parseInputs();
         if (inputs.size() == 0 && allowWitness) {
             // We read a dummy or an empty input
-            flags = readByte();
+            flags = payload.readByte();
             optimalEncodingMessageSize += 2;
 
             if (flags != 0) {
@@ -701,55 +692,49 @@ public class Transaction extends ChildMessage {
             throw new ProtocolException("Unknown transaction optional data");
         }
         // lock_time
-        vLockTime = LockTime.of(readUint32());
+        vLockTime = LockTime.of(payload.readUint32());
         optimalEncodingMessageSize += 4;
 
-        length = cursor - offset;
+        length = payload.cursor() - offset;
     }
 
     private void parseInputs() {
-        VarInt numInputsVarInt = readVarInt();
+        VarInt numInputsVarInt = payload.readVarInt();
         optimalEncodingMessageSize += numInputsVarInt.getSizeInBytes();
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
+            TransactionInput input = new TransactionInput(params, this, payload, serializer);
+            optimalEncodingMessageSize += input.getOptimalEncodingMessageSize();
             inputs.add(input);
-            VarInt scriptLenVarInt = readVarInt(TransactionOutPoint.MESSAGE_LENGTH);
-            int scriptLen = scriptLenVarInt.intValue();
-            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + scriptLenVarInt.getSizeInBytes() + scriptLen + 4;
-            cursor += scriptLen + 4;
         }
     }
 
     private void parseOutputs() {
-        VarInt numOutputsVarInt = readVarInt();
+        VarInt numOutputsVarInt = payload.readVarInt();
         optimalEncodingMessageSize += numOutputsVarInt.getSizeInBytes();
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
+            TransactionOutput output = new TransactionOutput(params, this, payload, serializer);
+            optimalEncodingMessageSize += output.getOptimalEncodingMessageSize();
             outputs.add(output);
-            VarInt scriptLenVarInt = readVarInt(8);
-            int scriptLen = scriptLenVarInt.intValue();
-            optimalEncodingMessageSize += 8 + scriptLenVarInt.getSizeInBytes() + scriptLen;
-            cursor += scriptLen;
         }
     }
 
     private void parseWitnesses() {
         int numWitnesses = inputs.size();
         for (int i = 0; i < numWitnesses; i++) {
-            VarInt pushCountVarInt = readVarInt();
+            VarInt pushCountVarInt = payload.readVarInt();
             int pushCount = pushCountVarInt.intValue();
             optimalEncodingMessageSize += pushCountVarInt.getSizeInBytes();
             TransactionWitness witness = new TransactionWitness(pushCount);
             getInput(i).setWitness(witness);
             for (int y = 0; y < pushCount; y++) {
-                VarInt pushSizeVarInt = readVarInt();
+                VarInt pushSizeVarInt = payload.readVarInt();
                 int pushSize = pushSizeVarInt.intValue();
                 optimalEncodingMessageSize += pushSizeVarInt.getSizeInBytes() + pushSize;
-                byte[] push = readBytes(pushSize);
+                byte[] push = payload.readBytes(pushSize);
                 witness.setPush(y, push);
             }
         }
@@ -1308,7 +1293,7 @@ public class Transaction extends ChildMessage {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = this.params.getDefaultSerializer().makeTransaction(this.bitcoinSerialize());
+            Transaction tx = this.params.getDefaultSerializer().makeTransaction(Payload.of(this.bitcoinSerialize()));
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual

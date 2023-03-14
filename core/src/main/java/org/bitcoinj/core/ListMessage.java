@@ -39,13 +39,13 @@ public abstract class ListMessage extends Message {
 
     public static final long MAX_INVENTORY_ITEMS = 50000;
 
-    public ListMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
-        super(params, bytes, 0);
+    public ListMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
-    public ListMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer, int length)
+    public ListMessage(NetworkParameters params, Payload payload, MessageSerializer serializer, int length)
             throws ProtocolException {
-        super(params, payload, 0, serializer, length);
+        super(params, payload, serializer, length);
     }
 
     public ListMessage(NetworkParameters params) {
@@ -74,22 +74,23 @@ public abstract class ListMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        long arrayLen = readVarInt().longValue();
+        int offset = payload.cursor();
+        long arrayLen = payload.readVarInt().longValue();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);
-        length = (int) (cursor - offset + (arrayLen * InventoryItem.MESSAGE_LENGTH));
+        length = (int) (payload.cursor() - offset + (arrayLen * InventoryItem.MESSAGE_LENGTH));
 
         // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
         items = new ArrayList<>((int) arrayLen);
         for (int i = 0; i < arrayLen; i++) {
-            if (cursor + InventoryItem.MESSAGE_LENGTH > payload.length) {
+            if (payload.cursor() + InventoryItem.MESSAGE_LENGTH > payload.length()) {
                 throw new ProtocolException("Ran off the end of the INV");
             }
-            int typeCode = (int) readUint32();
+            int typeCode = (int) payload.readUint32();
             InventoryItem.Type type = InventoryItem.Type.ofCode(typeCode);
             if (type == null)
                 throw new ProtocolException("Unknown CInv type: " + typeCode);
-            InventoryItem item = new InventoryItem(type, readHash());
+            InventoryItem item = new InventoryItem(type, payload.readHash());
             items.add(item);
         }
         payload = null;

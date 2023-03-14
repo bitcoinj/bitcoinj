@@ -153,30 +153,15 @@ public class Block extends Message {
     /**
      * Construct a block object from the Bitcoin wire format.
      * @param params NetworkParameters object.
-     * @param payloadBytes the payload to extract the block from.
+     * @param payload the payload to extract the block from.
      * @param serializer the serializer to use for this message.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, MessageSerializer serializer, int length)
+    public Block(NetworkParameters params, Payload payload, MessageSerializer serializer, int length)
             throws ProtocolException {
-        super(params, payloadBytes, 0, serializer, length);
-    }
-
-    /**
-     * Construct a block object from the Bitcoin wire format.
-     * @param params NetworkParameters object.
-     * @param payloadBytes the payload to extract the block from.
-     * @param offset The location of the first payload byte within the array.
-     * @param serializer the serializer to use for this message.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
-     * @throws ProtocolException
-     */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer, int length)
-            throws ProtocolException {
-        super(params, payloadBytes, offset, serializer, length);
+        super(params, payload, serializer, length);
     }
 
     /**
@@ -184,18 +169,17 @@ public class Block extends Message {
      * contained within another message (i.e. for AuxPoW header).
      *
      * @param params NetworkParameters object.
-     * @param payloadBytes Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param parent The message element which contains this block, maybe null for no parent.
      * @param serializer the serializer to use for this block.
      * @param length The length of message if known.  Usually this is provided when deserializing of the wire
      * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, MessageSerializer serializer, int length)
+    public Block(NetworkParameters params, Payload payload, @Nullable Message parent, MessageSerializer serializer, int length)
             throws ProtocolException {
         // TODO: Keep the parent
-        super(params, payloadBytes, offset, serializer, length);
+        super(params, payload, serializer, length);
     }
 
     /**
@@ -249,30 +233,24 @@ public class Block extends Message {
 
     /**
      * Parse transactions from the block.
-     * 
-     * @param transactionsOffset Offset of the transactions within the block.
-     * Useful for non-Bitcoin chains where the block header may not be a fixed
-     * size.
      */
-    protected void parseTransactions(final int transactionsOffset) throws ProtocolException {
-        cursor = transactionsOffset;
+    protected void parseTransactions() throws ProtocolException {
         optimalEncodingMessageSize = HEADER_SIZE;
-        if (payload.length == cursor) {
+        if (payload.length() == payload.cursor()) {
             // This message is just a header, it has no transactions.
             transactionBytesValid = false;
             return;
         }
 
-        VarInt numTransactionsVarInt = readVarInt();
+        VarInt numTransactionsVarInt = payload.readVarInt();
         optimalEncodingMessageSize += numTransactionsVarInt.getSizeInBytes();
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH, null);
+            Transaction tx = new Transaction(params, payload, this, serializer, UNKNOWN_LENGTH, null);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
-            cursor += tx.getMessageSize();
             optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
         }
         transactionBytesValid = serializer.isParseRetainMode();
@@ -280,20 +258,20 @@ public class Block extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
+        int offset = payload.cursor();
         // header
-        cursor = offset;
-        version = readUint32();
-        prevBlockHash = readHash();
-        merkleRoot = readHash();
-        time = Instant.ofEpochSecond(readUint32());
-        difficultyTarget = readUint32();
-        nonce = readUint32();
-        hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
+        version = payload.readUint32();
+        prevBlockHash = payload.readHash();
+        merkleRoot = payload.readHash();
+        time = Instant.ofEpochSecond(payload.readUint32());
+        difficultyTarget = payload.readUint32();
+        nonce = payload.readUint32();
+        hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload.bytes(), offset, payload.cursor() - offset));
         headerBytesValid = serializer.isParseRetainMode();
 
         // transactions
-        parseTransactions(offset + HEADER_SIZE);
-        length = cursor - offset;
+        parseTransactions();
+        length = payload.cursor() - offset;
     }
 
     public static Block createGenesis(NetworkParameters n) {
@@ -339,8 +317,8 @@ public class Block extends Message {
     // default for testing
     void writeHeader(OutputStream stream) throws IOException {
         // try for cached write first
-        if (headerBytesValid && payload != null && payload.length >= offset + HEADER_SIZE) {
-            stream.write(payload, offset, HEADER_SIZE);
+        if (headerBytesValid && payload != null && payload.length() >= HEADER_SIZE) {
+            stream.write(payload.bytes(), 0, HEADER_SIZE);
             return;
         }
         // fall back to manual write
@@ -360,8 +338,8 @@ public class Block extends Message {
         }
 
         // confirmed we must have transactions either cached or as objects.
-        if (transactionBytesValid && payload != null && payload.length >= offset + length) {
-            stream.write(payload, offset + HEADER_SIZE, length - HEADER_SIZE);
+        if (transactionBytesValid && payload != null && payload.length() >= length) {
+            stream.write(payload.bytes(), HEADER_SIZE, length - HEADER_SIZE);
             return;
         }
 
@@ -380,12 +358,12 @@ public class Block extends Message {
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
             Objects.requireNonNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
-            if (length == payload.length) {
-                return payload;
+            if (length == payload.length()) {
+                return payload.bytes();
             } else {
                 // byte array is offset so copy out the correct range.
                 byte[] buf = new byte[length];
-                System.arraycopy(payload, offset, buf, 0, length);
+                System.arraycopy(payload.bytes(), 0, buf, 0, length);
                 return buf;
             }
         }
@@ -419,7 +397,7 @@ public class Block extends Message {
      */
     private int guessTransactionsLength() {
         if (transactionBytesValid)
-            return payload.length - HEADER_SIZE;
+            return payload.length() - HEADER_SIZE;
         if (transactions == null)
             return 0;
         int len = VarInt.sizeOf(transactions.size());

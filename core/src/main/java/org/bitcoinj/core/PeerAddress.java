@@ -84,12 +84,11 @@ public class PeerAddress extends ChildMessage {
      * Construct a peer address from a serialized payload.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public PeerAddress(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer, UNKNOWN_LENGTH);
+    public PeerAddress(NetworkParameters params, Payload payload, Message parent, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, parent, serializer, UNKNOWN_LENGTH);
     }
 
     /**
@@ -236,18 +235,18 @@ public class PeerAddress extends ChildMessage {
 
         length = 0;
         if (protocolVersion >= 1) {
-            time = Optional.of(Instant.ofEpochSecond(readUint32()));
+            time = Optional.of(Instant.ofEpochSecond(payload.readUint32()));
             length += 4;
         } else {
             time = Optional.empty();
         }
         if (protocolVersion == 2) {
-            VarInt servicesVarInt = readVarInt();
+            VarInt servicesVarInt = payload.readVarInt();
             length += servicesVarInt.getSizeInBytes();
             services = BigInteger.valueOf(servicesVarInt.longValue());
-            int networkId = readByte();
+            int networkId = payload.readByte();
             length += 1;
-            byte[] addrBytes = readByteArray();
+            byte[] addrBytes = payload.readByteArray();
             int addrLen = addrBytes.length;
             length += VarInt.sizeOf(addrLen) + addrLen;
             Optional<NetworkId> id = NetworkId.of(networkId);
@@ -295,9 +294,9 @@ public class PeerAddress extends ChildMessage {
                 hostname = null;
             }
         } else {
-            services = readUint64();
+            services = payload.readUint64();
             length += 8;
-            byte[] addrBytes = readBytes(16);
+            byte[] addrBytes = payload.readBytes(16);
             length += 16;
             if (Arrays.equals(ONIONCAT_PREFIX, Arrays.copyOf(addrBytes, 6))) {
                 byte[] onionAddress = Arrays.copyOfRange(addrBytes, 6, 16);
@@ -307,8 +306,7 @@ public class PeerAddress extends ChildMessage {
                 hostname = null;
             }
         }
-        port = ByteUtils.readUint16BE(payload, cursor);
-        cursor += 2;
+        port = payload.readUint16BE();
         length += 2;
     }
 

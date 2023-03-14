@@ -76,8 +76,8 @@ public class BloomFilter extends Message {
     /**
      * Construct a BloomFilter by deserializing payloadBytes
      */
-    public BloomFilter(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public BloomFilter(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
     
     /**
@@ -147,15 +147,16 @@ public class BloomFilter extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        data = readByteArray();
+        int offset = payload.cursor();
+        data = payload.readByteArray();
         if (data.length > MAX_FILTER_SIZE)
             throw new ProtocolException ("Bloom filter out of size range.");
-        hashFuncs = readUint32();
+        hashFuncs = payload.readUint32();
         if (hashFuncs > MAX_HASH_FUNCS)
             throw new ProtocolException("Bloom filter hash function count out of range");
-        nTweak = readUint32();
-        nFlags = readBytes(1)[0];
-        length = cursor - offset;
+        nTweak = payload.readUint32();
+        nFlags = payload.readBytes(1)[0];
+        length = payload.cursor() - offset;
     }
     
     /**

@@ -28,8 +28,8 @@ import java.io.OutputStream;
 public class Pong extends Message {
     private long nonce;
 
-    public Pong(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public Pong(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
     
     /**
@@ -42,7 +42,7 @@ public class Pong extends Message {
     
     @Override
     protected void parse() throws ProtocolException {
-        nonce = readInt64();
+        nonce = payload.readInt64();
         length = 8;
     }
     

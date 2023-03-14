@@ -42,8 +42,8 @@ public class HeadersMessage extends Message {
 
     private List<Block> blockHeaders;
 
-    public HeadersMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public HeadersMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     public HeadersMessage(NetworkParameters params, Block... headers) throws ProtocolException {
@@ -67,7 +67,8 @@ public class HeadersMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        int numHeaders = readVarInt().intValue();
+        int offset = payload.cursor();
+        int numHeaders = payload.readVarInt().intValue();
         if (numHeaders > MAX_HEADERS)
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
                                          MAX_HEADERS);
@@ -76,16 +77,16 @@ public class HeadersMessage extends Message {
         final BitcoinSerializer serializer = this.params.getSerializer(true);
 
         for (int i = 0; i < numHeaders; ++i) {
-            final Block newBlockHeader = serializer.makeBlock(payload, cursor, UNKNOWN_LENGTH);
+            final Block newBlockHeader = serializer.makeBlock(payload);
             if (newBlockHeader.hasTransactions()) {
                 throw new ProtocolException("Block header does not end with a null byte");
             }
-            cursor += newBlockHeader.optimalEncodingMessageSize;
+            payload.skip(newBlockHeader.optimalEncodingMessageSize);
             blockHeaders.add(newBlockHeader);
         }
 
         if (length == UNKNOWN_LENGTH) {
-            length = cursor - offset;
+            length = payload.cursor() - offset;
         }
 
         if (log.isDebugEnabled()) {

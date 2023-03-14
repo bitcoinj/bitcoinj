@@ -73,8 +73,8 @@ public class PartialMerkleTree extends Message {
     // txids and internal hashes
     private List<Sha256Hash> hashes;
     
-    public PartialMerkleTree(NetworkParameters params, byte[] payloadBytes, int offset) throws ProtocolException {
-        super(params, payloadBytes, offset);
+    public PartialMerkleTree(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
@@ -121,17 +121,18 @@ public class PartialMerkleTree extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        transactionCount = (int)readUint32();
+        int offset = payload.cursor();
+        transactionCount = (int) payload.readUint32();
 
-        int nHashes = readVarInt().intValue();
+        int nHashes = payload.readVarInt().intValue();
         hashes = new ArrayList<>(Math.min(nHashes, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < nHashes; i++)
-            hashes.add(readHash());
+            hashes.add(payload.readHash());
 
-        int nFlagBytes = readVarInt().intValue();
-        matchedChildBits = readBytes(nFlagBytes);
+        int nFlagBytes = payload.readVarInt().intValue();
+        matchedChildBits = payload.readBytes(nFlagBytes);
 
-        length = cursor - offset;
+        length = payload.cursor() - offset;
     }
 
     // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.

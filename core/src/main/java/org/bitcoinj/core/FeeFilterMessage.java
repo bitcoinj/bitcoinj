@@ -34,8 +34,8 @@ import java.math.BigInteger;
 public class FeeFilterMessage extends Message {
     private Coin feeRate;
 
-    public FeeFilterMessage(NetworkParameters params, byte[] payloadBytes, BitcoinSerializer serializer, int length) {
-        super(params, payloadBytes, 0, serializer, length);
+    public FeeFilterMessage(NetworkParameters params, Payload payload, BitcoinSerializer serializer, int length) {
+        super(params, payload, serializer, length);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class FeeFilterMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        feeRate = Coin.ofSat(readUint64().longValue());
+        feeRate = Coin.ofSat(payload.readUint64().longValue());
     }
 
     public Coin getFeeRate() {

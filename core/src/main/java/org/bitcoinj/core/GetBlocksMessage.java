@@ -43,23 +43,23 @@ public class GetBlocksMessage extends Message {
         this.stopHash = stopHash;
     }
 
-    public GetBlocksMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public GetBlocksMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     @Override
     protected void parse() throws ProtocolException {
-        cursor = offset;
-        version = readUint32();
-        int startCount = readVarInt().intValue();
+        int offset = payload.cursor();
+        version = payload.readUint32();
+        int startCount = payload.readVarInt().intValue();
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
-        length = cursor - offset + ((startCount + 1) * 32);
+        length = payload.cursor() - offset + ((startCount + 1) * 32);
         locator = new BlockLocator();
         for (int i = 0; i < startCount; i++) {
-            locator = locator.add(readHash());
+            locator = locator.add(payload.readHash());
         }
-        stopHash = readHash();
+        stopHash = payload.readHash();
     }
 
     public BlockLocator getLocator() {

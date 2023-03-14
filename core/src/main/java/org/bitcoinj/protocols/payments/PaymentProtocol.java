@@ -25,6 +25,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Payload;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.X509Utils;
 import org.bitcoinj.params.BitcoinNetworkParams;
@@ -369,7 +370,7 @@ public class PaymentProtocol {
             Protos.Payment paymentMessage) {
         final List<Transaction> transactions = new ArrayList<>(paymentMessage.getTransactionsCount());
         for (final ByteString transaction : paymentMessage.getTransactionsList())
-            transactions.add(params.getDefaultSerializer().makeTransaction(transaction.toByteArray()));
+            transactions.add(params.getDefaultSerializer().makeTransaction(Payload.of(transaction.toByteArray())));
         return transactions;
     }
 
