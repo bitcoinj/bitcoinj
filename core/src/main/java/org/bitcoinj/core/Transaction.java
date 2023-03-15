@@ -25,6 +25,8 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.LockTime.HeightLock;
+import org.bitcoinj.core.LockTime.TimeLock;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -846,7 +848,7 @@ public class Transaction extends ChildMessage {
             if (locktime.isBlockHeight()) {
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
-                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(locktime.blockHeight())))
+                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(((HeightLock)locktime).blockHeight())))
                             .append(')');
                 }
             }
@@ -1869,8 +1871,8 @@ public class Transaction extends ChildMessage {
     public Instant estimateLockTimeInstant(AbstractBlockChain chain) {
         LockTime locktime = lockTime();
         return locktime.isBlockHeight() ?
-                chain.estimateBlockTimeInstant(locktime.blockHeight()) :
-                locktime.timestamp();
+                chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight()) :
+                ((TimeLock)locktime).timestamp();
     }
 
     /** @deprecated use {@link #estimateLockTimeInstant(AbstractBlockChain)} */
