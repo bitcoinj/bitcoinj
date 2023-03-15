@@ -1,9 +1,14 @@
-image: debian:bullseye-slim
-
 before_script:
   - apt-get update
-  - apt-get -y install openjdk-11-jdk gradle
 
-build:
+build:bullseye:
+  image: debian:bullseye-slim
   script:
+    - apt-get -y install openjdk-11-jdk gradle
+    - gradle build --stacktrace
+
+build:bookworm:
+  image: debian:bookworm-slim
+  script:
+    - apt-get -y install openjdk-17-jdk gradle
     - gradle build --stacktrace
