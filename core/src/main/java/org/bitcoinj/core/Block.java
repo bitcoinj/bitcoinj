@@ -670,16 +670,16 @@ public class Block extends Message {
     }
 
     private Sha256Hash calculateMerkleRoot() {
-        List<byte[]> tree = buildMerkleTree(false);
-        return Sha256Hash.wrap(tree.get(tree.size() - 1));
+        List<Sha256Hash> tree = buildMerkleTree(false);
+        return tree.get(tree.size() - 1);
     }
 
     private Sha256Hash calculateWitnessRoot() {
-        List<byte[]> tree = buildMerkleTree(true);
-        return Sha256Hash.wrap(tree.get(tree.size() - 1));
+        List<Sha256Hash> tree = buildMerkleTree(true);
+        return tree.get(tree.size() - 1);
     }
 
-    private List<byte[]> buildMerkleTree(boolean useWTxId) {
+    private List<Sha256Hash> buildMerkleTree(boolean useWTxId) {
         // The Merkle root is based on a tree of hashes calculated from the transactions:
         //
         //     root
@@ -710,15 +710,15 @@ public class Block extends Message {
         //    2     3    4  4
         //  / \   / \   / \
         // t1 t2 t3 t4 t5 t5
-        ArrayList<byte[]> tree = new ArrayList<>(transactions.size());
+        ArrayList<Sha256Hash> tree = new ArrayList<>(transactions.size());
         // Start by adding all the hashes of the transactions as leaves of the tree.
         for (Transaction tx : transactions) {
-            final Sha256Hash id;
+            final Sha256Hash hash;
             if (useWTxId && tx.isCoinBase())
-                id = Sha256Hash.ZERO_HASH;
+                hash = Sha256Hash.ZERO_HASH;
             else
-                id = useWTxId ? tx.getWTxId() : tx.getTxId();
-            tree.add(id.getBytes());
+                hash = useWTxId ? tx.getWTxId() : tx.getTxId();
+            tree.add(hash);
         }
         int levelOffset = 0; // Offset in the list where the currently processed level starts.
         // Step through each level, stopping when we reach the root (levelSize == 1).
@@ -728,9 +728,11 @@ public class Block extends Message {
                 // The right hand node can be the same as the left hand, in the case where we don't have enough
                 // transactions.
                 int right = Math.min(left + 1, levelSize - 1);
-                byte[] leftBytes = ByteUtils.reverseBytes(tree.get(levelOffset + left));
-                byte[] rightBytes = ByteUtils.reverseBytes(tree.get(levelOffset + right));
-                tree.add(ByteUtils.reverseBytes(hashTwice(leftBytes, rightBytes)));
+                Sha256Hash leftHash = tree.get(levelOffset + left);
+                Sha256Hash rightHash = tree.get(levelOffset + right);
+                tree.add(Sha256Hash.wrapReversed(hashTwice(
+                        leftHash.getReversedBytes(),
+                        rightHash.getReversedBytes())));
             }
             // Move to the next level.
             levelOffset += levelSize;
