@@ -16,36 +16,24 @@
 
 package org.bitcoinj.core;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import org.bitcoinj.core.LockTime.HeightLock;
+import org.bitcoinj.core.LockTime.TimeLock;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.Assert.*;
 
+@RunWith(JUnitParamsRunner.class)
 public class LockTimeTest {
-    @Test
-    public void of() {
-        assertEquals(0, LockTime.of(0).rawValue());
-        assertEquals(499_999_999, LockTime.of(LockTime.THRESHOLD - 1).rawValue());
-        assertEquals(500_000_000, LockTime.of(LockTime.THRESHOLD).rawValue());
-        assertEquals(Long.MAX_VALUE, LockTime.of(Long.MAX_VALUE).rawValue());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void of_negative() {
-        LockTime.of(-1);
-    }
-
     @Test
     public void ofBlockHeight() {
         assertEquals(1, LockTime.ofBlockHeight(1).blockHeight());
         assertEquals(499_999_999, LockTime.ofBlockHeight((int) LockTime.THRESHOLD - 1).blockHeight());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void ofBlockHeight_negative() {
-        LockTime.ofBlockHeight(-1);
     }
 
     @Test
@@ -68,16 +56,53 @@ public class LockTimeTest {
 
     @Test
     public void unset() {
-        assertEquals(0, LockTime.unset().rawValue());
+        LockTime unset = LockTime.unset();
+        assertTrue(unset instanceof HeightLock);
+        assertEquals(0, unset.rawValue());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void blockHeight_mismatch() {
-        LockTime.ofTimestamp(Instant.MAX).blockHeight();
+    @Test
+    public void timestampSubtype() {
+        LockTime timestamp = LockTime.ofTimestamp(Instant.now());
+        assertTrue(timestamp instanceof TimeLock);
+        assertTrue(((TimeLock) timestamp).timestamp().isAfter(Instant.EPOCH));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void timestamp_mismatch() {
-        LockTime.ofBlockHeight(1).timestamp();
+    @Test
+    public void blockHeightSubtype() {
+        LockTime blockHeight = LockTime.ofBlockHeight(100);
+        assertTrue(blockHeight instanceof HeightLock);
+        assertTrue(((HeightLock) blockHeight).blockHeight() > 0);
+    }
+
+    @Test
+    @Parameters(method = "validValueVectors")
+    public void validValues(long value, Class<?> clazz) {
+        LockTime lockTime = LockTime.of(value);
+
+        assertTrue(clazz.isInstance(lockTime));
+        assertEquals(value, lockTime.rawValue());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Parameters(method = "invalidValueVectors")
+    public void invalidValues(long value) {
+        LockTime lockTime = LockTime.of(value);
+    }
+
+    private Object[] validValueVectors() {
+        return new Object[] {
+                new Object[] { 0, HeightLock.class },
+                new Object[] { 1, HeightLock.class },
+                new Object[] { 499_999_999, HeightLock.class },
+                new Object[] { 500_000_000, TimeLock.class },
+                new Object[] { Long.MAX_VALUE, TimeLock.class },
+                new Object[] { Instant.now().getEpochSecond(), TimeLock.class },
+                new Object[] { Instant.MAX.getEpochSecond(), TimeLock.class }
+        };
+    }
+
+    private Long[] invalidValueVectors() {
+        return new Long[] { Long.MIN_VALUE, -1L };
     }
 }

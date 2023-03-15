@@ -22,14 +22,49 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Wrapper for transaction lock time, specified either as a block height or as a timestamp (in seconds
- * since epoch). Both are encoded into the same long "raw value", as used in the Bitcoin protocol.
- * The lock time is said to be "not set" if its raw value is zero.
+ * Wrapper for transaction lock time, specified either as a block height {@link HeightLock} or as a timestamp
+ * {@link TimeLock} (in seconds since epoch). Both are encoded into the same long "raw value", as used in the Bitcoin protocol.
+ * The lock time is said to be "not set" if its raw value is zero (and the zero value will be represented by a {@link HeightLock}
+ * with value zero.)
  * <p>
  * Instances of this class are immutable and should be treated as Java
  * <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html#Value-basedClasses">value-based</a>.
  */
-public class LockTime {
+public abstract /* sealed */ class LockTime {
+
+    /**
+     * A {@code LockTime} instance that contains a block height.
+     * Can also be zero to represent no-lock.
+     */
+    public static final class HeightLock extends LockTime {
+        public HeightLock(long value) {
+            super(value);
+        }
+
+        /**
+         * @return block height as an int
+         */
+        public int blockHeight() {
+            return Math.toIntExact(value);
+        }
+    }
+
+    /**
+     * A {@code LockTime} instance that contains a timestamp.
+     */
+    public static final class TimeLock extends LockTime {
+        public TimeLock(long value) {
+            super(value);
+        }
+
+        /**
+         * @return timestamp in java.time format
+         */
+        public Instant timestamp() {
+            return Instant.ofEpochSecond(value);
+        }
+    }
+
     /**
      * Wrap a raw value (as used in the Bitcoin protocol) into a lock time.
      * @param rawValue raw value to be wrapped
@@ -38,7 +73,9 @@ public class LockTime {
     public static LockTime of(long rawValue) {
         if (rawValue < 0)
             throw new IllegalArgumentException("illegal negative lock time: " + rawValue);
-        return new LockTime(rawValue);
+        return rawValue < LockTime.THRESHOLD
+                ? new HeightLock(rawValue)
+                : new TimeLock(rawValue);
     }
 
     /**
@@ -46,12 +83,12 @@ public class LockTime {
      * @param blockHeight block height to be wrapped
      * @return wrapped block height
      */
-    public static LockTime ofBlockHeight(int blockHeight) {
+    public static HeightLock ofBlockHeight(int blockHeight) {
         if (blockHeight < 0)
             throw new IllegalArgumentException("illegal negative block height: " + blockHeight);
         if (blockHeight >= THRESHOLD)
             throw new IllegalArgumentException("block height too high: " + blockHeight);
-        return of(blockHeight);
+        return new HeightLock(blockHeight);
     }
 
     /**
@@ -59,11 +96,11 @@ public class LockTime {
      * @param time timestamp to be wrapped
      * @return wrapped timestamp
      */
-    public static LockTime ofTimestamp(Instant time) {
+    public static TimeLock ofTimestamp(Instant time) {
         long secs = time.getEpochSecond();
         if (secs < THRESHOLD)
             throw new IllegalArgumentException("timestamp too low: " + secs);
-        return of(secs);
+        return new TimeLock(secs);
     }
 
     /**
@@ -71,16 +108,16 @@ public class LockTime {
      * @return unset lock time
      */
     public static LockTime unset() {
-        return of(0);
+        return LockTime.ofBlockHeight(0);
     }
 
     /**
      * Raw values below this threshold specify a block height, otherwise a timestamp in seconds since epoch.
-     * Consider using {@link #isBlockHeight()} or {@link #isTimestamp()} before using this constant.
+     * Consider using {@code lockTime instance of HeightLock} or {@code lockTime instance of TimeLock} before using this constant.
      */
     public static final long THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 
-    private final long value;
+    protected final long value;
 
     private LockTime(long rawValue) {
         this.value = rawValue;
@@ -96,49 +133,11 @@ public class LockTime {
 
     /**
      * The lock time is considered to be set only if its raw value is greater than zero.
+     * In other words, it is set if it is either a non-zero block height or a timestamp.
      * @return true if lock time is set
      */
     public boolean isSet() {
         return value > 0;
-    }
-
-    /**
-     * Determine if this lock time is specified as a block height. That means its raw value is below {@link #THRESHOLD}.
-     * @return true if specified as a block height
-     */
-    public boolean isBlockHeight() {
-        return value < THRESHOLD;
-    }
-
-    /**
-     * Gets the lock time as a block height.
-     * @return lock time as a block height
-     * @throws IllegalStateException if the lock time is not specified as a block height
-     */
-    public int blockHeight() {
-        if (!isBlockHeight())
-            throw new IllegalStateException("lock time not specified as a block height");
-        return Math.toIntExact(value);
-    }
-
-    /**
-     * Determine if this lock time is specified as a timestamp in seconds since epoch. That means its raw value is
-     * equal or above {@link #THRESHOLD}.
-     * @return true if specified as a timestamp
-     */
-    public boolean isTimestamp() {
-        return value >= THRESHOLD;
-    }
-
-    /**
-     * Gets the lock time as a timestamp.
-     * @return lock time as a timestamp
-     * @throws IllegalStateException if the lock time is not specified as a timestamp
-     */
-    public Instant timestamp() {
-        if (!isTimestamp())
-            throw new IllegalStateException("lock time not specified as a timestamp");
-        return Instant.ofEpochSecond(value);
     }
 
     @Override
@@ -155,8 +154,8 @@ public class LockTime {
 
     @Override
     public String toString() {
-        return isBlockHeight() ?
-                "block " + blockHeight() :
-                TimeUtils.dateTimeFormat(timestamp());
+        return this instanceof HeightLock ?
+                "block " + ((HeightLock) this).blockHeight() :
+                TimeUtils.dateTimeFormat(((TimeLock) this).timestamp());
     }
 }

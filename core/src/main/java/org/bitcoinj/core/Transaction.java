@@ -25,6 +25,8 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.LockTime.HeightLock;
+import org.bitcoinj.core.LockTime.TimeLock;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -129,9 +131,9 @@ public class Transaction extends ChildMessage {
     public static final int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
     /**
-     * @deprecated use {@link LockTime#THRESHOLD},
-     *                 {@link LockTime#isBlockHeight()} or
-     *                 {@link LockTime#isTimestamp()}
+     * @deprecated use {@link LockTime#THRESHOLD} or
+     *                 {@code lockTime instanceof HeightLock} or
+     *                 {@code lockTime instanceof TimeLock}
      **/
     @Deprecated
     public static final int LOCKTIME_THRESHOLD = (int) LockTime.THRESHOLD;
@@ -843,10 +845,10 @@ public class Transaction extends ChildMessage {
             s.append(indent).append("time locked until ");
             LockTime locktime = lockTime();
             s.append(locktime);
-            if (locktime.isBlockHeight()) {
+            if (locktime instanceof HeightLock) {
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
-                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(locktime.blockHeight())))
+                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight())))
                             .append(')');
                 }
             }
@@ -1858,7 +1860,7 @@ public class Transaction extends ChildMessage {
      */
     public boolean isFinal(int height, long blockTimeSeconds) {
         LockTime locktime = lockTime();
-        return locktime.rawValue() < (locktime.isBlockHeight() ? height : blockTimeSeconds) ||
+        return locktime.rawValue() < (locktime instanceof HeightLock ? height : blockTimeSeconds) ||
                 !isTimeLocked();
     }
 
@@ -1868,9 +1870,9 @@ public class Transaction extends ChildMessage {
      */
     public Instant estimateLockTimeInstant(AbstractBlockChain chain) {
         LockTime locktime = lockTime();
-        return locktime.isBlockHeight() ?
-                chain.estimateBlockTimeInstant(locktime.blockHeight()) :
-                locktime.timestamp();
+        return locktime instanceof HeightLock ?
+                chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight()) :
+                ((TimeLock) locktime).timestamp();
     }
 
     /** @deprecated use {@link #estimateLockTimeInstant(AbstractBlockChain)} */

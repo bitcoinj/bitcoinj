@@ -1407,8 +1407,8 @@ public class Script {
         // There are two kinds of nLockTime, need to ensure we're comparing apples-to-apples
         LockTime txContainingThisLockTime = txContainingThis.lockTime();
         if (!(
-            ((txContainingThisLockTime.isBlockHeight()) && (nLockTime.compareTo(LOCKTIME_THRESHOLD_BIG)) < 0) ||
-            ((txContainingThisLockTime.isTimestamp()) && (nLockTime.compareTo(LOCKTIME_THRESHOLD_BIG)) >= 0))
+            ((txContainingThisLockTime instanceof LockTime.HeightLock) && (nLockTime.compareTo(LOCKTIME_THRESHOLD_BIG)) < 0) ||
+            ((txContainingThisLockTime instanceof LockTime.TimeLock) && (nLockTime.compareTo(LOCKTIME_THRESHOLD_BIG)) >= 0))
         )
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Lock time requirement type mismatch");
 
