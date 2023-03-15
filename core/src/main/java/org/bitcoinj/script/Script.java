@@ -1407,12 +1407,12 @@ public class Script {
             ((txContainingThis.getLockTime() <  Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) < 0) ||
             ((txContainingThis.getLockTime() >= Transaction.LOCKTIME_THRESHOLD) && (nLockTime.compareTo(Transaction.LOCKTIME_THRESHOLD_BIG)) >= 0))
         )
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Locktime requirement type mismatch");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Lock time requirement type mismatch");
 
         // Now that we know we're comparing apples-to-apples, the
         // comparison is a simple numeric one.
         if (nLockTime.compareTo(BigInteger.valueOf(txContainingThis.getLockTime())) > 0)
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Locktime requirement not satisfied");
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNSATISFIED_LOCKTIME, "Lock time requirement not satisfied");
 
         // Finally the nLockTime feature can be disabled and thus
         // CHECKLOCKTIMEVERIFY bypassed if every txin has been
