@@ -5,8 +5,8 @@ import org.gradle.api.GradleScriptException
 def minGradleVersion = GradleVersion.version("4.4")
 // Minimum Gradle version for JUnit5
 def minJunit5GradleVersion = GradleVersion.version("4.6")
-// Minimum Gradle version for builds of JavaFX 11 module
-def minFxGradleVersion = GradleVersion.version("4.10")
+// Minimum Gradle version for builds of JavaFX 17 module using JDK 17
+def minFxGradleVersion = GradleVersion.version("7.3")
 
 rootProject.name = 'bitcoinj-parent'
 
@@ -30,7 +30,7 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
-if (GradleVersion.current().compareTo(minFxGradleVersion) > 0) {
+if (GradleVersion.current().compareTo(minFxGradleVersion) > 0 && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     System.err.println "Including wallettemplate because ${GradleVersion.current()}"
     include 'wallettemplate'
     project(':wallettemplate').name = 'bitcoinj-wallettemplate'
