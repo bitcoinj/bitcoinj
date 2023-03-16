@@ -20,8 +20,6 @@ import org.bitcoinj.base.internal.TimeUtils;
 
 import java.time.Instant;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
 
 /**
  * Wrapper for transaction lock time, specified either as a block height or as a timestamp (in seconds
@@ -54,14 +52,6 @@ public abstract /* sealed */ class LockTime {
         }
     }
 
-    // TODO: Should we have a separate NoLock case, or should it be HeightLock with value ZERO?
-    public static final class NoLock extends LockTime {
-        private static final NoLock NO_LOCK = new NoLock();
-        public NoLock() {
-            super(0);
-        }
-    }
-
     /**
      * Wrap a raw value (as used in the Bitcoin protocol) into a lock time.
      * @param rawValue raw value to be wrapped
@@ -70,9 +60,7 @@ public abstract /* sealed */ class LockTime {
     public static LockTime of(long rawValue) {
         if (rawValue < 0)
             throw new IllegalArgumentException("illegal negative lock time: " + rawValue);
-        return rawValue == 0
-                ? NoLock.NO_LOCK
-                : rawValue < LockTime.THRESHOLD
+        return rawValue < LockTime.THRESHOLD
                     ? new HeightLock(rawValue)
                     : new TimeLock(rawValue);
     }
@@ -106,13 +94,13 @@ public abstract /* sealed */ class LockTime {
      * Construct an unset lock time.
      * @return unset lock time
      */
-    public static NoLock unset() {
-        return NoLock.NO_LOCK;
+    public static LockTime unset() {
+        return LockTime.ofBlockHeight(0);
     }
 
     /**
      * Raw values below this threshold specify a block height, otherwise a timestamp in seconds since epoch.
-     * Consider using {@link #isBlockHeight()} or {@link #isTimestamp()} before using this constant.
+     * Consider using {@code lockTime instance of HeightLock} or {@code lockTime instance of TimeLock} before using this constant.
      */
     public static final long THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
 
@@ -131,46 +119,12 @@ public abstract /* sealed */ class LockTime {
     }
 
     /**
-     * The lock time is considered to be set only if its raw value is greater than zero.
+     * This is equivalent to {@code lockTime instanceof HeightLock || lockTime instanceof TimeLock}.
+     * (The lock time is considered to be set only if its raw value is greater than zero.)
      * @return true if lock time is set
      */
     public boolean isSet() {
-        return !(this instanceof NoLock);
-    }
-
-    /**
-     * Determine if this lock time is specified as a block height. That means its raw value is below {@link #THRESHOLD}.
-     * TODO: this maps NoLock into a BlockLock. I'm not sure this is what we want, but I think some use-cases need this.
-     * @return true if specified as a block height
-     */
-    public boolean isBlockHeight() {
-        return this instanceof HeightLock || this instanceof NoLock;
-    }
-
-    /**
-     * Gets the lock time as a block height.
-     * @return lock time as a block height
-     */
-    public OptionalInt getBlockHeight() {
-        return isBlockHeight() ? OptionalInt.of(((HeightLock)this).blockHeight()) : OptionalInt.empty();
-    }
-
-    /**
-     * Determine if this lock time is specified as a timestamp in seconds since epoch. That means its raw value is
-     * equal or above {@link #THRESHOLD}.
-     * @return true if specified as a timestamp
-     */
-    public boolean isTimestamp() {
-        return this instanceof TimeLock;
-    }
-
-    /**
-     * Gets the lock time as a timestamp.
-     * @return lock time as a timestamp
-     * @throws IllegalStateException if the lock time is not specified as a timestamp
-     */
-    public Optional<Instant> getTimestamp() {
-        return isTimestamp() ? Optional.of(((TimeLock) this).timestamp()) : Optional.empty();
+        return value > 0;
     }
 
     @Override
@@ -187,14 +141,8 @@ public abstract /* sealed */ class LockTime {
 
     @Override
     public String toString() {
-        String result;
-        if (this instanceof NoLock) {
-            result = "no lock";
-        } else if (this instanceof HeightLock) {
-            result =  "block " + ((HeightLock)this).blockHeight();
-        } else {
-            result = TimeUtils.dateTimeFormat(((TimeLock)this).timestamp());
-        }
-        return result;
+        return this instanceof HeightLock
+                ? "block " + ((HeightLock)this).blockHeight()
+                : TimeUtils.dateTimeFormat(((TimeLock)this).timestamp());
     }
 }

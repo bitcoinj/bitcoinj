@@ -131,9 +131,8 @@ public class Transaction extends ChildMessage {
     public static final int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
     /**
-     * @deprecated use {@link LockTime#THRESHOLD},
-     *                 {@link LockTime#isBlockHeight()} or
-     *                 {@link LockTime#isTimestamp()}
+     * @deprecated use {@code lockTime instanceof HeightLock} or
+     *                 {@code lockTime instanceof TimeLock}
      **/
     @Deprecated
     public static final int LOCKTIME_THRESHOLD = (int) LockTime.THRESHOLD;
@@ -845,7 +844,7 @@ public class Transaction extends ChildMessage {
             s.append(indent).append("time locked until ");
             LockTime locktime = lockTime();
             s.append(locktime);
-            if (locktime.isBlockHeight()) {
+            if (locktime instanceof HeightLock) {
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
                             .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(((HeightLock)locktime).blockHeight())))
@@ -1860,7 +1859,7 @@ public class Transaction extends ChildMessage {
      */
     public boolean isFinal(int height, long blockTimeSeconds) {
         LockTime locktime = lockTime();
-        return locktime.rawValue() < (locktime.isBlockHeight() ? height : blockTimeSeconds) ||
+        return locktime.rawValue() < (locktime instanceof HeightLock ? height : blockTimeSeconds) ||
                 !isTimeLocked();
     }
 
@@ -1870,7 +1869,7 @@ public class Transaction extends ChildMessage {
      */
     public Instant estimateLockTimeInstant(AbstractBlockChain chain) {
         LockTime locktime = lockTime();
-        return locktime.isBlockHeight() ?
+        return locktime instanceof HeightLock ?
                 chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight()) :
                 ((TimeLock)locktime).timestamp();
     }

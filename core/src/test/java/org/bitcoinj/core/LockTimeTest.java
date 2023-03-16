@@ -17,7 +17,6 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.core.LockTime.HeightLock;
-import org.bitcoinj.core.LockTime.NoLock;
 import org.bitcoinj.core.LockTime.TimeLock;
 import org.junit.Test;
 
@@ -74,16 +73,6 @@ public class LockTimeTest {
         assertEquals(0, LockTime.unset().rawValue());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void blockHeight_mismatch() {
-        LockTime.ofTimestamp(Instant.MAX).getBlockHeight().orElseThrow(IllegalStateException::new);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void timestamp_mismatch() {
-        LockTime.ofBlockHeight(1).getTimestamp().orElseThrow(IllegalStateException::new);
-    }
-
     @Test
     public void testSubtypes() {
         LockTime timestamp = LockTime.ofTimestamp(Instant.now());
@@ -92,7 +81,7 @@ public class LockTimeTest {
 
         assertTrue(timestamp instanceof TimeLock);
         assertTrue(height instanceof HeightLock);
-        assertTrue(unset instanceof NoLock);
+        assertTrue(unset instanceof HeightLock);
 
         if (timestamp instanceof TimeLock) {
             assertTrue(((TimeLock) timestamp).timestamp().isAfter(Instant.EPOCH));
@@ -100,7 +89,7 @@ public class LockTimeTest {
         if (height instanceof HeightLock) {
             assertTrue(((HeightLock) height).blockHeight() > 0);
         }
-        if (unset instanceof NoLock) {
+        if (unset instanceof HeightLock && unset.rawValue() == 0) {
             assertTrue(unset.rawValue() == 0);
         }
     }
