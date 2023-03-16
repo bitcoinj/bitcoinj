@@ -1678,7 +1678,7 @@ public class Transaction extends ChildMessage {
      * referenced by the given {@link Context}.
      */
     public TransactionConfidence getConfidence(Context context) {
-        return getConfidence(context.getConfidenceTable());
+        return getConfidence(TxConfidenceTable.instance(params.network()));
     }
 
     /**
