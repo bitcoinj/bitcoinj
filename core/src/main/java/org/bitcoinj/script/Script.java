@@ -208,7 +208,7 @@ public class Script {
         CHECKSEQUENCEVERIFY // Enable CHECKSEQUENCEVERIFY operation
     }
     public static final EnumSet<VerifyFlag> ALL_VERIFY_FLAGS = EnumSet.allOf(VerifyFlag.class);
-    private static final BigInteger LOCKTIME_THRESHOLD_BIG = BigInteger.valueOf(Transaction.LOCKTIME_THRESHOLD);
+    private static final BigInteger LOCKTIME_THRESHOLD_BIG = BigInteger.valueOf(LockTime.THRESHOLD);
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
     public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
