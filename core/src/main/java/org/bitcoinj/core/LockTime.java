@@ -32,7 +32,6 @@ import java.util.Objects;
 public abstract /* sealed */ class LockTime {
 
     public static final class HeightLock extends LockTime {
-
         public HeightLock(long value) {
             super(value);
         }
@@ -119,8 +118,8 @@ public abstract /* sealed */ class LockTime {
     }
 
     /**
-     * This is equivalent to {@code lockTime instanceof HeightLock && rawValue() > 0 || lockTime instanceof TimeLock}.
-     * (The lock time is considered to be set only if its raw value is greater than zero.)
+     * The lock time is considered to be set only if its raw value is greater than zero.
+     * In other words, it is set if it is either a non-zero block height or a timestamp.
      * @return true if lock time is set
      */
     public boolean isSet() {
