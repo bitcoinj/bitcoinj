@@ -63,11 +63,11 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0NOTEQUAL;
@@ -260,7 +260,7 @@ public class Script {
     public Script(byte[] programBytes, Instant creationTime) throws ScriptException {
         this.program = programBytes;
         parse(programBytes);
-        this.creationTime = checkNotNull(creationTime);
+        this.creationTime = Objects.requireNonNull(creationTime);
     }
 
     /**
@@ -282,7 +282,7 @@ public class Script {
      * @param creationTime creation time of this script
      */
     public void setCreationTime(Instant creationTime) {
-        this.creationTime = checkNotNull(creationTime);
+        this.creationTime = Objects.requireNonNull(creationTime);
     }
 
     /**
@@ -570,7 +570,7 @@ public class Script {
         // and any placeholder OP_0 sigs.
         List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
         ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
-        checkNotNull(redeemScriptChunk.data);
+        Objects.requireNonNull(redeemScriptChunk.data);
         Script redeemScript = new Script(redeemScriptChunk.data);
 
         int sigCount = 0;
@@ -579,7 +579,7 @@ public class Script {
             if (chunk.opcode == OP_0) {
                 // OP_0, skip
             } else {
-                checkNotNull(chunk.data);
+                Objects.requireNonNull(chunk.data);
                 try {
                     if (myIndex < redeemScript.findSigInRedeem(chunk.data, hash))
                         return sigCount;

@@ -52,13 +52,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -735,7 +735,7 @@ public class KeyChainGroup implements KeyBag {
      * @throws java.lang.IllegalArgumentException if the key is deterministic.
      */
     public boolean removeImportedKey(ECKey key) {
-        checkNotNull(key);
+        Objects.requireNonNull(key);
         checkArgument(!(key instanceof DeterministicKey));
         return basic.removeKey(key);
     }
@@ -758,8 +758,8 @@ public class KeyChainGroup implements KeyBag {
      * @throws DeterministicUpgradeRequiredException Thrown if there are random keys but no HD chain.
      */
     public void encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
-        checkNotNull(keyCrypter);
-        checkNotNull(aesKey);
+        Objects.requireNonNull(keyCrypter);
+        Objects.requireNonNull(aesKey);
         checkState((chains != null && !chains.isEmpty()) || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
 
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
@@ -785,7 +785,7 @@ public class KeyChainGroup implements KeyBag {
      * @throws org.bitcoinj.crypto.KeyCrypterException Thrown if the wallet decryption fails for some reason, leaving the group unchanged.
      */
     public void decrypt(AesKey aesKey) {
-        checkNotNull(aesKey);
+        Objects.requireNonNull(aesKey);
 
         BasicKeyChain newBasic = basic.toDecrypted(aesKey);
         if (chains != null) {
@@ -899,8 +899,8 @@ public class KeyChainGroup implements KeyBag {
 
     /** Adds a listener for events that are run when keys are added, on the given executor. */
     public void addEventListener(KeyChainEventListener listener, Executor executor) {
-        checkNotNull(listener);
-        checkNotNull(executor);
+        Objects.requireNonNull(listener);
+        Objects.requireNonNull(executor);
         basic.addEventListener(listener, executor);
         if (chains != null)
             for (DeterministicKeyChain chain : chains)
@@ -909,7 +909,7 @@ public class KeyChainGroup implements KeyBag {
 
     /** Removes a listener for events that are run when keys are added. */
     public boolean removeEventListener(KeyChainEventListener listener) {
-        checkNotNull(listener);
+        Objects.requireNonNull(listener);
         if (chains != null)
             for (DeterministicKeyChain chain : chains)
                 chain.removeEventListener(listener);
@@ -926,13 +926,13 @@ public class KeyChainGroup implements KeyBag {
      * executor.
      */
     public void addCurrentKeyChangeEventListener(CurrentKeyChangeEventListener listener, Executor executor) {
-        checkNotNull(listener);
+        Objects.requireNonNull(listener);
         currentKeyChangeListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /** Removes a listener for events that are run when a current key and/or address changes. */
     public boolean removeCurrentKeyChangeEventListener(CurrentKeyChangeEventListener listener) {
-        checkNotNull(listener);
+        Objects.requireNonNull(listener);
         return ListenerRegistration.removeFromList(listener, currentKeyChangeListeners);
     }
 
@@ -981,7 +981,7 @@ public class KeyChainGroup implements KeyBag {
     }
 
     public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
-        checkNotNull(crypter);
+        Objects.requireNonNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter, factory);
         int lookaheadSize = -1, lookaheadThreshold = -1;
@@ -1025,7 +1025,7 @@ public class KeyChainGroup implements KeyBag {
                                        @Nullable Instant keyRotationTime, @Nullable AesKey aesKey)
             throws DeterministicUpgradeRequiresPassword {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
-        checkNotNull(structure);
+        Objects.requireNonNull(structure);
         if (!isDeterministicUpgradeRequired(preferredScriptType, keyRotationTime))
             return; // Nothing to do.
 
@@ -1044,7 +1044,7 @@ public class KeyChainGroup implements KeyBag {
                     .outputScriptType(ScriptType.P2WPKH)
                     .accountPath(structure.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.MAINNET)).build();
             if (seedWasEncrypted)
-                chain = chain.toEncrypted(checkNotNull(keyCrypter), aesKey);
+                chain = chain.toEncrypted(Objects.requireNonNull(keyCrypter), aesKey);
             addAndActivateHDChain(chain);
         }
     }

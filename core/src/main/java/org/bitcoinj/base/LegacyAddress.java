@@ -29,8 +29,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
  * plus a set of network parameters. Not to be confused with a {@link org.bitcoinj.core.PeerAddress}
@@ -66,8 +64,8 @@ public class LegacyAddress implements Address {
      *            20-byte hash of pubkey or script
      */
     private LegacyAddress(Network network, boolean p2sh, byte[] hash160) throws AddressFormatException {
-        this.network = normalizeNetwork(checkNotNull(network));
-        this.bytes = checkNotNull(hash160);
+        this.network = normalizeNetwork(Objects.requireNonNull(network));
+        this.bytes = Objects.requireNonNull(hash160);
         if (hash160.length != 20)
             throw new AddressFormatException.InvalidDataLength(
                     "Legacy addresses are 20 byte (160 bit) hashes, but got: " + hash160.length);

@@ -39,8 +39,8 @@ import org.slf4j.LoggerFactory;
 import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
 
 import java.time.Duration;
+import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 /**
@@ -83,7 +83,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
         }
 
         final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) app.walletAppKit().wallet().getKeyCrypter();
-        checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
+        Objects.requireNonNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
             protected final void onFinish(AesKey aesKey, int timeTakenMsec) {

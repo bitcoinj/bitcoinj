@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>A transfer of coins from one address to another creates a transaction in which the outputs
@@ -204,7 +203,7 @@ public class TransactionInput extends ChildMessage {
 
     /** Set the given program as the scriptSig that is supposed to satisfy the connected output script. */
     public void setScriptSig(Script scriptSig) {
-        this.scriptSig = new WeakReference<>(checkNotNull(scriptSig));
+        this.scriptSig = new WeakReference<>(Objects.requireNonNull(scriptSig));
         // TODO: This should all be cleaned up so we have a consistent internal representation.
         setScriptBytes(scriptSig.getProgram());
     }
@@ -456,7 +455,7 @@ public class TransactionInput extends ChildMessage {
     public void verify() throws VerificationException {
         final Transaction fromTx = getOutpoint().fromTx;
         long spendingIndex = getOutpoint().getIndex();
-        checkNotNull(fromTx, "Not connected");
+        Objects.requireNonNull(fromTx, "Not connected");
         final TransactionOutput output = fromTx.getOutput((int) spendingIndex);
         verify(output);
     }

@@ -56,6 +56,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
@@ -63,7 +64,6 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -214,7 +214,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          */
         public T entropy(byte[] entropy, Instant creationTime) {
             this.entropy = entropy;
-            this.creationTime = checkNotNull(creationTime);
+            this.creationTime = Objects.requireNonNull(creationTime);
             return self();
         }
 
@@ -306,7 +306,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          */
         public T accountPath(List<ChildNumber> accountPath) {
             checkState(watchingKey == null, "either watch or accountPath");
-            this.accountPath = HDPath.M(checkNotNull(accountPath));
+            this.accountPath = HDPath.M(Objects.requireNonNull(accountPath));
             return self();
         }
 
@@ -396,7 +396,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
-            rootKey = HDKeyDerivation.createMasterPrivateKey(checkNotNull(seed.getSeedBytes()));
+            rootKey = HDKeyDerivation.createMasterPrivateKey(Objects.requireNonNull(seed.getSeedBytes()));
             Optional<Instant> creationTime = seed.getCreationTime();
             if (creationTime.isPresent())
                 rootKey.setCreationTime(creationTime.get());
@@ -422,8 +422,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     protected DeterministicKeyChain(KeyCrypter crypter, AesKey aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
-        checkNotNull(chain.rootKey);
-        checkNotNull(chain.seed);
+        Objects.requireNonNull(chain.rootKey);
+        Objects.requireNonNull(chain.seed);
 
         checkArgument(!chain.rootKey.isEncrypted(), "Chain already encrypted");
         this.accountPath = chain.getAccountPath();
@@ -470,7 +470,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private DeterministicKey encryptNonLeaf(AesKey aesKey, DeterministicKeyChain chain,
                                             DeterministicKey parent, List<ChildNumber> path) {
         DeterministicKey key = chain.hierarchy.get(path, false, false);
-        key = key.encrypt(checkNotNull(basicKeyChain.getKeyCrypter()), aesKey, parent);
+        key = key.encrypt(Objects.requireNonNull(basicKeyChain.getKeyCrypter()), aesKey, parent);
         putKey(key);
         return key;
     }
@@ -561,12 +561,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     // Clone key to new hierarchy.
     private static DeterministicKey cloneKey(DeterministicHierarchy hierarchy, DeterministicKey key) {
-        DeterministicKey parent = hierarchy.get(checkNotNull(key.getParent()).getPath(), false, false);
+        DeterministicKey parent = hierarchy.get(Objects.requireNonNull(key.getParent()).getPath(), false, false);
         return new DeterministicKey(key.dropPrivateBytes(), parent);
     }
 
     private void checkForBitFlip(DeterministicKey k) {
-        DeterministicKey parent = checkNotNull(k.getParent());
+        DeterministicKey parent = Objects.requireNonNull(k.getParent());
         byte[] rederived = HDKeyDerivation.deriveChildKeyBytesFromPublic(parent, k.getChildNumber(), HDKeyDerivation.PublicDeriveMode.WITH_INVERSION).keyBytes;
         byte[] actual = k.getPubKey();
         if (!Arrays.equals(rederived, actual))
@@ -955,7 +955,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         Protos.EncryptedData proto = key.getEncryptedData();
                         EncryptedData data = new EncryptedData(proto.getInitialisationVector().toByteArray(),
                                 proto.getEncryptedPrivateKey().toByteArray());
-                        checkNotNull(crypter, "Encountered an encrypted key but no key crypter provided");
+                        Objects.requireNonNull(crypter, "Encountered an encrypted key but no key crypter provided");
                         detkey = new DeterministicKey(path, chainCode, crypter, pubkey, data, parent);
                     } else {
                         // No secret key bytes and key is not encrypted: either a watching key or private key bytes
@@ -1026,7 +1026,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public DeterministicKeyChain toEncrypted(CharSequence password) {
-        checkNotNull(password);
+        Objects.requireNonNull(password);
         checkArgument(password.length() > 0);
         checkState(seed != null, "Attempt to encrypt a watching chain.");
         checkState(!seed.isEncrypted());
@@ -1042,7 +1042,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public DeterministicKeyChain toDecrypted(CharSequence password) {
-        checkNotNull(password);
+        Objects.requireNonNull(password);
         checkArgument(password.length() > 0);
         KeyCrypter crypter = getKeyCrypter();
         checkState(crypter != null, "Chain not encrypted");
@@ -1088,7 +1088,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public boolean checkPassword(CharSequence password) {
-        checkNotNull(password);
+        Objects.requireNonNull(password);
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
         return checkAESKey(getKeyCrypter().deriveKey(password));
     }
@@ -1096,7 +1096,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Override
     public boolean checkAESKey(AesKey aesKey) {
         checkState(rootKey != null, "Can't check password for a watching chain");
-        checkNotNull(aesKey);
+        Objects.requireNonNull(aesKey);
         checkState(getKeyCrypter() != null, "Key chain not encrypted");
         try {
             return rootKey.decrypt(aesKey).getPubKeyPoint().equals(rootKey.getPubKeyPoint());

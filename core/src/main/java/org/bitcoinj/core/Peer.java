@@ -70,7 +70,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -184,7 +183,7 @@ public class Peer extends PeerSocketHandler {
     private final CompletableFuture<Peer> incomingVersionHandshakeFuture = new CompletableFuture<>();
     private final CompletableFuture<Peer> versionHandshakeFuture = outgoingVersionHandshakeFuture
                     .thenCombine(incomingVersionHandshakeFuture, (peer1, peer2) -> {
-                        checkNotNull(peer1);
+                        Objects.requireNonNull(peer1);
                         checkState(peer1 == peer2);
                         return peer1;
                     });
@@ -231,8 +230,8 @@ public class Peer extends PeerSocketHandler {
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
                 @Nullable AbstractBlockChain chain, long requiredServices, int downloadTxDependencyDepth) {
         super(params, remoteAddress);
-        this.params = Preconditions.checkNotNull(params);
-        this.versionMessage = Preconditions.checkNotNull(ver);
+        this.params = Objects.requireNonNull(params);
+        this.versionMessage = Objects.requireNonNull(ver);
         this.vDownloadTxDependencyDepth = chain != null ? downloadTxDependencyDepth : 0;
         this.blockChain = chain;  // Allowed to be null.
         this.requiredServices = requiredServices;
@@ -971,7 +970,7 @@ public class Peer extends PeerSocketHandler {
                 lock.lock();
                 try {
                     if (downloadBlockBodies) {
-                        final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
+                        final Block orphanRoot = Objects.requireNonNull(blockChain.getOrphanRoot(m.getHash()));
                         blockChainDownloadLocked(orphanRoot.getHash());
                     } else {
                         log.info("Did not start chain download on solved block due to in-flight header download.");
@@ -1073,7 +1072,7 @@ public class Peer extends PeerSocketHandler {
                 // no matter how many blocks are solved, and therefore that the (2) duplicate filtering can work.
                 lock.lock();
                 try {
-                    final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(m.getHash()));
+                    final Block orphanRoot = Objects.requireNonNull(blockChain.getOrphanRoot(m.getHash()));
                     blockChainDownloadLocked(orphanRoot.getHash());
                 } finally {
                     lock.unlock();
@@ -1115,7 +1114,7 @@ public class Peer extends PeerSocketHandler {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
-        final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - checkNotNull(blockChain).getBestChainHeight());
+        final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - Objects.requireNonNull(blockChain).getBestChainHeight());
         for (final ListenerRegistration<BlocksDownloadedEventListener> registration : blocksDownloadedEventListeners) {
             registration.executor.execute(() -> registration.listener.onBlocksDownloaded(Peer.this, block, fb, blocksLeft));
         }
@@ -1205,7 +1204,7 @@ public class Peer extends PeerSocketHandler {
                     if (blockChain.isOrphan(item.hash) && downloadBlockBodies) {
                         // If an orphan was re-advertised, ask for more blocks unless we are not currently downloading
                         // full block data because we have a getheaders outstanding.
-                        final Block orphanRoot = checkNotNull(blockChain.getOrphanRoot(item.hash));
+                        final Block orphanRoot = Objects.requireNonNull(blockChain.getOrphanRoot(item.hash));
                         blockChainDownloadLocked(orphanRoot.getHash());
                     } else {
                         // Don't re-request blocks we already requested. Normally this should not happen. However there is
@@ -1416,7 +1415,7 @@ public class Peer extends PeerSocketHandler {
         // This is because it requires scanning all the block chain headers, which is very slow. Instead we add the top
         // 100 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
         // must always put the genesis block as the first entry.
-        BlockStore store = checkNotNull(blockChain).getBlockStore();
+        BlockStore store = Objects.requireNonNull(blockChain).getBlockStore();
         StoredBlock chainHead = blockChain.getChainHead();
         Sha256Hash chainHeadHash = chainHead.getHeader().getHash();
         // Did we already make this request? If so, don't do it again.
@@ -1619,7 +1618,7 @@ public class Peer extends PeerSocketHandler {
      * behind the peer, or negative if the peer is ahead of us.
      */
     public int getPeerBlockHeightDifference() {
-        checkNotNull(blockChain, "No block chain configured");
+        Objects.requireNonNull(blockChain, "No block chain configured");
         // Chain will overflow signed int blocks in ~41,000 years.
         int chainHeight = (int) getBestHeight();
         // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
@@ -1718,9 +1717,9 @@ public class Peer extends PeerSocketHandler {
      * unset a filter, though the underlying p2p protocol does support it.</p>
      */
     public void setBloomFilter(BloomFilter filter, boolean andQueryMemPool) {
-        checkNotNull(filter, "Clearing filters is not currently supported");
+        Objects.requireNonNull(filter, "Clearing filters is not currently supported");
         final VersionMessage version = vPeerVersionMessage;
-        checkNotNull(version, "Cannot set filter before version handshake is complete");
+        Objects.requireNonNull(version, "Cannot set filter before version handshake is complete");
         if (version.isBloomFilteringSupported()) {
             vBloomFilter = filter;
             log.info("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
@@ -1748,7 +1747,7 @@ public class Peer extends PeerSocketHandler {
             // discarded.
             sendPing().thenRunAsync(() -> {
                 lock.lock();
-                checkNotNull(awaitingFreshFilter);
+                Objects.requireNonNull(awaitingFreshFilter);
                 GetDataMessage getdata = new GetDataMessage(params);
                 for (Sha256Hash hash : awaitingFreshFilter)
                     getdata.addFilteredBlock(hash);

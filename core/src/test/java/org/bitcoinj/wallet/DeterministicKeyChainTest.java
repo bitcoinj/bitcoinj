@@ -50,11 +50,11 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -357,7 +357,7 @@ public class DeterministicKeyChainTest {
         assertFalse(key1.isEncrypted());
         assertTrue(encKey1.isEncrypted());
         assertEquals(encKey1.getPubKeyPoint(), key1.getPubKeyPoint());
-        final AesKey aesKey = checkNotNull(encChain.getKeyCrypter()).deriveKey("open secret");
+        final AesKey aesKey = Objects.requireNonNull(encChain.getKeyCrypter()).deriveKey("open secret");
         encKey1.sign(Sha256Hash.ZERO_HASH, aesKey);
         encKey2.sign(Sha256Hash.ZERO_HASH, aesKey);
         assertTrue(encChain.checkAESKey(aesKey));

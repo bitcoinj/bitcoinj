@@ -95,6 +95,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -107,7 +108,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.bitcoinj.base.Coin.parseCoin;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
@@ -1158,7 +1158,7 @@ public class WalletTool implements Callable<Integer> {
                 AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return;   // Error message already printed.
-                key = key.encrypt(checkNotNull(wallet.getKeyCrypter()), aesKey);
+                key = key.encrypt(Objects.requireNonNull(wallet.getKeyCrypter()), aesKey);
             }
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '"
@@ -1186,7 +1186,7 @@ public class WalletTool implements Callable<Integer> {
                 System.err.println("The password is incorrect.");
             return null;
         }
-        return checkNotNull(wallet.getKeyCrypter()).deriveKey(password);
+        return Objects.requireNonNull(wallet.getKeyCrypter()).deriveKey(password);
     }
 
     /**

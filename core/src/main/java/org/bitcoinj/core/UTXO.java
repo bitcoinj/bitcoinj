@@ -30,8 +30,6 @@ import java.math.BigInteger;
 import java.util.Locale;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 // TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
 
 /**
@@ -83,9 +81,9 @@ public class UTXO {
                 boolean coinbase,
                 Script script,
                 String address) {
-        this.hash = checkNotNull(hash);
+        this.hash = Objects.requireNonNull(hash);
         this.index = index;
-        this.value = checkNotNull(value);
+        this.value = Objects.requireNonNull(value);
         this.height = height;
         this.script = script;
         this.coinbase = coinbase;

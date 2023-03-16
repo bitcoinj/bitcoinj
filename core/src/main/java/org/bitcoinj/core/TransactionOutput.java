@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -141,7 +140,7 @@ public class TransactionOutput extends ChildMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        checkNotNull(scriptBytes);
+        Objects.requireNonNull(scriptBytes);
         ByteUtils.int64ToByteStreamLE(value, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
         stream.write(new VarInt(scriptBytes.length).encode());
@@ -160,7 +159,7 @@ public class TransactionOutput extends ChildMessage {
      * Sets the value of this output.
      */
     public void setValue(Coin value) {
-        checkNotNull(value);
+        Objects.requireNonNull(value);
         unCache();
         this.value = value.value;
     }

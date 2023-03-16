@@ -25,9 +25,8 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>Tracks transactions that are being announced across the network. Typically one is created for you by a
@@ -166,7 +165,7 @@ public class TxConfidenceTable {
      * is unknown to the system at this time.
      */
     public TransactionConfidence getOrCreate(Sha256Hash hash) {
-        checkNotNull(hash);
+        Objects.requireNonNull(hash);
         lock.lock();
         try {
             WeakConfidenceReference reference = table.get(hash);

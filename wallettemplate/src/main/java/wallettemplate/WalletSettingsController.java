@@ -41,8 +41,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static javafx.beans.binding.Bindings.*;
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
 import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
@@ -82,7 +82,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
             }
         } else {
             this.aesKey = aesKey;
-            seed = seed.decrypt(checkNotNull(app.walletAppKit().wallet().getKeyCrypter()), "", aesKey);
+            seed = seed.decrypt(Objects.requireNonNull(app.walletAppKit().wallet().getKeyCrypter()), "", aesKey);
             // Now we can display the wallet seed as appropriate.
             passwordButton.setText("Remove password");
         }
@@ -94,7 +94,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
         // Set the mnemonic seed words.
         final List<String> mnemonicCode = seed.getMnemonicCode();
-        checkNotNull(mnemonicCode);    // Already checked for encryption.
+        Objects.requireNonNull(mnemonicCode);    // Already checked for encryption.
         String origWords = InternalUtils.SPACE_JOINER.join(mnemonicCode);
         wordsArea.setText(origWords);
 

@@ -56,10 +56,10 @@ import java.nio.channels.FileLock;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -142,12 +142,12 @@ public class WalletAppKit extends AbstractIdleService {
      */
     public WalletAppKit(BitcoinNetwork network, ScriptType preferredOutputScriptType,
                         KeyChainGroupStructure structure, File directory, String filePrefix) {
-        this.network = checkNotNull(network);
+        this.network = Objects.requireNonNull(network);
         this.params = NetworkParameters.of(this.network);
-        this.preferredOutputScriptType = checkNotNull(preferredOutputScriptType);
-        this.structure = checkNotNull(structure);
-        this.directory = checkNotNull(directory);
-        this.filePrefix = checkNotNull(filePrefix);
+        this.preferredOutputScriptType = Objects.requireNonNull(preferredOutputScriptType);
+        this.structure = Objects.requireNonNull(structure);
+        this.directory = Objects.requireNonNull(directory);
+        this.filePrefix = Objects.requireNonNull(filePrefix);
     }
 
     /** Will only connect to the given addresses. Cannot be called after startup. */
@@ -181,7 +181,7 @@ public class WalletAppKit extends AbstractIdleService {
      * too, due to some missing implementation code.
      */
     public WalletAppKit setDownloadListener(DownloadProgressTracker listener) {
-        checkNotNull(listener);
+        Objects.requireNonNull(listener);
         this.downloadListener = listener;
         return this;
     }
@@ -200,7 +200,7 @@ public class WalletAppKit extends AbstractIdleService {
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
         if (this.checkpoints != null)
             Closeables.closeQuietly(checkpoints);
-        this.checkpoints = checkNotNull(checkpoints);
+        this.checkpoints = Objects.requireNonNull(checkpoints);
         return this;
     }
 
@@ -221,8 +221,8 @@ public class WalletAppKit extends AbstractIdleService {
      * @param version A short string that contains the version number, e.g. "1.0-BETA"
      */
     public WalletAppKit setUserAgent(String userAgent, String version) {
-        this.userAgent = checkNotNull(userAgent);
-        this.version = checkNotNull(version);
+        this.userAgent = Objects.requireNonNull(userAgent);
+        this.version = Objects.requireNonNull(version);
         return this;
     }
 
@@ -232,7 +232,7 @@ public class WalletAppKit extends AbstractIdleService {
      * @return WalletAppKit for method chaining purposes
      */
     public WalletAppKit setWalletFactory(@Nonnull WalletProtobufSerializer.WalletFactory walletFactory) {
-        checkNotNull(walletFactory);
+        Objects.requireNonNull(walletFactory);
         this.walletFactory = walletFactory;
         return this;
     }

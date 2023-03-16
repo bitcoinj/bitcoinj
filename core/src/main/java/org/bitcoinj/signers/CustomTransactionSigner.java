@@ -33,8 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * <p>This signer may be used as a template for creating custom multisig transaction signers.</p>
@@ -69,7 +68,7 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
                 return false;
             }
 
-            Script inputScript = checkNotNull(txIn.getScriptSig());
+            Script inputScript = Objects.requireNonNull(txIn.getScriptSig());
 
             try {
                 // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when

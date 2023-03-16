@@ -38,10 +38,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 // TODO: Lose the mmap in this class. There are too many platform bugs that require odd workarounds.
@@ -112,8 +112,8 @@ public class SPVBlockStore implements BlockStore {
      * @throws BlockStoreException if something goes wrong
      */
     public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
-        checkNotNull(file);
-        this.params = checkNotNull(params);
+        Objects.requireNonNull(file);
+        this.params = Objects.requireNonNull(params);
         checkArgument(capacity > 0);
         try {
             boolean exists = file.exists();

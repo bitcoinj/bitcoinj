@@ -46,11 +46,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Coin.SATOSHI;
@@ -254,7 +254,7 @@ public class FullBlockTestGenerator {
         //     genesis -> b1 (0) -> b2 (1)
         //                      \-> b3 (1) -> b4 (2)
         //
-        TransactionOutPointWithValue out2 = checkNotNull(spendableOutputs.poll());
+        TransactionOutPointWithValue out2 = Objects.requireNonNull(spendableOutputs.poll());
         NewBlock b4 = createNextBlock(b3, chainHeadHeight + 3, out2, null);
         blocks.add(new BlockAndValidity(b4, true, false, b4.getHash(), chainHeadHeight + 3, "b4"));
 
@@ -1460,10 +1460,10 @@ public class FullBlockTestGenerator {
         //            \-> b80 (25) -> b81 (26) -> b82 (27)
         // b78 creates a tx, which is spent in b79. after b82, both should be in mempool
         //
-        TransactionOutPointWithValue out24 = checkNotNull(spendableOutputs.poll());
-        TransactionOutPointWithValue out25 = checkNotNull(spendableOutputs.poll());
-        TransactionOutPointWithValue out26 = checkNotNull(spendableOutputs.poll());
-        TransactionOutPointWithValue out27 = checkNotNull(spendableOutputs.poll());
+        TransactionOutPointWithValue out24 = Objects.requireNonNull(spendableOutputs.poll());
+        TransactionOutPointWithValue out25 = Objects.requireNonNull(spendableOutputs.poll());
+        TransactionOutPointWithValue out26 = Objects.requireNonNull(spendableOutputs.poll());
+        TransactionOutPointWithValue out27 = Objects.requireNonNull(spendableOutputs.poll());
 
         NewBlock b77 = createNextBlock(b76, chainHeadHeight + 25, out24, null);
         blocks.add(new BlockAndValidity(b77, true, false, b77.getHash(), chainHeadHeight + 25, "b77"));

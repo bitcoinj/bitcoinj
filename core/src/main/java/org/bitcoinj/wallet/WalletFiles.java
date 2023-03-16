@@ -30,12 +30,11 @@ import java.sql.Time;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A class that handles atomic and optionally delayed writing of the wallet file to disk. In future: backups too.
@@ -82,11 +81,11 @@ public class WalletFiles {
         this.executor.setKeepAliveTime(5, TimeUnit.SECONDS);
         this.executor.allowCoreThreadTimeOut(true);
         this.executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-        this.wallet = checkNotNull(wallet);
+        this.wallet = Objects.requireNonNull(wallet);
         // File must only be accessed from the auto-save executor from now on, to avoid simultaneous access.
-        this.file = checkNotNull(file);
+        this.file = Objects.requireNonNull(file);
         this.savePending = new AtomicBoolean();
-        this.delay = checkNotNull(delay);
+        this.delay = Objects.requireNonNull(delay);
 
         this.saver = () -> {
             // Runs in an auto save thread.
@@ -120,7 +119,7 @@ public class WalletFiles {
      * The given listener will be called on the autosave thread before and after the wallet is saved to disk.
      */
     public void setListener(@Nonnull Listener listener) {
-        this.vListener = checkNotNull(listener);
+        this.vListener = Objects.requireNonNull(listener);
     }
 
     /** Actually write the wallet file to disk, using an atomic rename when possible. Runs on the current thread. */

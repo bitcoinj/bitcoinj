@@ -47,13 +47,13 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -727,7 +727,7 @@ public abstract class AbstractBlockChain {
             sendTransactionsToListener(newStoredBlock, newBlockType, listener, 0, block.getTransactions(),
                     !first, falsePositives);
         } else if (filteredTxHashList != null) {
-            checkNotNull(filteredTxn);
+            Objects.requireNonNull(filteredTxn);
             // We must send transactions to listeners in the order they appeared in the block - thus we iterate over the
             // set of hashes and call sendTransactionsToListener with individual txn when they have not already been
             // seen in loose broadcasts - otherwise notifyTransactionIsInBlock on the hash.
@@ -856,7 +856,7 @@ public abstract class AbstractBlockChain {
         StoredBlock cursor = higher;
         do {
             results.add(cursor);
-            cursor = checkNotNull(cursor.getPrev(store), "Ran off the end of the chain");
+            cursor = Objects.requireNonNull(cursor.getPrev(store), "Ran off the end of the chain");
         } while (!cursor.equals(lower));
         return results;
     }
@@ -879,10 +879,10 @@ public abstract class AbstractBlockChain {
         while (!currentChainCursor.equals(newChainCursor)) {
             if (currentChainCursor.getHeight() > newChainCursor.getHeight()) {
                 currentChainCursor = currentChainCursor.getPrev(store);
-                checkNotNull(currentChainCursor, "Attempt to follow an orphan chain");
+                Objects.requireNonNull(currentChainCursor, "Attempt to follow an orphan chain");
             } else {
                 newChainCursor = newChainCursor.getPrev(store);
-                checkNotNull(newChainCursor, "Attempt to follow an orphan chain");
+                Objects.requireNonNull(newChainCursor, "Attempt to follow an orphan chain");
             }
         }
         return currentChainCursor;

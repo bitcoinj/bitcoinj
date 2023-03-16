@@ -86,7 +86,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -189,7 +188,7 @@ public class ECKey implements EncryptableItem {
     }
 
     protected ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
-        this(priv, new LazyECPoint(checkNotNull(pub), compressed));
+        this(priv, new LazyECPoint(Objects.requireNonNull(pub), compressed));
     }
 
     protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
@@ -202,7 +201,7 @@ public class ECKey implements EncryptableItem {
             checkArgument(!priv.equals(BigInteger.ONE));
         }
         this.priv = priv;
-        this.pub = checkNotNull(pub);
+        this.pub = Objects.requireNonNull(pub);
     }
 
     /**
@@ -262,8 +261,8 @@ public class ECKey implements EncryptableItem {
      * already. The compression state of the point will be preserved.
      */
     public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
-        checkNotNull(priv);
-        checkNotNull(pub);
+        Objects.requireNonNull(priv);
+        Objects.requireNonNull(pub);
         return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(CURVE.getCurve(), pub));
     }
 
@@ -305,8 +304,8 @@ public class ECKey implements EncryptableItem {
      */
     public static ECKey fromEncrypted(EncryptedData encryptedPrivateKey, KeyCrypter crypter, byte[] pubKey) {
         ECKey key = fromPublicOnly(pubKey);
-        key.encryptedPrivateKey = checkNotNull(encryptedPrivateKey);
-        key.keyCrypter = checkNotNull(crypter);
+        key.encryptedPrivateKey = Objects.requireNonNull(encryptedPrivateKey);
+        key.keyCrypter = Objects.requireNonNull(crypter);
         return key;
     }
 
@@ -601,7 +600,7 @@ public class ECKey implements EncryptableItem {
                 throw new RuntimeException(e); // cannot happen
             }
         }
-        checkNotNull(privateKeyForSigning);
+        Objects.requireNonNull(privateKeyForSigning);
         ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
         signer.init(true, privKey);
@@ -988,7 +987,7 @@ public class ECKey implements EncryptableItem {
         Preconditions.checkArgument(recId >= 0, "recId must be positive");
         Preconditions.checkArgument(sig.r.signum() >= 0, "r must be positive");
         Preconditions.checkArgument(sig.s.signum() >= 0, "s must be positive");
-        Preconditions.checkNotNull(message);
+        Objects.requireNonNull(message);
         // see https://www.secg.org/sec1-v2.pdf, section 4.1.6
         // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
         //   1.1 Let x = r + jn
@@ -1091,7 +1090,7 @@ public class ECKey implements EncryptableItem {
      * @param creationTime creation time of this key
      */
     public void setCreationTime(Instant creationTime) {
-        this.creationTime = checkNotNull(creationTime);
+        this.creationTime = Objects.requireNonNull(creationTime);
     }
 
     /**
@@ -1122,7 +1121,7 @@ public class ECKey implements EncryptableItem {
      * @return encryptedKey
      */
     public ECKey encrypt(KeyCrypter keyCrypter, AesKey aesKey) throws KeyCrypterException {
-        checkNotNull(keyCrypter);
+        Objects.requireNonNull(keyCrypter);
         final byte[] privKeyBytes = getPrivKeyBytes();
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
@@ -1142,7 +1141,7 @@ public class ECKey implements EncryptableItem {
      * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
      */
     public ECKey decrypt(KeyCrypter keyCrypter, AesKey aesKey) throws KeyCrypterException {
-        checkNotNull(keyCrypter);
+        Objects.requireNonNull(keyCrypter);
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
@@ -1332,7 +1331,7 @@ public class ECKey implements EncryptableItem {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.add("pub HEX", getPublicKeyAsHex());
         if (includePrivate) {
-            ECKey decryptedKey = isEncrypted() ? decrypt(checkNotNull(aesKey)) : this;
+            ECKey decryptedKey = isEncrypted() ? decrypt(Objects.requireNonNull(aesKey)) : this;
             try {
                 helper.add("priv HEX", decryptedKey.getPrivateKeyAsHex());
                 helper.add("priv WIF", decryptedKey.getPrivateKeyAsWiF(network));

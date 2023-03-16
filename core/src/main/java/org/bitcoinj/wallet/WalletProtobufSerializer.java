@@ -61,9 +61,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Serialize and de-serialize a wallet to a byte stream containing a
@@ -742,7 +741,7 @@ public class WalletProtobufSerializer {
                             tx.getTxId(), byteStringToHash(spentByTransactionHash)));
                 }
                 final int spendingIndex = transactionOutput.getSpentByTransactionIndex();
-                TransactionInput input = checkNotNull(spendingTx.getInput(spendingIndex));
+                TransactionInput input = Objects.requireNonNull(spendingTx.getInput(spendingIndex));
                 input.connect(output);
             }
         }

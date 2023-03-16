@@ -31,7 +31,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
@@ -184,9 +183,9 @@ public class SegwitAddress implements Address {
         if (witnessVersion == 1 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_TR)
             throw new AddressFormatException.InvalidDataLength(
                     "Invalid length for address version 1: " + witnessProgram.length);
-        this.network = normalizeNetwork(checkNotNull(network));
+        this.network = normalizeNetwork(Objects.requireNonNull(network));
         this.witnessVersion = (short) witnessVersion;
-        this.witnessProgram = checkNotNull(witnessProgram);
+        this.witnessProgram = Objects.requireNonNull(witnessProgram);
     }
 
     /**
