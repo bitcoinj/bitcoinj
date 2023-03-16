@@ -178,6 +178,7 @@ public class Context {
         slot.set(Objects.requireNonNull(context));
     }
 
+    @Deprecated
     /**
      * Returns the {@link TxConfidenceTable} created by this context. The pool tracks advertised
      * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
