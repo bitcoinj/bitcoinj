@@ -848,7 +848,7 @@ public class Transaction extends ChildMessage {
             if (locktime instanceof HeightLock) {
                 if (chain != null) {
                     s.append(" (estimated to be reached at ")
-                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(((HeightLock)locktime).blockHeight())))
+                            .append(TimeUtils.dateTimeFormat(chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight())))
                             .append(')');
                 }
             }
@@ -1872,7 +1872,7 @@ public class Transaction extends ChildMessage {
         LockTime locktime = lockTime();
         return locktime instanceof HeightLock ?
                 chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight()) :
-                ((TimeLock)locktime).timestamp();
+                ((TimeLock) locktime).timestamp();
     }
 
     /** @deprecated use {@link #estimateLockTimeInstant(AbstractBlockChain)} */
