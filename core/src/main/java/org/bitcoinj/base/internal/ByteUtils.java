@@ -24,7 +24,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Comparator;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * Utility methods for bit, byte, and integer manipulation and conversion. Most of these were moved here
@@ -71,13 +71,13 @@ public class ByteUtils {
      * @return numBytes byte long array.
      */
     public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
-        checkArgument(b.signum() >= 0, "b must be positive or zero");
-        checkArgument(numBytes > 0, "numBytes must be positive");
+        checkArgument(b.signum() >= 0, () -> "b must be positive or zero: " + b);
+        checkArgument(numBytes > 0, () -> "numBytes must be positive: " + numBytes);
         byte[] src = b.toByteArray();
         byte[] dest = new byte[numBytes];
         boolean isFirstByteOnlyForSign = src[0] == 0;
         int length = isFirstByteOnlyForSign ? src.length - 1 : src.length;
-        checkArgument(length <= numBytes, "The given number does not fit in " + numBytes);
+        checkArgument(length <= numBytes, () -> "The given number does not fit in " + numBytes);
         int srcPos = isFirstByteOnlyForSign ? 1 : 0;
         int destPos = numBytes - length;
         System.arraycopy(src, srcPos, dest, destPos, length);

@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * <p>Implementation of the Bech32 encoding.</p>
@@ -127,16 +127,16 @@ public class Bech32 {
     }
 
     /** Encode a Bech32 string. */
-    public static String encode(Encoding encoding, String hrp, final byte[] values) {
-        checkArgument(hrp.length() >= 1, "Human-readable part is too short");
-        checkArgument(hrp.length() <= 83, "Human-readable part is too long");
-        hrp = hrp.toLowerCase(Locale.ROOT);
-        byte[] checksum = createChecksum(encoding, hrp, values);
+    public static String encode(Encoding encoding, final String hrp, final byte[] values) {
+        checkArgument(hrp.length() >= 1, () -> "human-readable part is too short: " + hrp.length());
+        checkArgument(hrp.length() <= 83, () -> "human-readable part is too long: " + hrp.length());
+        String lcHrp = hrp.toLowerCase(Locale.ROOT);
+        byte[] checksum = createChecksum(encoding, lcHrp, values);
         byte[] combined = new byte[values.length + checksum.length];
         System.arraycopy(values, 0, combined, 0, values.length);
         System.arraycopy(checksum, 0, combined, values.length, checksum.length);
-        StringBuilder sb = new StringBuilder(hrp.length() + 1 + combined.length);
-        sb.append(hrp);
+        StringBuilder sb = new StringBuilder(lcHrp.length() + 1 + combined.length);
+        sb.append(lcHrp);
         sb.append('1');
         for (byte b : combined) {
             sb.append(CHARSET.charAt(b));
