@@ -22,7 +22,7 @@ import org.bitcoinj.base.Monetary;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * Represents a monetary fiat value. It was decided to not fold this into {@link Coin} because of type
@@ -105,12 +105,14 @@ public final class Fiat implements Monetary, Comparable<Fiat> {
     }
 
     public Fiat add(final Fiat value) {
-        checkArgument(value.currencyCode.equals(currencyCode));
+        checkArgument(value.currencyCode.equals(currencyCode), () ->
+                "values to add must be of same currency: " + value.currencyCode + " vs " + currencyCode);
         return new Fiat(currencyCode, Math.addExact(this.value, value.value));
     }
 
     public Fiat subtract(final Fiat value) {
-        checkArgument(value.currencyCode.equals(currencyCode));
+        checkArgument(value.currencyCode.equals(currencyCode), () ->
+                "values to substract must be of same currency: " + value.currencyCode + " vs " + currencyCode);
         return new Fiat(currencyCode, Math.subtractExact(this.value, value.value));
     }
 
@@ -127,7 +129,8 @@ public final class Fiat implements Monetary, Comparable<Fiat> {
     }
 
     public long divide(final Fiat divisor) {
-        checkArgument(divisor.currencyCode.equals(currencyCode));
+        checkArgument(divisor.currencyCode.equals(currencyCode), () ->
+                "values to divide must be of same currency: " + divisor.currencyCode + " vs " + currencyCode);
         return this.value / divisor.value;
     }
 

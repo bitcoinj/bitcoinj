@@ -27,7 +27,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * A {@code Sha256Hash} wraps a {@code byte[]} so that {@link #equals} and {@link #hashCode} work correctly, allowing it to be used as a key in a
@@ -42,7 +42,8 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
     private final byte[] bytes;
 
     private Sha256Hash(byte[] rawHashBytes) {
-        checkArgument(rawHashBytes.length == LENGTH);
+        checkArgument(rawHashBytes.length == LENGTH, () ->
+                "length must be " + LENGTH + ": " + rawHashBytes.length);
         this.bytes = rawHashBytes;
     }
 

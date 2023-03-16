@@ -20,7 +20,7 @@ import org.bitcoinj.base.utils.MonetaryFormat;
 
 import java.math.BigDecimal;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * Represents a monetary Bitcoin value. This class is immutable and should be treated as a Java <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html#Value-basedClasses">Value-based class</a>.
@@ -129,9 +129,9 @@ public final class Coin implements Monetary, Comparable<Coin> {
      * @return {@code Coin} object containing value in satoshis
      */
     public static Coin valueOf(final int coins, final int cents) {
-        checkArgument(cents < 100);
-        checkArgument(cents >= 0);
-        checkArgument(coins >= 0);
+        checkArgument(cents < 100, () -> "cents nust be below 100: " + cents);
+        checkArgument(cents >= 0, () -> "cents cannot be negative: " + cents);
+        checkArgument(coins >= 0, () -> "coins cannot be negative: " + cents);
         final Coin coin = COIN.multiply(coins).add(CENT.multiply(cents));
         return coin;
     }
