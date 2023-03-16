@@ -30,6 +30,7 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
+
 import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
