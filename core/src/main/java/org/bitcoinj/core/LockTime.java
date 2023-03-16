@@ -119,7 +119,7 @@ public abstract /* sealed */ class LockTime {
     }
 
     /**
-     * This is equivalent to {@code lockTime instanceof HeightLock || lockTime instanceof TimeLock}.
+     * This is equivalent to {@code lockTime instanceof HeightLock && rawValue() > 0 || lockTime instanceof TimeLock}.
      * (The lock time is considered to be set only if its raw value is greater than zero.)
      * @return true if lock time is set
      */

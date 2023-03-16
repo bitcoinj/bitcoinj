@@ -131,7 +131,8 @@ public class Transaction extends ChildMessage {
     public static final int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
     /**
-     * @deprecated use {@code lockTime instanceof HeightLock} or
+     * @deprecated use {@link LockTime#THRESHOLD} or
+     *                 {@code lockTime instanceof HeightLock} or
      *                 {@code lockTime instanceof TimeLock}
      **/
     @Deprecated
