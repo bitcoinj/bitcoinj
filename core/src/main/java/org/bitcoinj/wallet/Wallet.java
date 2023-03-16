@@ -128,6 +128,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -139,7 +140,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 // To do list:
@@ -509,8 +509,8 @@ public class Wallet extends BaseTaggableObject
      * @param keyChainGroup keychain group to manage keychains
      */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
-        this.params = checkNotNull(params);
-        this.keyChainGroup = checkNotNull(keyChainGroup);
+        this.params = Objects.requireNonNull(params);
+        this.keyChainGroup = Objects.requireNonNull(keyChainGroup);
         watchedScripts = new HashSet<>();
         unspent = new HashMap<>();
         spent = new HashMap<>();
@@ -941,7 +941,7 @@ public class Wallet extends BaseTaggableObject
     public int importKeysAndEncrypt(final List<ECKey> keys, CharSequence password) {
         keyChainGroupLock.lock();
         try {
-            checkNotNull(getKeyCrypter(), "Wallet is not encrypted");
+            Objects.requireNonNull(getKeyCrypter(), "Wallet is not encrypted");
             return importKeysAndEncrypt(keys, getKeyCrypter().deriveKey(password));
         } finally {
             keyChainGroupLock.unlock();
@@ -1664,7 +1664,7 @@ public class Wallet extends BaseTaggableObject
     public void setRiskAnalyzer(RiskAnalysis.Analyzer analyzer) {
         lock.lock();
         try {
-            this.riskAnalyzer = checkNotNull(analyzer);
+            this.riskAnalyzer = Objects.requireNonNull(analyzer);
         } finally {
             lock.unlock();
         }
@@ -2607,7 +2607,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
 
-            TransactionOutput output = checkNotNull(input.getConnectedOutput());
+            TransactionOutput output = Objects.requireNonNull(input.getConnectedOutput());
             if (result == TransactionInput.ConnectionResult.ALREADY_SPENT) {
                 if (fromChain) {
                     // Can be:
@@ -2630,7 +2630,7 @@ public class Wallet extends BaseTaggableObject
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
                 // The outputs are already marked as spent by the connect call above, so check if there are any more for
                 // us to use. Move if not.
-                Transaction connected = checkNotNull(input.getConnectedTransaction());
+                Transaction connected = Objects.requireNonNull(input.getConnectedTransaction());
                 log.info("  marked {} as spent by {}", input.getOutpoint(), tx.getTxId());
                 maybeMovePool(connected, "prevtx");
                 // Just because it's connected doesn't mean it's actually ours: sometimes we have total visibility.
@@ -3679,7 +3679,7 @@ public class Wallet extends BaseTaggableObject
     public void setLastBlockSeenTime(Instant time) {
         lock.lock();
         try {
-            lastBlockSeenTime = checkNotNull(time);
+            lastBlockSeenTime = Objects.requireNonNull(time);
         } finally {
             lock.unlock();
         }
@@ -3853,7 +3853,7 @@ public class Wallet extends BaseTaggableObject
     public Coin getBalance(CoinSelector selector) {
         lock.lock();
         try {
-            checkNotNull(selector);
+            Objects.requireNonNull(selector);
             List<TransactionOutput> candidates = calculateAllSpendCandidates(true, false);
             CoinSelection selection = selector.select((Coin) params.network().maxMoney(), candidates);
             return selection.totalValue();
@@ -4474,7 +4474,8 @@ public class Wallet extends BaseTaggableObject
                 }
 
                 RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
-                checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
+                Objects.requireNonNull(redeemData, () ->
+                        "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().getHash());
                 txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
                 txIn.setWitness(scriptPubKey.createEmptyWitness(redeemData.keys.get(0)));
             }
@@ -4532,7 +4533,7 @@ public class Wallet extends BaseTaggableObject
             if (vUTXOProvider == null) {
                 candidates = myUnspents.stream()
                     .filter(output ->   (!excludeUnsignable || canSignFor(output.getScriptPubKey())) &&
-                                        (!excludeImmatureCoinbases || checkNotNull(output.getParentTransaction()).isMature()))
+                                        (!excludeImmatureCoinbases || Objects.requireNonNull(output.getParentTransaction()).isMature()))
                     .collect(StreamUtils.toUnmodifiableList());
             } else {
                 candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
@@ -4579,7 +4580,7 @@ public class Wallet extends BaseTaggableObject
      */
     protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
         checkState(lock.isHeldByCurrentThread());
-        UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
+        UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         LinkedList<TransactionOutput> candidates = new LinkedList<>();
         try {
             int chainHeight = utxoProvider.getChainHeadHeight();
@@ -4620,7 +4621,7 @@ public class Wallet extends BaseTaggableObject
      * @return The list of stored outputs.
      */
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
-        UTXOProvider utxoProvider = checkNotNull(vUTXOProvider, "No UTXO provider has been set");
+        UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
         keys.addAll(getActiveKeyChain().getLeafKeys());
@@ -5069,7 +5070,7 @@ public class Wallet extends BaseTaggableObject
      * add the same extension twice (or two different objects that use the same ID) will throw an IllegalStateException.
      */
     public void addExtension(WalletExtension extension) {
-        String id = checkNotNull(extension).getWalletExtensionID();
+        String id = Objects.requireNonNull(extension).getWalletExtensionID();
         lock.lock();
         try {
             if (extensions.containsKey(id))
@@ -5085,7 +5086,7 @@ public class Wallet extends BaseTaggableObject
      * Atomically adds extension or returns an existing extension if there is one with the same id already present.
      */
     public WalletExtension addOrGetExistingExtension(WalletExtension extension) {
-        String id = checkNotNull(extension).getWalletExtensionID();
+        String id = Objects.requireNonNull(extension).getWalletExtensionID();
         lock.lock();
         try {
             WalletExtension previousExtension = extensions.get(id);
@@ -5105,7 +5106,7 @@ public class Wallet extends BaseTaggableObject
      * already present.
      */
     public void addOrUpdateExtension(WalletExtension extension) {
-        String id = checkNotNull(extension).getWalletExtensionID();
+        String id = Objects.requireNonNull(extension).getWalletExtensionID();
         lock.lock();
         try {
             extensions.put(id, extension);
@@ -5290,16 +5291,16 @@ public class Wallet extends BaseTaggableObject
                 Script redeemScript = null;
                 if (ScriptPattern.isP2PKH(script)) {
                     key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), ScriptType.P2PKH);
-                    checkNotNull(key, "Coin selection includes unspendable outputs");
+                    Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 } else if (ScriptPattern.isP2WPKH(script)) {
                     key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), ScriptType.P2WPKH);
-                    checkNotNull(key, "Coin selection includes unspendable outputs");
+                    Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
                     vsize += IntMath.divide(script.getNumberOfBytesRequiredToSpend(key, redeemScript), 4,
                             RoundingMode.CEILING); // round up
                 } else if (ScriptPattern.isP2SH(script)) {
                     redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
-                    checkNotNull(redeemScript, "Coin selection includes unspendable outputs");
+                    Objects.requireNonNull(redeemScript, "Coin selection includes unspendable outputs");
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
                 } else {
                     vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);

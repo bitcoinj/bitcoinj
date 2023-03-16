@@ -41,6 +41,7 @@ import java.security.SignatureException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -48,7 +49,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.base.internal.ByteUtils.reverseBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -327,7 +327,7 @@ public class ECKeyTest {
         boolean found = false;
         for (int i = 0; i < 4; i++) {
             ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, true);
-            checkNotNull(key2);
+            Objects.requireNonNull(key2);
             if (key.equals(key2)) {
                 found = true;
                 break;
@@ -356,7 +356,7 @@ public class ECKeyTest {
     @Test
     public void testEncryptedCreate() {
         ECKey unencryptedKey = new ECKey();
-        byte[] originalPrivateKeyBytes = checkNotNull(unencryptedKey.getPrivKeyBytes());
+        byte[] originalPrivateKeyBytes = Objects.requireNonNull(unencryptedKey.getPrivKeyBytes());
         log.info("Original private key = " + ByteUtils.formatHex(originalPrivateKeyBytes));
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, unencryptedKey.getPubKey());
@@ -425,7 +425,7 @@ public class ECKeyTest {
         boolean found = false;
         for (int i = 0; i < 4; i++) {
             ECKey key2 = ECKey.recoverFromSignature(i, sig, hash, true);
-            checkNotNull(key2);
+            Objects.requireNonNull(key2);
             if (unencryptedKey.equals(key2)) {
                 found = true;
                 break;

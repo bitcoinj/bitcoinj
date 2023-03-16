@@ -46,10 +46,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -98,10 +98,10 @@ public class CheckpointManager {
 
     /** Loads the checkpoints from the given stream */
     public CheckpointManager(NetworkParameters params, @Nullable InputStream inputStream) throws IOException {
-        this.params = checkNotNull(params);
+        this.params = Objects.requireNonNull(params);
         if (inputStream == null)
             inputStream = openStream(params);
-        checkNotNull(inputStream);
+        Objects.requireNonNull(inputStream);
         inputStream = new BufferedInputStream(inputStream);
         inputStream.mark(1);
         int first = inputStream.read();
@@ -234,8 +234,8 @@ public class CheckpointManager {
      */
     public static void checkpoint(NetworkParameters params, InputStream checkpoints, BlockStore store, Instant time)
             throws IOException, BlockStoreException {
-        checkNotNull(params);
-        checkNotNull(store);
+        Objects.requireNonNull(params);
+        Objects.requireNonNull(store);
         checkArgument(!(store instanceof FullPrunedBlockStore), "You cannot use checkpointing with a full store.");
 
         time = time.minus(7, ChronoUnit.WEEKS);

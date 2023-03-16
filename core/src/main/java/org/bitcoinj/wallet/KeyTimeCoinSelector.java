@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * A coin selector that takes all coins assigned to keys created before the given timestamp.
@@ -50,7 +49,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
     private final boolean ignorePending;
 
     public KeyTimeCoinSelector(Wallet wallet, Instant time, boolean ignorePending) {
-        this.time = checkNotNull(time);
+        this.time = Objects.requireNonNull(time);
         this.wallet = wallet;
         this.ignorePending = ignorePending;
     }
@@ -82,7 +81,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
                     log.info("Skipping tx output {} because it's not of simple form.", output);
                     continue;
                 }
-                checkNotNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
+                Objects.requireNonNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
                 if (controllingKey.getCreationTime().orElse(Instant.EPOCH).compareTo(time) >= 0) continue;
                 // It's older than the cutoff time so select.
                 gathered.push(output);

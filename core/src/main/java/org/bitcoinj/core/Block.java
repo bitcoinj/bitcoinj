@@ -49,6 +49,7 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
@@ -379,7 +380,7 @@ public class Block extends Message {
     public byte[] bitcoinSerialize() {
         // we have completely cached byte array.
         if (headerBytesValid && transactionBytesValid) {
-            Preconditions.checkNotNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
+            Objects.requireNonNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
             if (length == payload.length) {
                 return payload;
             } else {

@@ -38,8 +38,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * <p>This class encrypts and decrypts byte arrays and strings using scrypt as the
  * key derivation function and AES for the encryption.</p>
@@ -119,7 +117,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * @throws NullPointerException if the scryptParameters or any of its N, R or P is null.
      */
     public KeyCrypterScrypt(ScryptParameters scryptParameters) {
-        this.scryptParameters = checkNotNull(scryptParameters);
+        this.scryptParameters = Objects.requireNonNull(scryptParameters);
         // Check there is a non-empty salt.
         // (Some early MultiBit wallets has a missing salt so it is not a hard fail).
         if (scryptParameters.getSalt() == null
@@ -171,8 +169,8 @@ public class KeyCrypterScrypt implements KeyCrypter {
      */
     @Override
     public EncryptedData encrypt(byte[] plainBytes, AesKey aesKey) throws KeyCrypterException {
-        checkNotNull(plainBytes);
-        checkNotNull(aesKey);
+        Objects.requireNonNull(plainBytes);
+        Objects.requireNonNull(aesKey);
 
         try {
             // Generate iv - each encryption call has a different iv.
@@ -204,8 +202,8 @@ public class KeyCrypterScrypt implements KeyCrypter {
      */
     @Override
     public byte[] decrypt(EncryptedData dataToDecrypt, AesKey aesKey) throws KeyCrypterException {
-        checkNotNull(dataToDecrypt);
-        checkNotNull(aesKey);
+        Objects.requireNonNull(dataToDecrypt);
+        Objects.requireNonNull(aesKey);
 
         try {
             ParametersWithIV keyWithIv = new ParametersWithIV(new KeyParameter(aesKey.bytes()), dataToDecrypt.initialisationVector);
@@ -233,7 +231,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * Note: a String.getBytes() is not used to avoid creating a String of the password in the JVM.
      */
     private static byte[] convertToByteArray(CharSequence charSequence) {
-        checkNotNull(charSequence);
+        Objects.requireNonNull(charSequence);
 
         byte[] byteArray = new byte[charSequence.length() << 1];
         for(int i = 0; i < charSequence.length(); i++) {

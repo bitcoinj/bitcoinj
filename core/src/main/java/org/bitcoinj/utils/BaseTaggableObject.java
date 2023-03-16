@@ -21,8 +21,7 @@ import com.google.protobuf.ByteString;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * A simple implementation of {@link TaggableObject} that uses a hashmap that is
@@ -53,8 +52,8 @@ public class BaseTaggableObject implements TaggableObject {
     @Deprecated
     public synchronized void setTag(String tag, ByteString value) {
         // HashMap allows null keys and values, but we don't
-        checkNotNull(tag);
-        checkNotNull(value);
+        Objects.requireNonNull(tag);
+        Objects.requireNonNull(value);
         tags.put(tag, value);
     }
 

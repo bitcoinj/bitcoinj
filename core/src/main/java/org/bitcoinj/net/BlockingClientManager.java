@@ -26,9 +26,8 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * <p>A thin wrapper around a set of {@link BlockingClient}s.</p>
@@ -52,7 +51,7 @@ public class BlockingClientManager extends AbstractIdleService implements Client
      * bitcoinj connects to the P2P network.
      */
     public BlockingClientManager(SocketFactory socketFactory) {
-        this.socketFactory = checkNotNull(socketFactory);
+        this.socketFactory = Objects.requireNonNull(socketFactory);
     }
 
     @Override

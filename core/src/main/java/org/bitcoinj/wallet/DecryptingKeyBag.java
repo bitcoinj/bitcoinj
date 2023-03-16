@@ -23,8 +23,7 @@ import org.bitcoinj.crypto.ECKey;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * A DecryptingKeyBag filters a pre-existing key bag, decrypting keys as they are requested using the provided
@@ -36,7 +35,7 @@ public class DecryptingKeyBag implements KeyBag {
     protected final AesKey aesKey;
 
     public DecryptingKeyBag(KeyBag target, @Nullable AesKey aesKey) {
-        this.target = checkNotNull(target);
+        this.target = Objects.requireNonNull(target);
         this.aesKey = aesKey;
     }
 

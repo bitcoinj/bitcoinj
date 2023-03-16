@@ -36,10 +36,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -231,7 +231,7 @@ public class BasicKeyChainTest {
         assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
         assertFalse(keys.get(0).hasSecretBytes());
         assertTrue(keys.get(0).hasEncryptedData());
-        chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()));
+        chain = BasicKeyChain.fromProtobufEncrypted(keys, Objects.requireNonNull(chain.getKeyCrypter()));
         assertEquals(key1.getEncryptedPrivateKey(), chain.getKeys().get(0).getEncryptedPrivateKey());
         assertTrue(chain.checkPassword("foo bar"));
     }

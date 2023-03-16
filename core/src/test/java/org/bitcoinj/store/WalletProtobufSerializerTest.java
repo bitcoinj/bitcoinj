@@ -71,9 +71,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
@@ -253,9 +253,9 @@ public class WalletProtobufSerializerTest {
         tx2.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
         wallet.receivePending(tx2, null);
         Wallet walletCopy = roundTrip(wallet);
-        Transaction tx1copy = checkNotNull(walletCopy.getTransaction(tx1.getTxId()));
+        Transaction tx1copy = Objects.requireNonNull(walletCopy.getTransaction(tx1.getTxId()));
         assertEquals(TransactionInput.NO_SEQUENCE, tx1copy.getInput(0).getSequenceNumber());
-        Transaction tx2copy = checkNotNull(walletCopy.getTransaction(tx2.getTxId()));
+        Transaction tx2copy = Objects.requireNonNull(walletCopy.getTransaction(tx2.getTxId()));
         assertEquals(TransactionInput.NO_SEQUENCE - 1, tx2copy.getInput(0).getSequenceNumber());
     }
 
@@ -392,7 +392,7 @@ public class WalletProtobufSerializerTest {
         myWallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));
         Wallet wallet1 = roundTrip(myWallet);
         Transaction tx2 = wallet1.getTransaction(tx.getTxId());
-        assertEquals(checkNotNull(tx2).getVersion(), 2);
+        assertEquals(Objects.requireNonNull(tx2).getVersion(), 2);
     }
 
     @Test

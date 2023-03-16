@@ -37,11 +37,11 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
@@ -251,7 +251,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Do the same thing with an offline transaction.
         peerGroup.removeWallet(wallet);
         SendRequest req = SendRequest.to(dest, valueOf(2, 0));
-        Transaction t3 = checkNotNull(wallet.sendCoinsOffline(req));
+        Transaction t3 = Objects.requireNonNull(wallet.sendCoinsOffline(req));
         assertNull(outbound(p1));  // Nothing sent.
         // Add the wallet to the peer group (simulate initialization). Transactions should be announced.
         peerGroup.addWallet(wallet);

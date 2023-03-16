@@ -43,9 +43,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -283,9 +283,9 @@ public class KeyChainGroupTest {
         assertTrue(group.checkPassword("password"));
         assertFalse(group.checkPassword("wrong password"));
         final ECKey ea = group.findKeyFromPubKey(a.getPubKey());
-        assertTrue(checkNotNull(ea).isEncrypted());
+        assertTrue(Objects.requireNonNull(ea).isEncrypted());
         if (withImported) {
-            assertTrue(checkNotNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
+            assertTrue(Objects.requireNonNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
             assertEquals(yesterday, group.getEarliestKeyCreationTimeInstant());
         } else {
             assertEquals(now, group.getEarliestKeyCreationTimeInstant());
@@ -320,9 +320,9 @@ public class KeyChainGroupTest {
 
         group.decrypt(AES_KEY);
         assertFalse(group.isEncrypted());
-        assertFalse(checkNotNull(group.findKeyFromPubKey(a.getPubKey())).isEncrypted());
+        assertFalse(Objects.requireNonNull(group.findKeyFromPubKey(a.getPubKey())).isEncrypted());
         if (withImported) {
-            assertFalse(checkNotNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
+            assertFalse(Objects.requireNonNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
             assertEquals(yesterday, group.getEarliestKeyCreationTimeInstant());
         } else {
             assertEquals(now, group.getEarliestKeyCreationTimeInstant());
@@ -336,7 +336,7 @@ public class KeyChainGroupTest {
         assertTrue(group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).isEncrypted());
         final ECKey key = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         group.decrypt(AES_KEY);
-        assertFalse(checkNotNull(group.findKeyFromPubKey(key.getPubKey())).isEncrypted());
+        assertFalse(Objects.requireNonNull(group.findKeyFromPubKey(key.getPubKey())).isEncrypted());
     }
 
     @Test
@@ -514,7 +514,7 @@ public class KeyChainGroupTest {
     @Test
     public void constructFromSeed() {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        final DeterministicSeed seed = checkNotNull(group.getActiveKeyChain().getSeed());
+        final DeterministicSeed seed = Objects.requireNonNull(group.getActiveKeyChain().getSeed());
         KeyChainGroup group2 = KeyChainGroup.builder(MAINNET).lookaheadSize(5)
                 .addChain(DeterministicKeyChain.builder().seed(seed).outputScriptType(ScriptType.P2PKH).build())
                 .build();
@@ -587,7 +587,7 @@ public class KeyChainGroupTest {
         final DeterministicSeed deterministicSeed = group.getActiveKeyChain().getSeed();
         assertNotNull(deterministicSeed);
         assertTrue(deterministicSeed.isEncrypted());
-        byte[] entropy = checkNotNull(group.getActiveKeyChain().toDecrypted(AES_KEY).getSeed()).getEntropyBytes();
+        byte[] entropy = Objects.requireNonNull(group.getActiveKeyChain().toDecrypted(AES_KEY).getSeed()).getEntropyBytes();
     }
 
     @Test

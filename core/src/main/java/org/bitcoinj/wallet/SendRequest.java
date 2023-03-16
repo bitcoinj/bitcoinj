@@ -31,7 +31,7 @@ import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.Wallet.MissingSigsMode;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * A SendRequest gives the wallet information about precisely how to send money to a recipient or set of recipients.
@@ -171,7 +171,7 @@ public class SendRequest {
     public static SendRequest to(Address destination, Coin value) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = NetworkParameters.of(destination.network());
-        checkNotNull(parameters, "Address is for an unknown network");
+        Objects.requireNonNull(parameters, "Address is for an unknown network");
         req.tx = new Transaction(parameters);
         req.tx.addOutput(value, destination);
         return req;
@@ -202,7 +202,7 @@ public class SendRequest {
     public static SendRequest emptyWallet(Address destination) {
         SendRequest req = new SendRequest();
         final NetworkParameters parameters = NetworkParameters.of(destination.network());
-        checkNotNull(parameters, "Address is for an unknown network");
+        Objects.requireNonNull(parameters, "Address is for an unknown network");
         req.tx = new Transaction(parameters);
         req.tx.addOutput(Coin.ZERO, destination);
         req.emptyWallet = true;
@@ -224,7 +224,7 @@ public class SendRequest {
             }
         }
         // TODO spend another confirmed output of own wallet if needed
-        checkNotNull(outputToSpend, "Can't find adequately sized output that spends to us");
+        Objects.requireNonNull(outputToSpend, "Can't find adequately sized output that spends to us");
 
         final Transaction tx = new Transaction(parentTransaction.getParams());
         tx.addInput(outputToSpend);

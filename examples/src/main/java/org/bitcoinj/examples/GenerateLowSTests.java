@@ -22,8 +22,7 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.EnumSet;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
@@ -148,7 +147,8 @@ public class GenerateLowSTests {
             TransactionInput txIn = outputTransaction.getInput(i);
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
             RedeemData redeemData = txIn.getConnectedRedeemData(bag);
-            checkNotNull(redeemData, "Transaction exists in wallet that we cannot redeem: %s", txIn.getOutpoint().getHash());
+            Objects.requireNonNull(redeemData, () ->
+                    "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().getHash());
             txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
         }
     }

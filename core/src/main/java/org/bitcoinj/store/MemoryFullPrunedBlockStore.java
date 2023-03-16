@@ -16,7 +16,6 @@
 
 package org.bitcoinj.store;
 
-import com.google.common.base.Preconditions;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.crypto.ECKey;
@@ -290,14 +289,14 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public synchronized void put(StoredBlock block) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         Sha256Hash hash = block.getHeader().getHash();
         blockMap.put(hash, new StoredBlockAndWasUndoableFlag(block, false));
     }
     
     @Override
     public synchronized final void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         Sha256Hash hash = storedBlock.getHeader().getHash();
         fullBlockMap.put(hash, storedBlock.getHeight(), undoableBlock);
         blockMap.put(hash, new StoredBlockAndWasUndoableFlag(storedBlock, true));
@@ -306,7 +305,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     @Nullable
     public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         StoredBlockAndWasUndoableFlag storedBlock = blockMap.get(hash);
         return storedBlock == null ? null : storedBlock.block;
     }
@@ -314,7 +313,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     @Nullable
     public synchronized StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         StoredBlockAndWasUndoableFlag storedBlock = blockMap.get(hash);
         return (storedBlock != null && storedBlock.wasUndoable) ? storedBlock.block : null;
     }
@@ -322,31 +321,31 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     @Nullable
     public synchronized StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException {
-        Preconditions.checkNotNull(fullBlockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(fullBlockMap, "MemoryFullPrunedBlockStore is closed");
         return fullBlockMap.get(hash);
     }
 
     @Override
     public synchronized StoredBlock getChainHead() throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         return chainHead;
     }
 
     @Override
     public synchronized final void setChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         this.chainHead = chainHead;
     }
     
     @Override
     public synchronized StoredBlock getVerifiedChainHead() throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         return verifiedChainHead;
     }
 
     @Override
     public synchronized final void setVerifiedChainHead(StoredBlock chainHead) throws BlockStoreException {
-        Preconditions.checkNotNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         this.verifiedChainHead = chainHead;
         if (this.chainHead.getHeight() < chainHead.getHeight())
             setChainHead(chainHead);
@@ -365,19 +364,19 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     @Nullable
     public synchronized UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
-        Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         return transactionOutputMap.get(new StoredTransactionOutPoint(hash, index));
     }
 
     @Override
     public synchronized void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
-        Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         transactionOutputMap.put(new StoredTransactionOutPoint(out), out);
     }
 
     @Override
     public synchronized void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
-        Preconditions.checkNotNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         if (transactionOutputMap.remove(new StoredTransactionOutPoint(out)) == null)
             throw new BlockStoreException("Tried to remove a UTXO from MemoryFullPrunedBlockStore that it didn't have!");
     }

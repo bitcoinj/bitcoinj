@@ -90,6 +90,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -98,7 +99,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.MILLICOIN;
@@ -858,15 +858,15 @@ public class WalletTest extends TestWithWallet {
         final Coin value2 = valueOf(2, 0);
         // Give us three coins and make sure we have some change.
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, value.add(value2));
-        Transaction send1 = checkNotNull(wallet.createSend(OTHER_ADDRESS, value2));
-        Transaction send2 = checkNotNull(wallet.createSend(OTHER_ADDRESS, value2));
+        Transaction send1 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, value2));
+        Transaction send2 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, value2));
         byte[] buf = send1.bitcoinSerialize();
         buf[43] = 0;  // Break the signature: bitcoinj won't check in SPV mode and this is easier than other mutations.
         send1 = TESTNET.getDefaultSerializer().makeTransaction(buf);
         wallet.commitTx(send2);
         assertEquals(value, wallet.getBalance(BalanceType.ESTIMATED));
         // Now spend the change. This transaction should die permanently when the mutant appears in the chain.
-        Transaction send3 = checkNotNull(wallet.createSend(OTHER_ADDRESS, value, true));
+        Transaction send3 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, value, true));
         wallet.commitTx(send3);
         assertEquals(ZERO, wallet.getBalance(BalanceType.AVAILABLE));
         final LinkedList<TransactionConfidence> dead = new LinkedList<>();
@@ -1169,8 +1169,8 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void doubleSpendForBuildingTx() throws Exception {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(2, 0));
-        Transaction send1 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
-        Transaction send2 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20), true));
+        Transaction send1 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
+        Transaction send2 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20), true));
 
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, send1);
         assertUnspent(send1);
@@ -1183,11 +1183,11 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void txSpendingDeadTx() throws Exception {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(2, 0));
-        Transaction send1 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
-        Transaction send2 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20), true));
+        Transaction send1 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
+        Transaction send2 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20), true));
         wallet.commitTx(send1);
         assertPending(send1);
-        Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50), true));
+        Transaction send1b = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50), true));
 
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, send2);
         assertDead(send1);
@@ -1227,12 +1227,12 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void testAddTransactionsDependingOn() throws Exception {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(2, 0));
-        Transaction send1 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
-        Transaction send2 = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20), true));
+        Transaction send1 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
+        Transaction send2 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 20), true));
         wallet.commitTx(send1);
-        Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50), true));
+        Transaction send1b = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50), true));
         wallet.commitTx(send1b);
-        Transaction send1c = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 25), true));
+        Transaction send1c = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 25), true));
         wallet.commitTx(send1c);
         wallet.commitTx(send2);
         Set<Transaction> txns = new HashSet<>();
@@ -1247,15 +1247,15 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void sortTxnsByDependency() throws Exception {
         Transaction send1 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(2, 0));
-        Transaction send1a = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
+        Transaction send1a = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(1, 0), true));
         wallet.commitTx(send1a);
-        Transaction send1b = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50), true));
+        Transaction send1b = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 50), true));
         wallet.commitTx(send1b);
-        Transaction send1c = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 25), true));
+        Transaction send1c = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 25), true));
         wallet.commitTx(send1c);
-        Transaction send1d = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 12), true));
+        Transaction send1d = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 12), true));
         wallet.commitTx(send1d);
-        Transaction send1e = checkNotNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 06), true));
+        Transaction send1e = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, valueOf(0, 06), true));
         wallet.commitTx(send1e);
 
         Transaction send2 = sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(200, 0));
@@ -2092,7 +2092,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(encryptedWallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN, key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         assertEquals(Coin.COIN, encryptedWallet.getBalance());
         SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
-        req.aesKey = checkNotNull(encryptedWallet.getKeyCrypter()).deriveKey(PASSWORD1);
+        req.aesKey = Objects.requireNonNull(encryptedWallet.getKeyCrypter()).deriveKey(PASSWORD1);
         encryptedWallet.sendCoinsOffline(req);
     }
 
@@ -2963,7 +2963,7 @@ public class WalletTest extends TestWithWallet {
         wallet = roundTrip(wallet);
 
         tx = wallet.getTransaction(tx.getTxId());
-        checkNotNull(tx);
+        Objects.requireNonNull(tx);
         assertEquals(Transaction.Purpose.KEY_ROTATION, tx.getPurpose());
         // Have to divide here to avoid mismatch due to second-level precision in serialisation.
         assertEquals(compromiseTime, wallet.getKeyRotationTimeInstant().get());

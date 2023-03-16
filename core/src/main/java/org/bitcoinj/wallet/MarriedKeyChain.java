@@ -36,11 +36,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -94,7 +94,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
         @Override
         public MarriedKeyChain build() {
-            checkNotNull(followingKeys, "followingKeys must be provided");
+            Objects.requireNonNull(followingKeys, "followingKeys must be provided");
 
             if (threshold == 0)
                 threshold = (followingKeys.size() + 1) / 2 + 1;

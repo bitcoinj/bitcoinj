@@ -60,11 +60,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
 import static org.bitcoinj.base.internal.ByteUtils.uint32ToByteStreamLE;
@@ -553,7 +553,7 @@ public class Transaction extends ChildMessage {
      * @param updateTime update time
      */
     public void setUpdateTime(Instant updateTime) {
-        this.updateTime = checkNotNull(updateTime);
+        this.updateTime = Objects.requireNonNull(updateTime);
     }
 
     /**
@@ -1117,7 +1117,7 @@ public class Transaction extends ChildMessage {
      * @return The newly created input
      */
     public TransactionInput addSignedInput(TransactionOutput output, ECKey sigKey, SigHash sigHash, boolean anyoneCanPay) {
-        checkNotNull(output.getValue(), "TransactionOutput.getValue() must not be null");
+        Objects.requireNonNull(output.getValue(), "TransactionOutput.getValue() must not be null");
         checkState(output.getValue().value > 0, "TransactionOutput.getValue() must not be greater than zero");
         return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), output.getValue(), sigKey, sigHash, anyoneCanPay);
     }

@@ -36,8 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * <p>Provides a standard implementation of a Bitcoin URI with support for the following:</p>
@@ -136,8 +135,8 @@ public class BitcoinURI {
      * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
      */
     public BitcoinURI(@Nonnull Network network, String input) throws BitcoinURIParseException {
-        checkNotNull(network);
-        checkNotNull(input);
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(input);
 
         String scheme = network.uriScheme();
 
@@ -398,8 +397,8 @@ public class BitcoinURI {
     public static String convertToBitcoinURI(Network network,
                                              String address, @Nullable Coin amount,
                                              @Nullable String label, @Nullable String message) {
-        checkNotNull(network);
-        checkNotNull(address);
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(address);
         if (amount != null && amount.signum() < 0) {
             throw new IllegalArgumentException("Coin must be positive");
         }

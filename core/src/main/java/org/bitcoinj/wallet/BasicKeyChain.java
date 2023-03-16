@@ -40,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
@@ -47,7 +48,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -388,7 +388,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      * @throws org.bitcoinj.wallet.UnreadableWalletException if the data structures are corrupted/inconsistent
      */
     public static BasicKeyChain fromProtobufEncrypted(List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
-        BasicKeyChain chain = new BasicKeyChain(checkNotNull(crypter));
+        BasicKeyChain chain = new BasicKeyChain(Objects.requireNonNull(crypter));
         chain.deserializeFromProtobuf(keys);
         return chain;
     }
@@ -474,7 +474,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      */
     @Override
     public BasicKeyChain toEncrypted(CharSequence password) {
-        checkNotNull(password);
+        Objects.requireNonNull(password);
         checkArgument(password.length() > 0);
         KeyCrypter scrypt = new KeyCrypterScrypt();
         AesKey derivedKey = scrypt.deriveKey(password);
@@ -494,7 +494,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public BasicKeyChain toEncrypted(KeyCrypter keyCrypter, AesKey aesKey) {
         lock.lock();
         try {
-            checkNotNull(keyCrypter);
+            Objects.requireNonNull(keyCrypter);
             checkState(this.keyCrypter == null, "Key chain is already encrypted");
             BasicKeyChain encrypted = new BasicKeyChain(keyCrypter);
             for (ECKey key : hashToKeys.values()) {
@@ -519,7 +519,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     @Override
     public BasicKeyChain toDecrypted(CharSequence password) {
-        checkNotNull(keyCrypter, "Wallet is already decrypted");
+        Objects.requireNonNull(keyCrypter, "Wallet is already decrypted");
         AesKey aesKey = keyCrypter.deriveKey(password);
         return toDecrypted(aesKey);
     }
@@ -551,7 +551,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      */
     @Override
     public boolean checkPassword(CharSequence password) {
-        checkNotNull(password);
+        Objects.requireNonNull(password);
         checkState(keyCrypter != null, "Key chain not encrypted");
         return checkAESKey(keyCrypter.deriveKey(password));
     }

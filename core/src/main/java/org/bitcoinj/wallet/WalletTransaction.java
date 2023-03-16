@@ -18,7 +18,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.core.Transaction;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * Stores data about a transaction that is only relevant to the {@link Wallet} class.
@@ -34,7 +34,7 @@ public class WalletTransaction {
     private final Pool pool;
     
     public WalletTransaction(Pool pool, Transaction transaction) {
-        this.pool = checkNotNull(pool);
+        this.pool = Objects.requireNonNull(pool);
         this.transaction = transaction;
     }
 

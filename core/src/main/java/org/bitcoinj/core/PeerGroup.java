@@ -83,6 +83,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -100,7 +101,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -410,7 +410,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param connectionManager used to create new connections and keep track of existing ones.
      */
     protected PeerGroup(Network network, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        this(NetworkParameters.of(checkNotNull(network)), chain, connectionManager);
+        this(NetworkParameters.of(Objects.requireNonNull(network)), chain, connectionManager);
     }
 
     /**
@@ -421,7 +421,7 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     @VisibleForTesting
     protected PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        checkNotNull(params);
+        Objects.requireNonNull(params);
         Context.getOrCreate(); // create a context for convenience
         this.params = params;
         this.chain = chain;
@@ -751,7 +751,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * @see Peer#addBlocksDownloadedEventListener(Executor, BlocksDownloadedEventListener)
      */
     public void addBlocksDownloadedEventListener(Executor executor, BlocksDownloadedEventListener listener) {
-        peersBlocksDownloadedEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peersBlocksDownloadedEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addBlocksDownloadedEventListener(executor, listener);
         for (Peer peer : getPendingPeers())
@@ -768,7 +768,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * chain download starts.</p>
      */
     public void addChainDownloadStartedEventListener(Executor executor, ChainDownloadStartedEventListener listener) {
-        peersChainDownloadStartedEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peersChainDownloadStartedEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addChainDownloadStartedEventListener(executor, listener);
         for (Peer peer : getPendingPeers())
@@ -785,7 +785,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * new peers are connected to.</p>
      */
     public void addConnectedEventListener(Executor executor, PeerConnectedEventListener listener) {
-        peerConnectedEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peerConnectedEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addConnectedEventListener(executor, listener);
         for (Peer peer : getPendingPeers())
@@ -802,7 +802,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * peers are disconnected from.</p>
      */
     public void addDisconnectedEventListener(Executor executor, PeerDisconnectedEventListener listener) {
-        peerDisconnectedEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peerDisconnectedEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addDisconnectedEventListener(executor, listener);
         for (Peer peer : getPendingPeers())
@@ -819,7 +819,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * peers are discovered.</p>
      */
     public void addDiscoveredEventListener(Executor executor, PeerDiscoveredEventListener listener) {
-        peerDiscoveredEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peerDiscoveredEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
     }
 
     /** See {@link Peer#addGetDataEventListener(GetDataEventListener)} */
@@ -829,7 +829,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** See {@link Peer#addGetDataEventListener(Executor, GetDataEventListener)} */
     public void addGetDataEventListener(final Executor executor, final GetDataEventListener listener) {
-        peerGetDataEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peerGetDataEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addGetDataEventListener(executor, listener);
         for (Peer peer : getPendingPeers())
@@ -843,7 +843,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** See {@link Peer#addOnTransactionBroadcastListener(OnTransactionBroadcastListener)} */
     public void addOnTransactionBroadcastListener(Executor executor, OnTransactionBroadcastListener listener) {
-        peersTransactionBroadastEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peersTransactionBroadastEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addOnTransactionBroadcastListener(executor, listener);
         for (Peer peer : getPendingPeers())
@@ -857,7 +857,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** See {@link Peer#addPreMessageReceivedEventListener(Executor, PreMessageReceivedEventListener)} */
     public void addPreMessageReceivedEventListener(Executor executor, PreMessageReceivedEventListener listener) {
-        peersPreMessageReceivedEventListeners.add(new ListenerRegistration<>(checkNotNull(listener), executor));
+        peersPreMessageReceivedEventListeners.add(new ListenerRegistration<>(Objects.requireNonNull(listener), executor));
         for (Peer peer : getConnectedPeers())
             peer.addPreMessageReceivedEventListener(executor, listener);
         for (Peer peer : getPendingPeers())
@@ -1244,7 +1244,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public void addWallet(Wallet wallet) {
         lock.lock();
         try {
-            checkNotNull(wallet);
+            Objects.requireNonNull(wallet);
             checkState(!wallets.contains(wallet));
             wallets.add(wallet);
             wallet.setTransactionBroadcaster(this);
@@ -1277,7 +1277,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public ListenableCompletableFuture<BloomFilter> addPeerFilterProvider(PeerFilterProvider provider) {
         lock.lock();
         try {
-            checkNotNull(provider);
+            Objects.requireNonNull(provider);
             checkState(!peerFilterProviders.contains(provider));
             // Insert provider at the start. This avoids various concurrency problems that could occur because we need
             // all providers to be in a consistent, unchanging state whilst the filter is built. Providers can give
@@ -1308,7 +1308,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public void removePeerFilterProvider(PeerFilterProvider provider) {
         lock.lock();
         try {
-            checkNotNull(provider);
+            Objects.requireNonNull(provider);
             checkArgument(peerFilterProviders.remove(provider));
         } finally {
             lock.unlock();
@@ -1319,7 +1319,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Unlinks the given wallet so it no longer receives broadcast transactions or has its transactions announced.
      */
     public void removeWallet(Wallet wallet) {
-        wallets.remove(checkNotNull(wallet));
+        wallets.remove(Objects.requireNonNull(wallet));
         peerFilterProviders.remove(wallet);
         wallet.removeCoinsReceivedEventListener(walletCoinsReceivedEventListener);
         wallet.removeCoinsSentEventListener(walletCoinsSentEventListener);

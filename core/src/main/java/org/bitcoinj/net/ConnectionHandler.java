@@ -34,10 +34,10 @@ import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 // TODO: The locking in all this class is horrible and not really necessary. We should just run all network stuff on one thread.
@@ -86,7 +86,7 @@ class ConnectionHandler implements MessageWriteTarget {
 
     private ConnectionHandler(@Nullable StreamConnection connection, SelectionKey key) {
         this.key = key;
-        this.channel = checkNotNull(((SocketChannel)key.channel()));
+        this.channel = Objects.requireNonNull(((SocketChannel)key.channel()));
         if (connection == null) {
             readBuff = null;
             return;
@@ -98,7 +98,7 @@ class ConnectionHandler implements MessageWriteTarget {
     }
 
     public ConnectionHandler(StreamConnection connection, SelectionKey key, Set<ConnectionHandler> connectedHandlers) {
-        this(checkNotNull(connection), key);
+        this(Objects.requireNonNull(connection), key);
 
         // closeConnection() may have already happened because we invoked the other c'tor above, which called
         // connection.setWriteTarget which might have re-entered already. In this case we shouldn't add ourselves
@@ -236,7 +236,7 @@ class ConnectionHandler implements MessageWriteTarget {
                 // "flip" the buffer - setting the limit to the current position and setting position to 0
                 ((Buffer) handler.readBuff).flip();
                 // Use connection.receiveBytes's return value as a check that it stopped reading at the right location
-                int bytesConsumed = checkNotNull(handler.connection).receiveBytes(handler.readBuff);
+                int bytesConsumed = Objects.requireNonNull(handler.connection).receiveBytes(handler.readBuff);
                 checkState(handler.readBuff.position() == bytesConsumed);
                 // Now drop the bytes which were read by compacting readBuff (resetting limit and keeping relative
                 // position)

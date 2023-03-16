@@ -39,7 +39,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -74,7 +73,7 @@ public class DeterministicKey extends ECKey {
         super(priv, publicAsPoint.compress());
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
+        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
@@ -97,7 +96,7 @@ public class DeterministicKey extends ECKey {
         super(priv, ECKey.publicPointFromPrivate(priv), true);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = checkNotNull(hdPath);
+        this.childNumberPath = Objects.requireNonNull(hdPath);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
@@ -111,8 +110,8 @@ public class DeterministicKey extends ECKey {
                             EncryptedData priv,
                             @Nullable DeterministicKey parent) {
         this(childNumberPath, chainCode, pub, null, parent);
-        this.encryptedPrivateKey = checkNotNull(priv);
-        this.keyCrypter = checkNotNull(crypter);
+        this.encryptedPrivateKey = Objects.requireNonNull(priv);
+        this.keyCrypter = Objects.requireNonNull(crypter);
     }
 
     /**
@@ -145,7 +144,7 @@ public class DeterministicKey extends ECKey {
         super(null, publicAsPoint.compress());
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
+        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
         this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
@@ -165,7 +164,7 @@ public class DeterministicKey extends ECKey {
         super(priv, ECKey.publicPointFromPrivate(priv), true);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(checkNotNull(childNumberPath));
+        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
         this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
@@ -301,7 +300,7 @@ public class DeterministicKey extends ECKey {
 
     public DeterministicKey encrypt(KeyCrypter keyCrypter, AesKey aesKey, @Nullable DeterministicKey newParent) throws KeyCrypterException {
         // Same as the parent code, except we construct a DeterministicKey instead of an ECKey.
-        checkNotNull(keyCrypter);
+        Objects.requireNonNull(keyCrypter);
         if (newParent != null)
             checkArgument(newParent.isEncrypted());
         final byte[] privKeyBytes = getPrivKeyBytes();
@@ -380,7 +379,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public DeterministicKey decrypt(KeyCrypter keyCrypter, AesKey aesKey) throws KeyCrypterException {
-        checkNotNull(keyCrypter);
+        Objects.requireNonNull(keyCrypter);
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
@@ -460,7 +459,7 @@ public class DeterministicKey extends ECKey {
         // catch it.
         if (!downCursor.pub.equals(pub))
             throw new KeyCrypterException.PublicPrivateMismatch("Could not decrypt bytes");
-        return checkNotNull(downCursor.priv);
+        return Objects.requireNonNull(downCursor.priv);
     }
 
     /**

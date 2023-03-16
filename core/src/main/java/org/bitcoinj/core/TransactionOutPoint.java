@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -133,7 +132,7 @@ public class TransactionOutPoint extends ChildMessage {
      * @throws java.lang.NullPointerException if there is no connected output.
      */
     public byte[] getConnectedPubKeyScript() {
-        byte[] result = checkNotNull(getConnectedOutput()).getScriptBytes();
+        byte[] result = Objects.requireNonNull(getConnectedOutput()).getScriptBytes();
         checkState(result.length > 0);
         return result;
     }
@@ -149,7 +148,7 @@ public class TransactionOutPoint extends ChildMessage {
     @Nullable
     public ECKey getConnectedKey(KeyBag keyBag) throws ScriptException {
         TransactionOutput connectedOutput = getConnectedOutput();
-        checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
+        Objects.requireNonNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isP2PKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
@@ -175,7 +174,7 @@ public class TransactionOutPoint extends ChildMessage {
     @Nullable
     public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
         TransactionOutput connectedOutput = getConnectedOutput();
-        checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
+        Objects.requireNonNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isP2PKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);

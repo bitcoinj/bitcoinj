@@ -37,10 +37,10 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -71,9 +71,9 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     }
 
     public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {
-        checkNotNull(params);
+        Objects.requireNonNull(params);
         serializer = params.getDefaultSerializer();
-        this.peerAddress = checkNotNull(peerAddress);
+        this.peerAddress = Objects.requireNonNull(peerAddress);
         this.timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
     }
 

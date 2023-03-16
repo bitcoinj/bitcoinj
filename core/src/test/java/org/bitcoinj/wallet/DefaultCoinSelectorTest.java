@@ -36,8 +36,8 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.junit.Assert.assertEquals;
@@ -84,8 +84,8 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Test
     public void depthOrdering() {
         // Send two transactions in two blocks on top of each other.
-        Transaction t1 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
-        Transaction t2 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
+        Transaction t1 = Objects.requireNonNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
+        Transaction t2 = Objects.requireNonNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
 
         // Check we selected just the oldest one.
         DefaultCoinSelector selector = DefaultCoinSelector.get();
@@ -106,12 +106,12 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     public void coinAgeOrdering() {
         // Send three transactions in four blocks on top of each other. Coin age of t1 is 1*4=4, coin age of t2 = 2*2=4
         // and t3=0.01.
-        Transaction t1 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
+        Transaction t1 = Objects.requireNonNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
         // Padding block.
         wallet.notifyNewBestBlock(FakeTxBuilder.createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).storedBlock);
         final Coin TWO_COINS = COIN.multiply(2);
-        Transaction t2 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, TWO_COINS));
-        Transaction t3 = checkNotNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT));
+        Transaction t2 = Objects.requireNonNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, TWO_COINS));
+        Transaction t3 = Objects.requireNonNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT));
 
         // Should be ordered t2, t1, t3.
         ArrayList<TransactionOutput> candidates = new ArrayList<>();
