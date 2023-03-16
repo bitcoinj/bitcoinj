@@ -81,7 +81,9 @@ public class Context {
      */
     public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee, boolean relaxProofOfWork) {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
-        this.confidenceTable = new TxConfidenceTable();
+        TxConfidenceTable txConfidenceTable = new TxConfidenceTable();
+        TxConfidenceTable.setInstance(txConfidenceTable);
+        this.confidenceTable = txConfidenceTable;
         this.eventHorizon = eventHorizon;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
