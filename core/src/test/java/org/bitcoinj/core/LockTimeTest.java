@@ -16,38 +16,24 @@
 
 package org.bitcoinj.core;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.bitcoinj.core.LockTime.HeightLock;
 import org.bitcoinj.core.LockTime.TimeLock;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.Assert.*;
 
+@RunWith(JUnitParamsRunner.class)
 public class LockTimeTest {
-    @Test
-    public void of() {
-        assertEquals(0, LockTime.of(0).rawValue());
-        assertEquals(499_999_999, LockTime.of(LockTime.THRESHOLD - 1).rawValue());
-        assertEquals(500_000_000, LockTime.of(LockTime.THRESHOLD).rawValue());
-        assertEquals(Long.MAX_VALUE, LockTime.of(Long.MAX_VALUE).rawValue());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void of_negative() {
-        LockTime.of(-1);
-    }
-
     @Test
     public void ofBlockHeight() {
         assertEquals(1, LockTime.ofBlockHeight(1).blockHeight());
         assertEquals(499_999_999, LockTime.ofBlockHeight((int) LockTime.THRESHOLD - 1).blockHeight());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void ofBlockHeight_negative() {
-        LockTime.ofBlockHeight(-1);
     }
 
     @Test
@@ -92,5 +78,36 @@ public class LockTimeTest {
         if (unset instanceof HeightLock && unset.rawValue() == 0) {
             assertTrue(unset.rawValue() == 0);
         }
+    }
+
+    @Test
+    @Parameters(method = "validValueVectors")
+    public void testValues(long value, Class<?> clazz) {
+        LockTime lockTime = LockTime.of(value);
+
+        assertTrue(clazz.isInstance(lockTime));
+        assertEquals(value, lockTime.rawValue());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @Parameters(method = "invalidValues")
+    public void testValues(long value) {
+        LockTime lockTime = LockTime.of(value);
+    }
+
+    private Object[] validValueVectors() {
+        return new Object[]{
+                new Object[]{0, HeightLock.class},
+                new Object[]{1, HeightLock.class},
+                new Object[]{499_999_999, HeightLock.class},
+                new Object[]{500_000_000, TimeLock.class},
+                new Object[]{Long.MAX_VALUE, TimeLock.class},
+                new Object[]{Instant.now().getEpochSecond(), TimeLock.class},
+                new Object[]{Instant.MAX.getEpochSecond(), TimeLock.class}
+        };
+    }
+
+    private Long[] invalidValues() {
+        return new Long[]{Long.MIN_VALUE, -1L};
     }
 }

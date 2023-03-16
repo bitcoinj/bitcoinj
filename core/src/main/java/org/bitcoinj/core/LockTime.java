@@ -22,30 +22,44 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Wrapper for transaction lock time, specified either as a block height or as a timestamp (in seconds
- * since epoch). Both are encoded into the same long "raw value", as used in the Bitcoin protocol.
- * The lock time is said to be "not set" if its raw value is zero.
+ * Wrapper for transaction lock time, specified either as a block height {@link HeightLock} or as a timestamp
+ * {@link TimeLock}(in seconds since epoch). Both are encoded into the same long "raw value", as used in the Bitcoin protocol.
+ * The lock time is said to be "not set" if its raw value is zero (and the zero value will be represented by a {@link HeightLock}
+ * with value zero.)
  * <p>
  * Instances of this class are immutable and should be treated as Java
  * <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/doc-files/ValueBased.html#Value-basedClasses">value-based</a>.
  */
 public abstract /* sealed */ class LockTime {
 
+    /**
+     * A {@code LockTime} instance that contains a block height.
+     * Can also be zero to represent no-lock.
+     */
     public static final class HeightLock extends LockTime {
         public HeightLock(long value) {
             super(value);
         }
 
+        /**
+         * @return block height as an int
+         */
         public int blockHeight() {
             return Math.toIntExact(value);
         }
     }
 
+    /**
+     * A {@code LockTime} instance that contains a timestamp.
+     */
     public static final class TimeLock extends LockTime {
         public TimeLock(long value) {
             super(value);
         }
 
+        /**
+         * @return timestamp in java.time format
+         */
         public Instant timestamp() {
             return Instant.ofEpochSecond(value);
         }
