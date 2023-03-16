@@ -16,7 +16,6 @@
 
 package org.bitcoinj.base;
 
-import com.google.common.base.MoreObjects;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.exceptions.AddressFormatException;
@@ -177,8 +176,10 @@ public class SegwitAddressTest {
 
         @Override
         public String toString() {
-            return MoreObjects.toStringHelper(this).add("address", address).add("params", expectedNetwork.id())
-                    .add("scriptPubKey", expectedScriptPubKey).add("witnessVersion", expectedWitnessVersion).toString();
+            StringBuilder s = new StringBuilder(this.getClass().getSimpleName()).append('{');
+            s.append("address=").append(address).append(',');
+            s.append("expected=").append(expectedNetwork.id()).append(',').append(expectedScriptPubKey).append(',').append(expectedWitnessVersion);
+            return s.append('}').toString();
         }
     }
 
