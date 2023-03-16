@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.utils.Threading;
 
@@ -41,6 +42,21 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class TxConfidenceTable {
     protected final ReentrantLock lock = Threading.lock(TxConfidenceTable.class);
+
+    //simply to help with migration.
+    @Deprecated
+    private static TxConfidenceTable _instance;
+
+    @Deprecated
+    public static void setInstance(TxConfidenceTable txConfidenceTable) {
+        if (_instance != null){
+            throw new RuntimeException("confidence table already set");
+        }
+        _instance = txConfidenceTable;
+    }
+    public static TxConfidenceTable instance(Network network) {
+        return _instance;
+    }
 
     private static class WeakConfidenceReference extends WeakReference<TransactionConfidence> {
         public Sha256Hash hash;
