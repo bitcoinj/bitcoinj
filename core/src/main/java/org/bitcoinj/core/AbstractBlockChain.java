@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Preconditions;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.listeners.ReorganizeListener;
@@ -47,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -101,6 +103,16 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
+
+    // TODO: 2023-03-16 remove values with only one value on the heap
+    private static final Map<Network, Set<AbstractBlockChain>> _instances = new HashMap<>();
+
+    private static void addInstance(Network network, AbstractBlockChain instance){
+
+        Set<AbstractBlockChain> networkInstances = _instances.getOrDefault(network, new HashSet<>());
+        networkInstances.add(instance);
+        _instances.put(network, networkInstances);
+    }
     /** synchronization lock */
     protected final ReentrantLock lock = Threading.lock(AbstractBlockChain.class);
 
@@ -182,6 +194,7 @@ public abstract class AbstractBlockChain {
 
         this.versionTally = new VersionTally(params);
         this.versionTally.initialize(blockStore, chainHead);
+        addInstance(params.network(), this);
     }
 
     /**
