@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.listeners.ReorganizeListener;
@@ -53,8 +52,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
@@ -137,7 +136,7 @@ public abstract class AbstractBlockChain {
         final Map<Sha256Hash, Transaction> filteredTxn;
         OrphanBlock(Block block, @Nullable List<Sha256Hash> filteredTxHashes, @Nullable Map<Sha256Hash, Transaction> filteredTxn) {
             final boolean filtered = filteredTxHashes != null && filteredTxn != null;
-            Preconditions.checkArgument((block.getTransactions() == null && filtered)
+            checkArgument((block.getTransactions() == null && filtered)
                                         || (block.getTransactions() != null && !filtered));
             this.block = block;
             this.filteredTxHashes = filteredTxHashes;
@@ -519,7 +518,8 @@ public abstract class AbstractBlockChain {
                 // We can't find the previous block. Probably we are still in the process of downloading the chain and a
                 // block was solved whilst we were doing it. We put it to one side and try to connect it later when we
                 // have more blocks.
-                checkState(tryConnecting, "bug in tryConnectingOrphans");
+                checkState(tryConnecting, () ->
+                        "bug in tryConnectingOrphans");
                 log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.getPrevBlockHash());
                 orphanBlocks.put(block.getHash(), new OrphanBlock(block, filteredTxHashList, filteredTxn));
                 if (tryConnecting)
@@ -851,7 +851,8 @@ public abstract class AbstractBlockChain {
      * Returns the set of contiguous blocks between 'higher' and 'lower'. Higher is included, lower is not.
      */
     private static LinkedList<StoredBlock> getPartialChain(StoredBlock higher, StoredBlock lower, BlockStore store) throws BlockStoreException {
-        checkArgument(higher.getHeight() > lower.getHeight(), "higher and lower are reversed");
+        checkArgument(higher.getHeight() > lower.getHeight(), () ->
+                "higher and lower are reversed");
         LinkedList<StoredBlock> results = new LinkedList<>();
         StoredBlock cursor = higher;
         do {

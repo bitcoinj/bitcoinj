@@ -100,8 +100,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>Runs a set of connections to the P2P network, brings up connections to replace disconnected nodes and manages
@@ -1150,7 +1150,8 @@ public class PeerGroup implements TransactionBroadcaster {
             // Just try to help catch what might be a programming error.
             log.warn("Starting up with no attached block chain. Did you forget to pass one to the constructor?");
         }
-        checkState(!vUsedUp, "Cannot start a peer group twice");
+        checkState(!vUsedUp, () ->
+                "cannot start a peer group twice");
         vRunning = true;
         vUsedUp = true;
         executorStartupLatch.countDown();
@@ -1741,7 +1742,8 @@ public class PeerGroup implements TransactionBroadcaster {
     public void setFastCatchupTime(Instant fastCatchupTime) {
         lock.lock();
         try {
-            checkState(chain == null || !chain.shouldVerifyTransactions(), "Fast catchup is incompatible with fully verifying");
+            checkState(chain == null || !chain.shouldVerifyTransactions(), () ->
+                    "fast catchup is incompatible with fully verifying");
             this.fastCatchupTime = fastCatchupTime;
             if (downloadPeer != null) {
                 downloadPeer.setFastDownloadParameters(bloomFilterMerger.getLastFilter() != null, fastCatchupTime);

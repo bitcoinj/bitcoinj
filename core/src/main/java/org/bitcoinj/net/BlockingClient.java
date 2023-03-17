@@ -35,7 +35,7 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>Creates a simple connection to a server using a {@link StreamConnection} to process data.</p>

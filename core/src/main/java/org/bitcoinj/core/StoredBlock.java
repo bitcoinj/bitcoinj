@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Wraps a {@link Block} object with extra data that can be derived from the block chain but is slow or inconvenient to
@@ -126,7 +126,8 @@ public class StoredBlock {
     /** Serializes the stored block to a custom packed format. Used by {@link CheckpointManager}. */
     public void serializeCompact(ByteBuffer buffer) {
         byte[] chainWorkBytes = getChainWork().toByteArray();
-        checkState(chainWorkBytes.length <= CHAIN_WORK_BYTES, "Ran out of space to store chain work!");
+        checkState(chainWorkBytes.length <= CHAIN_WORK_BYTES, () ->
+                "ran out of space to store chain work!");
         if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
             // Pad to the right size.
             buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);

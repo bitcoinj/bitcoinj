@@ -42,7 +42,7 @@ import java.time.temporal.Temporal;
 import java.time.temporal.TemporalUnit;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Parameters for Bitcoin-like networks.
@@ -191,8 +191,8 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
             }
             hash = cursor.getHeader().getPrevBlockHash();
         }
-        checkState(cursor != null && isDifficultyTransitionPoint(cursor.getHeight() - 1),
-                "Didn't arrive at a transition point.");
+        checkState(cursor != null && isDifficultyTransitionPoint(cursor.getHeight() - 1), () ->
+                "didn't arrive at a transition point");
         Duration elapsed = TimeUtils.elapsedTime(start);
         if (elapsed.toMillis() > 50)
             log.info("Difficulty transition traversal took {} ms", elapsed.toMillis());

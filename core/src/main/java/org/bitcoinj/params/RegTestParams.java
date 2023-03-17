@@ -24,7 +24,7 @@ import org.bitcoinj.base.Sha256Hash;
 
 import java.time.Instant;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
@@ -86,7 +86,8 @@ public class RegTestParams extends BitcoinNetworkParams {
                 genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
                 genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
                 genesisBlock.setNonce(GENESIS_NONCE);
-                checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
+                checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
+                        "invalid genesis hash");
             }
         }
         return genesisBlock;

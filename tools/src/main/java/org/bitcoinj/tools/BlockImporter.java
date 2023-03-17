@@ -21,9 +21,10 @@ import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.*;
 import org.bitcoinj.utils.BlockFileLoader;
-import com.google.common.base.Preconditions;
 
 import java.io.File;
+
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /** Very thin wrapper around {@link BlockFileLoader} */
 public class BlockImporter {
@@ -31,7 +32,7 @@ public class BlockImporter {
         System.out.println("USAGE: BlockImporter (prod|test) (Disk|MemFull|Mem|SPV) [blockStore]");
         System.out.println("       blockStore is required unless type is Mem or MemFull");
         System.out.println("       Does full verification if the store supports it");
-        Preconditions.checkArgument(args.length == 2 || args.length == 3);
+        checkArgument(args.length == 2 || args.length == 3);
         
         NetworkParameters params;
         if (args[0].equals("test"))
@@ -42,15 +43,15 @@ public class BlockImporter {
         BlockStore store;
         switch (args[1]) {
             case "MemFull":
-                Preconditions.checkArgument(args.length == 2);
+                checkArgument(args.length == 2);
                 store = new MemoryFullPrunedBlockStore(params, 100);
                 break;
             case "Mem":
-                Preconditions.checkArgument(args.length == 2);
+                checkArgument(args.length == 2);
                 store = new MemoryBlockStore(params);
                 break;
             case "SPV":
-                Preconditions.checkArgument(args.length == 3);
+                checkArgument(args.length == 3);
                 store = new SPVBlockStore(params, new File(args[2]));
                 break;
             default:

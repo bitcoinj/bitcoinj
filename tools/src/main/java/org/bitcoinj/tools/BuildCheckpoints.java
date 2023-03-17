@@ -49,8 +49,8 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Downloads and verifies a full chain from your local peer, emitting checkpoints at each difficulty transition period

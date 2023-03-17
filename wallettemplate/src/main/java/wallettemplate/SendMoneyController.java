@@ -40,7 +40,7 @@ import org.bitcoinj.walletfx.controls.BitcoinAddressValidator;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.bitcoinj.walletfx.utils.WTUtils;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.walletfx.utils.GuiUtils.*;
 
 import javax.annotation.Nullable;

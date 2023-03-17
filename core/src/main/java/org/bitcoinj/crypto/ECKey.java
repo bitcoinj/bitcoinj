@@ -19,7 +19,6 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import org.bitcoin.NativeSecp256k1;
 import org.bitcoin.NativeSecp256k1Util;
 import org.bitcoin.Secp256k1Context;
@@ -85,8 +84,8 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
@@ -193,7 +192,8 @@ public class ECKey implements EncryptableItem {
 
     protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         if (priv != null) {
-            checkArgument(priv.bitLength() <= 32 * 8, "private key exceeds 32 bytes: %s bits", priv.bitLength());
+            checkArgument(priv.bitLength() <= 32 * 8, () ->
+                    "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
             // Try and catch buggy callers or bad key imports, etc. Zero and one are special because these are often
             // used as sentinel values and because scripting languages have a habit of auto-casting true and false to
             // 1 and 0 or vice-versa. Type confusion bugs could therefore result in private keys with these values.
@@ -426,7 +426,8 @@ public class ECKey implements EncryptableItem {
         if (scriptType == ScriptType.P2PKH) {
             return LegacyAddress.fromPubKeyHash(network, this.getPubKeyHash());
         } else if (scriptType == ScriptType.P2WPKH) {
-            checkArgument(this.isCompressed(), "only compressed keys allowed");
+            checkArgument(this.isCompressed(), () ->
+                    "only compressed keys allowed");
             return SegwitAddress.fromHash(network, this.getPubKeyHash());
         } else {
             throw new IllegalArgumentException(scriptType.toString());
@@ -745,30 +746,36 @@ public class ECKey implements EncryptableItem {
         try {
             ASN1InputStream decoder = new ASN1InputStream(asn1privkey);
             DLSequence seq = (DLSequence) decoder.readObject();
-            checkArgument(decoder.readObject() == null, "Input contains extra bytes");
+            checkArgument(decoder.readObject() == null, () ->
+                    "input contains extra bytes");
             decoder.close();
 
-            checkArgument(seq.size() == 4, "Input does not appear to be an ASN.1 OpenSSL EC private key");
+            checkArgument(seq.size() == 4, () ->
+                    "input does not appear to be an ASN.1 OpenSSL EC private key");
 
-            checkArgument(((ASN1Integer) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE),
-                    "Input is of wrong version");
+            checkArgument(((ASN1Integer) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE), () ->
+                    "input is of wrong version");
 
             byte[] privbits = ((ASN1OctetString) seq.getObjectAt(1)).getOctets();
             BigInteger privkey = ByteUtils.bytesToBigInteger(privbits);
 
             ASN1TaggedObject pubkey = (ASN1TaggedObject) seq.getObjectAt(3);
-            checkArgument(pubkey.getTagNo() == 1, "Input has 'publicKey' with bad tag number");
-            checkArgument(pubkey.getTagClass() == BERTags.CONTEXT_SPECIFIC, "Input has 'publicKey' with bad tag class");
+            checkArgument(pubkey.getTagNo() == 1, () ->
+                    "input has 'publicKey' with bad tag number");
+            checkArgument(pubkey.getTagClass() == BERTags.CONTEXT_SPECIFIC, () ->
+                    "input has 'publicKey' with bad tag class");
             byte[] pubbits = ((DERBitString) pubkey.getBaseObject()).getBytes();
-            checkArgument(pubbits.length == 33 || pubbits.length == 65, "Input has 'publicKey' with invalid length");
+            checkArgument(pubbits.length == 33 || pubbits.length == 65, () ->
+                    "input has 'publicKey' with invalid length");
             int encoding = pubbits[0] & 0xFF;
             // Only allow compressed(2,3) and uncompressed(4), not infinity(0) or hybrid(6,7)
-            checkArgument(encoding >= 2 && encoding <= 4, "Input has 'publicKey' with invalid encoding");
+            checkArgument(encoding >= 2 && encoding <= 4, () ->
+                    "input has 'publicKey' with invalid encoding");
 
             // Now sanity check to ensure the pubkey bytes match the privkey.
             ECKey key = ECKey.fromPrivate(privkey, isPubKeyCompressed(pubbits));
-            if (!Arrays.equals(key.getPubKey(), pubbits))
-                throw new IllegalArgumentException("Public key in ASN.1 structure does not match private key.");
+            checkArgument (Arrays.equals(key.getPubKey(), pubbits), () ->
+                    "public key in ASN.1 structure does not match private key.");
             return key;
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
@@ -984,9 +991,9 @@ public class ECKey implements EncryptableItem {
      */
     @Nullable
     public static ECKey recoverFromSignature(int recId, ECDSASignature sig, Sha256Hash message, boolean compressed) {
-        Preconditions.checkArgument(recId >= 0, "recId must be positive");
-        Preconditions.checkArgument(sig.r.signum() >= 0, "r must be positive");
-        Preconditions.checkArgument(sig.s.signum() >= 0, "s must be positive");
+        checkArgument(recId >= 0, () -> "recId must be positive");
+        checkArgument(sig.r.signum() >= 0, () -> "r must be positive");
+        checkArgument(sig.s.signum() >= 0, () -> "s must be positive");
         Objects.requireNonNull(message);
         // see https://www.secg.org/sec1-v2.pdf, section 4.1.6
         // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
@@ -1145,7 +1152,8 @@ public class ECKey implements EncryptableItem {
         // Check that the keyCrypter matches the one used to encrypt the keys, if set.
         if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
-        checkState(encryptedPrivateKey != null, "This key is not encrypted");
+        checkState(encryptedPrivateKey != null, () ->
+                "this key is not encrypted");
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
         if (unencryptedPrivateKey.length != 32)
             throw new KeyCrypterException.InvalidCipherText(

@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>This message is a reference or pointer to an output of a different transaction.</p>

@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * <p>This class reads block files stored in the Bitcoin Core format. This is simply a way to concatenate
@@ -55,7 +55,8 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
      * Gets the list of files which contain blocks from Bitcoin Core.
      */
     public static List<File> getReferenceClientBlockFileList(File blocksDir) {
-        checkArgument(blocksDir.isDirectory(), "%s is not a directory", blocksDir);
+        checkArgument(blocksDir.isDirectory(), () ->
+                "not a directory: " + blocksDir);
         List<File> list = new LinkedList<>();
         for (int i = 0; true; i++) {
             File file = new File(blocksDir, String.format(Locale.US, "blk%05d.dat", i));

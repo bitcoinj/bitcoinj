@@ -58,8 +58,8 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A KeyChainGroup is used by the {@link Wallet} and manages: a {@link BasicKeyChain} object
@@ -322,7 +322,8 @@ public class KeyChainGroup implements KeyBag {
      * Useful for adding a complex pre-configured keychain, such as a married wallet.
      */
     public void addAndActivateHDChain(DeterministicKeyChain chain) {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         log.info("Activating a new HD chain: {}", chain);
         for (ListenerRegistration<KeyChainEventListener> registration : basic.getListeners())
             chain.addEventListener(registration.listener, registration.executor);
@@ -464,7 +465,8 @@ public class KeyChainGroup implements KeyBag {
      * @param keyRotationTime key rotation to take into account
      */
     public List<DeterministicKeyChain> getActiveKeyChains(@Nullable Instant keyRotationTime) {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         List<DeterministicKeyChain> activeChains = new LinkedList<>();
         for (DeterministicKeyChain chain : chains)
             if (keyRotationTime == null || chain.earliestKeyCreationTime().compareTo(keyRotationTime) >= 0)
@@ -484,7 +486,8 @@ public class KeyChainGroup implements KeyBag {
      * type and no active chain for this type exists, {@code null} is returned. No upgrade or downgrade is tried.
      */
     public final DeterministicKeyChain getActiveKeyChain(ScriptType outputScriptType, Instant keyRotationTime) {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         List<DeterministicKeyChain> chainsReversed = new ArrayList<>(chains);
         Collections.reverse(chainsReversed);
         for (DeterministicKeyChain chain : chainsReversed)
@@ -507,7 +510,8 @@ public class KeyChainGroup implements KeyBag {
      * tried.
      */
     public final DeterministicKeyChain getActiveKeyChain() {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         if (chains.isEmpty())
             throw new DeterministicUpgradeRequiredException();
         return chains.get(chains.size() - 1);
@@ -517,7 +521,8 @@ public class KeyChainGroup implements KeyBag {
      * Merge all active chains from the given keychain group into this keychain group.
      */
     public final void mergeActiveKeyChains(KeyChainGroup from, Instant keyRotationTime) {
-        checkArgument(isEncrypted() == from.isEncrypted(), "encrypted and non-encrypted keychains cannot be mixed");
+        checkArgument(isEncrypted() == from.isEncrypted(), () ->
+                "encrypted and non-encrypted keychains cannot be mixed");
         for (DeterministicKeyChain chain : from.getActiveKeyChains(keyRotationTime))
             addAndActivateHDChain(chain);
     }
@@ -535,7 +540,8 @@ public class KeyChainGroup implements KeyBag {
      * for more information.
      */
     public int getLookaheadSize() {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         if (lookaheadSize == -1)
             return getActiveKeyChain().getLookaheadSize();
         else
@@ -548,7 +554,8 @@ public class KeyChainGroup implements KeyBag {
      * for more information.
      */
     public int getLookaheadThreshold() {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         if (lookaheadThreshold == -1)
             return getActiveKeyChain().getLookaheadThreshold();
         else
@@ -566,12 +573,14 @@ public class KeyChainGroup implements KeyBag {
     }
 
     public boolean checkPassword(CharSequence password) {
-        checkState(keyCrypter != null, "Not encrypted");
+        checkState(keyCrypter != null, () ->
+                "not encrypted");
         return checkAESKey(keyCrypter.deriveKey(password));
     }
 
     public boolean checkAESKey(AesKey aesKey) {
-        checkState(keyCrypter != null, "Not encrypted");
+        checkState(keyCrypter != null, () ->
+                "not encrypted");
         if (basic.numKeys() > 0)
             return basic.checkAESKey(aesKey);
         return getActiveKeyChain().checkAESKey(aesKey);
@@ -580,7 +589,8 @@ public class KeyChainGroup implements KeyBag {
     /** Imports the given unencrypted keys into the basic chain, encrypting them along the way with the given key. */
     public int importKeysAndEncrypt(final List<ECKey> keys, AesKey aesKey) {
         // TODO: Firstly check if the aes key can decrypt any of the existing keys successfully.
-        checkState(keyCrypter != null, "Not encrypted");
+        checkState(keyCrypter != null, () ->
+                "not encrypted");
         LinkedList<ECKey> encryptedKeys = new LinkedList<>();
         for (ECKey key : keys) {
             if (key.isEncrypted())
@@ -760,7 +770,8 @@ public class KeyChainGroup implements KeyBag {
     public void encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
         Objects.requireNonNull(keyCrypter);
         Objects.requireNonNull(aesKey);
-        checkState((chains != null && !chains.isEmpty()) || basic.numKeys() != 0, "can't encrypt entirely empty wallet");
+        checkState((chains != null && !chains.isEmpty()) || basic.numKeys() != 0, () ->
+                "can't encrypt entirely empty wallet");
 
         BasicKeyChain newBasic = basic.toEncrypted(keyCrypter, aesKey);
         List<DeterministicKeyChain> newChains = new ArrayList<>();
@@ -1024,7 +1035,8 @@ public class KeyChainGroup implements KeyBag {
     public void upgradeToDeterministic(ScriptType preferredScriptType, KeyChainGroupStructure structure,
                                        @Nullable Instant keyRotationTime, @Nullable AesKey aesKey)
             throws DeterministicUpgradeRequiresPassword {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         Objects.requireNonNull(structure);
         if (!isDeterministicUpgradeRequired(preferredScriptType, keyRotationTime))
             return; // Nothing to do.
@@ -1131,7 +1143,8 @@ public class KeyChainGroup implements KeyBag {
 
     /** Returns a copy of the current list of chains. */
     public List<DeterministicKeyChain> getDeterministicKeyChains() {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         return new ArrayList<>(chains);
     }
     /**
@@ -1139,7 +1152,8 @@ public class KeyChainGroup implements KeyBag {
      * lookahead and thus the Bloom filter that was previously calculated has become stale.
      */
     public int getCombinedKeyLookaheadEpochs() {
-        checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
+        checkState(supportsDeterministicChains(), () ->
+                "doesn't support deterministic chains");
         int epoch = 0;
         for (DeterministicKeyChain chain : chains)
             epoch += chain.getKeyLookaheadEpoch();

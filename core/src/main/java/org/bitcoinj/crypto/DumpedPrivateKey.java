@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
@@ -26,6 +25,8 @@ import org.bitcoinj.params.Networks;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
+
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * Parses and generates private keys in the form used by the Bitcoin "dumpprivkey" command. This is the private key
@@ -104,7 +105,7 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
     }
 
     private static byte[] encode(byte[] keyBytes, boolean compressed) {
-        Preconditions.checkArgument(keyBytes.length == 32, "Private keys must be 32 bytes");
+        checkArgument(keyBytes.length == 32, () -> "private keys must be 32 bytes");
         if (!compressed) {
             return keyBytes;
         } else {

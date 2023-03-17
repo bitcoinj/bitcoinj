@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Preconditions;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
@@ -51,10 +50,11 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Coin.SATOSHI;
 import static org.bitcoinj.base.Coin.ZERO;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.script.ScriptOpCodes.OP_1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_2DUP;
 import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
@@ -1514,7 +1514,7 @@ public class FullBlockTestGenerator {
         // b83 creates a tx which contains a transaction script with an invalid opcode in a dead execution path:
         // OP_FALSE OP_IF OP_INVALIDOPCODE OP_ELSE OP_TRUE OP_ENDIF
         //
-        TransactionOutPointWithValue out28 = spendableOutputs.poll();  Preconditions.checkState(out28 != null);
+        TransactionOutPointWithValue out28 = spendableOutputs.poll(); checkState(out28 != null);
 
         NewBlock b83 = createNextBlock(b82, chainHeadHeight + 29, null, null);
         {
@@ -1537,10 +1537,10 @@ public class FullBlockTestGenerator {
         // -> b81 (26) -> b82 (27) -> b83 (28) -> b84 (29) -> b87 (30) -> b88 (31)
         //                                    \-> b85 (29) -> b86 (30)            \-> b89 (32)
         //
-        TransactionOutPointWithValue out29 = spendableOutputs.poll();  Preconditions.checkState(out29 != null);
-        TransactionOutPointWithValue out30 = spendableOutputs.poll();  Preconditions.checkState(out30 != null);
-        TransactionOutPointWithValue out31 = spendableOutputs.poll();  Preconditions.checkState(out31 != null);
-        TransactionOutPointWithValue out32 = spendableOutputs.poll();  Preconditions.checkState(out32 != null);
+        TransactionOutPointWithValue out29 = spendableOutputs.poll(); checkState(out29 != null);
+        TransactionOutPointWithValue out30 = spendableOutputs.poll(); checkState(out30 != null);
+        TransactionOutPointWithValue out31 = spendableOutputs.poll(); checkState(out31 != null);
+        TransactionOutPointWithValue out32 = spendableOutputs.poll(); checkState(out32 != null);
 
         NewBlock b84 = createNextBlock(b83, chainHeadHeight + 30, out29, null);
         Transaction b84tx1 = new Transaction(params);
@@ -1671,7 +1671,7 @@ public class FullBlockTestGenerator {
 
         if (runExpensiveTests) {
             // No way you can fit this test in memory
-            Preconditions.checkArgument(blockStorageFile != null);
+            checkArgument(blockStorageFile != null);
 
             NewBlock lastBlock = b1001;
             TransactionOutPoint lastOutput = new TransactionOutPoint(params, 1, b1001.block.getTransactions().get(1).getTxId());

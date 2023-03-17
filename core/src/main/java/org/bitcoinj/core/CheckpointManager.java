@@ -49,9 +49,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkPositionIndex;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>Vends hard-coded {@link StoredBlock}s for blocks throughout the chain. Checkpoints serve two purposes:</p>
@@ -130,7 +129,9 @@ public class CheckpointManager {
             dis.readFully(header);
             if (!Arrays.equals(header, BINARY_MAGIC.getBytes(StandardCharsets.US_ASCII)))
                 throw new IOException("Header bytes did not match expected version");
-            int numSignatures = checkPositionIndex(dis.readInt(), MAX_SIGNATURES, "Num signatures out of range");
+            int numSignatures = dis.readInt();
+            checkState(numSignatures >= 0 && numSignatures < MAX_SIGNATURES, () ->
+                    "numSignatures out of range: " + numSignatures);
             for (int i = 0; i < numSignatures; i++) {
                 byte[] sig = new byte[65];
                 dis.readFully(sig);
@@ -236,7 +237,8 @@ public class CheckpointManager {
             throws IOException, BlockStoreException {
         Objects.requireNonNull(params);
         Objects.requireNonNull(store);
-        checkArgument(!(store instanceof FullPrunedBlockStore), "You cannot use checkpointing with a full store.");
+        checkArgument(!(store instanceof FullPrunedBlockStore), () ->
+                "you cannot use checkpointing with a full store");
 
         time = time.minus(7, ChronoUnit.WEEKS);
 

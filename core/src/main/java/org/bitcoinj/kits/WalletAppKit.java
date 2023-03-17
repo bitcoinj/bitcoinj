@@ -60,7 +60,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>Utility class that wraps the boilerplate needed to set up a new SPV bitcoinj app. Instantiate it with a directory
@@ -152,7 +152,8 @@ public class WalletAppKit extends AbstractIdleService {
 
     /** Will only connect to the given addresses. Cannot be called after startup. */
     public WalletAppKit setPeerNodes(PeerAddress... addresses) {
-        checkState(state() == State.NEW, "Cannot call after startup");
+        checkState(state() == State.NEW, () ->
+                "cannot call after startup");
         this.peerAddresses = addresses;
         return this;
     }
@@ -170,7 +171,8 @@ public class WalletAppKit extends AbstractIdleService {
 
     /** If true, the wallet will save itself to disk automatically whenever it changes. */
     public WalletAppKit setAutoSave(boolean value) {
-        checkState(state() == State.NEW, "Cannot call after startup");
+        checkState(state() == State.NEW, () ->
+                "cannot call after startup");
         useAutoSave = value;
         return this;
     }
@@ -511,22 +513,26 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     public BlockChain chain() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, () ->
+                "cannot call until startup is complete");
         return vChain;
     }
 
     public BlockStore store() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, () ->
+                "cannot call until startup is complete");
         return vStore;
     }
 
     public Wallet wallet() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, () ->
+                "cannot call until startup is complete");
         return vWallet;
     }
 
     public PeerGroup peerGroup() {
-        checkState(state() == State.STARTING || state() == State.RUNNING, "Cannot call until startup is complete");
+        checkState(state() == State.STARTING || state() == State.RUNNING, () ->
+                "cannot call until startup is complete");
         return vPeerGroup;
     }
 

@@ -26,7 +26,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_16;

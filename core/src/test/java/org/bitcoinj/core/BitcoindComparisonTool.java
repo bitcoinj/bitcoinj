@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.net.NioClient;
@@ -48,6 +47,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * A tool for comparing the blocks which are accepted/rejected by bitcoind/bitcoinj
@@ -93,7 +94,7 @@ public class BitcoindComparisonTool {
         ver.localServices = VersionMessage.NODE_NETWORK;
         final Peer bitcoind = new Peer(PARAMS, ver, new PeerAddress(PARAMS, InetAddress.getLocalHost()),
                 new BlockChain(PARAMS, new MemoryBlockStore(PARAMS)));
-        Preconditions.checkState(bitcoind.getVersionMessage().hasBlockChain());
+        checkState(bitcoind.getVersionMessage().hasBlockChain());
 
         final BlockWrapper currentBlock = new BlockWrapper();
 

@@ -36,9 +36,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import org.bitcoinj.base.internal.ByteUtils;
+
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Holds the seed bytes for the BIP32 deterministic wallet algorithm, inside a
@@ -188,7 +189,7 @@ public class DeterministicSeed implements EncryptableItem {
 
     /** Internal use only. */
     private DeterministicSeed(byte[] entropy, String passphrase, @Nullable Instant creationTime) {
-        checkArgument(entropy.length * 8 >= DEFAULT_SEED_ENTROPY_BITS, "entropy size too small");
+        checkArgument(entropy.length * 8 >= DEFAULT_SEED_ENTROPY_BITS, () -> "entropy size too small");
         Objects.requireNonNull(passphrase);
 
         this.mnemonicCode = MnemonicCode.INSTANCE.toMnemonic(entropy);
@@ -205,7 +206,8 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private static byte[] getEntropy(SecureRandom random, int bits) {
-        checkArgument(bits <= MAX_SEED_ENTROPY_BITS, "requested entropy size too large");
+        checkArgument(bits <= MAX_SEED_ENTROPY_BITS, () ->
+                "requested entropy size too large");
 
         byte[] seed = new byte[bits / 8];
         random.nextBytes(seed);
@@ -300,8 +302,10 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     public DeterministicSeed encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
-        checkState(encryptedMnemonicCode == null, "Trying to encrypt seed twice");
-        checkState(mnemonicCode != null, "Mnemonic missing so cannot encrypt");
+        checkState(encryptedMnemonicCode == null, () ->
+                "trying to encrypt seed twice");
+        checkState(mnemonicCode != null, () ->
+                "mnemonic missing so cannot encrypt");
         EncryptedData encryptedMnemonic = keyCrypter.encrypt(getMnemonicAsBytes(), aesKey);
         EncryptedData encryptedSeed = keyCrypter.encrypt(seed, aesKey);
         return new DeterministicSeed(encryptedMnemonic, encryptedSeed, creationTime);

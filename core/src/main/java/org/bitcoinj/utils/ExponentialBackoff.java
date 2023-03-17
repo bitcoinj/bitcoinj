@@ -21,7 +21,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import java.time.Duration;
 import java.time.Instant;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * <p>Tracks successes and failures and calculates a time to retry the operation.</p>
@@ -51,8 +51,10 @@ public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
          * @param maximumInterval the maximum interval to wait
          */
         public Params(Duration initialInterval, float multiplier, Duration maximumInterval) {
-            checkArgument(multiplier > 1.0f, "multiplier must be greater than 1.0");
-            checkArgument(maximumInterval.compareTo(initialInterval) >= 0, "maximum must not be less than initial");
+            checkArgument(multiplier > 1.0f, () ->
+                    "multiplier must be greater than 1.0: " + multiplier);
+            checkArgument(maximumInterval.compareTo(initialInterval) >= 0, () ->
+                    "maximum must not be less than initial: " + maximumInterval);
 
             this.initialInterval = initialInterval;
             this.multiplier = multiplier;

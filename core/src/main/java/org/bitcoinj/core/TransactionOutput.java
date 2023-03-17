@@ -39,8 +39,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
@@ -114,8 +114,10 @@ public class TransactionOutput extends ChildMessage {
         super(params);
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
-        checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), "Negative values not allowed");
-        checkArgument(!params.network().exceedsMaxMoney(value), "Values larger than MAX_MONEY not allowed");
+        checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), () ->
+                "negative values not allowed");
+        checkArgument(!params.network().exceedsMaxMoney(value), () ->
+                "values larger than MAX_MONEY not allowed");
         this.value = value.value;
         this.scriptBytes = scriptBytes;
         setParent(parent);

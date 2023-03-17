@@ -30,7 +30,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -92,9 +92,8 @@ public abstract class Message {
 
         parse();
 
-        if (this.length == UNKNOWN_LENGTH && !(this instanceof UnknownMessage))
-            checkState(false, "Length field has not been set in constructor for %s after parse.",
-                       getClass().getSimpleName());
+        checkState(this.length != UNKNOWN_LENGTH || this instanceof UnknownMessage, () ->
+                "length field has not been set in constructor for " + getClass().getSimpleName() + " after parse");
 
         if (serializer.isParseRetainMode())
             Objects.requireNonNull(this.payload, "payload must be retained");
@@ -271,8 +270,8 @@ public abstract class Message {
      * This returns a correct value by parsing the message.
      */
     public final int getMessageSize() {
-        if (length == UNKNOWN_LENGTH)
-            checkState(false, "Length field has not been set in %s.", getClass().getSimpleName());
+        checkState(length != UNKNOWN_LENGTH, () ->
+                "length field has not been set in " + getClass().getSimpleName());
         return length;
     }
 

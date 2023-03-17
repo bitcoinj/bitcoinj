@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.bitcoinj.base.Coin.SMALLEST_UNIT_EXPONENT;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * <p>This class, a concrete extension of {@link BtcFormat}, is distinguished in that each
@@ -79,10 +79,8 @@ public final class BtcFixedFormat extends BtcFormat {
         Locale locale, int scale, int minDecimals, List<Integer> groups
     ) {
         super((DecimalFormat)NumberFormat.getInstance(locale), minDecimals, groups);
-        checkArgument(
-            scale <= SMALLEST_UNIT_EXPONENT,
-            "decimal cannot be shifted " + String.valueOf(scale) + " places"
-        );
+        checkArgument(scale <= SMALLEST_UNIT_EXPONENT, () ->
+                "decimal cannot be shifted " + String.valueOf(scale) + " places");
         this.scale = scale;
     }
 

@@ -46,9 +46,9 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Random;
 
-import static com.google.common.base.Preconditions.checkState;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.valueOf;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Methods for building fake transactions for unit tests. Since these methods are currently used both in the `bitcoinj-core`
