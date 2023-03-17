@@ -186,7 +186,7 @@ public class Context {
      * have that it's really valid.
      */
     public TxConfidenceTable getConfidenceTable() {
-        return confidenceTable;
+        return TxConfidenceTable.getSingleInstance();
     }
 
     /**
