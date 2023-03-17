@@ -47,8 +47,6 @@ public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
 
     public static final int DEFAULT_EVENT_HORIZON = 100;
-
-    final private TxConfidenceTable confidenceTable;
     final private int eventHorizon;
     final private boolean ensureMinRequiredFee;
     final private Coin feePerKb;
@@ -81,9 +79,6 @@ public class Context {
      */
     public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee, boolean relaxProofOfWork) {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
-        TxConfidenceTable txConfidenceTable = new TxConfidenceTable();
-        TxConfidenceTable.setInstance(txConfidenceTable);
-        this.confidenceTable = txConfidenceTable;
         this.eventHorizon = eventHorizon;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
