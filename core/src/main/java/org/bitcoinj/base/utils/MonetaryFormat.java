@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import static com.google.common.math.LongMath.checkedPow;
 import static com.google.common.math.LongMath.divide;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -435,14 +434,34 @@ public final class MonetaryFormat {
      */
     private static DecimalNumber satoshisToDecimal(long satoshis, RoundingMode roundingMode, int potentialDecimals, int maxDecimals) {
         // rounding
-        long precisionDivisor = checkedPow(10, potentialDecimals - maxDecimals);
+        long precisionDivisor = checkedPowOf10(potentialDecimals - maxDecimals);
         long roundedSatoshsis = Math.multiplyExact(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
 
         // shifting
-        long shiftDivisor = checkedPow(10, potentialDecimals);
+        long shiftDivisor = checkedPowOf10(potentialDecimals);
         return new DecimalNumber(
                         roundedSatoshsis / shiftDivisor,
                         roundedSatoshsis % shiftDivisor);
+    }
+
+    // a couple of precomputed powers of ten
+    private static long[] POWERS_OF_10 = precomputePowersOf10(MAX_DECIMALS);
+
+    private static long[] precomputePowersOf10(int maxExponent) {
+        long[] powers = new long[maxExponent + 1];
+        powers[0] = 1;
+        for (int exponent = 1; exponent <= maxExponent; exponent++)
+            powers[exponent] = Math.multiplyExact(powers[exponent - 1], 10);
+        return powers;
+    }
+
+    // we implement this ourselves because there is no Math.powExact()
+    private static long checkedPowOf10(int exponent) {
+        checkArgument(exponent >= 0, () ->
+                "exponent cannot be negative: " + exponent);
+        checkArgument(exponent < POWERS_OF_10.length, () ->
+                "exponent cannot be higher than " + (POWERS_OF_10.length - 1) + ": " + exponent);
+        return POWERS_OF_10[exponent];
     }
 
     private static class DecimalNumber {
