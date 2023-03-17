@@ -25,8 +25,7 @@ public class Preconditions {
      * @throws IllegalArgumentException if {@code expression} is false
      */
     public static void checkArgument(boolean expression) {
-        if (!expression)
-            throw new IllegalArgumentException();
+        check(expression, () -> new IllegalArgumentException());
     }
 
     /**
@@ -36,8 +35,7 @@ public class Preconditions {
      * @throws IllegalArgumentException if {@code expression} is false
      */
     public static void checkArgument(boolean expression, Supplier<String> messageSupplier) {
-        if (!expression)
-            throw new IllegalArgumentException(messageSupplier.get());
+        check(expression, () -> new IllegalArgumentException(messageSupplier.get()));
     }
 
     /**
@@ -47,8 +45,7 @@ public class Preconditions {
      * @throws IllegalStateException if {@code expression} is false
      */
     public static void checkState(boolean expression) {
-        if (!expression)
-            throw new IllegalStateException();
+        check(expression, () -> new IllegalStateException());
     }
 
     /**
@@ -59,7 +56,17 @@ public class Preconditions {
      * @throws IllegalStateException if {@code expression} is false
      */
     public static void checkState(boolean expression, Supplier<String> messageSupplier) {
+        check(expression, () -> new IllegalStateException(messageSupplier.get()));
+    }
+
+    /**
+     * Ensures the truth of an expression, throwing a custom exception if not.
+     * @param expression a boolean expression
+     * @param exceptionSupplier supplier of the exception to be thrown
+     * @throws X if {@code expression} is false
+     */
+    public static <X extends Throwable> void check(boolean expression, Supplier<? extends X> exceptionSupplier) throws X {
         if (!expression)
-            throw new IllegalStateException(messageSupplier.get());
+            throw exceptionSupplier.get();
     }
 }
