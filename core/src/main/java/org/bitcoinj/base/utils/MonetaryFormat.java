@@ -19,6 +19,7 @@ package org.bitcoinj.base.utils;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Monetary;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -27,8 +28,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-import static com.google.common.math.LongMath.checkedPow;
-import static com.google.common.math.LongMath.divide;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
@@ -438,15 +437,17 @@ public final class MonetaryFormat {
      */
     private static DecimalNumber satoshisToDecimal(long satoshis, RoundingMode roundingMode, int decimalShift,
                                                    int maxVisibleDecimals) {
-        // rounding
-        long precisionDivisor = checkedPow(10, decimalShift - maxVisibleDecimals);
-        long roundedSatoshsis = Math.multiplyExact(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
-
-        // shifting
-        long shiftDivisor = checkedPow(10, decimalShift);
+        BigDecimal decimalSats = BigDecimal.valueOf(satoshis);
+        // shift the decimal point
+        decimalSats = decimalSats.movePointLeft(decimalShift);
+        // discard unwanted precision and round accordingly
+        decimalSats = decimalSats.setScale(maxVisibleDecimals, roundingMode);
+        // separate decimals from the number
+        BigDecimal[] separated = decimalSats.divideAndRemainder(BigDecimal.ONE);
         return new DecimalNumber(
-                        roundedSatoshsis / shiftDivisor,
-                        roundedSatoshsis % shiftDivisor);
+                separated[0].longValue(),
+                separated[1].movePointRight(decimalShift).longValue()
+        );
     }
 
     private static class DecimalNumber {
