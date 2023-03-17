@@ -362,20 +362,22 @@ public final class MonetaryFormat {
      * Format the given monetary value to a human readable form.
      */
     public CharSequence format(Monetary monetary) {
-        // preparation
+        // determine maximum number of decimals that can be visible in the formatted string
+        // (if all decimal groups were to be used)
         int max = minDecimals;
         if (decimalGroups != null)
             for (int group : decimalGroups)
                 max += group;
+        final int maxVisibleDecimals = max;
+
         int smallestUnitExponent = monetary.smallestUnitExponent();
-        int maxDecimals = max;
-        checkState(maxDecimals <= smallestUnitExponent, () ->
-                "maxDecimals cannot exceed " + smallestUnitExponent + ": " + maxDecimals);
+        checkState(maxVisibleDecimals <= smallestUnitExponent, () ->
+                "maxVisibleDecimals cannot exceed " + smallestUnitExponent + ": " + maxVisibleDecimals);
 
         // convert to decimal
         long satoshis = Math.abs(monetary.getValue());
         int potentialDecimals = smallestUnitExponent - shift;
-        DecimalNumber decimal = satoshisToDecimal(satoshis, roundingMode, potentialDecimals, maxDecimals);
+        DecimalNumber decimal = satoshisToDecimal(satoshis, roundingMode, potentialDecimals, maxVisibleDecimals);
         long numbers = decimal.numbers;
         long decimals = decimal.decimals;
 
@@ -430,12 +432,13 @@ public final class MonetaryFormat {
      * @param satoshis number of satoshis
      * @param roundingMode rounding mode
      * @param potentialDecimals potential decimals
-     * @param maxDecimals maximum decimals
+     * @param maxVisibleDecimals the maximum number of decimals that can be visible in the formatted string
      * @return private class with two longs
      */
-    private static DecimalNumber satoshisToDecimal(long satoshis, RoundingMode roundingMode, int potentialDecimals, int maxDecimals) {
+    private static DecimalNumber satoshisToDecimal(long satoshis, RoundingMode roundingMode, int potentialDecimals,
+                                                   int maxVisibleDecimals) {
         // rounding
-        long precisionDivisor = checkedPow(10, potentialDecimals - maxDecimals);
+        long precisionDivisor = checkedPow(10, potentialDecimals - maxVisibleDecimals);
         long roundedSatoshsis = Math.multiplyExact(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
 
         // shifting
