@@ -1169,7 +1169,7 @@ public class Peer extends PeerSocketHandler {
             // sending us the transaction: currently we'll never try to re-fetch after a timeout.
             //
             // The line below can trigger confidence listeners.
-            TransactionConfidence conf = TxConfidenceTable.instance(params.network()).seen(item.hash, this.getAddress());
+            TransactionConfidence conf = TxConfidenceTable.getOrCreateInstance(params.network()).seen(item.hash, this.getAddress());
             if (conf.numBroadcastPeers() > 1) {
                 // Some other peer already announced this so don't download.
                 it.remove();
