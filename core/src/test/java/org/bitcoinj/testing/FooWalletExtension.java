@@ -21,7 +21,7 @@ import org.bitcoinj.wallet.WalletExtension;
 
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 public class FooWalletExtension implements WalletExtension {
     private final byte[] data = {1, 2, 3};

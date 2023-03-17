@@ -23,7 +23,7 @@ import org.bitcoinj.base.Sha256Hash;
 
 import java.time.Instant;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>Parameters for the signet, a separate public instance of Bitcoin that has relaxed rules suitable for development
@@ -83,7 +83,8 @@ public class SigNetParams extends BitcoinNetworkParams {
                 genesisBlock.setDifficultyTarget(GENESIS_DIFFICULTY);
                 genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
                 genesisBlock.setNonce(GENESIS_NONCE);
-                checkState(genesisBlock.getHash().equals(GENESIS_HASH), "Invalid genesis hash");
+                checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
+                        "invalid genesis hash");
             }
         }
         return genesisBlock;

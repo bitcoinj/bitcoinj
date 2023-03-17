@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
@@ -324,7 +324,8 @@ public class TransactionBroadcast {
         }
         if (callback != null) {
             final double progress = Math.min(1.0, mined ? 1.0 : numSeenPeers / (double) numWaitingFor);
-            checkState(progress >= 0.0 && progress <= 1.0, progress);
+            checkState(progress >= 0.0 && progress <= 1.0, () ->
+                    "" + progress);
             try {
                 if (executor == null)
                     callback.onBroadcastProgress(progress);

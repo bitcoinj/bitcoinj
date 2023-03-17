@@ -36,8 +36,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_1NEGATE;
 import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
@@ -174,8 +174,10 @@ public class ScriptBuilder {
      * @see #number(long)
      */
     public ScriptBuilder smallNum(int index, int num) {
-        checkArgument(num >= 0, "Cannot encode negative numbers with smallNum");
-        checkArgument(num <= 16, "Cannot encode numbers larger than 16 with smallNum");
+        checkArgument(num >= 0, () ->
+                "cannot encode negative numbers with smallNum");
+        checkArgument(num <= 16, () ->
+                "cannot encode numbers larger than 16 with smallNum");
         return addChunk(index, new ScriptChunk(Script.encodeToOpN(num), null));
     }
 
@@ -399,7 +401,8 @@ public class ScriptBuilder {
         // We assume here that OP_0 placeholders always go after the sigs, so
         // to find if we have sigs missing, we can just check the chunk in latest sig position
         boolean hasMissingSigs = inputChunks.get(totalChunks - sigsSuffixCount - 1).equalsOpCode(OP_0);
-        checkArgument(hasMissingSigs, "ScriptSig is already filled with signatures");
+        checkArgument(hasMissingSigs, () ->
+                "scriptSig is already filled with signatures");
 
         // copy the prefix
         for (ScriptChunk chunk: inputChunks.subList(0, sigsPrefixCount))

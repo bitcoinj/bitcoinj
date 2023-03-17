@@ -34,7 +34,7 @@ import java.security.GeneralSecurityException;
 import java.text.Normalizer;
 import java.util.Arrays;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Implementation of <a href="https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki">BIP 38</a>

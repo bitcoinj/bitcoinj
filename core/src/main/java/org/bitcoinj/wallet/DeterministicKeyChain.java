@@ -63,8 +63,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A deterministic key chain is a {@link KeyChain} that uses the
@@ -262,7 +262,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          * Creates a key chain that watches the given account key.
          */
         public T watch(DeterministicKey accountKey) {
-            checkState(accountPath == null, "either watch or accountPath");
+            checkState(accountPath == null, () ->
+                    "either watch or accountPath");
             this.watchingKey = accountKey;
             this.isFollowing = false;
             return self();
@@ -273,7 +274,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          * wallet following keychain represents "spouse". Watch key has to be an account key.
          */
         public T watchAndFollow(DeterministicKey accountKey) {
-            checkState(accountPath == null, "either watchAndFollow or accountPath");
+            checkState(accountPath == null, () ->
+                    "either watchAndFollow or accountPath");
             this.watchingKey = accountKey;
             this.isFollowing = true;
             return self();
@@ -283,7 +285,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          * Creates a key chain that can spend from the given account key.
          */
         public T spend(DeterministicKey accountKey) {
-            checkState(accountPath == null, "either spend or accountPath");
+            checkState(accountPath == null, () ->
+                    "either spend or accountPath");
             this.spendingKey = accountKey;
             this.isFollowing = false;
             return self();
@@ -305,13 +308,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
          * Use an account path other than the default {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH}.
          */
         public T accountPath(List<ChildNumber> accountPath) {
-            checkState(watchingKey == null, "either watch or accountPath");
+            checkState(watchingKey == null, () ->
+                    "either watch or accountPath");
             this.accountPath = HDPath.M(Objects.requireNonNull(accountPath));
             return self();
         }
 
         public DeterministicKeyChain build() {
-            checkState(passphrase == null || seed == null, "Passphrase must not be specified with seed");
+            checkState(passphrase == null || seed == null, () ->
+                    "passphrase must not be specified with seed");
 
             if (accountPath == null)
                 accountPath = ACCOUNT_ZERO_PATH;
@@ -360,10 +365,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public DeterministicKeyChain(DeterministicKey key, boolean isFollowing, boolean isWatching,
             ScriptType outputScriptType) {
         if (isWatching)
-            checkArgument(key.isPubKeyOnly(), "Private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first.");
+            checkArgument(key.isPubKeyOnly(), () ->
+                    "private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first");
         else
-            checkArgument(key.hasPrivKey(), "Private subtrees are required.");
-        checkArgument(isWatching || !isFollowing, "Can only follow a key that is watched");
+            checkArgument(key.hasPrivKey(), () ->
+                    "private subtrees are required");
+        checkArgument(isWatching || !isFollowing, () ->
+                "can only follow a key that is watched");
 
         basicKeyChain = new BasicKeyChain();
         this.seed = null;
@@ -389,8 +397,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
                                     ScriptType outputScriptType, List<ChildNumber> accountPath) {
-        checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH
-                || outputScriptType == ScriptType.P2WPKH, "Only P2PKH or P2WPKH allowed.");
+        checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH, () ->
+                "only P2PKH or P2WPKH allowed");
         this.outputScriptType = outputScriptType != null ? outputScriptType : ScriptType.P2PKH;
         this.accountPath = HDPath.M(accountPath);
         this.seed = seed;
@@ -425,7 +433,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         Objects.requireNonNull(chain.rootKey);
         Objects.requireNonNull(chain.seed);
 
-        checkArgument(!chain.rootKey.isEncrypted(), "Chain already encrypted");
+        checkArgument(!chain.rootKey.isEncrypted(), () ->
+                "chain already encrypted");
         this.accountPath = chain.getAccountPath();
         this.outputScriptType = chain.outputScriptType;
 
@@ -1028,7 +1037,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     public DeterministicKeyChain toEncrypted(CharSequence password) {
         Objects.requireNonNull(password);
         checkArgument(password.length() > 0);
-        checkState(seed != null, "Attempt to encrypt a watching chain.");
+        checkState(seed != null, () ->
+                "attempt to encrypt a watching chain");
         checkState(!seed.isEncrypted());
         KeyCrypter scrypt = new KeyCrypterScrypt();
         AesKey derivedKey = scrypt.deriveKey(password);
@@ -1045,15 +1055,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         Objects.requireNonNull(password);
         checkArgument(password.length() > 0);
         KeyCrypter crypter = getKeyCrypter();
-        checkState(crypter != null, "Chain not encrypted");
+        checkState(crypter != null, () ->
+                "chain not encrypted");
         AesKey derivedKey = crypter.deriveKey(password);
         return toDecrypted(derivedKey);
     }
 
     @Override
     public DeterministicKeyChain toDecrypted(AesKey aesKey) {
-        checkState(getKeyCrypter() != null, "Key chain not encrypted");
-        checkState(seed != null, "Can't decrypt a watching chain");
+        checkState(getKeyCrypter() != null, () ->
+                "key chain not encrypted");
+        checkState(seed != null, () ->
+                "can't decrypt a watching chain");
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
@@ -1089,15 +1102,18 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Override
     public boolean checkPassword(CharSequence password) {
         Objects.requireNonNull(password);
-        checkState(getKeyCrypter() != null, "Key chain not encrypted");
+        checkState(getKeyCrypter() != null, () ->
+                "key chain not encrypted");
         return checkAESKey(getKeyCrypter().deriveKey(password));
     }
 
     @Override
     public boolean checkAESKey(AesKey aesKey) {
-        checkState(rootKey != null, "Can't check password for a watching chain");
+        checkState(rootKey != null, () ->
+                "can't check password for a watching chain");
         Objects.requireNonNull(aesKey);
-        checkState(getKeyCrypter() != null, "Key chain not encrypted");
+        checkState(getKeyCrypter() != null, () ->
+                "key chain not encrypted");
         try {
             return rootKey.decrypt(aesKey).getPubKeyPoint().equals(rootKey.getPubKeyPoint());
         } catch (KeyCrypterException e) {

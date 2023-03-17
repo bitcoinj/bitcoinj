@@ -47,8 +47,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * A {@link KeyChain} that implements the simplest model possible: it can have keys imported into it, and just acts as
@@ -396,7 +396,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private void deserializeFromProtobuf(List<Protos.Key> keys) throws UnreadableWalletException {
         lock.lock();
         try {
-            checkState(hashToKeys.isEmpty(), "Tried to deserialize into a non-empty chain");
+            checkState(hashToKeys.isEmpty(), () ->
+                    "tried to deserialize into a non-empty chain");
             for (Protos.Key key : keys) {
                 if (key.getType() != Protos.Key.Type.ORIGINAL && key.getType() != Protos.Key.Type.ENCRYPTED_SCRYPT_AES)
                     continue;
@@ -407,7 +408,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
                 byte[] pub = key.getPublicKey().toByteArray();
                 ECKey ecKey;
                 if (encrypted) {
-                    checkState(keyCrypter != null, "This wallet is encrypted but encrypt() was not called prior to deserialization");
+                    checkState(keyCrypter != null, () ->
+                            "this wallet is encrypted but encrypt() was not called prior to deserialization");
                     if (!key.hasEncryptedData())
                         throw new UnreadableWalletException("Encrypted private key data missing");
                     Protos.EncryptedData proto = key.getEncryptedData();
@@ -495,7 +497,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             Objects.requireNonNull(keyCrypter);
-            checkState(this.keyCrypter == null, "Key chain is already encrypted");
+            checkState(this.keyCrypter == null, () ->
+                    "key chain is already encrypted");
             BasicKeyChain encrypted = new BasicKeyChain(keyCrypter);
             for (ECKey key : hashToKeys.values()) {
                 ECKey encryptedKey = key.encrypt(keyCrypter, aesKey);
@@ -528,7 +531,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
     public BasicKeyChain toDecrypted(AesKey aesKey) {
         lock.lock();
         try {
-            checkState(keyCrypter != null, "Wallet is already decrypted");
+            checkState(keyCrypter != null, () ->
+                    "wallet is already decrypted");
             // Do an up-front check.
             if (numKeys() > 0 && !checkAESKey(aesKey))
                 throw new KeyCrypterException("Password/key was incorrect.");
@@ -552,7 +556,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
     @Override
     public boolean checkPassword(CharSequence password) {
         Objects.requireNonNull(password);
-        checkState(keyCrypter != null, "Key chain not encrypted");
+        checkState(keyCrypter != null, () ->
+                "key chain not encrypted");
         return checkAESKey(keyCrypter.deriveKey(password));
     }
 
@@ -567,7 +572,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
         try {
             // If no keys then cannot decrypt.
             if (hashToKeys.isEmpty()) return false;
-            checkState(keyCrypter != null, "Key chain is not encrypted");
+            checkState(keyCrypter != null, () ->
+                    "key chain is not encrypted");
 
             // Find the first encrypted key in the wallet.
             ECKey first = null;
@@ -577,7 +583,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     break;
                 }
             }
-            checkState(first != null, "No encrypted keys in the wallet");
+            checkState(first != null, () ->
+                    "no encrypted keys in the wallet");
 
             try {
                 ECKey rebornKey = first.decrypt(aesKey);

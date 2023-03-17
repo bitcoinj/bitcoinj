@@ -16,7 +16,7 @@
 
 package org.bitcoinj.core;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * <p>Represents the "inv" P2P network message. An inv contains a list of hashes of either blocks or transactions. It's

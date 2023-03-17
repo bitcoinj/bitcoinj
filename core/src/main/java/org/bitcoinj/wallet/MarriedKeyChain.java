@@ -40,8 +40,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A multi-signature keychain using synchronized HD keys (a.k.a HDM)</p>
@@ -156,7 +156,8 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         keys.add(followedKey);
         for (DeterministicKeyChain keyChain : followingKeyChains) {
             DeterministicKey followingKey = keyChain.getKey(purpose);
-            checkState(followedKey.getChildNumber().equals(followingKey.getChildNumber()), "Following keychains should be in sync");
+            checkState(followedKey.getChildNumber().equals(followingKey.getChildNumber()), () ->
+                    "following keychains should be in sync");
             keys.add(followingKey);
         }
         List<ECKey> marriedKeys = Collections.unmodifiableList(keys);
@@ -183,14 +184,17 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     private void addFollowingAccountKeys(List<DeterministicKey> followingAccountKeys, int sigsRequiredToSpend) {
-        checkArgument(sigsRequiredToSpend <= followingAccountKeys.size() + 1, "Multisig threshold can't exceed total number of keys");
-        checkState(numLeafKeysIssued() == 0, "Active keychain already has keys in use");
+        checkArgument(sigsRequiredToSpend <= followingAccountKeys.size() + 1, () ->
+                "multisig threshold can't exceed total number of keys");
+        checkState(numLeafKeysIssued() == 0, () ->
+                "active keychain already has keys in use");
         checkState(followingKeyChains == null);
 
         List<DeterministicKeyChain> followingKeyChains = new ArrayList<>();
 
         for (DeterministicKey key : followingAccountKeys) {
-            checkArgument(key.getPath().size() == getAccountPath().size(), "Following keys have to be account keys");
+            checkArgument(key.getPath().size() == getAccountPath().size(), () ->
+                    "following keys have to be account keys");
             DeterministicKeyChain chain = DeterministicKeyChain.builder().watchAndFollow(key)
                     .outputScriptType(getOutputScriptType()).build();
             if (lookaheadSize >= 0)
@@ -261,7 +265,8 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         super.maybeLookAheadScripts();
         int numLeafKeys = getLeafKeys().size();
 
-        checkState(marriedKeysRedeemData.size() <= numLeafKeys, "Number of scripts is greater than number of leaf keys");
+        checkState(marriedKeysRedeemData.size() <= numLeafKeys, () ->
+                "number of scripts is greater than number of leaf keys");
         if (marriedKeysRedeemData.size() == numLeafKeys)
             return;
 

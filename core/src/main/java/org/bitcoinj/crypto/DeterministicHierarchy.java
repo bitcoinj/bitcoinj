@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 // TODO: This whole API feels a bit object heavy. Do we really need ChildNumber and so many maps, etc?
 // TODO: Should we be representing this using an actual tree arrangement in memory instead of a bunch of hashmaps?
@@ -102,7 +102,7 @@ public class DeterministicHierarchy {
             if (!create)
                 throw new IllegalArgumentException(String.format(Locale.US, "No key found for %s path %s.",
                     relativePath ? "relative" : "absolute", inputPath.toString()));
-            checkArgument(absolutePath.size() > 0, "Can't derive the master key: nothing to derive from.");
+            checkArgument(absolutePath.size() > 0, () -> "can't derive the master key: nothing to derive from");
             DeterministicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), false, true);
             putKey(HDKeyDerivation.deriveChildKey(parent, absolutePath.get(absolutePath.size() - 1)));
         }

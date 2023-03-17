@@ -40,8 +40,8 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Handles high-level message (de)serialization for peers, acting as the bridge between the

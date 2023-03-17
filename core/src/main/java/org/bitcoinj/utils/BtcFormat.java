@@ -39,9 +39,9 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static java.math.RoundingMode.HALF_UP;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.CODE;
 import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;
 
@@ -747,7 +747,8 @@ public abstract class BtcFormat extends Format {
 
     /** This single constructor is invoked by the overriding subclass constructors. */
     protected BtcFormat(DecimalFormat numberFormat, int minDecimals, List<Integer> groups) {
-        checkArgument(minDecimals >= 0, "There can be no fewer than zero fractional decimal places");
+        checkArgument(minDecimals >= 0, () ->
+                "there can be no fewer than zero fractional decimal places");
         this.numberFormat = numberFormat;
         this.numberFormat.setParseBigDecimal(true);
         this.numberFormat.setRoundingMode(HALF_UP);
@@ -930,7 +931,8 @@ public abstract class BtcFormat extends Format {
     private static List<Integer> boxAsList(int[] elements) throws IllegalArgumentException {
         List<Integer> list = new ArrayList<>(elements.length);
         for (int e : elements) {
-            checkArgument(e > 0, "Size of decimal group must be at least one.");
+            checkArgument(e > 0, () ->
+                    "size of decimal group must be at least one.");
             list.add(e);
         }
         return list;
@@ -1186,7 +1188,8 @@ public abstract class BtcFormat extends Format {
 
     private StringBuffer format(Object qty, StringBuffer toAppendTo, FieldPosition pos,
                                             int minDecimals, List<Integer> fractionGroups) {
-        checkArgument(minDecimals >= 0, "There can be no fewer than zero fractional decimal places");
+        checkArgument(minDecimals >= 0, () ->
+                "there can be no fewer than zero fractional decimal places");
         synchronized (numberFormat) {
             DecimalFormatSymbols anteSigns = numberFormat.getDecimalFormatSymbols();
             BigDecimal denominatedUnitCount = denominateAndRound(inSatoshis(qty), minDecimals, fractionGroups);

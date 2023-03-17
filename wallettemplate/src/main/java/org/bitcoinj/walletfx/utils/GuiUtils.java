@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.function.BiConsumer;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.walletfx.utils.WTUtils.unchecked;
 
 public class GuiUtils {

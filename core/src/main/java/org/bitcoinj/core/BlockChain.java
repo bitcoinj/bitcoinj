@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 // TODO: Rename this class to SPVBlockChain at some point.
 
@@ -93,7 +93,8 @@ public class BlockChain extends AbstractBlockChain {
         lock.lock();
         try {
             int currentHeight = getBestChainHeight();
-            checkArgument(height >= 0 && height <= currentHeight, "Bad height: %s", height);
+            checkArgument(height >= 0 && height <= currentHeight, () ->
+                    "bad height: " + height);
             if (height == currentHeight)
                 return; // nothing to do
 

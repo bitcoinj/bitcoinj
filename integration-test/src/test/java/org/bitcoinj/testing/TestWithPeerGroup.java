@@ -16,7 +16,6 @@
 
 package org.bitcoinj.testing;
 
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -45,8 +44,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * You can derive from this class and call peerGroup.start() in your tests to get a functional PeerGroup that can be
@@ -133,7 +132,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     }
 
     protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws Exception {
-        Preconditions.checkArgument(id < PEER_SERVERS);
+        checkArgument(id < PEER_SERVERS);
         InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + id);
         Peer peer = peerGroup.connectTo(remoteAddress).getConnectionOpenFuture().get();
         InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();

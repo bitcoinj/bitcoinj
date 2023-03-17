@@ -22,7 +22,7 @@ import org.bitcoinj.base.Coin;
 import java.math.BigInteger;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * An exchange rate is expressed as a ratio of a {@link Coin} and a {@link Fiat} amount.
@@ -36,7 +36,8 @@ public class ExchangeRate {
     public ExchangeRate(Coin coin, Fiat fiat) {
         checkArgument(coin.isPositive());
         checkArgument(fiat.isPositive());
-        checkArgument(fiat.currencyCode != null, "currency code required");
+        checkArgument(fiat.currencyCode != null, () ->
+                "currency code required");
         this.coin = coin;
         this.fiat = fiat;
     }
@@ -65,8 +66,8 @@ public class ExchangeRate {
      * @throws ArithmeticException if the converted coin amount is too high or too low.
      */
     public Coin fiatToCoin(Fiat convertFiat) {
-        checkArgument(convertFiat.currencyCode.equals(fiat.currencyCode), "Currency mismatch: %s vs %s",
-                convertFiat.currencyCode, fiat.currencyCode);
+        checkArgument(convertFiat.currencyCode.equals(fiat.currencyCode), () ->
+                "currency mismatch: " + convertFiat.currencyCode + " vs " + fiat.currencyCode);
         // Use BigInteger because it's much easier to maintain full precision without overflowing.
         final BigInteger converted = BigInteger.valueOf(convertFiat.value).multiply(BigInteger.valueOf(coin.value))
                 .divide(BigInteger.valueOf(fiat.value));

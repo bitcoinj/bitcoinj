@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkElementIndex;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * <p>A transfer of coins from one address to another creates a transaction in which the outputs
@@ -370,8 +370,10 @@ public class TransactionInput extends ChildMessage {
     public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
         if (!transaction.getTxId().equals(outpoint.getHash()))
             return ConnectionResult.NO_SUCH_TX;
-        checkElementIndex((int) outpoint.getIndex(), transaction.getOutputs().size(), "Corrupt transaction");
-        TransactionOutput out = transaction.getOutput((int) outpoint.getIndex());
+        int outpointIndex = (int) outpoint.getIndex();
+        checkArgument(outpointIndex >= 0 && outpointIndex < transaction.getOutputs().size(), () ->
+                "corrupt transaction: " + outpointIndex);
+        TransactionOutput out = transaction.getOutput(outpointIndex);
         if (!out.isAvailableForSpending()) {
             if (getParentTransaction().equals(outpoint.fromTx)) {
                 // Already connected.

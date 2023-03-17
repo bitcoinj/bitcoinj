@@ -38,8 +38,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * A deterministic key is a node in a {@link DeterministicHierarchy}. As per
@@ -123,9 +123,8 @@ public class DeterministicKey extends ECKey {
     throws IllegalArgumentException {
         if (parentFingerprint != 0) {
             if (parent != null)
-                checkArgument(parent.getFingerprint() == parentFingerprint,
-                              "parent fingerprint mismatch",
-                              Integer.toHexString(parent.getFingerprint()), Integer.toHexString(parentFingerprint));
+                checkArgument(parent.getFingerprint() == parentFingerprint, () ->
+                        "parent fingerprint mismatch: " + Integer.toHexString(parent.getFingerprint()) + " vs " + Integer.toHexString(parentFingerprint));
             return parentFingerprint;
         } else return 0;
     }
@@ -304,7 +303,7 @@ public class DeterministicKey extends ECKey {
         if (newParent != null)
             checkArgument(newParent.isEncrypted());
         final byte[] privKeyBytes = getPrivKeyBytes();
-        checkState(privKeyBytes != null, "Private key is not available");
+        checkState(privKeyBytes != null, () -> "Private key is not available");
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
         if (newParent == null) {
@@ -479,7 +478,8 @@ public class DeterministicKey extends ECKey {
     @Override
     public BigInteger getPrivKey() {
         final BigInteger key = findOrDerivePrivateKey();
-        checkState(key != null, "Private key bytes not available");
+        checkState(key != null, () ->
+                "private key bytes not available");
         return key;
     }
 
@@ -684,7 +684,8 @@ public class DeterministicKey extends ECKey {
         buffer.get(chainCode);
         byte[] data = new byte[33];
         buffer.get(data);
-        checkArgument(!buffer.hasRemaining(), "Found unexpected data in key");
+        checkArgument(!buffer.hasRemaining(), () ->
+                "found unexpected data in key");
         if (pub) {
             return new DeterministicKey(path, chainCode, new LazyECPoint(ECKey.CURVE.getCurve(), data), parent, depth, parentFingerprint);
         } else {

@@ -17,7 +17,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import net.jcip.annotations.GuardedBy;
@@ -70,7 +69,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A Peer handles the high level communication with a Bitcoin node, extending a {@link PeerSocketHandler} which
@@ -631,7 +631,7 @@ public class Peer extends PeerSocketHandler {
         }
 
         try {
-            checkState(!downloadBlockBodies, toString());
+            checkState(!downloadBlockBodies, () -> toString());
             for (int i = 0; i < m.getBlockHeaders().size(); i++) {
                 Block header = m.getBlockHeaders().get(i);
                 // Process headers until we pass the fast catchup time, or are about to catch up with the head
@@ -813,7 +813,7 @@ public class Peer extends PeerSocketHandler {
      */
     public ListenableCompletableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
-        Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
+        checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
         return ListenableCompletableFuture.of(downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0));
@@ -1287,7 +1287,7 @@ public class Peer extends PeerSocketHandler {
     /** Sends a getdata with a single item in it. */
     private CompletableFuture sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
-        Preconditions.checkArgument(getdata.getItems().size() == 1);
+        checkArgument(getdata.getItems().size() == 1);
         GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash);
         getDataFutures.add(req);
         sendMessage(getdata);
@@ -1624,7 +1624,8 @@ public class Peer extends PeerSocketHandler {
         // chainHeight should not be zero/negative because we shouldn't have given the user a Peer that is to another
         // client-mode node, nor should it be unconnected. If that happens it means the user overrode us somewhere or
         // there is a bug in the peer management code.
-        checkState(params.allowEmptyPeerChain() || chainHeight > 0, "Connected to peer with zero/negative chain height", chainHeight);
+        checkState(params.allowEmptyPeerChain() || chainHeight > 0, () ->
+                "connected to peer with zero/negative chain height: " + chainHeight);
         return chainHeight - blockChain.getBestChainHeight();
     }
 

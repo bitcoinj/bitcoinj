@@ -16,7 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.Preconditions;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.core.VerificationException;
@@ -24,6 +23,8 @@ import org.bitcoinj.core.VerificationException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * A TransactionSignature wraps an {@link ECKey.ECDSASignature} and adds methods for handling
@@ -68,7 +69,7 @@ public class TransactionSignature extends ECKey.ECDSASignature {
 
     /** Calculates the byte used in the protocol to represent the combination of mode and anyoneCanPay. */
     public static int calcSigHashValue(Transaction.SigHash mode, boolean anyoneCanPay) {
-        Preconditions.checkArgument(SigHash.ALL == mode || SigHash.NONE == mode || SigHash.SINGLE == mode); // enforce compatibility since this code was made before the SigHash enum was updated
+        checkArgument(SigHash.ALL == mode || SigHash.NONE == mode || SigHash.SINGLE == mode); // enforce compatibility since this code was made before the SigHash enum was updated
         int sighashFlags = mode.value;
         if (anyoneCanPay)
             sighashFlags |= Transaction.SigHash.ANYONECANPAY.value;

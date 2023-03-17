@@ -66,8 +66,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
 import static org.bitcoinj.base.internal.ByteUtils.uint32ToByteStreamLE;
 import static org.bitcoinj.base.internal.ByteUtils.uint64ToByteStreamLE;
@@ -1024,7 +1024,8 @@ public class Transaction extends ChildMessage {
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
         // Verify the API user didn't try to do operations out of order.
-        checkState(!outputs.isEmpty(), "Attempting to sign tx without outputs.");
+        checkState(!outputs.isEmpty(), () ->
+                "attempting to sign tx without outputs");
         if (amount == null || amount.value <= 0) {
             log.warn("Illegal amount value. Amount is required for SegWit transactions.");
         }
@@ -1120,7 +1121,8 @@ public class Transaction extends ChildMessage {
      */
     public TransactionInput addSignedInput(TransactionOutput output, ECKey sigKey, SigHash sigHash, boolean anyoneCanPay) {
         Objects.requireNonNull(output.getValue(), "TransactionOutput.getValue() must not be null");
-        checkState(output.getValue().value > 0, "TransactionOutput.getValue() must not be greater than zero");
+        checkState(output.getValue().value > 0, () ->
+                "transactionOutput.getValue() must not be greater than zero");
         return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), output.getValue(), sigKey, sigHash, anyoneCanPay);
     }
 

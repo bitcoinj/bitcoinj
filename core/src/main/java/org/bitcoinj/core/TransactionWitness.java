@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 public class TransactionWitness {
     public static final TransactionWitness EMPTY = new TransactionWitness(0);
@@ -38,7 +38,8 @@ public class TransactionWitness {
      * used as a placeholder.
      */
     public static TransactionWitness redeemP2WPKH(@Nullable TransactionSignature signature, ECKey pubKey) {
-        checkArgument(pubKey.isCompressed(), "only compressed keys allowed");
+        checkArgument(pubKey.isCompressed(), () ->
+                "only compressed keys allowed");
         TransactionWitness witness = new TransactionWitness(2);
         witness.setPush(0, signature != null ? signature.encodeToBitcoin() : new byte[0]); // signature
         witness.setPush(1, pubKey.getPubKey()); // pubkey

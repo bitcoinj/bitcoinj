@@ -38,7 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 // TODO: The locking in all this class is horrible and not really necessary. We should just run all network stuff on one thread.
 

@@ -35,7 +35,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>The default risk analysis. Currently, it only is concerned with whether a tx/dependency is non-final or not, and

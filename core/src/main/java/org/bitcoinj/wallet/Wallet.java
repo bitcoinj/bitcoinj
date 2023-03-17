@@ -139,8 +139,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 // To do list:
 //
@@ -1417,7 +1417,8 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             final KeyCrypter crypter = keyChainGroup.getKeyCrypter();
-            checkState(crypter != null, "Not encrypted");
+            checkState(crypter != null, () ->
+                    "not encrypted");
             keyChainGroup.decrypt(crypter.deriveKey(password));
         } catch (KeyCrypterException.InvalidCipherText | KeyCrypterException.PublicPrivateMismatch e) {
             throw new BadWalletEncryptionKeyException(e);
@@ -1705,7 +1706,8 @@ public class Wallet extends BaseTaggableObject
     public WalletFiles autosaveToFile(File f, Duration delay, @Nullable WalletFiles.Listener eventListener) {
         lock.lock();
         try {
-            checkState(vFileManager == null, "Already auto saving this wallet.");
+            checkState(vFileManager == null, () ->
+                    "already auto saving this wallet");
             WalletFiles manager = new WalletFiles(this, f, delay);
             if (eventListener != null)
                 manager.setListener(eventListener);
@@ -1734,7 +1736,8 @@ public class Wallet extends BaseTaggableObject
         try {
             WalletFiles files = vFileManager;
             vFileManager = null;
-            checkState(files != null, "Auto saving not enabled.");
+            checkState(files != null, () ->
+                    "auto saving not enabled");
             files.shutdownAndWait();
         } finally {
             lock.unlock();
@@ -2865,7 +2868,8 @@ public class Wallet extends BaseTaggableObject
      * @throws VerificationException if transaction was already in the pending pool
      */
     public void commitTx(Transaction tx) throws VerificationException {
-        checkArgument(maybeCommitTx(tx), "commitTx called on the same transaction twice");
+        checkArgument(maybeCommitTx(tx), () ->
+                "commitTx called on the same transaction twice");
     }
 
     //endregion
@@ -4245,7 +4249,8 @@ public class Wallet extends BaseTaggableObject
     public SendResult sendCoins(SendRequest request)
             throws InsufficientMoneyException, BadWalletEncryptionKeyException {
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
-        checkState(broadcaster != null, "No transaction broadcaster is configured");
+        checkState(broadcaster != null, () ->
+                "no transaction broadcaster is configured");
         return sendCoins(broadcaster, request);
     }
 
@@ -4327,7 +4332,8 @@ public class Wallet extends BaseTaggableObject
     public void completeTx(SendRequest req) throws InsufficientMoneyException, BadWalletEncryptionKeyException {
         lock.lock();
         try {
-            checkArgument(!req.completed, "Given SendRequest has already been completed.");
+            checkArgument(!req.completed, () ->
+                    "given SendRequest has already been completed");
             // Calculate the amount of value we need to import.
             Coin value = req.tx.getOutputSum();
 
@@ -4374,7 +4380,8 @@ public class Wallet extends BaseTaggableObject
             } else {
                 // We're being asked to empty the wallet. What this means is ensuring "tx" has only a single output
                 // of the total value we can currently spend as determined by the selector, and then subtracting the fee.
-                checkState(req.tx.getOutputs().size() == 1, "Empty wallet TX must have a single output only.");
+                checkState(req.tx.getOutputs().size() == 1, () ->
+                        "empty wallet TX must have a single output only");
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
                 bestCoinSelection = selector.select((Coin) params.network().maxMoney(), candidates);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
@@ -5358,8 +5365,8 @@ public class Wallet extends BaseTaggableObject
         // is no inversion.
         for (Transaction tx : toBroadcast) {
             ConfidenceType confidenceType = tx.getConfidence().getConfidenceType();
-            checkState(confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT,
-                    "Tx %s: expected PENDING or IN_CONFLICT, was %s", tx.getTxId(), confidenceType);
+            checkState(confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT, () ->
+                    "Tx " + tx.getTxId() + ": expected PENDING or IN_CONFLICT, was " + confidenceType);
             // Re-broadcast even if it's marked as already seen for two reasons
             // 1) Old wallets may have transactions marked as broadcast by 1 peer when in reality the network
             //    never saw it, due to bugs.
@@ -5389,9 +5396,8 @@ public class Wallet extends BaseTaggableObject
      * @param keyRotationTime rotate any keys created before this time, or null for no rotation
      */
     public void setKeyRotationTime(@Nullable Instant keyRotationTime) {
-        checkArgument(keyRotationTime == null || keyRotationTime.compareTo(TimeUtils.currentTime()) <= 0,
-                "Given time (%s) cannot be in the future.",
-                TimeUtils.dateTimeFormat(keyRotationTime));
+        checkArgument(keyRotationTime == null || keyRotationTime.compareTo(TimeUtils.currentTime()) <= 0, () ->
+                "given time cannot be in the future: " + TimeUtils.dateTimeFormat(keyRotationTime));
         vKeyRotationTime = keyRotationTime;
         saveNow();
     }

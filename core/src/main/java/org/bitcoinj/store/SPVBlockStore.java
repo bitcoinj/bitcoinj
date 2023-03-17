@@ -41,8 +41,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 // TODO: Lose the mmap in this class. There are too many platform bugs that require odd workarounds.
 
@@ -331,7 +331,8 @@ public class SPVBlockStore implements BlockStore {
     /** Returns the offset from the file start where the latest block should be written (end of prev block). */
     private int getRingCursor(ByteBuffer buffer) {
         int c = buffer.getInt(4);
-        checkState(c >= FILE_PROLOGUE_BYTES, "Integer overflow");
+        checkState(c >= FILE_PROLOGUE_BYTES, () ->
+                "integer overflow");
         return c;
     }
 

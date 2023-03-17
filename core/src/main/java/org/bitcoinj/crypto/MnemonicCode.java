@@ -38,8 +38,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import org.bitcoinj.base.internal.ByteUtils;
+
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * A MnemonicCode object may be used to convert between binary seed values and
@@ -205,8 +206,10 @@ public class MnemonicCode {
      * @param entropy entropy bits, length must be a multiple of 32 bits
      */
     public List<String> toMnemonic(byte[] entropy) {
-        checkArgument(entropy.length % 4 == 0, "entropy length not multiple of 32 bits");
-        checkArgument(entropy.length > 0, "entropy is empty");
+        checkArgument(entropy.length % 4 == 0, () ->
+                "entropy length not multiple of 32 bits");
+        checkArgument(entropy.length > 0, () ->
+                "entropy is empty");
 
         // We take initial entropy of ENT bits and compute its
         // checksum by taking first ENT / 32 bits of its SHA256 hash.
