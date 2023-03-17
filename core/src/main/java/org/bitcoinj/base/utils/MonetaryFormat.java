@@ -376,14 +376,14 @@ public final class MonetaryFormat {
 
         // convert to decimal
         long satoshis = Math.abs(monetary.getValue());
-        int potentialDecimals = smallestUnitExponent - shift;
-        DecimalNumber decimal = satoshisToDecimal(satoshis, roundingMode, potentialDecimals, maxVisibleDecimals);
+        int decimalShift = smallestUnitExponent - shift;
+        DecimalNumber decimal = satoshisToDecimal(satoshis, roundingMode, decimalShift, maxVisibleDecimals);
         long numbers = decimal.numbers;
         long decimals = decimal.decimals;
 
         // formatting
-        String decimalsStr = potentialDecimals > 0 ? String.format(Locale.US,
-                "%0" + Integer.toString(potentialDecimals) + "d", decimals) : "";
+        String decimalsStr = decimalShift > 0 ? String.format(Locale.US,
+                "%0" + Integer.toString(decimalShift) + "d", decimals) : "";
         StringBuilder str = new StringBuilder(decimalsStr);
         while (str.length() > minDecimals && str.charAt(str.length() - 1) == '0')
             str.setLength(str.length() - 1); // trim trailing zero
@@ -431,18 +431,19 @@ public final class MonetaryFormat {
      * Convert a long number of satoshis to a decimal number of BTC
      * @param satoshis number of satoshis
      * @param roundingMode rounding mode
-     * @param potentialDecimals potential decimals
+     * @param decimalShift the number of places to move the decimal point to the left,
+     *                     coming from smallest unit (e.g. satoshi)
      * @param maxVisibleDecimals the maximum number of decimals that can be visible in the formatted string
      * @return private class with two longs
      */
-    private static DecimalNumber satoshisToDecimal(long satoshis, RoundingMode roundingMode, int potentialDecimals,
+    private static DecimalNumber satoshisToDecimal(long satoshis, RoundingMode roundingMode, int decimalShift,
                                                    int maxVisibleDecimals) {
         // rounding
-        long precisionDivisor = checkedPow(10, potentialDecimals - maxVisibleDecimals);
+        long precisionDivisor = checkedPow(10, decimalShift - maxVisibleDecimals);
         long roundedSatoshsis = Math.multiplyExact(divide(satoshis, precisionDivisor, roundingMode), precisionDivisor);
 
         // shifting
-        long shiftDivisor = checkedPow(10, potentialDecimals);
+        long shiftDivisor = checkedPow(10, decimalShift);
         return new DecimalNumber(
                         roundedSatoshsis / shiftDivisor,
                         roundedSatoshsis % shiftDivisor);
