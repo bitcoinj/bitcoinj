@@ -24,10 +24,13 @@ import javax.annotation.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 /**
  * <p>Tracks transactions that are being announced across the network. Typically one is created for you by a
@@ -43,20 +46,70 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TxConfidenceTable {
     protected final ReentrantLock lock = Threading.lock(TxConfidenceTable.class);
 
-    //simply to help with migration.
-    @Deprecated
-    private static TxConfidenceTable _instance;
+    private static class TxConfidenceTableWrapper {
+        final boolean autoCreated;
+        final TxConfidenceTable table;
 
-    @Deprecated
-    public static void setInstance(TxConfidenceTable txConfidenceTable) {
-        if (_instance != null){
-            throw new RuntimeException("confidence table already set");
+        private TxConfidenceTableWrapper(boolean autoCreated, TxConfidenceTable table) {
+            this.autoCreated = autoCreated;
+            this.table = table;
         }
-        _instance = txConfidenceTable;
     }
+    private final static Map<Network, TxConfidenceTableWrapper> _instances = new HashMap<>();
+
+    /**
+     * @deprecated Use {@link TxConfidenceTable#instance(Network)}. Also
+     * ensure that {@link TxConfidenceTable#setInstance(Network, TxConfidenceTable)}
+     * is used to set the instance.
+     *
+     * This is a migration method that automatically creates an instance
+     * to minimise the chance of breaking existing implementations.
+     */
+    @Deprecated
+    public static TxConfidenceTable getOrCreateInstance(Network network) {
+
+        if (!_instances.containsKey(network)){
+            ChainHeightSupplier chainHeightSupplier = () -> {
+                Set<AbstractBlockChain> blockchainInstances = AbstractBlockChain.instances(network);
+                if (blockchainInstances == null || blockchainInstances.isEmpty()){
+                    throw new RuntimeException("no AbstractBlockChain set for " + network);
+                }
+                // if there is going to be more than one blockchain then it's best
+                // to create and set the TxConfidenceTable yourself rather than
+                // trying to guess which blockchain should be used.
+                if (blockchainInstances.size() > 1 && _instances.get(network).autoCreated){
+                    throw new RuntimeException("create & set the TxConfidenceTable if there is going to be more than one blockchain");
+                }
+                return blockchainInstances.stream().findFirst().get().getBestChainHeight();
+            };
+            TxConfidenceTable confidenceTable = new TxConfidenceTable(chainHeightSupplier);
+            _instances.put(network, new TxConfidenceTableWrapper(false, confidenceTable));
+        }
+        return instance(network);
+    }
+
     public static TxConfidenceTable instance(Network network) {
-        return _instance;
+        return _instances.get(network).table;
     }
+
+    public static void setInstance(Network network, TxConfidenceTable confidenceTable){
+        _instances.put(network, new TxConfidenceTableWrapper(false, confidenceTable));
+    }
+
+    /**
+     * @deprecated Use {@link TxConfidenceTable#instance(Network)} and
+     * ensure that a TxConfidenceTable instance is set via
+     * {@link TxConfidenceTable#setInstance(Network, TxConfidenceTable)}
+     */
+    @Deprecated
+    public static TxConfidenceTable getSingleInstance() {
+        if (_instances.size() != 1){
+            throw new RuntimeException("Should only be used if there is a single TxConfidenceTable");
+        }
+        return _instances.entrySet().stream().findFirst().get().getValue().table;
+    }
+
+    public interface ChainHeightSupplier extends Supplier<Integer> {}
 
     private static class WeakConfidenceReference extends WeakReference<TransactionConfidence> {
         public Sha256Hash hash;
@@ -104,7 +157,7 @@ public class TxConfidenceTable {
      * Creates a table that will track at most {@link TxConfidenceTable#MAX_SIZE} entries. You should normally use
      * this constructor.
      */
-    public TxConfidenceTable() {
+    public TxConfidenceTable(ChainHeightSupplier chainHeightSupplier) {
         this(MAX_SIZE);
     }
 
