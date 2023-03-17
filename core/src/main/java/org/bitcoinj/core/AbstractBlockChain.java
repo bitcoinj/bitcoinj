@@ -113,6 +113,13 @@ public abstract class AbstractBlockChain {
         networkInstances.add(instance);
         _instances.put(network, networkInstances);
     }
+
+    //intended only as a migration method
+    @Deprecated
+    @Nullable
+    public static Set<AbstractBlockChain> instances(Network network){
+        return _instances.get(network);
+    }
     /** synchronization lock */
     protected final ReentrantLock lock = Threading.lock(AbstractBlockChain.class);
 
