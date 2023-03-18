@@ -459,7 +459,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         versionMessage.localServices = VersionMessage.NODE_NETWORK;
         connectPeer(1, versionMessage);
         peerGroup.waitForPeers(1).get();
-        assertFalse(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
+        assertFalse(peerGroup.getConnectedPeers().get(0).lastPingInterval().isPresent());
     }
 
     @Test
@@ -473,11 +473,11 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Ping ping = (Ping) waitForOutbound(p1);
         inbound(p1, new Pong(ping.getNonce()));
         pingAndWait(p1);
-        assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
+        assertTrue(peerGroup.getConnectedPeers().get(0).lastPingInterval().isPresent());
         // The call to outbound should block until a ping arrives.
         ping = (Ping) waitForOutbound(p1);
         inbound(p1, new Pong(ping.getNonce()));
-        assertTrue(peerGroup.getConnectedPeers().get(0).getLastPingTime() < Long.MAX_VALUE);
+        assertTrue(peerGroup.getConnectedPeers().get(0).lastPingInterval().isPresent());
     }
 
     @Test

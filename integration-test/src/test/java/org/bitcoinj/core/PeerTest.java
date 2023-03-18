@@ -506,11 +506,11 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         TimeUtils.setMockClock();
         // No ping pong happened yet.
-        assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
-        assertEquals(Long.MAX_VALUE, peer.getPingTime());
+        assertFalse(peer.lastPingInterval().isPresent());
+        assertFalse(peer.pingInterval().isPresent());
         CompletableFuture<Duration> future = peer.sendPing();
-        assertEquals(Long.MAX_VALUE, peer.getLastPingTime());
-        assertEquals(Long.MAX_VALUE, peer.getPingTime());
+        assertFalse(peer.lastPingInterval().isPresent());
+        assertFalse(peer.pingInterval().isPresent());
         assertFalse(future.isDone());
         Ping pingMsg = (Ping) outbound(writeTarget);
         TimeUtils.rollMockClock(Duration.ofSeconds(5));
@@ -520,16 +520,16 @@ public class PeerTest extends TestWithNetworkConnections {
         assertTrue(future.isDone());
         Duration elapsed = future.get();
         assertTrue(elapsed.toMillis() + " ms", elapsed.toMillis() > 1000);
-        assertEquals(elapsed.toMillis(), peer.getLastPingTime());
-        assertEquals(elapsed.toMillis(), peer.getPingTime());
+        assertEquals(elapsed, peer.lastPingInterval().get());
+        assertEquals(elapsed, peer.pingInterval().get());
         // Do it again and make sure it affects the average.
         CompletableFuture<Duration> future2 = peer.sendPing();
         pingMsg = (Ping) outbound(writeTarget);
         TimeUtils.rollMockClock(Duration.ofSeconds(50));
         inbound(writeTarget, new Pong(pingMsg.getNonce()));
         Duration elapsed2 = future2.get();
-        assertEquals(elapsed2.toMillis(), peer.getLastPingTime());
-        assertEquals(7250, peer.getPingTime());
+        assertEquals(elapsed2, peer.lastPingInterval().get());
+        assertEquals(Duration.ofMillis(7250), peer.pingInterval().get());
         TimeUtils.clearMockClock();
     }
 
