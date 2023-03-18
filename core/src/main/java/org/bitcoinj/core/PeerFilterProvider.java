@@ -31,12 +31,12 @@ public interface PeerFilterProvider {
      * Blocks with timestamps before this time will only have headers downloaded. {@link Instant#EPOCH} requires that all
      * blocks be downloaded, and thus this should default to {@link Instant#MAX}.
      */
-    Instant getEarliestKeyCreationTimeInstant();
+    Instant earliestKeyCreationTime();
 
-    /** @deprecated use {@link #getEarliestKeyCreationTimeInstant()} */
+    /** @deprecated use {@link #earliestKeyCreationTime()} */
     @Deprecated
     default long getEarliestKeyCreationTime() {
-        Instant earliestKeyCreationTime = getEarliestKeyCreationTimeInstant();
+        Instant earliestKeyCreationTime = earliestKeyCreationTime();
         return earliestKeyCreationTime.equals(Instant.MAX) ? Long.MAX_VALUE : earliestKeyCreationTime.getEpochSecond();
     }
 

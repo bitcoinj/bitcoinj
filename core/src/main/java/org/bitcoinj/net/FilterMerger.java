@@ -75,7 +75,7 @@ public class FilterMerger {
             result.earliestKeyTime = Instant.MAX;
             int elements = 0;
             for (PeerFilterProvider p : providers) {
-                result.earliestKeyTime = TimeUtils.earlier(result.earliestKeyTime, p.getEarliestKeyCreationTimeInstant());
+                result.earliestKeyTime = TimeUtils.earlier(result.earliestKeyTime, p.earliestKeyCreationTime());
                 elements += p.getBloomFilterElementCount();
             }
 

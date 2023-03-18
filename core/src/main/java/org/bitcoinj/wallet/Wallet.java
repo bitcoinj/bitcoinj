@@ -3531,7 +3531,7 @@ public class Wallet extends BaseTaggableObject
 
             // Do the keys.
             builder.append("\nKeys:\n");
-            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(getEarliestKeyCreationTimeInstant()))
+            builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(earliestKeyCreationTime()))
                     .append('\n');
             final Optional<Instant> keyRotationTime = getKeyRotationTimeInstant();
             if (keyRotationTime.isPresent())
@@ -3635,7 +3635,7 @@ public class Wallet extends BaseTaggableObject
      *         {@link Instant#MAX} if no keys in this wallet
      */
     @Override
-    public Instant getEarliestKeyCreationTimeInstant() {
+    public Instant earliestKeyCreationTime() {
         keyChainGroupLock.lock();
         try {
             Instant earliestTime = keyChainGroup.getEarliestKeyCreationTimeInstant();

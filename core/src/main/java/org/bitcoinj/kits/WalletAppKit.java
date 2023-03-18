@@ -353,7 +353,7 @@ public class WalletAppKit extends AbstractIdleService {
                 }
                 else
                 {
-                    time = vWallet.getEarliestKeyCreationTimeInstant();
+                    time = vWallet.earliestKeyCreationTime();
                 }
                 if (time.isAfter(Instant.EPOCH))
                     CheckpointManager.checkpoint(params, checkpoints, vStore, time);

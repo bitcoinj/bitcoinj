@@ -1481,10 +1481,10 @@ public class WalletTest extends TestWithWallet {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
-        assertEquals(now, wallet.getEarliestKeyCreationTimeInstant());
+        assertEquals(now, wallet.earliestKeyCreationTime());
         TimeUtils.rollMockClock(Duration.ofMinutes(1));
         wallet.freshReceiveKey();
-        assertEquals(now, wallet.getEarliestKeyCreationTimeInstant());
+        assertEquals(now, wallet.earliestKeyCreationTime());
     }
 
     @Test
@@ -1492,11 +1492,11 @@ public class WalletTest extends TestWithWallet {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
-        assertEquals(now, wallet.getEarliestKeyCreationTimeInstant());
+        assertEquals(now, wallet.earliestKeyCreationTime());
         TimeUtils.rollMockClock(Duration.ofMinutes(-2));
         wallet.addWatchedAddress(OTHER_ADDRESS);
         wallet.freshReceiveKey();
-        assertEquals(now.minusSeconds(120), wallet.getEarliestKeyCreationTimeInstant());
+        assertEquals(now.minusSeconds(120), wallet.earliestKeyCreationTime());
     }
 
     @Test
@@ -3534,7 +3534,7 @@ public class WalletTest extends TestWithWallet {
         Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
         List<String> mnemonicCode = wallet.getKeyChainSeed().getMnemonicCode();
         final DeterministicSeed clonedSeed = DeterministicSeed.ofMnemonic(mnemonicCode, "",
-                wallet.getEarliestKeyCreationTimeInstant());
+                wallet.earliestKeyCreationTime());
         Wallet clone = Wallet.fromSeed(TESTNET, clonedSeed, ScriptType.P2WPKH);
         assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());
         assertEquals(wallet.freshReceiveAddress(ScriptType.P2PKH),

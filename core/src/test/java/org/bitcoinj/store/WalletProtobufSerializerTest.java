@@ -357,9 +357,9 @@ public class WalletProtobufSerializerTest {
         assertEquals(creationTime, wallet.getWatchingKey().getCreationTime().get());
         assertEquals(creationTime, wallet2.getWatchingKey().getCreationTime().get());
         assertEquals(creationTime, wallet3.getWatchingKey().getCreationTime().get());
-        assertEquals(creationTime, wallet.getEarliestKeyCreationTimeInstant());
-        assertEquals(creationTime, wallet2.getEarliestKeyCreationTimeInstant());
-        assertEquals(creationTime, wallet3.getEarliestKeyCreationTimeInstant());
+        assertEquals(creationTime, wallet.earliestKeyCreationTime());
+        assertEquals(creationTime, wallet2.earliestKeyCreationTime());
+        assertEquals(creationTime, wallet3.earliestKeyCreationTime());
     }
 
     @Test
