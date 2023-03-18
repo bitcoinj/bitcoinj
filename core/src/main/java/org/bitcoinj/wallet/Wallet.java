@@ -5522,7 +5522,7 @@ public class Wallet extends BaseTaggableObject
         ScriptType preferredScriptType = ScriptType.P2PKH;
         if (keyChainGroup.supportsDeterministicChains()) {
             for (DeterministicKeyChain chain : keyChainGroup.getDeterministicKeyChains()) {
-                if (chain.getEarliestKeyCreationTimeInstant().compareTo(keyRotationTime) >= 0)
+                if (chain.earliestKeyCreationTime().compareTo(keyRotationTime) >= 0)
                     allChainsRotating = false;
                 else
                     preferredScriptType = chain.getOutputScriptType();

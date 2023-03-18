@@ -291,7 +291,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
      *         {@link Instant#MAX} if no keys in this chain
      */
     @Override
-    public Instant getEarliestKeyCreationTimeInstant() {
+    public Instant earliestKeyCreationTime() {
         lock.lock();
         try {
             return hashToKeys.values().stream()

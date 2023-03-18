@@ -81,7 +81,7 @@ public class BasicKeyChainTest {
         assertEquals(2, chain.numKeys());
         assertTrue(onKeysAddedRan.getAndSet(false));
         assertArrayEquals(keys.toArray(), onKeysAdded.get().toArray());
-        assertEquals(now, chain.getEarliestKeyCreationTimeInstant());
+        assertEquals(now, chain.earliestKeyCreationTime());
         // Check we ignore duplicates.
         final ECKey newKey = new ECKey();
         keys.add(newKey);

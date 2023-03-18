@@ -467,7 +467,7 @@ public class KeyChainGroup implements KeyBag {
         checkState(supportsDeterministicChains(), "doesn't support deterministic chains");
         List<DeterministicKeyChain> activeChains = new LinkedList<>();
         for (DeterministicKeyChain chain : chains)
-            if (keyRotationTime == null || chain.getEarliestKeyCreationTimeInstant().compareTo(keyRotationTime) >= 0)
+            if (keyRotationTime == null || chain.earliestKeyCreationTime().compareTo(keyRotationTime) >= 0)
                 activeChains.add(chain);
         return activeChains;
     }
@@ -489,7 +489,7 @@ public class KeyChainGroup implements KeyBag {
         Collections.reverse(chainsReversed);
         for (DeterministicKeyChain chain : chainsReversed)
             if (chain.getOutputScriptType() == outputScriptType
-                    && (keyRotationTime == null || chain.getEarliestKeyCreationTimeInstant().compareTo(keyRotationTime) >= 0))
+                    && (keyRotationTime == null || chain.earliestKeyCreationTime().compareTo(keyRotationTime) >= 0))
                 return chain;
         return null;
     }
@@ -851,7 +851,7 @@ public class KeyChainGroup implements KeyBag {
      *         {@link Instant#MAX} if no keys in this group
      */
     public Instant getEarliestKeyCreationTimeInstant() {
-        return TimeUtils.earlier(basic.getEarliestKeyCreationTimeInstant(), getEarliestChainsCreationTime());
+        return TimeUtils.earlier(basic.earliestKeyCreationTime(), getEarliestChainsCreationTime());
     }
 
     /** @deprecated use {@link #getEarliestKeyCreationTimeInstant()} */
@@ -865,7 +865,7 @@ public class KeyChainGroup implements KeyBag {
         return chains == null ?
                 Instant.MAX :
                 chains.stream()
-                        .map(DeterministicKeyChain::getEarliestKeyCreationTimeInstant)
+                        .map(DeterministicKeyChain::earliestKeyCreationTime)
                         .min(Instant::compareTo)
                         .orElse(Instant.MAX);
     }

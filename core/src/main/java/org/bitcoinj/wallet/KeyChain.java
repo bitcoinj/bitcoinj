@@ -82,12 +82,12 @@ public interface KeyChain {
      *         {@link Instant#EPOCH} if at least one time is unknown,
      *         {@link Instant#MAX} if no keys in this chain
      */
-    Instant getEarliestKeyCreationTimeInstant();
+    Instant earliestKeyCreationTime();
 
-    /** @deprecated use {@link #getEarliestKeyCreationTimeInstant()} */
+    /** @deprecated use {@link #earliestKeyCreationTime()} */
     @Deprecated
     default long getEarliestKeyCreationTime() {
-        Instant earliestKeyCreationTime = getEarliestKeyCreationTimeInstant();
+        Instant earliestKeyCreationTime = earliestKeyCreationTime();
         return earliestKeyCreationTime.equals(Instant.MAX) ? Long.MAX_VALUE : earliestKeyCreationTime.getEpochSecond();
     }
 
