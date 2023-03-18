@@ -37,7 +37,7 @@ public abstract /* sealed */ class LockTime {
      * Can also be zero to represent no-lock.
      */
     public static final class HeightLock extends LockTime {
-        public HeightLock(long value) {
+        private HeightLock(long value) {
             super(value);
         }
 
@@ -53,7 +53,7 @@ public abstract /* sealed */ class LockTime {
      * A {@code LockTime} instance that contains a timestamp.
      */
     public static final class TimeLock extends LockTime {
-        public TimeLock(long value) {
+        private TimeLock(long value) {
             super(value);
         }
 
