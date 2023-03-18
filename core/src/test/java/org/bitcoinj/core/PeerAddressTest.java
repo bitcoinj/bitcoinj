@@ -82,7 +82,7 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5)));// potentially racy
+        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5)));// potentially racy
     }
 
     @Test
@@ -96,7 +96,7 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5))); // potentially racy
+        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -109,7 +109,7 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertFalse(pa2.getTimeInstant().isPresent());
+        assertFalse(pa2.time().isPresent());
     }
 
     @Test
@@ -123,7 +123,7 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5))); // potentially racy
+        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -137,7 +137,7 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertTrue(pa2.getTimeInstant().get().compareTo(time) >= 0 && pa2.getTimeInstant().get().isBefore(time.plusSeconds(5))); // potentially racy
+        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -151,7 +151,7 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
-        assertFalse(pa2.getTimeInstant().isPresent());
+        assertFalse(pa2.time().isPresent());
     }
 
     @Test

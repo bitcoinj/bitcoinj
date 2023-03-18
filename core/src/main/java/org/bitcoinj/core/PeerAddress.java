@@ -345,11 +345,11 @@ public class PeerAddress extends ChildMessage {
      * old `addr` messages).
      * @return time that the node was last seen, or empty if unknown
      */
-    public Optional<Instant> getTimeInstant() {
+    public Optional<Instant> time() {
         return time;
     }
 
-    /** @deprecated use {@link #getTimeInstant()} */
+    /** @deprecated use {@link #time()} */
     @Deprecated
     public long getTime() {
         return time.isPresent() ? time.get().getEpochSecond() : -1;
