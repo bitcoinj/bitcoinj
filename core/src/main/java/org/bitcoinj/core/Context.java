@@ -47,8 +47,6 @@ public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
 
     public static final int DEFAULT_EVENT_HORIZON = 100;
-
-    final private TxConfidenceTable confidenceTable;
     final private int eventHorizon;
     final private boolean ensureMinRequiredFee;
     final private Coin feePerKb;
@@ -81,7 +79,6 @@ public class Context {
      */
     public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee, boolean relaxProofOfWork) {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
-        this.confidenceTable = new TxConfidenceTable();
         this.eventHorizon = eventHorizon;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
@@ -176,6 +173,7 @@ public class Context {
         slot.set(Objects.requireNonNull(context));
     }
 
+    @Deprecated
     /**
      * Returns the {@link TxConfidenceTable} created by this context. The pool tracks advertised
      * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
@@ -183,7 +181,7 @@ public class Context {
      * have that it's really valid.
      */
     public TxConfidenceTable getConfidenceTable() {
-        return confidenceTable;
+        return TxConfidenceTable.getSingleInstance();
     }
 
     /**
