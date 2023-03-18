@@ -17,11 +17,14 @@
 
 package org.bitcoinj.tools;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
@@ -41,8 +44,8 @@ public class WatchMempool {
     private static final List<Transaction> NO_DEPS = Collections.emptyList();
     private static final Map<String, Integer> counters = new HashMap<>();
     private static final String TOTAL_KEY = "TOTAL";
-    private static final long START_MS = System.currentTimeMillis();
-    private static final long STATISTICS_FREQUENCY_MS = 1000 * 5;
+    private static final Instant START = TimeUtils.currentTime();
+    private static final Duration STATISTICS_FREQUENCY = Duration.ofSeconds(5);
 
     public static void main(String[] args) throws InterruptedException {
         BriefLogFormatter.init();
@@ -60,7 +63,7 @@ public class WatchMempool {
         peerGroup.start();
 
         while (true) {
-            Thread.sleep(STATISTICS_FREQUENCY_MS);
+            Thread.sleep(STATISTICS_FREQUENCY.toMillis());
             printCounters();
         }
     }
@@ -74,7 +77,8 @@ public class WatchMempool {
     }
 
     private static synchronized void printCounters() {
-        System.out.printf("Runtime: %d minutes\n", (System.currentTimeMillis() - START_MS) / 1000 / 60);
+        Duration elapsed = TimeUtils.elapsedTime(START);
+        System.out.printf("Runtime: %d:%02d minutes\n", elapsed.toMinutes(), elapsed.toSecondsPart());
         Integer total = counters.get(TOTAL_KEY);
         if (total == null)
             return;
