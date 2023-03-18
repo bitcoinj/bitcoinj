@@ -125,7 +125,7 @@ public class WalletProtobufSerializerTest {
         ECKey foundKey = wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash(), null);
         assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
-        assertEquals(myKey.getCreationTime(), foundKey.getCreationTime());
+        assertEquals(myKey.creationTime(), foundKey.creationTime());
         assertEquals(mScriptCreationTime.truncatedTo(ChronoUnit.MILLIS),
                 wallet1.getWatchedScripts().get(0).getCreationTime().get());
         assertEquals(1, wallet1.getWatchedScripts().size());
@@ -343,7 +343,7 @@ public class WalletProtobufSerializerTest {
         ECKey foundKey = wallet1.findKeyFromPubKeyHash(myKey.getPubKeyHash(), null);
         assertArrayEquals(myKey.getPubKey(), foundKey.getPubKey());
         assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
-        assertEquals(myKey.getCreationTime(), foundKey.getCreationTime());
+        assertEquals(myKey.creationTime(), foundKey.creationTime());
     }
 
     @Test
@@ -354,9 +354,9 @@ public class WalletProtobufSerializerTest {
         Wallet wallet2 = roundTrip(wallet);
         Wallet wallet3 = roundTrip(wallet2);
         assertEquals(xpub, wallet.getWatchingKey().serializePubB58(TESTNET.network()));
-        assertEquals(creationTime, wallet.getWatchingKey().getCreationTime().get());
-        assertEquals(creationTime, wallet2.getWatchingKey().getCreationTime().get());
-        assertEquals(creationTime, wallet3.getWatchingKey().getCreationTime().get());
+        assertEquals(creationTime, wallet.getWatchingKey().creationTime().get());
+        assertEquals(creationTime, wallet2.getWatchingKey().creationTime().get());
+        assertEquals(creationTime, wallet3.getWatchingKey().creationTime().get());
         assertEquals(creationTime, wallet.earliestKeyCreationTime());
         assertEquals(creationTime, wallet2.earliestKeyCreationTime());
         assertEquals(creationTime, wallet3.earliestKeyCreationTime());

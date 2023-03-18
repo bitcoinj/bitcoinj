@@ -268,7 +268,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     @Override
-    public Optional<Instant> getCreationTime() {
+    public Optional<Instant> creationTime() {
         return Optional.ofNullable(creationTime);
     }
 

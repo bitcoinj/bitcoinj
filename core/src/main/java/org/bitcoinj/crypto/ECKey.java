@@ -122,7 +122,7 @@ public class ECKey implements EncryptableItem {
     private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = ByteUtils.arrayUnsignedComparator();
 
     /** Sorts oldest keys first, newest last. */
-    public static final Comparator<ECKey> AGE_COMPARATOR = Comparator.comparing(ecKey -> ecKey.getCreationTime().orElse(Instant.EPOCH));
+    public static final Comparator<ECKey> AGE_COMPARATOR = Comparator.comparing(ecKey -> ecKey.creationTime().orElse(Instant.EPOCH));
 
     /** Compares by extracting pub key as a {@code byte[]} and using a lexicographic comparator */
     public static final Comparator<ECKey> PUBKEY_COMPARATOR = Comparator.comparing(ECKey::getPubKey, LEXICOGRAPHICAL_COMPARATOR);
@@ -1080,7 +1080,7 @@ public class ECKey implements EncryptableItem {
      * that data.
      */
     @Override
-    public Optional<Instant> getCreationTime() {
+    public Optional<Instant> creationTime() {
         return Optional.ofNullable(creationTime);
     }
 

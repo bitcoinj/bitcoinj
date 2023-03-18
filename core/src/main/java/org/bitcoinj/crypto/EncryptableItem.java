@@ -43,12 +43,12 @@ public interface EncryptableItem {
     Protos.Wallet.EncryptionType getEncryptionType();
 
     /** Returns the time at which this encryptable item was first created/derived, or empty of unknown. */
-    Optional<Instant> getCreationTime();
+    Optional<Instant> creationTime();
 
-    /** @deprecated use {@link #getCreationTime()} */
+    /** @deprecated use {@link #creationTime()} */
     @Deprecated
     default long getCreationTimeSeconds() {
-        Optional<Instant> creationTime = getCreationTime();
+        Optional<Instant> creationTime = creationTime();
         return creationTime.isPresent() ? creationTime.get().getEpochSecond() : 0;
     }
 }

@@ -397,7 +397,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
             rootKey = HDKeyDerivation.createMasterPrivateKey(Objects.requireNonNull(seed.getSeedBytes()));
-            Optional<Instant> creationTime = seed.getCreationTime();
+            Optional<Instant> creationTime = seed.creationTime();
             if (creationTime.isPresent())
                 rootKey.setCreationTime(creationTime.get());
             else
@@ -726,8 +726,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Override
     public Instant earliestKeyCreationTime() {
         return (seed != null ?
-                seed.getCreationTime() :
-                getWatchingKey().getCreationTime()
+                seed.creationTime() :
+                getWatchingKey().creationTime()
         ).orElse(Instant.EPOCH);
     }
 
@@ -1452,7 +1452,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     builder.append("Seed is encrypted\n");
             }
             builder.append("Seed birthday:     ");
-            Optional<Instant> seedCreationTime = seed.getCreationTime();
+            Optional<Instant> seedCreationTime = seed.creationTime();
             if (seedCreationTime.isPresent())
                 builder.append(seedCreationTime.get().getEpochSecond()).append("  [")
                         .append(TimeUtils.dateTimeFormat(seedCreationTime.get())).append("]");
@@ -1461,7 +1461,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             builder.append("\n");
         } else {
             builder.append("Key birthday:      ");
-            Optional<Instant> watchingKeyCreationTime = watchingKey.getCreationTime();
+            Optional<Instant> watchingKeyCreationTime = watchingKey.creationTime();
             if (watchingKeyCreationTime.isPresent())
                 builder.append(watchingKeyCreationTime.get().getEpochSecond()).append("  [")
                         .append(TimeUtils.dateTimeFormat(watchingKeyCreationTime.get())).append("]");

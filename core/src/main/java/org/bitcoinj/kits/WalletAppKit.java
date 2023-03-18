@@ -339,13 +339,13 @@ public class WalletAppKit extends AbstractIdleService {
                 // Initialize the chain file with a checkpoint to speed up first-run sync.
                 Instant time;
                 if (restoreFromSeed != null) {
-                    time = restoreFromSeed.getCreationTime().orElse(Instant.EPOCH);
+                    time = restoreFromSeed.creationTime().orElse(Instant.EPOCH);
                     if (chainFileExists) {
                         log.info("Clearing the chain file in preparation for restore.");
                         vStore.clear();
                     }
                 } else if (restoreFromKey != null) {
-                    time = restoreFromKey.getCreationTime().orElse(Instant.EPOCH);
+                    time = restoreFromKey.creationTime().orElse(Instant.EPOCH);
                     if (chainFileExists) {
                         log.info("Clearing the chain file in preparation for restore.");
                         vStore.clear();

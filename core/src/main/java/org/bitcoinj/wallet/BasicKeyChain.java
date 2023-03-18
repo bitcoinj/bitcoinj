@@ -295,7 +295,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             return hashToKeys.values().stream()
-                    .map(key -> key.getCreationTime().orElse(Instant.EPOCH))
+                    .map(key -> key.creationTime().orElse(Instant.EPOCH))
                     .min(Instant::compareTo)
                     .orElse(Instant.MAX);
         } finally {
@@ -348,7 +348,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
     /*package*/ static Protos.Key.Builder serializeEncryptableItem(EncryptableItem item) {
         Protos.Key.Builder proto = Protos.Key.newBuilder();
-        item.getCreationTime().ifPresent(creationTime -> proto.setCreationTimestamp(creationTime.toEpochMilli()));
+        item.creationTime().ifPresent(creationTime -> proto.setCreationTimestamp(creationTime.toEpochMilli()));
         if (item.isEncrypted() && item.getEncryptedData() != null) {
             // The encrypted data can be missing for an "encrypted" key in the case of a deterministic wallet for
             // which the leaf keys chain to an encrypted parent and rederive their private keys on the fly. In that
@@ -629,9 +629,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
         try {
             ECKey oldest = null;
             for (ECKey key : hashToKeys.values()) {
-                Instant keyTime = key.getCreationTime().orElse(Instant.EPOCH);
+                Instant keyTime = key.creationTime().orElse(Instant.EPOCH);
                 if (keyTime.isAfter(time)) {
-                    if (oldest == null || oldest.getCreationTime().orElse(Instant.EPOCH).isAfter(keyTime))
+                    if (oldest == null || oldest.creationTime().orElse(Instant.EPOCH).isAfter(keyTime))
                         oldest = key;
                 }
             }
@@ -654,7 +654,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         try {
             List<ECKey> results = new LinkedList<>();
             for (ECKey key : hashToKeys.values()) {
-                Instant keyTime = key.getCreationTime().orElse(Instant.EPOCH);
+                Instant keyTime = key.creationTime().orElse(Instant.EPOCH);
                 if (keyTime.isBefore(time)) {
                     results.add(key);
                 }

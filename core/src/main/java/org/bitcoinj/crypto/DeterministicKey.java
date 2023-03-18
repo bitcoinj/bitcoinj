@@ -308,7 +308,7 @@ public class DeterministicKey extends ECKey {
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
         DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
         if (newParent == null) {
-            Optional<Instant> creationTime = getCreationTime();
+            Optional<Instant> creationTime = this.creationTime();
             if (creationTime.isPresent())
                 key.setCreationTime(creationTime.get());
             else
@@ -388,7 +388,7 @@ public class DeterministicKey extends ECKey {
         if (!Arrays.equals(key.getPubKey(), getPubKey()))
             throw new KeyCrypterException.PublicPrivateMismatch("Provided AES key is wrong");
         if (parent == null) {
-            Optional<Instant> creationTime = getCreationTime();
+            Optional<Instant> creationTime = this.creationTime();
             if (creationTime.isPresent())
                 key.setCreationTime(creationTime.get());
             else
@@ -705,14 +705,14 @@ public class DeterministicKey extends ECKey {
 
     /**
      * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
-     * in which case the time is stored alongside the key as per normal, see {@link ECKey#getCreationTime()}.
+     * in which case the time is stored alongside the key as per normal, see {@link ECKey#creationTime()}.
      */
     @Override
-    public Optional<Instant> getCreationTime() {
+    public Optional<Instant> creationTime() {
         if (parent != null)
-            return parent.getCreationTime();
+            return parent.creationTime();
         else
-            return super.getCreationTime();
+            return super.creationTime();
     }
 
     /**
@@ -776,7 +776,7 @@ public class DeterministicKey extends ECKey {
         helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
         helper.add("chainCode", ByteUtils.formatHex(chainCode));
         helper.add("path", getPathAsString());
-        Optional<Instant> creationTime = getCreationTime();
+        Optional<Instant> creationTime = this.creationTime();
         if (!creationTime.isPresent())
             helper.add("creationTimeSeconds", "unknown");
         else if (parent != null)

@@ -82,7 +82,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
                     continue;
                 }
                 Objects.requireNonNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
-                if (controllingKey.getCreationTime().orElse(Instant.EPOCH).compareTo(time) >= 0) continue;
+                if (controllingKey.creationTime().orElse(Instant.EPOCH).compareTo(time) >= 0) continue;
                 // It's older than the cutoff time so select.
                 gathered.push(output);
                 if (gathered.size() >= MAX_SIMULTANEOUS_INPUTS) {
