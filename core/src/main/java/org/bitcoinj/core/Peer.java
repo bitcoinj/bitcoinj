@@ -58,6 +58,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -167,8 +168,8 @@ public class Peer extends PeerSocketHandler {
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
-    private final ReentrantLock lastPingTimesLock = new ReentrantLock();
-    @GuardedBy("lastPingTimesLock") private long[] lastPingTimes = null;
+    private final ReentrantLock pingIntervalsLock = new ReentrantLock();
+    @GuardedBy("pingIntervalsLock") private Duration[] pingIntervals = null;
     private final CopyOnWriteArrayList<PendingPing> pendingPings;
     // Disconnect from a peer that is not responding to Pings
     private static final int PENDING_PINGS_LIMIT = 50;
@@ -1498,7 +1499,7 @@ public class Peer extends PeerSocketHandler {
         public void complete() {
             if (!future.isDone()) {
                 Duration elapsed = TimeUtils.elapsedTime(startTime);
-                Peer.this.addPingTimeData(elapsed.toMillis());
+                Peer.this.addPingInterval(elapsed);
                 if (log.isDebugEnabled())
                     log.debug("{}: ping time is {} ms", Peer.this.toString(), elapsed.toMillis());
                 future.complete(elapsed);
@@ -1507,28 +1508,28 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Adds a ping time sample to the averaging window. */
-    private void addPingTimeData(long sample) {
-        lastPingTimesLock.lock();
+    private void addPingInterval(Duration sample) {
+        pingIntervalsLock.lock();
         try {
-            if (lastPingTimes == null) {
-                lastPingTimes = new long[PING_MOVING_AVERAGE_WINDOW];
+            if (pingIntervals == null) {
+                pingIntervals = new Duration[PING_MOVING_AVERAGE_WINDOW];
                 // Initialize the averaging window to the first sample.
-                Arrays.fill(lastPingTimes, sample);
+                Arrays.fill(pingIntervals, sample);
             } else {
                 // Shift all elements backwards by one.
-                System.arraycopy(lastPingTimes, 1, lastPingTimes, 0, lastPingTimes.length - 1);
+                System.arraycopy(pingIntervals, 1, pingIntervals, 0, pingIntervals.length - 1);
                 // And append the new sample to the end.
-                lastPingTimes[lastPingTimes.length - 1] = sample;
+                pingIntervals[pingIntervals.length - 1] = sample;
             }
         } finally {
-            lastPingTimesLock.unlock();
+            pingIntervalsLock.unlock();
         }
     }
 
     /**
      * Sends the peer a ping message and returns a future that will be completed when the pong is received back.
      * The future provides a {@link Duration} which contains the time elapsed between the ping and the pong.
-     * Once the pong is received the value returned by {@link Peer#getLastPingTime()} is updated.
+     * Once the pong is received the value returned by {@link Peer#lastPingInterval()} is updated.
      * The future completes exceptionally with a {@link ProtocolException} if the peer version is too low to support measurable pings.
      * @return A future for the duration representing elapsed time
      */
@@ -1560,35 +1561,55 @@ public class Peer extends PeerSocketHandler {
 
     /**
      * Returns the elapsed time of the last ping/pong cycle. If {@link Peer#sendPing()} has never
-     * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
+     * been called or we did not hear back the "pong" message yet, returns empty.
+     * @return last ping, or empty
      */
-    public long getLastPingTime() {
-        lastPingTimesLock.lock();
+    public Optional<Duration> lastPingInterval() {
+        pingIntervalsLock.lock();
         try {
-            if (lastPingTimes == null)
-                return Long.MAX_VALUE;
-            return lastPingTimes[lastPingTimes.length - 1];
+            if (pingIntervals == null || pingIntervals.length == 0)
+                return Optional.empty();
+            return Optional.of(pingIntervals[pingIntervals.length - 1]);
         } finally {
-            lastPingTimesLock.unlock();
+            pingIntervalsLock.unlock();
         }
+    }
+
+    /** @deprecated use {@link #lastPingInterval()} */
+    @Deprecated
+    public long getLastPingTime() {
+        Optional<Duration> lastPingInterval = lastPingInterval();
+        return lastPingInterval.isPresent() ?
+                lastPingInterval.get().toMillis() :
+                Long.MAX_VALUE;
     }
 
     /**
      * Returns a moving average of the last N ping/pong cycles. If {@link Peer#sendPing()} has never
-     * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}. The moving average
+     * been called or we did not hear back the "pong" message yet, returns empty. The moving average
      * window is 5 buckets.
+     * @return moving average, or empty
      */
-    public long getPingTime() {
-        lastPingTimesLock.lock();
+    public Optional<Duration> pingInterval() {
+        pingIntervalsLock.lock();
         try {
-            if (lastPingTimes == null)
-                return Long.MAX_VALUE;
-            long sum = 0;
-            for (long i : lastPingTimes) sum += i;
-            return (long)((double) sum / lastPingTimes.length);
+            if (pingIntervals == null || pingIntervals.length == 0)
+                return Optional.empty();
+            Duration sum = Duration.ZERO;
+            for (Duration i : pingIntervals) sum = sum.plus(i);
+            return Optional.of(sum.dividedBy(pingIntervals.length));
         } finally {
-            lastPingTimesLock.unlock();
+            pingIntervalsLock.unlock();
         }
+    }
+
+    /** @deprecated use {@link #pingInterval()} */
+    @Deprecated
+    public long getPingTime() {
+        Optional<Duration> pingInterval = pingInterval();
+        return pingInterval.isPresent() ?
+                pingInterval.get().toMillis() :
+                Long.MAX_VALUE;
     }
 
     private void processPing(Ping m) {

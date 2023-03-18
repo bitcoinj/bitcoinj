@@ -2248,7 +2248,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Returns the period between pings for an individual peer. Setting this lower means more accurate and timely ping
-     * times are available via {@link Peer#getLastPingTime()} but it increases load on the
+     * times are available via {@link Peer#lastPingInterval()} but it increases load on the
      * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
      */
     public long getPingIntervalMsec() {
@@ -2262,7 +2262,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /**
      * Sets the period between pings for an individual peer. Setting this lower means more accurate and timely ping
-     * times are available via {@link Peer#getLastPingTime()} but it increases load on the
+     * times are available via {@link Peer#lastPingInterval()} but it increases load on the
      * remote node. It defaults to {@link PeerGroup#DEFAULT_PING_INTERVAL_MSEC}.
      * Setting the value to be smaller or equals 0 disables pinging entirely, although you can still request one yourself
      * using {@link Peer#sendPing()}.

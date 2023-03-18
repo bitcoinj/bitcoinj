@@ -35,6 +35,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -255,9 +256,9 @@ public class PeerMonitor {
                     Coin feeFilter = peer.getFeeFilter();
                     return feeFilter != null ? feeFilter.toFriendlyString() : "";
                 case PING_TIME:
-                    return peer.getPingTime();
+                    return peer.pingInterval().map(Duration::toMillis).orElse(0L);
                 case LAST_PING_TIME:
-                    return peer.getLastPingTime();
+                    return peer.lastPingInterval().map(Duration::toMillis).orElse(0L);
                 case ADDRESSES:
                     return getAddressesForPeer(peer);
 
