@@ -221,7 +221,7 @@ public class WalletProtobufSerializer {
             }
         }
 
-        Optional<Instant> keyRotationTime = wallet.getKeyRotationTimeInstant();
+        Optional<Instant> keyRotationTime = wallet.keyRotationTime();
         if (keyRotationTime.isPresent()) {
             long timeSecs = keyRotationTime.get().getEpochSecond();
             walletBuilder.setKeyRotationTime(timeSecs);

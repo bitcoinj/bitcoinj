@@ -3533,7 +3533,7 @@ public class Wallet extends BaseTaggableObject
             builder.append("\nKeys:\n");
             builder.append("Earliest creation time: ").append(TimeUtils.dateTimeFormat(earliestKeyCreationTime()))
                     .append('\n');
-            final Optional<Instant> keyRotationTime = getKeyRotationTimeInstant();
+            final Optional<Instant> keyRotationTime = keyRotationTime();
             if (keyRotationTime.isPresent())
                 builder.append("Key rotation time:      ").append(TimeUtils.dateTimeFormat(keyRotationTime.get())).append('\n');
             builder.append(keyChainGroup.toString(includeLookahead, includePrivateKeys, aesKey));
@@ -5418,11 +5418,11 @@ public class Wallet extends BaseTaggableObject
      * Returns the key rotation time, or empty if unconfigured. See {@link #setKeyRotationTime(Instant)} for a description
      * of the field.
      */
-    public Optional<Instant> getKeyRotationTimeInstant() {
+    public Optional<Instant> keyRotationTime() {
         return Optional.ofNullable(vKeyRotationTime);
     }
 
-    /** @deprecated use {@link #getKeyRotationTimeInstant()} */
+    /** @deprecated use {@link #keyRotationTime()} */
     @Deprecated
     public @Nullable Date getKeyRotationTime() {
         Instant keyRotationTime = vKeyRotationTime;

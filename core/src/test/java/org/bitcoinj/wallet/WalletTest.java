@@ -2966,7 +2966,7 @@ public class WalletTest extends TestWithWallet {
         Objects.requireNonNull(tx);
         assertEquals(Transaction.Purpose.KEY_ROTATION, tx.getPurpose());
         // Have to divide here to avoid mismatch due to second-level precision in serialisation.
-        assertEquals(compromiseTime, wallet.getKeyRotationTimeInstant().get());
+        assertEquals(compromiseTime, wallet.keyRotationTime().get());
 
         // Make a normal spend and check it's all ok.
         wallet.sendCoins(broadcaster, OTHER_ADDRESS, wallet.getBalance());
