@@ -409,9 +409,9 @@ public class KeyChainGroupTest {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
         assertEquals(now, group.earliestKeyCreationTime());
-        TimeUtils.rollMockClock(Duration.ofSeconds(10000));
+        TimeUtils.rollMockClock(Duration.ofSeconds(10_000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        TimeUtils.rollMockClock(Duration.ofSeconds(10000));
+        TimeUtils.rollMockClock(Duration.ofSeconds(10_000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // Check that all keys are assumed to be created at the same instant the seed is.
         assertEquals(now, group.earliestKeyCreationTime());

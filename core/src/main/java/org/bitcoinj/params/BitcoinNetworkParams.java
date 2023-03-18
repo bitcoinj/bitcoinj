@@ -59,7 +59,7 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
     /**
      * Block reward halving interval (number of blocks)
      */
-    public static final int REWARD_HALVING_INTERVAL = 210000;
+    public static final int REWARD_HALVING_INTERVAL = 210_000;
 
     private static final Logger log = LoggerFactory.getLogger(BitcoinNetworkParams.class);
 

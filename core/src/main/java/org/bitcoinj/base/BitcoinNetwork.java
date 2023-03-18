@@ -51,7 +51,7 @@ public enum BitcoinNetwork implements Network {
     /**
      * The maximum number of coins to be generated
      */
-    private static final long MAX_COINS = 21000000;
+    private static final long MAX_COINS = 21_000_000;
 
     /**
      * The maximum money to be generated
