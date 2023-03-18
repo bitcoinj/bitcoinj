@@ -42,7 +42,7 @@ public class WatchMempool {
     private static final Map<String, Integer> counters = new HashMap<>();
     private static final String TOTAL_KEY = "TOTAL";
     private static final long START_MS = System.currentTimeMillis();
-    private static final long STATISTICS_FREQUENCY_MS = 1000 * 5;
+    private static final long STATISTICS_FREQUENCY_MS = 5_000;
 
     public static void main(String[] args) throws InterruptedException {
         BriefLogFormatter.init();
