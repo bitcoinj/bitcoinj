@@ -102,7 +102,7 @@ public class Transaction extends ChildMessage {
 
     // helps the above comparator by handling transactions with unknown update time
     private static Instant sortableUpdateTime(Transaction tx) {
-        return tx.getUpdateTimeInstant().orElse(Instant.EPOCH);
+        return tx.updateTime().orElse(Instant.EPOCH);
     }
 
     /**
@@ -540,14 +540,14 @@ public class Transaction extends ChildMessage {
      * Returns the earliest time at which the transaction was seen (broadcast or included into the chain),
      * or empty if that information isn't available.
      */
-    public Optional<Instant> getUpdateTimeInstant() {
+    public Optional<Instant> updateTime() {
         return Optional.ofNullable(updateTime);
     }
 
-    /** @deprecated use {@link #getUpdateTimeInstant()} */
+    /** @deprecated use {@link #updateTime()} */
     @Deprecated
     public Date getUpdateTime() {
-        return Date.from(getUpdateTimeInstant().orElse(Instant.EPOCH));
+        return Date.from(updateTime().orElse(Instant.EPOCH));
     }
 
     /**
@@ -836,7 +836,7 @@ public class Transaction extends ChildMessage {
         if (size != vsize)
             s.append(vsize).append(" virtual bytes, ");
         s.append(size).append(" bytes\n");
-        getUpdateTimeInstant().ifPresent(
+        updateTime().ifPresent(
                 time -> s.append(indent).append("updated: ").append(TimeUtils.dateTimeFormat(time)).append('\n'));
         if (version != 1)
             s.append(indent).append("version ").append(version).append('\n');

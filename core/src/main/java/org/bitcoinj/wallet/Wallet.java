@@ -2017,7 +2017,7 @@ public class Wallet extends BaseTaggableObject
                 // two wallets depend on the same transaction.
                 Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
                 cloneTx.setPurpose(tx.getPurpose());
-                Optional<Instant> updateTime = tx.getUpdateTimeInstant();
+                Optional<Instant> updateTime = tx.updateTime();
                 if (updateTime.isPresent())
                     cloneTx.setUpdateTime(updateTime.get());
                 else
@@ -2040,7 +2040,7 @@ public class Wallet extends BaseTaggableObject
             // two wallets depend on the same transaction.
             Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
             cloneTx.setPurpose(tx.getPurpose());
-            Optional<Instant> updateTime = tx.getUpdateTimeInstant();
+            Optional<Instant> updateTime = tx.updateTime();
             if (updateTime.isPresent())
                 cloneTx.setUpdateTime(updateTime.get());
             else

@@ -258,7 +258,7 @@ public class WalletProtobufSerializer {
                  .setHash(hashToByteString(tx.getTxId()))
                  .setVersion((int) tx.getVersion());
 
-        tx.getUpdateTimeInstant().ifPresent(
+        tx.updateTime().ifPresent(
                 time -> txBuilder.setUpdatedAt(time.toEpochMilli()));
 
         LockTime locktime = tx.lockTime();
