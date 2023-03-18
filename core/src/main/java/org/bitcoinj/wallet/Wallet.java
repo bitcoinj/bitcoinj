@@ -3638,7 +3638,7 @@ public class Wallet extends BaseTaggableObject
     public Instant earliestKeyCreationTime() {
         keyChainGroupLock.lock();
         try {
-            Instant earliestTime = keyChainGroup.getEarliestKeyCreationTimeInstant();
+            Instant earliestTime = keyChainGroup.earliestKeyCreationTime();
             for (Script script : watchedScripts)
                 earliestTime = TimeUtils.earlier(script.getCreationTime().orElse(Instant.EPOCH), earliestTime);
             return earliestTime;

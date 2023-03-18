@@ -850,14 +850,14 @@ public class KeyChainGroup implements KeyBag {
      *         {@link Instant#EPOCH} if at least one time is unknown,
      *         {@link Instant#MAX} if no keys in this group
      */
-    public Instant getEarliestKeyCreationTimeInstant() {
+    public Instant earliestKeyCreationTime() {
         return TimeUtils.earlier(basic.earliestKeyCreationTime(), getEarliestChainsCreationTime());
     }
 
-    /** @deprecated use {@link #getEarliestKeyCreationTimeInstant()} */
+    /** @deprecated use {@link #earliestKeyCreationTime()} */
     @Deprecated
     public long getEarliestKeyCreationTime() {
-        Instant earliestKeyCreationTime = getEarliestKeyCreationTimeInstant();
+        Instant earliestKeyCreationTime = earliestKeyCreationTime();
         return earliestKeyCreationTime.equals(Instant.MAX) ? Long.MAX_VALUE : earliestKeyCreationTime.getEpochSecond();
     }
 

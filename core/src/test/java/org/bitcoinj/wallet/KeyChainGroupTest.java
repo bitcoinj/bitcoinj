@@ -262,7 +262,7 @@ public class KeyChainGroupTest {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(now, group.getEarliestKeyCreationTimeInstant());
+        assertEquals(now, group.earliestKeyCreationTime());
         Instant yesterday = now.minus(1, ChronoUnit.DAYS);
         TimeUtils.setMockClock(yesterday);
         ECKey b = new ECKey();
@@ -274,9 +274,9 @@ public class KeyChainGroupTest {
         } catch (IllegalStateException e) {
         }
         if (withImported) {
-            assertEquals(now, group.getEarliestKeyCreationTimeInstant());
+            assertEquals(now, group.earliestKeyCreationTime());
             group.importKeys(b);
-            assertEquals(yesterday, group.getEarliestKeyCreationTimeInstant());
+            assertEquals(yesterday, group.earliestKeyCreationTime());
         }
         group.encrypt(KEY_CRYPTER, AES_KEY);
         assertTrue(group.isEncrypted());
@@ -286,9 +286,9 @@ public class KeyChainGroupTest {
         assertTrue(Objects.requireNonNull(ea).isEncrypted());
         if (withImported) {
             assertTrue(Objects.requireNonNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
-            assertEquals(yesterday, group.getEarliestKeyCreationTimeInstant());
+            assertEquals(yesterday, group.earliestKeyCreationTime());
         } else {
-            assertEquals(now, group.getEarliestKeyCreationTimeInstant());
+            assertEquals(now, group.earliestKeyCreationTime());
         }
         try {
             ea.sign(Sha256Hash.ZERO_HASH);
@@ -323,9 +323,9 @@ public class KeyChainGroupTest {
         assertFalse(Objects.requireNonNull(group.findKeyFromPubKey(a.getPubKey())).isEncrypted());
         if (withImported) {
             assertFalse(Objects.requireNonNull(group.findKeyFromPubKey(b.getPubKey())).isEncrypted());
-            assertEquals(yesterday, group.getEarliestKeyCreationTimeInstant());
+            assertEquals(yesterday, group.earliestKeyCreationTime());
         } else {
-            assertEquals(now, group.getEarliestKeyCreationTimeInstant());
+            assertEquals(now, group.earliestKeyCreationTime());
         }
     }
 
@@ -408,18 +408,18 @@ public class KeyChainGroupTest {
     public void earliestKeyTime() {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
-        assertEquals(now, group.getEarliestKeyCreationTimeInstant());
+        assertEquals(now, group.earliestKeyCreationTime());
         TimeUtils.rollMockClock(Duration.ofSeconds(10000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         TimeUtils.rollMockClock(Duration.ofSeconds(10000));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // Check that all keys are assumed to be created at the same instant the seed is.
-        assertEquals(now, group.getEarliestKeyCreationTimeInstant());
+        assertEquals(now, group.earliestKeyCreationTime());
         ECKey key = new ECKey();
         Instant yesterday = now.minus(1, ChronoUnit.DAYS);
         key.setCreationTime(yesterday);
         group.importKeys(key);
-        assertEquals(yesterday, group.getEarliestKeyCreationTimeInstant());
+        assertEquals(yesterday, group.earliestKeyCreationTime());
     }
 
     @Test
