@@ -270,18 +270,18 @@ public class PaymentSession {
     /**
      * Returns the expires time of the payment request, or empty if none.
      */
-    public Optional<Instant> getExpiresInstant() {
+    public Optional<Instant> expires() {
         if (paymentDetails.hasExpires())
             return Optional.of(Instant.ofEpochSecond(paymentDetails.getExpires()));
         else
             return Optional.empty();
     }
 
-    /** @deprecated use {@link #getExpiresInstant()} */
+    /** @deprecated use {@link #expires()} */
     @Nullable
     @Deprecated
     public Date getExpires() {
-        return getExpiresInstant()
+        return expires()
                 .map(Date::from)
                 .orElse(null);
     }
@@ -290,7 +290,7 @@ public class PaymentSession {
      * This should always be called before attempting to call sendPayment.
      */
     public boolean isExpired() {
-        return getExpiresInstant()
+        return expires()
                 .map(time -> TimeUtils.currentTime().isAfter(time))
                 .orElse(false);
     }
