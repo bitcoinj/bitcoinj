@@ -146,10 +146,10 @@ public class BuildCheckpoints implements Callable<Integer> {
 
         chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
             int height = block.getHeight();
-            if (height % params.getInterval() == 0 && timeAgo.isAfter(block.getHeader().getTimeInstant())) {
+            if (height % params.getInterval() == 0 && timeAgo.isAfter(block.getHeader().time())) {
                 System.out.println(String.format("Checkpointing block %s at height %d, time %s",
                         block.getHeader().getHash(), block.getHeight(),
-                        TimeUtils.dateTimeFormat(block.getHeader().getTimeInstant())));
+                        TimeUtils.dateTimeFormat(block.getHeader().time())));
                 checkpoints.put(height, block);
             }
         });

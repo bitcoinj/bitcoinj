@@ -1039,7 +1039,7 @@ public abstract class AbstractBlockChain {
     public Instant estimateBlockTimeInstant(int height) {
         synchronized (chainHeadLock) {
             long offset = height - chainHead.getHeight();
-            Instant headTime = chainHead.getHeader().getTimeInstant();
+            Instant headTime = chainHead.getHeader().time();
             return headTime.plus(10 * offset, ChronoUnit.MINUTES);
         }
     }

@@ -425,7 +425,7 @@ public class PeerGroup implements TransactionBroadcaster {
         Context.getOrCreate(); // create a context for convenience
         this.params = params;
         this.chain = chain;
-        fastCatchupTime = params.getGenesisBlock().getTimeInstant();
+        fastCatchupTime = params.getGenesisBlock().time();
         wallets = new CopyOnWriteArrayList<>();
         peerFilterProviders = new CopyOnWriteArrayList<>();
 

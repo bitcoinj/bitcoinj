@@ -420,7 +420,7 @@ public class Transaction extends ChildMessage {
      * @param relativityOffset A number that disambiguates the order of transactions within a block.
      */
     public void setBlockAppearance(StoredBlock block, boolean bestChain, int relativityOffset) {
-        Instant blockTime = block.getHeader().getTimeInstant();
+        Instant blockTime = block.getHeader().time();
         if (bestChain && (updateTime == null || updateTime.equals(Instant.EPOCH) || updateTime.isAfter(blockTime))) {
             updateTime = blockTime;
         }

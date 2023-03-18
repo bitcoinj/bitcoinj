@@ -238,7 +238,7 @@ public class Peer extends PeerSocketHandler {
         this.vDownloadData = chain != null;
         this.getDataFutures = new ConcurrentLinkedQueue<>();
         this.getAddrFutures = new LinkedList<>();
-        this.fastCatchupTime = params.getGenesisBlock().getTimeInstant();
+        this.fastCatchupTime = params.getGenesisBlock().time();
         this.pendingPings = new CopyOnWriteArrayList<>();
         this.vMinProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
         this.wallets = new CopyOnWriteArrayList<>();
@@ -637,7 +637,7 @@ public class Peer extends PeerSocketHandler {
                 // Process headers until we pass the fast catchup time, or are about to catch up with the head
                 // of the chain - always process the last block as a full/filtered block to kick us out of the
                 // fast catchup mode (in which we ignore new blocks).
-                boolean passedTime = header.getTimeInstant().compareTo(fastCatchupTime) >= 0;
+                boolean passedTime = header.time().compareTo(fastCatchupTime) >= 0;
                 boolean reachedTop = blockChain.getBestChainHeight() >= vPeerVersionMessage.bestHeight;
                 if (!passedTime && !reachedTop) {
                     if (!vDownloadData) {
@@ -1320,7 +1320,7 @@ public class Peer extends PeerSocketHandler {
             this.fastCatchupTime = fastCatchupTime;
             // If the given time is before the current chains head block time, then this has no effect (we already
             // downloaded everything we need).
-            if (blockChain != null && this.fastCatchupTime.isAfter(blockChain.getChainHead().getHeader().getTimeInstant()))
+            if (blockChain != null && this.fastCatchupTime.isAfter(blockChain.getChainHead().getHeader().time()))
                 downloadBlockBodies = false;
             this.useFilteredBlocks = useFilteredBlocks;
         } finally {
@@ -1335,7 +1335,7 @@ public class Peer extends PeerSocketHandler {
     public void setDownloadParameters(boolean useFilteredBlocks) {
         lock.lock();
         try {
-            this.fastCatchupTime = params.getGenesisBlock().getTimeInstant();
+            this.fastCatchupTime = params.getGenesisBlock().time();
             downloadBlockBodies = true;
             this.useFilteredBlocks = useFilteredBlocks;
         } finally {

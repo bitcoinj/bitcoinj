@@ -69,7 +69,7 @@ public class DownloadProgressTracker implements BlockchainDownloadEventListener 
             caughtUp = true;
             if (lastPercent != 100) {
                 lastPercent = 100;
-                progress(lastPercent, blocksLeft, block.getTimeInstant());
+                progress(lastPercent, blocksLeft, block.time());
             }
             doneDownload();
             future.complete(peer.getBestHeight());
@@ -81,7 +81,7 @@ public class DownloadProgressTracker implements BlockchainDownloadEventListener 
 
         double pct = 100.0 - (100.0 * (blocksLeft / (double) originalBlocksLeft));
         if ((int) pct != lastPercent) {
-            progress(pct, blocksLeft, block.getTimeInstant());
+            progress(pct, blocksLeft, block.time());
             lastPercent = (int) pct;
         }
     }

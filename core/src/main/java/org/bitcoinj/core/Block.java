@@ -904,14 +904,14 @@ public class Block extends Message {
     /**
      * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
      */
-    public Instant getTimeInstant() {
+    public Instant time() {
         return time;
     }
 
     /**
      * Returns the time at which the block was solved and broadcast, according to the clock of the solving node. This
      * is measured in seconds since the UNIX epoch (midnight Jan 1st 1970).
-     * @deprecated use {@link #getTimeInstant()}
+     * @deprecated use {@link #time()}
      */
     @Deprecated
     public long getTimeSeconds() {
@@ -920,11 +920,11 @@ public class Block extends Message {
 
     /**
      * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
-     * @deprecated use {@link #getTimeInstant()}
+     * @deprecated use {@link #time()}
      */
     @Deprecated
     public Date getTime() {
-        return Date.from(getTimeInstant());
+        return Date.from(time());
     }
 
     @VisibleForTesting
@@ -1059,8 +1059,8 @@ public class Block extends Message {
         b.setPrevBlockHash(getHash());
         // Don't let timestamp go backwards
         Instant bitcoinTime = time.truncatedTo(ChronoUnit.SECONDS);
-        if (getTimeInstant().compareTo(bitcoinTime) >= 0)
-            b.setTime(getTimeInstant().plusSeconds(1));
+        if (time().compareTo(bitcoinTime) >= 0)
+            b.setTime(time().plusSeconds(1));
         else
             b.setTime(bitcoinTime);
         b.solve();
@@ -1086,12 +1086,12 @@ public class Block extends Message {
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, getTimeInstant().plusSeconds(5), pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, time().plusSeconds(5), pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, Coin value) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, getTimeInstant().plusSeconds(5), pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, time().plusSeconds(5), pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
     }
 
     @VisibleForTesting

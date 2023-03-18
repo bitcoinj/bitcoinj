@@ -994,7 +994,7 @@ public class WalletTool implements Callable<Integer> {
                             wallet.getEarliestKeyCreationTimeInstant());
                     StoredBlock head = store.getChainHead();
                     System.out.println("Skipped to checkpoint " + head.getHeight() + " at "
-                            + TimeUtils.dateTimeFormat(head.getHeader().getTimeInstant()));
+                            + TimeUtils.dateTimeFormat(head.getHeader().time()));
                 } catch (IOException x) {
                     System.out.println("Could not load checkpoints: " + x.getMessage());
                 }
