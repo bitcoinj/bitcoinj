@@ -1491,7 +1491,7 @@ public class PeerGroup implements TransactionBroadcaster {
         checkState(lock.isHeldByCurrentThread());
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
-        ver.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
+        ver.time = TimeUtils.currentBitcoinTime();
         ver.receivingAddr = address;
         ver.receivingAddr.setParent(ver);
 

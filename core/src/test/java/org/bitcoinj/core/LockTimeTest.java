@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.LockTime.HeightLock;
 import org.bitcoinj.core.LockTime.TimeLock;
 import org.junit.Test;
@@ -63,7 +64,7 @@ public class LockTimeTest {
 
     @Test
     public void timestampSubtype() {
-        LockTime timestamp = LockTime.ofTimestamp(Instant.now());
+        LockTime timestamp = LockTime.ofTimestamp(TimeUtils.currentBitcoinTime());
         assertTrue(timestamp instanceof TimeLock);
         assertTrue(((TimeLock) timestamp).timestamp().isAfter(Instant.EPOCH));
     }
@@ -97,7 +98,7 @@ public class LockTimeTest {
                 new Object[] { 499_999_999, HeightLock.class },
                 new Object[] { 500_000_000, TimeLock.class },
                 new Object[] { Long.MAX_VALUE, TimeLock.class },
-                new Object[] { Instant.now().getEpochSecond(), TimeLock.class },
+                new Object[] { TimeUtils.currentBitcoinTime().getEpochSecond(), TimeLock.class },
                 new Object[] { Instant.MAX.getEpochSecond(), TimeLock.class }
         };
     }

@@ -20,6 +20,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.TimeZone;
 
 /**
@@ -68,6 +69,28 @@ public class TimeUtils {
      */
     public static Instant currentTime() {
         return Instant.now(clock);
+    }
+
+    /**
+     * Returns the current time in "Bitcoin time", or a mocked out equivalent.
+     * Bitcoin time is used in the P2P protocol and represents seconds since epoch.
+     * It has no higher precision than the second.
+     */
+    public static Instant currentBitcoinTime() {
+        return currentTime().truncatedTo(ChronoUnit.SECONDS);
+    }
+
+    /**
+     * Ensures the given time is a "Bitcoin time".
+     * Bitcoin time is used in the P2P protocol and represents seconds since epoch.
+     * It has no higher precision than the second.
+     * @param time time to be checked for absence of precision higher than the second
+     * @return the time that was checked
+     */
+    public static Instant checkBitcoinTime(Instant time) {
+        Preconditions.checkArgument(time.getNano() == 0, () ->
+                "not a Bitcoin time: " + DateTimeFormatter.ISO_INSTANT.format(time));
+        return time;
     }
 
     /**

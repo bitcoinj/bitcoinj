@@ -29,7 +29,6 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -75,7 +74,7 @@ public class VersionMessage extends Message {
     /**
      * What the other side believes the current time to be.
      */
-    public Instant time;
+    public Instant time; // Bitcoin time
     /**
      * The network address of the node receiving this message.
      */
@@ -111,7 +110,7 @@ public class VersionMessage extends Message {
         super(params);
         clientVersion = serializer.getProtocolVersion();
         localServices = 0;
-        time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
+        time = TimeUtils.currentBitcoinTime();
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
