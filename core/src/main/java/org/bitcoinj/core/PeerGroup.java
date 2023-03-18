@@ -563,7 +563,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     return;
                 }
 
-                boolean havePeerWeCanTry = !inactives.isEmpty() && backoffMap.get(inactives.peek()).getRetryInstant().isBefore(now);
+                boolean havePeerWeCanTry = !inactives.isEmpty() && backoffMap.get(inactives.peek()).retryTime().isBefore(now);
                 doDiscovery = !havePeerWeCanTry;
             } finally {
                 firstRun = false;
@@ -590,7 +590,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 // Inactives is sorted by backoffMap time.
                 if (inactives.isEmpty()) {
                     if (countConnectedAndPendingPeers() < getMaxConnections()) {
-                        Duration interval = TimeUtils.longest(Duration.between(now, groupBackoff.getRetryInstant()), MIN_PEER_DISCOVERY_INTERVAL);
+                        Duration interval = TimeUtils.longest(Duration.between(now, groupBackoff.retryTime()), MIN_PEER_DISCOVERY_INTERVAL);
                         log.info("Peer discovery didn't provide us any more peers, will try again in "
                             + interval.toMillis() + " ms.");
                         executor.schedule(this, interval.toMillis(), TimeUnit.MILLISECONDS);
@@ -609,8 +609,8 @@ public class PeerGroup implements TransactionBroadcaster {
                     // Most likely we were given a fixed set of addresses in some test scenario.
                     return;
                 }
-                Instant retryTime = backoffMap.get(addrToTry).getRetryInstant();
-                retryTime = TimeUtils.later(retryTime, groupBackoff.getRetryInstant());
+                Instant retryTime = backoffMap.get(addrToTry).retryTime();
+                retryTime = TimeUtils.later(retryTime, groupBackoff.retryTime());
                 if (retryTime.isAfter(now)) {
                     Duration delay = Duration.between(now, retryTime);
                     log.info("Waiting {} ms before next connect attempt to {}", delay.toMillis(), addrToTry);

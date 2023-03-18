@@ -37,24 +37,24 @@ public class ExponentialBackoffTest {
 
     @Test
     public void testSuccess() {
-        assertEquals(TimeUtils.currentTime(), backoff.getRetryInstant());
+        assertEquals(TimeUtils.currentTime(), backoff.retryTime());
 
         backoff.trackFailure();
         backoff.trackFailure();
         backoff.trackSuccess();
 
-        assertEquals(TimeUtils.currentTime(), backoff.getRetryInstant());
+        assertEquals(TimeUtils.currentTime(), backoff.retryTime());
     }
 
     @Test
     public void testFailure() {
-        assertEquals(TimeUtils.currentTime(), backoff.getRetryInstant());
+        assertEquals(TimeUtils.currentTime(), backoff.retryTime());
 
         backoff.trackFailure();
         backoff.trackFailure();
         backoff.trackFailure();
 
-        assertEquals(TimeUtils.currentTime().plusMillis(121), backoff.getRetryInstant());
+        assertEquals(TimeUtils.currentTime().plusMillis(121), backoff.retryTime());
     }
 
     @Test

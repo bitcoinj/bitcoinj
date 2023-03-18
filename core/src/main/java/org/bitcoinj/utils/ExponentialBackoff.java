@@ -89,13 +89,13 @@ public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
     }
 
     /** Get the next time to retry */
-    public Instant getRetryInstant() {
+    public Instant retryTime() {
         return retryTime;
     }
 
     /**
      * Get the next time to retry, in milliseconds since the epoch
-     * @deprecated use {@link #getRetryInstant()}
+     * @deprecated use {@link #retryTime()}
      **/
     @Deprecated
     public long getRetryTime() {
