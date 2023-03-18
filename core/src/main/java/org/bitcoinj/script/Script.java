@@ -267,14 +267,14 @@ public class Script {
      * Gets the creation time of this script, or empty if unknown.
      * @return creation time of this script, or empty if unknown
      */
-    public Optional<Instant> getCreationTime() {
+    public Optional<Instant> creationTime() {
         return Optional.ofNullable(creationTime);
     }
 
-    /** @deprecated use {@link #getCreationTime()} */
+    /** @deprecated use {@link #creationTime()} */
     @Deprecated
     public long getCreationTimeSeconds() {
-        return getCreationTime().orElse(Instant.EPOCH).getEpochSecond();
+        return creationTime().orElse(Instant.EPOCH).getEpochSecond();
     }
 
     /**

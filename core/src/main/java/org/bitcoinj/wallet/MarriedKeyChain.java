@@ -252,7 +252,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         builder.append(script.getToAddress(params));
         builder.append("  hash160:");
         builder.append(ByteUtils.formatHex(script.getPubKeyHash()));
-        script.getCreationTime().ifPresent(creationTime -> builder.append("  creationTimeSeconds:").append(creationTime));
+        script.creationTime().ifPresent(creationTime -> builder.append("  creationTimeSeconds:").append(creationTime));
         builder.append('\n');
     }
 

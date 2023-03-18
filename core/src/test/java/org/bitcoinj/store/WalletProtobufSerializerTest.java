@@ -127,7 +127,7 @@ public class WalletProtobufSerializerTest {
         assertArrayEquals(myKey.getPrivKeyBytes(), foundKey.getPrivKeyBytes());
         assertEquals(myKey.creationTime(), foundKey.creationTime());
         assertEquals(mScriptCreationTime.truncatedTo(ChronoUnit.MILLIS),
-                wallet1.getWatchedScripts().get(0).getCreationTime().get());
+                wallet1.getWatchedScripts().get(0).creationTime().get());
         assertEquals(1, wallet1.getWatchedScripts().size());
         assertEquals(ScriptBuilder.createOutputScript(myWatchedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)),
                 wallet1.getWatchedScripts().get(0));

@@ -1123,7 +1123,7 @@ public class Wallet extends BaseTaggableObject
                 // a script in the wallet with an incorrect creation time.
                 if (watchedScripts.contains(script))
                     watchedScripts.remove(script);
-                if (!script.getCreationTime().isPresent())
+                if (!script.creationTime().isPresent())
                     log.warn("Adding a script to the wallet with a creation time of zero, this will disable the checkpointing optimization!    {}", script);
                 watchedScripts.add(script);
                 added++;
@@ -3640,7 +3640,7 @@ public class Wallet extends BaseTaggableObject
         try {
             Instant earliestTime = keyChainGroup.earliestKeyCreationTime();
             for (Script script : watchedScripts)
-                earliestTime = TimeUtils.earlier(script.getCreationTime().orElse(Instant.EPOCH), earliestTime);
+                earliestTime = TimeUtils.earlier(script.creationTime().orElse(Instant.EPOCH), earliestTime);
             return earliestTime;
         } finally {
             keyChainGroupLock.unlock();

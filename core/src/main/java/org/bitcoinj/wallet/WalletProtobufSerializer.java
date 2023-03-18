@@ -189,7 +189,7 @@ public class WalletProtobufSerializer {
             Protos.Script protoScript =
                     Protos.Script.newBuilder()
                             .setProgram(ByteString.copyFrom(script.getProgram()))
-                            .setCreationTimestamp(script.getCreationTime().orElse(Instant.EPOCH).toEpochMilli())
+                            .setCreationTimestamp(script.creationTime().orElse(Instant.EPOCH).toEpochMilli())
                             .build();
 
             walletBuilder.addWatchedScript(protoScript);
