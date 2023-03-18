@@ -391,7 +391,7 @@ public class WalletProtobufSerializer {
                     .build();
             confidenceBuilder.addBroadcastBy(proto);
         }
-        confidence.getLastBroadcastTime().ifPresent(
+        confidence.lastBroadcastTime().ifPresent(
                 lastBroadcastTime -> confidenceBuilder.setLastBroadcastedAt(lastBroadcastTime.toEpochMilli())
         );
         txBuilder.setConfidence(confidenceBuilder);

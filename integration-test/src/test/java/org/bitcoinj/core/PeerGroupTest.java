@@ -390,7 +390,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inv.addTransaction(tx);
 
         assertEquals(0, tx.getConfidence().numBroadcastPeers());
-        assertFalse(tx.getConfidence().getLastBroadcastTime().isPresent());
+        assertFalse(tx.getConfidence().lastBroadcastTime().isPresent());
 
         // Peer 2 advertises the tx but does not receive it yet.
         inbound(p2, inv);
@@ -414,7 +414,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(2, tx.getConfidence().numBroadcastPeers());
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p1).getAddress()));
         assertTrue(tx.getConfidence().wasBroadcastBy(peerOf(p2).getAddress()));
-        assertTrue(tx.getConfidence().getLastBroadcastTime().isPresent());
+        assertTrue(tx.getConfidence().lastBroadcastTime().isPresent());
 
         tx.getConfidence().addEventListener((confidence, reason) -> confEvent[0] = confidence);
         // A straggler reports in.

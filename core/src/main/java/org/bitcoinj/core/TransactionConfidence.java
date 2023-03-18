@@ -343,11 +343,11 @@ public class TransactionConfidence {
      * Return the time the transaction was last announced to us, or empty if unknown.
      * @return time the transaction was last announced to us, or empty if unknown
      */
-    public Optional<Instant> getLastBroadcastTime() {
+    public Optional<Instant> lastBroadcastTime() {
         return Optional.ofNullable(lastBroadcastTime);
     }
 
-    /** @deprecated use {@link #getLastBroadcastTime()} */
+    /** @deprecated use {@link #lastBroadcastTime()} */
     @Deprecated
     @Nullable
     public Date getLastBroadcastedAt() {
