@@ -3519,7 +3519,7 @@ public class Wallet extends BaseTaggableObject
             builder.append("  ").append(spent.size()).append(" spent\n");
             builder.append("  ").append(dead.size()).append(" dead\n");
             builder.append("Last seen best block: ").append(getLastBlockSeenHeight()).append(" (")
-                    .append(getLastBlockSeenTimeInstant()
+                    .append(lastBlockSeenTime()
                             .map(instant -> TimeUtils.dateTimeFormat(instant))
                             .orElse("time unknown"))
                     .append("): ").append(getLastBlockSeenHash()).append('\n');
@@ -3708,7 +3708,7 @@ public class Wallet extends BaseTaggableObject
      * was found, although most miners do use accurate times. If this wallet is old and does not have a recorded
      * time then this method returns zero.
      */
-    public Optional<Instant> getLastBlockSeenTimeInstant() {
+    public Optional<Instant> lastBlockSeenTime() {
         lock.lock();
         try {
             return Optional.ofNullable(lastBlockSeenTime);
@@ -3717,17 +3717,17 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** @deprecated use {@link #getLastBlockSeenTimeInstant()} */
+    /** @deprecated use {@link #lastBlockSeenTime()} */
     @Deprecated
     public long getLastBlockSeenTimeSecs() {
-        return getLastBlockSeenTimeInstant().map(Instant::getEpochSecond).orElse((long) 0);
+        return lastBlockSeenTime().map(Instant::getEpochSecond).orElse((long) 0);
     }
 
-    /** @deprecated use {@link #getLastBlockSeenTimeInstant()} */
+    /** @deprecated use {@link #lastBlockSeenTime()} */
     @Deprecated
     @Nullable
     public Date getLastBlockSeenTime() {
-        return getLastBlockSeenTimeInstant().map(Date::from).orElse(null);
+        return lastBlockSeenTime().map(Date::from).orElse(null);
     }
 
     /**

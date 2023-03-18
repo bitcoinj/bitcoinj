@@ -95,7 +95,7 @@ public class WalletFiles {
             }
             log.info("Background saving wallet; last seen block is height {}, date {}, hash {}",
                     wallet.getLastBlockSeenHeight(),
-                    wallet.getLastBlockSeenTimeInstant()
+                    wallet.lastBlockSeenTime()
                             .map(time -> TimeUtils.dateTimeFormat(time))
                             .orElse("unknown"),
                     wallet.getLastBlockSeenHash());
@@ -129,7 +129,7 @@ public class WalletFiles {
         if (executor.isShutdown())
             return;
         log.info("Saving wallet; last seen block is height {}, date {}, hash {}", wallet.getLastBlockSeenHeight(),
-                wallet.getLastBlockSeenTimeInstant()
+                wallet.lastBlockSeenTime()
                         .map(time -> TimeUtils.dateTimeFormat(time))
                         .orElse("unknown"),
                 wallet.getLastBlockSeenHash());

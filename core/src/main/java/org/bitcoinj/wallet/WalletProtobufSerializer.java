@@ -201,7 +201,7 @@ public class WalletProtobufSerializer {
             walletBuilder.setLastSeenBlockHash(hashToByteString(lastSeenBlockHash));
             walletBuilder.setLastSeenBlockHeight(wallet.getLastBlockSeenHeight());
         }
-        wallet.getLastBlockSeenTimeInstant().ifPresent(
+        wallet.lastBlockSeenTime().ifPresent(
                 time -> walletBuilder.setLastSeenBlockTimeSecs(time.getEpochSecond()));
 
         // Populate the scrypt parameters.

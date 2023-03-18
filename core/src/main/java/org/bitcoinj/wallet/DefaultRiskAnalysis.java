@@ -95,7 +95,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
 
         final int height = wallet.getLastBlockSeenHeight();
-        final Optional<Instant> time = wallet.getLastBlockSeenTimeInstant();
+        final Optional<Instant> time = wallet.lastBlockSeenTime();
         if (!time.isPresent())
             return null;
 
