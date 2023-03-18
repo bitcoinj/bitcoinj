@@ -1868,17 +1868,17 @@ public class Transaction extends ChildMessage {
      * Returns either the lock time, if it was specified as a timestamp, or an estimate based on the time in
      * the current head block if it was specified as a block height.
      */
-    public Instant estimateLockTimeInstant(AbstractBlockChain chain) {
+    public Instant estimateUnlockTime(AbstractBlockChain chain) {
         LockTime locktime = lockTime();
         return locktime instanceof HeightLock ?
                 chain.estimateBlockTimeInstant(((HeightLock) locktime).blockHeight()) :
                 ((TimeLock) locktime).timestamp();
     }
 
-    /** @deprecated use {@link #estimateLockTimeInstant(AbstractBlockChain)} */
+    /** @deprecated use {@link #estimateUnlockTime(AbstractBlockChain)} */
     @Deprecated
     public Date estimateLockTime(AbstractBlockChain chain) {
-        return Date.from(estimateLockTimeInstant(chain));
+        return Date.from(estimateUnlockTime(chain));
     }
 
     /**
