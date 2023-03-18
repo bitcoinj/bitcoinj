@@ -257,14 +257,14 @@ public class PaymentSession {
     /**
      * Returns the time that the payment request was generated.
      */
-    public Instant getTime() {
+    public Instant time() {
         return Instant.ofEpochSecond(paymentDetails.getTime());
     }
 
-    /** @deprecated use {@link #getTime()} */
+    /** @deprecated use {@link #time()} */
     @Deprecated
     public Date getDate() {
-        return Date.from(getTime());
+        return Date.from(time());
     }
 
     /**

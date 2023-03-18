@@ -73,7 +73,7 @@ public class PaymentProtocolTool {
             }
             final int version = session.getPaymentRequest().getPaymentDetailsVersion();
             StringBuilder output = new StringBuilder(
-                    format("Bitcoin payment request, version %d%nDate: %s%n", version, session.getTime()));
+                    format("Bitcoin payment request, version %d%nDate: %s%n", version, session.time()));
             PaymentProtocol.PkiVerificationData pki = PaymentProtocol.verifyPaymentRequestPki(
                     session.getPaymentRequest(), new TrustStoreLoader.DefaultTrustStoreLoader().getKeyStore());
             if (pki != null) {

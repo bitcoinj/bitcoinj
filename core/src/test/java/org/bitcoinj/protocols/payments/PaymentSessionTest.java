@@ -82,7 +82,7 @@ public class PaymentSessionTest {
         assertEquals(paymentRequestMemo, paymentSession.getMemo());
         assertEquals(amount, paymentSession.getValue());
         assertEquals(simplePaymentUrl, paymentSession.getPaymentUrl());
-        assertEquals(time, paymentSession.getTime());
+        assertEquals(time, paymentSession.time());
         assertTrue(paymentSession.getSendRequest().tx.equals(tx));
         assertFalse(paymentSession.isExpired());
 
