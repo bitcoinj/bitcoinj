@@ -164,24 +164,25 @@ public class TransactionTest {
     @Test
     public void testOptimalEncodingMessageSize() {
         Transaction tx = new Transaction(TESTNET);
+        int length = tx.length; // at this raw stage, doesn't include numInputs/numOutputs fields
 
-        int length = tx.length;
+        // add fake transaction input
+        TransactionInput input = new TransactionInput(TESTNET, null, ScriptBuilder.createEmpty().getProgram(),
+                new TransactionOutPoint(TESTNET, 0, Sha256Hash.ZERO_HASH));
+        tx.addInput(input);
+        length += 1; // numInputs field
+        length += input.length;
 
-        // add basic transaction input, check the length
-        tx.addOutput(new TransactionOutput(TESTNET, null, Coin.COIN, ADDRESS));
-        length += getCombinedLength(tx.getOutputs());
+        // add fake transaction output
+        TransactionOutput output = new TransactionOutput(TESTNET, null, Coin.COIN, ADDRESS);
+        tx.addOutput(output);
+        length += 1; // numOutputs field
+        length += output.length;
 
-        // add basic output, check the length
-        length += getCombinedLength(tx.getInputs());
-
+        // message size has now grown
+        assertEquals(length, tx.getMessageSize());
         // optimal encoding size should equal the length we just calculated
-        assertEquals(tx.getOptimalEncodingMessageSize(), length);
-    }
-
-    private int getCombinedLength(List<? extends Message> list) {
-        int sumOfAllMsgSizes = 0;
-        for (Message m: list) { sumOfAllMsgSizes += m.getMessageSize() + 1; }
-        return sumOfAllMsgSizes;
+        assertEquals(length, tx.getOptimalEncodingMessageSize());
     }
 
     @Test
