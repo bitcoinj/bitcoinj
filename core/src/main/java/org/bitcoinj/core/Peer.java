@@ -1578,10 +1578,9 @@ public class Peer extends PeerSocketHandler {
     /** @deprecated use {@link #lastPingInterval()} */
     @Deprecated
     public long getLastPingTime() {
-        Optional<Duration> lastPingInterval = lastPingInterval();
-        return lastPingInterval.isPresent() ?
-                lastPingInterval.get().toMillis() :
-                Long.MAX_VALUE;
+        return lastPingInterval()
+                .map(Duration::toMillis)
+                .orElse(Long.MAX_VALUE);
     }
 
     /**
@@ -1606,10 +1605,9 @@ public class Peer extends PeerSocketHandler {
     /** @deprecated use {@link #pingInterval()} */
     @Deprecated
     public long getPingTime() {
-        Optional<Duration> pingInterval = pingInterval();
-        return pingInterval.isPresent() ?
-                pingInterval.get().toMillis() :
-                Long.MAX_VALUE;
+        return pingInterval()
+                .map(Duration::toMillis)
+                .orElse(Long.MAX_VALUE);
     }
 
     private void processPing(Ping m) {
