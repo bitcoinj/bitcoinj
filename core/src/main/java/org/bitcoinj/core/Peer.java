@@ -48,10 +48,11 @@ import javax.annotation.Nullable;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -169,7 +170,7 @@ public class Peer extends PeerSocketHandler {
 
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock pingIntervalsLock = new ReentrantLock();
-    @GuardedBy("pingIntervalsLock") private Duration[] pingIntervals = null;
+    @GuardedBy("pingIntervalsLock") private final Deque<Duration> pingIntervals = new ArrayDeque<>(PING_MOVING_AVERAGE_WINDOW);
     private final CopyOnWriteArrayList<PendingPing> pendingPings;
     // Disconnect from a peer that is not responding to Pings
     private static final int PENDING_PINGS_LIMIT = 50;
@@ -1511,15 +1512,16 @@ public class Peer extends PeerSocketHandler {
     private void addPingInterval(Duration sample) {
         pingIntervalsLock.lock();
         try {
-            if (pingIntervals == null) {
-                pingIntervals = new Duration[PING_MOVING_AVERAGE_WINDOW];
+            if (pingIntervals.size() == 0) {
                 // Initialize the averaging window to the first sample.
-                Arrays.fill(pingIntervals, sample);
+                for (int i = 0; i < PING_MOVING_AVERAGE_WINDOW ; i++) {
+                    pingIntervals.add(sample);
+                }
             } else {
-                // Shift all elements backwards by one.
-                System.arraycopy(pingIntervals, 1, pingIntervals, 0, pingIntervals.length - 1);
-                // And append the new sample to the end.
-                pingIntervals[pingIntervals.length - 1] = sample;
+                // Remove oldest sample from front of queue
+                pingIntervals.remove();
+                // Add new sample to end of queue
+                pingIntervals.add(sample);
             }
         } finally {
             pingIntervalsLock.unlock();
@@ -1567,9 +1569,7 @@ public class Peer extends PeerSocketHandler {
     public Optional<Duration> lastPingInterval() {
         pingIntervalsLock.lock();
         try {
-            if (pingIntervals == null || pingIntervals.length == 0)
-                return Optional.empty();
-            return Optional.of(pingIntervals[pingIntervals.length - 1]);
+            return Optional.ofNullable(pingIntervals.peekLast());
         } finally {
             pingIntervalsLock.unlock();
         }
@@ -1592,11 +1592,9 @@ public class Peer extends PeerSocketHandler {
     public Optional<Duration> pingInterval() {
         pingIntervalsLock.lock();
         try {
-            if (pingIntervals == null || pingIntervals.length == 0)
-                return Optional.empty();
-            Duration sum = Duration.ZERO;
-            for (Duration i : pingIntervals) sum = sum.plus(i);
-            return Optional.of(sum.dividedBy(pingIntervals.length));
+            return pingIntervals.stream()
+                    .reduce(Duration::plus)
+                    .map(d -> d.dividedBy(pingIntervals.size()));
         } finally {
             pingIntervalsLock.unlock();
         }
