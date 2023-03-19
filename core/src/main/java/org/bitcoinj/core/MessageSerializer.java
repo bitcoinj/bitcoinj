@@ -65,36 +65,26 @@ public abstract class MessageSerializer {
      * Make an address message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract AddressV1Message makeAddressV1Message(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
+    public abstract AddressV1Message makeAddressV1Message(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make an address message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract AddressV2Message makeAddressV2Message(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
+    public abstract AddressV2Message makeAddressV2Message(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
 
     /**
-     * Make a block from the payload, using an offset of zero and the payload
-     * length as block length.
+     * Make a block from the payload, using an offset of zero.
      */
     public final Block makeBlock(byte[] payloadBytes) throws ProtocolException {
-        return makeBlock(payloadBytes, 0, payloadBytes.length);
+        return makeBlock(payloadBytes, 0);
     }
 
     /**
-     * Make a block from the payload, using an offset of zero and the provided
-     * length as block length.
-     */
-    public final Block makeBlock(byte[] payloadBytes, int length) throws ProtocolException {
-        return makeBlock(payloadBytes, 0, length);
-    }
-
-    /**
-     * Make a block from the payload, using an offset of zero and the provided
-     * length as block length. Extension point for alternative
+     * Make a block from the payload, using an offset of zero. Extension point for alternative
      * serialization format support.
      */
-    public abstract Block makeBlock(final byte[] payloadBytes, final int offset, final int length) throws ProtocolException, UnsupportedOperationException;
+    public abstract Block makeBlock(byte[] payloadBytes, int offset) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make an filter message from the payload. Extension point for alternative
@@ -112,7 +102,7 @@ public abstract class MessageSerializer {
      * Make an inventory message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws ProtocolException, UnsupportedOperationException;
+    public abstract InventoryMessage makeInventoryMessage(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a transaction from the payload. Extension point for alternative
@@ -123,7 +113,7 @@ public abstract class MessageSerializer {
      * serializer (i.e. for messages with no network parameters), or because
      * it does not support deserializing transactions.
      */
-    public abstract Transaction makeTransaction(byte[] payloadBytes, int offset, int length, byte[] hash) throws ProtocolException, UnsupportedOperationException;
+    public abstract Transaction makeTransaction(byte[] payloadBytes, int offset, byte[] hash) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a transaction from the payload. Extension point for alternative
@@ -148,7 +138,7 @@ public abstract class MessageSerializer {
      * it does not support deserializing transactions.
      */
     public final Transaction makeTransaction(byte[] payloadBytes, int offset) throws ProtocolException {
-        return makeTransaction(payloadBytes, offset, payloadBytes.length, null);
+        return makeTransaction(payloadBytes, offset, null);
     }
 
     public abstract void seekPastMagicBytes(ByteBuffer in) throws BufferUnderflowException;

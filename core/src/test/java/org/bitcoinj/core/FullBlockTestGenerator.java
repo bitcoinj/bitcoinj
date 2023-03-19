@@ -1228,7 +1228,7 @@ public class FullBlockTestGenerator {
 
             for (Transaction transaction : b64Original.block.getTransactions())
                 transaction.bitcoinSerialize(stream);
-            b64 = params.getSerializer(true).makeBlock(stream.toByteArray(), stream.size());
+            b64 = params.getSerializer(true).makeBlock(stream.toByteArray());
 
             // The following checks are checking to ensure block serialization functions in the way needed for this test
             // If they fail, it is likely not an indication of error, but an indication that this test needs rewritten

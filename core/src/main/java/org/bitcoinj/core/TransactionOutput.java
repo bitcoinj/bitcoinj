@@ -88,7 +88,7 @@ public class TransactionOutput extends ChildMessage {
      * @throws ProtocolException
      */
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer, UNKNOWN_LENGTH);
+        super(params, payload, offset, parent, serializer);
         availableForSpending = true;
     }
 

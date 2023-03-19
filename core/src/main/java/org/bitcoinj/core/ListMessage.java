@@ -43,9 +43,9 @@ public abstract class ListMessage extends Message {
         super(params, bytes, 0);
     }
 
-    public ListMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer, int length)
+    public ListMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, 0, serializer, length);
+        super(params, payload, 0, serializer);
     }
 
     public ListMessage(NetworkParameters params) {

@@ -34,8 +34,8 @@ import java.math.BigInteger;
 public class FeeFilterMessage extends Message {
     private Coin feeRate;
 
-    public FeeFilterMessage(NetworkParameters params, byte[] payloadBytes, BitcoinSerializer serializer, int length) {
-        super(params, payloadBytes, 0, serializer, length);
+    public FeeFilterMessage(NetworkParameters params, byte[] payloadBytes, BitcoinSerializer serializer) {
+        super(params, payloadBytes, 0, serializer);
     }
 
     @Override

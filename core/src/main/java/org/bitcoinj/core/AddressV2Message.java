@@ -37,28 +37,24 @@ public class AddressV2Message extends AddressMessage {
      * @param params NetworkParameters object.
      * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this block.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    AddressV2Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer, int length) throws ProtocolException {
-        super(params, payload, offset, serializer, length);
+    AddressV2Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, offset, serializer);
     }
 
     /**
      * Construct a new 'addrv2' message.
      * @param params NetworkParameters object.
      * @param serializer the serializer to use for this block.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    AddressV2Message(NetworkParameters params, byte[] payload, MessageSerializer serializer, int length) throws ProtocolException {
-        super(params, payload, 0, serializer, length);
+    AddressV2Message(NetworkParameters params, byte[] payload, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, 0, serializer);
     }
 
     AddressV2Message(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0, params.getDefaultSerializer(), UNKNOWN_LENGTH);
+        super(params, payload, 0, params.getDefaultSerializer());
     }
 
     @Override

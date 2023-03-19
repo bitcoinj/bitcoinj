@@ -89,7 +89,7 @@ public class PeerAddress extends ChildMessage {
      * @throws ProtocolException
      */
     public PeerAddress(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer, UNKNOWN_LENGTH);
+        super(params, payload, offset, parent, serializer);
     }
 
     /**
