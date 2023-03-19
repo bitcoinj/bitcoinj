@@ -301,13 +301,9 @@ public abstract class Message {
     }
 
     protected VarInt readVarInt() throws ProtocolException {
-        return readVarInt(0);
-    }
-
-    protected VarInt readVarInt(int offset) throws ProtocolException {
         try {
-            VarInt varint = new VarInt(payload, cursor + offset);
-            cursor += offset + varint.getOriginalSizeInBytes();
+            VarInt varint = new VarInt(payload, cursor);
+            cursor += varint.getOriginalSizeInBytes();
             return varint;
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new ProtocolException(e);
