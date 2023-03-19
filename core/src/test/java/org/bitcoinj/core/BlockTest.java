@@ -367,7 +367,7 @@ public class BlockTest {
         };
         byte[] serializedBlock = block.bitcoinSerialize();
         try {
-            TESTNET.getDefaultSerializer().makeBlock(serializedBlock, serializedBlock.length);
+            TESTNET.getDefaultSerializer().makeBlock(serializedBlock);
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
