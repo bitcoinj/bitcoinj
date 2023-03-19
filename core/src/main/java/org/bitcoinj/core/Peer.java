@@ -1586,7 +1586,7 @@ public class Peer extends PeerSocketHandler {
     /**
      * Returns a moving average of the last N ping/pong cycles. If {@link Peer#sendPing()} has never
      * been called or we did not hear back the "pong" message yet, returns empty. The moving average
-     * window is 5 buckets.
+     * window is {@link #PING_MOVING_AVERAGE_WINDOW} buckets.
      * @return moving average, or empty
      */
     public Optional<Duration> pingInterval() {
