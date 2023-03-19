@@ -155,13 +155,11 @@ public class Block extends Message {
      * @param params NetworkParameters object.
      * @param payloadBytes the payload to extract the block from.
      * @param serializer the serializer to use for this message.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, MessageSerializer serializer, int length)
+    public Block(NetworkParameters params, byte[] payloadBytes, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payloadBytes, 0, serializer, length);
+        super(params, payloadBytes, 0, serializer);
     }
 
     /**
@@ -170,13 +168,11 @@ public class Block extends Message {
      * @param payloadBytes the payload to extract the block from.
      * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer, int length)
+    public Block(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payloadBytes, offset, serializer, length);
+        super(params, payloadBytes, offset, serializer);
     }
 
     /**
@@ -188,14 +184,12 @@ public class Block extends Message {
      * @param offset The location of the first payload byte within the array.
      * @param parent The message element which contains this block, maybe null for no parent.
      * @param serializer the serializer to use for this block.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, MessageSerializer serializer, int length)
+    public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, MessageSerializer serializer)
             throws ProtocolException {
         // TODO: Keep the parent
-        super(params, payloadBytes, offset, serializer, length);
+        super(params, payloadBytes, offset, serializer);
     }
 
     /**
@@ -268,7 +262,7 @@ public class Block extends Message {
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, cursor, this, serializer, UNKNOWN_LENGTH, null);
+            Transaction tx = new Transaction(params, payload, cursor, this, serializer, null);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);

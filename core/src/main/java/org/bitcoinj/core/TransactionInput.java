@@ -145,7 +145,7 @@ public class TransactionInput extends ChildMessage {
      */
     public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] payload, int offset, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, offset, parentTransaction, serializer, UNKNOWN_LENGTH);
+        super(params, payload, offset, parentTransaction, serializer);
         this.value = null;
     }
 

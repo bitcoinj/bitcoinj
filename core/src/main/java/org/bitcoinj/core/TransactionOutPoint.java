@@ -96,7 +96,7 @@ public class TransactionOutPoint extends ChildMessage {
      * @throws ProtocolException
      */
     public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer, MESSAGE_LENGTH);
+        super(params, payload, offset, parent, serializer);
     }
 
     @Override

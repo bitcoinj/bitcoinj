@@ -259,16 +259,14 @@ public class Transaction extends ChildMessage {
      * @param offset The location of the first payload byte within the array.
      * @param parent The parent of the transaction.
      * @param setSerializer The serializer to use for this transaction.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @param hashFromHeader Used by BitcoinSerializer. The serializer has to calculate a hash for checksumming so to
      * avoid wasting the considerable effort a set method is provided so the serializer can set it. No verification
      * is performed on this hash.
      * @throws ProtocolException
      */
     public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent,
-            MessageSerializer setSerializer, int length, @Nullable byte[] hashFromHeader) throws ProtocolException {
-        super(params, payload, offset, parent, setSerializer, length);
+            MessageSerializer setSerializer, @Nullable byte[] hashFromHeader) throws ProtocolException {
+        super(params, payload, offset, parent, setSerializer);
         if (hashFromHeader != null) {
             cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
             if (!hasWitnesses())
@@ -279,9 +277,9 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer, int length)
+    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer)
             throws ProtocolException {
-        super(params, payload, 0, parent, setSerializer, length);
+        super(params, payload, 0, parent, setSerializer);
     }
 
     /**

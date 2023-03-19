@@ -211,36 +211,36 @@ public class BitcoinSerializer extends MessageSerializer {
         }
 
         try {
-            return makeMessage(header.command, header.size, payloadBytes, hash);
+            return makeMessage(header.command, payloadBytes, hash);
         } catch (Exception e) {
             throw new ProtocolException("Error deserializing message " + ByteUtils.formatHex(payloadBytes) + "\n", e);
         }
     }
 
-    private Message makeMessage(String command, int length, byte[] payloadBytes, byte[] hash) throws ProtocolException {
+    private Message makeMessage(String command, byte[] payloadBytes, byte[] hash) throws ProtocolException {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
             return new VersionMessage(params, payloadBytes);
         } else if (command.equals("inv")) { 
-            return makeInventoryMessage(payloadBytes, length);
+            return makeInventoryMessage(payloadBytes);
         } else if (command.equals("block")) {
-            return makeBlock(payloadBytes, length);
+            return makeBlock(payloadBytes);
         } else if (command.equals("merkleblock")) {
             return makeFilteredBlock(payloadBytes);
         } else if (command.equals("getdata")) {
-            return new GetDataMessage(params, payloadBytes, this, length);
+            return new GetDataMessage(params, payloadBytes, this);
         } else if (command.equals("getblocks")) {
             return new GetBlocksMessage(params, payloadBytes);
         } else if (command.equals("getheaders")) {
             return new GetHeadersMessage(params, payloadBytes);
         } else if (command.equals("tx")) {
-            return makeTransaction(payloadBytes, 0, length, hash);
+            return makeTransaction(payloadBytes, 0, hash);
         } else if (command.equals("sendaddrv2")) {
             return new SendAddrV2Message(params);
         } else if (command.equals("addr")) {
-            return makeAddressV1Message(payloadBytes, length);
+            return makeAddressV1Message(payloadBytes);
         } else if (command.equals("addrv2")) {
-            return makeAddressV2Message(payloadBytes, length);
+            return makeAddressV2Message(payloadBytes);
         } else if (command.equals("ping")) {
             return new Ping(params, payloadBytes);
         } else if (command.equals("pong")) {
@@ -260,7 +260,7 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("sendheaders")) {
             return new SendHeadersMessage(params, payloadBytes);
         } else if (command.equals("feefilter")) {
-            return new FeeFilterMessage(params, payloadBytes, this, length);
+            return new FeeFilterMessage(params, payloadBytes, this);
         } else {
             return new UnknownMessage(params, command, payloadBytes);
         }
@@ -278,8 +278,8 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public AddressV1Message makeAddressV1Message(byte[] payloadBytes, int length) throws ProtocolException {
-        return new AddressV1Message(params, payloadBytes, this, length);
+    public AddressV1Message makeAddressV1Message(byte[] payloadBytes) throws ProtocolException {
+        return new AddressV1Message(params, payloadBytes, this);
     }
 
     /**
@@ -287,8 +287,8 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public AddressV2Message makeAddressV2Message(byte[] payloadBytes, int length) throws ProtocolException {
-        return new AddressV2Message(params, payloadBytes, this, length);
+    public AddressV2Message makeAddressV2Message(byte[] payloadBytes) throws ProtocolException {
+        return new AddressV2Message(params, payloadBytes, this);
     }
 
     /**
@@ -296,8 +296,8 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public Block makeBlock(final byte[] payloadBytes, final int offset, final int length) throws ProtocolException {
-        return new Block(params, payloadBytes, offset, this, length);
+    public Block makeBlock(byte[] payloadBytes, int offset) throws ProtocolException {
+        return new Block(params, payloadBytes, offset, this);
     }
 
     /**
@@ -323,8 +323,8 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws ProtocolException {
-        return new InventoryMessage(params, payloadBytes, this, length);
+    public InventoryMessage makeInventoryMessage(byte[] payloadBytes) throws ProtocolException {
+        return new InventoryMessage(params, payloadBytes, this);
     }
 
     /**
@@ -332,9 +332,9 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public Transaction makeTransaction(byte[] payloadBytes, int offset, int length, byte[] hashFromHeader)
+    public Transaction makeTransaction(byte[] payloadBytes, int offset, byte[] hashFromHeader)
             throws ProtocolException {
-        return new Transaction(params, payloadBytes, offset, null, this, length, hashFromHeader);
+        return new Transaction(params, payloadBytes, offset, null, this, hashFromHeader);
     }
 
     @Override

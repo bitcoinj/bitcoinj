@@ -64,17 +64,17 @@ class DummySerializer extends MessageSerializer {
     }
 
     @Override
-    public AddressV1Message makeAddressV1Message(byte[] payloadBytes, int length) throws UnsupportedOperationException {
+    public AddressV1Message makeAddressV1Message(byte[] payloadBytes) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public AddressV2Message makeAddressV2Message(byte[] payloadBytes, int length) throws UnsupportedOperationException {
+    public AddressV2Message makeAddressV2Message(byte[] payloadBytes) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public Block makeBlock(byte[] payloadBytes, int offset, int length) throws UnsupportedOperationException {
+    public Block makeBlock(byte[] payloadBytes, int offset) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
@@ -89,12 +89,12 @@ class DummySerializer extends MessageSerializer {
     }
 
     @Override
-    public InventoryMessage makeInventoryMessage(byte[] payloadBytes, int length) throws UnsupportedOperationException {
+    public InventoryMessage makeInventoryMessage(byte[] payloadBytes) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public Transaction makeTransaction(byte[] payloadBytes, int offset, int length, byte[] hash) throws UnsupportedOperationException {
+    public Transaction makeTransaction(byte[] payloadBytes, int offset, byte[] hash) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 

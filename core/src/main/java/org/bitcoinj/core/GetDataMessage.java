@@ -36,13 +36,11 @@ public class GetDataMessage extends ListMessage {
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param serializer the serializer to use for this message.
-     * @param length The length of message if known.  Usually this is provided when deserializing of the wire
-     * as the length will be provided as part of the header.  If unknown then set to Message.UNKNOWN_LENGTH
      * @throws ProtocolException
      */
-    public GetDataMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer, int length)
+    public GetDataMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, serializer, length);
+        super(params, payload, serializer);
     }
 
     public GetDataMessage(NetworkParameters params) {
