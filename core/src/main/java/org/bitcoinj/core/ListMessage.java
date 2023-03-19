@@ -92,7 +92,6 @@ public abstract class ListMessage extends Message {
             InventoryItem item = new InventoryItem(type, readHash());
             items.add(item);
         }
-        payload = null;
     }
 
     @Override

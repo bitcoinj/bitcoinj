@@ -74,7 +74,7 @@ public class MockAltNetworkParams extends NetworkParameters {
     }
 
     @Override
-    public BitcoinSerializer getSerializer(boolean parseRetain) {
+    public BitcoinSerializer getSerializer() {
         return null;
     }
 

@@ -48,7 +48,6 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Sha256Hash.hashTwice;
@@ -130,9 +129,6 @@ public class Block extends Message {
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
 
-    protected boolean headerBytesValid;
-    protected boolean transactionBytesValid;
-    
     // Blocks can be encoded in a way that will use more bytes than is optimal (due to VarInts having multiple encodings)
     // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
     // of the size of the ideal encoding in addition to the actual message size (which Message needs)
@@ -253,7 +249,6 @@ public class Block extends Message {
         optimalEncodingMessageSize = HEADER_SIZE;
         if (payload.length == cursor) {
             // This message is just a header, it has no transactions.
-            transactionBytesValid = false;
             return;
         }
 
@@ -269,7 +264,6 @@ public class Block extends Message {
             cursor += tx.getMessageSize();
             optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
         }
-        transactionBytesValid = serializer.isParseRetainMode();
     }
 
     @Override
@@ -283,7 +277,6 @@ public class Block extends Message {
         difficultyTarget = readUint32();
         nonce = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
-        headerBytesValid = serializer.isParseRetainMode();
 
         // transactions
         parseTransactions(offset + HEADER_SIZE);
@@ -332,12 +325,6 @@ public class Block extends Message {
 
     // default for testing
     void writeHeader(OutputStream stream) throws IOException {
-        // try for cached write first
-        if (headerBytesValid && payload != null && payload.length >= offset + HEADER_SIZE) {
-            stream.write(payload, offset, HEADER_SIZE);
-            return;
-        }
-        // fall back to manual write
         ByteUtils.uint32ToByteStreamLE(version, stream);
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
@@ -353,12 +340,6 @@ public class Block extends Message {
             return;
         }
 
-        // confirmed we must have transactions either cached or as objects.
-        if (transactionBytesValid && payload != null && payload.length >= offset + length) {
-            stream.write(payload, offset + HEADER_SIZE, length - HEADER_SIZE);
-            return;
-        }
-
         stream.write(new VarInt(transactions.size()).encode());
         for (Transaction tx : transactions) {
             tx.bitcoinSerialize(stream);
@@ -371,21 +352,6 @@ public class Block extends Message {
      */
     @Override
     public byte[] bitcoinSerialize() {
-        // we have completely cached byte array.
-        if (headerBytesValid && transactionBytesValid) {
-            Objects.requireNonNull(payload, "Bytes should never be null if headerBytesValid && transactionBytesValid");
-            if (length == payload.length) {
-                return payload;
-            } else {
-                // byte array is offset so copy out the correct range.
-                byte[] buf = new byte[length];
-                System.arraycopy(payload, offset, buf, 0, length);
-                return buf;
-            }
-        }
-
-        // At least one of the two cacheable components is invalid
-        // so fall back to stream write since we can't be sure of the length.
         ByteArrayOutputStream stream = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? HEADER_SIZE + guessTransactionsLength() : length);
         try {
             writeHeader(stream);
@@ -412,8 +378,6 @@ public class Block extends Message {
      * real value the only penalty is resizing of the underlying byte array.
      */
     private int guessTransactionsLength() {
-        if (transactionBytesValid)
-            return payload.length - HEADER_SIZE;
         if (transactions == null)
             return 0;
         int len = VarInt.sizeOf(transactions.size());
@@ -432,16 +396,10 @@ public class Block extends Message {
     }
 
     private void unCacheHeader() {
-        headerBytesValid = false;
-        if (!transactionBytesValid)
-            payload = null;
         hash = null;
     }
 
     private void unCacheTransactions() {
-        transactionBytesValid = false;
-        if (!headerBytesValid)
-            payload = null;
         // Current implementation has to uncache headers as well as any change to a tx will alter the merkle root. In
         // future we can go more granular and cache merkle root separately so rest of the header does not need to be
         // rewritten.
@@ -1107,16 +1065,6 @@ public class Block extends Message {
     Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null,
                                TimeUtils.currentTime(), pubKey, FIFTY_COINS, height);
-    }
-
-    @VisibleForTesting
-    boolean isHeaderBytesValid() {
-        return headerBytesValid;
-    }
-
-    @VisibleForTesting
-    boolean isTransactionBytesValid() {
-        return transactionBytesValid;
     }
 
     /**

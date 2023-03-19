@@ -126,32 +126,24 @@ public class ParseByteCacheTest {
     }
     
     @Test
-    public void testTransactionsRetain() throws Exception {
-        testTransaction(MAINNET, txMessage, false, true);
-        testTransaction(TESTNET, tx1BytesWithHeader, false, true);
-        testTransaction(TESTNET, tx2BytesWithHeader, false, true);
-    }
-    
-    @Test
-    public void testTransactionsNoRetain() throws Exception {
-        testTransaction(MAINNET, txMessage, false, false);
-        testTransaction(TESTNET, tx1BytesWithHeader, false, false);
-        testTransaction(TESTNET, tx2BytesWithHeader, false, false);
+    public void testTransactions() throws Exception {
+        testTransaction(MAINNET, txMessage, false);
+        testTransaction(TESTNET, tx1BytesWithHeader, false);
+        testTransaction(TESTNET, tx2BytesWithHeader, false);
     }
 
     @Test
     public void testBlockAll() throws Exception {
-        testBlock(b1BytesWithHeader, false, false);
-        testBlock(b1BytesWithHeader, false, true);
+        testBlock(b1BytesWithHeader, false);
     }
 
-    public void testBlock(byte[] blockBytes, boolean isChild, boolean retain) throws Exception {
+    public void testBlock(byte[] blockBytes, boolean isChild) throws Exception {
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer serializerRef = TESTNET.getSerializer(false);
+        MessageSerializer serializerRef = TESTNET.getSerializer();
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
-        BitcoinSerializer serializer = TESTNET.getSerializer(retain);
+        BitcoinSerializer serializer = TESTNET.getSerializer();
         Block b1;
         Block bRef;
         b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
@@ -163,14 +155,9 @@ public class ParseByteCacheTest {
         assertArrayEquals(bos.toByteArray(), blockBytes);
         
         // check retain status survive both before and after a serialization
-        assertEquals(retain, b1.isHeaderBytesValid());
-        assertEquals(retain, b1.isTransactionBytesValid());
-        
+        // "retained mode" was removed from Message, so maybe this test doesn't make much sense any more
         serDeser(serializer, b1, blockBytes, null, null);
-        
-        assertEquals(retain, b1.isHeaderBytesValid());
-        assertEquals(retain, b1.isTransactionBytesValid());
-        
+
         // compare to ref block
         bos.reset();
         serializerRef.serialize(bRef, bos);
@@ -180,11 +167,6 @@ public class ParseByteCacheTest {
         b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
             Transaction tx1 = b1.getTransactions().get(0);
-            
-            // this will always be true for all children of a block once they are retrieved.
-            // the tx child inputs/outputs may not be parsed however.
-            
-            assertEquals(retain, tx1.isCached());
             
             // does it still match ref block?
             serDeser(serializer, b1, bos.toByteArray(), null, null);
@@ -210,8 +192,6 @@ public class ParseByteCacheTest {
         b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
             Transaction tx1 = b1.getTransactions().get(0);
-            
-            assertEquals(retain, tx1.isCached());
         }
         // does it still match ref block?
         serDeser(serializer, b1, bos.toByteArray(), null, null);
@@ -223,8 +203,6 @@ public class ParseByteCacheTest {
         // change a value in header
         b1.setNonce(23);
         bRef.setNonce(23);
-        assertFalse(b1.isHeaderBytesValid());
-        assertEquals(retain , b1.isTransactionBytesValid());
         // does it still match ref block?
         bos.reset();
         serializerRef.serialize(bRef, bos);
@@ -240,9 +218,7 @@ public class ParseByteCacheTest {
             Transaction tx1 = b1.getTransactions().get(0);
             
             TransactionInput tin = tx1.getInputs().get(0);
-            
-            assertEquals(retain, tin.isCached());
-            
+
             // does it still match ref tx?
             bos.reset();
             serializerRef.serialize(bRef, bos);
@@ -262,19 +238,6 @@ public class ParseByteCacheTest {
                 tx1.addInput(tx1.getInputs().get(0));
                 // replicate on reference tx
                 bRef.getTransactions().get(0).addInput(bRef.getTransactions().get(0).getInputs().get(0));
-                
-                assertFalse(tx1.isCached());
-                assertFalse(b1.isTransactionBytesValid());
-                
-                // confirm sibling cache status was unaffected
-                if (tx1.getInputs().size() > 1) {
-                    assertEquals(retain, tx1.getInputs().get(1).isCached());
-                }
-                
-                // this has to be false. Altering a tx invalidates the merkle root.
-                // when we have seperate merkle caching then the entire header won't need to be
-                // invalidated.
-                assertFalse(b1.isHeaderBytesValid());
                 
                 bos.reset();
                 serializerRef.serialize(bRef, bos);
@@ -309,14 +272,6 @@ public class ParseByteCacheTest {
                 TransactionInput fromTxRef = bRef.getTransactions().get(0).getInputs().get(0);
                 bRef2.getTransactions().get(0).addInput(fromTxRef);
                 
-                // b1 hasn't changed but it's no longer in the parent
-                // chain of fromTx1 so has to have been uncached since it won't be
-                // notified of changes throught the parent chain anymore.
-                assertFalse(b1.isTransactionBytesValid());
-                
-                // b2 should have it's cache invalidated because it has changed.
-                assertFalse(b2.isTransactionBytesValid());
-                
                 bos.reset();
                 serializerRef.serialize(bRef2, bos);
                 byte[] source = bos.toByteArray();
@@ -337,14 +292,14 @@ public class ParseByteCacheTest {
         }
     }
     
-    public void testTransaction(NetworkParameters params, byte[] txBytes, boolean isChild, boolean retain) throws Exception {
+    public void testTransaction(NetworkParameters params, byte[] txBytes, boolean isChild) throws Exception {
 
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer serializerRef = params.getSerializer(false);
+        MessageSerializer serializerRef = params.getSerializer();
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-        BitcoinSerializer serializer = params.getSerializer(retain);
+        BitcoinSerializer serializer = params.getSerializer();
         Transaction t1;
         Transaction tRef;
         t1 = (Transaction) serializer.deserialize(ByteBuffer.wrap(txBytes));
@@ -356,11 +311,8 @@ public class ParseByteCacheTest {
         assertArrayEquals(bos.toByteArray(), txBytes);
 
         // check and retain status survive both before and after a serialization
-        assertEquals(retain, t1.isCached());
-
+        // "retained mode" was removed from Message, so maybe this test doesn't make much sense any more
         serDeser(serializer, t1, txBytes, null, null);
-
-        assertEquals(retain, t1.isCached());
 
         // compare to ref tx
         bos.reset();
@@ -371,8 +323,7 @@ public class ParseByteCacheTest {
         t1.getInputs();
         if (t1.getInputs().size() > 0) {
             TransactionInput tin = t1.getInputs().get(0);
-            assertEquals(retain, tin.isCached());
-            
+
             // does it still match ref tx?
             serDeser(serializer, t1, bos.toByteArray(), null, null);
         }
@@ -388,8 +339,6 @@ public class ParseByteCacheTest {
 
             // replicate on reference tx
             tRef.addInput(tRef.getInputs().get(0));
-
-            assertFalse(t1.isCached());
 
             bos.reset();
             serializerRef.serialize(tRef, bos);

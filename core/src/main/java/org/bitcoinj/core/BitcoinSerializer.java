@@ -52,7 +52,6 @@ public class BitcoinSerializer extends MessageSerializer {
 
     private final NetworkParameters params;
     private final int protocolVersion;
-    private final boolean parseRetain;
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();
 
@@ -84,30 +83,27 @@ public class BitcoinSerializer extends MessageSerializer {
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
-     * @param params           networkParams used to create Messages instances and determining packetMagic
-     * @param parseRetain      retain the backing byte array of a message for fast reserialization.
+     * @param params networkParams used to create Messages instances and determining packetMagic
      */
-    public BitcoinSerializer(NetworkParameters params, boolean parseRetain) {
-        this(params, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT), parseRetain);
+    public BitcoinSerializer(NetworkParameters params) {
+        this(params, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT));
     }
 
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
-     * @param params           networkParams used to create Messages instances and determining packetMagic
-     * @param protocolVersion  the protocol version to use
-     * @param parseRetain      retain the backing byte array of a message for fast reserialization.
+     * @param params          networkParams used to create Messages instances and determining packetMagic
+     * @param protocolVersion the protocol version to use
      */
-    public BitcoinSerializer(NetworkParameters params, int protocolVersion, boolean parseRetain) {
+    public BitcoinSerializer(NetworkParameters params, int protocolVersion) {
         this.params = params;
         this.protocolVersion = protocolVersion;
-        this.parseRetain = parseRetain;
     }
 
     @Override
     public BitcoinSerializer withProtocolVersion(int protocolVersion) {
         return protocolVersion == this.protocolVersion ?
-                this : new BitcoinSerializer(params, protocolVersion, parseRetain);
+                this : new BitcoinSerializer(params, protocolVersion);
     }
 
     @Override
@@ -359,15 +355,6 @@ public class BitcoinSerializer extends MessageSerializer {
         }
     }
 
-    /**
-     * Whether the serializer will produce cached mode Messages
-     */
-    @Override
-    public boolean isParseRetainMode() {
-        return parseRetain;
-    }
-
-
     public static class BitcoinPacketHeader {
         /** The largest number of bytes that a header can represent */
         public static final int HEADER_LENGTH = COMMAND_LEN + 4 + 4;
@@ -410,12 +397,11 @@ public class BitcoinSerializer extends MessageSerializer {
         if (o == null || !(o instanceof BitcoinSerializer)) return false;
         BitcoinSerializer other = (BitcoinSerializer) o;
         return Objects.equals(params, other.params) &&
-                protocolVersion == other.protocolVersion &&
-                parseRetain == other.parseRetain;
+                protocolVersion == other.protocolVersion;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, protocolVersion, parseRetain);
+        return Objects.hash(params, protocolVersion);
     }
 }

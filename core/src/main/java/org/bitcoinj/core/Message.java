@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
@@ -57,9 +56,6 @@ public abstract class Message {
     // The raw message payload bytes themselves.
     protected byte[] payload;
 
-    /** @deprecated will be removed after 0.17 */
-    @Deprecated
-    protected boolean recached = false;
     protected MessageSerializer serializer;
 
     protected NetworkParameters params;
@@ -93,10 +89,7 @@ public abstract class Message {
         checkState(this.length != UNKNOWN_LENGTH || this instanceof UnknownMessage, () ->
                 "length field has not been set in constructor for " + getClass().getSimpleName() + " after parse");
 
-        if (serializer.isParseRetainMode())
-            Objects.requireNonNull(this.payload, "payload must be retained");
-        else
-            this.payload = null;
+        this.payload = null;
     }
 
     protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
@@ -114,8 +107,6 @@ public abstract class Message {
      * invalidated unless they are also modified internally.</p>
      */
     protected void unCache() {
-        payload = null;
-        recached = false;
     }
 
     protected void adjustLength(int newArraySize, int adjustment) {
@@ -132,19 +123,6 @@ public abstract class Message {
             length++;  // The assumption here is we never call adjustLength with the same arraySize as before.
         else if (newArraySize != 0)
             length += VarInt.sizeOf(newArraySize) - VarInt.sizeOf(newArraySize - 1);
-    }
-
-    /**
-     * used for unit testing
-     */
-    public boolean isCached() {
-        return payload != null;
-    }
-
-    /** @deprecated will be removed after 0.17 */
-    @Deprecated
-    public boolean isRecached() {
-        return recached;
     }
 
     /**
@@ -190,19 +168,6 @@ public abstract class Message {
      * @return a byte array owned by this object, do NOT mutate it.
      */
     public byte[] unsafeBitcoinSerialize() {
-        // 1st attempt to use a cached array.
-        if (payload != null) {
-            if (offset == 0 && length == payload.length) {
-                // Cached byte array is the entire message with no extras so we can return as is and avoid an array
-                // copy.
-                return payload;
-            }
-
-            byte[] buf = new byte[length];
-            System.arraycopy(payload, offset, buf, 0, length);
-            return buf;
-        }
-
         // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
         try {
@@ -211,22 +176,6 @@ public abstract class Message {
             // Cannot happen, we are serializing to a memory stream.
         }
 
-        if (serializer.isParseRetainMode()) {
-            // A free set of steak knives!
-            // If there happens to be a call to this method we gain an opportunity to recache
-            // the byte array and in this case it contains no bytes from parent messages.
-            // This give a dual benefit.  Releasing references to the larger byte array so that it
-            // it is more likely to be GC'd.  And preventing double serializations.  E.g. calculating
-            // merkle root calls this method.  It is will frequently happen prior to serializing the block
-            // which means another call to bitcoinSerialize is coming.  If we didn't recache then internal
-            // serialization would occur a 2nd time and every subsequent time the message is serialized.
-            payload = stream.toByteArray();
-            cursor = cursor - offset;
-            offset = 0;
-            recached = true;
-            length = payload.length;
-            return payload;
-        }
         // Record length. If this Message wasn't parsed from a byte stream it won't have length field
         // set (except for static length message types).  Setting it makes future streaming more efficient
         // because we can preallocate the ByteArrayOutputStream buffer and avoid resizing.
@@ -242,12 +191,6 @@ public abstract class Message {
      * @throws IOException
      */
     public final void bitcoinSerialize(OutputStream stream) throws IOException {
-        // 1st check for cached bytes.
-        if (payload != null && length != UNKNOWN_LENGTH) {
-            stream.write(payload, offset, length);
-            return;
-        }
-
         bitcoinSerializeToStream(stream);
     }
 

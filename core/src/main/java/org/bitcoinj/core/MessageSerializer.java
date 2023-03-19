@@ -57,11 +57,6 @@ public abstract class MessageSerializer {
     public abstract Message deserializePayload(BitcoinSerializer.BitcoinPacketHeader header, ByteBuffer in) throws ProtocolException, BufferUnderflowException, UnsupportedOperationException;
 
     /**
-     * Whether the serializer will produce cached mode Messages
-     */
-    public abstract boolean isParseRetainMode();
-
-    /**
      * Make an address message from the payload. Extension point for alternative
      * serialization format support.
      */

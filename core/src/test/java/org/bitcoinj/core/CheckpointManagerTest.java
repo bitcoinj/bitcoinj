@@ -56,8 +56,8 @@ public class CheckpointManagerTest {
     @Test
     public void canReadTextualStream() throws IOException {
         expect(params.getId()).andReturn("org/bitcoinj/core/checkpointmanagertest/validTextualFormat");
-        expect(params.getSerializer(false)).andReturn(
-                new BitcoinSerializer(params, NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), false));
+        expect(params.getSerializer()).andReturn(
+                new BitcoinSerializer(params, NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
         expect(params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT))
                 .andReturn(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion());
         replay(params);
