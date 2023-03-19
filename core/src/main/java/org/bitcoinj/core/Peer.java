@@ -171,6 +171,9 @@ public class Peer extends PeerSocketHandler {
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock pingIntervalsLock = new ReentrantLock();
     @GuardedBy("pingIntervalsLock") private final Deque<Duration> pingIntervals = new ArrayDeque<>(PING_MOVING_AVERAGE_WINDOW);
+    private volatile Duration lastPing = null;    // should only be written while holding pingIntervalsLock
+    private volatile Duration averagePing = null; // should only be written while holding pingIntervalsLock
+
     private final CopyOnWriteArrayList<PendingPing> pendingPings;
     // Disconnect from a peer that is not responding to Pings
     private static final int PENDING_PINGS_LIMIT = 50;
@@ -1512,17 +1515,18 @@ public class Peer extends PeerSocketHandler {
     private void addPingInterval(Duration sample) {
         pingIntervalsLock.lock();
         try {
-            if (pingIntervals.size() == 0) {
-                // Initialize the averaging window to the first sample.
-                for (int i = 0; i < PING_MOVING_AVERAGE_WINDOW ; i++) {
-                    pingIntervals.add(sample);
-                }
-            } else {
+            if (pingIntervals.size() >= PING_MOVING_AVERAGE_WINDOW) {
                 // Remove oldest sample from front of queue
                 pingIntervals.remove();
-                // Add new sample to end of queue
-                pingIntervals.add(sample);
             }
+            // Add new sample to end of queue
+            pingIntervals.add(sample);
+            // calculate last and average pings (while we have the lock and are loaded in cache)
+            lastPing = sample;
+            averagePing = pingIntervals.stream()
+                    .reduce(Duration::plus)
+                    .map(d -> d.dividedBy(pingIntervals.size()))
+                    .orElse(null);
         } finally {
             pingIntervalsLock.unlock();
         }
@@ -1567,12 +1571,7 @@ public class Peer extends PeerSocketHandler {
      * @return last ping, or empty
      */
     public Optional<Duration> lastPingInterval() {
-        pingIntervalsLock.lock();
-        try {
-            return Optional.ofNullable(pingIntervals.peekLast());
-        } finally {
-            pingIntervalsLock.unlock();
-        }
+        return Optional.ofNullable(lastPing);
     }
 
     /** @deprecated use {@link #lastPingInterval()} */
@@ -1590,14 +1589,7 @@ public class Peer extends PeerSocketHandler {
      * @return moving average, or empty
      */
     public Optional<Duration> pingInterval() {
-        pingIntervalsLock.lock();
-        try {
-            return pingIntervals.stream()
-                    .reduce(Duration::plus)
-                    .map(d -> d.dividedBy(pingIntervals.size()));
-        } finally {
-            pingIntervalsLock.unlock();
-        }
+        return Optional.ofNullable(averagePing);
     }
 
     /** @deprecated use {@link #pingInterval()} */
