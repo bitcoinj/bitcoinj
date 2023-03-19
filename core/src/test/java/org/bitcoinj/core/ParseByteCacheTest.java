@@ -116,20 +116,20 @@ public class ParseByteCacheTest {
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 
-        MessageSerializer bs = TESTNET.getDefaultSerializer();
+        MessageSerializer serializer = TESTNET.getDefaultSerializer();
         
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        bs.serialize(tx1, bos);
+        serializer.serialize(tx1, bos);
         tx1BytesWithHeader = bos.toByteArray();
         tx1Bytes = tx1.bitcoinSerialize();
         
         bos.reset();
-        bs.serialize(tx2, bos);
+        serializer.serialize(tx2, bos);
         tx2BytesWithHeader = bos.toByteArray();
         tx2Bytes = tx2.bitcoinSerialize();
         
         bos.reset();
-        bs.serialize(b1, bos);
+        serializer.serialize(b1, bos);
         b1BytesWithHeader = bos.toByteArray();
         b1Bytes = b1.bitcoinSerialize();
     }
@@ -171,33 +171,33 @@ public class ParseByteCacheTest {
     public void testBlock(byte[] blockBytes, boolean isChild, boolean retain) throws Exception {
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer bsRef = TESTNET.getSerializer(false);
+        MessageSerializer serializerRef = TESTNET.getSerializer(false);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         
-        BitcoinSerializer bs = TESTNET.getSerializer(retain);
+        BitcoinSerializer serializer = TESTNET.getSerializer(retain);
         Block b1;
         Block bRef;
-        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // verify our reference BitcoinSerializer produces matching byte array.
         bos.reset();
-        bsRef.serialize(bRef, bos);
+        serializerRef.serialize(bRef, bos);
         assertArrayEquals(bos.toByteArray(), blockBytes);
         
         // check retain status survive both before and after a serialization
         assertEquals(retain, b1.isHeaderBytesValid());
         assertEquals(retain, b1.isTransactionBytesValid());
         
-        serDeser(bs, b1, blockBytes, null, null);
+        serDeser(serializer, b1, blockBytes, null, null);
         
         assertEquals(retain, b1.isHeaderBytesValid());
         assertEquals(retain, b1.isTransactionBytesValid());
         
         // compare to ref block
         bos.reset();
-        bsRef.serialize(bRef, bos);
-        serDeser(bs, b1, bos.toByteArray(), null, null);
+        serializerRef.serialize(bRef, bos);
+        serDeser(serializer, b1, bos.toByteArray(), null, null);
         
         // retrieve a value from a child
         b1.getTransactions();
@@ -210,22 +210,22 @@ public class ParseByteCacheTest {
             assertEquals(retain, tx1.isCached());
             
             // does it still match ref block?
-            serDeser(bs, b1, bos.toByteArray(), null, null);
+            serDeser(serializer, b1, bos.toByteArray(), null, null);
         }
         
         // refresh block
-        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // retrieve a value from header
         b1.getDifficultyTarget();
         
         // does it still match ref block?
-        serDeser(bs, b1, bos.toByteArray(), null, null);
+        serDeser(serializer, b1, bos.toByteArray(), null, null);
         
         // refresh block
-        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // retrieve a value from a child and header
         b1.getDifficultyTarget();
@@ -237,11 +237,11 @@ public class ParseByteCacheTest {
             assertEquals(retain, tx1.isCached());
         }
         // does it still match ref block?
-        serDeser(bs, b1, bos.toByteArray(), null, null);
+        serDeser(serializer, b1, bos.toByteArray(), null, null);
         
         // refresh block
-        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
 
         // change a value in header
         b1.setNonce(23);
@@ -250,12 +250,12 @@ public class ParseByteCacheTest {
         assertEquals(retain , b1.isTransactionBytesValid());
         // does it still match ref block?
         bos.reset();
-        bsRef.serialize(bRef, bos);
-        serDeser(bs, b1, bos.toByteArray(), null, null);
+        serializerRef.serialize(bRef, bos);
+        serDeser(serializer, b1, bos.toByteArray(), null, null);
         
         // refresh block
-        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // retrieve a value from a child of a child
         b1.getTransactions();
@@ -268,13 +268,13 @@ public class ParseByteCacheTest {
             
             // does it still match ref tx?
             bos.reset();
-            bsRef.serialize(bRef, bos);
-            serDeser(bs, b1, bos.toByteArray(), null, null);
+            serializerRef.serialize(bRef, bos);
+            serDeser(serializer, b1, bos.toByteArray(), null, null);
         }
         
         // refresh block
-        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // add an input
         b1.getTransactions();
@@ -300,23 +300,23 @@ public class ParseByteCacheTest {
                 assertFalse(b1.isHeaderBytesValid());
                 
                 bos.reset();
-                bsRef.serialize(bRef, bos);
+                serializerRef.serialize(bRef, bos);
                 byte[] source = bos.toByteArray();
                 // confirm we still match the reference tx.
-                serDeser(bs, b1, source, null, null);
+                serDeser(serializer, b1, source, null, null);
             }
             
             // does it still match ref tx?
             bos.reset();
-            bsRef.serialize(bRef, bos);
-            serDeser(bs, b1, bos.toByteArray(), null, null);
+            serializerRef.serialize(bRef, bos);
+            serDeser(serializer, b1, bos.toByteArray(), null, null);
         }
         
         // refresh block
-        b1 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        Block b2 = (Block) bs.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
-        Block bRef2 = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        Block b2 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
+        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
+        Block bRef2 = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // reparent an input
         b1.getTransactions();
@@ -341,22 +341,22 @@ public class ParseByteCacheTest {
                 assertFalse(b2.isTransactionBytesValid());
                 
                 bos.reset();
-                bsRef.serialize(bRef2, bos);
+                serializerRef.serialize(bRef2, bos);
                 byte[] source = bos.toByteArray();
                 // confirm altered block matches altered ref block.
-                serDeser(bs, b2, source, null, null);
+                serDeser(serializer, b2, source, null, null);
             }
             
             // does unaltered block still match ref block?
             bos.reset();
-            bsRef.serialize(bRef, bos);
-            serDeser(bs, b1, bos.toByteArray(), null, null);
+            serializerRef.serialize(bRef, bos);
+            serDeser(serializer, b1, bos.toByteArray(), null, null);
 
             // how about if we refresh it?
-            bRef = (Block) bsRef.deserialize(ByteBuffer.wrap(blockBytes));
+            bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
             bos.reset();
-            bsRef.serialize(bRef, bos);
-            serDeser(bs, b1, bos.toByteArray(), null, null);
+            serializerRef.serialize(bRef, bos);
+            serDeser(serializer, b1, bos.toByteArray(), null, null);
         }
     }
     
@@ -364,31 +364,31 @@ public class ParseByteCacheTest {
 
         // reference serializer to produce comparison serialization output after changes to
         // message structure.
-        MessageSerializer bsRef = params.getSerializer(false);
+        MessageSerializer serializerRef = params.getSerializer(false);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-        BitcoinSerializer bs = params.getSerializer(retain);
+        BitcoinSerializer serializer = params.getSerializer(retain);
         Transaction t1;
         Transaction tRef;
-        t1 = (Transaction) bs.deserialize(ByteBuffer.wrap(txBytes));
-        tRef = (Transaction) bsRef.deserialize(ByteBuffer.wrap(txBytes));
+        t1 = (Transaction) serializer.deserialize(ByteBuffer.wrap(txBytes));
+        tRef = (Transaction) serializerRef.deserialize(ByteBuffer.wrap(txBytes));
 
         // verify our reference BitcoinSerializer produces matching byte array.
         bos.reset();
-        bsRef.serialize(tRef, bos);
+        serializerRef.serialize(tRef, bos);
         assertArrayEquals(bos.toByteArray(), txBytes);
 
         // check and retain status survive both before and after a serialization
         assertEquals(retain, t1.isCached());
 
-        serDeser(bs, t1, txBytes, null, null);
+        serDeser(serializer, t1, txBytes, null, null);
 
         assertEquals(retain, t1.isCached());
 
         // compare to ref tx
         bos.reset();
-        bsRef.serialize(tRef, bos);
-        serDeser(bs, t1, bos.toByteArray(), null, null);
+        serializerRef.serialize(tRef, bos);
+        serDeser(serializer, t1, bos.toByteArray(), null, null);
         
         // retrieve a value from a child
         t1.getInputs();
@@ -397,12 +397,12 @@ public class ParseByteCacheTest {
             assertEquals(retain, tin.isCached());
             
             // does it still match ref tx?
-            serDeser(bs, t1, bos.toByteArray(), null, null);
+            serDeser(serializer, t1, bos.toByteArray(), null, null);
         }
         
         // refresh tx
-        t1 = (Transaction) bs.deserialize(ByteBuffer.wrap(txBytes));
-        tRef = (Transaction) bsRef.deserialize(ByteBuffer.wrap(txBytes));
+        t1 = (Transaction) serializer.deserialize(ByteBuffer.wrap(txBytes));
+        tRef = (Transaction) serializerRef.deserialize(ByteBuffer.wrap(txBytes));
         
         // add an input
         if (t1.getInputs().size() > 0) {
@@ -415,24 +415,24 @@ public class ParseByteCacheTest {
             assertFalse(t1.isCached());
 
             bos.reset();
-            bsRef.serialize(tRef, bos);
+            serializerRef.serialize(tRef, bos);
             byte[] source = bos.toByteArray();
             //confirm we still match the reference tx.
-            serDeser(bs, t1, source, null, null);
+            serDeser(serializer, t1, source, null, null);
         }
     }
     
-    private void serDeser(MessageSerializer bs, Message message, byte[] sourceBytes, byte[] containedBytes, byte[] containingBytes) throws Exception {
+    private void serDeser(MessageSerializer serializer, Message message, byte[] sourceBytes, byte[] containedBytes, byte[] containingBytes) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        bs.serialize(message, bos);
+        serializer.serialize(message, bos);
         byte[] b1 = bos.toByteArray();
         
-        Message m2 = bs.deserialize(ByteBuffer.wrap(b1));
+        Message m2 = serializer.deserialize(ByteBuffer.wrap(b1));
 
         assertEquals(message, m2);
 
         bos.reset();
-        bs.serialize(m2, bos);
+        serializer.serialize(m2, bos);
         byte[] b2 = bos.toByteArray();
         assertArrayEquals(b1, b2);
 
