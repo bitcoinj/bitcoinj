@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -94,8 +95,10 @@ public abstract class Message {
         if (this.length == UNKNOWN_LENGTH && !(this instanceof UnknownMessage))
             checkState(false, "Length field has not been set in constructor for %s after parse.",
                        getClass().getSimpleName());
-        
-        if (!serializer.isParseRetainMode())
+
+        if (serializer.isParseRetainMode())
+            Objects.requireNonNull(this.payload, "payload must be retained");
+        else
             this.payload = null;
     }
 
