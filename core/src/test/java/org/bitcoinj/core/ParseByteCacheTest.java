@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -44,34 +43,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ParseByteCacheTest {
-    private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
     private static final int BLOCK_HEIGHT_GENESIS = 0;
 
-    private final byte[] txMessage = HEX.withSeparator(" ", 2).decode(
-            "f9 be b4 d9 74 78 00 00  00 00 00 00 00 00 00 00" +
-            "02 01 00 00 e2 93 cd be  01 00 00 00 01 6d bd db" +
-            "08 5b 1d 8a f7 51 84 f0  bc 01 fa d5 8d 12 66 e9" +
-            "b6 3b 50 88 19 90 e4 b4  0d 6a ee 36 29 00 00 00" +
-            "00 8b 48 30 45 02 21 00  f3 58 1e 19 72 ae 8a c7" +
-            "c7 36 7a 7a 25 3b c1 13  52 23 ad b9 a4 68 bb 3a" +
-            "59 23 3f 45 bc 57 83 80  02 20 59 af 01 ca 17 d0" +
-            "0e 41 83 7a 1d 58 e9 7a  a3 1b ae 58 4e de c2 8d" +
-            "35 bd 96 92 36 90 91 3b  ae 9a 01 41 04 9c 02 bf" +
-            "c9 7e f2 36 ce 6d 8f e5  d9 40 13 c7 21 e9 15 98" +
-            "2a cd 2b 12 b6 5d 9b 7d  59 e2 0a 84 20 05 f8 fc" +
-            "4e 02 53 2e 87 3d 37 b9  6f 09 d6 d4 51 1a da 8f" +
-            "14 04 2f 46 61 4a 4c 70  c0 f1 4b ef f5 ff ff ff" +
-            "ff 02 40 4b 4c 00 00 00  00 00 19 76 a9 14 1a a0" +
-            "cd 1c be a6 e7 45 8a 7a  ba d5 12 a9 d9 ea 1a fb" +
-            "22 5e 88 ac 80 fa e9 c7  00 00 00 00 19 76 a9 14" +
-            "0e ab 5b ea 43 6a 04 84  cf ab 12 48 5e fd a0 b7" +
-            "8b 4e cc 52 88 ac 00 00  00 00");
-    
-    private final byte[] txMessagePart = HEX.withSeparator(" ", 2).decode(
-            "08 5b 1d 8a f7 51 84 f0  bc 01 fa d5 8d 12 66 e9" +
-            "b6 3b 50 88 19 90 e4 b4  0d 6a ee 36 29 00 00 00" +
-            "00 8b 48 30 45 02 21 00  f3 58 1e 19 72 ae 8a c7" +
-            "c7 36 7a 7a 25 3b c1 13  52 23 ad b9 a4 68 bb 3a");
+    private final byte[] txMessage = ByteUtils.parseHex(
+            "f9beb4d974780000000000000000000002010000e293cdbe01000000016dbddb085b1d8af75184f0bc01fad58d1266e9b63b50881990e4b40d6aee3629000000008b483045022100f3581e1972ae8ac7c7367a7a253bc1135223adb9a468bb3a59233f45bc578380022059af01ca17d00e41837a1d58e97aa31bae584edec28d35bd96923690913bae9a0141049c02bfc97ef236ce6d8fe5d94013c721e915982acd2b12b65d9b7d59e20a842005f8fc4e02532e873d37b96f09d6d4511ada8f14042f46614a4c70c0f14beff5ffffffff02404b4c00000000001976a9141aa0cd1cbea6e7458a7abad512a9d9ea1afb225e88ac80fae9c7000000001976a9140eab5bea436a0484cfab12485efda0b78b4ecc5288ac00000000");
+    private final byte[] txMessagePart = ByteUtils.parseHex(
+            "085b1d8af75184f0bc01fad58d1266e9b63b50881990e4b40d6aee3629000000008b483045022100f3581e1972ae8ac7c7367a7a253bc1135223adb9a468bb3a");
 
     private BlockStore blockStore;
     
