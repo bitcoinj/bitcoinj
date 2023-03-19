@@ -392,7 +392,7 @@ public class Block extends Message {
 
         // At least one of the two cacheable components is invalid
         // so fall back to stream write since we can't be sure of the length.
-        ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? HEADER_SIZE + guessTransactionsLength() : length);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? HEADER_SIZE + guessTransactionsLength() : length);
         try {
             writeHeader(stream);
             writeTransactions(stream);
@@ -462,7 +462,7 @@ public class Block extends Message {
      */
     private Sha256Hash calculateHash() {
         try {
-            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(HEADER_SIZE);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(HEADER_SIZE);
             writeHeader(bos);
             return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bos.toByteArray()));
         } catch (IOException e) {

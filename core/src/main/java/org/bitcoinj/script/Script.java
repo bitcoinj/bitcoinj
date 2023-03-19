@@ -37,7 +37,6 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
-import org.bitcoinj.core.UnsafeByteArrayOutputStream;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.core.VerificationException;
@@ -489,7 +488,7 @@ public class Script {
     public static byte[] createInputScript(byte[] signature, byte[] pubkey) {
         try {
             // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new UnsafeByteArrayOutputStream(signature.length + pubkey.length + 2);
+            ByteArrayOutputStream bits = new ByteArrayOutputStream(signature.length + pubkey.length + 2);
             writeBytes(bits, signature);
             writeBytes(bits, pubkey);
             return bits.toByteArray();
@@ -501,7 +500,7 @@ public class Script {
     public static byte[] createInputScript(byte[] signature) {
         try {
             // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new UnsafeByteArrayOutputStream(signature.length + 2);
+            ByteArrayOutputStream bits = new ByteArrayOutputStream(signature.length + 2);
             writeBytes(bits, signature);
             return bits.toByteArray();
         } catch (IOException e) {
@@ -782,7 +781,7 @@ public class Script {
      */
     public static byte[] removeAllInstancesOf(byte[] inputScript, byte[] chunkToRemove) {
         // We usually don't end up removing anything
-        UnsafeByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(inputScript.length);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(inputScript.length);
 
         int cursor = 0;
         while (cursor < inputScript.length) {
@@ -1517,7 +1516,7 @@ public class Script {
         byte[] prog = script.getProgram();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
-        UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sigBytes.length + 1);
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream(sigBytes.length + 1);
         try {
             writeBytes(outStream, sigBytes);
         } catch (IOException e) {
@@ -1594,7 +1593,7 @@ public class Script {
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
         for (byte[] sig : sigs) {
-            UnsafeByteArrayOutputStream outStream = new UnsafeByteArrayOutputStream(sig.length + 1);
+            ByteArrayOutputStream outStream = new ByteArrayOutputStream(sig.length + 1);
             try {
                 writeBytes(outStream, sig);
             } catch (IOException e) {

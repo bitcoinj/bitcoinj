@@ -207,7 +207,7 @@ public abstract class Message {
         }
 
         // No cached array available so serialize parts by stream.
-        ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
         try {
             bitcoinSerializeToStream(stream);
         } catch (IOException e) {

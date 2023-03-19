@@ -293,7 +293,7 @@ public class Transaction extends ChildMessage {
             if (!hasWitnesses() && cachedWTxId != null) {
                 cachedTxId = cachedWTxId;
             } else {
-                ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length < 32 ? 32 : length + 32);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
                 try {
                     bitcoinSerializeToStream(stream, false);
                 } catch (IOException e) {
@@ -339,7 +339,7 @@ public class Transaction extends ChildMessage {
     public int getWeight() {
         if (!hasWitnesses())
             return getMessageSize() * 4;
-        try (final ByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(length)) {
+        try (final ByteArrayOutputStream stream = new ByteArrayOutputStream(length)) {
             bitcoinSerializeToStream(stream, false);
             final int baseSize = stream.size();
             stream.reset();
@@ -1470,7 +1470,7 @@ public class Transaction extends ChildMessage {
             byte[] scriptCode,
             Coin prevValue,
             byte sigHashType){
-        ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
         try {
             byte[] hashPrevouts = new byte[32];
             byte[] hashSequence = new byte[32];
@@ -1480,7 +1480,7 @@ public class Transaction extends ChildMessage {
             boolean signAll = (basicSigHashType != SigHash.SINGLE.value) && (basicSigHashType != SigHash.NONE.value);
 
             if (!anyoneCanPay) {
-                ByteArrayOutputStream bosHashPrevouts = new UnsafeByteArrayOutputStream(256);
+                ByteArrayOutputStream bosHashPrevouts = new ByteArrayOutputStream(256);
                 for (TransactionInput input : this.inputs) {
                     bosHashPrevouts.write(input.getOutpoint().getHash().getReversedBytes());
                     uint32ToByteStreamLE(input.getOutpoint().getIndex(), bosHashPrevouts);
@@ -1489,7 +1489,7 @@ public class Transaction extends ChildMessage {
             }
 
             if (!anyoneCanPay && signAll) {
-                ByteArrayOutputStream bosSequence = new UnsafeByteArrayOutputStream(256);
+                ByteArrayOutputStream bosSequence = new ByteArrayOutputStream(256);
                 for (TransactionInput input : this.inputs) {
                     uint32ToByteStreamLE(input.getSequenceNumber(), bosSequence);
                 }
@@ -1497,7 +1497,7 @@ public class Transaction extends ChildMessage {
             }
 
             if (signAll) {
-                ByteArrayOutputStream bosHashOutputs = new UnsafeByteArrayOutputStream(256);
+                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
                 for (TransactionOutput output : this.outputs) {
                     uint64ToByteStreamLE(
                             BigInteger.valueOf(output.getValue().getValue()),
@@ -1508,7 +1508,7 @@ public class Transaction extends ChildMessage {
                 }
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
-                ByteArrayOutputStream bosHashOutputs = new UnsafeByteArrayOutputStream(256);
+                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
                 uint64ToByteStreamLE(
                         BigInteger.valueOf(this.outputs.get(inputIndex).getValue().getValue()),
                         bosHashOutputs

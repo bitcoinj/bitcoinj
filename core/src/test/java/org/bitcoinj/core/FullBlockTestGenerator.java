@@ -675,7 +675,7 @@ public class FullBlockTestGenerator {
         int b39numP2SHOutputs = 0, b39sigOpsPerOutput = 6;
         NewBlock b39 = createNextBlock(b35, chainHeadHeight + 12, null, null);
         {
-            ByteArrayOutputStream p2shScriptPubKey = new UnsafeByteArrayOutputStream();
+            ByteArrayOutputStream p2shScriptPubKey = new ByteArrayOutputStream();
             try {
                 Script.writeBytes(p2shScriptPubKey, coinbaseOutKeyPubKey);
                 p2shScriptPubKey.write(OP_2DUP);
@@ -695,7 +695,7 @@ public class FullBlockTestGenerator {
             b39p2shScriptPubKey = p2shScriptPubKey.toByteArray();
 
             byte[] scriptHash = CryptoUtils.sha256hash160(b39p2shScriptPubKey);
-            UnsafeByteArrayOutputStream scriptPubKey = new UnsafeByteArrayOutputStream(scriptHash.length + 3);
+            ByteArrayOutputStream scriptPubKey = new ByteArrayOutputStream(scriptHash.length + 3);
             scriptPubKey.write(OP_HASH160);
             try {
                 Script.writeBytes(scriptPubKey, scriptHash);
@@ -767,12 +767,12 @@ public class FullBlockTestGenerator {
 
                     // Sign input
                     try {
-                        ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(73);
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream(73);
                         bos.write(coinbaseOutKey.sign(hash).encodeToDER());
                         bos.write(SigHash.SINGLE.value);
                         byte[] signature = bos.toByteArray();
 
-                        ByteArrayOutputStream scriptSigBos = new UnsafeByteArrayOutputStream(signature.length + b39p2shScriptPubKey.length + 3);
+                        ByteArrayOutputStream scriptSigBos = new ByteArrayOutputStream(signature.length + b39p2shScriptPubKey.length + 3);
                         Script.writeBytes(scriptSigBos, new byte[] {(byte) OP_CHECKSIG});
                         scriptSigBos.write(Script.createInputScript(signature));
                         Script.writeBytes(scriptSigBos, b39p2shScriptPubKey);
@@ -837,13 +837,13 @@ public class FullBlockTestGenerator {
 
                         // Sign input
                         try {
-                            ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(
+                            ByteArrayOutputStream bos = new ByteArrayOutputStream(
                                     73);
                             bos.write(coinbaseOutKey.sign(hash).encodeToDER());
                             bos.write(SigHash.SINGLE.value);
                             byte[] signature = bos.toByteArray();
 
-                            ByteArrayOutputStream scriptSigBos = new UnsafeByteArrayOutputStream(
+                            ByteArrayOutputStream scriptSigBos = new ByteArrayOutputStream(
                                     signature.length
                                             + b39p2shScriptPubKey.length + 3);
                             Script.writeBytes(scriptSigBos,
@@ -1216,7 +1216,7 @@ public class FullBlockTestGenerator {
             b64Original.solve();
             checkState(b64Original.block.getMessageSize() == Block.MAX_BLOCK_SIZE);
 
-            UnsafeByteArrayOutputStream stream = new UnsafeByteArrayOutputStream(b64Original.block.getMessageSize() + 8);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream(b64Original.block.getMessageSize() + 8);
             b64Original.block.writeHeader(stream);
 
             byte[] varIntBytes = new byte[9];
