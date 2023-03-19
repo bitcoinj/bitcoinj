@@ -426,23 +426,31 @@ public class ParseByteCacheTest {
             assertTrue(arrayContains(containingBytes, b1));
         }
     }
-    
+
+    // Determine if sub is contained in sup.
     public static boolean arrayContains(byte[] sup, byte[] sub) {
-        if (sup.length < sub.length)
-            return false;       
-        
-        String superstring = ByteUtils.formatHex(sup);
-        String substring = ByteUtils.formatHex(sub);
-        
-        int ind = superstring.indexOf(substring);
-        
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < superstring.indexOf(substring); i++)
-            sb.append(" ");
-        
-        //System.out.println(superstring);
-        //System.out.println(sb.append(substring).toString());
-        //System.out.println();
-        return ind > -1;
+        ByteBuffer subBuf = ByteBuffer.wrap(sub);
+        int subLength = sub.length;
+        int lengthDiff = sup.length - subLength;
+        if (lengthDiff < 0)
+            return false;
+        for (int i = 0; i <= lengthDiff; i++)
+            if (ByteBuffer.wrap(sup, i, subLength).equals(subBuf))
+                return true;
+        return false;
+    }
+
+    @Test
+    public void testArrayContains() {
+        byte[] oneToNine = ByteUtils.parseHex("010203040506070809");
+        assertTrue(arrayContains(oneToNine, oneToNine));
+        assertTrue(arrayContains(oneToNine, ByteUtils.parseHex("010203")));
+        assertTrue(arrayContains(oneToNine, ByteUtils.parseHex("040506")));
+        assertTrue(arrayContains(oneToNine, ByteUtils.parseHex("070809")));
+        assertTrue(arrayContains(oneToNine, new byte[0]));
+
+        assertFalse(arrayContains(oneToNine, ByteUtils.parseHex("123456")));
+        assertFalse(arrayContains(oneToNine, ByteUtils.parseHex("080910")));
+        assertFalse(arrayContains(oneToNine, ByteUtils.parseHex("01020304050607080910")));
     }
 }
