@@ -81,11 +81,10 @@ public abstract class MessageSerializer {
     }
 
     /**
-     * Make a block from the payload, using an offset of zero and the provided
-     * length as block length. Extension point for alternative
+     * Make a block from the payload, using an offset of zero. Extension point for alternative
      * serialization format support.
      */
-    public abstract Block makeBlock(byte[] payloadBytes, final int offset) throws ProtocolException, UnsupportedOperationException;
+    public abstract Block makeBlock(byte[] payloadBytes, int offset) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make an filter message from the payload. Extension point for alternative
