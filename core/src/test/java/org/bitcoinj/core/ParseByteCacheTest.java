@@ -453,12 +453,13 @@ public class ParseByteCacheTest {
 
     // Determine if sub is contained in sup.
     public static boolean arrayContains(byte[] sup, byte[] sub) {
+        ByteBuffer subBuf = ByteBuffer.wrap(sub);
         int subLength = sub.length;
         int lengthDiff = sup.length - subLength;
         if (lengthDiff < 0)
             return false;
         for (int i = 0; i <= lengthDiff; i++)
-            if (Arrays.equals(sup, i, i + subLength, sub, 0, subLength))
+            if (ByteBuffer.wrap(sup, i, subLength).equals(subBuf))
                 return true;
         return false;
     }
