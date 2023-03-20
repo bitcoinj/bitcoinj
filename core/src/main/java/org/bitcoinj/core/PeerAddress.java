@@ -156,7 +156,7 @@ public class PeerAddress extends ChildMessage {
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
         if (protocolVersion >= 1) {
-            ByteUtils.uint32ToByteStreamLE(time.get().getEpochSecond(), stream);
+            ByteUtils.writeUint32LE(time.get().getEpochSecond(), stream);
         }
         if (protocolVersion == 2) {
             stream.write(new VarInt(services.longValue()).encode());
@@ -198,7 +198,7 @@ public class PeerAddress extends ChildMessage {
                 throw new IllegalStateException();
             }
         } else {
-            ByteUtils.uint64ToByteStreamLE(services, stream);  // nServices.
+            ByteUtils.writeUint64LE(services, stream);  // nServices.
             if (addr != null) {
                 // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
                 // hand.
@@ -225,7 +225,7 @@ public class PeerAddress extends ChildMessage {
             }
         }
         // And write out the port. Unlike the rest of the protocol, address and port is in big endian byte order.
-        ByteUtils.uint16ToByteStreamBE(port, stream);
+        ByteUtils.writeUint16BE(port, stream);
     }
 
     @Override

@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.bitcoinj.base.internal.ByteUtils.readUint32;
-import static org.bitcoinj.base.internal.ByteUtils.uint32ToByteArrayBE;
+import static org.bitcoinj.base.internal.ByteUtils.writeUint32BE;
 
 /**
  * <p>Methods to serialize and de-serialize messages to the Bitcoin network format as defined in
@@ -117,7 +117,7 @@ public class BitcoinSerializer extends MessageSerializer {
     @Override
     public void serialize(String name, byte[] message, OutputStream out) throws IOException {
         byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */];
-        uint32ToByteArrayBE(params.getPacketMagic(), header, 0);
+        writeUint32BE(params.getPacketMagic(), header, 0);
 
         // The header array is initialized to zero by Java so we don't have to worry about
         // NULL terminating the string here.
@@ -125,7 +125,7 @@ public class BitcoinSerializer extends MessageSerializer {
             header[4 + i] = (byte) (name.codePointAt(i) & 0xFF);
         }
 
-        ByteUtils.uint32ToByteArrayLE(message.length, header, 4 + COMMAND_LEN);
+        ByteUtils.writeUint32LE(message.length, header, 4 + COMMAND_LEN);
 
         byte[] hash = Sha256Hash.hashTwice(message);
         System.arraycopy(hash, 0, header, 4 + COMMAND_LEN + 4, 4);

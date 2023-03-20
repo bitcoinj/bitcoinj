@@ -325,12 +325,12 @@ public class Block extends Message {
 
     // default for testing
     void writeHeader(OutputStream stream) throws IOException {
-        ByteUtils.uint32ToByteStreamLE(version, stream);
+        ByteUtils.writeUint32LE(version, stream);
         stream.write(prevBlockHash.getReversedBytes());
         stream.write(getMerkleRoot().getReversedBytes());
-        ByteUtils.uint32ToByteStreamLE(time.getEpochSecond(), stream);
-        ByteUtils.uint32ToByteStreamLE(difficultyTarget, stream);
-        ByteUtils.uint32ToByteStreamLE(nonce, stream);
+        ByteUtils.writeUint32LE(time.getEpochSecond(), stream);
+        ByteUtils.writeUint32LE(difficultyTarget, stream);
+        ByteUtils.writeUint32LE(nonce, stream);
     }
 
     private void writeTransactions(OutputStream stream) throws IOException {

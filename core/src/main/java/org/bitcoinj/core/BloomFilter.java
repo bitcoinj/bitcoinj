@@ -165,8 +165,8 @@ public class BloomFilter extends Message {
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(new VarInt(data.length).encode());
         stream.write(data);
-        ByteUtils.uint32ToByteStreamLE(hashFuncs, stream);
-        ByteUtils.uint32ToByteStreamLE(nTweak, stream);
+        ByteUtils.writeUint32LE(hashFuncs, stream);
+        ByteUtils.writeUint32LE(nTweak, stream);
         stream.write(nFlags);
     }
 

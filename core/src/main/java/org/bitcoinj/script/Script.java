@@ -456,7 +456,7 @@ public class Script {
             os.write(buf);
         } else if (buf.length < 65536) {
             os.write(OP_PUSHDATA2);
-            ByteUtils.uint16ToByteStreamLE(buf.length, os);
+            ByteUtils.writeUint16LE(buf.length, os);
             os.write(buf);
         } else {
             throw new RuntimeException("Unimplemented");

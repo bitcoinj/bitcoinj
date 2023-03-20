@@ -99,7 +99,7 @@ public abstract class ListMessage extends Message {
         stream.write(new VarInt(items.size()).encode());
         for (InventoryItem i : items) {
             // Write out the type code.
-            ByteUtils.uint32ToByteStreamLE(i.type.code, stream);
+            ByteUtils.writeUint32LE(i.type.code, stream);
             // And now the hash.
             stream.write(i.hash.getReversedBytes());
         }

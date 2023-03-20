@@ -53,13 +53,13 @@ public class TransactionOutputChanges {
 
     public void serializeToStream(OutputStream bos) throws IOException {
         int numOutsCreated = txOutsCreated.size();
-        ByteUtils.uint32ToByteStreamLE(numOutsCreated, bos);
+        ByteUtils.writeUint32LE(numOutsCreated, bos);
         for (UTXO output : txOutsCreated) {
             output.serializeToStream(bos);
         }
         
         int numOutsSpent = txOutsSpent.size();
-        ByteUtils.uint32ToByteStreamLE(numOutsSpent, bos);
+        ByteUtils.writeUint32LE(numOutsSpent, bos);
         for (UTXO output : txOutsSpent) {
             output.serializeToStream(bos);
         }
