@@ -65,9 +65,11 @@ public class TxConfidenceTable {
     /**
      * Creates a table that will track at most the given number of transactions (allowing you to bound memory
      * usage).
-     * @param size Max number of transactions to track. The table will fill up to this size then stop growing.
+     *
+     * @param size                Max number of transactions to track. The table will fill up to this size then stop growing.
+     * @param chainHeightSupplier A reference to a method that returns the current best block height.
      */
-    public TxConfidenceTable(final int size) {
+    public TxConfidenceTable(final int size, ChainHeightSupplier chainHeightSupplier) {
         this(size, new TransactionConfidence.Factory());
     }
 
@@ -89,7 +91,7 @@ public class TxConfidenceTable {
      * this constructor.
      */
     public TxConfidenceTable() {
-        this(MAX_SIZE);
+        this(MAX_SIZE, () -> -1); // TODO: 2023-03-20 replace with actual ChainHeightSupplier
     }
 
     /**
