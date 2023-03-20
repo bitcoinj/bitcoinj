@@ -96,13 +96,13 @@ public class ByteUtils {
     }
 
     /** Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in little endian format. */
-    public static void uint16ToByteArrayLE(int val, byte[] out, int offset) {
+    public static void writeUint16LE(int val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
     }
 
     /** Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
-    public static void uint32ToByteArrayLE(long val, byte[] out, int offset) {
+    public static void writeUint32LE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
@@ -110,7 +110,7 @@ public class ByteUtils {
     }
 
     /** Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in big endian format. */
-    public static void uint32ToByteArrayBE(long val, byte[] out, int offset) {
+    public static void writeUint32BE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
         out[offset + 2] = (byte) (0xFF & (val >> 8));
@@ -118,7 +118,7 @@ public class ByteUtils {
     }
 
     /** Write 8 bytes to the byte array (starting at the offset) as signed 64-bit integer in little endian format. */
-    public static void int64ToByteArrayLE(long val, byte[] out, int offset) {
+    public static void writeInt64LE(long val, byte[] out, int offset) {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
@@ -130,19 +130,19 @@ public class ByteUtils {
     }
 
     /** Write 2 bytes to the output stream as unsigned 16-bit integer in little endian format. */
-    public static void uint16ToByteStreamLE(int val, OutputStream stream) throws IOException {
+    public static void writeUint16LE(int val, OutputStream stream) throws IOException {
         stream.write(0xFF & val);
         stream.write(0xFF & (val >> 8));
     }
 
     /** Write 2 bytes to the output stream as unsigned 16-bit integer in big endian format. */
-    public static void uint16ToByteStreamBE(int val, OutputStream stream) throws IOException {
+    public static void writeUint16BE(int val, OutputStream stream) throws IOException {
         stream.write(0xFF & (val >> 8));
         stream.write(0xFF & val);
     }
 
     /** Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format. */
-    public static void uint32ToByteStreamLE(long val, OutputStream stream) throws IOException {
+    public static void writeUint32LE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
         stream.write((int) (0xFF & (val >> 16)));
@@ -150,7 +150,7 @@ public class ByteUtils {
     }
 
     /** Write 4 bytes to the output stream as unsigned 32-bit integer in big endian format. */
-    public static void uint32ToByteStreamBE(long val, OutputStream stream) throws IOException {
+    public static void writeUint32BE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & (val >> 24)));
         stream.write((int) (0xFF & (val >> 16)));
         stream.write((int) (0xFF & (val >> 8)));
@@ -158,7 +158,7 @@ public class ByteUtils {
     }
 
     /** Write 8 bytes to the output stream as signed 64-bit integer in little endian format. */
-    public static void int64ToByteStreamLE(long val, OutputStream stream) throws IOException {
+    public static void writeInt64LE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
         stream.write((int) (0xFF & (val >> 16)));
@@ -170,7 +170,7 @@ public class ByteUtils {
     }
 
     /** Write 8 bytes to the output stream as unsigned 64-bit integer in little endian format. */
-    public static void uint64ToByteStreamLE(BigInteger val, OutputStream stream) throws IOException {
+    public static void writeUint64LE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();
         if (bytes.length > 8) {
             throw new RuntimeException("Input too large to encode into a uint64");
@@ -303,7 +303,7 @@ public class ByteUtils {
         if (includeLength) {
             byte[] result = new byte[length + 4];
             System.arraycopy(array, 0, result, length - array.length + 3, array.length);
-            uint32ToByteArrayBE(length, result, 0);
+            writeUint32BE(length, result, 0);
             if (isNegative)
                 result[4] |= 0x80;
             return result;
