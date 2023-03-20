@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,8 +33,8 @@ public class NotFoundMessage extends InventoryMessage {
         super(params);
     }
 
-    public NotFoundMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes);
+    public NotFoundMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     public NotFoundMessage(NetworkParameters params, List<InventoryItem> items) {

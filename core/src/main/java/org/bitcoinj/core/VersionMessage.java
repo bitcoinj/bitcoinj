@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -99,8 +100,8 @@ public class VersionMessage extends Message {
      */
     public boolean relayTxesBeforeFilter;
 
-    public VersionMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public VersionMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     // It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
@@ -130,10 +131,10 @@ public class VersionMessage extends Message {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
         time = Instant.ofEpochSecond(readUint64().longValue());
-        receivingAddr = new PeerAddress(params, payload, cursor, this, serializer.withProtocolVersion(0));
+        receivingAddr = new PeerAddress(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer.withProtocolVersion(0));
         cursor += receivingAddr.getMessageSize();
         if (clientVersion >= 106) {
-            fromAddr = new PeerAddress(params, payload, cursor, this, serializer.withProtocolVersion(0));
+            fromAddr = new PeerAddress(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer.withProtocolVersion(0));
             cursor += fromAddr.getMessageSize();
             // uint64 localHostNonce (random data)
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where

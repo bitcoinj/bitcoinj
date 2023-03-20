@@ -53,6 +53,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -153,7 +154,7 @@ public class ScriptTest {
         ECKey key3 = DumpedPrivateKey.fromBase58(BitcoinNetwork.TESTNET, "cVHwXSPRZmL9adctwBwmn4oTZdZMbaCsR5XF6VznqMgcvt1FDDxg").getKey();
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key1, key2, key3));
         byte[] bytes = ByteUtils.parseHex("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
-        Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(bytes);
+        Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(bytes));
         TransactionOutput output = transaction.getOutput(1);
         Transaction spendTx = new Transaction(TESTNET);
         Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
@@ -387,7 +388,7 @@ public class ScriptTest {
             Transaction transaction = null;
             try {
                 Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-                transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteUtils.parseHex(test.get(1).asText().toLowerCase()));
+                transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(test.get(1).asText().toLowerCase())));
                 transaction.verify();
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
@@ -420,12 +421,12 @@ public class ScriptTest {
             MessageSerializer serializer = TESTNET.getDefaultSerializer();
             Transaction transaction;
             try {
-                transaction = serializer.makeTransaction(txBytes);
+                transaction = serializer.makeTransaction(ByteBuffer.wrap(txBytes));
             } catch (ProtocolException ignore) {
                 // Try to parse as a no-witness transaction because some vectors are 0-input, 1-output txs that fail
                 // to correctly parse as witness transactions.
                 int protoVersionNoWitness = serializer.getProtocolVersion() | SERIALIZE_TRANSACTION_NO_WITNESS;
-                transaction = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(txBytes);
+                transaction = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(ByteBuffer.wrap(txBytes));
             }
             Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 

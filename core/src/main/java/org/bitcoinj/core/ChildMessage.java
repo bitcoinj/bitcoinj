@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 
 /**
  * <p>Represents a Message type that can be contained within another Message.  ChildMessages that have a cached
@@ -32,13 +33,13 @@ public abstract class ChildMessage extends Message {
         super(params);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public ChildMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent,
+    public ChildMessage(NetworkParameters params, ByteBuffer payload, @Nullable Message parent,
                         MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, serializer);
+        super(params, payload, serializer);
         this.parent = parent;
     }
 

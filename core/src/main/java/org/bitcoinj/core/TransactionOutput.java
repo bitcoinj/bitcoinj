@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -71,9 +72,8 @@ public class TransactionOutput extends ChildMessage {
     /**
      * Deserializes a transaction output message. This is usually part of a transaction message.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, byte[] payload,
-                             int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
         setParent(parent);
         availableForSpending = true;
     }
@@ -83,12 +83,11 @@ public class TransactionOutput extends ChildMessage {
      *
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer);
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, parent, serializer);
         availableForSpending = true;
     }
 

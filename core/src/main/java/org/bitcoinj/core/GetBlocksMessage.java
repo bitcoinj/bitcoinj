@@ -23,6 +23,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * <p>Represents the "getblocks" P2P network message, which requests the hashes of the parts of the block chain we're
@@ -43,8 +44,8 @@ public class GetBlocksMessage extends Message {
         this.stopHash = stopHash;
     }
 
-    public GetBlocksMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public GetBlocksMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     @Override

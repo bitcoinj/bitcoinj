@@ -24,6 +24,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,8 +74,8 @@ public class PartialMerkleTree extends Message {
     // txids and internal hashes
     private List<Sha256Hash> hashes;
     
-    public PartialMerkleTree(NetworkParameters params, byte[] payloadBytes, int offset) throws ProtocolException {
-        super(params, payloadBytes, offset);
+    public PartialMerkleTree(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**

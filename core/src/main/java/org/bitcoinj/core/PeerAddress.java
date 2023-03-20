@@ -31,6 +31,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -84,12 +85,11 @@ public class PeerAddress extends ChildMessage {
      * Construct a peer address from a serialized payload.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public PeerAddress(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer);
+    public PeerAddress(NetworkParameters params, ByteBuffer payload, Message parent, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, parent, serializer);
     }
 
     /**

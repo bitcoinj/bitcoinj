@@ -20,6 +20,7 @@ import org.bitcoinj.base.VarInt;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,8 +29,8 @@ public abstract class AddressMessage extends Message {
     protected static final long MAX_ADDRESSES = 1000;
     protected List<PeerAddress> addresses;
 
-    AddressMessage(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, serializer);
+    AddressMessage(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, serializer);
     }
 
     @Override

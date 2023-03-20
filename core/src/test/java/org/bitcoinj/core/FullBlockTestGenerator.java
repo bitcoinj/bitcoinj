@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1068,7 +1069,7 @@ public class FullBlockTestGenerator {
 
         Block b56;
         try {
-            b56 = params.getDefaultSerializer().makeBlock(b57.block.bitcoinSerialize());
+            b56 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57.block.bitcoinSerialize()));
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1109,7 +1110,7 @@ public class FullBlockTestGenerator {
 
         Block b56p2;
         try {
-            b56p2 = params.getDefaultSerializer().makeBlock(b57p2.block.bitcoinSerialize());
+            b56p2 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57p2.block.bitcoinSerialize()));
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1228,7 +1229,7 @@ public class FullBlockTestGenerator {
 
             for (Transaction transaction : b64Original.block.getTransactions())
                 transaction.bitcoinSerialize(stream);
-            b64 = params.getSerializer().makeBlock(stream.toByteArray());
+            b64 = params.getSerializer().makeBlock(ByteBuffer.wrap(stream.toByteArray()));
 
             // The following checks are checking to ensure block serialization functions in the way needed for this test
             // If they fail, it is likely not an indication of error, but an indication that this test needs rewritten
@@ -1358,7 +1359,7 @@ public class FullBlockTestGenerator {
         }
         b72.solve();
 
-        Block b71 = params.getDefaultSerializer().makeBlock(b72.block.bitcoinSerialize());
+        Block b71 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b72.block.bitcoinSerialize()));
         b71.addTransaction(b72.block.getTransactions().get(2));
         checkState(b71.getHash().equals(b72.getHash()));
         blocks.add(new BlockAndValidity(b71, false, true, b69.getHash(), chainHeadHeight + 21, "b71"));

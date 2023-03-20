@@ -21,8 +21,8 @@ import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
@@ -65,11 +65,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
@@ -225,8 +225,8 @@ public class WalletProtobufSerializerTest {
         assertTrue(lastSeenBlockHash.isEmpty());
 
         // Create a block.
-        Block block = TESTNET.getDefaultSerializer()
-                .makeBlock(ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat")));
+        Block block = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
+                ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"))));
         Sha256Hash blockHash = block.getHash();
         wallet.setLastBlockSeenHash(blockHash);
         wallet.setLastBlockSeenHeight(1);
@@ -385,8 +385,8 @@ public class WalletProtobufSerializerTest {
 
     @Test
     public void roundtripVersionTwoTransaction() throws Exception {
-        Transaction tx = new Transaction(TESTNET, ByteUtils.parseHex(
-                "0200000001d7902864af9310420c6e606b814c8f89f7902d40c130594e85df2e757a7cc301070000006b483045022100ca1757afa1af85c2bb014382d9ce411e1628d2b3d478df9d5d3e9e93cb25dcdd02206c5d272b31a23baf64e82793ee5c816e2bbef251e733a638b630ff2331fc83ba0121026ac2316508287761befbd0f7495ea794b396dbc5b556bf276639f56c0bd08911feffffff0274730700000000001976a91456da2d038a098c42390c77ef163e1cc23aedf24088ac91062300000000001976a9148ebf3467b9a8d7ae7b290da719e61142793392c188ac22e00600"));
+        Transaction tx = new Transaction(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(
+                "0200000001d7902864af9310420c6e606b814c8f89f7902d40c130594e85df2e757a7cc301070000006b483045022100ca1757afa1af85c2bb014382d9ce411e1628d2b3d478df9d5d3e9e93cb25dcdd02206c5d272b31a23baf64e82793ee5c816e2bbef251e733a638b630ff2331fc83ba0121026ac2316508287761befbd0f7495ea794b396dbc5b556bf276639f56c0bd08911feffffff0274730700000000001976a91456da2d038a098c42390c77ef163e1cc23aedf24088ac91062300000000001976a9148ebf3467b9a8d7ae7b290da719e61142793392c188ac22e00600")));
         assertEquals(tx.getVersion(), 2);
         assertEquals(tx.getTxId().toString(), "0321b1413ed9048199815bd6bc2650cab1a9e8d543f109a42c769b1f18df4174");
         myWallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));
@@ -483,8 +483,8 @@ public class WalletProtobufSerializerTest {
     @Test
     public void storeWitnessTransactions() throws Exception {
         // 3 inputs, inputs 0 and 2 have witnesses but not input 1
-        Transaction tx = new Transaction(TESTNET, ByteUtils.parseHex(
-                "02000000000103fc8a5bea59392369e8a1b635395e507a5cbaeffd926e6967a00d17c669aef1d3010000001716001403c80a334ed6a92cf400d8c708522ea0d6fa5593ffffffffc0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f0100000000ffffffffc0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f0200000000ffffffff01a086010000000000220020eb72e573a9513d982a01f0e6a6b53e92764db81a0c26d2be94c5fc5b69a0db7d02473044022048e895b7af715303ce273a2be03d6110ed69b5700679f4f036000f8ba6eddd2802205f780423fcce9b3632ed41681b0a86f5d123766b71f303558c39c1be5fe43e2601210259eb16169df80dbe5856d082a226d84a97d191c895f8046c3544df525028a874000220c0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f20c0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f00000000"));
+        Transaction tx = new Transaction(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(
+                "02000000000103fc8a5bea59392369e8a1b635395e507a5cbaeffd926e6967a00d17c669aef1d3010000001716001403c80a334ed6a92cf400d8c708522ea0d6fa5593ffffffffc0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f0100000000ffffffffc0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f0200000000ffffffff01a086010000000000220020eb72e573a9513d982a01f0e6a6b53e92764db81a0c26d2be94c5fc5b69a0db7d02473044022048e895b7af715303ce273a2be03d6110ed69b5700679f4f036000f8ba6eddd2802205f780423fcce9b3632ed41681b0a86f5d123766b71f303558c39c1be5fe43e2601210259eb16169df80dbe5856d082a226d84a97d191c895f8046c3544df525028a874000220c0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f20c0166d2218a2613b5384fc2c31238b1b6fa337080a1384220734e1bfd3629d3f00000000")));
         assertTrue(tx.hasWitnesses());
         assertEquals(tx.getTxId().toString(), "1c687396f4710f26206dbdd8bf07a28c76398be6750226ddfaf05a1a80d30034");
         myWallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));

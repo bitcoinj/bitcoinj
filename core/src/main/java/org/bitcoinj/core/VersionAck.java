@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import java.nio.ByteBuffer;
+
 /**
  * <p>The verack message, sent by a client accepting the version message they
  * received from their peer.</p>
@@ -27,6 +29,6 @@ public class VersionAck extends EmptyMessage {
     }
 
     // this is needed by the BitcoinSerializer
-    public VersionAck(NetworkParameters params, byte[] payload) {
+    public VersionAck(NetworkParameters params, ByteBuffer payload) {
     }
 }

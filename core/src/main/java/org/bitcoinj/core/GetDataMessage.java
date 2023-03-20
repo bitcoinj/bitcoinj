@@ -19,6 +19,8 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 
+import java.nio.ByteBuffer;
+
 /**
  * <p>Represents the "getdata" P2P network message, which requests the contents of blocks or transactions given their
  * hashes.</p>
@@ -27,8 +29,8 @@ import org.bitcoinj.base.Sha256Hash;
  */
 public class GetDataMessage extends ListMessage {
 
-    public GetDataMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes);
+    public GetDataMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
@@ -38,7 +40,7 @@ public class GetDataMessage extends ListMessage {
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public GetDataMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer)
+    public GetDataMessage(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer)
             throws ProtocolException {
         super(params, payload, serializer);
     }

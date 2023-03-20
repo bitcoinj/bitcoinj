@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -54,7 +55,7 @@ public class PeerAddressTest {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
         String hex = "010000000000000000000000000000000000ffff0a000001208d";
-        PeerAddress pa = new PeerAddress(MAINNET, ByteUtils.parseHex(hex), 0, null,
+        PeerAddress pa = new PeerAddress(MAINNET, ByteBuffer.wrap(ByteUtils.parseHex(hex)), null,
                 serializer);
         assertEquals(26, pa.length);
         assertEquals(VersionMessage.NODE_NETWORK, pa.getServices().longValue());
@@ -78,7 +79,7 @@ public class PeerAddressTest {
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
                 serializer);
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null, serializer);
+        PeerAddress pa2 = new PeerAddress(MAINNET, ByteBuffer.wrap(serialized), null, serializer);
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -92,7 +93,7 @@ public class PeerAddressTest {
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
                 serializer);
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null, serializer);
+        PeerAddress pa2 = new PeerAddress(MAINNET, ByteBuffer.wrap(serialized), null, serializer);
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -105,7 +106,7 @@ public class PeerAddressTest {
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("1.2.3.4"), 1234, BigInteger.ZERO,
                 serializer);
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null, serializer);
+        PeerAddress pa2 = new PeerAddress(MAINNET, ByteBuffer.wrap(serialized), null, serializer);
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -119,7 +120,7 @@ public class PeerAddressTest {
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 BigInteger.ZERO, serializer);
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null, serializer);
+        PeerAddress pa2 = new PeerAddress(MAINNET, ByteBuffer.wrap(serialized), null, serializer);
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -133,7 +134,7 @@ public class PeerAddressTest {
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 BigInteger.ZERO, serializer);
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null, serializer);
+        PeerAddress pa2 = new PeerAddress(MAINNET, ByteBuffer.wrap(serialized), null, serializer);
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(BigInteger.ZERO, pa2.getServices());
@@ -146,7 +147,7 @@ public class PeerAddressTest {
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 BigInteger.ZERO, serializer);
         byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(MAINNET, serialized, 0, null,
+        PeerAddress pa2 = new PeerAddress(MAINNET, ByteBuffer.wrap(serialized), null,
                 serializer);
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
@@ -158,7 +159,7 @@ public class PeerAddressTest {
     @Parameters(method = "deserializeToStringValues")
     public void deserializeToString(int version, String expectedToString, String hex) {
         MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(version);
-        PeerAddress pa = new PeerAddress(MAINNET, ByteUtils.parseHex(hex), 0, null, serializer);
+        PeerAddress pa = new PeerAddress(MAINNET, ByteBuffer.wrap(ByteUtils.parseHex(hex)), null, serializer);
 
         assertEquals(expectedToString, pa.toString());
     }

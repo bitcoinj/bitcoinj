@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import java.nio.ByteBuffer;
+
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
@@ -31,8 +33,8 @@ public class InventoryMessage extends ListMessage {
     /** A hard coded constant in the protocol. */
     public static final int MAX_INV_SIZE = 50000;
 
-    public InventoryMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
-        super(params, bytes);
+    public InventoryMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
@@ -42,7 +44,7 @@ public class InventoryMessage extends ListMessage {
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public InventoryMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer)
+    public InventoryMessage(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer)
             throws ProtocolException {
         super(params, payload, serializer);
     }

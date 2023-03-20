@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -916,7 +917,7 @@ public abstract class AbstractBlockChain {
             try {
                 falsePositives.remove(tx.getTxId());
                 if (clone)
-                    tx = tx.params.getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
+                    tx = tx.params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx.bitcoinSerialize()));
                 listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was

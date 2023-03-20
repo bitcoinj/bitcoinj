@@ -22,6 +22,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 
 /**
  * <p>Represents an "feefilter" message on the P2P network, which instructs a peer to filter transaction invs for
@@ -34,8 +35,8 @@ import java.math.BigInteger;
 public class FeeFilterMessage extends Message {
     private Coin feeRate;
 
-    public FeeFilterMessage(NetworkParameters params, byte[] payloadBytes, BitcoinSerializer serializer) {
-        super(params, payloadBytes, 0, serializer);
+    public FeeFilterMessage(NetworkParameters params, ByteBuffer payload, BitcoinSerializer serializer) {
+        super(params, payload, serializer);
     }
 
     @Override

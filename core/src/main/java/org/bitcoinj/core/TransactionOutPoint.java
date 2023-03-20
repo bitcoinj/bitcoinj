@@ -31,6 +31,7 @@ import org.bitcoinj.wallet.RedeemData;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -84,19 +85,18 @@ public class TransactionOutPoint extends ChildMessage {
     /**
      * Deserializes the message. This is usually part of a transaction message.
      */
-    public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
      * Deserializes the message. This is usually part of a transaction message.
      * @param params NetworkParameters object.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer);
+    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, Message parent, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, parent, serializer);
     }
 
     @Override
