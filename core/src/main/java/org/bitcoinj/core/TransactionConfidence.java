@@ -433,7 +433,10 @@ public class TransactionConfidence {
      * the depth is zero.</p>
      */
     public synchronized int getDepthInBlocks() {
-        return depth;
+        if (appearedAtChainHeight == -1){
+            return 0;
+        }
+        return chainHeightSupplier.get() - appearedAtChainHeight + 1;
     }
 
     /*
