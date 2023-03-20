@@ -25,7 +25,7 @@ package org.bitcoinj.base.internal;
  */
 public class HexFormat {
     public String formatHex(byte[] bytes) {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder(bytes.length * 2);
         for (byte aByte : bytes) {
             stringBuilder.append(byteToHex(aByte));
         }
