@@ -169,10 +169,9 @@ public class Peer extends PeerSocketHandler {
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
-    private final ReentrantLock pingIntervalsLock = new ReentrantLock();
-    @GuardedBy("pingIntervalsLock") private final Deque<Duration> pingIntervals = new ArrayDeque<>(PING_MOVING_AVERAGE_WINDOW);
-    private volatile Duration lastPing = null;    // should only be written while holding pingIntervalsLock
-    private volatile Duration averagePing = null; // should only be written while holding pingIntervalsLock
+    private final Deque<Duration> pingIntervals = new ArrayDeque<>(PING_MOVING_AVERAGE_WINDOW);
+    private volatile Duration lastPing = null;    // should only be written while holding lock on pingIntervals
+    private volatile Duration averagePing = null; // should only be written while holding lock on pingIntervals
 
     private final CopyOnWriteArrayList<PendingPing> pendingPings;
     // Disconnect from a peer that is not responding to Pings
@@ -1513,8 +1512,7 @@ public class Peer extends PeerSocketHandler {
 
     /** Adds a ping time sample to the averaging window. */
     private void addPingInterval(Duration sample) {
-        pingIntervalsLock.lock();
-        try {
+        synchronized (pingIntervals) {
             if (pingIntervals.size() >= PING_MOVING_AVERAGE_WINDOW) {
                 // Remove oldest sample from front of queue
                 pingIntervals.remove();
@@ -1527,8 +1525,6 @@ public class Peer extends PeerSocketHandler {
                     .reduce(Duration::plus)
                     .map(d -> d.dividedBy(pingIntervals.size()))
                     .orElse(null);
-        } finally {
-            pingIntervalsLock.unlock();
         }
     }
 
