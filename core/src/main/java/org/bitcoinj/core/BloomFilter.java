@@ -28,6 +28,7 @@ import org.bitcoinj.script.ScriptPattern;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -74,10 +75,10 @@ public class BloomFilter extends Message {
     private static final int MAX_HASH_FUNCS = 50;
 
     /**
-     * Construct a BloomFilter by deserializing payloadBytes
+     * Construct a BloomFilter by deserializing payload
      */
-    public BloomFilter(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public BloomFilter(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
     
     /**

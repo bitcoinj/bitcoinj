@@ -245,8 +245,8 @@ public class FakeTxBuilder {
         doubleSpends.t2.addOutput(o2);
 
         try {
-            doubleSpends.t1 = params.getDefaultSerializer().makeTransaction(doubleSpends.t1.bitcoinSerialize());
-            doubleSpends.t2 = params.getDefaultSerializer().makeTransaction(doubleSpends.t2.bitcoinSerialize());
+            doubleSpends.t1 = params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(doubleSpends.t1.bitcoinSerialize()));
+            doubleSpends.t2 = params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(doubleSpends.t2.bitcoinSerialize()));
         } catch (ProtocolException e) {
             throw new RuntimeException(e);
         }

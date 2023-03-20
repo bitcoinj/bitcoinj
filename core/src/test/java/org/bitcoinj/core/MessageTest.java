@@ -21,6 +21,8 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+
 public class MessageTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
 
@@ -28,13 +30,13 @@ public class MessageTest {
     @Test(expected = ProtocolException.class)
     public void readStrOfExtremeLength() {
         VarInt length = new VarInt(Integer.MAX_VALUE);
-        byte[] payload = length.encode();
+        ByteBuffer payload = ByteBuffer.wrap(length.encode());
         new VarStrMessage(TESTNET, payload);
     }
 
     static class VarStrMessage extends Message {
-        public VarStrMessage(NetworkParameters params, byte[] payload) {
-            super(params, payload, 0);
+        public VarStrMessage(NetworkParameters params, ByteBuffer payload) {
+            super(params, payload);
         }
 
         @Override
@@ -47,13 +49,13 @@ public class MessageTest {
     @Test(expected = ProtocolException.class)
     public void readByteArrayOfExtremeLength() {
         VarInt length = new VarInt(Integer.MAX_VALUE);
-        byte[] payload = length.encode();
+        ByteBuffer payload = ByteBuffer.wrap(length.encode());
         new VarBytesMessage(TESTNET, payload);
     }
 
     static class VarBytesMessage extends Message {
-        public VarBytesMessage(NetworkParameters params, byte[] payload) {
-            super(params, payload, 0);
+        public VarBytesMessage(NetworkParameters params, ByteBuffer payload) {
+            super(params, payload);
         }
 
         @Override

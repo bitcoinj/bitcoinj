@@ -41,6 +41,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -270,7 +271,7 @@ public class ChainSplitTest {
     }
 
     private Block roundtrip(Block b2) throws ProtocolException {
-        return TESTNET.getDefaultSerializer().makeBlock(b2.bitcoinSerialize());
+        return TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b2.bitcoinSerialize()));
     }
 
     @Test

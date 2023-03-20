@@ -19,6 +19,8 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.internal.ByteUtils;
 
+import java.nio.ByteBuffer;
+
 /**
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
@@ -26,8 +28,8 @@ public class UnknownMessage extends EmptyMessage {
 
     private String name;
 
-    public UnknownMessage(NetworkParameters params, String name, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public UnknownMessage(NetworkParameters params, String name, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
         this.name = name;
     }
 

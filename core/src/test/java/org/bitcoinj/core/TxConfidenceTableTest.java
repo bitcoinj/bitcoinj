@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 
 import static org.bitcoinj.base.Coin.COIN;
 import static org.easymock.EasyMock.anyObject;
@@ -67,7 +68,7 @@ public class TxConfidenceTableTest {
 
     @Test
     public void pinHandlers() {
-        Transaction tx = TESTNET.getDefaultSerializer().makeTransaction(tx1.bitcoinSerialize());
+        Transaction tx = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx1.bitcoinSerialize()));
         Sha256Hash hash = tx.getTxId();
         table.seen(hash, address1);
         assertEquals(1, tx.getConfidence().numBroadcastPeers());

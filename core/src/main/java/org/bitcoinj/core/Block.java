@@ -38,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -149,26 +150,13 @@ public class Block extends Message {
     /**
      * Construct a block object from the Bitcoin wire format.
      * @param params NetworkParameters object.
-     * @param payloadBytes the payload to extract the block from.
+     * @param payload the payload to extract the block from.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, MessageSerializer serializer)
+    public Block(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payloadBytes, 0, serializer);
-    }
-
-    /**
-     * Construct a block object from the Bitcoin wire format.
-     * @param params NetworkParameters object.
-     * @param payloadBytes the payload to extract the block from.
-     * @param offset The location of the first payload byte within the array.
-     * @param serializer the serializer to use for this message.
-     * @throws ProtocolException
-     */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, MessageSerializer serializer)
-            throws ProtocolException {
-        super(params, payloadBytes, offset, serializer);
+        super(params, payload, serializer);
     }
 
     /**
@@ -176,16 +164,15 @@ public class Block extends Message {
      * contained within another message (i.e. for AuxPoW header).
      *
      * @param params NetworkParameters object.
-     * @param payloadBytes Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param parent The message element which contains this block, maybe null for no parent.
      * @param serializer the serializer to use for this block.
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, byte[] payloadBytes, int offset, @Nullable Message parent, MessageSerializer serializer)
+    public Block(NetworkParameters params, ByteBuffer payload, int offset, @Nullable Message parent, MessageSerializer serializer)
             throws ProtocolException {
         // TODO: Keep the parent
-        super(params, payloadBytes, offset, serializer);
+        super(params, payload, serializer);
     }
 
     /**
@@ -257,7 +244,7 @@ public class Block extends Message {
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, cursor, this, serializer, null);
+            Transaction tx = new Transaction(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer, null);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);

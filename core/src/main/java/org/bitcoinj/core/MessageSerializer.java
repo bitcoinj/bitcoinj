@@ -60,44 +60,37 @@ public abstract class MessageSerializer {
      * Make an address message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract AddressV1Message makeAddressV1Message(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
+    public abstract AddressV1Message makeAddressV1Message(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make an address message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract AddressV2Message makeAddressV2Message(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
+    public abstract AddressV2Message makeAddressV2Message(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     /**
-     * Make a block from the payload, using an offset of zero.
-     */
-    public final Block makeBlock(byte[] payloadBytes) throws ProtocolException {
-        return makeBlock(payloadBytes, 0);
-    }
-
-    /**
-     * Make a block from the payload, using an offset of zero. Extension point for alternative
+     * Make a block from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract Block makeBlock(byte[] payloadBytes, int offset) throws ProtocolException, UnsupportedOperationException;
+    public abstract Block makeBlock(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make an filter message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract Message makeBloomFilter(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
+    public abstract Message makeBloomFilter(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a filtered block from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
+    public abstract FilteredBlock makeFilteredBlock(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make an inventory message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract InventoryMessage makeInventoryMessage(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException;
+    public abstract InventoryMessage makeInventoryMessage(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a transaction from the payload. Extension point for alternative
@@ -108,7 +101,7 @@ public abstract class MessageSerializer {
      * serializer (i.e. for messages with no network parameters), or because
      * it does not support deserializing transactions.
      */
-    public abstract Transaction makeTransaction(byte[] payloadBytes, int offset, byte[] hash) throws ProtocolException, UnsupportedOperationException;
+    public abstract Transaction makeTransaction(ByteBuffer payload, byte[] hash) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a transaction from the payload. Extension point for alternative
@@ -119,21 +112,8 @@ public abstract class MessageSerializer {
      * serializer (i.e. for messages with no network parameters), or because
      * it does not support deserializing transactions.
      */
-    public final Transaction makeTransaction(byte[] payloadBytes) throws ProtocolException, UnsupportedOperationException {
-        return makeTransaction(payloadBytes, 0);
-    }
-
-    /**
-     * Make a transaction from the payload. Extension point for alternative
-     * serialization format support.
-     * 
-     * @throws UnsupportedOperationException if this serializer/deserializer
-     * does not support deserialization. This can occur either because it's a dummy
-     * serializer (i.e. for messages with no network parameters), or because
-     * it does not support deserializing transactions.
-     */
-    public final Transaction makeTransaction(byte[] payloadBytes, int offset) throws ProtocolException {
-        return makeTransaction(payloadBytes, offset, null);
+    public final Transaction makeTransaction(ByteBuffer payload) throws ProtocolException {
+        return makeTransaction(payload, null);
     }
 
     public abstract void seekPastMagicBytes(ByteBuffer in) throws BufferUnderflowException;

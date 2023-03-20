@@ -36,6 +36,7 @@ import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.ScriptBuilder;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -369,7 +370,7 @@ public class PaymentProtocol {
             Protos.Payment paymentMessage) {
         final List<Transaction> transactions = new ArrayList<>(paymentMessage.getTransactionsCount());
         for (final ByteString transaction : paymentMessage.getTransactionsList())
-            transactions.add(params.getDefaultSerializer().makeTransaction(transaction.toByteArray()));
+            transactions.add(params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(transaction.toByteArray())));
         return transactions;
     }
 

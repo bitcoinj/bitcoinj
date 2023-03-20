@@ -21,6 +21,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * <p>Instances of this class are not safe for use by multiple threads.</p>
@@ -28,8 +29,8 @@ import java.io.OutputStream;
 public class Pong extends Message {
     private long nonce;
 
-    public Pong(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public Pong(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
     
     /**

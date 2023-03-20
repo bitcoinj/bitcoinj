@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -161,7 +162,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 bytes = new byte[(int) size];
                 currentFileStream.read(bytes, 0, (int) size);
                 try {
-                    nextBlock = params.getDefaultSerializer().makeBlock(bytes);
+                    nextBlock = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(bytes));
                 } catch (ProtocolException e) {
                     nextBlock = null;
                     continue;
