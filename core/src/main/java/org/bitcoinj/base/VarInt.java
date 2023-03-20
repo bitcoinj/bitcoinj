@@ -109,17 +109,17 @@ public class VarInt {
             case 3:
                 bytes = new byte[3];
                 bytes[0] = (byte) 253;
-                ByteUtils.uint16ToByteArrayLE((int) value, bytes, 1);
+                ByteUtils.writeUint16LE((int) value, bytes, 1);
                 return bytes;
             case 5:
                 bytes = new byte[5];
                 bytes[0] = (byte) 254;
-                ByteUtils.uint32ToByteArrayLE(value, bytes, 1);
+                ByteUtils.writeUint32LE(value, bytes, 1);
                 return bytes;
             default:
                 bytes = new byte[9];
                 bytes[0] = (byte) 255;
-                ByteUtils.int64ToByteArrayLE(value, bytes, 1);
+                ByteUtils.writeInt64LE(value, bytes, 1);
                 return bytes;
         }
     }

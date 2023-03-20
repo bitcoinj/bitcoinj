@@ -144,13 +144,13 @@ public class UTXO {
     }
 
     public void serializeToStream(OutputStream bos) throws IOException {
-        ByteUtils.uint64ToByteStreamLE(BigInteger.valueOf(value.value), bos);
+        ByteUtils.writeUint64LE(BigInteger.valueOf(value.value), bos);
         byte[] scriptBytes = script.getProgram();
-        ByteUtils.uint32ToByteStreamLE(scriptBytes.length, bos);
+        ByteUtils.writeUint32LE(scriptBytes.length, bos);
         bos.write(scriptBytes);
         bos.write(hash.getBytes());
-        ByteUtils.uint32ToByteStreamLE(index, bos);
-        ByteUtils.uint32ToByteStreamLE(height, bos);
+        ByteUtils.writeUint32LE(index, bos);
+        ByteUtils.writeUint32LE(height, bos);
         bos.write(new byte[] { (byte)(coinbase ? 1 : 0) });
     }
 

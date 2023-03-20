@@ -48,7 +48,7 @@ public class Pong extends Message {
     
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        ByteUtils.int64ToByteStreamLE(nonce, stream);
+        ByteUtils.writeInt64LE(nonce, stream);
     }
     
     /** Returns the nonce sent by the remote peer. */

@@ -53,7 +53,7 @@ public class Ping extends Message {
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (hasNonce)
-            ByteUtils.int64ToByteStreamLE(nonce, stream);
+            ByteUtils.writeInt64LE(nonce, stream);
     }
 
     @Override

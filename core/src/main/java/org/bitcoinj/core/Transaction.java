@@ -69,8 +69,8 @@ import java.util.TreeMap;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
-import static org.bitcoinj.base.internal.ByteUtils.uint32ToByteStreamLE;
-import static org.bitcoinj.base.internal.ByteUtils.uint64ToByteStreamLE;
+import static org.bitcoinj.base.internal.ByteUtils.writeUint32LE;
+import static org.bitcoinj.base.internal.ByteUtils.writeUint64LE;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -1377,7 +1377,7 @@ public class Transaction extends ChildMessage {
             ByteArrayOutputStream bos = new ByteArrayOutputStream(tx.length);
             tx.bitcoinSerializeToStream(bos, false);
             // We also have to write a hash type (sigHashType is actually an unsigned char)
-            uint32ToByteStreamLE(0x000000ff & sigHashType, bos);
+            writeUint32LE(0x000000ff & sigHashType, bos);
             // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
             // however then we would expect that it is IS reversed.
             Sha256Hash hash = Sha256Hash.twiceOf(bos.toByteArray());
@@ -1485,7 +1485,7 @@ public class Transaction extends ChildMessage {
                 ByteArrayOutputStream bosHashPrevouts = new ByteArrayOutputStream(256);
                 for (TransactionInput input : this.inputs) {
                     bosHashPrevouts.write(input.getOutpoint().getHash().getReversedBytes());
-                    uint32ToByteStreamLE(input.getOutpoint().getIndex(), bosHashPrevouts);
+                    writeUint32LE(input.getOutpoint().getIndex(), bosHashPrevouts);
                 }
                 hashPrevouts = Sha256Hash.hashTwice(bosHashPrevouts.toByteArray());
             }
@@ -1493,7 +1493,7 @@ public class Transaction extends ChildMessage {
             if (!anyoneCanPay && signAll) {
                 ByteArrayOutputStream bosSequence = new ByteArrayOutputStream(256);
                 for (TransactionInput input : this.inputs) {
-                    uint32ToByteStreamLE(input.getSequenceNumber(), bosSequence);
+                    writeUint32LE(input.getSequenceNumber(), bosSequence);
                 }
                 hashSequence = Sha256Hash.hashTwice(bosSequence.toByteArray());
             }
@@ -1501,7 +1501,7 @@ public class Transaction extends ChildMessage {
             if (signAll) {
                 ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
                 for (TransactionOutput output : this.outputs) {
-                    uint64ToByteStreamLE(
+                    writeUint64LE(
                             BigInteger.valueOf(output.getValue().getValue()),
                             bosHashOutputs
                     );
@@ -1511,7 +1511,7 @@ public class Transaction extends ChildMessage {
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
                 ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
-                uint64ToByteStreamLE(
+                writeUint64LE(
                         BigInteger.valueOf(this.outputs.get(inputIndex).getValue().getValue()),
                         bosHashOutputs
                 );
@@ -1519,18 +1519,18 @@ public class Transaction extends ChildMessage {
                 bosHashOutputs.write(this.outputs.get(inputIndex).getScriptBytes());
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             }
-            uint32ToByteStreamLE(version, bos);
+            writeUint32LE(version, bos);
             bos.write(hashPrevouts);
             bos.write(hashSequence);
             bos.write(inputs.get(inputIndex).getOutpoint().getHash().getReversedBytes());
-            uint32ToByteStreamLE(inputs.get(inputIndex).getOutpoint().getIndex(), bos);
+            writeUint32LE(inputs.get(inputIndex).getOutpoint().getIndex(), bos);
             bos.write(new VarInt(scriptCode.length).encode());
             bos.write(scriptCode);
-            uint64ToByteStreamLE(BigInteger.valueOf(prevValue.getValue()), bos);
-            uint32ToByteStreamLE(inputs.get(inputIndex).getSequenceNumber(), bos);
+            writeUint64LE(BigInteger.valueOf(prevValue.getValue()), bos);
+            writeUint32LE(inputs.get(inputIndex).getSequenceNumber(), bos);
             bos.write(hashOutputs);
-            uint32ToByteStreamLE(this.vLockTime.rawValue(), bos);
-            uint32ToByteStreamLE(0x000000ff & sigHashType, bos);
+            writeUint32LE(this.vLockTime.rawValue(), bos);
+            writeUint32LE(0x000000ff & sigHashType, bos);
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -1551,7 +1551,7 @@ public class Transaction extends ChildMessage {
      */
     protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwit) throws IOException {
         // version
-        uint32ToByteStreamLE(version, stream);
+        writeUint32LE(version, stream);
         // marker, flag
         if (useSegwit) {
             stream.write(0);
@@ -1572,7 +1572,7 @@ public class Transaction extends ChildMessage {
             }
         }
         // lock_time
-        uint32ToByteStreamLE(vLockTime.rawValue(), stream);
+        writeUint32LE(vLockTime.rawValue(), stream);
     }
 
     /**
