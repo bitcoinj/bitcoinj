@@ -70,7 +70,7 @@ public class TxConfidenceTable {
      * @param chainHeightSupplier A reference to a method that returns the current best block height.
      */
     public TxConfidenceTable(final int size, ChainHeightSupplier chainHeightSupplier) {
-        this(size, new TransactionConfidence.Factory());
+        this(size, new TransactionConfidence.Factory(chainHeightSupplier));
     }
 
     TxConfidenceTable(final int size, TransactionConfidence.Factory confidenceFactory){

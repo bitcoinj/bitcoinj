@@ -72,6 +72,13 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  */
 public class TransactionConfidence {
     public static class Factory {
+
+        final ChainHeightSupplier chainHeightSupplier;
+
+        public Factory(ChainHeightSupplier chainHeightSupplier) {
+            this.chainHeightSupplier = chainHeightSupplier;
+        }
+
         public TransactionConfidence createConfidence(Sha256Hash hash) {
             return new TransactionConfidence(hash);
         }
