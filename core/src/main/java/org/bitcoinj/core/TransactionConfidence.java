@@ -80,7 +80,7 @@ public class TransactionConfidence {
         }
 
         public TransactionConfidence createConfidence(Sha256Hash hash) {
-            return new TransactionConfidence(hash);
+            return new TransactionConfidence(hash, chainHeightSupplier);
         }
     }
 
@@ -95,6 +95,9 @@ public class TransactionConfidence {
     private Instant lastBroadcastTime = null;
     /** The Transaction that this confidence object is associated with. */
     private final Sha256Hash hash;
+
+    private final ChainHeightSupplier chainHeightSupplier;
+
     // Lazily created listeners array.
     private CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
 
@@ -169,11 +172,12 @@ public class TransactionConfidence {
     }
     private Source source = Source.UNKNOWN;
 
-    public TransactionConfidence(Sha256Hash hash) {
+    public TransactionConfidence(Sha256Hash hash, ChainHeightSupplier chainHeightSupplier) {
         // Assume a default number of peers for our set.
         broadcastBy = new CopyOnWriteArrayList<>();
         listeners = new CopyOnWriteArrayList<>();
         this.hash = hash;
+        this.chainHeightSupplier = chainHeightSupplier;
     }
 
     /**
@@ -477,7 +481,7 @@ public class TransactionConfidence {
 
     /** Returns a copy of this object. Event listeners are not duplicated. */
     public TransactionConfidence duplicate() {
-        TransactionConfidence c = new TransactionConfidence(hash);
+        TransactionConfidence c = new TransactionConfidence(hash, chainHeightSupplier);
         c.broadcastBy.addAll(broadcastBy);
         c.lastBroadcastTime = lastBroadcastTime;
         synchronized (this) {
