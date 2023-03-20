@@ -28,8 +28,8 @@ public abstract class AddressMessage extends Message {
     protected static final long MAX_ADDRESSES = 1000;
     protected List<PeerAddress> addresses;
 
-    AddressMessage(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, serializer);
+    AddressMessage(NetworkParameters params, Payload payload, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, serializer);
     }
 
     @Override

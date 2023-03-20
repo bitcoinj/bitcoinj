@@ -240,15 +240,8 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
-    public Transaction(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
-    }
-
-    /**
-     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
-     */
-    public Transaction(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public Transaction(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
         // inputs/outputs will be created in parse()
     }
 
@@ -256,7 +249,6 @@ public class Transaction extends ChildMessage {
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param parent The parent of the transaction.
      * @param setSerializer The serializer to use for this transaction.
      * @param hashFromHeader Used by BitcoinSerializer. The serializer has to calculate a hash for checksumming so to
@@ -264,9 +256,9 @@ public class Transaction extends ChildMessage {
      * is performed on this hash.
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent,
+    public Transaction(NetworkParameters params, Payload payload, @Nullable Message parent,
             MessageSerializer setSerializer, @Nullable byte[] hashFromHeader) throws ProtocolException {
-        super(params, payload, offset, parent, setSerializer);
+        super(params, payload, parent, setSerializer);
         if (hashFromHeader != null) {
             cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
             if (!hasWitnesses())
@@ -277,9 +269,9 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, byte[] payload, @Nullable Message parent, MessageSerializer setSerializer)
+    public Transaction(NetworkParameters params, Payload payload, @Nullable Message parent, MessageSerializer setSerializer)
             throws ProtocolException {
-        super(params, payload, 0, parent, setSerializer);
+        super(params, payload, parent, setSerializer);
     }
 
     /**
@@ -711,7 +703,7 @@ public class Transaction extends ChildMessage {
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, payload, cursor, serializer);
+            TransactionInput input = new TransactionInput(params, this, Payload.of(payload, cursor), serializer);
             inputs.add(input);
             cursor += TransactionOutPoint.MESSAGE_LENGTH;
             VarInt scriptLenVarInt = readVarInt();
@@ -727,7 +719,7 @@ public class Transaction extends ChildMessage {
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, payload, cursor, serializer);
+            TransactionOutput output = new TransactionOutput(params, this, Payload.of(payload, cursor), serializer);
             outputs.add(output);
             cursor += 8; // value
             VarInt scriptLenVarInt = readVarInt();
@@ -1310,7 +1302,7 @@ public class Transaction extends ChildMessage {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = this.params.getDefaultSerializer().makeTransaction(this.bitcoinSerialize());
+            Transaction tx = this.params.getDefaultSerializer().makeTransaction(Payload.of(this.bitcoinSerialize()));
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual

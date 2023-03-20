@@ -31,6 +31,6 @@ public class SendHeadersMessage extends EmptyMessage {
     }
 
     // this is needed by the BitcoinSerializer
-    public SendHeadersMessage(NetworkParameters params, byte[] payload) {
+    public SendHeadersMessage(NetworkParameters params, Payload payload) {
     }
 }

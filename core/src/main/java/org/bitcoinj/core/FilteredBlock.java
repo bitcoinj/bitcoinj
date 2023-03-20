@@ -44,8 +44,8 @@ public class FilteredBlock extends Message {
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions
     private Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<>();
     
-    public FilteredBlock(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public FilteredBlock(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     public FilteredBlock(NetworkParameters params, Block header, PartialMerkleTree pmt) {
@@ -67,9 +67,9 @@ public class FilteredBlock extends Message {
     protected void parse() throws ProtocolException {
         byte[] headerBytes = new byte[Block.HEADER_SIZE];
         System.arraycopy(payload, 0, headerBytes, 0, Block.HEADER_SIZE);
-        header = params.getDefaultSerializer().makeBlock(headerBytes);
+        header = params.getDefaultSerializer().makeBlock(Payload.of(headerBytes));
         
-        merkleTree = new PartialMerkleTree(params, payload, Block.HEADER_SIZE);
+        merkleTree = new PartialMerkleTree(params, Payload.of(payload, Block.HEADER_SIZE));
         
         length = Block.HEADER_SIZE + merkleTree.getMessageSize();
     }

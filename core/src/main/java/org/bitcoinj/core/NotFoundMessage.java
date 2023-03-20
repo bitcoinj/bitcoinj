@@ -32,8 +32,8 @@ public class NotFoundMessage extends InventoryMessage {
         super(params);
     }
 
-    public NotFoundMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes);
+    public NotFoundMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     public NotFoundMessage(NetworkParameters params, List<InventoryItem> items) {

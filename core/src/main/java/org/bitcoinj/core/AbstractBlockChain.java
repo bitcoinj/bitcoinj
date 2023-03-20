@@ -916,7 +916,7 @@ public abstract class AbstractBlockChain {
             try {
                 falsePositives.remove(tx.getTxId());
                 if (clone)
-                    tx = tx.params.getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
+                    tx = tx.params.getDefaultSerializer().makeTransaction(Payload.of(tx.bitcoinSerialize()));
                 listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was

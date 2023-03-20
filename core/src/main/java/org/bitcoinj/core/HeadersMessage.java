@@ -42,8 +42,8 @@ public class HeadersMessage extends Message {
 
     private List<Block> blockHeaders;
 
-    public HeadersMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public HeadersMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     public HeadersMessage(NetworkParameters params, Block... headers) throws ProtocolException {
@@ -76,7 +76,7 @@ public class HeadersMessage extends Message {
         final BitcoinSerializer serializer = this.params.getSerializer(true);
 
         for (int i = 0; i < numHeaders; ++i) {
-            final Block newBlockHeader = serializer.makeBlock(payload, cursor);
+            final Block newBlockHeader = serializer.makeBlock(Payload.of(payload, cursor));
             if (newBlockHeader.hasTransactions()) {
                 throw new ProtocolException("Block header does not end with a null byte");
             }

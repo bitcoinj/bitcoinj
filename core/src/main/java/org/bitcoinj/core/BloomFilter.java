@@ -74,10 +74,10 @@ public class BloomFilter extends Message {
     private static final int MAX_HASH_FUNCS = 50;
 
     /**
-     * Construct a BloomFilter by deserializing payloadBytes
+     * Construct a BloomFilter by deserializing payload
      */
-    public BloomFilter(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public BloomFilter(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
     
     /**

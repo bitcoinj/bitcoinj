@@ -28,13 +28,13 @@ public class MessageTest {
     @Test(expected = ProtocolException.class)
     public void readStrOfExtremeLength() {
         VarInt length = new VarInt(Integer.MAX_VALUE);
-        byte[] payload = length.encode();
+        Payload payload = Payload.of(length.encode());
         new VarStrMessage(TESTNET, payload);
     }
 
     static class VarStrMessage extends Message {
-        public VarStrMessage(NetworkParameters params, byte[] payload) {
-            super(params, payload, 0);
+        public VarStrMessage(NetworkParameters params, Payload payload) {
+            super(params, payload);
         }
 
         @Override
@@ -47,13 +47,13 @@ public class MessageTest {
     @Test(expected = ProtocolException.class)
     public void readByteArrayOfExtremeLength() {
         VarInt length = new VarInt(Integer.MAX_VALUE);
-        byte[] payload = length.encode();
+        Payload payload = Payload.of(length.encode());
         new VarBytesMessage(TESTNET, payload);
     }
 
     static class VarBytesMessage extends Message {
-        public VarBytesMessage(NetworkParameters params, byte[] payload) {
-            super(params, payload, 0);
+        public VarBytesMessage(NetworkParameters params, Payload payload) {
+            super(params, payload);
         }
 
         @Override

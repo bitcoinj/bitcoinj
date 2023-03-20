@@ -34,30 +34,15 @@ public class AddressV1Message extends AddressMessage {
     /**
      * Construct a new 'addr' message.
      * @param params NetworkParameters object.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this block.
      * @throws ProtocolException
      */
-    AddressV1Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, serializer);
+    AddressV1Message(NetworkParameters params, Payload payload, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, serializer);
     }
 
-    /**
-     * Construct a new 'addr' message.
-     * @param params NetworkParameters object.
-     * @param serializer the serializer to use for this block.
-     * @throws ProtocolException
-     */
-    AddressV1Message(NetworkParameters params, byte[] payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, 0, serializer);
-    }
-
-    AddressV1Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset, params.getDefaultSerializer());
-    }
-
-    AddressV1Message(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0, params.getDefaultSerializer());
+    AddressV1Message(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload, params.getDefaultSerializer());
     }
 
     @Override
@@ -71,7 +56,7 @@ public class AddressV1Message extends AddressMessage {
         MessageSerializer serializer = this.serializer.withProtocolVersion(1);
         length = numAddressesVarInt.getSizeInBytes();
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, payload, cursor, this, serializer);
+            PeerAddress addr = new PeerAddress(params, Payload.of(payload, cursor), this, serializer);
             addresses.add(addr);
             cursor += addr.getMessageSize();
             length += addr.getMessageSize();

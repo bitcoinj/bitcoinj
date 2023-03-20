@@ -77,16 +77,16 @@ public abstract class Message {
      * 
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    protected Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
+    protected Message(NetworkParameters params, Payload payload, MessageSerializer serializer) throws ProtocolException {
         this.serializer = serializer;
         this.params = params;
-        this.payload = payload;
-        this.cursor = this.offset = offset;
-        this.length = payload.length;
+        byte[] bytes = payload.bytes();
+        this.payload = bytes;
+        this.cursor = this.offset = payload.offset();
+        this.length = bytes.length;
 
         parse();
 
@@ -99,8 +99,8 @@ public abstract class Message {
             this.payload = null;
     }
 
-    protected Message(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        this(params, payload, offset, params.getDefaultSerializer());
+    protected Message(NetworkParameters params, Payload payload) throws ProtocolException {
+        this(params, payload, params.getDefaultSerializer());
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.

@@ -31,30 +31,18 @@ import java.util.ArrayList;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class AddressV2Message extends AddressMessage {
-
-    /**
-     * Construct a new 'addrv2' message.
-     * @param params NetworkParameters object.
-     * @param offset The location of the first payload byte within the array.
-     * @param serializer the serializer to use for this block.
-     * @throws ProtocolException
-     */
-    AddressV2Message(NetworkParameters params, byte[] payload, int offset, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, serializer);
-    }
-
     /**
      * Construct a new 'addrv2' message.
      * @param params NetworkParameters object.
      * @param serializer the serializer to use for this block.
      * @throws ProtocolException
      */
-    AddressV2Message(NetworkParameters params, byte[] payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, 0, serializer);
+    AddressV2Message(NetworkParameters params, Payload payload, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, serializer);
     }
 
-    AddressV2Message(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0, params.getDefaultSerializer());
+    AddressV2Message(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload, params.getDefaultSerializer());
     }
 
     @Override
@@ -68,7 +56,7 @@ public class AddressV2Message extends AddressMessage {
         MessageSerializer serializer = this.serializer.withProtocolVersion(2);
         length = numAddressesVarInt.getSizeInBytes();
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, payload, cursor, this, serializer);
+            PeerAddress addr = new PeerAddress(params, Payload.of(payload, cursor), this, serializer);
             addresses.add(addr);
             cursor += addr.getMessageSize();
             length += addr.getMessageSize();

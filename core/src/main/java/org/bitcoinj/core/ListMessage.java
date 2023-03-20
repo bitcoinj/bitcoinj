@@ -39,13 +39,13 @@ public abstract class ListMessage extends Message {
 
     public static final long MAX_INVENTORY_ITEMS = 50000;
 
-    public ListMessage(NetworkParameters params, byte[] bytes) throws ProtocolException {
-        super(params, bytes, 0);
+    public ListMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
-    public ListMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer)
+    public ListMessage(NetworkParameters params, Payload payload, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, 0, serializer);
+        super(params, payload, serializer);
     }
 
     public ListMessage(NetworkParameters params) {

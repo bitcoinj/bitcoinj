@@ -29,8 +29,8 @@ public class Ping extends Message {
     private long nonce;
     private boolean hasNonce;
     
-    public Ping(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes, 0);
+    public Ping(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
     
     /**

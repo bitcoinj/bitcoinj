@@ -84,12 +84,11 @@ public class PeerAddress extends ChildMessage {
      * Construct a peer address from a serialized payload.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public PeerAddress(NetworkParameters params, byte[] payload, int offset, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, parent, serializer);
+    public PeerAddress(NetworkParameters params, Payload payload, Message parent, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, parent, serializer);
     }
 
     /**

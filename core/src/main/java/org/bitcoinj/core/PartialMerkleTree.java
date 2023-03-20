@@ -73,8 +73,8 @@ public class PartialMerkleTree extends Message {
     // txids and internal hashes
     private List<Sha256Hash> hashes;
     
-    public PartialMerkleTree(NetworkParameters params, byte[] payloadBytes, int offset) throws ProtocolException {
-        super(params, payloadBytes, offset);
+    public PartialMerkleTree(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**

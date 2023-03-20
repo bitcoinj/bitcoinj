@@ -30,6 +30,7 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.StreamUtils;
+import org.bitcoinj.core.Payload;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
@@ -2018,7 +2019,7 @@ public class Wallet extends BaseTaggableObject
 
                 // Clone transaction to avoid multiple wallets pointing to the same transaction. This can happen when
                 // two wallets depend on the same transaction.
-                Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
+                Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(Payload.of(tx.bitcoinSerialize()));
                 cloneTx.setPurpose(tx.getPurpose());
                 Optional<Instant> updateTime = tx.updateTime();
                 if (updateTime.isPresent())
@@ -2041,7 +2042,7 @@ public class Wallet extends BaseTaggableObject
 
             // Clone transaction to avoid multiple wallets pointing to the same transaction. This can happen when
             // two wallets depend on the same transaction.
-            Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(tx.bitcoinSerialize());
+            Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(Payload.of(tx.bitcoinSerialize()));
             cloneTx.setPurpose(tx.getPurpose());
             Optional<Instant> updateTime = tx.updateTime();
             if (updateTime.isPresent())
@@ -5197,7 +5198,7 @@ public class Wallet extends BaseTaggableObject
             }
             for (int i = 0; i < req.tx.getOutputs().size(); i++) {
                 TransactionOutput output = new TransactionOutput(params, tx,
-                        req.tx.getOutputs().get(i).bitcoinSerialize(), 0);
+                        Payload.of(req.tx.getOutputs().get(i).bitcoinSerialize()));
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
                     output.setValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));

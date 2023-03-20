@@ -64,37 +64,37 @@ class DummySerializer extends MessageSerializer {
     }
 
     @Override
-    public AddressV1Message makeAddressV1Message(byte[] payloadBytes) throws UnsupportedOperationException {
+    public AddressV1Message makeAddressV1Message(Payload payload) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public AddressV2Message makeAddressV2Message(byte[] payloadBytes) throws UnsupportedOperationException {
+    public AddressV2Message makeAddressV2Message(Payload payload) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public Block makeBlock(byte[] payloadBytes, int offset) throws UnsupportedOperationException {
+    public Block makeBlock(Payload payload) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public Message makeBloomFilter(byte[] payloadBytes) throws UnsupportedOperationException {
+    public Message makeBloomFilter(Payload payload) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public FilteredBlock makeFilteredBlock(byte[] payloadBytes) throws UnsupportedOperationException {
+    public FilteredBlock makeFilteredBlock(Payload payload) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public InventoryMessage makeInventoryMessage(byte[] payloadBytes) throws UnsupportedOperationException {
+    public InventoryMessage makeInventoryMessage(Payload payload) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 
     @Override
-    public Transaction makeTransaction(byte[] payloadBytes, int offset, byte[] hash) throws UnsupportedOperationException {
+    public Transaction makeTransaction(Payload payload, byte[] hash) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 

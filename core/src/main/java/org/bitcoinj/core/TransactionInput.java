@@ -129,8 +129,8 @@ public class TransactionInput extends ChildMessage {
     /**
      * Deserializes an input message. This is usually part of a transaction message.
      */
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, Payload payload) throws ProtocolException {
+        super(params, payload);
         setParent(parentTransaction);
         this.value = null;
     }
@@ -139,13 +139,12 @@ public class TransactionInput extends ChildMessage {
      * Deserializes an input message. This is usually part of a transaction message.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param offset The location of the first payload byte within the array.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction, byte[] payload, int offset, MessageSerializer serializer)
+    public TransactionInput(NetworkParameters params, Transaction parentTransaction, Payload payload, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, offset, parentTransaction, serializer);
+        super(params, payload, parentTransaction, serializer);
         this.value = null;
     }
 
@@ -162,7 +161,7 @@ public class TransactionInput extends ChildMessage {
 
     @Override
     protected void parse() throws ProtocolException {
-        outpoint = new TransactionOutPoint(params, payload, cursor, this, serializer);
+        outpoint = new TransactionOutPoint(params, Payload.of(payload, cursor), this, serializer);
         cursor += outpoint.getMessageSize();
         int scriptLen = readVarInt().intValue();
         length = cursor - offset + scriptLen + 4;
@@ -504,7 +503,7 @@ public class TransactionInput extends ChildMessage {
 
     /** Returns a copy of the input detached from its containing transaction, if need be. */
     public TransactionInput duplicateDetached() {
-        return new TransactionInput(params, null, bitcoinSerialize(), 0);
+        return new TransactionInput(params, null, Payload.of(bitcoinSerialize()));
     }
 
     /**

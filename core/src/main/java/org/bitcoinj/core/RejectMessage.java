@@ -79,8 +79,8 @@ public class RejectMessage extends Message {
     private RejectCode code;
     private Sha256Hash messageHash;
 
-    public RejectMessage(NetworkParameters params, byte[] payload) throws ProtocolException {
-        super(params, payload, 0);
+    public RejectMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */

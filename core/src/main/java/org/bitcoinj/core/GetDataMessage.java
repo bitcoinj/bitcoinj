@@ -27,8 +27,8 @@ import org.bitcoinj.base.Sha256Hash;
  */
 public class GetDataMessage extends ListMessage {
 
-    public GetDataMessage(NetworkParameters params, byte[] payloadBytes) throws ProtocolException {
-        super(params, payloadBytes);
+    public GetDataMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
     /**
@@ -38,7 +38,7 @@ public class GetDataMessage extends ListMessage {
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public GetDataMessage(NetworkParameters params, byte[] payload, MessageSerializer serializer)
+    public GetDataMessage(NetworkParameters params, Payload payload, MessageSerializer serializer)
             throws ProtocolException {
         super(params, payload, serializer);
     }

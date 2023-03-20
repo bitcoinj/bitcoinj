@@ -32,13 +32,13 @@ public abstract class ChildMessage extends Message {
         super(params);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] payload, int offset) throws ProtocolException {
-        super(params, payload, offset);
+    public ChildMessage(NetworkParameters params, Payload payload) throws ProtocolException {
+        super(params, payload);
     }
 
-    public ChildMessage(NetworkParameters params, byte[] payload, int offset, @Nullable Message parent,
+    public ChildMessage(NetworkParameters params, Payload payload, @Nullable Message parent,
                         MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, offset, serializer);
+        super(params, payload, serializer);
         this.parent = parent;
     }
 
