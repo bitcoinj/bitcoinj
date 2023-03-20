@@ -22,8 +22,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Comparator;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
@@ -96,6 +101,17 @@ public class ByteUtils {
     }
 
     /**
+     * Write 2 bytes to the buffer as unsigned 16-bit integer in little endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeUint16LE(int val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).putShort((short) val);
+    }
+
+    /**
      * Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in little endian format.
      * @param val value to be written
      * @param out buffer to be written into
@@ -104,8 +120,45 @@ public class ByteUtils {
      *                                        if the value doesn't fit the remaining buffer
      */
     public static void writeUint16LE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
-        out[offset] = (byte) (0xFF & val);
-        out[offset + 1] = (byte) (0xFF & (val >> 8));
+        check(offset >= 0 && offset <= out.length - 2, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        writeUint16LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+    }
+
+    /**
+     * Write 2 bytes to the buffer as unsigned 16-bit integer in big endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeUint16BE(int val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.BIG_ENDIAN).putShort((short) val);
+    }
+
+    /**
+     * Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in big endian format.
+     * @param val value to be written
+     * @param out buffer to be written into
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the value doesn't fit the remaining buffer
+     */
+    public static void writeUint16BE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
+        check(offset >= 0 && offset <= out.length - 2, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        writeUint16BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+    }
+
+    /**
+     * Write 4 bytes to the buffer as unsigned 32-bit integer in little endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeUint32LE(long val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).putInt((int) val);
     }
 
     /**
@@ -117,10 +170,20 @@ public class ByteUtils {
      *                                        if the value doesn't fit the remaining buffer
      */
     public static void writeUint32LE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
-        out[offset] = (byte) (0xFF & val);
-        out[offset + 1] = (byte) (0xFF & (val >> 8));
-        out[offset + 2] = (byte) (0xFF & (val >> 16));
-        out[offset + 3] = (byte) (0xFF & (val >> 24));
+        check(offset >= 0 && offset <= out.length - 4, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        writeUint32LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+    }
+
+    /**
+     * Write 4 bytes to the buffer as unsigned 32-bit integer in big endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeUint32BE(long val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.BIG_ENDIAN).putInt((int) val);
     }
 
     /**
@@ -132,10 +195,20 @@ public class ByteUtils {
      *                                        if the value doesn't fit the remaining buffer
      */
     public static void writeUint32BE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
-        out[offset] = (byte) (0xFF & (val >> 24));
-        out[offset + 1] = (byte) (0xFF & (val >> 16));
-        out[offset + 2] = (byte) (0xFF & (val >> 8));
-        out[offset + 3] = (byte) (0xFF & val);
+        check(offset >= 0 && offset <= out.length - 4, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        writeUint32BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+    }
+
+    /**
+     * Write 8 bytes to the buffer as signed 64-bit integer in little endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeInt64LE(long val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).putLong(val);
     }
 
     /**
@@ -147,14 +220,9 @@ public class ByteUtils {
      *                                        if the value doesn't fit the remaining buffer
      */
     public static void writeInt64LE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
-        out[offset] = (byte) (0xFF & val);
-        out[offset + 1] = (byte) (0xFF & (val >> 8));
-        out[offset + 2] = (byte) (0xFF & (val >> 16));
-        out[offset + 3] = (byte) (0xFF & (val >> 24));
-        out[offset + 4] = (byte) (0xFF & (val >> 32));
-        out[offset + 5] = (byte) (0xFF & (val >> 40));
-        out[offset + 6] = (byte) (0xFF & (val >> 48));
-        out[offset + 7] = (byte) (0xFF & (val >> 56));
+        check(offset >= 0 && offset <= out.length + 8, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        writeInt64LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
     }
 
     /**
@@ -164,8 +232,9 @@ public class ByteUtils {
      * @throws IOException if an I/O error occurs
      */
     public static void writeUint16LE(int val, OutputStream stream) throws IOException {
-        stream.write(0xFF & val);
-        stream.write(0xFF & (val >> 8));
+        byte[] buf = new byte[2];
+        writeUint16LE(val, ByteBuffer.wrap(buf));
+        stream.write(buf);
     }
 
     /**
@@ -175,8 +244,9 @@ public class ByteUtils {
      * @throws IOException if an I/O error occurs
      */
     public static void writeUint16BE(int val, OutputStream stream) throws IOException {
-        stream.write(0xFF & (val >> 8));
-        stream.write(0xFF & val);
+        byte[] buf = new byte[2];
+        writeUint16BE(val, ByteBuffer.wrap(buf));
+        stream.write(buf);
     }
 
     /**
@@ -186,10 +256,9 @@ public class ByteUtils {
      * @throws IOException if an I/O error occurs
      */
     public static void writeUint32LE(long val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & val));
-        stream.write((int) (0xFF & (val >> 8)));
-        stream.write((int) (0xFF & (val >> 16)));
-        stream.write((int) (0xFF & (val >> 24)));
+        byte[] buf = new byte[4];
+        writeUint32LE(val, ByteBuffer.wrap(buf));
+        stream.write(buf);
     }
 
     /**
@@ -199,10 +268,9 @@ public class ByteUtils {
      * @throws IOException if an I/O error occurs
      */
     public static void writeUint32BE(long val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & (val >> 24)));
-        stream.write((int) (0xFF & (val >> 16)));
-        stream.write((int) (0xFF & (val >> 8)));
-        stream.write((int) (0xFF & val));
+        byte[] buf = new byte[4];
+        writeUint32BE(val, ByteBuffer.wrap(buf));
+        stream.write(buf);
     }
 
     /**
@@ -212,14 +280,9 @@ public class ByteUtils {
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt64LE(long val, OutputStream stream) throws IOException {
-        stream.write((int) (0xFF & val));
-        stream.write((int) (0xFF & (val >> 8)));
-        stream.write((int) (0xFF & (val >> 16)));
-        stream.write((int) (0xFF & (val >> 24)));
-        stream.write((int) (0xFF & (val >> 32)));
-        stream.write((int) (0xFF & (val >> 40)));
-        stream.write((int) (0xFF & (val >> 48)));
-        stream.write((int) (0xFF & (val >> 56)));
+        byte[] buf = new byte[8];
+        writeInt64LE(val, ByteBuffer.wrap(buf));
+        stream.write(buf);
     }
 
     /**
@@ -242,6 +305,15 @@ public class ByteUtils {
     }
 
     /**
+     * Read 2 bytes from the buffer as unsigned 16-bit integer in little endian format.
+     * @param buf buffer to be read from
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static int readUint16(ByteBuffer buf) throws BufferUnderflowException {
+        return Short.toUnsignedInt(buf.order(ByteOrder.LITTLE_ENDIAN).getShort());
+    }
+
+    /**
      * Read 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in little endian format.
      * @param bytes buffer to be read from
      * @param offset offset into the buffer
@@ -249,54 +321,18 @@ public class ByteUtils {
      *                                        if the read value extends beyond the remaining bytes of the buffer
      */
     public static int readUint16(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
-        return (bytes[offset] & 0xff) |
-                ((bytes[offset + 1] & 0xff) << 8);
+        check(offset >= 0 && offset <= bytes.length - 2, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        return readUint16(ByteBuffer.wrap(bytes, offset, bytes.length - offset));
     }
 
     /**
-     * Read 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format.
-     * @param bytes buffer to be read from
-     * @param offset offset into the buffer
-     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
-     *                                        if the read value extends beyond the remaining bytes of the buffer
+     * Read 2 bytes from the buffer as unsigned 16-bit integer in big endian format.
+     * @param buf buffer to be read from
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
      */
-    public static long readUint32(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
-        return (bytes[offset] & 0xffL) |
-                ((bytes[offset + 1] & 0xffL) << 8) |
-                ((bytes[offset + 2] & 0xffL) << 16) |
-                ((bytes[offset + 3] & 0xffL) << 24);
-    }
-
-    /**
-     * Read 8 bytes from the byte array (starting at the offset) as signed 64-bit integer in little endian format.
-     * @param bytes buffer to be read from
-     * @param offset offset into the buffer
-     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
-     *                                        if the read value extends beyond the remaining bytes of the buffer
-     */
-    public static long readInt64(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
-        return (bytes[offset] & 0xffL) |
-               ((bytes[offset + 1] & 0xffL) << 8) |
-               ((bytes[offset + 2] & 0xffL) << 16) |
-               ((bytes[offset + 3] & 0xffL) << 24) |
-               ((bytes[offset + 4] & 0xffL) << 32) |
-               ((bytes[offset + 5] & 0xffL) << 40) |
-               ((bytes[offset + 6] & 0xffL) << 48) |
-               ((bytes[offset + 7] & 0xffL) << 56);
-    }
-
-    /**
-     * Read 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in big endian format.
-     * @param bytes buffer to be read from
-     * @param offset offset into the buffer
-     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
-     *                                        if the read value extends beyond the remaining bytes of the buffer
-     */
-    public static long readUint32BE(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
-        return ((bytes[offset] & 0xffL) << 24) |
-                ((bytes[offset + 1] & 0xffL) << 16) |
-                ((bytes[offset + 2] & 0xffL) << 8) |
-                (bytes[offset + 3] & 0xffL);
+    public static int readUint16BE(ByteBuffer buf) throws BufferUnderflowException {
+        return Short.toUnsignedInt(buf.order(ByteOrder.BIG_ENDIAN).getShort());
     }
 
     /**
@@ -307,8 +343,75 @@ public class ByteUtils {
      *                                        if the read value extends beyond the remaining bytes of the buffer
      */
     public static int readUint16BE(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
-        return ((bytes[offset] & 0xff) << 8) |
-                (bytes[offset + 1] & 0xff);
+        check(offset >= 0 && offset <= bytes.length - 2, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        return readUint16BE(ByteBuffer.wrap(bytes, offset, bytes.length - offset));
+    }
+
+    /**
+     * Read 4 bytes from the buffer as unsigned 32-bit integer in little endian format.
+     * @param buf buffer to be read from
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static long readUint32(ByteBuffer buf) throws BufferUnderflowException {
+        return Integer.toUnsignedLong(buf.order(ByteOrder.LITTLE_ENDIAN).getInt());
+    }
+
+    /**
+     * Read 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static long readUint32(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
+        check(offset >= 0 && offset <= bytes.length - 4, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        return readUint32(ByteBuffer.wrap(bytes, offset, bytes.length - offset));
+    }
+
+    /**
+     * Read 4 bytes from the buffer as unsigned 32-bit integer in big endian format.
+     * @param buf buffer to be read from
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static long readUint32BE(ByteBuffer buf) throws BufferUnderflowException {
+        return Integer.toUnsignedLong(buf.order(ByteOrder.BIG_ENDIAN).getInt());
+    }
+
+    /**
+     * Read 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in big endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static long readUint32BE(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
+        check(offset >= 0 && offset <= bytes.length - 4, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        return readUint32BE(ByteBuffer.wrap(bytes, offset, bytes.length - offset));
+    }
+
+    /**
+     * Read 8 bytes from the buffer as signed 64-bit integer in little endian format.
+     * @param buf buffer to be read from
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static long readInt64(ByteBuffer buf) throws BufferUnderflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).getLong();
+    }
+
+    /**
+     * Read 8 bytes from the byte array (starting at the offset) as signed 64-bit integer in little endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static long readInt64(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
+        check(offset >= 0 && offset <= bytes.length - 8, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        return readInt64(ByteBuffer.wrap(bytes, offset, bytes.length - offset));
     }
 
     /**
@@ -316,9 +419,10 @@ public class ByteUtils {
      * @param is stream to be read from
      */
     public static int readUint16FromStream(InputStream is) {
+        byte[] buf = new byte[2];
         try {
-            return (is.read() & 0xff) |
-                    ((is.read() & 0xff) << 8);
+            is.read(buf);
+            return readUint16(ByteBuffer.wrap(buf));
         } catch (IOException x) {
             throw new RuntimeException(x);
         }
@@ -329,11 +433,10 @@ public class ByteUtils {
      * @param is stream to be read from
      */
     public static long readUint32FromStream(InputStream is) {
+        byte[] buf = new byte[4];
         try {
-            return (is.read() & 0xffL) |
-                    ((is.read() & 0xffL) << 8) |
-                    ((is.read() & 0xffL) << 16) |
-                    ((is.read() & 0xffL) << 24);
+            is.read(buf);
+            return readUint32(ByteBuffer.wrap(buf));
         } catch (IOException x) {
             throw new RuntimeException(x);
         }
