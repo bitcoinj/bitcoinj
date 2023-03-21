@@ -122,7 +122,7 @@ public class SeedPeers implements PeerDiscovery {
 
     private static InetAddress convertAddress(int seed) throws UnknownHostException {
         byte[] v4addr = new byte[4];
-        ByteUtils.writeUint32LE(seed, v4addr, 0);
+        ByteUtils.writeInt32BE(seed, v4addr, 0);
         return InetAddress.getByAddress(v4addr);
     }
 }
