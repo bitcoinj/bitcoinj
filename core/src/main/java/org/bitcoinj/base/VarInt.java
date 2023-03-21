@@ -24,7 +24,6 @@ import org.bitcoinj.base.internal.ByteUtils;
  */
 public class VarInt {
     private final long value;
-    private final int originallyEncodedSize;
 
     /**
      * Constructs a new VarInt with the given unsigned long value.
@@ -33,7 +32,6 @@ public class VarInt {
      */
     public VarInt(long value) {
         this.value = value;
-        originallyEncodedSize = getSizeInBytes();
     }
 
     /**
@@ -46,16 +44,12 @@ public class VarInt {
         int first = 0xFF & buf[offset];
         if (first < 253) {
             value = first;
-            originallyEncodedSize = 1; // 1 data byte (8 bits)
         } else if (first == 253) {
             value = ByteUtils.readUint16(buf, offset + 1);
-            originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
         } else if (first == 254) {
             value = ByteUtils.readUint32(buf, offset + 1);
-            originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
         } else {
             value = ByteUtils.readInt64(buf, offset + 1);
-            originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
         }
     }
 
@@ -72,7 +66,7 @@ public class VarInt {
      * deserialized from a byte array, or the minimum encoded size if it was not.
      */
     public int getOriginalSizeInBytes() {
-        return originallyEncodedSize;
+        return sizeOf(value);
     }
 
     /**
