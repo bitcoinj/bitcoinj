@@ -106,11 +106,11 @@ public class RejectMessage extends Message {
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
-        stream.write(new VarInt(messageBytes.length).encode());
+        stream.write(VarInt.of(messageBytes.length).encode());
         stream.write(messageBytes);
         stream.write(code.code);
         byte[] reasonBytes = reason.getBytes(StandardCharsets.UTF_8);
-        stream.write(new VarInt(reasonBytes.length).encode());
+        stream.write(VarInt.of(reasonBytes.length).encode());
         stream.write(reasonBytes);
         if ("block".equals(message) || "tx".equals(message))
             stream.write(messageHash.getReversedBytes());

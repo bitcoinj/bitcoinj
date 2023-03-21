@@ -354,7 +354,7 @@ public class BlockTest {
                 ByteUtils.writeUint32LE(getDifficultyTarget(), stream);
                 ByteUtils.writeUint32LE(getNonce(), stream);
 
-                stream.write(new VarInt(Integer.MAX_VALUE).encode());
+                stream.write(VarInt.of(Integer.MAX_VALUE).encode());
             }
 
             @Override

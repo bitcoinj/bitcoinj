@@ -112,11 +112,11 @@ public class PartialMerkleTree extends Message {
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         writeUint32LE(transactionCount, stream);
 
-        stream.write(new VarInt(hashes.size()).encode());
+        stream.write(VarInt.of(hashes.size()).encode());
         for (Sha256Hash hash : hashes)
             stream.write(hash.getReversedBytes());
 
-        stream.write(new VarInt(matchedChildBits.length).encode());
+        stream.write(VarInt.of(matchedChildBits.length).encode());
         stream.write(matchedChildBits);
     }
 

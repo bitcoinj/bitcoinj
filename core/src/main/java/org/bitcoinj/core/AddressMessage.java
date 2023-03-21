@@ -37,7 +37,7 @@ public abstract class AddressMessage extends Message {
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (addresses == null)
             return;
-        stream.write(new VarInt(addresses.size()).encode());
+        stream.write(VarInt.of(addresses.size()).encode());
         for (PeerAddress addr : addresses) {
             addr.bitcoinSerialize(stream);
         }
