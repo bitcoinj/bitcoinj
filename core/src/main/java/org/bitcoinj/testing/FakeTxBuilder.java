@@ -20,6 +20,7 @@ package org.bitcoinj.testing;
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
@@ -73,7 +74,7 @@ public class FakeTxBuilder {
 
     /** Create a fake coinbase transaction. */
     public static Transaction createFakeCoinbaseTx(final NetworkParameters params) {
-        TransactionOutPoint outpoint = new TransactionOutPoint(params, -1, Sha256Hash.ZERO_HASH);
+        TransactionOutPoint outpoint = new TransactionOutPoint(params, ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
         TransactionInput input = new TransactionInput(params, null, new byte[0], outpoint);
         Transaction tx = new Transaction(params);
         tx.addInput(input);

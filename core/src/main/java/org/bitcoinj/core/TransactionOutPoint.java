@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
@@ -58,6 +59,8 @@ public class TransactionOutPoint extends ChildMessage {
 
     public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
         super(params);
+        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                "index out of range: " + index);
         this.index = index;
         if (fromTx != null) {
             this.hash = fromTx.getTxId();
@@ -70,6 +73,8 @@ public class TransactionOutPoint extends ChildMessage {
 
     public TransactionOutPoint(NetworkParameters params, long index, Sha256Hash hash) {
         super(params);
+        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                "index out of range: " + index);
         this.index = index;
         this.hash = hash;
     }
@@ -226,6 +231,8 @@ public class TransactionOutPoint extends ChildMessage {
      */
     @Deprecated
     public void setIndex(long index) {
+        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                "index out of range: " + index);
         this.index = index;
     }
 

@@ -338,7 +338,9 @@ public class ScriptTest {
         Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (JsonNode input : inputs) {
             String hash = input.get(0).asText();
-            int index = input.get(1).asInt();
+            long index = input.get(1).asLong();
+            if (index == -1)
+                index = ByteUtils.MAX_UNSIGNED_INTEGER;
             String script = input.get(2).asText();
             Sha256Hash sha256Hash = Sha256Hash.wrap(ByteUtils.parseHex(hash));
             scriptPubKeys.put(new TransactionOutPoint(TESTNET, index, sha256Hash), parseScriptString(script));
@@ -394,8 +396,6 @@ public class ScriptTest {
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
                     TransactionInput input = transaction.getInputs().get(i);
-                    if (input.getOutpoint().getIndex() == 0xffffffffL)
-                        input.getOutpoint().setIndex(-1);
                     assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                     input.getScriptSig().correctlySpends(transaction, i, null, null,
                             scriptPubKeys.get(input.getOutpoint()), verifyFlags);

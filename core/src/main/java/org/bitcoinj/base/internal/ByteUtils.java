@@ -36,6 +36,9 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * from {@code org.bitcoinj.core.Utils}.
  */
 public class ByteUtils {
+    /** Maximum unsigned value that can be expressed by 32 bits. */
+    public static final long MAX_UNSIGNED_INTEGER = Integer.toUnsignedLong(-1);
+
     /**
      * Hex encoding used throughout the framework. Use with ByteUtils.formatHex(byte[]) or ByteUtils.parseHex(CharSequence).
      * @deprecated Use {@link ByteUtils#hexFormat} or {@link ByteUtils#parseHex(String)} or other available
