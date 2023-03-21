@@ -159,15 +159,15 @@ public class PeerAddress extends ChildMessage {
             ByteUtils.writeUint32LE(time.get().getEpochSecond(), stream);
         }
         if (protocolVersion == 2) {
-            stream.write(new VarInt(services.longValue()).encode());
+            stream.write(VarInt.of(services.longValue()).encode());
             if (addr != null) {
                 if (addr instanceof Inet4Address) {
                     stream.write(0x01);
-                    stream.write(new VarInt(4).encode());
+                    stream.write(VarInt.of(4).encode());
                     stream.write(addr.getAddress());
                 } else if (addr instanceof Inet6Address) {
                     stream.write(0x02);
-                    stream.write(new VarInt(16).encode());
+                    stream.write(VarInt.of(16).encode());
                     stream.write(addr.getAddress());
                 } else {
                     throw new IllegalStateException();
@@ -177,12 +177,12 @@ public class PeerAddress extends ChildMessage {
                 if (onionAddress.length == 10) {
                     // TORv2
                     stream.write(0x03);
-                    stream.write(new VarInt(10).encode());
+                    stream.write(VarInt.of(10).encode());
                     stream.write(onionAddress);
                 } else if (onionAddress.length == 32 + 2 + 1) {
                     // TORv3
                     stream.write(0x04);
-                    stream.write(new VarInt(32).encode());
+                    stream.write(VarInt.of(32).encode());
                     byte[] pubkey = Arrays.copyOfRange(onionAddress, 0, 32);
                     byte[] checksum = Arrays.copyOfRange(onionAddress, 32, 34);
                     byte torVersion = onionAddress[34];

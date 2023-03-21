@@ -25,58 +25,58 @@ public class VarIntTest {
 
     @Test
     public void testBytes() {
-        VarInt a = new VarInt(10); // with widening conversion
+        VarInt a = VarInt.of(10); // with widening conversion
         assertEquals(1, a.getSizeInBytes());
         assertEquals(1, a.encode().length);
-        assertEquals(10, new VarInt(a.encode(), 0).intValue());
+        assertEquals(10, VarInt.ofBytes(a.encode(), 0).intValue());
     }
 
     @Test
     public void testShorts() {
-        VarInt a = new VarInt(64000); // with widening conversion
+        VarInt a = VarInt.of(64000); // with widening conversion
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
-        assertEquals(64000, new VarInt(a.encode(), 0).intValue());
+        assertEquals(64000, VarInt.ofBytes(a.encode(), 0).intValue());
     }
 
     @Test
     public void testShortFFFF() {
-        VarInt a = new VarInt(0xFFFFL);
+        VarInt a = VarInt.of(0xFFFFL);
         assertEquals(3, a.getSizeInBytes());
         assertEquals(3, a.encode().length);
-        assertEquals(0xFFFFL, new VarInt(a.encode(), 0).intValue());
+        assertEquals(0xFFFFL, VarInt.ofBytes(a.encode(), 0).intValue());
     }
 
     @Test
     public void testInts() {
-        VarInt a = new VarInt(0xAABBCCDDL);
+        VarInt a = VarInt.of(0xAABBCCDDL);
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
         byte[] bytes = a.encode();
-        assertEquals(0xAABBCCDDL, new VarInt(bytes, 0).longValue());
+        assertEquals(0xAABBCCDDL, VarInt.ofBytes(bytes, 0).longValue());
     }
 
     @Test
     public void testIntFFFFFFFF() {
-        VarInt a = new VarInt(0xFFFFFFFFL);
+        VarInt a = VarInt.of(0xFFFFFFFFL);
         assertEquals(5, a.getSizeInBytes());
         assertEquals(5, a.encode().length);
         byte[] bytes = a.encode();
-        assertEquals(0xFFFFFFFFL, new VarInt(bytes, 0).longValue());
+        assertEquals(0xFFFFFFFFL, VarInt.ofBytes(bytes, 0).longValue());
     }
 
     @Test
     public void testLong() {
-        VarInt a = new VarInt(0xCAFEBABEDEADBEEFL);
+        VarInt a = VarInt.of(0xCAFEBABEDEADBEEFL);
         assertEquals(9, a.getSizeInBytes());
         assertEquals(9, a.encode().length);
         byte[] bytes = a.encode();
-        assertEquals(0xCAFEBABEDEADBEEFL, new VarInt(bytes, 0).longValue());
+        assertEquals(0xCAFEBABEDEADBEEFL, VarInt.ofBytes(bytes, 0).longValue());
     }
 
     @Test
     public void testSizeOfNegativeInt() {
         // shouldn't normally be passed, but at least stay consistent (bug regression test)
-        assertEquals(VarInt.sizeOf(-1), new VarInt(-1).encode().length);
+        assertEquals(VarInt.sizeOf(-1), VarInt.of(-1).encode().length);
     }
 }

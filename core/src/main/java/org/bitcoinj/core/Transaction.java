@@ -616,27 +616,27 @@ public class Transaction extends ChildMessage {
         int i;
         int scriptLen;
 
-        varint = new VarInt(buf, cursor);
+        varint = VarInt.ofBytes(buf, cursor);
         int txInCount = varint.intValue();
         cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txInCount; i++) {
             // 36 = length of previous_outpoint
             cursor += 36;
-            varint = new VarInt(buf, cursor);
+            varint = VarInt.ofBytes(buf, cursor);
             scriptLen = varint.intValue();
             // 4 = length of sequence field (unint32)
             cursor += scriptLen + 4 + varint.getOriginalSizeInBytes();
         }
 
-        varint = new VarInt(buf, cursor);
+        varint = VarInt.ofBytes(buf, cursor);
         int txOutCount = varint.intValue();
         cursor += varint.getOriginalSizeInBytes();
 
         for (i = 0; i < txOutCount; i++) {
             // 8 = length of tx value field (uint64)
             cursor += 8;
-            varint = new VarInt(buf, cursor);
+            varint = VarInt.ofBytes(buf, cursor);
             scriptLen = varint.intValue();
             cursor += scriptLen + varint.getOriginalSizeInBytes();
         }
@@ -1498,7 +1498,7 @@ public class Transaction extends ChildMessage {
                             BigInteger.valueOf(output.getValue().getValue()),
                             bosHashOutputs
                     );
-                    bosHashOutputs.write(new VarInt(output.getScriptBytes().length).encode());
+                    bosHashOutputs.write(VarInt.of(output.getScriptBytes().length).encode());
                     bosHashOutputs.write(output.getScriptBytes());
                 }
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
@@ -1508,7 +1508,7 @@ public class Transaction extends ChildMessage {
                         BigInteger.valueOf(this.outputs.get(inputIndex).getValue().getValue()),
                         bosHashOutputs
                 );
-                bosHashOutputs.write(new VarInt(this.outputs.get(inputIndex).getScriptBytes().length).encode());
+                bosHashOutputs.write(VarInt.of(this.outputs.get(inputIndex).getScriptBytes().length).encode());
                 bosHashOutputs.write(this.outputs.get(inputIndex).getScriptBytes());
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             }
@@ -1517,7 +1517,7 @@ public class Transaction extends ChildMessage {
             bos.write(hashSequence);
             bos.write(inputs.get(inputIndex).getOutpoint().getHash().getReversedBytes());
             writeUint32LE(inputs.get(inputIndex).getOutpoint().getIndex(), bos);
-            bos.write(new VarInt(scriptCode.length).encode());
+            bos.write(VarInt.of(scriptCode.length).encode());
             bos.write(scriptCode);
             writeUint64LE(BigInteger.valueOf(prevValue.getValue()), bos);
             writeUint32LE(inputs.get(inputIndex).getSequenceNumber(), bos);
@@ -1551,11 +1551,11 @@ public class Transaction extends ChildMessage {
             stream.write(1);
         }
         // txin_count, txins
-        stream.write(new VarInt(inputs.size()).encode());
+        stream.write(VarInt.of(inputs.size()).encode());
         for (TransactionInput in : inputs)
             in.bitcoinSerialize(stream);
         // txout_count, txouts
-        stream.write(new VarInt(outputs.size()).encode());
+        stream.write(VarInt.of(outputs.size()).encode());
         for (TransactionOutput out : outputs)
             out.bitcoinSerialize(stream);
         // script_witnisses

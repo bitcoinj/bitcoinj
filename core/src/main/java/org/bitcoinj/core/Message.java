@@ -245,7 +245,7 @@ public abstract class Message {
 
     protected VarInt readVarInt() throws ProtocolException {
         try {
-            VarInt varint = new VarInt(payload, cursor);
+            VarInt varint = VarInt.ofBytes(payload, cursor);
             cursor += varint.getOriginalSizeInBytes();
             return varint;
         } catch (ArrayIndexOutOfBoundsException e) {

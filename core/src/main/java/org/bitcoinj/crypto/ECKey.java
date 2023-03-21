@@ -1420,7 +1420,7 @@ public class ECKey implements EncryptableItem {
             bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
             bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
             byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
-            VarInt size = new VarInt(messageBytes.length);
+            VarInt size = VarInt.of(messageBytes.length);
             bos.write(size.encode());
             bos.write(messageBytes);
             return bos.toByteArray();

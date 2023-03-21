@@ -82,9 +82,9 @@ public class TransactionWitness {
     }
 
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(new VarInt(pushes.size()).encode());
+        stream.write(VarInt.of(pushes.size()).encode());
         for (byte[] push : pushes) {
-            stream.write(new VarInt(push.length).encode());
+            stream.write(VarInt.of(push.length).encode());
             stream.write(push);
         }
     }

@@ -19,6 +19,8 @@ package org.bitcoinj.base;
 
 import org.bitcoinj.base.internal.ByteUtils;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
+
 /**
  * A variable-length encoded unsigned integer using Satoshi's encoding (a.k.a. "CompactSize").
  */
@@ -31,9 +33,8 @@ public class VarInt {
      *
      * @param value the unsigned long value (beware widening conversion of negatives!)
      */
-    public VarInt(long value) {
-        this.value = value;
-        originallyEncodedSize = getSizeInBytes();
+    public static VarInt of(long value) {
+        return new VarInt(value, sizeOf(value));
     }
 
     /**
@@ -41,7 +42,45 @@ public class VarInt {
      *
      * @param buf the buffer containing the value
      * @param offset the offset of the value
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the value doesn't fit the remaining buffer
      */
+    public static VarInt ofBytes(byte[] buf, int offset) throws ArrayIndexOutOfBoundsException {
+        check(offset >= 0 && offset < buf.length, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        int first = 0xFF & buf[offset];
+        long value;
+        int originallyEncodedSize;
+        if (first < 253) {
+            value = first;
+            originallyEncodedSize = 1; // 1 data byte (8 bits)
+        } else if (first == 253) {
+            value = ByteUtils.readUint16(buf, offset + 1);
+            originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
+        } else if (first == 254) {
+            value = ByteUtils.readUint32(buf, offset + 1);
+            originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
+        } else {
+            value = ByteUtils.readInt64(buf, offset + 1);
+            originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
+        }
+        return new VarInt(value, originallyEncodedSize);
+    }
+
+    private VarInt(long value, int originallyEncodedSize) {
+        this.value = value;
+        this.originallyEncodedSize = originallyEncodedSize;
+    }
+
+    /** @deprecated use {@link #of(long)} */
+    @Deprecated
+    public VarInt(long value) {
+        this.value = value;
+        originallyEncodedSize = getSizeInBytes();
+    }
+
+    /** @deprecated  use {@link #ofBytes(byte[], int)} */
+    @Deprecated
     public VarInt(byte[] buf, int offset) {
         int first = 0xFF & buf[offset];
         if (first < 253) {
