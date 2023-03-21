@@ -201,6 +201,31 @@ public class ByteUtils {
     }
 
     /**
+     * Write 4 bytes to the buffer as signed 32-bit integer in big endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeInt32BE(int val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.BIG_ENDIAN).putInt((int) val);
+    }
+
+    /**
+     * Write 4 bytes to the byte array (starting at the offset) as signed 32-bit integer in big endian format.
+     * @param val value to be written
+     * @param out buffer to be written into
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the value doesn't fit the remaining buffer
+     */
+    public static void writeInt32BE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
+        check(offset >= 0 && offset <= out.length - 4, () ->
+                new ArrayIndexOutOfBoundsException(offset));
+        writeInt32BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+    }
+
+    /**
      * Write 8 bytes to the buffer as signed 64-bit integer in little endian format.
      * @param val value to be written
      * @param buf buffer to be written into
