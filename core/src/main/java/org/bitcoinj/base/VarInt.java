@@ -19,6 +19,10 @@ package org.bitcoinj.base;
 
 import org.bitcoinj.base.internal.ByteUtils;
 
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+
 import static org.bitcoinj.base.internal.Preconditions.check;
 
 /**
@@ -48,20 +52,30 @@ public class VarInt {
     public static VarInt ofBytes(byte[] buf, int offset) throws ArrayIndexOutOfBoundsException {
         check(offset >= 0 && offset < buf.length, () ->
                 new ArrayIndexOutOfBoundsException(offset));
-        int first = 0xFF & buf[offset];
+        return read(ByteBuffer.wrap(buf, offset, buf.length - offset));
+    }
+
+    /**
+     * Constructs a new VarInt by reading from the given buffer.
+     *
+     * @param buf buffer to read from
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static VarInt read(ByteBuffer buf) throws BufferUnderflowException {
+        int first = Byte.toUnsignedInt(buf.get());
         long value;
         int originallyEncodedSize;
         if (first < 253) {
             value = first;
             originallyEncodedSize = 1; // 1 data byte (8 bits)
         } else if (first == 253) {
-            value = ByteUtils.readUint16(buf, offset + 1);
+            value = ByteUtils.readUint16(buf);
             originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
         } else if (first == 254) {
-            value = ByteUtils.readUint32(buf, offset + 1);
+            value = ByteUtils.readUint32(buf);
             originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
         } else {
-            value = ByteUtils.readInt64(buf, offset + 1);
+            value = ByteUtils.readInt64(buf);
             originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
         }
         return new VarInt(value, originallyEncodedSize);
@@ -141,25 +155,36 @@ public class VarInt {
      * @return the minimal encoded bytes of the value
      */
     public byte[] encode() {
-        byte[] bytes;
+        byte[] bytes = new byte[sizeOf(value)];
+        write(ByteBuffer.wrap(bytes));
+        return bytes;
+    }
+
+    /**
+     * Write encoded value into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
         switch (sizeOf(value)) {
             case 1:
-                return new byte[]{(byte) value};
+                buf.put((byte) value);
+                break;
             case 3:
-                bytes = new byte[3];
-                bytes[0] = (byte) 253;
-                ByteUtils.writeUint16LE((int) value, bytes, 1);
-                return bytes;
+                buf.put((byte) 253);
+                ByteUtils.writeUint16LE((int) value, buf);
+                break;
             case 5:
-                bytes = new byte[5];
-                bytes[0] = (byte) 254;
-                ByteUtils.writeUint32LE(value, bytes, 1);
-                return bytes;
+                buf.put((byte) 254);
+                ByteUtils.writeUint32LE(value, buf);
+                break;
             default:
-                bytes = new byte[9];
-                bytes[0] = (byte) 255;
-                ByteUtils.writeInt64LE(value, bytes, 1);
-                return bytes;
+                buf.put((byte) 255);
+                ByteUtils.writeInt64LE(value, buf);
+                break;
         }
+        return buf;
     }
 }
