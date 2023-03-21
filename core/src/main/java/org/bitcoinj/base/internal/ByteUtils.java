@@ -36,6 +36,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * from {@code org.bitcoinj.core.Utils}.
  */
 public class ByteUtils {
+    /** Maximum unsigned value that can be expressed by 16 bits. */
+    public static final int MAX_UNSIGNED_SHORT = Short.toUnsignedInt((short) -1);
     /** Maximum unsigned value that can be expressed by 32 bits. */
     public static final long MAX_UNSIGNED_INTEGER = Integer.toUnsignedLong(-1);
 
@@ -114,6 +116,8 @@ public class ByteUtils {
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
     public static ByteBuffer writeInt16LE(int val, ByteBuffer buf) throws BufferOverflowException {
+        checkArgument(val >= 0 && val <= MAX_UNSIGNED_SHORT, () ->
+                "value out of range: " + val);
         return buf.order(ByteOrder.LITTLE_ENDIAN).putShort((short) val);
     }
 
@@ -145,6 +149,8 @@ public class ByteUtils {
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
     public static ByteBuffer writeInt16BE(int val, ByteBuffer buf) throws BufferOverflowException {
+        checkArgument(val >= 0 && val <= MAX_UNSIGNED_SHORT, () ->
+                "value out of range: " + val);
         return buf.order(ByteOrder.BIG_ENDIAN).putShort((short) val);
     }
 
@@ -191,6 +197,8 @@ public class ByteUtils {
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
     public static ByteBuffer writeInt32LE(long val, ByteBuffer buf) throws BufferOverflowException {
+        checkArgument(val >= 0 && val <= MAX_UNSIGNED_INTEGER, () ->
+                "value out of range: " + val);
         return buf.order(ByteOrder.LITTLE_ENDIAN).putInt((int) val);
     }
 
@@ -222,6 +230,8 @@ public class ByteUtils {
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
     public static ByteBuffer writeInt32BE(long val, ByteBuffer buf) throws BufferOverflowException {
+        checkArgument(val >= 0 && val <= MAX_UNSIGNED_INTEGER, () ->
+                "value out of range: " + val);
         return buf.order(ByteOrder.BIG_ENDIAN).putInt((int) val);
     }
 
