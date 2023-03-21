@@ -1195,7 +1195,7 @@ public class FullBlockTestGenerator {
         NewBlock b63 = createNextBlock(b60, chainHeadHeight + 19, null, null);
         {
             b63.block.getTransactions().get(0).setLockTime(0xffffffffL);
-            b63.block.getTransactions().get(0).getInputs().get(0).setSequenceNumber(0xDEADBEEF);
+            b63.block.getTransactions().get(0).getInputs().get(0).setSequenceNumber(0xdeadbeefL);
             checkState(!b63.block.getTransactions().get(0).isFinal(chainHeadHeight + 17, b63.block.getTimeSeconds()));
         }
         b63.solve();
