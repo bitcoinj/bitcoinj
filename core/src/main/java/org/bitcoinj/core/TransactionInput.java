@@ -229,6 +229,8 @@ public class TransactionInput extends ChildMessage {
      * examples of how you can use this feature to build contract protocols.
      */
     public void setSequenceNumber(long sequence) {
+        checkArgument(sequence >= 0 && sequence <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                "sequence out of range: " + sequence);
         unCache();
         this.sequence = sequence;
     }
