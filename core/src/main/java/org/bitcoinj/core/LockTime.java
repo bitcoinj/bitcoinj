@@ -97,7 +97,7 @@ public abstract /* sealed */ class LockTime {
      * @return wrapped timestamp
      */
     public static TimeLock ofTimestamp(Instant time) {
-        long secs = time.getEpochSecond();
+        long secs = TimeUtils.checkBitcoinTime(time).getEpochSecond();
         if (secs < THRESHOLD)
             throw new IllegalArgumentException("timestamp too low: " + secs);
         return new TimeLock(secs);

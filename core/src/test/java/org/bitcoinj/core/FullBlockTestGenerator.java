@@ -983,7 +983,7 @@ public class FullBlockTestGenerator {
 
         // Block with timestamp > 2h in the future
         NewBlock b48 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
-        b48.block.setTime(TimeUtils.currentTime().plusSeconds(60 * 60 * 3));
+        b48.block.setTime(TimeUtils.currentBitcoinTime().plusSeconds(60 * 60 * 3));
         b48.solve();
         blocks.add(new BlockAndValidity(b48, false, true, b44.getHash(), chainHeadHeight + 15, "b48"));
 

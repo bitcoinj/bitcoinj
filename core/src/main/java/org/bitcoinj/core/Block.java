@@ -118,7 +118,7 @@ public class Block extends Message {
     private long version;
     private Sha256Hash prevBlockHash;
     private Sha256Hash merkleRoot, witnessRoot;
-    private Instant time;
+    private Instant time; // Bitcoin time
     private long difficultyTarget; // "nBits"
     private long nonce;
 
@@ -140,7 +140,7 @@ public class Block extends Message {
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
         difficultyTarget = 0x1d07fff8L;
-        time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
+        time = TimeUtils.currentBitcoinTime();
         prevBlockHash = Sha256Hash.ZERO_HASH;
 
         length = HEADER_SIZE;
@@ -205,7 +205,7 @@ public class Block extends Message {
         this.version = version;
         this.prevBlockHash = prevBlockHash;
         this.merkleRoot = merkleRoot;
-        this.time = time;
+        this.time = TimeUtils.checkBitcoinTime(time);
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
         this.transactions = new LinkedList<>();
@@ -882,7 +882,7 @@ public class Block extends Message {
     @VisibleForTesting
     public void setTime(Instant time) {
         unCacheHeader();
-        this.time = time.truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
+        this.time = TimeUtils.checkBitcoinTime(time);
         this.hash = null;
     }
 

@@ -32,7 +32,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
@@ -53,7 +52,7 @@ public class PeerAddress extends ChildMessage {
     private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
     private BigInteger services;
-    private Optional<Instant> time;
+    private Optional<Instant> time; // Bitcoin time
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = ByteUtils.parseHex("fd87d87eeb43");
@@ -101,7 +100,7 @@ public class PeerAddress extends ChildMessage {
         this.port = port;
         setSerializer(serializer);
         this.services = services;
-        this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+        this.time = Optional.of(TimeUtils.currentBitcoinTime());
     }
 
     /**
@@ -142,7 +141,7 @@ public class PeerAddress extends ChildMessage {
         this.hostname = hostname;
         this.port = port;
         this.services = BigInteger.ZERO;
-        this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+        this.time = Optional.of(TimeUtils.currentBitcoinTime());
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
