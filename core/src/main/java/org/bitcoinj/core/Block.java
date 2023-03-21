@@ -226,19 +226,8 @@ public class Block extends Message {
 
     /**
      * Parse transactions from the block.
-     * 
-     * @param transactionsOffset Offset of the transactions within the block.
-     * Useful for non-Bitcoin chains where the block header may not be a fixed
-     * size.
      */
-    protected void parseTransactions(final int transactionsOffset) throws ProtocolException {
-        cursor = transactionsOffset;
-        optimalEncodingMessageSize = HEADER_SIZE;
-        if (payload.length == cursor) {
-            // This message is just a header, it has no transactions.
-            return;
-        }
-
+    protected void parseTransactions() throws ProtocolException {
         VarInt numTransactionsVarInt = readVarInt();
         optimalEncodingMessageSize += numTransactionsVarInt.getSizeInBytes();
         int numTransactions = numTransactionsVarInt.intValue();
@@ -264,9 +253,12 @@ public class Block extends Message {
         difficultyTarget = readUint32();
         nonce = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
+        optimalEncodingMessageSize = HEADER_SIZE;
 
         // transactions
-        parseTransactions(offset + HEADER_SIZE);
+        if (payload.length > cursor) // otherwise this message is just a header
+            parseTransactions();
+
         length = cursor - offset;
     }
 
