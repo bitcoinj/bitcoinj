@@ -418,7 +418,7 @@ public class ByteUtils {
      * Read 2 bytes from the stream as unsigned 16-bit integer in little endian format.
      * @param is stream to be read from
      */
-    public static int readUint16FromStream(InputStream is) {
+    public static int readUint16(InputStream is) {
         byte[] buf = new byte[2];
         try {
             is.read(buf);
@@ -432,7 +432,7 @@ public class ByteUtils {
      * Read 4 bytes from the stream as unsigned 32-bit integer in little endian format.
      * @param is stream to be read from
      */
-    public static long readUint32FromStream(InputStream is) {
+    public static long readUint32(InputStream is) {
         byte[] buf = new byte[4];
         try {
             is.read(buf);

@@ -40,12 +40,12 @@ public class TransactionOutputChanges {
     }
     
     public TransactionOutputChanges(InputStream in) throws IOException {
-        int numOutsCreated = (int) ByteUtils.readUint32FromStream(in);
+        int numOutsCreated = (int) ByteUtils.readUint32(in);
         txOutsCreated = new LinkedList<>();
         for (int i = 0; i < numOutsCreated; i++)
             txOutsCreated.add(UTXO.fromStream(in));
         
-        int numOutsSpent = (int) ByteUtils.readUint32FromStream(in);
+        int numOutsSpent = (int) ByteUtils.readUint32(in);
         txOutsSpent = new LinkedList<>();
         for (int i = 0; i < numOutsSpent; i++)
             txOutsSpent.add(UTXO.fromStream(in));

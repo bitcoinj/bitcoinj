@@ -160,7 +160,7 @@ public class UTXO {
             throw new EOFException();
         Coin value = Coin.valueOf(ByteUtils.readInt64(valueBytes, 0));
 
-        int scriptBytesLength = (int) ByteUtils.readUint32FromStream(in);
+        int scriptBytesLength = (int) ByteUtils.readUint32(in);
         byte[] scriptBytes = new byte[scriptBytesLength];
         if (in.read(scriptBytes) != scriptBytesLength)
             throw new EOFException();
@@ -176,7 +176,7 @@ public class UTXO {
             throw new EOFException();
         long index = ByteUtils.readUint32(indexBytes, 0);
 
-        int height = (int) ByteUtils.readUint32FromStream(in);
+        int height = (int) ByteUtils.readUint32(in);
 
         byte[] coinbaseByte = new byte[1];
         in.read(coinbaseByte);
