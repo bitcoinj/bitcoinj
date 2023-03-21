@@ -1,6 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
- * Copyright 2018 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,66 +16,82 @@
 
 package org.bitcoinj.base;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 
+@RunWith(JUnitParamsRunner.class)
 public class VarIntTest {
 
     @Test
-    public void testBytes() {
-        VarInt a = VarInt.of(10); // with widening conversion
-        assertEquals(1, a.getSizeInBytes());
-        assertEquals(1, a.encode().length);
-        assertEquals(10, VarInt.ofBytes(a.encode(), 0).intValue());
+    @Parameters(method = "integerTestVectors")
+    public void testIntCreation(int value, int size) {
+        VarInt a = VarInt.of(value);
+        assertEquals(value, a.intValue());
+        assertEquals(size, a.getSizeInBytes());
+        assertEquals(size, a.getOriginalSizeInBytes());
+        assertEquals(size, a.encode().length);
+        assertEquals(value, VarInt.ofBytes(a.encode(), 0).intValue());
+    }
+
+    @Test(expected = RuntimeException.class)
+    @Parameters(method = "longTestVectors")
+    public void testIntGetErr(int value, int size) {
+        VarInt a = VarInt.of(value);
+        a.intValue();
+    }
+
+    @Test(expected = RuntimeException.class)
+    @Parameters(method = "longTestVectors")
+    public void testIntGetErr2(int value, int size) {
+        VarInt a = VarInt.of(value);
+        VarInt.ofBytes(a.encode(), 0).intValue();
     }
 
     @Test
-    public void testShorts() {
-        VarInt a = VarInt.of(64000); // with widening conversion
-        assertEquals(3, a.getSizeInBytes());
-        assertEquals(3, a.encode().length);
-        assertEquals(64000, VarInt.ofBytes(a.encode(), 0).intValue());
+    @Parameters(method = "longTestVectors")
+    public void testLongCreation(long value, int size) {
+        VarInt a = VarInt.of(value);
+        assertEquals(value, a.longValue());
+        assertEquals(size, a.getSizeInBytes());
+        assertEquals(size, a.getOriginalSizeInBytes());
+        assertEquals(size, a.encode().length);
+        assertEquals(value, VarInt.ofBytes(a.encode(), 0).longValue());
     }
 
-    @Test
-    public void testShortFFFF() {
-        VarInt a = VarInt.of(0xFFFFL);
-        assertEquals(3, a.getSizeInBytes());
-        assertEquals(3, a.encode().length);
-        assertEquals(0xFFFFL, VarInt.ofBytes(a.encode(), 0).intValue());
+    private Object[] integerTestVectors() {
+        return new Object[]{
+                new Object[]{ 0, 1},
+                new Object[]{ 10, 1},
+                new Object[]{ 252, 1},
+                new Object[]{ 253, 3},
+                new Object[]{ 64000, 3},
+                new Object[]{ 0x7FFF, 3},
+                new Object[]{ 0x8000, 3},
+                new Object[]{ 0x10000, 5},
+                new Object[]{ Integer.MIN_VALUE, 9},
+                new Object[]{ Integer.MAX_VALUE, 5},
+                // -1 shouldn't normally be passed, but at least stay consistent (bug regression test)
+                new Object[]{ -1, 9}
+        };
     }
 
-    @Test
-    public void testInts() {
-        VarInt a = VarInt.of(0xAABBCCDDL);
-        assertEquals(5, a.getSizeInBytes());
-        assertEquals(5, a.encode().length);
-        byte[] bytes = a.encode();
-        assertEquals(0xAABBCCDDL, VarInt.ofBytes(bytes, 0).longValue());
-    }
-
-    @Test
-    public void testIntFFFFFFFF() {
-        VarInt a = VarInt.of(0xFFFFFFFFL);
-        assertEquals(5, a.getSizeInBytes());
-        assertEquals(5, a.encode().length);
-        byte[] bytes = a.encode();
-        assertEquals(0xFFFFFFFFL, VarInt.ofBytes(bytes, 0).longValue());
-    }
-
-    @Test
-    public void testLong() {
-        VarInt a = VarInt.of(0xCAFEBABEDEADBEEFL);
-        assertEquals(9, a.getSizeInBytes());
-        assertEquals(9, a.encode().length);
-        byte[] bytes = a.encode();
-        assertEquals(0xCAFEBABEDEADBEEFL, VarInt.ofBytes(bytes, 0).longValue());
-    }
-
-    @Test
-    public void testSizeOfNegativeInt() {
-        // shouldn't normally be passed, but at least stay consistent (bug regression test)
-        assertEquals(VarInt.sizeOf(-1), VarInt.of(-1).encode().length);
+    private Object[] longTestVectors() {
+        return new Object[]{
+                new Object[]{ 0x7FFFL, 3},
+                new Object[]{ 0x8000L, 3},
+                new Object[]{ 0xFFFFL, 3},
+                new Object[]{ 0x10000L, 5},
+                new Object[]{ 0xAABBCCDDL, 5},
+                new Object[]{ 0xFFFFFFFFL, 5},
+                new Object[]{ 0xCAFEBABEDEADBEEFL, 9},
+                new Object[]{ Long.MIN_VALUE, 9},
+                new Object[]{ Long.MAX_VALUE, 9},
+                // -1 shouldn't normally be passed, but at least stay consistent (bug regression test)
+                new Object[]{ -1L, 9}
+        };
     }
 }
