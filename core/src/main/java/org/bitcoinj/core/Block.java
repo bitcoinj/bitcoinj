@@ -225,28 +225,28 @@ public class Block extends Message {
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer, null);
+            Transaction tx = new Transaction(params, payload, this, serializer, null);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
-            cursor += tx.getMessageSize();
         }
     }
 
     @Override
     protected void parse() throws ProtocolException {
         // header
-        cursor = offset;
+        payload.mark();
         version = readUint32();
         prevBlockHash = readHash();
         merkleRoot = readHash();
         time = Instant.ofEpochSecond(readUint32());
         difficultyTarget = readUint32();
         nonce = readUint32();
-        hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
+        payload.reset(); // read again from the mark for the hash
+        hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(readBytes(HEADER_SIZE)));
 
         // transactions
-        if (payload.length > cursor) // otherwise this message is just a header
+        if (payload.hasRemaining()) // otherwise this message is just a header
             parseTransactions();
     }
 

@@ -645,7 +645,6 @@ public class Transaction extends ChildMessage {
     protected void parse() throws ProtocolException {
         boolean allowWitness = allowWitness();
 
-        cursor = offset;
 
         // version
         version = readUint32();
@@ -690,12 +689,13 @@ public class Transaction extends ChildMessage {
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, ByteBuffer.wrap(payload, cursor, payload.length - cursor), serializer);
+            TransactionInput input = new TransactionInput(params, this, payload.slice(), serializer);
             inputs.add(input);
-            cursor += TransactionOutPoint.MESSAGE_LENGTH;
+            // intentionally read again, due to the slice above
+            skipBytes(TransactionOutPoint.MESSAGE_LENGTH);
             VarInt scriptLenVarInt = readVarInt();
             int scriptLen = scriptLenVarInt.intValue();
-            cursor += scriptLen + 4;
+            skipBytes(scriptLen + 4);
         }
     }
 
@@ -704,12 +704,13 @@ public class Transaction extends ChildMessage {
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, ByteBuffer.wrap(payload, cursor, payload.length - cursor), serializer);
+            TransactionOutput output = new TransactionOutput(params, this, payload.slice(), serializer);
             outputs.add(output);
-            cursor += 8; // value
+            // intentionally read again, due to the slice above
+            skipBytes(8); // value
             VarInt scriptLenVarInt = readVarInt();
             int scriptLen = scriptLenVarInt.intValue();
-            cursor += scriptLen;
+            skipBytes(scriptLen);
         }
     }
 

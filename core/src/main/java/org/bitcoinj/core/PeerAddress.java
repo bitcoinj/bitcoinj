@@ -300,8 +300,7 @@ public class PeerAddress extends ChildMessage {
                 hostname = null;
             }
         }
-        port = ByteUtils.readUint16BE(payload, cursor);
-        cursor += 2;
+        port = ByteUtils.readUint16BE(payload);
     }
 
     private static InetAddress getByAddress(byte[] addrBytes) {

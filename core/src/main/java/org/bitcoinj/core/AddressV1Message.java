@@ -56,9 +56,8 @@ public class AddressV1Message extends AddressMessage {
         addresses = new ArrayList<>(numAddresses);
         MessageSerializer serializer = this.serializer.withProtocolVersion(1);
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer);
+            PeerAddress addr = new PeerAddress(params, payload, this, serializer);
             addresses.add(addr);
-            cursor += addr.getMessageSize();
         }
     }
 

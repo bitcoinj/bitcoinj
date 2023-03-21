@@ -45,7 +45,7 @@ public class PeerAddressTest {
     public void equalsContract() {
         EqualsVerifier.forClass(PeerAddress.class)
                 .suppress(Warning.NONFINAL_FIELDS)
-                .withIgnoredFields("time", "parent", "params", "offset", "cursor", "payload", "serializer")
+                .withIgnoredFields("time", "parent", "params", "payload", "serializer")
                 .usingGetClass()
                 .verify();
     }

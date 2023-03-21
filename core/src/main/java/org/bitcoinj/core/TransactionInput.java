@@ -160,8 +160,7 @@ public class TransactionInput extends ChildMessage {
 
     @Override
     protected void parse() throws ProtocolException {
-        outpoint = new TransactionOutPoint(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer);
-        cursor += TransactionOutPoint.MESSAGE_LENGTH;
+        outpoint = new TransactionOutPoint(params, payload, this, serializer);
         int scriptLen = readVarInt().intValue();
         scriptBytes = readBytes(scriptLen);
         sequence = readUint32();

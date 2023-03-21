@@ -27,9 +27,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
@@ -44,14 +46,8 @@ public abstract class Message {
 
     public static final int MAX_SIZE = 0x02000000; // 32MB
 
-    // The offset is how many bytes into the provided byte array this message payload starts at.
-    protected int offset;
-    // The cursor keeps track of where we are in the byte array as we parse it.
-    // Note that it's relative to the start of the array NOT the start of the message payload.
-    protected int cursor;
-
     // The raw message payload bytes themselves.
-    protected byte[] payload;
+    protected ByteBuffer payload;
 
     protected MessageSerializer serializer;
 
@@ -76,10 +72,7 @@ public abstract class Message {
     protected Message(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
         this.serializer = serializer;
         this.params = params;
-        // unwrap ByteBuffer into individual fields
-        this.payload = new byte[payload.remaining()];
-        payload.get(this.payload);
-        this.cursor = this.offset = 0;
+        this.payload = payload;
 
         parse();
 
@@ -154,20 +147,18 @@ public abstract class Message {
 
     protected long readUint32() throws ProtocolException {
         try {
-            long u = ByteUtils.readUint32(payload, cursor);
-            cursor += 4;
+            long u = ByteUtils.readUint32(payload);
             return u;
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (BufferUnderflowException e) {
             throw new ProtocolException(e);
         }
     }
 
     protected long readInt64() throws ProtocolException {
         try {
-            long u = ByteUtils.readInt64(payload, cursor);
-            cursor += 8;
+            long u = ByteUtils.readInt64(payload);
             return u;
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (BufferUnderflowException e) {
             throw new ProtocolException(e);
         }
     }
@@ -179,16 +170,14 @@ public abstract class Message {
 
     protected VarInt readVarInt() throws ProtocolException {
         try {
-            VarInt varint = VarInt.ofBytes(payload, cursor);
-            cursor += varint.getOriginalSizeInBytes();
-            return varint;
-        } catch (ArrayIndexOutOfBoundsException e) {
+            return VarInt.read(payload);
+        } catch (BufferUnderflowException e) {
             throw new ProtocolException(e);
         }
     }
 
     private void checkReadLength(int length) throws ProtocolException {
-        if ((length > MAX_SIZE) || (cursor + length > payload.length)) {
+        if ((length > MAX_SIZE) || length > payload.remaining()) {
             throw new ProtocolException("Claimed value length too large: " + length);
         }
     }
@@ -197,17 +186,20 @@ public abstract class Message {
         checkReadLength(length);
         try {
             byte[] b = new byte[length];
-            System.arraycopy(payload, cursor, b, 0, length);
-            cursor += length;
+            payload.get(b);
             return b;
-        } catch (IndexOutOfBoundsException e) {
+        } catch (BufferUnderflowException e) {
             throw new ProtocolException(e);
         }
     }
 
     protected byte readByte() throws ProtocolException {
         checkReadLength(1);
-        return payload[cursor++];
+        try {
+            return payload.get();
+        } catch (BufferUnderflowException e) {
+            throw new ProtocolException(e);
+        }
     }
 
     protected byte[] readByteArray() throws ProtocolException {
@@ -224,6 +216,12 @@ public abstract class Message {
         // We have to flip it around, as it's been read off the wire in little endian.
         // Not the most efficient way to do this but the clearest.
         return Sha256Hash.wrapReversed(readBytes(32));
+    }
+
+    protected void skipBytes(int numBytes) throws ProtocolException {
+        checkArgument(numBytes >= 0);
+        checkReadLength(numBytes);
+        payload.position(payload.position() + numBytes);
     }
 
     /** Network parameters this message was created with. */

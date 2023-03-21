@@ -50,7 +50,6 @@ public class GetBlocksMessage extends Message {
 
     @Override
     protected void parse() throws ProtocolException {
-        cursor = offset;
         version = readUint32();
         int startCount = readVarInt().intValue();
         if (startCount > 500)

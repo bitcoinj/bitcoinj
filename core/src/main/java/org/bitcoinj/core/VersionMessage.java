@@ -131,11 +131,9 @@ public class VersionMessage extends Message {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
         time = Instant.ofEpochSecond(readUint64().longValue());
-        receivingAddr = new PeerAddress(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer.withProtocolVersion(0));
-        cursor += receivingAddr.getMessageSize();
+        receivingAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
         if (clientVersion >= 106) {
-            fromAddr = new PeerAddress(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer.withProtocolVersion(0));
-            cursor += fromAddr.getMessageSize();
+            fromAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
             // uint64 localHostNonce (random data)
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
             // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
