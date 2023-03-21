@@ -95,30 +95,58 @@ public class ByteUtils {
         return new BigInteger(1, bytes);
     }
 
-    /** Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in little endian format. */
-    public static void writeUint16LE(int val, byte[] out, int offset) {
+    /**
+     * Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in little endian format.
+     * @param val value to be written
+     * @param out buffer to be written into
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if value doesn't fully fit the buffer
+     */
+    public static void writeUint16LE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
     }
 
-    /** Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
-    public static void writeUint32LE(long val, byte[] out, int offset) {
+    /**
+     * Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in little endian format.
+     * @param val value to be written
+     * @param out buffer to be written into
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if value doesn't fully fit the buffer
+     */
+    public static void writeUint32LE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
         out[offset + 3] = (byte) (0xFF & (val >> 24));
     }
 
-    /** Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in big endian format. */
-    public static void writeUint32BE(long val, byte[] out, int offset) {
+    /**
+     * Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in big endian format.
+     * @param val value to be written
+     * @param out buffer to be written into
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if value doesn't fully fit the buffer
+     */
+    public static void writeUint32BE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         out[offset] = (byte) (0xFF & (val >> 24));
         out[offset + 1] = (byte) (0xFF & (val >> 16));
         out[offset + 2] = (byte) (0xFF & (val >> 8));
         out[offset + 3] = (byte) (0xFF & val);
     }
 
-    /** Write 8 bytes to the byte array (starting at the offset) as signed 64-bit integer in little endian format. */
-    public static void writeInt64LE(long val, byte[] out, int offset) {
+    /**
+     * Write 8 bytes to the byte array (starting at the offset) as signed 64-bit integer in little endian format.
+     * @param val value to be written
+     * @param out buffer to be written into
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if value doesn't fully fit the buffer
+     */
+    public static void writeInt64LE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         out[offset] = (byte) (0xFF & val);
         out[offset + 1] = (byte) (0xFF & (val >> 8));
         out[offset + 2] = (byte) (0xFF & (val >> 16));
@@ -129,19 +157,34 @@ public class ByteUtils {
         out[offset + 7] = (byte) (0xFF & (val >> 56));
     }
 
-    /** Write 2 bytes to the output stream as unsigned 16-bit integer in little endian format. */
+    /**
+     * Write 2 bytes to the output stream as unsigned 16-bit integer in little endian format.
+     * @param val value to be written
+     * @param stream strean to be written into
+     * @throws IOException if an I/O error occurs
+     */
     public static void writeUint16LE(int val, OutputStream stream) throws IOException {
         stream.write(0xFF & val);
         stream.write(0xFF & (val >> 8));
     }
 
-    /** Write 2 bytes to the output stream as unsigned 16-bit integer in big endian format. */
+    /**
+     * Write 2 bytes to the output stream as unsigned 16-bit integer in big endian format.
+     * @param val value to be written
+     * @param stream strean to be written into
+     * @throws IOException if an I/O error occurs
+     */
     public static void writeUint16BE(int val, OutputStream stream) throws IOException {
         stream.write(0xFF & (val >> 8));
         stream.write(0xFF & val);
     }
 
-    /** Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format. */
+    /**
+     * Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format.
+     * @param val value to be written
+     * @param stream strean to be written into
+     * @throws IOException if an I/O error occurs
+     */
     public static void writeUint32LE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
@@ -149,7 +192,12 @@ public class ByteUtils {
         stream.write((int) (0xFF & (val >> 24)));
     }
 
-    /** Write 4 bytes to the output stream as unsigned 32-bit integer in big endian format. */
+    /**
+     * Write 4 bytes to the output stream as unsigned 32-bit integer in big endian format.
+     * @param val value to be written
+     * @param stream strean to be written into
+     * @throws IOException if an I/O error occurs
+     */
     public static void writeUint32BE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & (val >> 24)));
         stream.write((int) (0xFF & (val >> 16)));
@@ -157,7 +205,12 @@ public class ByteUtils {
         stream.write((int) (0xFF & val));
     }
 
-    /** Write 8 bytes to the output stream as signed 64-bit integer in little endian format. */
+    /**
+     * Write 8 bytes to the output stream as signed 64-bit integer in little endian format.
+     * @param val value to be written
+     * @param stream strean to be written into
+     * @throws IOException if an I/O error occurs
+     */
     public static void writeInt64LE(long val, OutputStream stream) throws IOException {
         stream.write((int) (0xFF & val));
         stream.write((int) (0xFF & (val >> 8)));
@@ -169,7 +222,12 @@ public class ByteUtils {
         stream.write((int) (0xFF & (val >> 56)));
     }
 
-    /** Write 8 bytes to the output stream as unsigned 64-bit integer in little endian format. */
+    /**
+     * Write 8 bytes to the output stream as unsigned 64-bit integer in little endian format.
+     * @param val value to be written
+     * @param stream strean to be written into
+     * @throws IOException if an I/O error occurs
+     */
     public static void writeUint64LE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();
         if (bytes.length > 8) {
@@ -183,22 +241,40 @@ public class ByteUtils {
         }
     }
 
-    /** Parse 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in little endian format. */
-    public static int readUint16(byte[] bytes, int offset) {
+    /**
+     * Read 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in little endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond its bounds
+     */
+    public static int readUint16(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
         return (bytes[offset] & 0xff) |
                 ((bytes[offset + 1] & 0xff) << 8);
     }
 
-    /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format. */
-    public static long readUint32(byte[] bytes, int offset) {
+    /**
+     * Read 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in little endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond its bounds
+     */
+    public static long readUint32(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
         return (bytes[offset] & 0xffL) |
                 ((bytes[offset + 1] & 0xffL) << 8) |
                 ((bytes[offset + 2] & 0xffL) << 16) |
                 ((bytes[offset + 3] & 0xffL) << 24);
     }
 
-    /** Parse 8 bytes from the byte array (starting at the offset) as signed 64-bit integer in little endian format. */
-    public static long readInt64(byte[] bytes, int offset) {
+    /**
+     * Read 8 bytes from the byte array (starting at the offset) as signed 64-bit integer in little endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond its bounds
+     */
+    public static long readInt64(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
         return (bytes[offset] & 0xffL) |
                ((bytes[offset + 1] & 0xffL) << 8) |
                ((bytes[offset + 2] & 0xffL) << 16) |
@@ -209,21 +285,36 @@ public class ByteUtils {
                ((bytes[offset + 7] & 0xffL) << 56);
     }
 
-    /** Parse 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in big endian format. */
-    public static long readUint32BE(byte[] bytes, int offset) {
+    /**
+     * Read 4 bytes from the byte array (starting at the offset) as unsigned 32-bit integer in big endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond its bounds
+     */
+    public static long readUint32BE(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
         return ((bytes[offset] & 0xffL) << 24) |
                 ((bytes[offset + 1] & 0xffL) << 16) |
                 ((bytes[offset + 2] & 0xffL) << 8) |
                 (bytes[offset + 3] & 0xffL);
     }
 
-    /** Parse 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in big endian format. */
-    public static int readUint16BE(byte[] bytes, int offset) {
+    /**
+     * Read 2 bytes from the byte array (starting at the offset) as unsigned 16-bit integer in big endian format.
+     * @param bytes buffer to be read from
+     * @param offset offset into the buffer
+     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
+     *                                        if the read value extends beyond its bounds
+     */
+    public static int readUint16BE(byte[] bytes, int offset) throws ArrayIndexOutOfBoundsException {
         return ((bytes[offset] & 0xff) << 8) |
                 (bytes[offset + 1] & 0xff);
     }
 
-    /** Parse 2 bytes from the stream as unsigned 16-bit integer in little endian format. */
+    /**
+     * Read 2 bytes from the stream as unsigned 16-bit integer in little endian format.
+     * @param is stream to be read from
+     */
     public static int readUint16FromStream(InputStream is) {
         try {
             return (is.read() & 0xff) |
@@ -233,7 +324,10 @@ public class ByteUtils {
         }
     }
 
-    /** Parse 4 bytes from the stream as unsigned 32-bit integer in little endian format. */
+    /**
+     * Read 4 bytes from the stream as unsigned 32-bit integer in little endian format.
+     * @param is stream to be read from
+     */
     public static long readUint32FromStream(InputStream is) {
         try {
             return (is.read() & 0xffL) |
