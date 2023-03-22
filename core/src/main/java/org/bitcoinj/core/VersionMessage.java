@@ -144,7 +144,7 @@ public class VersionMessage extends Message {
             // int bestHeight (size of known block chain).
             bestHeight = readUint32();
             if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
-                relayTxesBeforeFilter = readBytes(1)[0] != 0;
+                relayTxesBeforeFilter = readByte() != 0;
             } else {
                 relayTxesBeforeFilter = true;
             }

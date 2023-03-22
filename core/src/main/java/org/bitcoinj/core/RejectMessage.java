@@ -96,7 +96,7 @@ public class RejectMessage extends Message {
     @Override
     protected void parse() throws ProtocolException {
         message = readStr();
-        code = RejectCode.fromCode(readBytes(1)[0]);
+        code = RejectCode.fromCode(readByte());
         reason = readStr();
         if (message.equals("block") || message.equals("tx"))
             messageHash = readHash();
