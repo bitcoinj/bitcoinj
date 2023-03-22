@@ -321,50 +321,14 @@ public class Block extends Message {
 
         stream.write(VarInt.of(transactions.size()).encode());
         for (Transaction tx : transactions) {
-            tx.bitcoinSerialize(stream);
+            tx.bitcoinSerializeToStream(stream);
         }
-    }
-
-    /**
-     * Special handling to check if we have a valid byte array for both header
-     * and transactions
-     */
-    @Override
-    public byte[] bitcoinSerialize() {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? HEADER_SIZE + guessTransactionsLength() : length);
-        try {
-            writeHeader(stream);
-            writeTransactions(stream);
-        } catch (IOException e) {
-            // Cannot happen, we are serializing to a memory stream.
-        }
-        return stream.toByteArray();
     }
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         writeHeader(stream);
-        // We may only have enough data to write the header.
         writeTransactions(stream);
-    }
-
-    /**
-     * Provides a reasonable guess at the byte length of the transactions part of the block.
-     * The returned value will be accurate in 99% of cases and in those cases where not will probably slightly
-     * oversize.
-     *
-     * This is used to preallocate the underlying byte array for a ByteArrayOutputStream.  If the size is under the
-     * real value the only penalty is resizing of the underlying byte array.
-     */
-    private int guessTransactionsLength() {
-        if (transactions == null)
-            return 0;
-        int len = VarInt.sizeOf(transactions.size());
-        for (Transaction tx : transactions) {
-            // 255 is just a guess at an average tx length
-            len += tx.length == UNKNOWN_LENGTH ? 255 : tx.length;
-        }
-        return len;
     }
 
     @Override

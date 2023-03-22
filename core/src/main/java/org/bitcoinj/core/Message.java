@@ -187,16 +187,6 @@ public abstract class Message {
     }
 
     /**
-     * Serialize this message to the provided OutputStream using the bitcoin wire format.
-     *
-     * @param stream
-     * @throws IOException
-     */
-    public final void bitcoinSerialize(OutputStream stream) throws IOException {
-        bitcoinSerializeToStream(stream);
-    }
-
-    /**
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {

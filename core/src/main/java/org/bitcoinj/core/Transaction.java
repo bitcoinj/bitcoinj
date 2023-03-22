@@ -1553,11 +1553,11 @@ public class Transaction extends ChildMessage {
         // txin_count, txins
         stream.write(VarInt.of(inputs.size()).encode());
         for (TransactionInput in : inputs)
-            in.bitcoinSerialize(stream);
+            in.bitcoinSerializeToStream(stream);
         // txout_count, txouts
         stream.write(VarInt.of(outputs.size()).encode());
         for (TransactionOutput out : outputs)
-            out.bitcoinSerialize(stream);
+            out.bitcoinSerializeToStream(stream);
         // script_witnisses
         if (useSegwit) {
             for (TransactionInput in : inputs) {

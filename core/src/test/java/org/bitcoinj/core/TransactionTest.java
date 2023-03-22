@@ -727,12 +727,12 @@ public class TransactionTest {
             long inputsSize = hackInputsSize ? Integer.MAX_VALUE : getInputs().size();
             stream.write(VarInt.of(inputsSize).encode());
             for (TransactionInput in : getInputs())
-                in.bitcoinSerialize(stream);
+                in.bitcoinSerializeToStream(stream);
             // txout_count, txouts
             long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : getOutputs().size();
             stream.write(VarInt.of(outputsSize).encode());
             for (TransactionOutput out : getOutputs())
-                out.bitcoinSerialize(stream);
+                out.bitcoinSerializeToStream(stream);
             // script_witnisses
             if (useSegwit) {
                 for (TransactionInput in : getInputs()) {

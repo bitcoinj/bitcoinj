@@ -39,7 +39,7 @@ public abstract class AddressMessage extends Message {
             return;
         stream.write(VarInt.of(addresses.size()).encode());
         for (PeerAddress addr : addresses) {
-            addr.bitcoinSerialize(stream);
+            addr.bitcoinSerializeToStream(stream);
         }
     }
 

@@ -356,16 +356,6 @@ public class BlockTest {
 
                 stream.write(VarInt.of(Integer.MAX_VALUE).encode());
             }
-
-            @Override
-            public byte[] bitcoinSerialize() {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                try {
-                    bitcoinSerializeToStream(baos);
-                } catch (IOException e) {
-                }
-                return baos.toByteArray();
-            }
         };
         byte[] serializedBlock = block.bitcoinSerialize();
         try {

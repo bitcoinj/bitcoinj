@@ -50,12 +50,4 @@ public abstract class EmptyMessage extends Message {
     @Override
     protected void parse() throws ProtocolException {
     }
-
-    /* (non-Javadoc)
-      * @see Message#bitcoinSerialize()
-      */
-    @Override
-    public byte[] bitcoinSerialize() {
-        return new byte[0];
-    }
 }
