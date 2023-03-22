@@ -216,9 +216,11 @@ public abstract class Message {
     }
 
     protected Sha256Hash readHash() throws ProtocolException {
-        // We have to flip it around, as it's been read off the wire in little endian.
-        // Not the most efficient way to do this but the clearest.
-        return Sha256Hash.wrapReversed(readBytes(32));
+        try {
+            return Sha256Hash.read(payload);
+        } catch (BufferUnderflowException e) {
+            throw new ProtocolException(e);
+        }
     }
 
     protected void skipBytes(int numBytes) throws ProtocolException {

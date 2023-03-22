@@ -22,6 +22,9 @@ import org.bitcoinj.base.internal.ByteUtils;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -79,6 +82,20 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      */
     public static Sha256Hash wrapReversed(byte[] rawHashBytes) {
         return wrap(ByteUtils.reverseBytes(rawHashBytes));
+    }
+
+    /**
+     * Create a new instance by reading from the given buffer.
+     *
+     * @param buf buffer to read from
+     * @return a new instance
+     * @throws BufferUnderflowException if the read hash extends beyond the remaining bytes of the buffer
+     */
+    public static Sha256Hash read(ByteBuffer buf) throws BufferUnderflowException {
+        byte[] b = new byte[32];
+        buf.get(b);
+        // we have to flip it around, as on the wire it's in little endian
+        return Sha256Hash.wrapReversed(b);
     }
 
     /**
@@ -256,6 +273,19 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      */
     public byte[] getReversedBytes() {
         return ByteUtils.reverseBytes(bytes);
+    }
+
+    /**
+     * Write hash into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the hash doesn't fit the remaining buffer
+     */
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        // we have to flip it around, as on the wire it's in little endian
+        buf.put(getReversedBytes());
+        return buf;
     }
 
     @Override
