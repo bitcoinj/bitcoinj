@@ -156,39 +156,6 @@ public class BlockTest {
         // NB: This tests the bitcoin serialization protocol.
         assertArrayEquals(block700000Bytes, block700000.bitcoinSerialize());
     }
-    
-    @Test
-    public void testUpdateLength() {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Block block = TESTNET.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, new ECKey().getPubKey(), Block.BLOCK_HEIGHT_GENESIS);
-        assertEquals(block.bitcoinSerialize().length, block.length);
-        final int origBlockLen = block.length;
-        Transaction tx = new Transaction(TESTNET);
-        // this is broken until the transaction has > 1 input + output (which is required anyway...)
-        //assertTrue(tx.length == tx.bitcoinSerialize().length && tx.length == 8);
-        byte[] outputScript = new byte[10];
-        Arrays.fill(outputScript, (byte) ScriptOpCodes.OP_FALSE);
-        tx.addOutput(new TransactionOutput(TESTNET, null, Coin.SATOSHI, outputScript));
-        tx.addInput(new TransactionInput(TESTNET, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
-                new TransactionOutPoint(TESTNET, 0, Sha256Hash.of(new byte[] { 1 }))));
-        int origTxLength = 8 + 2 + 8 + 1 + 10 + 40 + 1 + 1;
-        assertEquals(tx.bitcoinSerialize().length, tx.length);
-        assertEquals(origTxLength, tx.length);
-        block.addTransaction(tx);
-        assertEquals(block.bitcoinSerialize().length, block.length);
-        assertEquals(origBlockLen + tx.length, block.length);
-        block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {(byte) ScriptOpCodes.OP_FALSE, (byte) ScriptOpCodes.OP_FALSE});
-        assertEquals(block.length, origBlockLen + tx.length);
-        assertEquals(tx.length, origTxLength + 1);
-        block.getTransactions().get(1).getInputs().get(0).clearScriptBytes();
-        assertEquals(block.length, block.bitcoinSerialize().length);
-        assertEquals(block.length, origBlockLen + tx.length);
-        assertEquals(tx.length, origTxLength - 1);
-        block.getTransactions().get(1).addInput(new TransactionInput(TESTNET, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
-                new TransactionOutPoint(TESTNET, 0, Sha256Hash.of(new byte[] { 1 }))));
-        assertEquals(block.length, origBlockLen + tx.length);
-        assertEquals(tx.length, origTxLength + 41); // - 1 + 40 + 1 + 1
-    }
 
     @Test
     public void testCoinbaseHeightTestnet() throws Exception {

@@ -182,13 +182,6 @@ public class Transaction extends ChildMessage {
     // If this transaction is not stored in the wallet, appearsInHashes is null.
     private Map<Sha256Hash, Integer> appearsInHashes;
 
-    // Transactions can be encoded in a way that will use more bytes than is optimal
-    // (due to VarInts having multiple encodings)
-    // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
-    // of the size of the ideal encoding in addition to the actual message size (which Message needs) so that Blocks
-    // can properly keep track of optimal encoded size
-    private int optimalEncodingMessageSize;
-
     /**
      * This enum describes the underlying reason the transaction was created. It's useful for rendering wallet GUIs
      * more appropriately.
@@ -234,7 +227,6 @@ public class Transaction extends ChildMessage {
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
-        length = 8; // 8 for std fields
         vLockTime = LockTime.unset();
     }
 
@@ -284,7 +276,7 @@ public class Transaction extends ChildMessage {
             if (!hasWitnesses() && cachedWTxId != null) {
                 cachedTxId = cachedWTxId;
             } else {
-                ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
+                ByteArrayOutputStream stream = new ByteArrayOutputStream(255); // just a guess at an average tx length
                 try {
                     bitcoinSerializeToStream(stream, false);
                 } catch (IOException e) {
@@ -330,7 +322,7 @@ public class Transaction extends ChildMessage {
     public int getWeight() {
         if (!hasWitnesses())
             return getMessageSize() * 4;
-        try (final ByteArrayOutputStream stream = new ByteArrayOutputStream(length)) {
+        try (final ByteArrayOutputStream stream = new ByteArrayOutputStream(255)) { // just a guess at an average tx length
             bitcoinSerializeToStream(stream, false);
             final int baseSize = stream.size();
             stream.reset();
@@ -654,7 +646,6 @@ public class Transaction extends ChildMessage {
         boolean allowWitness = allowWitness();
 
         cursor = offset;
-        optimalEncodingMessageSize = 4;
 
         // version
         version = readUint32();
@@ -664,7 +655,6 @@ public class Transaction extends ChildMessage {
         if (inputs.size() == 0 && allowWitness) {
             // We read a dummy or an empty input
             flags = readByte();
-            optimalEncodingMessageSize += 2;
 
             if (flags != 0) {
                 parseInputs();
@@ -693,14 +683,10 @@ public class Transaction extends ChildMessage {
         }
         // lock_time
         vLockTime = LockTime.of(readUint32());
-        optimalEncodingMessageSize += 4;
-
-        length = cursor - offset;
     }
 
     private void parseInputs() {
         VarInt numInputsVarInt = readVarInt();
-        optimalEncodingMessageSize += numInputsVarInt.getSizeInBytes();
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
@@ -709,14 +695,12 @@ public class Transaction extends ChildMessage {
             cursor += TransactionOutPoint.MESSAGE_LENGTH;
             VarInt scriptLenVarInt = readVarInt();
             int scriptLen = scriptLenVarInt.intValue();
-            optimalEncodingMessageSize += TransactionOutPoint.MESSAGE_LENGTH + scriptLenVarInt.getSizeInBytes() + scriptLen + 4;
             cursor += scriptLen + 4;
         }
     }
 
     private void parseOutputs() {
         VarInt numOutputsVarInt = readVarInt();
-        optimalEncodingMessageSize += numOutputsVarInt.getSizeInBytes();
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
@@ -725,7 +709,6 @@ public class Transaction extends ChildMessage {
             cursor += 8; // value
             VarInt scriptLenVarInt = readVarInt();
             int scriptLen = scriptLenVarInt.intValue();
-            optimalEncodingMessageSize += 8 + scriptLenVarInt.getSizeInBytes() + scriptLen;
             cursor += scriptLen;
         }
     }
@@ -735,13 +718,11 @@ public class Transaction extends ChildMessage {
         for (int i = 0; i < numWitnesses; i++) {
             VarInt pushCountVarInt = readVarInt();
             int pushCount = pushCountVarInt.intValue();
-            optimalEncodingMessageSize += pushCountVarInt.getSizeInBytes();
             TransactionWitness witness = new TransactionWitness(pushCount);
             getInput(i).setWitness(witness);
             for (int y = 0; y < pushCount; y++) {
                 VarInt pushSizeVarInt = readVarInt();
                 int pushSize = pushSizeVarInt.intValue();
-                optimalEncodingMessageSize += pushSizeVarInt.getSizeInBytes() + pushSize;
                 byte[] push = readBytes(pushSize);
                 witness.setPush(y, push);
             }
@@ -754,13 +735,6 @@ public class Transaction extends ChildMessage {
             if (in.hasWitness())
                 return true;
         return false;
-    }
-
-    public int getOptimalEncodingMessageSize() {
-        if (optimalEncodingMessageSize != 0)
-            return optimalEncodingMessageSize;
-        optimalEncodingMessageSize = getMessageSize();
-        return optimalEncodingMessageSize;
     }
 
     /**
@@ -964,8 +938,6 @@ public class Transaction extends ChildMessage {
             input.setParent(null);
         }
         inputs.clear();
-        // You wanted to reserialize, right?
-        this.length = this.bitcoinSerialize().length;
     }
 
     /**
@@ -987,7 +959,6 @@ public class Transaction extends ChildMessage {
         unCache();
         input.setParent(this);
         inputs.add(input);
-        adjustLength(inputs.size(), input.length);
         return input;
     }
 
@@ -1129,8 +1100,6 @@ public class Transaction extends ChildMessage {
             output.setParent(null);
         }
         outputs.clear();
-        // You wanted to reserialize, right?
-        this.length = this.bitcoinSerialize().length;
     }
 
     /**
@@ -1140,7 +1109,6 @@ public class Transaction extends ChildMessage {
         unCache();
         to.setParent(this);
         outputs.add(to);
-        adjustLength(outputs.size(), to.length);
         return to;
     }
 
@@ -1367,7 +1335,7 @@ public class Transaction extends ChildMessage {
                 tx.inputs.add(input);
             }
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(tx.length);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(255); // just a guess at an average tx length
             tx.bitcoinSerializeToStream(bos, false);
             // We also have to write a hash type (sigHashType is actually an unsigned char)
             writeUint32LE(0x000000ff & sigHashType, bos);
@@ -1465,7 +1433,7 @@ public class Transaction extends ChildMessage {
             byte[] scriptCode,
             Coin prevValue,
             byte sigHashType){
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(length == UNKNOWN_LENGTH ? 256 : length + 4);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(255); // just a guess at an average tx length
         try {
             byte[] hashPrevouts = new byte[32];
             byte[] hashSequence = new byte[32];
@@ -1529,6 +1497,25 @@ public class Transaction extends ChildMessage {
         }
 
         return Sha256Hash.twiceOf(bos.toByteArray());
+    }
+
+    @Override
+    public int getMessageSize() {
+        boolean useSegwit = hasWitnesses() && allowWitness();
+        int size = 4; // version
+        if (useSegwit)
+            size += 2; // marker, flag
+        size += VarInt.sizeOf(inputs.size());
+        for (TransactionInput in : inputs)
+            size += in.getMessageSize();
+        size += VarInt.sizeOf(outputs.size());
+        for (TransactionOutput out : outputs)
+            size += out.getMessageSize();
+        if (useSegwit)
+            for (TransactionInput in : inputs)
+                size += in.getWitness().getMessageSize();
+        size += 4; // locktime
+        return size;
     }
 
     @Override

@@ -106,7 +106,6 @@ public class TransactionInput extends ChildMessage {
         this.sequence = NO_SEQUENCE;
         this.value = value;
         setParent(parentTransaction);
-        length = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
     }
 
     /**
@@ -124,7 +123,6 @@ public class TransactionInput extends ChildMessage {
         sequence = NO_SEQUENCE;
         setParent(parentTransaction);
         this.value = output.getValue();
-        length = 41;
     }
 
     /**
@@ -163,11 +161,18 @@ public class TransactionInput extends ChildMessage {
     @Override
     protected void parse() throws ProtocolException {
         outpoint = new TransactionOutPoint(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer);
-        cursor += outpoint.getMessageSize();
+        cursor += TransactionOutPoint.MESSAGE_LENGTH;
         int scriptLen = readVarInt().intValue();
-        length = cursor - offset + scriptLen + 4;
         scriptBytes = readBytes(scriptLen);
         sequence = readUint32();
+    }
+
+    @Override
+    public int getMessageSize() {
+        int size = outpoint.getMessageSize();
+        size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        size += 4; // sequence
+        return size;
     }
 
     @Override
@@ -258,11 +263,7 @@ public class TransactionInput extends ChildMessage {
     void setScriptBytes(byte[] scriptBytes) {
         unCache();
         this.scriptSig = null;
-        int oldLength = length;
         this.scriptBytes = scriptBytes;
-        // 40 = previous_outpoint (36) + sequence (4)
-        int newLength = 40 + (scriptBytes == null ? 1 : VarInt.sizeOf(scriptBytes.length) + scriptBytes.length);
-        adjustLength(newLength - oldLength);
     }
 
     /**

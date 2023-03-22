@@ -156,7 +156,6 @@ public class BloomFilter extends Message {
             throw new ProtocolException("Bloom filter hash function count out of range");
         nTweak = readUint32();
         nFlags = readBytes(1)[0];
-        length = cursor - offset;
     }
     
     /**

@@ -66,14 +66,12 @@ public class TransactionOutPoint extends ChildMessage {
             // This happens when constructing the genesis block.
             hash = Sha256Hash.ZERO_HASH;
         }
-        length = MESSAGE_LENGTH;
     }
 
     public TransactionOutPoint(NetworkParameters params, long index, Sha256Hash hash) {
         super(params);
         this.index = index;
         this.hash = hash;
-        length = MESSAGE_LENGTH;
     }
 
     public TransactionOutPoint(NetworkParameters params, TransactionOutput connectedOutput) {
@@ -101,9 +99,13 @@ public class TransactionOutPoint extends ChildMessage {
 
     @Override
     protected void parse() throws ProtocolException {
-        length = MESSAGE_LENGTH;
         hash = readHash();
         index = readUint32();
+    }
+
+    @Override
+    public int getMessageSize() {
+        return MESSAGE_LENGTH;
     }
 
     @Override

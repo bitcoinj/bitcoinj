@@ -130,11 +130,6 @@ public class Block extends Message {
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
 
-    // Blocks can be encoded in a way that will use more bytes than is optimal (due to VarInts having multiple encodings)
-    // MAX_BLOCK_SIZE must be compared to the optimal encoding, not the actual encoding, so when parsing, we keep track
-    // of the size of the ideal encoding in addition to the actual message size (which Message needs)
-    protected int optimalEncodingMessageSize;
-
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(NetworkParameters params, long setVersion) {
         super(params);
@@ -143,8 +138,6 @@ public class Block extends Message {
         difficultyTarget = 0x1d07fff8L;
         time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
         prevBlockHash = Sha256Hash.ZERO_HASH;
-
-        length = HEADER_SIZE;
     }
 
     /**
@@ -229,7 +222,6 @@ public class Block extends Message {
      */
     protected void parseTransactions() throws ProtocolException {
         VarInt numTransactionsVarInt = readVarInt();
-        optimalEncodingMessageSize += numTransactionsVarInt.getSizeInBytes();
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
@@ -238,7 +230,6 @@ public class Block extends Message {
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
             cursor += tx.getMessageSize();
-            optimalEncodingMessageSize += tx.getOptimalEncodingMessageSize();
         }
     }
 
@@ -253,13 +244,10 @@ public class Block extends Message {
         difficultyTarget = readUint32();
         nonce = readUint32();
         hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(payload, offset, cursor - offset));
-        optimalEncodingMessageSize = HEADER_SIZE;
 
         // transactions
         if (payload.length > cursor) // otherwise this message is just a header
             parseTransactions();
-
-        length = cursor - offset;
     }
 
     public static Block createGenesis(NetworkParameters n) {
@@ -295,11 +283,17 @@ public class Block extends Message {
         genesisTxScriptPubKeyBytes = scriptPubKeyBytes.toByteArray();
     }
 
-    public int getOptimalEncodingMessageSize() {
-        if (optimalEncodingMessageSize != 0)
-            return optimalEncodingMessageSize;
-        optimalEncodingMessageSize = bitcoinSerialize().length;
-        return optimalEncodingMessageSize;
+    @Override
+    public int getMessageSize() {
+        int size = HEADER_SIZE;
+        List<Transaction> transactions = getTransactions();
+        if (transactions != null) {
+            size += VarInt.sizeOf(transactions.size());
+            for (Transaction tx : transactions) {
+                size += tx.getMessageSize();
+            }
+        }
+        return size;
     }
 
     // default for testing
@@ -691,7 +685,7 @@ public class Block extends Message {
         // transactions that reference spent or non-existent inputs.
         if (transactions.isEmpty())
             throw new VerificationException("Block had no transactions");
-        if (this.getOptimalEncodingMessageSize() > MAX_BLOCK_SIZE)
+        if (this.getMessageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         checkTransactions(height, flags);
         checkMerkleRoot();
@@ -771,7 +765,6 @@ public class Block extends Message {
         else if (runSanityChecks && transactions.size() > 0 && t.isCoinBase())
             throw new RuntimeException("Attempted to add a coinbase transaction when there already is one: " + t);
         transactions.add(t);
-        adjustLength(transactions.size(), t.length);
         // Force a recalculation next time the values are needed.
         merkleRoot = null;
         hash = null;
@@ -905,8 +898,6 @@ public class Block extends Message {
                 ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
         coinbase.setParent(this);
-        coinbase.length = coinbase.bitcoinSerialize().length;
-        adjustLength(transactions.size(), coinbase.length);
     }
 
     private static final byte[] EMPTY_BYTES = new byte[32];

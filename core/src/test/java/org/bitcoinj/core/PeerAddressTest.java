@@ -45,7 +45,7 @@ public class PeerAddressTest {
     public void equalsContract() {
         EqualsVerifier.forClass(PeerAddress.class)
                 .suppress(Warning.NONFINAL_FIELDS)
-                .withIgnoredFields("time", "parent", "params", "offset", "cursor", "length", "payload", "serializer")
+                .withIgnoredFields("time", "parent", "params", "offset", "cursor", "payload", "serializer")
                 .usingGetClass()
                 .verify();
     }
@@ -57,7 +57,6 @@ public class PeerAddressTest {
         String hex = "010000000000000000000000000000000000ffff0a000001208d";
         PeerAddress pa = new PeerAddress(MAINNET, ByteBuffer.wrap(ByteUtils.parseHex(hex)), null,
                 serializer);
-        assertEquals(26, pa.length);
         assertEquals(VersionMessage.NODE_NETWORK, pa.getServices().longValue());
         assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
         assertEquals(8333, pa.getPort());
@@ -69,7 +68,6 @@ public class PeerAddressTest {
         PeerAddress pa = new PeerAddress(MAINNET, InetAddress.getByName(null), 8333, BigInteger.ZERO,
                 serializer);
         assertEquals("000000000000000000000000000000000000ffff7f000001208d", ByteUtils.formatHex(pa.bitcoinSerialize()));
-        assertEquals(26, pa.length);
     }
 
     @Test

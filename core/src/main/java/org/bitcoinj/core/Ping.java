@@ -65,7 +65,6 @@ public class Ping extends Message {
         } catch(ProtocolException e) {
             hasNonce = false;
         }
-        length = hasNonce ? 8 : 0;
     }
     
     public boolean hasNonce() {

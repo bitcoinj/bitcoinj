@@ -81,6 +81,13 @@ public class TransactionWitness {
         pushes.set(i, value);
     }
 
+    protected int getMessageSize() {
+        int size = VarInt.sizeOf(pushes.size());
+        for (byte[] push : pushes)
+            size += VarInt.sizeOf(push.length) + push.length;
+        return size;
+    }
+
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(VarInt.of(pushes.size()).encode());
         for (byte[] push : pushes) {

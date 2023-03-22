@@ -44,7 +44,6 @@ public class Pong extends Message {
     @Override
     protected void parse() throws ProtocolException {
         nonce = readInt64();
-        length = 8;
     }
     
     @Override

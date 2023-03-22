@@ -52,7 +52,6 @@ public abstract class ListMessage extends Message {
     public ListMessage(NetworkParameters params) {
         super(params);
         items = new ArrayList<>();
-        length = 1; //length of 0 varint;
     }
 
     public List<InventoryItem> getItems() {
@@ -61,16 +60,12 @@ public abstract class ListMessage extends Message {
 
     public void addItem(InventoryItem item) {
         unCache();
-        length -= VarInt.sizeOf(items.size());
         items.add(item);
-        length += VarInt.sizeOf(items.size()) + InventoryItem.MESSAGE_LENGTH;
     }
 
     public void removeItem(int index) {
         unCache();
-        length -= VarInt.sizeOf(items.size());
         items.remove(index);
-        length += VarInt.sizeOf(items.size()) - InventoryItem.MESSAGE_LENGTH;
     }
 
     @Override
@@ -78,7 +73,6 @@ public abstract class ListMessage extends Message {
         long arrayLen = readVarInt().longValue();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);
-        length = (int) (cursor - offset + (arrayLen * InventoryItem.MESSAGE_LENGTH));
 
         // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
         items = new ArrayList<>((int) arrayLen);

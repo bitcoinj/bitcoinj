@@ -121,7 +121,6 @@ public class TransactionOutput extends ChildMessage {
         this.scriptBytes = scriptBytes;
         setParent(parent);
         availableForSpending = true;
-        length = 8 + VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
     }
 
     public Script getScriptPubKey() throws ScriptException {
@@ -135,8 +134,14 @@ public class TransactionOutput extends ChildMessage {
     protected void parse() throws ProtocolException {
         value = readInt64();
         int scriptLen = readVarInt().intValue();
-        length = cursor - offset + scriptLen;
         scriptBytes = readBytes(scriptLen);
+    }
+
+    @Override
+    public int getMessageSize() {
+        int size = 8; // value
+        size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        return size;
     }
 
     @Override

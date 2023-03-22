@@ -68,9 +68,7 @@ public class FilteredBlock extends Message {
     protected void parse() throws ProtocolException {
         byte[] headerBytes = readBytes(Block.HEADER_SIZE);
         header = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(headerBytes));
-        merkleTree = new PartialMerkleTree(params, ByteBuffer.wrap(payload, Block.HEADER_SIZE, length - Block.HEADER_SIZE));
-        
-        length = Block.HEADER_SIZE + merkleTree.getMessageSize();
+        merkleTree = new PartialMerkleTree(params, ByteBuffer.wrap(payload, Block.HEADER_SIZE, payload.length - Block.HEADER_SIZE));
     }
     
     /**

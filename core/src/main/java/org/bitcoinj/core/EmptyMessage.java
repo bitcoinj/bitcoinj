@@ -30,17 +30,19 @@ import java.nio.ByteBuffer;
 public abstract class EmptyMessage extends Message {
 
     public EmptyMessage() {
-        length = 0;
     }
 
     public EmptyMessage(NetworkParameters params) {
         super(params);
-        length = 0;
     }
 
     public EmptyMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
         super(params, payload);
-        length = 0;
+    }
+
+    @Override
+    public final int getMessageSize() {
+        return 0;
     }
 
     @Override

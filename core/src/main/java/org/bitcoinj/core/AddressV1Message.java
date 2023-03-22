@@ -55,12 +55,10 @@ public class AddressV1Message extends AddressMessage {
             throw new ProtocolException("Address message too large.");
         addresses = new ArrayList<>(numAddresses);
         MessageSerializer serializer = this.serializer.withProtocolVersion(1);
-        length = numAddressesVarInt.getSizeInBytes();
         for (int i = 0; i < numAddresses; i++) {
             PeerAddress addr = new PeerAddress(params, ByteBuffer.wrap(payload, cursor, payload.length - cursor), this, serializer);
             addresses.add(addr);
             cursor += addr.getMessageSize();
-            length += addr.getMessageSize();
         }
     }
 
@@ -72,7 +70,6 @@ public class AddressV1Message extends AddressMessage {
         unCache();
         address.setParent(this);
         addresses.add(address);
-        length = UNKNOWN_LENGTH;
     }
 
     @Override

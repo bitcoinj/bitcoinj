@@ -234,22 +234,17 @@ public class PeerAddress extends ChildMessage {
         if (protocolVersion < 0 || protocolVersion > 2)
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
-        length = 0;
         if (protocolVersion >= 1) {
             time = Optional.of(Instant.ofEpochSecond(readUint32()));
-            length += 4;
         } else {
             time = Optional.empty();
         }
         if (protocolVersion == 2) {
             VarInt servicesVarInt = readVarInt();
-            length += servicesVarInt.getSizeInBytes();
             services = BigInteger.valueOf(servicesVarInt.longValue());
             int networkId = readByte();
-            length += 1;
             byte[] addrBytes = readByteArray();
             int addrLen = addrBytes.length;
-            length += VarInt.sizeOf(addrLen) + addrLen;
             Optional<NetworkId> id = NetworkId.of(networkId);
             if (id.isPresent()) {
                 switch(id.get()) {
@@ -296,9 +291,7 @@ public class PeerAddress extends ChildMessage {
             }
         } else {
             services = readUint64();
-            length += 8;
             byte[] addrBytes = readBytes(16);
-            length += 16;
             if (Arrays.equals(ONIONCAT_PREFIX, Arrays.copyOf(addrBytes, 6))) {
                 byte[] onionAddress = Arrays.copyOfRange(addrBytes, 6, 16);
                 hostname = BASE32.encode(onionAddress) + ".onion";
@@ -309,7 +302,6 @@ public class PeerAddress extends ChildMessage {
         }
         port = ByteUtils.readUint16BE(payload, cursor);
         cursor += 2;
-        length += 2;
     }
 
     private static InetAddress getByAddress(byte[] addrBytes) {

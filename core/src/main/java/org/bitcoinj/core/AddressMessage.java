@@ -49,7 +49,6 @@ public abstract class AddressMessage extends Message {
         unCache();
         PeerAddress address = addresses.remove(index);
         address.setParent(null);
-        length = UNKNOWN_LENGTH;
     }
 
     /**

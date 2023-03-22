@@ -44,15 +44,11 @@ public abstract class Message {
 
     public static final int MAX_SIZE = 0x02000000; // 32MB
 
-    public static final int UNKNOWN_LENGTH = Integer.MIN_VALUE;
-
     // The offset is how many bytes into the provided byte array this message payload starts at.
     protected int offset;
     // The cursor keeps track of where we are in the byte array as we parse it.
     // Note that it's relative to the start of the array NOT the start of the message payload.
     protected int cursor;
-
-    protected int length = UNKNOWN_LENGTH;
 
     // The raw message payload bytes themselves.
     protected byte[] payload;
@@ -81,15 +77,11 @@ public abstract class Message {
         this.serializer = serializer;
         this.params = params;
         // unwrap ByteBuffer into individual fields
-        this.length = payload.remaining();
-        this.payload = new byte[this.length];
+        this.payload = new byte[payload.remaining()];
         payload.get(this.payload);
         this.cursor = this.offset = 0;
 
         parse();
-
-        checkState(this.length != UNKNOWN_LENGTH || this instanceof UnknownMessage, () ->
-                "length field has not been set in constructor for " + getClass().getSimpleName() + " after parse");
 
         this.payload = null;
     }
@@ -111,22 +103,6 @@ public abstract class Message {
     protected void unCache() {
     }
 
-    protected void adjustLength(int newArraySize, int adjustment) {
-        if (length == UNKNOWN_LENGTH)
-            return;
-        // Our own length is now unknown if we have an unknown length adjustment.
-        if (adjustment == UNKNOWN_LENGTH) {
-            length = UNKNOWN_LENGTH;
-            return;
-        }
-        length += adjustment;
-        // Check if we will need more bytes to encode the length prefix.
-        if (newArraySize == 1)
-            length++;  // The assumption here is we never call adjustLength with the same arraySize as before.
-        else if (newArraySize != 0)
-            length += VarInt.sizeOf(newArraySize) - VarInt.sizeOf(newArraySize - 1);
-    }
-
     /**
      * Overrides the message serializer.
      * @param serializer the new serializer
@@ -145,19 +121,13 @@ public abstract class Message {
      */
     public final byte[] bitcoinSerialize() {
         // No cached array available so serialize parts by stream.
-        ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
+        ByteArrayOutputStream stream = new ByteArrayOutputStream(100); // initial size just a guess
         try {
             bitcoinSerializeToStream(stream);
         } catch (IOException e) {
             // Cannot happen, we are serializing to a memory stream.
         }
-
-        // Record length. If this Message wasn't parsed from a byte stream it won't have length field
-        // set (except for static length message types).  Setting it makes future streaming more efficient
-        // because we can preallocate the ByteArrayOutputStream buffer and avoid resizing.
-        byte[] buf = stream.toByteArray();
-        length = buf.length;
-        return buf;
+        return stream.toByteArray();
     }
 
     /**
@@ -174,12 +144,12 @@ public abstract class Message {
     }
 
     /**
-     * This returns a correct value by parsing the message.
+     * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
+     * size can differ from the size of the original payload.
+     * @return size of the serialized message in bytes
      */
-    public final int getMessageSize() {
-        checkState(length != UNKNOWN_LENGTH, () ->
-                "length field has not been set in " + getClass().getSimpleName());
-        return length;
+    public int getMessageSize() {
+        return bitcoinSerialize().length;
     }
 
     protected long readUint32() throws ProtocolException {

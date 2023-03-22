@@ -100,7 +100,6 @@ public class RejectMessage extends Message {
         reason = readStr();
         if (message.equals("block") || message.equals("tx"))
             messageHash = readHash();
-        length = cursor - offset;
     }
 
     @Override

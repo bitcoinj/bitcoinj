@@ -157,7 +157,6 @@ public class VersionMessage extends Message {
             bestHeight = 0;
             relayTxesBeforeFilter = true;
         }
-        length = cursor - offset;
     }
 
     @Override

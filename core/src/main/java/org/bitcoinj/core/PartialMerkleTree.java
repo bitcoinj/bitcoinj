@@ -131,8 +131,6 @@ public class PartialMerkleTree extends Message {
 
         int nFlagBytes = readVarInt().intValue();
         matchedChildBits = readBytes(nFlagBytes);
-
-        length = cursor - offset;
     }
 
     // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.

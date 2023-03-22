@@ -1234,11 +1234,11 @@ public class FullBlockTestGenerator {
             // The following checks are checking to ensure block serialization functions in the way needed for this test
             // If they fail, it is likely not an indication of error, but an indication that this test needs rewritten
             checkState(stream.size() == b64Original.block.getMessageSize() + 8);
-            checkState(stream.size() == b64.getMessageSize());
             // This check fails because it was created for "retain mode" and the likely encoding is not "optimal".
             // We since removed this capability retain the original encoding, but could not rewrite this test data.
+            // checkState(stream.size() == b64.getMessageSize());
             // checkState(Arrays.equals(stream.toByteArray(), b64.bitcoinSerialize()));
-            checkState(b64.getOptimalEncodingMessageSize() == b64Original.block.getMessageSize());
+            // checkState(b64.getOptimalEncodingMessageSize() == b64Original.block.getMessageSize());
         }
         blocks.add(new BlockAndValidity(b64, true, false, b64.getHash(), chainHeadHeight + 19, "b64"));
         spendableOutputs.offer(b64Original.getCoinbaseOutput());
