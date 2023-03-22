@@ -693,8 +693,6 @@ public class TransactionTest {
 
         public HugeDeclaredSizeTransaction(NetworkParameters params, boolean hackInputsSize, boolean hackOutputsSize, boolean hackWitnessPushCountSize) {
             super(params);
-            setSerializer(serializer.withProtocolVersion(
-                    NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion()));
             Transaction inputTx = new Transaction(params);
             inputTx.addOutput(Coin.FIFTY_COINS, ECKey.fromPrivate(BigInteger.valueOf(123456)).toAddress(ScriptType.P2PKH, params.network()));
             this.addInput(inputTx.getOutput(0));
