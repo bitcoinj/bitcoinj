@@ -33,6 +33,10 @@ public abstract class ChildMessage extends Message {
         super(params);
     }
 
+    public ChildMessage(NetworkParameters params, MessageSerializer serializer) {
+        super(params, serializer);
+    }
+
     public ChildMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
         super(params, payload);
     }

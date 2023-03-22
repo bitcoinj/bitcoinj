@@ -96,10 +96,9 @@ public class PeerAddress extends ChildMessage {
      * Construct a peer address from a memorized or hardcoded address.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port, BigInteger services, MessageSerializer serializer) {
-        super(params);
+        super(params, serializer);
         this.addr = Objects.requireNonNull(addr);
         this.port = port;
-        setSerializer(serializer);
         this.services = services;
         this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }

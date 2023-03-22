@@ -50,7 +50,7 @@ public abstract class Message {
     // The raw message payload bytes themselves.
     protected ByteBuffer payload;
 
-    protected MessageSerializer serializer;
+    protected final MessageSerializer serializer;
 
     @Nullable
     protected final NetworkParameters params;
@@ -63,6 +63,11 @@ public abstract class Message {
     protected Message(NetworkParameters params) {
         this.params = params;
         this.serializer = params.getDefaultSerializer();
+    }
+
+    protected Message(NetworkParameters params, MessageSerializer serializer) {
+        this.params = params;
+        this.serializer = serializer;
     }
 
     /**
@@ -97,17 +102,6 @@ public abstract class Message {
      * invalidated unless they are also modified internally.</p>
      */
     protected void unCache() {
-    }
-
-    /**
-     * Overrides the message serializer.
-     * @param serializer the new serializer
-     */
-    public void setSerializer(MessageSerializer serializer) {
-        if (!this.serializer.equals(serializer)) {
-            this.serializer = serializer;
-            unCache();
-        }
     }
 
     /**
