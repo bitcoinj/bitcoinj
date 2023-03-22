@@ -1,6 +1,5 @@
 /*
- * Copyright 2011 Noa Resare
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +25,10 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 /**
- * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0031.mediawiki">BIP31</a> for details.</p>
- *
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ * <p>Instances of this class are immutable.</p>
  */
 public class Ping extends BaseMessage {
-    private long nonce;
+    private final long nonce;
 
     /**
      * Deserialize this message from a given payload.
@@ -45,17 +42,29 @@ public class Ping extends BaseMessage {
     }
 
     /**
-     * Create a Ping with a given nonce value.
+     * Create a ping with a nonce value.
+     * Only use this if the remote node has a protocol version greater than 60000
+     *
+     * @param nonce nonce value
+     * @return ping message
      */
-    public Ping(long nonce) {
-        this.nonce = nonce;
+    public static Ping of(long nonce) {
+        return new Ping(nonce);
     }
 
     /**
-     * Create a Ping with a random nonce value.
+     * Create a ping with a random nonce value.
+     * Only use this if the remote node has a protocol version greater than 60000
+     *
+     * @return ping message
      */
-    public Ping() {
-        this.nonce = new Random().nextLong();
+    public static Ping random() {
+        long nonce = new Random().nextLong();
+        return new Ping(nonce);
+    }
+
+    private Ping(long nonce) {
+        this.nonce = nonce;
     }
 
     @Override
@@ -69,7 +78,16 @@ public class Ping extends BaseMessage {
         return true;
     }
 
-    public long getNonce() {
+    public long nonce() {
         return nonce;
+    }
+
+    /**
+     * Create a {@link Pong} reply to this ping.
+     *
+     * @return pong message
+     */
+    public Pong pong() {
+        return Pong.of(nonce);
     }
 }

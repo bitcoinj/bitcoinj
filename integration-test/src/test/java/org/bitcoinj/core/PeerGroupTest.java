@@ -473,12 +473,12 @@ public class PeerGroupTest extends TestWithPeerGroup {
         versionMessage.localServices = Services.of(Services.NODE_NETWORK);
         InboundMessageQueuer p1 = connectPeer(1, versionMessage);
         Ping ping = (Ping) waitForOutbound(p1);
-        inbound(p1, new Pong(ping.getNonce()));
+        inbound(p1, ping.pong());
         pingAndWait(p1);
         assertTrue(peerGroup.getConnectedPeers().get(0).lastPingInterval().isPresent());
         // The call to outbound should block until a ping arrives.
         ping = (Ping) waitForOutbound(p1);
-        inbound(p1, new Pong(ping.getNonce()));
+        inbound(p1, ping.pong());
         assertTrue(peerGroup.getConnectedPeers().get(0).lastPingInterval().isPresent());
     }
 
@@ -844,7 +844,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNotEquals(filter, newFilter);
         assertNextMessageIs(p1, MemoryPoolMessage.class);
         Ping ping = assertNextMessageIs(p1, Ping.class);
-        inbound(p1, new Pong(ping.getNonce()));
+        inbound(p1, ping.pong());
 
         // Await restart of the chain download.
         GetDataMessage getdata = assertNextMessageIs(p1, GetDataMessage.class);
@@ -858,12 +858,12 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.waitForJobQueue();
         newFilter = assertNextMessageIs(p1, BloomFilter.class);
         assertNextMessageIs(p1, MemoryPoolMessage.class);
-        inbound(p1, new Pong(assertNextMessageIs(p1, Ping.class).getNonce()));
+        inbound(p1, assertNextMessageIs(p1, Ping.class).pong());
         assertNextMessageIs(p1, GetDataMessage.class);
         newBlocks = blocks.subList(6, blocks.size());
         filterAndSend(p1, newBlocks, newFilter);
         // Send a non-tx message so the peer knows the filtered block is over and force processing.
-        inbound(p1, new Ping());
+        inbound(p1, Ping.random());
         pingAndWait(p1);
 
         assertEquals(expectedBalance, wallet.getBalance());

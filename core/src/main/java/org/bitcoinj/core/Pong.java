@@ -1,6 +1,5 @@
 /*
- * Copyright 2012 Matt Corallo
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +26,10 @@ import java.nio.ByteBuffer;
 /**
  * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0031.mediawiki">BIP31</a> for details.</p>
  *
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ * <p>Instances of this class are immutable.</p>
  */
 public class Pong extends BaseMessage {
-    private long nonce;
+    private final long nonce;
 
     /**
      * Deserialize this message from a given payload.
@@ -42,12 +41,18 @@ public class Pong extends BaseMessage {
     public static Pong read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         return new Pong(ByteUtils.readInt64(payload));
     }
-    
+
     /**
-     * Create a Pong with a nonce value.
-     * Only use this if the remote node has a protocol version greater than 60000
+     * Create a pong with a nonce value.
+     *
+     * @param nonce nonce value
+     * @return pong message
      */
-    public Pong(long nonce) {
+    public static Pong of(long nonce) {
+        return new Pong(nonce);
+    }
+
+    private Pong(long nonce) {
         this.nonce = nonce;
     }
 
@@ -57,7 +62,7 @@ public class Pong extends BaseMessage {
     }
     
     /** Returns the nonce sent by the remote peer. */
-    public long getNonce() {
+    public long nonce() {
         return nonce;
     }
 }
