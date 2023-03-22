@@ -139,37 +139,11 @@ public abstract class Message {
     }
 
     /**
-     * Returns a copy of the array returned by {@link Message#unsafeBitcoinSerialize()}, which is safe to mutate.
-     * If you need extra performance and can guarantee you won't write to the array, you can use the unsafe version.
-     *
-     * @return a freshly allocated serialized byte array
-     */
-    public byte[] bitcoinSerialize() {
-        byte[] bytes = unsafeBitcoinSerialize();
-        byte[] copy = new byte[bytes.length];
-        System.arraycopy(bytes, 0, copy, 0, bytes.length);
-        return copy;
-    }
-
-    /**
      * <p>Serialize this message to a byte array that conforms to the bitcoin wire protocol.</p>
      *
-     * <p>This method may return the original byte array used to construct this message if the
-     * following conditions are met:</p>
-     *
-     * <ol>
-     * <li>1) The message was parsed from a byte array with parseRetain = true</li>
-     * <li>2) The message has not been modified</li>
-     * <li>3) The array had an offset of 0 and no surplus bytes</li>
-     * </ol>
-     *
-     * <p>If condition 3 is not met then an copy of the relevant portion of the array will be returned.
-     * Otherwise a full serialize will occur. For this reason you should only use this API if you can guarantee you
-     * will treat the resulting array as read only.</p>
-     *
-     * @return a byte array owned by this object, do NOT mutate it.
+     * @return a byte array
      */
-    public byte[] unsafeBitcoinSerialize() {
+    public final byte[] bitcoinSerialize() {
         // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new ByteArrayOutputStream(length < 32 ? 32 : length + 32);
         try {

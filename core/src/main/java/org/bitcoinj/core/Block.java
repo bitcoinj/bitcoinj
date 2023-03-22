@@ -905,7 +905,7 @@ public class Block extends Message {
                 ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
         coinbase.setParent(this);
-        coinbase.length = coinbase.unsafeBitcoinSerialize().length;
+        coinbase.length = coinbase.bitcoinSerialize().length;
         adjustLength(transactions.size(), coinbase.length);
     }
 

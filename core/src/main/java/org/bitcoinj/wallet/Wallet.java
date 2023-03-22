@@ -4417,7 +4417,7 @@ public class Wallet extends BaseTaggableObject
                 signTransaction(req);
 
             // Check size.
-            final int size = req.tx.unsafeBitcoinSerialize().length;
+            final int size = req.tx.bitcoinSerialize().length;
             if (size > Transaction.MAX_STANDARD_TX_SIZE)
                 throw new ExceededMaxTransactionSize();
 
@@ -5626,7 +5626,7 @@ public class Wallet extends BaseTaggableObject
             if (sign)
                 signTransaction(req);
             // KeyTimeCoinSelector should never select enough inputs to push us oversize.
-            checkState(rekeyTx.unsafeBitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
+            checkState(rekeyTx.bitcoinSerialize().length < Transaction.MAX_STANDARD_TX_SIZE);
             return rekeyTx;
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.

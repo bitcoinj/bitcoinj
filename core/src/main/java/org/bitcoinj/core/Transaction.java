@@ -823,7 +823,7 @@ public class Transaction extends ChildMessage {
             s.append(", wtxid ").append(wTxId);
         s.append('\n');
         int weight = getWeight();
-        int size = unsafeBitcoinSerialize().length;
+        int size = bitcoinSerialize().length;
         int vsize = getVsize();
         s.append(indent).append("weight: ").append(weight).append(" wu, ");
         if (size != vsize)
@@ -951,7 +951,7 @@ public class Transaction extends ChildMessage {
      * @return raw transaction in hex format
      */
     public String toHexString() {
-        return ByteUtils.formatHex(unsafeBitcoinSerialize());
+        return ByteUtils.formatHex(bitcoinSerialize());
     }
 
     /**
@@ -965,7 +965,7 @@ public class Transaction extends ChildMessage {
         }
         inputs.clear();
         // You wanted to reserialize, right?
-        this.length = this.unsafeBitcoinSerialize().length;
+        this.length = this.bitcoinSerialize().length;
     }
 
     /**
@@ -1130,7 +1130,7 @@ public class Transaction extends ChildMessage {
         }
         outputs.clear();
         // You wanted to reserialize, right?
-        this.length = this.unsafeBitcoinSerialize().length;
+        this.length = this.bitcoinSerialize().length;
     }
 
     /**
@@ -1303,7 +1303,7 @@ public class Transaction extends ChildMessage {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = this.params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(this.bitcoinSerialize()));
+            Transaction tx = this.params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(bitcoinSerialize()));
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual

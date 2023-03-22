@@ -172,16 +172,16 @@ public class BlockTest {
         tx.addInput(new TransactionInput(TESTNET, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},
                 new TransactionOutPoint(TESTNET, 0, Sha256Hash.of(new byte[] { 1 }))));
         int origTxLength = 8 + 2 + 8 + 1 + 10 + 40 + 1 + 1;
-        assertEquals(tx.unsafeBitcoinSerialize().length, tx.length);
+        assertEquals(tx.bitcoinSerialize().length, tx.length);
         assertEquals(origTxLength, tx.length);
         block.addTransaction(tx);
-        assertEquals(block.unsafeBitcoinSerialize().length, block.length);
+        assertEquals(block.bitcoinSerialize().length, block.length);
         assertEquals(origBlockLen + tx.length, block.length);
         block.getTransactions().get(1).getInputs().get(0).setScriptBytes(new byte[] {(byte) ScriptOpCodes.OP_FALSE, (byte) ScriptOpCodes.OP_FALSE});
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength + 1);
         block.getTransactions().get(1).getInputs().get(0).clearScriptBytes();
-        assertEquals(block.length, block.unsafeBitcoinSerialize().length);
+        assertEquals(block.length, block.bitcoinSerialize().length);
         assertEquals(block.length, origBlockLen + tx.length);
         assertEquals(tx.length, origTxLength - 1);
         block.getTransactions().get(1).addInput(new TransactionInput(TESTNET, null, new byte[] {(byte) ScriptOpCodes.OP_FALSE},

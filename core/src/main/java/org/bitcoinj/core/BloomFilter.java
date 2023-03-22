@@ -256,7 +256,7 @@ public class BloomFilter extends Message {
 
     /** Inserts the given transaction outpoint. */
     public synchronized void insert(TransactionOutPoint outpoint) {
-        insert(outpoint.unsafeBitcoinSerialize());
+        insert(outpoint.bitcoinSerialize());
     }
 
     /**
@@ -358,7 +358,7 @@ public class BloomFilter extends Message {
         }
         if (found) return true;
         for (TransactionInput input : tx.getInputs()) {
-            if (contains(input.getOutpoint().unsafeBitcoinSerialize())) {
+            if (contains(input.getOutpoint().bitcoinSerialize())) {
                 return true;
             }
             for (ScriptChunk chunk : input.getScriptSig().getChunks()) {

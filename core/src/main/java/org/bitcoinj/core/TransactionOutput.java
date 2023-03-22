@@ -212,7 +212,7 @@ public class TransactionOutput extends ChildMessage {
         // so dust is a spendable txout less than
         // 98*dustRelayFee/1000 (in satoshis).
         // 294 satoshis at the default rate of 3000 sat/kB.
-        long size = this.unsafeBitcoinSerialize().length;
+        long size = this.bitcoinSerialize().length;
         final Script script = getScriptPubKey();
         if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script))
             size += 32 + 4 + 1 + 107 + 4; // 148
