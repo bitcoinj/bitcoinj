@@ -23,6 +23,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -51,10 +52,12 @@ public abstract class Message {
 
     protected MessageSerializer serializer;
 
-    protected NetworkParameters params;
+    @Nullable
+    protected final NetworkParameters params;
 
     protected Message() {
-        serializer = DummySerializer.DEFAULT;
+        this.params = null;
+        this.serializer = DummySerializer.DEFAULT;
     }
 
     protected Message(NetworkParameters params) {
