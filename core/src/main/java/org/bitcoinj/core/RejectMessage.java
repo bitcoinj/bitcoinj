@@ -95,7 +95,7 @@ public class RejectMessage extends Message {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         message = Buffers.readLengthPrefixedString(payload);
         code = RejectCode.fromCode(payload.get());
         reason = Buffers.readLengthPrefixedString(payload);

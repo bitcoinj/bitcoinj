@@ -48,7 +48,7 @@ public class FeeFilterMessage extends Message {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         feeRate = Coin.ofSat(ByteUtils.readInt64(payload));
         check(feeRate.signum() >= 0, () -> new ProtocolException("fee rate out of range: " + feeRate));
     }

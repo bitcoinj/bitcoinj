@@ -647,7 +647,7 @@ public class Transaction extends Message {
      * transaction is segwit or not.
      */
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         boolean allowWitness = allowWitness();
 
 
@@ -655,27 +655,27 @@ public class Transaction extends Message {
         version = ByteUtils.readUint32(payload);
         byte flags = 0;
         // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
-        parseInputs();
+        parseInputs(payload);
         if (inputs.size() == 0 && allowWitness) {
             // We read a dummy or an empty input
             flags = payload.get();
 
             if (flags != 0) {
-                parseInputs();
-                parseOutputs();
+                parseInputs(payload);
+                parseOutputs(payload);
             } else {
                 outputs = new ArrayList<>(0);
             }
         } else {
             // We read non-empty inputs. Assume normal outputs follows.
-            parseOutputs();
+            parseOutputs(payload);
         }
 
         if (((flags & 1) != 0) && allowWitness) {
             // The witness flag is present, and we support witnesses.
             flags ^= 1;
             // script_witnesses
-            parseWitnesses();
+            parseWitnesses(payload);
             if (!hasWitnesses()) {
                 // It's illegal to encode witnesses when all witness stacks are empty.
                 throw new ProtocolException("Superfluous witness record");
@@ -689,7 +689,7 @@ public class Transaction extends Message {
         vLockTime = LockTime.of(ByteUtils.readUint32(payload));
     }
 
-    private void parseInputs() {
+    private void parseInputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numInputsVarInt = VarInt.read(payload);
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
@@ -704,7 +704,7 @@ public class Transaction extends Message {
         }
     }
 
-    private void parseOutputs() {
+    private void parseOutputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numOutputsVarInt = VarInt.read(payload);
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
@@ -719,7 +719,7 @@ public class Transaction extends Message {
         }
     }
 
-    private void parseWitnesses() {
+    private void parseWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         int numWitnesses = inputs.size();
         for (int i = 0; i < numWitnesses; i++) {
             VarInt pushCountVarInt = VarInt.read(payload);

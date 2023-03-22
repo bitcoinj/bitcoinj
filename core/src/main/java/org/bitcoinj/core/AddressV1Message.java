@@ -48,7 +48,7 @@ public class AddressV1Message extends AddressMessage {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         final VarInt numAddressesVarInt = VarInt.read(payload);
         int numAddresses = numAddressesVarInt.intValue();
         // Guard against ultra large messages that will crash us.

@@ -49,7 +49,7 @@ public class GetBlocksMessage extends Message {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         version = ByteUtils.readUint32(payload);
         int startCount = VarInt.read(payload).intValue();
         if (startCount > 500)

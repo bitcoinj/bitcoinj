@@ -40,9 +40,6 @@ public abstract class Message {
 
     public static final int MAX_SIZE = 0x02000000; // 32MB
 
-    // The raw message payload bytes themselves.
-    protected ByteBuffer payload;
-
     protected final MessageSerializer serializer;
 
     @Nullable
@@ -73,15 +70,12 @@ public abstract class Message {
     protected Message(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
         this.serializer = serializer;
         this.params = params;
-        this.payload = payload;
 
         try {
-            parse();
+            parse(payload);
         } catch(BufferUnderflowException e) {
             throw new ProtocolException(e);
         }
-
-        this.payload = null;
     }
 
     protected Message(ByteBuffer payload) throws ProtocolException {
@@ -94,7 +88,7 @@ public abstract class Message {
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
 
-    protected abstract void parse() throws BufferUnderflowException, ProtocolException;
+    protected abstract void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException;
 
     /**
      * <p>To be called before any change of internal values including any setters. This ensures any cached byte array is

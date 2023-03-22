@@ -161,7 +161,7 @@ public class TransactionInput extends ChildMessage {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         outpoint = new TransactionOutPoint(payload);
         int scriptLen = VarInt.read(payload).intValue();
         scriptBytes = Buffers.readBytes(payload, scriptLen);
