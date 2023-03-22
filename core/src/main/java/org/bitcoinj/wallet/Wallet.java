@@ -4911,7 +4911,6 @@ public class Wallet extends BaseTaggableObject
     private void subtractDepth(int depthToSubtract, Collection<Transaction> transactions) {
         for (Transaction tx : transactions) {
             if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
-                tx.getConfidence().setDepthInBlocks(tx.getConfidence().getDepthInBlocks() - depthToSubtract);
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
             }
         }
