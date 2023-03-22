@@ -56,7 +56,7 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
     @Override
     protected void processMessage(Message m) throws Exception {
         if (m instanceof Ping) {
-            CompletableFuture<Void> future = mapPingFutures.get(((Ping) m).getNonce());
+            CompletableFuture<Void> future = mapPingFutures.get(((Ping) m).nonce());
             if (future != null) {
                 future.complete(null);
                 return;

@@ -515,7 +515,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Ping pingMsg = (Ping) outbound(writeTarget);
         TimeUtils.rollMockClock(Duration.ofSeconds(5));
         // The pong is returned.
-        inbound(writeTarget, new Pong(pingMsg.getNonce()));
+        inbound(writeTarget, pingMsg.pong());
         pingAndWait(writeTarget);
         assertTrue(future.isDone());
         Duration elapsed = future.get();
@@ -526,7 +526,7 @@ public class PeerTest extends TestWithNetworkConnections {
         CompletableFuture<Duration> future2 = peer.sendPing();
         pingMsg = (Ping) outbound(writeTarget);
         TimeUtils.rollMockClock(Duration.ofSeconds(50));
-        inbound(writeTarget, new Pong(pingMsg.getNonce()));
+        inbound(writeTarget, pingMsg.pong());
         Duration elapsed2 = future2.get();
         assertEquals(elapsed2, peer.lastPingInterval().get());
         assertEquals(Duration.ofMillis(7250), peer.pingInterval().get());

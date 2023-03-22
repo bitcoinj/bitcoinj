@@ -209,7 +209,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         inbound(p1, tx1);
         inbound(p1, tx2);
         inbound(p1, tx3);
-        inbound(p1, new Pong(((Ping)ping).getNonce()));
+        inbound(p1, ((Ping) ping).pong());
 
         pingAndWait(p1);
 

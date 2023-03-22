@@ -219,7 +219,7 @@ public class TestWithNetworkConnections {
         // Send a ping and wait for it to get to the other side
         CompletableFuture<Void> pingReceivedFuture = new CompletableFuture<>();
         p.mapPingFutures.put(nonce, pingReceivedFuture);
-        p.peer.sendMessage(new Ping(nonce));
+        p.peer.sendMessage(Ping.of(nonce));
         pingReceivedFuture.get();
         p.mapPingFutures.remove(nonce);
     }
@@ -228,14 +228,14 @@ public class TestWithNetworkConnections {
         // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
         final CompletableFuture<Void> pongReceivedFuture = new CompletableFuture<>();
         PreMessageReceivedEventListener listener = (p1, m) -> {
-            if (m instanceof Pong && ((Pong) m).getNonce() == nonce) {
+            if (m instanceof Pong && ((Pong) m).nonce() == nonce) {
                 pongReceivedFuture.complete(null);
                 return null;
             }
             return m;
         };
         p.peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD, listener);
-        inbound(p, new Pong(nonce));
+        inbound(p, Pong.of(nonce));
         pongReceivedFuture.get();
         p.peer.removePreMessageReceivedEventListener(listener);
     }
