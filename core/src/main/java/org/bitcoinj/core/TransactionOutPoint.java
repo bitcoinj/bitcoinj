@@ -94,7 +94,7 @@ public class TransactionOutPoint extends Message {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         hash = Sha256Hash.read(payload);
         index = ByteUtils.readUint32(payload);
     }

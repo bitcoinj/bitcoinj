@@ -221,7 +221,7 @@ public class Block extends Message {
     /**
      * Parse transactions from the block.
      */
-    protected void parseTransactions() throws ProtocolException {
+    protected void parseTransactions(ByteBuffer payload) throws ProtocolException {
         VarInt numTransactionsVarInt = VarInt.read(payload);
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
@@ -234,7 +234,7 @@ public class Block extends Message {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         // header
         payload.mark();
         version = ByteUtils.readUint32(payload);
@@ -248,7 +248,7 @@ public class Block extends Message {
 
         // transactions
         if (payload.hasRemaining()) // otherwise this message is just a header
-            parseTransactions();
+            parseTransactions(payload);
     }
 
     public static Block createGenesis(NetworkParameters n) {

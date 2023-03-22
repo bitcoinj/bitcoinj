@@ -42,7 +42,7 @@ public class MessageTest {
         }
 
         @Override
-        protected void parse() throws BufferUnderflowException, ProtocolException {
+        protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
             Buffers.readLengthPrefixedString(payload);
         }
     }
@@ -61,7 +61,7 @@ public class MessageTest {
         }
 
         @Override
-        protected void parse() throws BufferUnderflowException, ProtocolException {
+        protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
             Buffers.readLengthPrefixedBytes(payload);
         }
     }

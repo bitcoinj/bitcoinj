@@ -229,7 +229,7 @@ public class PeerAddress extends Message {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         int protocolVersion = serializer.getProtocolVersion();
         if (protocolVersion < 0 || protocolVersion > 2)
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);

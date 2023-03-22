@@ -112,7 +112,7 @@ public class VersionMessage extends Message {
     }
 
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         clientVersion = (int) ByteUtils.readUint32(payload);
         localServices = Services.read(payload);
         time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));

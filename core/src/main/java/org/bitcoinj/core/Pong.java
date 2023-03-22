@@ -45,7 +45,7 @@ public class Pong extends Message {
     }
     
     @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {
+    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         nonce = ByteUtils.readInt64(payload);
     }
     
