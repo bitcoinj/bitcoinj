@@ -421,6 +421,16 @@ public class ByteUtils {
     }
 
     /**
+     * Read 8 bytes from the buffer as unsigned 64-bit integer in little endian format.
+     * @param buf buffer to be read from
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static BigInteger readUint64(ByteBuffer buf) throws BufferUnderflowException {
+        // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip
+        return new BigInteger(ByteUtils.reverseBytes(Buffers.readBytes(buf, 8)));
+    }
+
+    /**
      * Read 8 bytes from the buffer as signed 64-bit integer in little endian format.
      * @param buf buffer to be read from
      * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer

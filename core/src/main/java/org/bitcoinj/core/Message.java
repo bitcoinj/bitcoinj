@@ -158,8 +158,11 @@ public abstract class Message {
     }
 
     protected BigInteger readUint64() throws ProtocolException {
-        // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
-        return new BigInteger(ByteUtils.reverseBytes(readBytes(8)));
+        try {
+            return ByteUtils.readUint64(payload);
+        } catch (BufferUnderflowException e) {
+            throw new ProtocolException(e);
+        }
     }
 
     protected VarInt readVarInt() throws ProtocolException {
