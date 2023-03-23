@@ -16,11 +16,15 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.Coin;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.hamcrest.Matchers;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.math.BigDecimal;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 
 import static org.bitcoinj.base.BitcoinNetwork.MAX_MONEY;
 import static org.bitcoinj.base.Coin.CENT;
@@ -40,6 +44,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@RunWith(JUnitParamsRunner.class)
 public class CoinTest {
 
     @Test
@@ -228,5 +233,28 @@ public class CoinTest {
         assertEquals("6", parseCoin("6.000000").toPlainString());
         assertEquals("7", parseCoin("7.0000000").toPlainString());
         assertEquals("8", parseCoin("8.00000000").toPlainString());
+    }
+
+    @Test
+    @Parameters(method = "readAndWriteTestVectors")
+    public void readAndWrite(long sat) {
+        Coin coin = Coin.ofSat(sat);
+        ByteBuffer buf = ByteBuffer.allocate(Coin.BYTES);
+        coin.write(buf);
+        assertFalse(buf.hasRemaining());
+        ((Buffer) buf).rewind();
+        Coin coinCopy = Coin.read(buf);
+        assertFalse(buf.hasRemaining());
+        assertEquals(coin, coinCopy);
+    }
+
+    private Object[] readAndWriteTestVectors() {
+        return new Object[] {
+                new Object[] { 0 },
+                new Object[] { 10 },
+                new Object[] { -10 },
+                new Object[] { Long.MAX_VALUE },
+                new Object[] { Long.MIN_VALUE },
+        };
     }
 }

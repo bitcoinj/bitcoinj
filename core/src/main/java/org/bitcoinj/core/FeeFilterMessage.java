@@ -44,12 +44,12 @@ public class FeeFilterMessage extends Message {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         super.bitcoinSerializeToStream(stream);
-        ByteUtils.writeInt64LE(feeRate.value, stream);
+        stream.write(feeRate.serialize());
     }
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        feeRate = Coin.ofSat(ByteUtils.readInt64(payload));
+        feeRate = Coin.read(payload);
         check(feeRate.signum() >= 0, () -> new ProtocolException("fee rate out of range: " + feeRate));
     }
 

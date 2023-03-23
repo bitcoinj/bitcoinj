@@ -83,7 +83,7 @@ public class TransactionOutput {
      */
     public static TransactionOutput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
         Objects.requireNonNull(parentTransaction);
-        Coin value = Coin.valueOf(ByteUtils.readInt64(payload));
+        Coin value = Coin.read(payload);
         byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         return new TransactionOutput(parentTransaction, value, scriptBytes);
     }
@@ -134,7 +134,7 @@ public class TransactionOutput {
      * @throws BufferOverflowException if the output doesn't fit the remaining buffer
      */
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-        ByteUtils.writeInt64LE(value, buf);
+        Coin.valueOf(value).write(buf);
         Buffers.writeLengthPrefixedBytes(buf, scriptBytes);
         return buf;
     }
@@ -161,7 +161,7 @@ public class TransactionOutput {
      * @return size of the serialized message in bytes
      */
     public int getMessageSize() {
-        int size = 8; // value
+        int size = Coin.BYTES; // value
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         return size;
     }
