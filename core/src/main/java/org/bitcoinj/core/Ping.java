@@ -22,55 +22,50 @@ import org.bitcoinj.base.internal.ByteUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 /**
+ * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0031.mediawiki">BIP31</a> for details.</p>
+ *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class Ping extends Message {
     private long nonce;
-    private boolean hasNonce;
-    
+
     public Ping(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
         super(params, payload);
     }
-    
+
     /**
-     * Create a Ping with a nonce value.
-     * Only use this if the remote node has a protocol version greater than 60000
+     * Create a Ping with a given nonce value.
      */
     public Ping(long nonce) {
         this.nonce = nonce;
-        this.hasNonce = true;
     }
-    
+
     /**
-     * Create a Ping without a nonce value.
-     * Only use this if the remote node has a protocol version lower than or equal 60000
+     * Create a Ping with a random nonce value.
      */
     public Ping() {
-        this.hasNonce = false;
+        this.nonce = new Random().nextLong();
     }
-    
+
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (hasNonce)
-            ByteUtils.writeInt64LE(nonce, stream);
+        ByteUtils.writeInt64LE(nonce, stream);
     }
 
     @Override
     protected void parse() throws ProtocolException {
-        try {
-            nonce = readInt64();
-            hasNonce = true;
-        } catch(ProtocolException e) {
-            hasNonce = false;
-        }
+        nonce = readInt64();
     }
-    
+
+    /** @deprecated returns true */
+    @Deprecated
     public boolean hasNonce() {
-        return hasNonce;
+        return true;
     }
-    
+
     public long getNonce() {
         return nonce;
     }

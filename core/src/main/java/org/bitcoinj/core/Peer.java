@@ -1601,8 +1601,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     private void processPing(Ping m) {
-        if (m.hasNonce())
-            sendMessage(new Pong(m.getNonce()));
+        sendMessage(new Pong(m.getNonce()));
     }
 
     protected void processPong(Pong m) {

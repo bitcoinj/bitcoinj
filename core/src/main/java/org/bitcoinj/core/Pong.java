@@ -24,6 +24,8 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
+ * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0031.mediawiki">BIP31</a> for details.</p>
+ *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class Pong extends Message {
