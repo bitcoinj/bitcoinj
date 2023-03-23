@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +31,6 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-
-import static org.bitcoinj.base.internal.Preconditions.check;
-import static org.bitcoinj.base.internal.Preconditions.checkArgument;
-import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -174,15 +170,8 @@ public abstract class Message {
         return VarInt.read(payload);
     }
 
-    private void checkReadLength(int length) throws BufferUnderflowException {
-        check(length <= payload.remaining(), BufferUnderflowException::new);
-    }
-
     protected byte[] readBytes(int length) throws BufferUnderflowException {
-        checkReadLength(length);
-        byte[] b = new byte[length];
-        payload.get(b);
-        return b;
+        return Buffers.readBytes(payload, length);
     }
 
     protected byte readByte() throws BufferUnderflowException {
@@ -190,13 +179,11 @@ public abstract class Message {
     }
 
     protected byte[] readByteArray() throws BufferUnderflowException {
-        final int length = readVarInt().intValue();
-        return readBytes(length);
+        return Buffers.readLengthPrefixedBytes(payload);
     }
 
     protected String readStr() throws BufferUnderflowException {
-        int length = readVarInt().intValue();
-        return length == 0 ? "" : new String(readBytes(length), StandardCharsets.UTF_8); // optimization for empty strings
+        return Buffers.readLengthPrefixedString(payload);
     }
 
     protected Sha256Hash readHash() throws BufferUnderflowException {
@@ -204,9 +191,7 @@ public abstract class Message {
     }
 
     protected void skipBytes(int numBytes) throws BufferUnderflowException {
-        checkArgument(numBytes >= 0);
-        checkReadLength(numBytes);
-        payload.position(payload.position() + numBytes);
+        Buffers.skipBytes(payload, numBytes);
     }
 
     /** Network parameters this message was created with. */
