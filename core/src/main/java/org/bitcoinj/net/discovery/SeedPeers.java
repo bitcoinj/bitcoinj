@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -121,8 +122,7 @@ public class SeedPeers implements PeerDiscovery {
     }
 
     private static InetAddress convertAddress(int seed) throws UnknownHostException {
-        byte[] v4addr = new byte[4];
-        ByteUtils.writeInt32BE(seed, v4addr, 0);
+        byte[] v4addr = ByteBuffer.allocate(4).putInt(seed).array(); // Big-Endian
         return InetAddress.getByAddress(v4addr);
     }
 }
