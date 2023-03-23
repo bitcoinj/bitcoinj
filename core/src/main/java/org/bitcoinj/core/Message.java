@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +31,6 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-
-import static org.bitcoinj.base.internal.Preconditions.checkArgument;
-import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -173,25 +170,15 @@ public abstract class Message {
         }
     }
 
-    private void checkReadLength(int length) throws ProtocolException {
-        if ((length > MAX_SIZE) || length > payload.remaining()) {
-            throw new ProtocolException("Claimed value length too large: " + length);
-        }
-    }
-
     protected byte[] readBytes(int length) throws ProtocolException {
-        checkReadLength(length);
         try {
-            byte[] b = new byte[length];
-            payload.get(b);
-            return b;
+            return Buffers.readBytes(payload, length);
         } catch (BufferUnderflowException e) {
             throw new ProtocolException(e);
         }
     }
 
     protected byte readByte() throws ProtocolException {
-        checkReadLength(1);
         try {
             return payload.get();
         } catch (BufferUnderflowException e) {
@@ -200,13 +187,19 @@ public abstract class Message {
     }
 
     protected byte[] readByteArray() throws ProtocolException {
-        final int length = readVarInt().intValue();
-        return readBytes(length);
+        try {
+            return Buffers.readByteArray(payload);
+        } catch (BufferUnderflowException e) {
+            throw new ProtocolException(e);
+        }
     }
 
     protected String readStr() throws ProtocolException {
-        int length = readVarInt().intValue();
-        return length == 0 ? "" : new String(readBytes(length), StandardCharsets.UTF_8); // optimization for empty strings
+        try {
+            return Buffers.readString(payload);
+        } catch (BufferUnderflowException e) {
+            throw new ProtocolException(e);
+        }
     }
 
     protected Sha256Hash readHash() throws ProtocolException {
@@ -218,9 +211,11 @@ public abstract class Message {
     }
 
     protected void skipBytes(int numBytes) throws ProtocolException {
-        checkArgument(numBytes >= 0);
-        checkReadLength(numBytes);
-        payload.position(payload.position() + numBytes);
+        try {
+            Buffers.skipBytes(payload, numBytes);
+        } catch (BufferUnderflowException e) {
+            throw new ProtocolException(e);
+        }
     }
 
     /** Network parameters this message was created with. */
