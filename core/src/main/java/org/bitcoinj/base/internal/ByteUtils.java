@@ -122,23 +122,6 @@ public class ByteUtils {
     }
 
     /**
-     * Write a 16-bit integer to a given byte array in little-endian format, starting at a given offset.
-     * <p>
-     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
-     *
-     * @param val    value to be written
-     * @param out    buffer to be written into
-     * @param offset offset into the buffer
-     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
-     *                                        if the value doesn't fit the remaining buffer
-     */
-    public static void writeInt16LE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
-        check(offset >= 0 && offset <= out.length - 2, () ->
-                new ArrayIndexOutOfBoundsException(offset));
-        writeInt16LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
-    }
-
-    /**
      * Write a 16-bit integer to a given buffer in big-endian format.
      * <p>
      * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
@@ -152,23 +135,6 @@ public class ByteUtils {
         checkArgument(val >= 0 && val <= MAX_UNSIGNED_SHORT, () ->
                 "value out of range: " + val);
         return buf.order(ByteOrder.BIG_ENDIAN).putShort((short) val);
-    }
-
-    /**
-     * Write a 16-bit integer to a given byte array in big-endian format, starting at a given offset.
-     * <p>
-     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
-     *
-     * @param val    value to be written
-     * @param out    buffer to be written into
-     * @param offset offset into the buffer
-     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
-     *                                        if the value doesn't fit the remaining buffer
-     */
-    public static void writeInt16BE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
-        check(offset >= 0 && offset <= out.length - 2, () ->
-                new ArrayIndexOutOfBoundsException(offset));
-        writeInt16BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
     }
 
     /**
@@ -222,24 +188,7 @@ public class ByteUtils {
     /**
      * Write a 32-bit integer to a given buffer in big-endian format.
      * <p>
-     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
-     *
-     * @param val value to be written
-     * @param buf buffer to be written into
-     * @return the buffer
-     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
-     */
-    public static ByteBuffer writeInt32BE(long val, ByteBuffer buf) throws BufferOverflowException {
-        checkArgument(val >= 0 && val <= MAX_UNSIGNED_INTEGER, () ->
-                "value out of range: " + val);
-        return buf.order(ByteOrder.BIG_ENDIAN).putInt((int) val);
-    }
-
-    /**
-     * Write a 32-bit integer to a given buffer in big-endian format.
-     * <p>
-     * The value is expected as a signed or unsigned {@code int}. If you've got an unsigned {@code long} as per the
-     * Java Unsigned Integer API, use {@link #writeInt32BE(long, ByteBuffer)}.
+     * The value is expected as a signed or unsigned {@code int}.
      *
      * @param val value to be written
      * @param buf buffer to be written into
@@ -253,25 +202,7 @@ public class ByteUtils {
     /**
      * Write a 32-bit integer to a given byte array in big-endian format, starting at a given offset.
      * <p>
-     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
-     *
-     * @param val    value to be written
-     * @param out    buffer to be written into
-     * @param offset offset into the buffer
-     * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
-     *                                        if the value doesn't fit the remaining buffer
-     */
-    public static void writeInt32BE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
-        check(offset >= 0 && offset <= out.length - 4, () ->
-                new ArrayIndexOutOfBoundsException(offset));
-        writeInt32BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
-    }
-
-    /**
-     * Write a 32-bit integer to a given byte array in big-endian format, starting at a given offset.
-     * <p>
-     * The value is expected as a signed or unsigned {@code int}. If you've got an unsigned {@code long} as per the
-     * Java Unsigned Integer API, use {@link #writeInt32BE(long, byte[], int)}.
+     * The value is expected as a signed or unsigned {@code int}.
      *
      * @param val    value to be written
      * @param out    buffer to be written into
@@ -372,21 +303,6 @@ public class ByteUtils {
     public static void writeInt32LE(long val, OutputStream stream) throws IOException {
         byte[] buf = new byte[4];
         writeInt32LE(val, ByteBuffer.wrap(buf));
-        stream.write(buf);
-    }
-
-    /**
-     * Write a 32-bit integer to a given output stream in big-endian format.
-     * <p>
-     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
-     *
-     * @param val    value to be written
-     * @param stream stream to be written into
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeInt32BE(long val, OutputStream stream) throws IOException {
-        byte[] buf = new byte[4];
-        writeInt32BE(val, ByteBuffer.wrap(buf));
         stream.write(buf);
     }
 
