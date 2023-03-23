@@ -126,6 +126,8 @@ public class BloomFilter extends Message {
         // Optimal number of hash functions for a given filter size and element count.
         hashFuncs = (int)(data.length * 8 / (double)elements * log(2));
         hashFuncs = max(1, min(hashFuncs, MAX_HASH_FUNCS));
+        checkArgument(randomNonce >= 0 && randomNonce <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                "nonce out of range: " + randomNonce);
         this.nTweak = randomNonce;
         this.nFlags = (byte)(0xff & updateFlag.ordinal());
     }

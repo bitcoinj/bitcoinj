@@ -179,7 +179,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         assertEquals(Sha256Hash.wrap("c5abc61566dbb1c4bce5e1fda7b66bed22eb2130cea4b721690bc1488465abc9"), tx3.getTxId());
         assertEquals(tx3.getTxId(),txHashList.get(3));
 
-        BloomFilter filter = wallet.getBloomFilter(wallet.getKeyChainGroupSize()*2, 0.001, 0xDEADBEEF);
+        BloomFilter filter = wallet.getBloomFilter(wallet.getKeyChainGroupSize()*2, 0.001, 0xdeadbeefL);
         // Compare the serialized bloom filter to a known-good value
         assertArrayEquals(ByteUtils.parseHex("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"), filter.bitcoinSerialize());
 
