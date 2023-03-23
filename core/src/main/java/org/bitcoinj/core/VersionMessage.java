@@ -138,7 +138,7 @@ public class VersionMessage extends Message {
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
             // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
             // irrelevant.
-            readUint64();
+            skipBytes(8);
             // string subVer (currently "")
             subVer = readStr();
             // int bestHeight (size of known block chain).
