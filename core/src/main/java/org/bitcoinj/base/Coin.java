@@ -19,6 +19,10 @@ package org.bitcoinj.base;
 import org.bitcoinj.base.utils.MonetaryFormat;
 
 import java.math.BigDecimal;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
@@ -88,6 +92,9 @@ public final class Coin implements Monetary, Comparable<Coin> {
      */
     public static final Coin NEGATIVE_SATOSHI = Coin.valueOf(-1);
 
+    /** Number of bytes to store this amount. */
+    public static final int BYTES = 8;
+
     /**
      * The number of satoshis of this monetary value.
      */
@@ -106,6 +113,17 @@ public final class Coin implements Monetary, Comparable<Coin> {
     public static Coin valueOf(final long satoshis) {
         // Avoid allocating a new object for Coins of value zero
         return satoshis == 0 ? Coin.ZERO : new Coin(satoshis);
+    }
+
+    /**
+     * Read a Coin amount from the given buffer as 8 bytes in little-endian order.
+     *
+     * @param buf buffer to read from
+     * @return read amount
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static Coin read(ByteBuffer buf) throws BufferUnderflowException {
+        return valueOf(buf.order(ByteOrder.LITTLE_ENDIAN).getLong());
     }
 
     @Override
@@ -352,6 +370,27 @@ public final class Coin implements Monetary, Comparable<Coin> {
      */
     public BigDecimal toBtc() {
         return satoshiToBtc(this.value);
+    }
+
+    /**
+     * Write the amount into the given buffer as 8 bytes in little-endian order.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).putLong(this.value);
+    }
+
+    /**
+     * Allocates a byte array and serializes the amount.
+     *
+     * @return serialized amount
+     */
+    public byte[] serialize() {
+        ByteBuffer buf = ByteBuffer.allocate(BYTES);
+        return write(buf).array();
     }
 
     private static final MonetaryFormat FRIENDLY_FORMAT = MonetaryFormat.BTC.minDecimals(2).repeatOptionalDecimals(1, 6).postfixCode();
