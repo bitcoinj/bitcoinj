@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
@@ -133,6 +134,9 @@ public class TransactionOutput extends ChildMessage {
     @Override
     protected void parse() throws ProtocolException {
         value = readInt64();
+        // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
+        // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
+        check(value >= 0 || value == -1, () -> new ProtocolException("value out of range: " + value));
         int scriptLen = readVarInt().intValue();
         scriptBytes = readBytes(scriptLen);
     }
@@ -166,6 +170,9 @@ public class TransactionOutput extends ChildMessage {
      */
     public void setValue(Coin value) {
         Objects.requireNonNull(value);
+        // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
+        // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
+        checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), () -> "value out of range: " + value);
         unCache();
         this.value = value.value;
     }
