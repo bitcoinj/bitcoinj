@@ -24,6 +24,8 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
+
 /**
  * <p>Represents an "feefilter" message on the P2P network, which instructs a peer to filter transaction invs for
  * transactions that fall below the feerate provided.</p>
@@ -42,12 +44,13 @@ public class FeeFilterMessage extends Message {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         super.bitcoinSerializeToStream(stream);
-        ByteUtils.writeUint64LE(BigInteger.valueOf(feeRate.value), stream);
+        ByteUtils.writeInt64LE(feeRate.value, stream);
     }
 
     @Override
     protected void parse() throws ProtocolException {
-        feeRate = Coin.ofSat(readUint64().longValue());
+        feeRate = Coin.ofSat(readInt64());
+        check(feeRate.signum() >= 0, () -> new ProtocolException("fee rate out of range: " + feeRate));
     }
 
     public Coin getFeeRate() {
