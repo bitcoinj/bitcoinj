@@ -130,7 +130,7 @@ public class VersionMessage extends Message {
     protected void parse() throws ProtocolException {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
-        time = Instant.ofEpochSecond(readUint64().longValue());
+        time = Instant.ofEpochSecond(readInt64());
         receivingAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
         if (clientVersion >= 106) {
             fromAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
@@ -162,9 +162,7 @@ public class VersionMessage extends Message {
         ByteUtils.writeUint32LE(clientVersion, buf);
         ByteUtils.writeUint32LE(localServices, buf);
         ByteUtils.writeUint32LE(localServices >> 32, buf);
-        long time = this.time.getEpochSecond();
-        ByteUtils.writeUint32LE(time, buf);
-        ByteUtils.writeUint32LE(time >> 32, buf);
+        ByteUtils.writeInt64LE(time.getEpochSecond(), buf);
         receivingAddr.bitcoinSerializeToStream(buf);
         fromAddr.bitcoinSerializeToStream(buf);
         // Next up is the "local host nonce", this is to detect the case of connecting
