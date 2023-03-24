@@ -192,10 +192,10 @@ public class FullBlockTestGenerator {
             public boolean add(Rule element) {
                 if (outStream != null && element instanceof BlockAndValidity) {
                     try {
-                        ByteUtils.writeUint32BE(params.getPacketMagic(), outStream);
+                        ByteUtils.writeInt32BE(params.getPacketMagic(), outStream);
                         byte[] block = ((BlockAndValidity) element).block.bitcoinSerialize();
                         byte[] length = new byte[4];
-                        ByteUtils.writeUint32BE(block.length, length, 0);
+                        ByteUtils.writeInt32BE(block.length, length, 0);
                         outStream.write(ByteUtils.reverseBytes(length));
                         outStream.write(block);
                         ((BlockAndValidity)element).block = null;
@@ -1222,8 +1222,8 @@ public class FullBlockTestGenerator {
 
             byte[] varIntBytes = new byte[9];
             varIntBytes[0] = (byte) 255;
-            ByteUtils.writeUint32LE((long)b64Original.block.getTransactions().size(), varIntBytes, 1);
-            ByteUtils.writeUint32LE(((long)b64Original.block.getTransactions().size()) >>> 32, varIntBytes, 5);
+            ByteUtils.writeInt32LE((long)b64Original.block.getTransactions().size(), varIntBytes, 1);
+            ByteUtils.writeInt32LE(((long)b64Original.block.getTransactions().size()) >>> 32, varIntBytes, 5);
             stream.write(varIntBytes);
             checkState(VarInt.ofBytes(varIntBytes, 0).intValue() == b64Original.block.getTransactions().size());
 
@@ -1383,7 +1383,7 @@ public class FullBlockTestGenerator {
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is too large, the CHECKSIGs after that push are still counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            ByteUtils.writeUint32LE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            ByteUtils.writeInt32LE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b73);
             b73.addTransaction(tx);
@@ -1449,7 +1449,7 @@ public class FullBlockTestGenerator {
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is filled with CHECKSIGs, they (obviously) arent counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            ByteUtils.writeUint32LE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            ByteUtils.writeInt32LE(Block.MAX_BLOCK_SIGOPS, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
             tx.addOutput(new TransactionOutput(params, tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b76);
             b76.addTransaction(tx);

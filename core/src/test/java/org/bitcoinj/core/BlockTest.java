@@ -314,12 +314,12 @@ public class BlockTest {
         Block block = new Block(TESTNET, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-                ByteUtils.writeUint32LE(getVersion(), stream);
+                ByteUtils.writeInt32LE(getVersion(), stream);
                 stream.write(getPrevBlockHash().getReversedBytes());
                 stream.write(getMerkleRoot().getReversedBytes());
-                ByteUtils.writeUint32LE(getTimeSeconds(), stream);
-                ByteUtils.writeUint32LE(getDifficultyTarget(), stream);
-                ByteUtils.writeUint32LE(getNonce(), stream);
+                ByteUtils.writeInt32LE(getTimeSeconds(), stream);
+                ByteUtils.writeInt32LE(getDifficultyTarget(), stream);
+                ByteUtils.writeInt32LE(getNonce(), stream);
 
                 stream.write(VarInt.of(Integer.MAX_VALUE).encode());
             }

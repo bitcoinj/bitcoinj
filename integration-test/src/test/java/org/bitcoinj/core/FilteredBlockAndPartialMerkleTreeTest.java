@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.bitcoinj.base.internal.ByteUtils.writeUint32LE;
+import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -236,7 +236,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000003"));
         PartialMerkleTree pmt = new PartialMerkleTree(TESTNET, bits, hashes, 3) {
             public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-                writeUint32LE(getTransactionCount(), stream);
+                writeInt32LE(getTransactionCount(), stream);
                 // Add Integer.MAX_VALUE instead of hashes.size()
                 stream.write(VarInt.of(Integer.MAX_VALUE).encode());
                 //stream.write(VarInt.of(hashes.size()).encode());

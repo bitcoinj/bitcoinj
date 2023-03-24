@@ -33,7 +33,7 @@ import java.util.Objects;
 
 import static org.bitcoinj.base.internal.ByteUtils.checkBitLE;
 import static org.bitcoinj.base.internal.ByteUtils.reverseBytes;
-import static org.bitcoinj.base.internal.ByteUtils.writeUint32LE;
+import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
 
 /**
  * <p>A data structure that contains proofs of block inclusion for one or more transactions, in an efficient manner.</p>
@@ -111,7 +111,7 @@ public class PartialMerkleTree extends Message {
 
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        writeUint32LE(transactionCount, stream);
+        writeInt32LE(transactionCount, stream);
 
         stream.write(VarInt.of(hashes.size()).encode());
         for (Sha256Hash hash : hashes)

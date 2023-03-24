@@ -180,7 +180,7 @@ public class TransactionInput extends ChildMessage {
         outpoint.bitcoinSerializeToStream(stream);
         stream.write(VarInt.of(scriptBytes.length).encode());
         stream.write(scriptBytes);
-        ByteUtils.writeUint32LE(sequence, stream);
+        ByteUtils.writeInt32LE(sequence, stream);
     }
 
     /**

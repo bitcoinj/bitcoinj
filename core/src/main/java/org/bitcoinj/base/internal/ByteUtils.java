@@ -110,7 +110,7 @@ public class ByteUtils {
      * @return the buffer
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
-    public static ByteBuffer writeUint16LE(int val, ByteBuffer buf) throws BufferOverflowException {
+    public static ByteBuffer writeInt16LE(int val, ByteBuffer buf) throws BufferOverflowException {
         return buf.order(ByteOrder.LITTLE_ENDIAN).putShort((short) val);
     }
 
@@ -122,10 +122,10 @@ public class ByteUtils {
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
      */
-    public static void writeUint16LE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
+    public static void writeInt16LE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         check(offset >= 0 && offset <= out.length - 2, () ->
                 new ArrayIndexOutOfBoundsException(offset));
-        writeUint16LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+        writeInt16LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
     }
 
     /**
@@ -135,7 +135,7 @@ public class ByteUtils {
      * @return the buffer
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
-    public static ByteBuffer writeUint16BE(int val, ByteBuffer buf) throws BufferOverflowException {
+    public static ByteBuffer writeInt16BE(int val, ByteBuffer buf) throws BufferOverflowException {
         return buf.order(ByteOrder.BIG_ENDIAN).putShort((short) val);
     }
 
@@ -147,10 +147,10 @@ public class ByteUtils {
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
      */
-    public static void writeUint16BE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
+    public static void writeInt16BE(int val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         check(offset >= 0 && offset <= out.length - 2, () ->
                 new ArrayIndexOutOfBoundsException(offset));
-        writeUint16BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+        writeInt16BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
     }
 
     /**
@@ -171,7 +171,7 @@ public class ByteUtils {
      * @return the buffer
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
-    public static ByteBuffer writeUint32LE(long val, ByteBuffer buf) throws BufferOverflowException {
+    public static ByteBuffer writeInt32LE(long val, ByteBuffer buf) throws BufferOverflowException {
         return buf.order(ByteOrder.LITTLE_ENDIAN).putInt((int) val);
     }
 
@@ -183,10 +183,10 @@ public class ByteUtils {
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
      */
-    public static void writeUint32LE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
+    public static void writeInt32LE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         check(offset >= 0 && offset <= out.length - 4, () ->
                 new ArrayIndexOutOfBoundsException(offset));
-        writeUint32LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+        writeInt32LE(val, ByteBuffer.wrap(out, offset, out.length - offset));
     }
 
     /**
@@ -196,7 +196,7 @@ public class ByteUtils {
      * @return the buffer
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
-    public static ByteBuffer writeUint32BE(long val, ByteBuffer buf) throws BufferOverflowException {
+    public static ByteBuffer writeInt32BE(long val, ByteBuffer buf) throws BufferOverflowException {
         return buf.order(ByteOrder.BIG_ENDIAN).putInt((int) val);
     }
 
@@ -208,10 +208,10 @@ public class ByteUtils {
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
      */
-    public static void writeUint32BE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
+    public static void writeInt32BE(long val, byte[] out, int offset) throws ArrayIndexOutOfBoundsException {
         check(offset >= 0 && offset <= out.length - 4, () ->
                 new ArrayIndexOutOfBoundsException(offset));
-        writeUint32BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
+        writeInt32BE(val, ByteBuffer.wrap(out, offset, out.length - offset));
     }
 
     /**
@@ -245,9 +245,9 @@ public class ByteUtils {
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
-    public static void writeUint16LE(int val, OutputStream stream) throws IOException {
+    public static void writeInt16LE(int val, OutputStream stream) throws IOException {
         byte[] buf = new byte[2];
-        writeUint16LE(val, ByteBuffer.wrap(buf));
+        writeInt16LE(val, ByteBuffer.wrap(buf));
         stream.write(buf);
     }
 
@@ -257,9 +257,9 @@ public class ByteUtils {
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
-    public static void writeUint16BE(int val, OutputStream stream) throws IOException {
+    public static void writeInt16BE(int val, OutputStream stream) throws IOException {
         byte[] buf = new byte[2];
-        writeUint16BE(val, ByteBuffer.wrap(buf));
+        writeInt16BE(val, ByteBuffer.wrap(buf));
         stream.write(buf);
     }
 
@@ -281,9 +281,9 @@ public class ByteUtils {
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
-    public static void writeUint32LE(long val, OutputStream stream) throws IOException {
+    public static void writeInt32LE(long val, OutputStream stream) throws IOException {
         byte[] buf = new byte[4];
-        writeUint32LE(val, ByteBuffer.wrap(buf));
+        writeInt32LE(val, ByteBuffer.wrap(buf));
         stream.write(buf);
     }
 
@@ -293,9 +293,9 @@ public class ByteUtils {
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
-    public static void writeUint32BE(long val, OutputStream stream) throws IOException {
+    public static void writeInt32BE(long val, OutputStream stream) throws IOException {
         byte[] buf = new byte[4];
-        writeUint32BE(val, ByteBuffer.wrap(buf));
+        writeInt32BE(val, ByteBuffer.wrap(buf));
         stream.write(buf);
     }
 
@@ -317,7 +317,7 @@ public class ByteUtils {
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
-    public static void writeUint64LE(BigInteger val, OutputStream stream) throws IOException {
+    public static void writeInt64LE(BigInteger val, OutputStream stream) throws IOException {
         byte[] bytes = val.toByteArray();
         if (bytes.length > 8) {
             throw new RuntimeException("Input too large to encode into a uint64");
@@ -536,7 +536,7 @@ public class ByteUtils {
         if (includeLength) {
             byte[] result = new byte[length + 4];
             System.arraycopy(array, 0, result, length - array.length + 3, array.length);
-            writeUint32BE(length, result, 0);
+            writeInt32BE(length, result, 0);
             if (isNegative)
                 result[4] |= 0x80;
             return result;

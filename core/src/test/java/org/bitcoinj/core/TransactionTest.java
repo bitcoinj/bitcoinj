@@ -57,7 +57,7 @@ import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
 import org.bitcoinj.base.internal.ByteUtils;
-import static org.bitcoinj.base.internal.ByteUtils.writeUint32LE;
+import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -711,7 +711,7 @@ public class TransactionTest {
         @Override
         protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwit) throws IOException {
             // version
-            writeUint32LE(getVersion(), stream);
+            writeInt32LE(getVersion(), stream);
             // marker, flag
             if (useSegwit) {
                 stream.write(0);
@@ -743,7 +743,7 @@ public class TransactionTest {
                 }
             }
             // lock_time
-            writeUint32LE(lockTime().rawValue(), stream);
+            writeInt32LE(lockTime().rawValue(), stream);
         }
     }
 

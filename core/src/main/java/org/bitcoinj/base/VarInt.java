@@ -174,11 +174,11 @@ public class VarInt {
                 break;
             case 3:
                 buf.put((byte) 253);
-                ByteUtils.writeUint16LE((int) value, buf);
+                ByteUtils.writeInt16LE((int) value, buf);
                 break;
             case 5:
                 buf.put((byte) 254);
-                ByteUtils.writeUint32LE(value, buf);
+                ByteUtils.writeInt32LE(value, buf);
                 break;
             default:
                 buf.put((byte) 255);

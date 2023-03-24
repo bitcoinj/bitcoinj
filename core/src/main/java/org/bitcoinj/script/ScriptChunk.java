@@ -120,11 +120,11 @@ public class ScriptChunk {
             } else if (opcode == OP_PUSHDATA2) {
                 checkState(data.length <= 0xFFFF);
                 stream.write(OP_PUSHDATA2);
-                ByteUtils.writeUint16LE(data.length, stream);
+                ByteUtils.writeInt16LE(data.length, stream);
             } else if (opcode == OP_PUSHDATA4) {
                 checkState(data.length <= Script.MAX_SCRIPT_ELEMENT_SIZE);
                 stream.write(OP_PUSHDATA4);
-                ByteUtils.writeUint32LE(data.length, stream);
+                ByteUtils.writeInt32LE(data.length, stream);
             } else {
                 throw new RuntimeException("Unimplemented");
             }
