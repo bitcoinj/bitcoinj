@@ -18,8 +18,6 @@ package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.StreamUtils;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.Networks;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,19 +61,6 @@ public class DefaultAddressParser implements AddressParser {
     public DefaultAddressParser(List<Network> segwitNetworks, List<Network> base58Networks) {
         this.segwitNetworks = segwitNetworks;
         this.base58Networks = base58Networks;
-    }
-
-    /**
-     * Dynamically create a new AddressParser using a snapshot of currently configured networks
-     * from Networks.get().
-     * @return A backward-compatible parser
-     */
-    @Deprecated
-    public static DefaultAddressParser fromNetworks() {
-        List<Network> nets = Networks.get().stream()
-                .map(NetworkParameters::network)
-                .collect(StreamUtils.toUnmodifiableList());
-        return new DefaultAddressParser(nets, nets);
     }
 
     @Override
