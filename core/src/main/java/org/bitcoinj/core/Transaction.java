@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -110,17 +111,16 @@ public class Transaction extends ChildMessage {
      * A comparator that can be used to sort transactions by their chain height. Unconfirmed transactions will go to
      * the end.
      */
-    public static final Comparator<Transaction> SORT_TX_BY_HEIGHT = Comparator.comparing(
-                    Transaction::sortableBlockHeight,
-                    Comparator.reverseOrder())
-            .thenComparing(SORT_TX_BY_ID);
-
-    // helps the above comparator by handling unconfirmed transactions
-    private static int sortableBlockHeight(Transaction tx) {
-        TransactionConfidence confidence = tx.getConfidence();
-        return confidence.getConfidenceType() == ConfidenceType.BUILDING ?
-                confidence.getAppearedAtChainHeight() :
-                Block.BLOCK_HEIGHT_UNKNOWN;
+    public static Comparator<Transaction> SORT_TX_BY_HEIGHT(Map<Sha256Hash, Integer> appearedAtChainHeight){
+        Function<Transaction, Integer> sortableBlockHeight = tx -> {
+            Integer chainHeight = appearedAtChainHeight.get(tx.getTxId());
+            if (chainHeight == null){
+                return Block.BLOCK_HEIGHT_UNKNOWN;
+            }
+            return chainHeight;
+        };
+        return Comparator.comparing(sortableBlockHeight, Comparator.reverseOrder())
+                .thenComparing(SORT_TX_BY_ID);
     }
 
     private static final Logger log = LoggerFactory.getLogger(Transaction.class);
@@ -417,12 +417,6 @@ public class Transaction extends ChildMessage {
         }
 
         addBlockAppearance(block.getHeader().getHash(), relativityOffset);
-
-        if (bestChain) {
-            TransactionConfidence transactionConfidence = getConfidence();
-            // This sets type to BUILDING and depth to one.
-            transactionConfidence.setAppearedAtChainHeight(block.getHeight());
-        }
     }
 
     public void addBlockAppearance(final Sha256Hash blockHash, int relativityOffset) {

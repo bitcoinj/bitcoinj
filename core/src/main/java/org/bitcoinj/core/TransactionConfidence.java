@@ -143,7 +143,6 @@ public class TransactionConfidence {
     }
 
     private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
-    private int appearedAtChainHeight = -1;
     // The transaction that double spent this one, if any.
     private Transaction overridingTransaction;
 
@@ -252,23 +251,12 @@ public class TransactionConfidence {
     }
 
     /**
-     * Returns the chain height at which the transaction appeared if confidence type is BUILDING.
-     * @throws IllegalStateException if the confidence type is not BUILDING.
-     */
-    public synchronized int getAppearedAtChainHeight() {
-        if (getConfidenceType() != ConfidenceType.BUILDING)
-            throw new IllegalStateException("Confidence type is " + getConfidenceType() + ", not BUILDING");
-        return appearedAtChainHeight;
-    }
-
-    /**
      * The chain height at which the transaction appeared, if it has been seen in the best chain. Automatically sets
      * the current type to {@link ConfidenceType#BUILDING} and depth to one.
      */
     public synchronized void setAppearedAtChainHeight(int appearedAtChainHeight) {
         if (appearedAtChainHeight < 0)
             throw new IllegalArgumentException("appearedAtChainHeight out of range");
-        this.appearedAtChainHeight = appearedAtChainHeight;
         this.depth = 1;
         setConfidenceType(ConfidenceType.BUILDING);
     }
@@ -293,7 +281,6 @@ public class TransactionConfidence {
         }
         if (confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT) {
             depth = 0;
-            appearedAtChainHeight = -1;
         }
     }
 
@@ -392,8 +379,7 @@ public class TransactionConfidence {
                 builder.append("In conflict.");
                 break;
             case BUILDING:
-                builder.append(String.format(Locale.US, "Appeared in best chain at height %d, depth %d.",
-                        getAppearedAtChainHeight(), getDepthInBlocks()));
+                builder.append("Is included in a block and depth is increasing");
                 break;
         }
         if (source != Source.UNKNOWN)
@@ -476,7 +462,6 @@ public class TransactionConfidence {
         synchronized (this) {
             c.confidenceType = confidenceType;
             c.overridingTransaction = overridingTransaction;
-            c.appearedAtChainHeight = appearedAtChainHeight;
         }
         return c;
     }

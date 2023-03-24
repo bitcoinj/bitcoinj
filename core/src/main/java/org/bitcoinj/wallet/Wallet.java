@@ -217,6 +217,8 @@ public class Wallet extends BaseTaggableObject
     private final Map<Sha256Hash, Transaction> spent;
     private final Map<Sha256Hash, Transaction> dead;
 
+    private final Map<Sha256Hash, Integer> appearedAtChainHeight;
+
     // All transactions together.
     protected final Map<Sha256Hash, Transaction> transactions;
 
@@ -521,6 +523,7 @@ public class Wallet extends BaseTaggableObject
         // Use a linked hash map to ensure ordering of event listeners is correct.
         confidenceChanged = new LinkedHashMap<>();
         signers = new ArrayList<>();
+        appearedAtChainHeight = new HashMap<>();
         addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
     }
@@ -2317,6 +2320,9 @@ public class Wallet extends BaseTaggableObject
             // confidence object about the block and sets its depth appropriately.
             tx.setBlockAppearance(block, bestChain, relativityOffset);
             if (bestChain) {
+                appearedAtChainHeight.put(txHash, block.getHeight());
+                tx.getConfidence().setConfidenceType(ConfidenceType.BUILDING);
+
                 // Don't notify this tx of work done in notifyNewBestBlock which will be called immediately after
                 // this method has been called by BlockChain for all relevant transactions. Otherwise we'd double
                 // count.
@@ -2334,6 +2340,7 @@ public class Wallet extends BaseTaggableObject
                     if (txDependency.getConfidence().getConfidenceType().equals(ConfidenceType.IN_CONFLICT)) {
                         if (isNotSpendingTxnsInConfidenceType(txDependency, ConfidenceType.IN_CONFLICT)) {
                             txDependency.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+                            appearedAtChainHeight.remove(txDependency.getTxId());
                             confidenceChanged.put(txDependency, TransactionConfidence.Listener.ChangeReason.TYPE);
                         }
                     }
@@ -2811,6 +2818,7 @@ public class Wallet extends BaseTaggableObject
                 addTransactionsDependingOn(doubleSpendPendingTxns, getTransactions(true));
                 for (Transaction doubleSpendTx : doubleSpendPendingTxns) {
                     doubleSpendTx.getConfidence().setConfidenceType(ConfidenceType.IN_CONFLICT);
+                    appearedAtChainHeight.remove(doubleSpendTx.getTxId());
                     confidenceChanged.put(doubleSpendTx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 }
             } else {
@@ -2818,6 +2826,7 @@ public class Wallet extends BaseTaggableObject
                 // Add to the pending pool and schedule confidence listener notifications.
                 log.info("->pending: {}", tx.getTxId());
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+                appearedAtChainHeight.remove(tx.getTxId());
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.PENDING, tx);
             }
@@ -3557,11 +3566,11 @@ public class Wallet extends BaseTaggableObject
                 }
                 if (unspent.size() > 0) {
                     builder.append("\n>>> UNSPENT:\n");
-                    toStringHelper(builder, unspent, chain, Transaction.SORT_TX_BY_HEIGHT);
+                    toStringHelper(builder, unspent, chain, Transaction.SORT_TX_BY_HEIGHT(appearedAtChainHeight));
                 }
                 if (spent.size() > 0) {
                     builder.append("\n>>> SPENT:\n");
-                    toStringHelper(builder, spent, chain, Transaction.SORT_TX_BY_HEIGHT);
+                    toStringHelper(builder, spent, chain, Transaction.SORT_TX_BY_HEIGHT(appearedAtChainHeight));
                 }
                 if (dead.size() > 0) {
                     builder.append("\n>>> DEAD:\n");
@@ -4850,6 +4859,7 @@ public class Wallet extends BaseTaggableObject
                 log.info("  ->pending {}", tx.getTxId());
 
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);  // Wipe height/depth/work data.
+                appearedAtChainHeight.remove(tx.getTxId());
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.PENDING, tx);
                 updateForSpends(tx, false);
