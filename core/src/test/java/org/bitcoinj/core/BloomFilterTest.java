@@ -59,7 +59,7 @@ public class BloomFilterTest {
     
     @Test
     public void insertSerializeTestWithTweak() {
-        BloomFilter filter = new BloomFilter(3, 0.01, 2147483649L);
+        BloomFilter filter = new BloomFilter(3, 0.01, 0x80000001);
         
         filter.insert(ByteUtils.parseHex("99108ad8ed9bb6274d3980bab5a85c048f0950c8"));
         assertTrue (filter.contains(ByteUtils.parseHex("99108ad8ed9bb6274d3980bab5a85c048f0950c8")));
