@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 
 /**
  * <p>The "mempool" message asks a remote peer to announce all transactions in its memory pool, possibly restricted by
@@ -31,7 +32,7 @@ import java.io.OutputStream;
  */
 public class MemoryPoolMessage extends Message {
     @Override
-    protected void parse() throws ProtocolException {}
+    protected void parse() throws BufferUnderflowException, ProtocolException {}
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {}

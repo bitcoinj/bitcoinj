@@ -31,6 +31,7 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -228,7 +229,7 @@ public class PeerAddress extends ChildMessage {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         int protocolVersion = serializer.getProtocolVersion();
         if (protocolVersion < 0 || protocolVersion > 2)
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);

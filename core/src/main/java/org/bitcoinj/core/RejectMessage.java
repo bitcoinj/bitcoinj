@@ -22,6 +22,7 @@ import org.bitcoinj.base.VarInt;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -94,7 +95,7 @@ public class RejectMessage extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         message = readStr();
         code = RejectCode.fromCode(readByte());
         reason = readStr();

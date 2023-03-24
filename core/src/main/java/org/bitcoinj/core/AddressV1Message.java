@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.InternalUtils;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -47,7 +48,7 @@ public class AddressV1Message extends AddressMessage {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         final VarInt numAddressesVarInt = readVarInt();
         int numAddresses = numAddressesVarInt.intValue();
         // Guard against ultra large messages that will crash us.

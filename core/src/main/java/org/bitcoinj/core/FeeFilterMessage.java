@@ -22,6 +22,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -46,7 +47,7 @@ public class FeeFilterMessage extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         feeRate = Coin.ofSat(readUint64().longValue());
     }
 
