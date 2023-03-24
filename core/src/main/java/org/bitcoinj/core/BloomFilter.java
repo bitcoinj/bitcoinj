@@ -66,7 +66,7 @@ public class BloomFilter extends Message {
     
     private byte[] data;
     private long hashFuncs;
-    private long nTweak;
+    private int nTweak;
     private byte nFlags;
 
     // Same value as Bitcoin Core
@@ -85,10 +85,10 @@ public class BloomFilter extends Message {
     /**
      * Constructs a filter with the given parameters which is updated on P2PK outputs only.
      */
-    public BloomFilter(int elements, double falsePositiveRate, long randomNonce) {
+    public BloomFilter(int elements, double falsePositiveRate, int randomNonce) {
         this(elements, falsePositiveRate, randomNonce, BloomUpdate.UPDATE_P2PUBKEY_ONLY);
     }
-    
+
     /**
      * <p>Constructs a new Bloom Filter which will provide approximately the given false positive rate when the given
      * number of elements have been inserted. If the filter would otherwise be larger than the maximum allowed size,
@@ -118,7 +118,7 @@ public class BloomFilter extends Message {
      * of this flag is to reduce network round-tripping and avoid over-dirtying the filter for the most common
      * wallet configurations.</p>
      */
-    public BloomFilter(int elements, double falsePositiveRate, long randomNonce, BloomUpdate updateFlag) {
+    public BloomFilter(int elements, double falsePositiveRate, int randomNonce, BloomUpdate updateFlag) {
         // The following formulas were stolen from Wikipedia's page on Bloom Filters (with the addition of min(..., MAX_...))
         //                        Size required for a given number of elements and false-positive rate
         int size = (int)(-1  / (pow(log(2), 2)) * elements * log(falsePositiveRate));
@@ -155,7 +155,7 @@ public class BloomFilter extends Message {
         hashFuncs = readUint32();
         if (hashFuncs > MAX_HASH_FUNCS)
             throw new ProtocolException("Bloom filter hash function count out of range");
-        nTweak = readUint32();
+        nTweak = readInt32();
         nFlags = readByte();
     }
     
@@ -167,7 +167,7 @@ public class BloomFilter extends Message {
         stream.write(VarInt.of(data.length).encode());
         stream.write(data);
         ByteUtils.writeUint32LE(hashFuncs, stream);
-        ByteUtils.writeUint32LE(nTweak, stream);
+        ByteUtils.writeInt32LE(nTweak, stream);
         stream.write(nFlags);
     }
 

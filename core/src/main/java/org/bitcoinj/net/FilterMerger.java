@@ -26,6 +26,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 // This code is unit tested by the PeerGroup tests.
 
@@ -43,7 +44,7 @@ import java.util.List;
  */
 public class FilterMerger {
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
-    private final long bloomFilterTweak = (long) (Math.random() * Long.MAX_VALUE);
+    private final int bloomFilterTweak = new Random().nextInt();
 
     private volatile double vBloomFilterFPRate;
     private int lastBloomFilterElementCount;

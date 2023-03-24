@@ -253,6 +253,29 @@ public class ByteUtils {
     }
 
     /**
+     * Write a 4-byte integer to the output stream in little endian format.
+     * @param val value to be written
+     * @param stream stream to be written into
+     * @throws IOException if an I/O error occurs
+     */
+    public static void writeInt32LE(int val, OutputStream stream) throws IOException {
+        byte[] buf = new byte[4];
+        writeInt32LE(val, ByteBuffer.wrap(buf));
+        stream.write(buf);
+    }
+
+    /**
+     * Write 4 bytes to the buffer as a 32-bit integer in little endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeInt32LE(int val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).putInt(val);
+    }
+
+    /**
      * Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format.
      * @param val value to be written
      * @param stream strean to be written into
@@ -358,6 +381,16 @@ public class ByteUtils {
      */
     public static long readUint32(ByteBuffer buf) throws BufferUnderflowException {
         return Integer.toUnsignedLong(buf.order(ByteOrder.LITTLE_ENDIAN).getInt());
+    }
+
+    /**
+     * Read a 4-byte integer from the buffer in little endian format.
+     * @param buf buffer to be read from
+     * @return A 4-byte integer
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static int readInt32(ByteBuffer buf) throws BufferUnderflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).getInt();
     }
 
     /**

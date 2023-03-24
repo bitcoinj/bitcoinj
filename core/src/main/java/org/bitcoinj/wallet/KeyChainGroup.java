@@ -889,7 +889,7 @@ public class KeyChainGroup implements KeyBag {
         return result;
     }
 
-    public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
+    public BloomFilter getBloomFilter(int size, double falsePositiveRate, int nTweak) {
         BloomFilter filter = new BloomFilter(size, falsePositiveRate, nTweak);
         if (basic.numKeys() > 0)
             filter.merge(basic.getFilter(size, falsePositiveRate, nTweak));

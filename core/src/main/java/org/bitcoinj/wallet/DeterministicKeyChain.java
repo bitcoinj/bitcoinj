@@ -1140,7 +1140,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     @Override
-    public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
+    public BloomFilter getFilter(int size, double falsePositiveRate, int tweak) {
         lock.lock();
         try {
             checkArgument(size >= numBloomFilterEntries());

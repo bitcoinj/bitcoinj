@@ -1420,7 +1420,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * <p>Be careful regenerating the bloom filter too often, as it decreases anonymity because remote nodes can
      * compare transactions against both the new and old filters to significantly decrease the false positive rate.</p>
      * 
-     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, long, BloomFilter.BloomUpdate)} for a brief
+     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, int, BloomFilter.BloomUpdate)} for a brief
      * explanation of anonymity when using bloom filters.</p>
      */
     public void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
