@@ -18,9 +18,6 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.internal.ByteUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,31 +34,5 @@ public class TransactionOutputChanges {
     public TransactionOutputChanges(List<UTXO> txOutsCreated, List<UTXO> txOutsSpent) {
         this.txOutsCreated = txOutsCreated;
         this.txOutsSpent = txOutsSpent;
-    }
-    
-    public TransactionOutputChanges(InputStream in) throws IOException {
-        int numOutsCreated = (int) ByteUtils.readUint32(in);
-        txOutsCreated = new LinkedList<>();
-        for (int i = 0; i < numOutsCreated; i++)
-            txOutsCreated.add(UTXO.fromStream(in));
-        
-        int numOutsSpent = (int) ByteUtils.readUint32(in);
-        txOutsSpent = new LinkedList<>();
-        for (int i = 0; i < numOutsSpent; i++)
-            txOutsSpent.add(UTXO.fromStream(in));
-    }
-
-    public void serializeToStream(OutputStream bos) throws IOException {
-        int numOutsCreated = txOutsCreated.size();
-        ByteUtils.writeUint32LE(numOutsCreated, bos);
-        for (UTXO output : txOutsCreated) {
-            output.serializeToStream(bos);
-        }
-        
-        int numOutsSpent = txOutsSpent.size();
-        ByteUtils.writeUint32LE(numOutsSpent, bos);
-        for (UTXO output : txOutsSpent) {
-            output.serializeToStream(bos);
-        }
     }
 }

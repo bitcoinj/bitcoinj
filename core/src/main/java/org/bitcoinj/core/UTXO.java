@@ -22,10 +22,6 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.script.Script;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Locale;
 import java.util.Objects;
@@ -141,47 +137,5 @@ public class UTXO {
         if (o == null || getClass() != o.getClass()) return false;
         UTXO other = (UTXO) o;
         return getIndex() == other.getIndex() && getHash().equals(other.getHash()) && getValue().equals(((UTXO) o).getValue());
-    }
-
-    public void serializeToStream(OutputStream bos) throws IOException {
-        ByteUtils.writeUint64LE(BigInteger.valueOf(value.value), bos);
-        byte[] scriptBytes = script.getProgram();
-        ByteUtils.writeUint32LE(scriptBytes.length, bos);
-        bos.write(scriptBytes);
-        bos.write(hash.getBytes());
-        ByteUtils.writeUint32LE(index, bos);
-        ByteUtils.writeUint32LE(height, bos);
-        bos.write(new byte[] { (byte)(coinbase ? 1 : 0) });
-    }
-
-    public static UTXO fromStream(InputStream in) throws IOException {
-        byte[] valueBytes = new byte[8];
-        if (in.read(valueBytes, 0, 8) != 8)
-            throw new EOFException();
-        Coin value = Coin.valueOf(ByteUtils.readInt64(valueBytes, 0));
-
-        int scriptBytesLength = (int) ByteUtils.readUint32(in);
-        byte[] scriptBytes = new byte[scriptBytesLength];
-        if (in.read(scriptBytes) != scriptBytesLength)
-            throw new EOFException();
-        Script script = new Script(scriptBytes);
-
-        byte[] hashBytes = new byte[32];
-        if (in.read(hashBytes) != 32)
-            throw new EOFException();
-        Sha256Hash hash = Sha256Hash.wrap(hashBytes);
-
-        byte[] indexBytes = new byte[4];
-        if (in.read(indexBytes) != 4)
-            throw new EOFException();
-        long index = ByteUtils.readUint32(indexBytes, 0);
-
-        int height = (int) ByteUtils.readUint32(in);
-
-        byte[] coinbaseByte = new byte[1];
-        in.read(coinbaseByte);
-        boolean coinbase = coinbaseByte[0] == 1;
-
-        return new UTXO(hash, index, value, height, coinbase, script);
     }
 }
