@@ -66,8 +66,6 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * <p>Alternatively, you may know that the transaction is "dead", that is, one or more of its inputs have
  * been double spent and will never confirm unless there is another re-org.</p>
  *
- * <p>TransactionConfidence is updated via the {@link TransactionConfidence#incrementDepthInBlocks()}
- * method to ensure the block depth is up to date.</p>
  * To make a copy that won't be changed, use {@link TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence {
@@ -90,9 +88,6 @@ public class TransactionConfidence {
     private final Sha256Hash hash;
     // Lazily created listeners array.
     private CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
-
-    // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
-    private int depth;
 
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
     public enum ConfidenceType {
@@ -251,17 +246,6 @@ public class TransactionConfidence {
     }
 
     /**
-     * The chain height at which the transaction appeared, if it has been seen in the best chain. Automatically sets
-     * the current type to {@link ConfidenceType#BUILDING} and depth to one.
-     */
-    public synchronized void setAppearedAtChainHeight(int appearedAtChainHeight) {
-        if (appearedAtChainHeight < 0)
-            throw new IllegalArgumentException("appearedAtChainHeight out of range");
-        this.depth = 1;
-        setConfidenceType(ConfidenceType.BUILDING);
-    }
-
-    /**
      * Returns a general statement of the level of confidence you can have in this transaction.
      */
     public synchronized ConfidenceType getConfidenceType() {
@@ -278,9 +262,6 @@ public class TransactionConfidence {
         this.confidenceType = confidenceType;
         if (confidenceType != ConfidenceType.DEAD) {
             overridingTransaction = null;
-        }
-        if (confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT) {
-            depth = 0;
         }
     }
 
@@ -388,37 +369,6 @@ public class TransactionConfidence {
     }
 
     /**
-     * Called by the wallet when the tx appears on the best chain and a new block is added to the top. Updates the
-     * internal counter that tracks how deeply buried the block is.
-     *
-     * @return the new depth
-     */
-    public synchronized int incrementDepthInBlocks() {
-        return ++this.depth;
-    }
-
-    /**
-     * <p>Depth in the chain is an approximation of how much time has elapsed since the transaction has been confirmed.
-     * On average there is supposed to be a new block every 10 minutes, but the actual rate may vary. Bitcoin Core
-     * considers a transaction impractical to reverse after 6 blocks, but as of EOY 2011 network
-     * security is high enough that often only one block is considered enough even for high value transactions. For low
-     * value transactions like songs, or other cheap items, no blocks at all may be necessary.</p>
-     *     
-     * <p>If the transaction appears in the top block, the depth is one. If it's anything else (pending, dead, unknown)
-     * the depth is zero.</p>
-     */
-    public synchronized int getDepthInBlocks() {
-        return depth;
-    }
-
-    /*
-     * Set the depth in blocks. Having one block confirmation is a depth of one.
-     */
-    public synchronized void setDepthInBlocks(int depth) {
-        this.depth = depth;
-    }
-
-    /**
      * Erases the set of broadcast/seen peers. This cannot be called whilst the confidence is PENDING. It is useful
      * for saving memory and wallet space once a tx is buried so deep it doesn't seem likely to go pending again.
      */
@@ -496,31 +446,6 @@ public class TransactionConfidence {
      */
     public synchronized void setSource(Source source) {
         this.source = source;
-    }
-
-    /**
-     * Returns a future that completes when the transaction has been confirmed by "depth" blocks. For instance setting
-     * depth to one will wait until it appears in a block on the best chain, and zero will wait until it has been seen
-     * on the network.
-     */
-    public synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(final int depth, Executor executor) {
-        final ListenableCompletableFuture<TransactionConfidence> result = new ListenableCompletableFuture<>();
-        if (getDepthInBlocks() >= depth) {
-            result.complete(this);
-        }
-        addEventListener(executor, new Listener() {
-            @Override public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
-                if (getDepthInBlocks() >= depth) {
-                    removeEventListener(this);
-                    result.complete(confidence);
-                }
-            }
-        });
-        return result;
-    }
-
-    public synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(final int depth) {
-        return getDepthFuture(depth, Threading.USER_THREAD);
     }
 
     public Sha256Hash getTransactionHash() {

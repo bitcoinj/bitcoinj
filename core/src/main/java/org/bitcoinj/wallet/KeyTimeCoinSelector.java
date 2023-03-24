@@ -61,7 +61,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
     }
 
     @Override
-    public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
+    public CoinSelection select(Coin target, List<TransactionOutput> candidates, DepthProvider depthProvider) {
         try {
             LinkedList<TransactionOutput> gathered = new LinkedList<>();
             for (TransactionOutput output : candidates) {

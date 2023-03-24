@@ -33,5 +33,5 @@ public interface CoinSelector {
      * this call and can be edited freely. See the docs for CoinSelection to learn more, or look a the implementation
      * of {@link DefaultCoinSelector}.
      */
-    CoinSelection select(Coin target, List<TransactionOutput> candidates);
+    CoinSelection select(Coin target, List<TransactionOutput> candidates, DepthProvider depthProvider);
 }
