@@ -285,7 +285,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     @Override
-    public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
+    public BloomFilter getFilter(int size, double falsePositiveRate, int tweak) {
         lock.lock();
         BloomFilter filter;
         try {

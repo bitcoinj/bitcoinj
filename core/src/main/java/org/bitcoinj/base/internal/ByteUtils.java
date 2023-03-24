@@ -154,6 +154,17 @@ public class ByteUtils {
     }
 
     /**
+     * Write 4 bytes to the buffer as signed 32-bit integer in little endian format.
+     * @param val value to be written
+     * @param buf buffer to be written into
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeInt32LE(int val, ByteBuffer buf) throws BufferOverflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).putInt(val);
+    }
+
+    /**
      * Write 4 bytes to the buffer as unsigned 32-bit integer in little endian format.
      * @param val value to be written
      * @param buf buffer to be written into
@@ -249,6 +260,18 @@ public class ByteUtils {
     public static void writeUint16BE(int val, OutputStream stream) throws IOException {
         byte[] buf = new byte[2];
         writeUint16BE(val, ByteBuffer.wrap(buf));
+        stream.write(buf);
+    }
+
+    /**
+     * Write 4 bytes to the output stream as signed 32-bit integer in little endian format.
+     * @param val value to be written
+     * @param stream stream to be written into
+     * @throws IOException if an I/O error occurs
+     */
+    public static void writeInt32LE(int val, OutputStream stream) throws IOException {
+        byte[] buf = new byte[4];
+        writeInt32LE(val, ByteBuffer.wrap(buf));
         stream.write(buf);
     }
 
@@ -358,6 +381,16 @@ public class ByteUtils {
      */
     public static long readUint32(ByteBuffer buf) throws BufferUnderflowException {
         return Integer.toUnsignedLong(buf.order(ByteOrder.LITTLE_ENDIAN).getInt());
+    }
+
+    /**
+     * Read 4 bytes from the byte array (starting at the offset) as signed 32-bit integer in little endian format.
+     * @param buf buffer to be read from
+     * @return read integer
+     * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     */
+    public static int readInt32(ByteBuffer buf) throws BufferUnderflowException {
+        return buf.order(ByteOrder.LITTLE_ENDIAN).getInt();
     }
 
     /**

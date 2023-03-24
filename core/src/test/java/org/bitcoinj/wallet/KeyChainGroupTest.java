@@ -44,6 +44,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
@@ -343,7 +344,7 @@ public class KeyChainGroupTest {
     public void bloom() {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = new ECKey();
-        BloomFilter filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, (long)(Math.random() * Long.MAX_VALUE));
+        BloomFilter filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, new Random().nextInt());
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key1.getPubKey()));
         assertFalse(filter.contains(key2.getPubKey()));
@@ -355,7 +356,7 @@ public class KeyChainGroupTest {
         // We ran ahead of the lookahead buffer.
         assertFalse(filter.contains(group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKey()));
         group.importKeys(key2);
-        filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, (long) (Math.random() * Long.MAX_VALUE));
+        filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, new Random().nextInt());
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key1.getPubKey()));
         assertTrue(filter.contains(key2.getPubKey()));
@@ -386,7 +387,7 @@ public class KeyChainGroupTest {
         assertEquals(expected, group.getBloomFilterElementCount());
         Address address1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(expected, group.getBloomFilterElementCount());
-        BloomFilter filter = group.getBloomFilter(expected + 2, 0.001, (long)(Math.random() * Long.MAX_VALUE));
+        BloomFilter filter = group.getBloomFilter(expected + 2, 0.001, new Random().nextInt());
         assertTrue(filter.contains(address1.getHash()));
 
         Address address2 = group.freshAddress(KeyChain.KeyPurpose.CHANGE);

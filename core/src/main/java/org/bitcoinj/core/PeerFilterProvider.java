@@ -42,7 +42,7 @@ public interface PeerFilterProvider {
 
     /**
      * Called on all registered filter providers before {@link #getBloomFilterElementCount()} and
-     * {@link #getBloomFilter(int, double, long)} are called. Once called, the provider should ensure that the items
+     * {@link #getBloomFilter(int, double, int)} are called. Once called, the provider should ensure that the items
      * it will want to insert into the filter don't change. The reason is that all providers will have their element
      * counts queried, and then a filter big enough for all of them will be specified. So the provider must use
      * consistent state. There is guaranteed to be a matching call to {@link #endBloomFilterCalculation()} that can
@@ -52,7 +52,7 @@ public interface PeerFilterProvider {
 
     /**
      * Gets the number of elements that will be added to a bloom filter returned by
-     * {@link PeerFilterProvider#getBloomFilter(int, double, long)}
+     * {@link PeerFilterProvider#getBloomFilter(int, double, int)}
      */
     int getBloomFilterElementCount();
 
@@ -60,7 +60,7 @@ public interface PeerFilterProvider {
      * Gets a bloom filter that contains all the necessary elements for the listener to receive relevant transactions.
      * Default value should be an empty bloom filter with the given size, falsePositiveRate, and nTweak.
      */
-    BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak);
+    BloomFilter getBloomFilter(int size, double falsePositiveRate, int nTweak);
 
     /**
      * See {@link #beginBloomFilterCalculation()}.

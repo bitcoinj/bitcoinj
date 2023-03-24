@@ -72,7 +72,7 @@ public interface KeyChain {
 
     /**
      * Returns the number of elements this chain wishes to insert into the Bloom filter. The size passed to
-     * {@link #getFilter(int, double, long)} should be at least this large.
+     * {@link #getFilter(int, double, int)} should be at least this large.
      */
     int numBloomFilterEntries();
 
@@ -100,8 +100,8 @@ public interface KeyChain {
      * <p>This is used to generate a {@link BloomFilter} which can be {@link BloomFilter#merge(BloomFilter)}d with
      * another. It could also be used if you have a specific target for the filter's size.</p>
      *
-     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, long)} for a brief
+     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, int)} for a brief
      * explanation of anonymity when using bloom filters, and for the meaning of these parameters.</p>
      */
-    BloomFilter getFilter(int size, double falsePositiveRate, long tweak);
+    BloomFilter getFilter(int size, double falsePositiveRate, int tweak);
 }

@@ -147,6 +147,10 @@ public abstract class Message {
         return bitcoinSerialize().length;
     }
 
+    protected int readInt32() throws BufferUnderflowException {
+        return ByteUtils.readInt32(payload);
+    }
+
     protected long readUint32() throws BufferUnderflowException {
         return ByteUtils.readUint32(payload);
     }

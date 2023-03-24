@@ -606,7 +606,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
 
     @Override
-    public BloomFilter getFilter(int size, double falsePositiveRate, long tweak) {
+    public BloomFilter getFilter(int size, double falsePositiveRate, int tweak) {
         lock.lock();
         try {
             BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);

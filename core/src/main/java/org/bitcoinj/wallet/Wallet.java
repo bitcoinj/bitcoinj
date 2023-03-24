@@ -130,6 +130,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -4992,7 +4993,7 @@ public class Wallet extends BaseTaggableObject
     public BloomFilter getBloomFilter(double falsePositiveRate) {
         beginBloomFilterCalculation();
         try {
-            return getBloomFilter(getBloomFilterElementCount(), falsePositiveRate, (long) (Math.random() * Long.MAX_VALUE));
+            return getBloomFilter(getBloomFilterElementCount(), falsePositiveRate, new Random().nextInt());
         } finally {
             endBloomFilterCalculation();
         }
@@ -5006,11 +5007,11 @@ public class Wallet extends BaseTaggableObject
      * <p>This is used to generate a BloomFilter which can be {@link BloomFilter#merge(BloomFilter)}d with another.
      * It could also be used if you have a specific target for the filter's size.</p>
      * 
-     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, long, BloomFilter.BloomUpdate)} for a brief explanation of anonymity when using bloom
+     * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, int, BloomFilter.BloomUpdate)} for a brief explanation of anonymity when using bloom
      * filters.</p>
      */
     @Override @GuardedBy("keyChainGroupLock")
-    public BloomFilter getBloomFilter(int size, double falsePositiveRate, long nTweak) {
+    public BloomFilter getBloomFilter(int size, double falsePositiveRate, int nTweak) {
         beginBloomFilterCalculation();
         try {
             BloomFilter filter = keyChainGroup.getBloomFilter(size, falsePositiveRate, nTweak);
