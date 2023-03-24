@@ -27,6 +27,20 @@ public interface Network {
     String id();
 
     /**
+     * Header byte of base58 encoded legacy P2PKH addresses for this network.
+     * @return header byte as an {@code int}.
+     * @see LegacyAddress.AddressHeader
+     */
+    int legacyAddressHeader();
+
+    /**
+     * Header byte of base58 encoded legacy P2SH addresses for this network.
+     * @return header byte as an {@code int}.
+     * @see LegacyAddress.P2SHHeader
+     */
+    int legacyP2SHHeader();
+
+    /**
      * Human-readable part (HRP) of bech32 encoded segwit addresses for this network.
      * @return HRP (lowercase)
      */

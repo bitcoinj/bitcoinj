@@ -27,7 +27,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Objects;
+import java.util.stream.Stream;
+
+import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
@@ -186,13 +190,12 @@ public class LegacyAddress implements Address {
      */
     public static LegacyAddress fromBase58(@Nonnull Network network, String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
-        NetworkParameters params = NetworkParameters.of(network);
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
         byte[] bytes = Arrays.copyOfRange(versionAndDataBytes, 1, versionAndDataBytes.length);
-        if (version == params.getAddressHeader())
+        if (version == network.legacyAddressHeader())
             return new LegacyAddress(network, false, bytes);
-        else if (version == params.getP2SHHeader())
+        else if (version == network.legacyP2SHHeader())
             return new LegacyAddress(network, true, bytes);
         throw new AddressFormatException.WrongNetwork(version);
     }
@@ -213,8 +216,7 @@ public class LegacyAddress implements Address {
      * @return version header as one byte
      */
     public int getVersion() {
-        NetworkParameters params = NetworkParameters.of(network);
-        return p2sh ? params.getP2SHHeader() : params.getAddressHeader();
+        return p2sh ? network.legacyP2SHHeader() : network.legacyAddressHeader();
     }
 
     /**
@@ -290,5 +292,68 @@ public class LegacyAddress implements Address {
     @Override
     public int compareTo(Address o) {
        return LEGACY_ADDRESS_COMPARATOR.compare(this, o);
+    }
+
+    /**
+     * Address header of legacy P2PKH addresses for standard Bitcoin networks.
+     */
+    public enum AddressHeader {
+        X0(0, MAINNET),
+        X111(111, TESTNET, REGTEST),
+        X6F(0x6f, SIGNET);
+
+        private final int headerByte;
+        private final EnumSet<BitcoinNetwork> networks;
+
+        /**
+         * @param network network to find enum for
+         * @return the corresponding enum
+         */
+        public static AddressHeader ofNetwork(BitcoinNetwork network) {
+            return Stream.of(AddressHeader.values())
+                    .filter(header -> header.networks.contains(network))
+                    .findFirst()
+                    .orElseThrow(IllegalStateException::new);
+        }
+
+        AddressHeader(int headerByte, BitcoinNetwork first, BitcoinNetwork... rest) {
+            this.headerByte = headerByte;
+            this.networks = EnumSet.of(first, rest);
+        }
+
+        public int headerByte() {
+            return headerByte;
+        }
+    }
+
+    /**
+     * Address header of legacy P2SH addresses for standard Bitcoin networks.
+     */
+    public enum P2SHHeader {
+        X5(5, MAINNET),
+        X196(196, TESTNET, SIGNET, REGTEST);
+
+        private final int headerByte;
+        private final EnumSet<BitcoinNetwork> networks;
+
+        /**
+         * @param network network to find enum for
+         * @return the corresponding enum
+         */
+        public static P2SHHeader ofNetwork(BitcoinNetwork network) {
+            return Stream.of(P2SHHeader.values())
+                    .filter(header -> header.networks.contains(network))
+                    .findFirst()
+                    .orElseThrow(IllegalStateException::new);
+        }
+
+        P2SHHeader(int headerByte, BitcoinNetwork first, BitcoinNetwork... rest) {
+            this.headerByte = headerByte;
+            this.networks = EnumSet.of(first, rest);
+        }
+
+        public int headerByte() {
+            return headerByte;
+        }
     }
 }
