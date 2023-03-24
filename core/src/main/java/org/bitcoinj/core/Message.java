@@ -32,6 +32,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
@@ -164,9 +165,7 @@ public abstract class Message {
     }
 
     private void checkReadLength(int length) throws BufferUnderflowException {
-        if ((length > MAX_SIZE) || length > payload.remaining()) {
-            throw new BufferUnderflowException();
-        }
+        check(length <= payload.remaining(), BufferUnderflowException::new);
     }
 
     protected byte[] readBytes(int length) throws BufferUnderflowException {
