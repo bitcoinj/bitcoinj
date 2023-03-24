@@ -29,14 +29,14 @@ public interface Network {
     /**
      * Header byte of base58 encoded legacy P2PKH addresses for this network.
      * @return header byte as an {@code int}.
-     * @see HeaderBytes
+     * @see LegacyAddress.AddressHeader
      */
     int legacyAddressHeader();
 
     /**
      * Header byte of base58 encoded legacy P2SH addresses for this network.
      * @return header byte as an {@code int}.
-     * @see HeaderBytes
+     * @see LegacyAddress.P2SHHeader
      */
     int legacyP2SHHeader();
 

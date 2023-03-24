@@ -104,7 +104,7 @@ public enum BitcoinNetwork implements Network {
     /**
      * Header byte of base58 encoded legacy P2PKH addresses for this network.
      * @return header byte as an {@code int}.
-     * @see HeaderBytes
+     * @see LegacyAddress.AddressHeader
      */
     public int legacyAddressHeader() {
         return LegacyAddress.AddressHeader.ofNetwork(this).headerByte();
@@ -113,7 +113,7 @@ public enum BitcoinNetwork implements Network {
     /**
      * Header byte of base58 encoded legacy P2SH addresses for this network.
      * @return header byte as an {@code int}.
-     * @see HeaderBytes
+     * @see LegacyAddress.P2SHHeader
      */
     public int legacyP2SHHeader() {
         return LegacyAddress.P2SHHeader.ofNetwork(this).headerByte();
