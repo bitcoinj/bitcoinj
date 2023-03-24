@@ -104,7 +104,10 @@ public class ByteUtils {
     }
 
     /**
-     * Write 2 bytes to the buffer as unsigned 16-bit integer in little endian format.
+     * Write a 16-bit integer to a given buffer in little-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
+     *
      * @param val value to be written
      * @param buf buffer to be written into
      * @return the buffer
@@ -115,9 +118,12 @@ public class ByteUtils {
     }
 
     /**
-     * Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in little endian format.
-     * @param val value to be written
-     * @param out buffer to be written into
+     * Write a 16-bit integer to a given byte array in little-endian format, starting at a given offset.
+     * <p>
+     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
+     * @param out    buffer to be written into
      * @param offset offset into the buffer
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
@@ -129,7 +135,10 @@ public class ByteUtils {
     }
 
     /**
-     * Write 2 bytes to the buffer as unsigned 16-bit integer in big endian format.
+     * Write a 16-bit integer to a given buffer in big-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
+     *
      * @param val value to be written
      * @param buf buffer to be written into
      * @return the buffer
@@ -140,9 +149,12 @@ public class ByteUtils {
     }
 
     /**
-     * Write 2 bytes to the byte array (starting at the offset) as unsigned 16-bit integer in big endian format.
-     * @param val value to be written
-     * @param out buffer to be written into
+     * Write a 16-bit integer to a given byte array in big-endian format, starting at a given offset.
+     * <p>
+     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
+     * @param out    buffer to be written into
      * @param offset offset into the buffer
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
@@ -154,7 +166,11 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the buffer as signed 32-bit integer in little endian format.
+     * Write a 32-bit integer to a given buffer in little-endian format.
+     * <p>
+     * The value is expected as a signed or unsigned {@code int}. If you've got an unsigned {@code long} as per the
+     * Java Unsigned Integer API, use {@link #writeInt32LE(long, ByteBuffer)}.
+     *
      * @param val value to be written
      * @param buf buffer to be written into
      * @return the buffer
@@ -165,7 +181,10 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the buffer as unsigned 32-bit integer in little endian format.
+     * Write a 32-bit integer to a given buffer in little-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
+     *
      * @param val value to be written
      * @param buf buffer to be written into
      * @return the buffer
@@ -176,9 +195,12 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in little endian format.
-     * @param val value to be written
-     * @param out buffer to be written into
+     * Write a 32-bit integer to a given byte array in little-endian format, starting at a given offset.
+     * <p>
+     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
+     * @param out    buffer to be written into
      * @param offset offset into the buffer
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
@@ -190,7 +212,10 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the buffer as unsigned 32-bit integer in big endian format.
+     * Write a 32-bit integer to a given buffer in big-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
+     *
      * @param val value to be written
      * @param buf buffer to be written into
      * @return the buffer
@@ -201,9 +226,12 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the byte array (starting at the offset) as unsigned 32-bit integer in big endian format.
-     * @param val value to be written
-     * @param out buffer to be written into
+     * Write a 32-bit integer to a given byte array in big-endian format, starting at a given offset.
+     * <p>
+     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
+     * @param out    buffer to be written into
      * @param offset offset into the buffer
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
@@ -215,7 +243,10 @@ public class ByteUtils {
     }
 
     /**
-     * Write 8 bytes to the buffer as signed 64-bit integer in little endian format.
+     * Write a 64-bit integer to a given buffer in little-endian format.
+     * <p>
+     * The value is expected as a signed or unsigned {@code long}.
+     *
      * @param val value to be written
      * @param buf buffer to be written into
      * @return the buffer
@@ -226,9 +257,12 @@ public class ByteUtils {
     }
 
     /**
-     * Write 8 bytes to the byte array (starting at the offset) as signed 64-bit integer in little endian format.
-     * @param val value to be written
-     * @param out buffer to be written into
+     * Write a 64-bit integer to a given byte array in little-endian format, starting at a given offset.
+     * <p>
+     * The value is expected as a signed or unsigned {@code long}.
+     *
+     * @param val    value to be written
+     * @param out    buffer to be written into
      * @param offset offset into the buffer
      * @throws ArrayIndexOutOfBoundsException if offset points outside of the buffer, or
      *                                        if the value doesn't fit the remaining buffer
@@ -240,8 +274,11 @@ public class ByteUtils {
     }
 
     /**
-     * Write 2 bytes to the output stream as unsigned 16-bit integer in little endian format.
-     * @param val value to be written
+     * Write a 16-bit integer to a given output stream in little-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
@@ -252,8 +289,11 @@ public class ByteUtils {
     }
 
     /**
-     * Write 2 bytes to the output stream as unsigned 16-bit integer in big endian format.
-     * @param val value to be written
+     * Write a 16-bit integer to a given output stream in big-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
@@ -264,8 +304,12 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the output stream as signed 32-bit integer in little endian format.
-     * @param val value to be written
+     * Write a 32-bit integer to a given output stream in little-endian format.
+     * <p>
+     * The value is expected as a signed or unsigned {@code int}. If you've got an unsigned {@code long} as per the
+     * Java Unsigned Integer API, use {@link #writeInt32LE(long, OutputStream)}.
+     *
+     * @param val    value to be written
      * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
@@ -276,8 +320,11 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the output stream as unsigned 32-bit integer in little endian format.
-     * @param val value to be written
+     * Write a 32-bit integer to a given output stream in little-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
@@ -288,8 +335,11 @@ public class ByteUtils {
     }
 
     /**
-     * Write 4 bytes to the output stream as unsigned 32-bit integer in big endian format.
-     * @param val value to be written
+     * Write a 32-bit integer to a given output stream in big-endian format.
+     * <p>
+     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
+     *
+     * @param val    value to be written
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
@@ -300,8 +350,11 @@ public class ByteUtils {
     }
 
     /**
-     * Write 8 bytes to the output stream as signed 64-bit integer in little endian format.
-     * @param val value to be written
+     * Write a 64-bit integer to a given output stream in little-endian format.
+     * <p>
+     * The value is expected as a signed or unsigned {@code long}.
+     *
+     * @param val    value to be written
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
@@ -312,8 +365,11 @@ public class ByteUtils {
     }
 
     /**
-     * Write 8 bytes to the output stream as unsigned 64-bit integer in little endian format.
-     * @param val value to be written
+     * Write a 64-bit integer to a given output stream in little-endian format.
+     * <p>
+     * The value is expected as an unsigned {@link BigInteger}.
+     *
+     * @param val    value to be written
      * @param stream strean to be written into
      * @throws IOException if an I/O error occurs
      */
