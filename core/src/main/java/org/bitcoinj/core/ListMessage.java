@@ -23,6 +23,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,7 +70,7 @@ public abstract class ListMessage extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         long arrayLen = readVarInt().longValue();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);

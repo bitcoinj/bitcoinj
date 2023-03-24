@@ -31,6 +31,7 @@ import org.bitcoinj.wallet.RedeemData;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -103,7 +104,7 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         hash = readHash();
         index = readUint32();
     }

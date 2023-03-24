@@ -82,7 +82,11 @@ public abstract class Message {
         this.params = params;
         this.payload = payload;
 
-        parse();
+        try {
+            parse();
+        } catch(BufferUnderflowException e) {
+            throw new ProtocolException(e);
+        }
 
         this.payload = null;
     }
@@ -93,7 +97,7 @@ public abstract class Message {
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
 
-    protected abstract void parse() throws ProtocolException;
+    protected abstract void parse() throws BufferUnderflowException, ProtocolException;
 
     /**
      * <p>To be called before any change of internal values including any setters. This ensures any cached byte array is
@@ -142,82 +146,55 @@ public abstract class Message {
         return bitcoinSerialize().length;
     }
 
-    protected long readUint32() throws ProtocolException {
-        try {
-            long u = ByteUtils.readUint32(payload);
-            return u;
-        } catch (BufferUnderflowException e) {
-            throw new ProtocolException(e);
-        }
+    protected long readUint32() throws BufferUnderflowException {
+        return ByteUtils.readUint32(payload);
     }
 
-    protected long readInt64() throws ProtocolException {
-        try {
-            long u = ByteUtils.readInt64(payload);
-            return u;
-        } catch (BufferUnderflowException e) {
-            throw new ProtocolException(e);
-        }
+    protected long readInt64() throws BufferUnderflowException {
+        return ByteUtils.readInt64(payload);
     }
 
-    protected BigInteger readUint64() throws ProtocolException {
+    protected BigInteger readUint64() throws BufferUnderflowException {
         // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
         return new BigInteger(ByteUtils.reverseBytes(readBytes(8)));
     }
 
-    protected VarInt readVarInt() throws ProtocolException {
-        try {
-            return VarInt.read(payload);
-        } catch (BufferUnderflowException e) {
-            throw new ProtocolException(e);
-        }
+    protected VarInt readVarInt() throws BufferUnderflowException {
+        return VarInt.read(payload);
     }
 
-    private void checkReadLength(int length) throws ProtocolException {
+    private void checkReadLength(int length) throws BufferUnderflowException {
         if ((length > MAX_SIZE) || length > payload.remaining()) {
-            throw new ProtocolException("Claimed value length too large: " + length);
+            throw new BufferUnderflowException();
         }
     }
 
-    protected byte[] readBytes(int length) throws ProtocolException {
+    protected byte[] readBytes(int length) throws BufferUnderflowException {
         checkReadLength(length);
-        try {
-            byte[] b = new byte[length];
-            payload.get(b);
-            return b;
-        } catch (BufferUnderflowException e) {
-            throw new ProtocolException(e);
-        }
+        byte[] b = new byte[length];
+        payload.get(b);
+        return b;
     }
 
-    protected byte readByte() throws ProtocolException {
-        checkReadLength(1);
-        try {
-            return payload.get();
-        } catch (BufferUnderflowException e) {
-            throw new ProtocolException(e);
-        }
+    protected byte readByte() throws BufferUnderflowException {
+        return payload.get();
     }
 
-    protected byte[] readByteArray() throws ProtocolException {
+    protected byte[] readByteArray() throws BufferUnderflowException {
         final int length = readVarInt().intValue();
         return readBytes(length);
     }
 
-    protected String readStr() throws ProtocolException {
+    protected String readStr() throws BufferUnderflowException {
         int length = readVarInt().intValue();
         return length == 0 ? "" : new String(readBytes(length), StandardCharsets.UTF_8); // optimization for empty strings
     }
 
-    protected Sha256Hash readHash() throws ProtocolException {
-        try {
-            return Sha256Hash.read(payload);
-        } catch (BufferUnderflowException e) {
-            throw new ProtocolException(e);
-        }
+    protected Sha256Hash readHash() throws BufferUnderflowException {
+        return Sha256Hash.read(payload);
     }
 
-    protected void skipBytes(int numBytes) throws ProtocolException {
+    protected void skipBytes(int numBytes) throws BufferUnderflowException {
         checkArgument(numBytes >= 0);
         checkReadLength(numBytes);
         payload.position(payload.position() + numBytes);

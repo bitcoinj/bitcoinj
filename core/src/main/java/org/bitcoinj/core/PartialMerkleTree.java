@@ -24,6 +24,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -121,7 +122,7 @@ public class PartialMerkleTree extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         transactionCount = (int)readUint32();
 
         int nHashes = readVarInt().intValue();

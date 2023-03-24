@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -642,7 +643,7 @@ public class Transaction extends ChildMessage {
      * transaction is segwit or not.
      */
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         boolean allowWitness = allowWitness();
 
 

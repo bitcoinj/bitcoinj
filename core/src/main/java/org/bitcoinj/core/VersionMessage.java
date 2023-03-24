@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -127,7 +128,7 @@ public class VersionMessage extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         clientVersion = (int) readUint32();
         localServices = readUint64().longValue();
         time = Instant.ofEpochSecond(readInt64());

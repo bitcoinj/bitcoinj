@@ -233,7 +233,7 @@ public class BitcoinSerializerTest {
 
         Message unknownMessage = new Message() {
             @Override
-            protected void parse() throws ProtocolException {
+            protected void parse() throws BufferUnderflowException, ProtocolException {
             }
         };
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);

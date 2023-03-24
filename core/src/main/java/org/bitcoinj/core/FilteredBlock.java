@@ -21,6 +21,7 @@ import org.bitcoinj.base.Sha256Hash;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,7 +66,7 @@ public class FilteredBlock extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         byte[] headerBytes = readBytes(Block.HEADER_SIZE);
         header = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(headerBytes));
         merkleTree = new PartialMerkleTree(params, payload);

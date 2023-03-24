@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -50,6 +51,6 @@ public abstract class EmptyMessage extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
     }
 }

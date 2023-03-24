@@ -23,6 +23,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -49,7 +50,7 @@ public class GetBlocksMessage extends Message {
     }
 
     @Override
-    protected void parse() throws ProtocolException {
+    protected void parse() throws BufferUnderflowException, ProtocolException {
         version = readUint32();
         int startCount = readVarInt().intValue();
         if (startCount > 500)

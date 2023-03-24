@@ -21,6 +21,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 public class MessageTest {
@@ -40,7 +41,7 @@ public class MessageTest {
         }
 
         @Override
-        protected void parse() throws ProtocolException {
+        protected void parse() throws BufferUnderflowException, ProtocolException {
             readStr();
         }
     }
@@ -59,7 +60,7 @@ public class MessageTest {
         }
 
         @Override
-        protected void parse() throws ProtocolException {
+        protected void parse() throws BufferUnderflowException, ProtocolException {
             readByteArray();
         }
     }
