@@ -25,7 +25,6 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -54,7 +53,7 @@ public class PeerAddress extends ChildMessage {
     private InetAddress addr;   // Used for IPV4, IPV6, null otherwise or if not-yet-parsed
     private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
-    private BigInteger services;
+    private Services services;
     private Optional<Instant> time;
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
@@ -96,7 +95,7 @@ public class PeerAddress extends ChildMessage {
     /**
      * Construct a peer address from a memorized or hardcoded address.
      */
-    public PeerAddress(NetworkParameters params, InetAddress addr, int port, BigInteger services, MessageSerializer serializer) {
+    public PeerAddress(NetworkParameters params, InetAddress addr, int port, Services services, MessageSerializer serializer) {
         super(params, serializer);
         this.addr = Objects.requireNonNull(addr);
         this.port = port;
@@ -107,7 +106,7 @@ public class PeerAddress extends ChildMessage {
     /**
      * Constructs a peer address from the given IP address, port and services. Version number is default for the given parameters.
      */
-    public PeerAddress(NetworkParameters params, InetAddress addr, int port, BigInteger services) {
+    public PeerAddress(NetworkParameters params, InetAddress addr, int port, Services services) {
         this(params, addr, port, services, params.getDefaultSerializer().withProtocolVersion(0));
     }
 
@@ -115,7 +114,7 @@ public class PeerAddress extends ChildMessage {
      * Constructs a peer address from the given IP address and port. Version number is default for the given parameters.
      */
     public PeerAddress(NetworkParameters params, InetAddress addr, int port) {
-        this(params, addr, port, BigInteger.ZERO);
+        this(params, addr, port, Services.none());
     }
 
     /**
@@ -141,7 +140,7 @@ public class PeerAddress extends ChildMessage {
         super(params);
         this.hostname = hostname;
         this.port = port;
-        this.services = BigInteger.ZERO;
+        this.services = Services.none();
         this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
@@ -159,7 +158,7 @@ public class PeerAddress extends ChildMessage {
             ByteUtils.writeInt32LE(time.get().getEpochSecond(), stream);
         }
         if (protocolVersion == 2) {
-            stream.write(VarInt.of(services.longValue()).encode());
+            stream.write(VarInt.of(services.bits()).encode());
             if (addr != null) {
                 if (addr instanceof Inet4Address) {
                     stream.write(0x01);
@@ -198,7 +197,7 @@ public class PeerAddress extends ChildMessage {
                 throw new IllegalStateException();
             }
         } else {
-            ByteUtils.writeInt64LE(services, stream);  // nServices.
+            stream.write(services.buffer().array());
             if (addr != null) {
                 // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
                 // hand.
@@ -240,8 +239,7 @@ public class PeerAddress extends ChildMessage {
             time = Optional.empty();
         }
         if (protocolVersion == 2) {
-            VarInt servicesVarInt = readVarInt();
-            services = BigInteger.valueOf(servicesVarInt.longValue());
+            services = Services.of(VarInt.read(payload).longValue());
             int networkId = readByte();
             byte[] addrBytes = readByteArray();
             int addrLen = addrBytes.length;
@@ -290,7 +288,7 @@ public class PeerAddress extends ChildMessage {
                 hostname = null;
             }
         } else {
-            services = readUint64();
+            services = Services.read(payload);
             byte[] addrBytes = readBytes(16);
             if (Arrays.equals(ONIONCAT_PREFIX, Arrays.copyOf(addrBytes, 6))) {
                 byte[] onionAddress = Arrays.copyOfRange(addrBytes, 6, 16);
@@ -327,7 +325,7 @@ public class PeerAddress extends ChildMessage {
         return port;
     }
 
-    public BigInteger getServices() {
+    public Services getServices() {
         return services;
     }
 

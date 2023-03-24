@@ -17,6 +17,7 @@
 
 package org.bitcoinj.net.discovery;
 
+import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionMessage;
 
 import java.net.InetSocketAddress;
@@ -33,7 +34,7 @@ public interface PeerDiscovery {
 
     /**
      * Queries for addresses. This method may block.
-     * @param services required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}
+     * @param services required services as a bitmask, e.g. {@link Services#NODE_NETWORK}
      * @param timeout query timeout
      * @return found addresses
      */

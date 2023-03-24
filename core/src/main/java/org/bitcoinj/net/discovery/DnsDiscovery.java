@@ -19,6 +19,7 @@ package org.bitcoinj.net.discovery;
 
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.utils.DaemonThreadFactory;
@@ -100,7 +101,7 @@ public class DnsDiscovery extends MultiplexingDiscovery {
             InetAddress[] response = null;
             if (services != 0) {
                 String hostnameWithServices = "x" + Long.toHexString(services) + "." + hostname;
-                log.info("Requesting {} peers from {}", VersionMessage.toStringServices(services),
+                log.info("Requesting {} peers from {}", Services.of(services).toString(),
                         hostnameWithServices);
                 try {
                     response = InetAddress.getAllByName(hostnameWithServices);

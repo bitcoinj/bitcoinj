@@ -1018,7 +1018,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * Convenience for connecting only to peers that can serve specific services. It will configure suitable peer
      * discoveries.
-     * @param requiredServices Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
+     * @param requiredServices Required services as a bitmask, e.g. {@link Services#NODE_NETWORK}.
      */
     public void setRequiredServices(long requiredServices) {
         lock.lock();
@@ -2128,7 +2128,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             ArrayList<Peer> results = new ArrayList<>(peers.size());
             for (Peer peer : peers)
-                if ((peer.getPeerVersionMessage().localServices & mask) == mask)
+                if (peer.getPeerVersionMessage().localServices.has(mask))
                     results.add(peer);
             return results;
         } finally {

@@ -20,20 +20,16 @@ import com.google.common.net.InetAddresses;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.base.internal.InternalUtils;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -55,17 +51,6 @@ public class VersionMessage extends Message {
     /** The value that is prepended to the subVer field of this application. */
     public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
 
-    /** A service bit that denotes whether the peer has a full copy of the block chain or not. */
-    public static final int NODE_NETWORK = 1 << 0;
-    /** A service bit that denotes whether the peer supports BIP37 bloom filters or not. The service bit is defined in BIP111. */
-    public static final int NODE_BLOOM = 1 << 2;
-    /** Indicates that a node can be asked for blocks and transactions including witness data. */
-    public static final int NODE_WITNESS = 1 << 3;
-    /** A service bit that denotes whether the peer has at least the last two days worth of blockchain (BIP159). */
-    public static final int NODE_NETWORK_LIMITED = 1 << 10;
-    /** A service bit used by Bitcoin-ABC to announce Bitcoin Cash nodes. */
-    public static final int NODE_BITCOIN_CASH = 1 << 5;
-
     /**
      * The version number of the protocol spoken.
      */
@@ -73,7 +58,7 @@ public class VersionMessage extends Message {
     /**
      * Flags defining what optional services are supported.
      */
-    public long localServices;
+    public Services localServices;
     /**
      * What the other side believes the current time to be.
      */
@@ -112,15 +97,15 @@ public class VersionMessage extends Message {
     public VersionMessage(NetworkParameters params, int newBestHeight) {
         super(params);
         clientVersion = serializer.getProtocolVersion();
-        localServices = 0;
+        localServices = Services.none();
         time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
         MessageSerializer serializer = this.serializer.withProtocolVersion(0);
-        receivingAddr = new PeerAddress(params, localhost, params.getPort(), BigInteger.ZERO, serializer);
+        receivingAddr = new PeerAddress(params, localhost, params.getPort(), Services.none(), serializer);
         receivingAddr.setParent(this);
-        fromAddr = new PeerAddress(params, localhost, params.getPort(), BigInteger.ZERO, serializer);
+        fromAddr = new PeerAddress(params, localhost, params.getPort(), Services.none(), serializer);
         fromAddr.setParent(this);
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
@@ -130,7 +115,7 @@ public class VersionMessage extends Message {
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
         clientVersion = (int) readUint32();
-        localServices = readUint64().longValue();
+        localServices = Services.read(payload);
         time = Instant.ofEpochSecond(readInt64());
         receivingAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
         if (clientVersion >= 106) {
@@ -161,8 +146,7 @@ public class VersionMessage extends Message {
     @Override
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
         ByteUtils.writeInt32LE(clientVersion, buf);
-        ByteUtils.writeInt32LE(localServices, buf);
-        ByteUtils.writeInt32LE(localServices >> 32, buf);
+        buf.write(localServices.buffer().array());
         ByteUtils.writeInt64LE(time.getEpochSecond(), buf);
         receivingAddr.bitcoinSerializeToStream(buf);
         fromAddr.bitcoinSerializeToStream(buf);
@@ -207,9 +191,8 @@ public class VersionMessage extends Message {
     public String toString() {
         StringBuilder builder = new StringBuilder("\n");
         builder.append("client version: ").append(clientVersion).append("\n");
-        builder.append("local services: ").append(localServices);
-        if (localServices != 0)
-            builder.append(" (").append(toStringServices(localServices)).append(")");
+        if (localServices.hasAny())
+            builder.append("local services: ").append(localServices);
         builder.append("\n");
         builder.append("time:           ").append(TimeUtils.dateTimeFormat(time)).append("\n");
         builder.append("receiving addr: ").append(receivingAddr).append("\n");
@@ -283,14 +266,14 @@ public class VersionMessage extends Message {
         if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)
                 && clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111))
             return true;
-        if ((localServices & NODE_BLOOM) == NODE_BLOOM)
+        if (localServices.has(Services.NODE_BLOOM))
             return true;
         return false;
     }
 
     /** Returns true if a peer can be asked for blocks and transactions including witness data. */
     public boolean isWitnessSupported() {
-        return (localServices & NODE_WITNESS) == NODE_WITNESS;
+        return localServices.has(Services.NODE_WITNESS);
     }
 
     /**
@@ -298,34 +281,11 @@ public class VersionMessage extends Message {
      * running in client mode (only has the headers).
      */
     public boolean hasBlockChain() {
-        return (localServices & NODE_NETWORK) == NODE_NETWORK;
+        return localServices.has(Services.NODE_NETWORK);
     }
 
     /** Returns true if the peer has at least the last two days worth of blockchain (BIP159). */
     public boolean hasLimitedBlockChain() {
-        return hasBlockChain() || (localServices & NODE_NETWORK_LIMITED) == NODE_NETWORK_LIMITED;
-    }
-
-    public static String toStringServices(long services) {
-        List<String> strings = new LinkedList<>();
-        if ((services & NODE_NETWORK) == NODE_NETWORK) {
-            strings.add("NETWORK");
-            services &= ~NODE_NETWORK;
-        }
-        if ((services & NODE_BLOOM) == NODE_BLOOM) {
-            strings.add("BLOOM");
-            services &= ~NODE_BLOOM;
-        }
-        if ((services & NODE_WITNESS) == NODE_WITNESS) {
-            strings.add("WITNESS");
-            services &= ~NODE_WITNESS;
-        }
-        if ((services & NODE_NETWORK_LIMITED) == NODE_NETWORK_LIMITED) {
-            strings.add("NETWORK_LIMITED");
-            services &= ~NODE_NETWORK_LIMITED;
-        }
-        if (services != 0)
-            strings.add("remaining: " + Long.toBinaryString(services));
-        return InternalUtils.joiner(", ").join(strings);
+        return hasBlockChain() || localServices.has(Services.NODE_NETWORK_LIMITED);
     }
 }

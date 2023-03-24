@@ -25,6 +25,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.SendAddrV2Message;
+import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionAck;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.net.BlockingClientManager;
@@ -79,7 +80,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
 
         remoteVersionMessage = new VersionMessage(UNITTEST, 1);
         remoteVersionMessage.localServices =
-                VersionMessage.NODE_NETWORK | VersionMessage.NODE_BLOOM | VersionMessage.NODE_WITNESS;
+                Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
         remoteVersionMessage.clientVersion =
                 NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
         blockJobs = false;

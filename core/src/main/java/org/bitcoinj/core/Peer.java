@@ -389,9 +389,8 @@ public class Peer extends PeerSocketHandler {
         helper.addValue(getAddress());
         helper.add("version", vPeerVersionMessage.clientVersion);
         helper.add("subVer", vPeerVersionMessage.subVer);
-        String servicesStr = Strings.emptyToNull(VersionMessage.toStringServices(vPeerVersionMessage.localServices));
-        helper.add("services",
-                vPeerVersionMessage.localServices + (servicesStr != null ? " (" + servicesStr + ")" : ""));
+        if (vPeerVersionMessage.localServices.hasAny())
+            helper.add("services", vPeerVersionMessage.localServices.toString());
         helper.add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time));
         helper.add("height", vPeerVersionMessage.bestHeight);
         return helper.toString();
@@ -530,14 +529,14 @@ public class Peer extends PeerSocketHandler {
             close();
             return;
         }
-        if ((peerVersionMessage.localServices & requiredServices) != requiredServices) {
+        if (!peerVersionMessage.localServices.has(requiredServices)) {
             log.info("{}: Peer doesn't support these required services: {}", this,
-                    VersionMessage.toStringServices(requiredServices & ~peerVersionMessage.localServices));
+                    Services.of(requiredServices & ~peerVersionMessage.localServices.bits()).toString());
             // Shut down the channel gracefully.
             close();
             return;
         }
-        if ((peerVersionMessage.localServices & VersionMessage.NODE_BITCOIN_CASH) == VersionMessage.NODE_BITCOIN_CASH) {
+        if (peerVersionMessage.localServices.has(Services.NODE_BITCOIN_CASH)) {
             log.info("{}: Peer follows an incompatible block chain.", this);
             // Shut down the channel gracefully.
             close();

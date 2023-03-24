@@ -75,7 +75,7 @@ public class VersionMessageTest {
         ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
-        ver.localServices = 1;
+        ver.localServices = Services.of(1);
         ver.fromAddr = new PeerAddress(TESTNET, InetAddress.getByName("1.2.3.4"), 3888);
         ver.fromAddr.setParent(ver);
         ver.receivingAddr = new PeerAddress(TESTNET, InetAddress.getByName("4.3.2.1"), 8333);
@@ -86,7 +86,7 @@ public class VersionMessageTest {
         assertEquals(Instant.ofEpochSecond(23456), ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), ver2.clientVersion);
-        assertEquals(1, ver2.localServices);
+        assertEquals(1, ver2.localServices.bits());
         assertEquals("1.2.3.4", ver2.fromAddr.getAddr().getHostAddress());
         assertEquals(3888, ver2.fromAddr.getPort());
         assertEquals("4.3.2.1", ver2.receivingAddr.getAddr().getHostAddress());
@@ -99,7 +99,7 @@ public class VersionMessageTest {
         ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
-        ver.localServices = 1;
+        ver.localServices = Services.of(1);
         ver.fromAddr = new PeerAddress(TESTNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 3888);
         ver.fromAddr.setParent(ver);
         ver.receivingAddr = new PeerAddress(TESTNET, InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
@@ -110,7 +110,7 @@ public class VersionMessageTest {
         assertEquals(Instant.ofEpochSecond(23456), ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), ver2.clientVersion);
-        assertEquals(1, ver2.localServices);
+        assertEquals(1, ver2.localServices.bits());
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", ver2.fromAddr.getAddr().getHostAddress());
         assertEquals(3888, ver2.fromAddr.getPort());
         assertEquals("2002:db8:85a3:0:0:8a2e:370:7335", ver2.receivingAddr.getAddr().getHostAddress());

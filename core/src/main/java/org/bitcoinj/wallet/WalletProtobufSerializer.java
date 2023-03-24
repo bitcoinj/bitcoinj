@@ -26,6 +26,7 @@ import org.bitcoinj.core.LockTime;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.Services;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -387,7 +388,7 @@ public class WalletProtobufSerializer {
             Protos.PeerAddress proto = Protos.PeerAddress.newBuilder()
                     .setIpAddress(ByteString.copyFrom(address.getAddr().getAddress()))
                     .setPort(address.getPort())
-                    .setServices(address.getServices().longValue())
+                    .setServices(address.getServices().bits())
                     .build();
             confidenceBuilder.addBroadcastBy(proto);
         }
@@ -813,7 +814,7 @@ public class WalletProtobufSerializer {
                 throw new UnreadableWalletException("Peer IP address does not have the right length", e);
             }
             int port = proto.getPort();
-            BigInteger services = BigInteger.valueOf(proto.getServices());
+            Services services = Services.of(proto.getServices());
             PeerAddress address = new PeerAddress(params, ip, port, services);
             confidence.markBroadcastBy(address);
         }

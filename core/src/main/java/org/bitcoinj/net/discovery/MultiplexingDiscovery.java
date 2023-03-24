@@ -18,6 +18,7 @@
 package org.bitcoinj.net.discovery;
 
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
@@ -56,7 +57,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     /**
      * Builds a suitable set of peer discoveries. Will query them in parallel before producing a merged response.
      * @param params Network to use.
-     * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
+     * @param services Required services as a bitmask, e.g. {@link Services#NODE_NETWORK}.
      */
     public static MultiplexingDiscovery forServices(NetworkParameters params, long services) {
         return forServices(params, services, true, true);
@@ -65,7 +66,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     /**
      * Builds a suitable set of peer discoveries.
      * @param params Network to use.
-     * @param services Required services as a bitmask, e.g. {@link VersionMessage#NODE_NETWORK}.
+     * @param services Required services as a bitmask, e.g. {@link Services#NODE_NETWORK}.
      * @param parallelQueries When true, seeds are queried in parallel
      * @param shufflePeers When true, queried peers are shuffled
      */
