@@ -245,8 +245,8 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      */
     @Override
     public int hashCode() {
-        // Use the last 4 bytes, not the first 4 which are often zeros in Bitcoin.
-        return (int) ByteUtils.readUint32BE(bytes, LENGTH - (4 + 1));
+        // use the last 4 bytes, not the first 4 which are often zeros in Bitcoin
+        return ByteBuffer.wrap(bytes).getInt(LENGTH - Integer.BYTES);
     }
 
     @Override
