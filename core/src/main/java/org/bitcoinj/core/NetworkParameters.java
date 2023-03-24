@@ -308,6 +308,7 @@ public abstract class NetworkParameters {
      * First byte of a base58 encoded address. See {@link LegacyAddress}.
      * @return the header value
      */
+    @Deprecated
     public int getAddressHeader() {
         return addressHeader;
     }
@@ -316,6 +317,7 @@ public abstract class NetworkParameters {
      * First byte of a base58 encoded P2SH address.  P2SH addresses are defined as part of BIP0013.
      * @return the header value
      */
+    @Deprecated
     public int getP2SHHeader() {
         return p2shHeader;
     }
