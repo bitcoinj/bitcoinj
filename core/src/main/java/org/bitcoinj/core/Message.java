@@ -125,6 +125,12 @@ public abstract class Message {
         return stream.toByteArray();
     }
 
+    /** @deprecated use {@link #bitcoinSerialize()} */
+    @Deprecated
+    public byte[] unsafeBitcoinSerialize() {
+        return bitcoinSerialize();
+    }
+
     /**
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
