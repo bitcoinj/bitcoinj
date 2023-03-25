@@ -1,6 +1,9 @@
 before_script:
   - apt-get update
 
+after_script:
+  - gradle --version
+
 bullseye-jdk11:
   image: debian:bullseye-slim
   script:
