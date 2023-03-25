@@ -64,6 +64,7 @@ public class KeyChainGroupTest {
     private static final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
     private static final KeyCrypterScrypt KEY_CRYPTER = new KeyCrypterScrypt(2);
     private static final AesKey AES_KEY = KEY_CRYPTER.deriveKey("password");
+    private static final double LOW_FALSE_POSITIVE_RATE = 0.00001;
     private KeyChainGroup group;
     private DeterministicKey watchingAccountKey;
 
@@ -344,7 +345,7 @@ public class KeyChainGroupTest {
     public void bloom() {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = new ECKey();
-        BloomFilter filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, new Random().nextInt());
+        BloomFilter filter = group.getBloomFilter(group.getBloomFilterElementCount(), LOW_FALSE_POSITIVE_RATE, new Random().nextInt());
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key1.getPubKey()));
         assertFalse(filter.contains(key2.getPubKey()));
@@ -356,7 +357,7 @@ public class KeyChainGroupTest {
         // We ran ahead of the lookahead buffer.
         assertFalse(filter.contains(group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS).getPubKey()));
         group.importKeys(key2);
-        filter = group.getBloomFilter(group.getBloomFilterElementCount(), 0.001, new Random().nextInt());
+        filter = group.getBloomFilter(group.getBloomFilterElementCount(), LOW_FALSE_POSITIVE_RATE, new Random().nextInt());
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key1.getPubKey()));
         assertTrue(filter.contains(key2.getPubKey()));
@@ -387,7 +388,7 @@ public class KeyChainGroupTest {
         assertEquals(expected, group.getBloomFilterElementCount());
         Address address1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(expected, group.getBloomFilterElementCount());
-        BloomFilter filter = group.getBloomFilter(expected + 2, 0.001, new Random().nextInt());
+        BloomFilter filter = group.getBloomFilter(expected + 2, LOW_FALSE_POSITIVE_RATE, new Random().nextInt());
         assertTrue(filter.contains(address1.getHash()));
 
         Address address2 = group.freshAddress(KeyChain.KeyPurpose.CHANGE);
