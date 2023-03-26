@@ -68,18 +68,18 @@ public class LegacyAddressTest {
 
     @Test
     public void decoding() {
-        LegacyAddress a = LegacyAddress.fromBase58(TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        LegacyAddress a = LegacyAddress.fromBase58("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", TESTNET);
         assertEquals("fda79a24e50ff70ff42f7d89585da5bd19d9e5cc", ByteUtils.formatHex(a.getHash()));
 
-        LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        LegacyAddress b = LegacyAddress.fromBase58("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", MAINNET);
         assertEquals("4a22c3c4cbb31e4d03b15550636762bda0baf85a", ByteUtils.formatHex(b.getHash()));
     }
 
     @Test
     public void equalityOfEquivalentNetworks() {
-        LegacyAddress a = LegacyAddress.fromBase58(TESTNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        LegacyAddress b = LegacyAddress.fromBase58(SIGNET, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        LegacyAddress c = LegacyAddress.fromBase58(REGTEST, "n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
+        LegacyAddress a = LegacyAddress.fromBase58("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", TESTNET);
+        LegacyAddress b = LegacyAddress.fromBase58("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", SIGNET);
+        LegacyAddress c = LegacyAddress.fromBase58("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", REGTEST);
         assertEquals(a, b);
         assertEquals(b, c);
         assertEquals(a, c);
@@ -92,7 +92,7 @@ public class LegacyAddressTest {
     public void errorPaths() {
         // Check what happens if we try and decode garbage.
         try {
-            LegacyAddress.fromBase58(TESTNET, "this is not a valid address!");
+            LegacyAddress.fromBase58("this is not a valid address!", TESTNET);
             fail();
         } catch (AddressFormatException.WrongNetwork e) {
             fail();
@@ -102,7 +102,7 @@ public class LegacyAddressTest {
 
         // Check the empty case.
         try {
-            LegacyAddress.fromBase58(TESTNET, "");
+            LegacyAddress.fromBase58("", TESTNET);
             fail();
         } catch (AddressFormatException.WrongNetwork e) {
             fail();
@@ -112,7 +112,7 @@ public class LegacyAddressTest {
 
         // Check the case of a mismatched network.
         try {
-            LegacyAddress.fromBase58(TESTNET, "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            LegacyAddress.fromBase58("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", TESTNET);
             fail();
         } catch (AddressFormatException.WrongNetwork e) {
             // Success.
@@ -200,10 +200,10 @@ public class LegacyAddressTest {
     @Test
     public void p2shAddress() {
         // Test that we can construct P2SH addresses
-        LegacyAddress mainNetP2SHAddress = LegacyAddress.fromBase58(MAINNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        LegacyAddress mainNetP2SHAddress = LegacyAddress.fromBase58("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", MAINNET);
         assertEquals(mainNetP2SHAddress.getVersion(), NetworkParameters.of(MAINNET).getP2SHHeader());
         assertEquals(ScriptType.P2SH, mainNetP2SHAddress.getOutputScriptType());
-        LegacyAddress testNetP2SHAddress = LegacyAddress.fromBase58(TESTNET, "2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe");
+        LegacyAddress testNetP2SHAddress = LegacyAddress.fromBase58("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", TESTNET);
         assertEquals(testNetP2SHAddress.getVersion(), NetworkParameters.of(TESTNET).getP2SHHeader());
         assertEquals(ScriptType.P2SH, testNetP2SHAddress.getOutputScriptType());
 
@@ -235,13 +235,13 @@ public class LegacyAddressTest {
     @Test
     public void roundtripBase58() {
         String base58 = "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL";
-        assertEquals(base58, LegacyAddress.fromBase58(MAINNET, base58).toBase58());
+        assertEquals(base58, LegacyAddress.fromBase58(base58, MAINNET).toBase58());
     }
 
     @Test
     public void comparisonLessThan() {
-        LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
-        LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
+        LegacyAddress a = LegacyAddress.fromBase58("1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX", MAINNET);
+        LegacyAddress b = LegacyAddress.fromBase58("1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P", MAINNET);
 
         int result = a.compareTo(b);
         assertTrue(result < 0);
@@ -249,8 +249,8 @@ public class LegacyAddressTest {
 
     @Test
     public void comparisonGreaterThan() {
-        LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P");
-        LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX");
+        LegacyAddress a = LegacyAddress.fromBase58("1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P", MAINNET);
+        LegacyAddress b = LegacyAddress.fromBase58("1Dorian4RoXcnBv9hnQ4Y2C1an6NJ4UrjX", MAINNET);
 
         int result = a.compareTo(b);
         assertTrue(result > 0);
@@ -259,8 +259,8 @@ public class LegacyAddressTest {
     @Test
     public void comparisonNotEquals() {
         // These addresses only differ by version byte
-        LegacyAddress a = LegacyAddress.fromBase58(MAINNET, "14wivxvNTv9THhewPotsooizZawaWbEKE2");
-        LegacyAddress b = LegacyAddress.fromBase58(MAINNET, "35djrWQp1pTqNsMNWuZUES5vi7EJ74m9Eh");
+        LegacyAddress a = LegacyAddress.fromBase58("14wivxvNTv9THhewPotsooizZawaWbEKE2", MAINNET);
+        LegacyAddress b = LegacyAddress.fromBase58("35djrWQp1pTqNsMNWuZUES5vi7EJ74m9Eh", MAINNET);
 
         int result = a.compareTo(b);
         assertTrue(result != 0);
@@ -273,8 +273,8 @@ public class LegacyAddressTest {
         String line;
         while ((line = dataSetReader.readLine()) != null) {
             String addr[] = line.split(",");
-            LegacyAddress first = LegacyAddress.fromBase58(MAINNET, addr[0]);
-            LegacyAddress second = LegacyAddress.fromBase58(MAINNET, addr[1]);
+            LegacyAddress first = LegacyAddress.fromBase58(addr[0], MAINNET);
+            LegacyAddress second = LegacyAddress.fromBase58(addr[1], MAINNET);
             assertTrue(first.compareTo(second) < 0);
             assertTrue(first.toString().compareTo(second.toString()) < 0);
         }

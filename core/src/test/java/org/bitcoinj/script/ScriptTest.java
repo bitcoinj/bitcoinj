@@ -135,7 +135,7 @@ public class ScriptTest {
 
     @Test
     public void testP2SHOutputScript() {
-        Address p2shAddress = LegacyAddress.fromBase58(BitcoinNetwork.MAINNET, "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU");
+        Address p2shAddress = LegacyAddress.fromBase58("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", BitcoinNetwork.MAINNET);
         assertTrue(ScriptPattern.isP2SH(ScriptBuilder.createOutputScript(p2shAddress)));
     }
 
@@ -157,7 +157,7 @@ public class ScriptTest {
         Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(bytes));
         TransactionOutput output = transaction.getOutput(1);
         Transaction spendTx = new Transaction(TESTNET);
-        Address address = LegacyAddress.fromBase58(BitcoinNetwork.TESTNET, "n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H");
+        Address address = LegacyAddress.fromBase58("n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H", BitcoinNetwork.TESTNET);
         Script outputScript = ScriptBuilder.createOutputScript(address);
         spendTx.addOutput(output.getValue(), outputScript);
         spendTx.addInput(output);

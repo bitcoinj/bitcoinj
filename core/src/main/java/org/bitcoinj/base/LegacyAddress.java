@@ -56,7 +56,7 @@ public class LegacyAddress implements Address {
     public final boolean p2sh;
 
     /**
-     * Private constructor. Use {@link #fromBase58(Network, String)},
+     * Private constructor. Use {@link #fromBase58(String, Network)},
      * {@link #fromPubKeyHash(Network, byte[])}, {@link #fromScriptHash(Network, byte[])} or
      * {@link ECKey#toAddress(ScriptType, Network)}.
      *
@@ -169,7 +169,7 @@ public class LegacyAddress implements Address {
      *             if the given base58 doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
      *             if the given address is valid but for a different chain (eg testnet vs mainnet)
-     * @deprecated Use {@link #fromBase58(Network, String)}
+     * @deprecated Use {@link #fromBase58(String, Network)}
      */
     @Deprecated
     public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
@@ -183,12 +183,12 @@ public class LegacyAddress implements Address {
     /**
      * Construct a {@link LegacyAddress} from its base58 form.
      *
+     * @param base58  base58-encoded textual form of the address
      * @param network expected network this address is valid for
-     * @param base58 base58-encoded textual form of the address
-     * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
+     * @throws AddressFormatException              if the given base58 doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (eg testnet vs mainnet)
      */
-    public static LegacyAddress fromBase58(@Nonnull Network network, String base58)
+    public static LegacyAddress fromBase58(String base58, @Nonnull Network network)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;

@@ -99,7 +99,7 @@ public class DefaultAddressParser implements AddressParser {
     @Override
     public Address parseAddress(String addressString, Network network) throws AddressFormatException {
         try {
-            return LegacyAddress.fromBase58(network, addressString);
+            return LegacyAddress.fromBase58(addressString, network);
         } catch (AddressFormatException.WrongNetwork x) {
             throw x;
         } catch (AddressFormatException x) {
@@ -143,7 +143,7 @@ public class DefaultAddressParser implements AddressParser {
         return base58Networks.stream()
                 .filter(n -> version == n.legacyAddressHeader() || version == n.legacyP2SHHeader())
                 .findFirst()
-                .map(n -> LegacyAddress.fromBase58(n, base58))
+                .map(n -> LegacyAddress.fromBase58(base58, n))
                 .orElseThrow(() -> new AddressFormatException.InvalidPrefix("No network found for " + base58));
     }
 
