@@ -16,7 +16,6 @@
 
 package org.bitcoinj.walletfx.utils;
 
-import com.google.common.base.Throwables;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -30,6 +29,7 @@ import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -57,7 +57,7 @@ public class GuiUtils {
 
     public static void crashAlert(Throwable t) {
         t.printStackTrace();
-        Throwable rootCause = Throwables.getRootCause(t);
+        Throwable rootCause = findRootCause(t);
         Runnable r = () -> {
             runAlert((stage, controller) -> controller.crashAlert(stage, rootCause.toString()));
             Platform.exit();
@@ -70,7 +70,7 @@ public class GuiUtils {
 
     /** Show a GUI alert box for any unhandled exceptions that propagate out of this thread. */
     public static void handleCrashesOnThisThread() {
-        Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> GuiUtils.crashAlert(Throwables.getRootCause(exception)));
+        Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> GuiUtils.crashAlert(findRootCause(exception)));
     }
 
     public static void informationalAlert(String message, String details, Object... args) {
@@ -180,5 +180,13 @@ public class GuiUtils {
 
     public static void checkGuiThread() {
         checkState(Platform.isFxApplicationThread());
+    }
+
+    private static Throwable findRootCause(Throwable throwable) {
+        Throwable rootCause = Objects.requireNonNull(throwable);
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause;
     }
 }
