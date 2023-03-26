@@ -78,7 +78,7 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void testP2SHOutputScript() {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
-        Address P2SHAddress = LegacyAddress.fromBase58(BitcoinNetwork.MAINNET, P2SHAddressString);
+        Address P2SHAddress = LegacyAddress.fromBase58(P2SHAddressString, BitcoinNetwork.MAINNET);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
         Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.COIN, script);

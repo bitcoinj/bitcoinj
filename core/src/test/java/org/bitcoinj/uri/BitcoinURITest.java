@@ -89,7 +89,7 @@ public class BitcoinURITest {
         Networks.register(alternativeParameters);
         try {
             assertEquals("mockcoin:" + mockNetGoodAddress + "?amount=12.34&label=Hello&message=AMessage",
-                    BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(alternativeParameters.network(), mockNetGoodAddress), parseCoin("12.34"), "Hello", "AMessage"));
+                    BitcoinURI.convertToBitcoinURI(LegacyAddress.fromBase58(mockNetGoodAddress, alternativeParameters.network()), parseCoin("12.34"), "Hello", "AMessage"));
         } finally {
             Networks.unregister(alternativeParameters);
         }

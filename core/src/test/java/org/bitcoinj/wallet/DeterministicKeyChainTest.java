@@ -95,7 +95,7 @@ public class DeterministicKeyChainTest {
         ECKey key2 = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertFalse(key2.isPubKeyOnly());
 
-        final Address address = LegacyAddress.fromBase58(TESTNET, "n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV");
+        final Address address = LegacyAddress.fromBase58("n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV", TESTNET);
         assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
         assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
         assertEquals(key1, chain.findKeyFromPubHash(address.getHash()));
@@ -128,7 +128,7 @@ public class DeterministicKeyChainTest {
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = LegacyAddress.fromBase58(TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        final Address address = LegacyAddress.fromBase58("n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X", TESTNET);
         assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
         assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
         assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
@@ -149,7 +149,7 @@ public class DeterministicKeyChainTest {
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
 
-        final Address address = LegacyAddress.fromBase58(TESTNET, "n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X");
+        final Address address = LegacyAddress.fromBase58("n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X", TESTNET);
         assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
 
         DeterministicKey watching = chain1.getWatchingKey();
