@@ -19,7 +19,6 @@ package wallettemplate;
 import javafx.application.Platform;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -38,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -124,12 +124,20 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
 
     // Writes the given time to the wallet as a tag so we can find it again in this class.
     public static void setTargetTime(Duration targetTime) {
-        ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
+        ByteString bytes = ByteString.copyFrom(longToByteArray(targetTime.toMillis()));
         WalletApplication.instance().walletAppKit().wallet().setTag(TAG, bytes);
     }
 
     // Reads target time or throws if not set yet (should never happen).
     public static Duration getTargetTime() throws IllegalArgumentException {
-        return Duration.ofMillis(Longs.fromByteArray(WalletApplication.instance().walletAppKit().wallet().getTag(TAG).toByteArray()));
+        return Duration.ofMillis(longFromByteArray(WalletApplication.instance().walletAppKit().wallet().getTag(TAG).toByteArray()));
+    }
+
+    private static byte[] longToByteArray(long val) {
+        return ByteBuffer.allocate(8).putLong(val).array();
+    }
+
+    private static long longFromByteArray(byte[] bytes) {
+        return ByteBuffer.wrap(bytes).getLong();
     }
 }
