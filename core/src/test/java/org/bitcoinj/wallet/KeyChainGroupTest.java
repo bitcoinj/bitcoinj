@@ -110,7 +110,7 @@ public class KeyChainGroupTest {
         DeterministicSeed seed = DeterministicSeed.ofEntropy(entropy, "", Instant.ofEpochSecond(MnemonicCode.BIP39_STANDARDISATION_TIME_SECS));
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .seed(seed)
-                .followingKeys(watchingAccountKey)
+                .followingKey(watchingAccountKey)
                 .threshold(2).build();
         return chain;
     }
