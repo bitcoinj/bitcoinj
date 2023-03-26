@@ -211,7 +211,7 @@ public class Script {
     private static final BigInteger LOCKTIME_THRESHOLD_BIG = BigInteger.valueOf(LockTime.THRESHOLD);
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
-    public static final long MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
+    public static final int MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
     private static final int MAX_OPS_PER_SCRIPT = 201;
     private static final int MAX_STACK_SIZE = 1000;
     private static final int MAX_PUBKEYS_PER_MULTISIG = 20;
