@@ -17,7 +17,6 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
@@ -30,7 +29,6 @@ import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
-import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
@@ -112,29 +110,14 @@ public class ForwardingService implements Closeable {
         this.network = network;
         listener = this::coinsReceivedListener;
         // Start up a basic app using a class that automates some boilerplate.
-        kit = new WalletAppKit(network,
-                ScriptType.P2WPKH,
-                KeyChainGroupStructure.BIP32,
-                directory,
-                getPrefix(network));
+        kit = WalletAppKit.launch(network, directory, getPrefix(network), MAX_CONNECTIONS);
     }
 
     /**
-     * Start the WalletAppKit
+     * Start the ForwardingService
      * @return The receiving address for the forwarding wallet
      */
     public Address start() {
-        if (network == BitcoinNetwork.REGTEST) {
-            // Regression test mode is designed for testing and development only, so there's no public network for it.
-            // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
-            kit.connectToLocalHost();
-        }
-
-        kit.setBlockingStartup(false);  // Don't wait for blockchain synchronization before entering RUNNING state
-        kit.startAsync();               // Connect to the network and start downloading transactions
-        kit.awaitRunning();             // Wait for the service to reach the RUNNING state
-        kit.peerGroup().setMaxConnections(MAX_CONNECTIONS);
-
         // Start listening and forwarding
         kit.wallet().addCoinsReceivedEventListener(listener);
         return kit.wallet().currentReceiveAddress();

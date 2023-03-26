@@ -18,12 +18,10 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 
 import java.io.File;
@@ -38,11 +36,9 @@ import static org.bitcoinj.base.Coin.*;
 public class DoubleSpend {
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init();
-        WalletAppKit kit = new WalletAppKit(BitcoinNetwork.REGTEST, ScriptType.P2WPKH, KeyChainGroupStructure.BIP32, new File("."), "doublespend");
-        kit.connectToLocalHost();
-        kit.setAutoSave(false);
-        kit.startAsync();
-        kit.awaitRunning();
+        WalletAppKit kit = WalletAppKit.launch(BitcoinNetwork.REGTEST, new File("."), "doublespend", (k) ->
+            k.setAutoSave(false)
+        );
 
         System.out.println(kit.wallet());
 

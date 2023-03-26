@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
@@ -149,6 +150,77 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         this.structure = Objects.requireNonNull(structure);
         this.directory = Objects.requireNonNull(directory);
         this.filePrefix = Objects.requireNonNull(filePrefix);
+    }
+
+    /**
+     * Launch an instance of WalletAppKit with asynchronous startup. Wait until the PeerGroup is initialized.
+     *
+     * @param network The network the wallet connects to
+     * @param directory The directory for creating {@code .wallet} and {@code .spvchain} files
+     * @param filePrefix The base name for the {@code .wallet} and {@code .spvchain} files
+     * @return the instance
+     */
+    public static WalletAppKit launch(BitcoinNetwork network, File directory, String filePrefix) {
+        return WalletAppKit.launch(network, directory, filePrefix,0);
+    }
+
+    /**
+     * Launch an instance of WalletAppKit with asynchronous startup. Wait until the PeerGroup is initialized.
+     *
+     * @param network The network the wallet connects to
+     * @param directory The directory for creating {@code .wallet} and {@code .spvchain} files
+     * @param filePrefix The base name for the {@code .wallet} and {@code .spvchain} files
+     * @param configurer Callback to allow configuring the kit before it is started
+     * @return the instance
+     */
+    public static WalletAppKit launch(BitcoinNetwork network, File directory, String filePrefix, Consumer<WalletAppKit> configurer) {
+        return WalletAppKit.launch(network, directory, filePrefix, configurer, 0);
+    }
+
+    /**
+     * Launch an instance of WalletAppKit with asynchronous startup. Wait until the PeerGroup is initialized.
+     *
+     * @param network The network the wallet connects to
+     * @param directory The directory for creating {@code .wallet} and {@code .spvchain} files
+     * @param filePrefix The base name for the {@code .wallet} and {@code .spvchain} files
+     * @param maxConnections maximum number of peer connections.
+     * @return the instance
+     */
+    public static WalletAppKit launch(BitcoinNetwork network, File directory, String filePrefix, int maxConnections) {
+        return WalletAppKit.launch(network, directory, filePrefix, (c) -> {}, 0);
+    }
+
+    /**
+     * Launch an instance of WalletAppKit with asynchronous startup. Wait until the PeerGroup is initialized.
+     *
+     * @param network The network the wallet connects to
+     * @param directory The directory for creating {@code .wallet} and {@code .spvchain} files
+     * @param filePrefix The base name for the {@code .wallet} and {@code .spvchain} files
+     * @param configurer Callback to allow configuring the kit before it is started
+     * @param maxConnections maximum number of peer connections.
+     * @return the instance
+     */
+    public static WalletAppKit launch(BitcoinNetwork network, File directory, String filePrefix, Consumer<WalletAppKit> configurer, int maxConnections) {
+        WalletAppKit kit = new WalletAppKit(network,
+                ScriptType.P2WPKH,
+                KeyChainGroupStructure.BIP32,
+                directory,
+                filePrefix);
+
+        if (network == BitcoinNetwork.REGTEST) {
+            // Regression test mode is designed for testing and development only, so there's no public network for it.
+            // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
+            kit.connectToLocalHost();
+        }
+
+        kit.setBlockingStartup(false);  // Don't wait for blockchain synchronization before entering RUNNING state
+        configurer.accept(kit);         // Call configurer before startup
+        kit.startAsync();               // Connect to the network and start downloading transactions
+        kit.awaitRunning();             // Wait for the service to reach the RUNNING state
+        if (maxConnections > 0) {
+            kit.peerGroup().setMaxConnections(maxConnections);
+        }
+        return kit;
     }
 
     /** Will only connect to the given addresses. Cannot be called after startup. */
