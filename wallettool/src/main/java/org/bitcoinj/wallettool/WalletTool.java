@@ -715,7 +715,6 @@ public class WalletTool implements Callable<Integer> {
             } catch (ScriptException e) {
                 throw new RuntimeException(e);
             }
-            t = req.tx;   // Not strictly required today.
             System.out.println(t.getTxId());
             if (offline) {
                 wallet.commitTx(t);
