@@ -54,7 +54,7 @@ public class SendRequest {
      * key, otherwise the behavior of {@link Wallet#completeTx(SendRequest)} is undefined (likely
      * RuntimeException).</p>
      */
-    public Transaction tx;
+    public final Transaction tx;
 
     /**
      * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
@@ -159,7 +159,9 @@ public class SendRequest {
     // Tracks if this has been passed to wallet.completeTx already: just a safety check.
     boolean completed;
 
-    private SendRequest() {}
+    private SendRequest(Transaction transaction) {
+        tx = transaction;
+    }
 
     /**
      * <p>Creates a new SendRequest to the given address for the given value.</p>
@@ -169,12 +171,11 @@ public class SendRequest {
      * rejected by the network.</p>
      */
     public static SendRequest to(Address destination, Coin value) {
-        SendRequest req = new SendRequest();
         final NetworkParameters parameters = NetworkParameters.of(destination.network());
         Objects.requireNonNull(parameters, "Address is for an unknown network");
-        req.tx = new Transaction(parameters);
-        req.tx.addOutput(value, destination);
-        return req;
+        Transaction tx = new Transaction(parameters);
+        tx.addOutput(value, destination);
+        return new SendRequest(tx);
     }
 
     /**
@@ -186,25 +187,22 @@ public class SendRequest {
      * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
      */
     public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
-        SendRequest req = new SendRequest();
-        req.tx = new Transaction(params);
-        req.tx.addOutput(value, destination);
-        return req;
+        Transaction tx = new Transaction(params);
+        tx.addOutput(value, destination);
+        return new SendRequest(tx);
     }
 
     /** Simply wraps a pre-built incomplete transaction provided by you. */
     public static SendRequest forTx(Transaction tx) {
-        SendRequest req = new SendRequest();
-        req.tx = tx;
-        return req;
+        return new SendRequest(tx);
     }
 
     public static SendRequest emptyWallet(Address destination) {
-        SendRequest req = new SendRequest();
         final NetworkParameters parameters = NetworkParameters.of(destination.network());
         Objects.requireNonNull(parameters, "Address is for an unknown network");
-        req.tx = new Transaction(parameters);
-        req.tx.addOutput(Coin.ZERO, destination);
+        Transaction tx = new Transaction(parameters);
+        tx.addOutput(Coin.ZERO, destination);
+        SendRequest req = new SendRequest(tx);
         req.emptyWallet = true;
         return req;
     }
