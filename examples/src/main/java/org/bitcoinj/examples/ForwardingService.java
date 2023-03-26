@@ -156,7 +156,7 @@ public class ForwardingService implements AutoCloseable {
         if (kit.isRunning()) {
             kit.wallet().removeCoinsReceivedEventListener(listener);
         }
-        kit.stopAsync();
+        kit.close();
     }
 
     /**

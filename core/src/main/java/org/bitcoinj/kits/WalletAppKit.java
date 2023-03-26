@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +85,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * if anything goes wrong during startup - you should probably handle it and use {@link Exception#getCause()} to figure
  * out what went wrong more precisely. Same thing if you just use the {@link #startAsync()} method.</p>
  */
-public class WalletAppKit extends AbstractIdleService {
+public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
     protected final BitcoinNetwork network;
@@ -502,6 +503,11 @@ public class WalletAppKit extends AbstractIdleService {
         } catch (BlockStoreException e) {
             throw new IOException(e);
         }
+    }
+
+    @Override
+    public void close() {
+        stopAsync();
     }
 
     public BitcoinNetwork network() {
