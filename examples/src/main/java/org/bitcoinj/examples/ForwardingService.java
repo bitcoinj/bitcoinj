@@ -163,7 +163,7 @@ public class ForwardingService implements Closeable {
      * Implement the {@link WalletCoinsReceivedEventListener} functional interface. We could have {@link ForwardingService}
      * implement {@link WalletCoinsReceivedEventListener} with the {@code implements} keyword, but with JDK 8+ this method
      * can be private with any name and be referenced with a method reference.
-     * @param wallet The active wallet (unused)
+     * @param wallet The active wallet
      * @param incomingTx the received transaction
      * @param prevBalance wallet balance before this transaction (unused)
      * @param newBalance wallet balance after this transaction (unused)
@@ -171,7 +171,7 @@ public class ForwardingService implements Closeable {
     private void coinsReceivedListener(Wallet wallet, Transaction incomingTx, Coin prevBalance, Coin newBalance) {
         // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
         // The transaction "incomingTx" can either be pending, or included into a block (we didn't see the broadcast).
-        Coin value = incomingTx.getValueSentToMe(kit.wallet());
+        Coin value = incomingTx.getValueSentToMe(wallet);
         System.out.printf("Received tx for %s : %s\n", value.toFriendlyString(), incomingTx);
         System.out.println("Transaction will be forwarded after it confirms.");
         System.out.println("Waiting for confirmation...");
