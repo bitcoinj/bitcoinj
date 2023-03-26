@@ -156,7 +156,7 @@ public class ForwardingService implements Closeable {
         if (kit.isRunning()) {
             kit.wallet().removeCoinsReceivedEventListener(listener);
         }
-        kit.stopAsync();
+        kit.close();
     }
 
     /**
