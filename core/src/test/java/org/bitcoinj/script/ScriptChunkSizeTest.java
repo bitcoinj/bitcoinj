@@ -58,11 +58,11 @@ public class ScriptChunkSizeTest {
         for (int i = 0; i < 0xff + 1; i++)
             pushData1.add(new ScriptChunk(OP_PUSHDATA1, randomBytes(i)));
 
-        ArrayList<ScriptChunk> pushData2 = new ArrayList<>((int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1);
+        ArrayList<ScriptChunk> pushData2 = new ArrayList<>(Script.MAX_SCRIPT_ELEMENT_SIZE + 1);
         for (int i = 0; i < Script.MAX_SCRIPT_ELEMENT_SIZE + 1; i++)
             pushData2.add(new ScriptChunk(OP_PUSHDATA2, randomBytes(i)));
 
-        ArrayList<ScriptChunk> pushData4 = new ArrayList<>((int)Script.MAX_SCRIPT_ELEMENT_SIZE + 1);
+        ArrayList<ScriptChunk> pushData4 = new ArrayList<>(Script.MAX_SCRIPT_ELEMENT_SIZE + 1);
         for (int i = 0; i < Script.MAX_SCRIPT_ELEMENT_SIZE + 1; i++)
             pushData4.add(new ScriptChunk(OP_PUSHDATA4, randomBytes(i)));
 
