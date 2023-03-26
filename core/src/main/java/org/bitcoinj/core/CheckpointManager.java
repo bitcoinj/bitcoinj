@@ -240,7 +240,7 @@ public class CheckpointManager {
         checkArgument(!(store instanceof FullPrunedBlockStore), () ->
                 "you cannot use checkpointing with a full store");
 
-        time = time.minus(7, ChronoUnit.WEEKS);
+        time = time.minus(7, ChronoUnit.DAYS);
 
         log.info("Attempting to initialize a new block store with a checkpoint for time {} ({})", time.getEpochSecond(),
                 TimeUtils.dateTimeFormat(time));
