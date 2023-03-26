@@ -38,6 +38,7 @@ import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
+import java.io.Closeable;
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
@@ -48,7 +49,7 @@ import static java.util.stream.Collectors.toList;
  * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
  * sends them onwards to an address given on the command line.
  */
-public class ForwardingService implements AutoCloseable {
+public class ForwardingService implements Closeable {
     static final String USAGE = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
     static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
@@ -142,8 +143,7 @@ public class ForwardingService implements AutoCloseable {
     }
 
     /**
-     * Close the service. {@link AutoCloseable} will be triggered if an unhandled exception occurs within
-     * a <i>try-with-resources</i> block.
+     * Close the service.
      * <p>
      * Note that {@link WalletAppKit#setAutoStop(boolean)} is set by default and installs a shutdown handler
      * via {@link Runtime#addShutdownHook(Thread)} so we do not need to worry about explicitly shutting down
