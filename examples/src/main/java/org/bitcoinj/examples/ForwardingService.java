@@ -258,12 +258,12 @@ public class ForwardingService implements AutoCloseable {
      * <p>
      * This is using the idea of partial function application to create a 2-argument function for coin selection
      * with a third, fixed argument of the transaction id.
-     * @param forwardTxId The parent transaction hash
+     * @param parentTxId The parent transaction hash
      * @return a coin selector
      */
-    static CoinSelector forwardingCoinSelector(Sha256Hash forwardTxId) {
+    static CoinSelector forwardingCoinSelector(Sha256Hash parentTxId) {
         return (target, candidates) -> candidates.stream()
-                .filter(output -> output.getParentTransactionHash().equals(forwardTxId))
+                .filter(output -> output.getParentTransactionHash().equals(parentTxId))
                 .collect(collectingAndThen(toList(), CoinSelection::new));
     }
 }
