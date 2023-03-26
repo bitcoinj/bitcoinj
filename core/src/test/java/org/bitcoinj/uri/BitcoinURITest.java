@@ -104,7 +104,7 @@ public class BitcoinURITest {
 
     @Test
     public void testGood_legacy() throws BitcoinURIParseException {
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS, MAINNET);
         assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
@@ -113,7 +113,7 @@ public class BitcoinURITest {
 
     @Test
     public void testGood_uppercaseScheme() throws BitcoinURIParseException {
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME.toUpperCase(Locale.US) + ":" + MAINNET_GOOD_ADDRESS);
+        testObject = new BitcoinURI(BITCOIN_SCHEME.toUpperCase(Locale.US) + ":" + MAINNET_GOOD_ADDRESS, MAINNET);
         assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
@@ -122,7 +122,7 @@ public class BitcoinURITest {
 
     @Test
     public void testGood_segwit() throws BitcoinURIParseException {
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_SEGWIT_ADDRESS);
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_SEGWIT_ADDRESS, MAINNET);
         assertEquals(MAINNET_GOOD_SEGWIT_ADDRESS, testObject.getAddress().toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
@@ -134,7 +134,7 @@ public class BitcoinURITest {
     @Test
     public void testBad_Scheme() {
         try {
-            testObject = new BitcoinURI(MAINNET, "blimpcoin:" + MAINNET_GOOD_ADDRESS);
+            testObject = new BitcoinURI("blimpcoin:" + MAINNET_GOOD_ADDRESS, MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
         }
@@ -147,14 +147,14 @@ public class BitcoinURITest {
     public void testBad_BadSyntax() {
         // Various illegal characters
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + "|" + MAINNET_GOOD_ADDRESS);
+            testObject = new BitcoinURI(BITCOIN_SCHEME + "|" + MAINNET_GOOD_ADDRESS, MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad URI syntax"));
         }
 
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "\\");
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "\\", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad URI syntax"));
@@ -162,7 +162,7 @@ public class BitcoinURITest {
 
         // Separator without field
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":");
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad URI syntax"));
@@ -175,7 +175,7 @@ public class BitcoinURITest {
     @Test
     public void testBad_Address() {
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME);
+            testObject = new BitcoinURI(BITCOIN_SCHEME, MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
         }
@@ -187,7 +187,7 @@ public class BitcoinURITest {
     @Test
     public void testBad_IncorrectAddressType() {
         try {
-            testObject = new BitcoinURI(TESTNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS);
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS, TESTNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("Bad address"));
@@ -203,18 +203,18 @@ public class BitcoinURITest {
     @Test
     public void testGood_Amount() throws BitcoinURIParseException {
         // Test the decimal parsing
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=6543210.12345678");
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=6543210.12345678", MAINNET);
         assertEquals("654321012345678", testObject.getAmount().toString());
 
         // Test the decimal parsing
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=.12345678");
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=.12345678", MAINNET);
         assertEquals("12345678", testObject.getAmount().toString());
 
         // Test the integer parsing
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=6543210");
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=6543210", MAINNET);
         assertEquals("654321000000000", testObject.getAmount().toString());
     }
 
@@ -226,8 +226,8 @@ public class BitcoinURITest {
      */
     @Test
     public void testGood_Label() throws BitcoinURIParseException {
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?label=Hello%20World");
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?label=Hello%20World", MAINNET);
         assertEquals("Hello World", testObject.getLabel());
     }
 
@@ -241,8 +241,8 @@ public class BitcoinURITest {
     public void testGood_LabelWithAmpersandAndPlus() throws BitcoinURIParseException {
         String testString = "Hello Earth & Mars + Venus";
         String encodedLabel = BitcoinURI.encodeURLString(testString);
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
-                + encodedLabel);
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
+                + encodedLabel, MAINNET);
         assertEquals(testString, testObject.getLabel());
     }
 
@@ -257,8 +257,8 @@ public class BitcoinURITest {
         // Moscow in Russian in Cyrillic
         String moscowString = "\u041c\u043e\u0441\u043a\u0432\u0430";
         String encodedLabel = BitcoinURI.encodeURLString(moscowString); 
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
-                + encodedLabel);
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "?label="
+                + encodedLabel, MAINNET);
         assertEquals(moscowString, testObject.getLabel());
     }
 
@@ -270,8 +270,8 @@ public class BitcoinURITest {
      */
     @Test
     public void testGood_Message() throws BitcoinURIParseException {
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?message=Hello%20World");
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?message=Hello%20World", MAINNET);
         assertEquals("Hello World", testObject.getMessage());
     }
 
@@ -283,8 +283,8 @@ public class BitcoinURITest {
      */
     @Test
     public void testGood_Combinations() throws BitcoinURIParseException {
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=6543210&label=Hello%20World&message=Be%20well");
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=6543210&label=Hello%20World&message=Be%20well", MAINNET);
         assertEquals(
                 "BitcoinURI['amount'='654321000000000','label'='Hello World','message'='Be well','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']",
                 testObject.toString());
@@ -297,8 +297,8 @@ public class BitcoinURITest {
     public void testBad_Amount() {
         // Missing
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?amount=");
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                    + "?amount=", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("amount"));
@@ -306,8 +306,8 @@ public class BitcoinURITest {
 
         // Non-decimal (BIP 21)
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?amount=12X4");
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                    + "?amount=12X4", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("amount"));
@@ -316,14 +316,14 @@ public class BitcoinURITest {
 
     @Test
     public void testEmpty_Label() throws BitcoinURIParseException {
-        assertNull(new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?label=").getLabel());
+        assertNull(new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?label=", MAINNET).getLabel());
     }
 
     @Test
     public void testEmpty_Message() throws BitcoinURIParseException {
-        assertNull(new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?message=").getMessage());
+        assertNull(new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?message=", MAINNET).getMessage());
     }
 
     /**
@@ -332,8 +332,8 @@ public class BitcoinURITest {
     @Test
     public void testBad_Duplicated() {
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?address=aardvark");
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                    + "?address=aardvark", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("address"));
@@ -342,8 +342,8 @@ public class BitcoinURITest {
 
     @Test
     public void testGood_ManyEquals() throws BitcoinURIParseException {
-        assertEquals("aardvark=zebra", new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":"
-                + MAINNET_GOOD_ADDRESS + "?label=aardvark=zebra").getLabel());
+        assertEquals("aardvark=zebra", new BitcoinURI(BITCOIN_SCHEME + ":"
+                + MAINNET_GOOD_ADDRESS + "?label=aardvark=zebra", MAINNET).getLabel());
     }
     
     /**
@@ -355,16 +355,16 @@ public class BitcoinURITest {
     @Test
     public void testUnknown() throws BitcoinURIParseException {
         // Unknown not required field
-        testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?aardvark=true");
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?aardvark=true", MAINNET);
         assertEquals("BitcoinURI['aardvark'='true','address'='1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH']", testObject.toString());
 
         assertEquals("true", testObject.getParameterByName("aardvark"));
 
         // Unknown not required field (isolated)
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?aardvark");
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                    + "?aardvark", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("no separator"));
@@ -372,8 +372,8 @@ public class BitcoinURITest {
 
         // Unknown and required field
         try {
-            testObject = new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                    + "?req-aardvark=true");
+            testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                    + "?req-aardvark=true", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
             assertTrue(e.getMessage().contains("req-aardvark"));
@@ -391,26 +391,26 @@ public class BitcoinURITest {
 
     @Test(expected = BitcoinURIParseException.class)
     public void testBad_AmountTooPrecise() throws BitcoinURIParseException {
-        new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=0.123456789");
+        new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=0.123456789", MAINNET);
     }
 
     @Test(expected = BitcoinURIParseException.class)
     public void testBad_NegativeAmount() throws BitcoinURIParseException {
-        new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=-1");
+        new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=-1", MAINNET);
     }
 
     @Test(expected = BitcoinURIParseException.class)
     public void testBad_TooLargeAmount() throws BitcoinURIParseException {
-        new BitcoinURI(MAINNET, BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=100000000");
+        new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=100000000", MAINNET);
     }
 
     @Test
     public void testPaymentProtocolReq() throws Exception {
         // Non-backwards compatible form ...
-        BitcoinURI uri = new BitcoinURI(TESTNET, "bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9");
+        BitcoinURI uri = new BitcoinURI("bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9", TESTNET);
         assertEquals("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9", uri.getPaymentRequestUrl());
         assertEquals(Collections.singletonList("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9"),
                 uri.getPaymentRequestUrls());
@@ -419,15 +419,14 @@ public class BitcoinURITest {
 
     @Test
     public void testMultiplePaymentProtocolReq() throws Exception {
-        BitcoinURI uri = new BitcoinURI(MAINNET,
-                "bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin&r1=bt:112233445566");
+        BitcoinURI uri = new BitcoinURI("bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin&r1=bt:112233445566", MAINNET);
         assertEquals(Arrays.asList("bt:112233445566", "https://bitcoincore.org/~gavin"), uri.getPaymentRequestUrls());
         assertEquals("https://bitcoincore.org/~gavin", uri.getPaymentRequestUrl());
     }
 
     @Test
     public void testNoPaymentProtocolReq() throws Exception {
-        BitcoinURI uri = new BitcoinURI(MAINNET, "bitcoin:" + MAINNET_GOOD_ADDRESS);
+        BitcoinURI uri = new BitcoinURI("bitcoin:" + MAINNET_GOOD_ADDRESS, MAINNET);
         assertNull(uri.getPaymentRequestUrl());
         assertEquals(Collections.emptyList(), uri.getPaymentRequestUrls());
         assertNotNull(uri.getAddress());
@@ -435,8 +434,7 @@ public class BitcoinURITest {
 
     @Test
     public void testUnescapedPaymentProtocolReq() throws Exception {
-        BitcoinURI uri = new BitcoinURI(TESTNET,
-                "bitcoin:?r=https://merchant.com/pay.php?h%3D2a8628fc2fbe");
+        BitcoinURI uri = new BitcoinURI("bitcoin:?r=https://merchant.com/pay.php?h%3D2a8628fc2fbe", TESTNET);
         assertEquals("https://merchant.com/pay.php?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
         assertEquals(Collections.singletonList("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
         assertNull(uri.getAddress());
