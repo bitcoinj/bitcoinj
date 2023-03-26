@@ -156,7 +156,7 @@ public class ForwardingService implements AutoCloseable {
      * Implement the {@link WalletCoinsReceivedEventListener} functional interface. We could have {@link ForwardingService}
      * implement {@link WalletCoinsReceivedEventListener} with the {@code implements} keyword, but with JDK 8+ this method
      * can be private with any name and be referenced with a method reference.
-     * @param wallet The active wallet (unused)
+     * @param wallet The active wallet
      * @param incomingTx the received transaction
      * @param prevBalance wallet balance before this transaction (unused)
      * @param newBalance wallet balance after this transaction (unused)
@@ -164,11 +164,11 @@ public class ForwardingService implements AutoCloseable {
     private void coinsReceivedListener(Wallet wallet, Transaction incomingTx, Coin prevBalance, Coin newBalance) {
         // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
         // The transaction "incomingTx" can either be pending, or included into a block (we didn't see the broadcast).
-        Coin value = incomingTx.getValueSentToMe(kit.wallet());
+        Coin value = incomingTx.getValueSentToMe(wallet);
         System.out.printf("Received tx for %s : %s\n", value.toFriendlyString(), incomingTx);
         System.out.println("Transaction will be forwarded after it confirms.");
         System.out.println("Waiting for confirmation...");
-        kit.wallet().waitForConfirmations(incomingTx, REQUIRED_CONFIRMATIONS)
+        wallet.waitForConfirmations(incomingTx, REQUIRED_CONFIRMATIONS)
             .thenCompose(confidence -> {
                 // Required confirmations received, now compose a call to broadcast the forwarding transaction
                 System.out.printf("Incoming tx has received %d confirmations.\n", confidence.getDepthInBlocks());
@@ -176,7 +176,7 @@ public class ForwardingService implements AutoCloseable {
                 SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
                 sendRequest.coinSelector = forwardingCoinSelector(incomingTx.getTxId());
                 System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
-                return kit.wallet().sendTransaction(sendRequest);
+                return wallet.sendTransaction(sendRequest);
             })
             .thenCompose(broadcast -> {
                 System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
