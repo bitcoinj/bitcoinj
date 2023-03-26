@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.crypto.AesKey;
@@ -32,6 +31,7 @@ import org.bitcoinj.script.ScriptBuilder;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,13 +71,25 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         protected Builder() {
         }
 
+        public T followingKey(DeterministicKey followingKey) {
+            this.followingKeys = Collections.singletonList(followingKey);
+            return self();
+        }
+
         public T followingKeys(List<DeterministicKey> followingKeys) {
             this.followingKeys = followingKeys;
             return self();
         }
 
+        /**
+         * @deprecated Merge the elements and call {@link #followingKeys(List)}
+         */
+        @Deprecated
         public T followingKeys(DeterministicKey followingKey, DeterministicKey ...followingKeys) {
-            this.followingKeys = Lists.asList(followingKey, followingKeys);
+            List<DeterministicKey> tempList = new ArrayList<>();
+            tempList.add(followingKey);
+            tempList.addAll(Arrays.asList(followingKeys));
+            this.followingKeys = tempList;
             return self();
         }
 

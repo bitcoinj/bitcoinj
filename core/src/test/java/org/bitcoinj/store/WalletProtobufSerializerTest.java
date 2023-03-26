@@ -370,7 +370,7 @@ public class WalletProtobufSerializerTest {
         DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58(TESTNET.network()), TESTNET.network());
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())
-                .followingKeys(partnerKey)
+                .followingKey(partnerKey)
                 .threshold(2).build();
         myWallet.addAndActivateHDChain(chain);
 

@@ -3325,7 +3325,7 @@ public class WalletTest extends TestWithWallet {
         wallet.addTransactionSigner(signer);
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())
-                .followingKeys(partnerKey)
+                .followingKey(partnerKey)
                 .build();
         wallet.addAndActivateHDChain(chain);
 
