@@ -218,6 +218,15 @@ public class TransactionBroadcast {
     }
 
     /**
+     * Wait for confirmation the transaction has been sent to a remote peer. (Or at least buffered to be sent to
+     * a peer.)
+     * @return A future that completes when the message has been relayed by the appropriate number of remote peers
+     */
+    public CompletableFuture<TransactionBroadcast> awaitSent() {
+        return sentFuture;
+    }
+
+    /**
      * If you migrate to {@link #broadcastAndAwaitRelay()} and need a {@link CompletableFuture} that returns
      *  {@link Transaction} you can use:
      * <pre>{@code
