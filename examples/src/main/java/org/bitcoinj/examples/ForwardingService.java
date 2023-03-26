@@ -91,10 +91,10 @@ public class ForwardingService implements AutoCloseable {
         // Create the Service (and WalletKit)
         try (ForwardingService forwardingService = new ForwardingService(directory, address, network)) {
             // Start the Service (and WalletKit)
-            forwardingService.start();
+            Address receivingAddress = forwardingService.start();
 
             // After we start listening, we can tell the user the receiving address
-            System.out.printf("Waiting to receive coins on: %s\n", forwardingService.receivingAddress());
+            System.out.printf("Waiting to receive coins on: %s\n", receivingAddress);
             System.out.println("Press Ctrl-C to quit.");
 
             try {
@@ -124,8 +124,9 @@ public class ForwardingService implements AutoCloseable {
 
     /**
      * Start the WalletAppKit
+     * @return The receiving address for the forwarding wallet
      */
-    public void start() {
+    public Address start() {
         if (network == BitcoinNetwork.REGTEST) {
             // Regression test mode is designed for testing and development only, so there's no public network for it.
             // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
@@ -139,6 +140,7 @@ public class ForwardingService implements AutoCloseable {
 
         // Start listening and forwarding
         kit.wallet().addCoinsReceivedEventListener(listener);
+        return kit.wallet().currentReceiveAddress();
     }
 
     /**
@@ -240,13 +242,6 @@ public class ForwardingService implements AutoCloseable {
             future.completeExceptionally(e);
         }
         return future;
-    }
-
-    /**
-     * @return The current receiving address of the forwarding wallet
-     */
-    public Address receivingAddress() {
-        return kit.wallet().currentReceiveAddress();
     }
 
     static String getPrefix(BitcoinNetwork network) {
