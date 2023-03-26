@@ -252,7 +252,7 @@ public class ECKeyTest {
     public void verifyMessageSignedWithNativeSegwitP2WPKHAddress() throws Exception {
         String message = "This msg was signed with a native SegWit v0 address, the signature header byte therefore is in the range 39-42 (according to BIP 137).";
         String sigBase64 = "KH4/rrraZsPwuuW6pSKVnZVdZXmzLPBOPSS9zz6QLZnTGhO2mHFAs53QLPp94Hahz7kTgNiO6VYZpehMbNHIvNA=";
-        Address expectedAddress = SegwitAddress.fromBech32(MAINNET, "bc1qvcl0z7f25sf2u8up5wplk7arwclghh7de8fy6l");
+        Address expectedAddress = SegwitAddress.fromBech32("bc1qvcl0z7f25sf2u8up5wplk7arwclghh7de8fy6l", MAINNET);
         ECKey key = ECKey.signedMessageToKey(message, sigBase64);
         Address gotAddress = key.toAddress(ScriptType.P2WPKH, MAINNET);
         assertEquals(expectedAddress, gotAddress);

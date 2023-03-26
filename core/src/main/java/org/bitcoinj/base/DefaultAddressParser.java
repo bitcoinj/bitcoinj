@@ -104,7 +104,7 @@ public class DefaultAddressParser implements AddressParser {
             throw x;
         } catch (AddressFormatException x) {
             try {
-                return SegwitAddress.fromBech32(network, addressString);
+                return SegwitAddress.fromBech32(addressString, network);
             } catch (AddressFormatException.WrongNetwork x2) {
                 throw x;
             } catch (AddressFormatException x2) {
@@ -126,7 +126,7 @@ public class DefaultAddressParser implements AddressParser {
         return segwitNetworks.stream()
                 .filter(n -> hrp.equals(n.segwitAddressHrp()))
                 .findFirst()
-                .map(n -> SegwitAddress.fromBech32(n, bech32))
+                .map(n -> SegwitAddress.fromBech32(bech32, n))
                 .orElseThrow(() -> new AddressFormatException.InvalidPrefix("No network found for " + bech32));
     }
 

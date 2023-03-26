@@ -46,7 +46,7 @@ import static org.bitcoinj.base.BitcoinNetwork.*;
  * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki">BIP350</a> and
  * <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.</p>
  *
- * <p>However, you don't need to care about the internals. Use {@link #fromBech32(Network, String)},
+ * <p>However, you don't need to care about the internals. Use {@link #fromBech32(String, Network)},
  * {@link #fromHash(org.bitcoinj.base.Network, byte[])} or {@link ECKey#toAddress(ScriptType, Network)}
  * to construct a native segwit address.</p>
  */
@@ -144,7 +144,7 @@ public class SegwitAddress implements Address {
     }
 
     /**
-     * Private constructor. Use {@link #fromBech32(Network, String)},
+     * Private constructor. Use {@link #fromBech32(String, Network)},
      * {@link #fromHash(Network, byte[])} or {@link ECKey#toAddress(ScriptType, Network)}.
      * 
      * @param network
@@ -267,12 +267,12 @@ public class SegwitAddress implements Address {
     /**
      * Construct a {@link SegwitAddress} from its textual form.
      *
+     * @param bech32  bech32-encoded textual form of the address
      * @param network expected network this address is valid for
-     * @param bech32 bech32-encoded textual form of the address
      * @return constructed address
      * @throws AddressFormatException if something about the given bech32 address isn't right
      */
-    public static SegwitAddress fromBech32(@Nonnull Network network, String bech32)
+    public static SegwitAddress fromBech32(String bech32, @Nonnull Network network)
             throws AddressFormatException {
         Bech32.Bech32Data bechData = Bech32.decode(bech32);
         if (bechData.hrp.equals(network.segwitAddressHrp()))

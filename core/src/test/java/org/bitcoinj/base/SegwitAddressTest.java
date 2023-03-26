@@ -51,7 +51,7 @@ public class SegwitAddressTest {
     public void example_p2wpkh_mainnet() {
         String bech32 = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
 
-        SegwitAddress address = SegwitAddress.fromBech32(MAINNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, MAINNET);
 
         assertEquals(MAINNET, address.network());
         assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
@@ -65,7 +65,7 @@ public class SegwitAddressTest {
     public void example_p2wsh_mainnet() {
         String bech32 = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3";
 
-        SegwitAddress address = SegwitAddress.fromBech32(MAINNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, MAINNET);
 
         assertEquals(MAINNET, address.network());
         assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
@@ -79,7 +79,7 @@ public class SegwitAddressTest {
     public void example_p2wpkh_testnet() {
         String bech32 = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
 
-        SegwitAddress address = SegwitAddress.fromBech32(TESTNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, TESTNET);
 
         assertEquals(TESTNET, address.network());
         assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
@@ -93,8 +93,8 @@ public class SegwitAddressTest {
     public void equalityOfEquivalentNetworks() {
         String bech32 = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
 
-        SegwitAddress a = SegwitAddress.fromBech32(TESTNET, bech32);
-        SegwitAddress b = SegwitAddress.fromBech32(SIGNET, bech32);
+        SegwitAddress a = SegwitAddress.fromBech32(bech32, TESTNET);
+        SegwitAddress b = SegwitAddress.fromBech32(bech32, SIGNET);
 
         assertEquals(a, b);
         assertEquals(a.toString(), b.toString());
@@ -104,7 +104,7 @@ public class SegwitAddressTest {
     public void example_p2wpkh_regtest() {
         String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
 
-        SegwitAddress address = SegwitAddress.fromBech32(REGTEST, bcrt1_bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(bcrt1_bech32, REGTEST);
 
         assertEquals(REGTEST, address.network());
         assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
@@ -132,7 +132,7 @@ public class SegwitAddressTest {
     public void example_p2wsh_testnet() {
         String bech32 = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7";
 
-        SegwitAddress address = SegwitAddress.fromBech32(TESTNET, bech32);
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, TESTNET);
 
         assertEquals(TESTNET, address.network());
         assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
@@ -257,7 +257,7 @@ public class SegwitAddressTest {
         // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
         // (this program is 20 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
         String taprootAddressWith20BytesWitnessProgram = "bc1pqypqzqspqgqsyqgzqypqzqspqgqsyqgzzezy58";
-        SegwitAddress.fromBech32(MAINNET, taprootAddressWith20BytesWitnessProgram);
+        SegwitAddress.fromBech32(taprootAddressWith20BytesWitnessProgram, MAINNET);
     }
 
     @Test(expected = AddressFormatException.InvalidDataLength.class)
@@ -265,7 +265,7 @@ public class SegwitAddressTest {
         // Taproot, valid bech32m encoding, checksum ok, padding ok, but no valid Segwit v1 program
         // (this program is 40 bytes long, but only 32 bytes program length are valid for Segwit v1/Taproot)
         String taprootAddressWith40BytesWitnessProgram = "bc1p6t0pcqrq3mvedn884lgj9s2cm52xp9vtnlc89cv5x77f5l725rrdjhqrld6m6rza67j62a";
-        SegwitAddress.fromBech32(MAINNET, taprootAddressWith40BytesWitnessProgram);
+        SegwitAddress.fromBech32(taprootAddressWith40BytesWitnessProgram, MAINNET);
     }
 
     @Test(expected = AddressFormatException.InvalidPrefix.class)
@@ -275,6 +275,6 @@ public class SegwitAddressTest {
 
     @Test(expected = AddressFormatException.WrongNetwork.class)
     public void fromBech32_wrongNetwork() {
-        SegwitAddress.fromBech32(TESTNET, "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj");
+        SegwitAddress.fromBech32("bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj", TESTNET);
     }
 }
