@@ -18,8 +18,6 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
-import org.bitcoinj.core.listeners.PeerConnectedEventListener;
-import org.bitcoinj.core.listeners.PeerDisconnectedEventListener;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
@@ -28,7 +26,6 @@ import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscoveryException;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.utils.BriefLogFormatter;
-import com.google.common.util.concurrent.Futures;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
