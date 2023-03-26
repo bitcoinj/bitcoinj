@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
@@ -1731,12 +1730,14 @@ public class Transaction extends ChildMessage {
     /** Loops the outputs of a coinbase transaction to locate the witness commitment. */
     public Sha256Hash findWitnessCommitment() {
         checkState(isCoinBase());
-        for (TransactionOutput out : Lists.reverse(outputs)) {
-            Script scriptPubKey = out.getScriptPubKey();
-            if (ScriptPattern.isWitnessCommitment(scriptPubKey))
-                return ScriptPattern.extractWitnessCommitmentHash(scriptPubKey);
-        }
-        return null;
+        List<TransactionOutput> reversed = new ArrayList<>(outputs);
+        Collections.reverse(reversed);
+        return reversed.stream()
+                        .map(TransactionOutput::getScriptPubKey)
+                        .filter(ScriptPattern::isWitnessCommitment)
+                        .findFirst()
+                        .map(ScriptPattern::extractWitnessCommitmentHash)
+                        .orElse(null);
     }
 
     /**
