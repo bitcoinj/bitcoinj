@@ -20,7 +20,6 @@ package org.bitcoinj.wallet;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
@@ -907,7 +906,7 @@ public class Wallet extends BaseTaggableObject
      * handler. If the key already exists in the wallet, does nothing and returns false.</p>
      */
     public boolean importKey(ECKey key) {
-        return importKeys(Lists.newArrayList(key)) == 1;
+        return importKeys(Collections.singletonList(key)) == 1;
     }
 
     /**
@@ -1044,7 +1043,7 @@ public class Wallet extends BaseTaggableObject
      */
     public boolean addWatchedAddress(final Address address) {
         Instant now = TimeUtils.currentTime();
-        return addWatchedAddresses(Lists.newArrayList(address), now) == 1;
+        return addWatchedAddresses(Collections.singletonList(address), now) == 1;
     }
 
     /**
@@ -1054,7 +1053,7 @@ public class Wallet extends BaseTaggableObject
      * @return whether the address was added successfully (not already present)
      */
     public boolean addWatchedAddress(final Address address, Instant creationTime) {
-        return addWatchedAddresses(Lists.newArrayList(address), creationTime) == 1;
+        return addWatchedAddresses(Collections.singletonList(address), creationTime) == 1;
     }
 
     /** @deprecated use {@link #addWatchedAddress(Address, Instant)} or {@link #addWatchedAddress(Address)} */
