@@ -171,14 +171,14 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
-        assertFalse(sendResult.broadcastComplete.isDone());
+        assertFalse(sendResult.awaitRelayed().isDone());
         Transaction t1;
         {
             Message m;
             while (!((m = outbound(p1)) instanceof Transaction));
             t1 = (Transaction) m;
         }
-        assertFalse(sendResult.broadcastComplete.isDone());
+        assertFalse(sendResult.awaitRelayed().isDone());
 
         // p1 eats it :( A bit later the PeerGroup is taken down.
         peerGroup.removeWallet(wallet);
@@ -215,10 +215,10 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
-        assertNotNull(sendResult.tx);
+        assertNotNull(sendResult.transaction());
         Threading.waitForUserCode();
-        assertFalse(sendResult.broadcastComplete.isDone());
-        assertEquals(transactions[0], sendResult.tx);
+        assertFalse(sendResult.awaitRelayed().isDone());
+        assertEquals(transactions[0], sendResult.transaction());
         assertEquals(0, transactions[0].getConfidence().numBroadcastPeers());
         transactions[0] = null;
         Transaction t1;
@@ -239,8 +239,8 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         inbound(p2, inv);
         pingAndWait(p2);
         Threading.waitForUserCode();
-        assertTrue(sendResult.broadcastComplete.isDone());
-        assertEquals(transactions[0], sendResult.tx);
+        assertTrue(sendResult.awaitRelayed().isDone());
+        assertEquals(transactions[0], sendResult.transaction());
         assertEquals(1, transactions[0].getConfidence().numBroadcastPeers());
         // Confirm it.
         Block b2 = FakeTxBuilder.createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS, t1).block;

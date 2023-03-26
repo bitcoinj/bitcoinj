@@ -92,7 +92,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
             // their own money!
             req.allowUnconfirmed();
             sendResult = app.walletAppKit().wallet().sendCoins(req);
-            sendResult.broadcastComplete.whenComplete((result, t) -> {
+            sendResult.awaitRelayed().whenComplete((result, t) -> {
                 if (t == null) {
                     Platform.runLater(() -> overlayUI.done());
                 } else {
@@ -100,7 +100,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
                     crashAlert(t);
                 }
             });
-            sendResult.tx.getConfidence().addEventListener((tx, reason) -> {
+            sendResult.transaction().getConfidence().addEventListener((tx, reason) -> {
                 if (reason == TransactionConfidence.Listener.ChangeReason.SEEN_PEERS)
                     updateTitleForBroadcast();
             });
@@ -135,7 +135,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     }
 
     private void updateTitleForBroadcast() {
-        final int peers = sendResult.tx.getConfidence().numBroadcastPeers();
+        final int peers = sendResult.transaction().getConfidence().numBroadcastPeers();
         titleLabel.setText(String.format("Broadcasting ... seen by %d peers", peers));
     }
 }

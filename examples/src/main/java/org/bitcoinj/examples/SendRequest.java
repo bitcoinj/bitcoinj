@@ -60,7 +60,7 @@ public class SendRequest {
         // In this example we catch the InsufficientMoneyException and register a BalanceFuture callback that runs once the wallet has enough balance.
         try {
             Wallet.SendResult result = kit.wallet().sendCoins(kit.peerGroup(), to, value);
-            System.out.println("coins sent. transaction hash: " + result.tx.getTxId());
+            System.out.println("coins sent. transaction hash: " + result.transaction().getTxId());
             // you can use a block explorer like https://www.biteasy.com/ to inspect the transaction with the printed transaction hash. 
         } catch (InsufficientMoneyException e) {
             System.out.println("Not enough coins in your wallet. Missing " + e.missing.getValue() + " satoshis are missing (including fees)");
