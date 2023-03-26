@@ -655,15 +655,15 @@ public class WalletTool implements Callable<Integer> {
         Coin balance = coinSelector != null ? wallet.getBalance(coinSelector) : wallet.getBalance(allowUnconfirmed ?
                 BalanceType.ESTIMATED : BalanceType.AVAILABLE);
         // Convert the input strings to outputs.
-        Transaction t = new Transaction(params);
+        Transaction tx = new Transaction(params);
         for (String spec : outputs) {
             try {
                 OutputSpec outputSpec = new OutputSpec(spec);
                 Coin value = outputSpec.value != null ? outputSpec.value : balance;
                 if (outputSpec.isAddress())
-                    t.addOutput(value, outputSpec.addr);
+                    tx.addOutput(value, outputSpec.addr);
                 else
-                    t.addOutput(value, outputSpec.key);
+                    tx.addOutput(value, outputSpec.key);
             } catch (AddressFormatException.WrongNetwork e) {
                 System.err.println("Malformed output specification, address is for a different network: " + spec);
                 return;
@@ -678,12 +678,12 @@ public class WalletTool implements Callable<Integer> {
                 return;
             }
         }
-        SendRequest req = SendRequest.forTx(t);
+        SendRequest req = SendRequest.forTx(tx);
         if (coinSelector != null) {
             req.coinSelector = coinSelector;
             req.recipientsPayFees = true;
         }
-        if (t.getOutputs().size() == 1 && t.getOutput(0).getValue().equals(balance)) {
+        if (tx.getOutputs().size() == 1 && tx.getOutput(0).getValue().equals(balance)) {
             log.info("Emptying out wallet, recipient may get less than what you expect");
             req.emptyWallet = true;
         }
@@ -703,9 +703,9 @@ public class WalletTool implements Callable<Integer> {
 
             try {
                 if (lockTimeStr != null) {
-                    t.setLockTime(parseLockTimeStr(lockTimeStr));
+                    tx.setLockTime(parseLockTimeStr(lockTimeStr));
                     // For lock times to take effect, at least one output must have a non-final sequence number.
-                    t.getInputs().get(0).setSequenceNumber(0);
+                    tx.getInputs().get(0).setSequenceNumber(0);
                     // And because we modified the transaction after it was completed, we must re-sign the inputs.
                     wallet.signTransaction(req);
                 }
@@ -715,9 +715,9 @@ public class WalletTool implements Callable<Integer> {
             } catch (ScriptException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println(t.getTxId());
+            System.out.println(tx.getTxId());
             if (offline) {
-                wallet.commitTx(t);
+                wallet.commitTx(tx);
                 return;
             }
 
@@ -726,7 +726,7 @@ public class WalletTool implements Callable<Integer> {
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
-            peerGroup.broadcastTransaction(t).future().get();
+            peerGroup.broadcastTransaction(tx).future().get();
             // Hack for regtest/single peer mode, as we're about to shut down and won't get an ACK from the remote end.
             List<Peer> peerList = peerGroup.getConnectedPeers();
             if (peerList.size() == 1)
