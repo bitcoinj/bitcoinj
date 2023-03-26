@@ -239,6 +239,12 @@ public class Transaction extends ChildMessage {
         // inputs/outputs will be created in parse()
     }
 
+    /** @deprecated use {@link #Transaction(NetworkParameters, ByteBuffer)} or {@link MessageSerializer#makeTransaction(ByteBuffer)} */
+    @Deprecated
+    public Transaction(NetworkParameters params, byte[] payload) throws ProtocolException {
+        this(params, ByteBuffer.wrap(payload));
+    }
+
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      * @param params NetworkParameters object.
