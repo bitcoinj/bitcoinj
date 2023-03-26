@@ -108,7 +108,7 @@ public class BitcoinURI {
      */
     public BitcoinURI(String uri) throws BitcoinURIParseException {
         // TODO: Discover (via Service Loader mechanism) the correct Network from the URI string
-        this(BitcoinNetwork.MAINNET, uri);
+        this(uri, BitcoinNetwork.MAINNET);
     }
 
     /**
@@ -119,22 +119,21 @@ public class BitcoinURI {
      * @param input The raw URI data to be parsed (see class comments for accepted formats)
      *
      * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
-     * @deprecated Use {@link BitcoinURI#BitcoinURI(Network, String)} or {@link BitcoinURI#BitcoinURI(String)}
+     * @deprecated Use {@link BitcoinURI#BitcoinURI(String, Network)} or {@link BitcoinURI#BitcoinURI(String)}
      */
     @Deprecated
     public BitcoinURI(@Nullable NetworkParameters params, String input) throws BitcoinURIParseException {
-        this(params != null ? params.network() : BitcoinNetwork.MAINNET, input);
+        this(input, params != null ? params.network() : BitcoinNetwork.MAINNET);
     }
 
     /**
      * Constructs a new object by trying to parse the input as a valid Bitcoin URI.
      *
+     * @param input   The raw URI data to be parsed (see class comments for accepted formats)
      * @param network The network the URI is from
-     * @param input The raw URI data to be parsed (see class comments for accepted formats)
-     *
      * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
      */
-    public BitcoinURI(@Nonnull Network network, String input) throws BitcoinURIParseException {
+    public BitcoinURI(String input, @Nonnull Network network) throws BitcoinURIParseException {
         Objects.requireNonNull(network);
         Objects.requireNonNull(input);
 
