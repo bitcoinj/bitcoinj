@@ -180,6 +180,11 @@ public class VarInt {
     }
 
     @Override
+    public String toString() {
+        return Long.toUnsignedString(value);
+    }
+
+    @Override
     public boolean equals(Object o) {
         // originallyEncodedSize is not considered on purpose
         if (this == o) return true;
