@@ -96,20 +96,9 @@ public class VarInt {
     /** @deprecated use {@link #ofBytes(byte[], int)} */
     @Deprecated
     public VarInt(byte[] buf, int offset) {
-        int first = 0xFF & buf[offset];
-        if (first < 253) {
-            value = first;
-            originallyEncodedSize = 1; // 1 data byte (8 bits)
-        } else if (first == 253) {
-            value = ByteUtils.readUint16(buf, offset + 1);
-            originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
-        } else if (first == 254) {
-            value = ByteUtils.readUint32(buf, offset + 1);
-            originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
-        } else {
-            value = ByteUtils.readInt64(buf, offset + 1);
-            originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
-        }
+        VarInt copy = read(ByteBuffer.wrap(buf, offset, buf.length));
+        value = copy.value;
+        originallyEncodedSize = copy.originallyEncodedSize;
     }
 
     public long longValue() {
