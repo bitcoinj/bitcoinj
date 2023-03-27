@@ -40,8 +40,8 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 
 /**
- * ForwardingService demonstrates basic usage of the library. It sits on the network and when it receives coins, simply
- * sends them onwards to an address given on the command line.
+ * ForwardingService demonstrates basic usage of bitcoinj. It creates an SPV Wallet, listens on the network
+ * and when it receives coins, simply sends them onwards to the address given on the command line.
  */
 public class ForwardingService implements Closeable {
     static final String USAGE = "Usage: address-to-forward-to [mainnet|testnet|signet|regtest]";
@@ -52,6 +52,10 @@ public class ForwardingService implements Closeable {
     private final WalletAppKit kit;
     private final WalletCoinsReceivedEventListener listener;
 
+    /**
+     * Run the forwarding service as a command line tool
+     * @param args See {@link #USAGE}
+     */
     public static void main(String[] args) {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
         BriefLogFormatter.init();
@@ -139,9 +143,8 @@ public class ForwardingService implements Closeable {
     }
 
     /**
-     * Implement the {@link WalletCoinsReceivedEventListener} functional interface. We could have {@link ForwardingService}
-     * implement {@link WalletCoinsReceivedEventListener} with the {@code implements} keyword, but with JDK 8+ this method
-     * can be private with any name and be referenced with a method reference.
+     * A listener to receive coins and forward them to the configured address.
+     * Implements the {@link WalletCoinsReceivedEventListener} functional interface.
      * @param wallet The active wallet
      * @param incomingTx the received transaction
      * @param prevBalance wallet balance before this transaction (unused)
