@@ -150,9 +150,8 @@ public class VarInt {
      * @return the minimal encoded bytes of the value
      */
     public byte[] encode() {
-        byte[] bytes = new byte[sizeOf(value)];
-        write(ByteBuffer.wrap(bytes));
-        return bytes;
+        ByteBuffer buf = ByteBuffer.allocate(sizeOf(value));
+        return write(buf).array();
     }
 
     /**
