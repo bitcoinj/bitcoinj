@@ -17,11 +17,10 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.internal.ByteUtils;
-
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static org.bitcoinj.base.internal.Preconditions.check;
 
@@ -62,6 +61,7 @@ public class VarInt {
      * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
      */
     public static VarInt read(ByteBuffer buf) throws BufferUnderflowException {
+        buf.order(ByteOrder.LITTLE_ENDIAN);
         int first = Byte.toUnsignedInt(buf.get());
         long value;
         int originallyEncodedSize;
@@ -69,13 +69,13 @@ public class VarInt {
             value = first;
             originallyEncodedSize = 1; // 1 data byte (8 bits)
         } else if (first == 253) {
-            value = ByteUtils.readUint16(buf);
+            value = Short.toUnsignedInt(buf.getShort());
             originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
         } else if (first == 254) {
-            value = ByteUtils.readUint32(buf);
+            value = Integer.toUnsignedLong(buf.getInt());
             originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
         } else {
-            value = ByteUtils.readInt64(buf);
+            value = buf.getLong();
             originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
         }
         return new VarInt(value, originallyEncodedSize);
@@ -157,21 +157,22 @@ public class VarInt {
      * @throws BufferOverflowException if the value doesn't fit the remaining buffer
      */
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        buf.order(ByteOrder.LITTLE_ENDIAN);
         switch (sizeOf(value)) {
             case 1:
                 buf.put((byte) value);
                 break;
             case 3:
                 buf.put((byte) 253);
-                ByteUtils.writeInt16LE((int) value, buf);
+                buf.putShort((short) value);
                 break;
             case 5:
                 buf.put((byte) 254);
-                ByteUtils.writeInt32LE(value, buf);
+                buf.putInt((int) value);
                 break;
             default:
                 buf.put((byte) 255);
-                ByteUtils.writeInt64LE(value, buf);
+                buf.putLong(value);
                 break;
         }
         return buf;
