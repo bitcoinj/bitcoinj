@@ -21,6 +21,7 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Objects;
 
 import static org.bitcoinj.base.internal.Preconditions.check;
 
@@ -176,5 +177,18 @@ public class VarInt {
                 break;
         }
         return buf;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // originallyEncodedSize is not considered on purpose
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return value == ((VarInt) o).value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
     }
 }
