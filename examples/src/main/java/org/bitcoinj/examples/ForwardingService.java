@@ -80,15 +80,11 @@ public class ForwardingService implements Closeable {
             network = (BitcoinNetwork) address.network();
         }
 
-        forward(new File("."), network, address);
-    }
-
-    public static void forward(File directory, BitcoinNetwork network, Address address) {
         System.out.println("Network: " + network.id());
         System.out.println("Forwarding address: " + address);
 
         // Create the Service (and WalletKit)
-        try (ForwardingService forwardingService = new ForwardingService(directory, address, network)) {
+        try (ForwardingService forwardingService = new ForwardingService(new File("."), address, network)) {
             // Start the Service (and WalletKit)
             Address receivingAddress = forwardingService.start();
 
