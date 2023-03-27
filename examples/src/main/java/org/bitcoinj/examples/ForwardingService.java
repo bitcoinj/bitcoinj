@@ -61,9 +61,9 @@ public class ForwardingService implements Closeable {
         BriefLogFormatter.init();
         Context.propagate(new Context());
 
-        if (args.length < 1) {
+        if (args.length < 1 || args.length > 2) {
             System.err.println(USAGE);
-            throw new IllegalArgumentException("Address required");
+            System.exit(1);
         }
 
         // Figure out which network we should connect to. Each network gets its own set of files.
