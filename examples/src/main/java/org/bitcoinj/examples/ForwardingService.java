@@ -112,7 +112,7 @@ public class ForwardingService implements Closeable {
     public ForwardingService(File directory, Address forwardingAddress, BitcoinNetwork network) {
         this.forwardingAddress = forwardingAddress;
         this.network = network;
-        listener = this::coinsReceivedListener;
+        listener = this::coinForwardingListener;
         // Start up a basic app using a class that automates some boilerplate.
         kit = WalletAppKit.launch(network, directory, getPrefix(network), MAX_CONNECTIONS);
     }
@@ -150,7 +150,7 @@ public class ForwardingService implements Closeable {
      * @param prevBalance wallet balance before this transaction (unused)
      * @param newBalance wallet balance after this transaction (unused)
      */
-    private void coinsReceivedListener(Wallet wallet, Transaction incomingTx, Coin prevBalance, Coin newBalance) {
+    private void coinForwardingListener(Wallet wallet, Transaction incomingTx, Coin prevBalance, Coin newBalance) {
         // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
         // The transaction "incomingTx" can either be pending, or included into a block (we didn't see the broadcast).
         Coin value = incomingTx.getValueSentToMe(wallet);
