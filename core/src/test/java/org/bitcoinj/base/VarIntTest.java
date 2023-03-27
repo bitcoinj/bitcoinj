@@ -21,7 +21,11 @@ import junitparams.Parameters;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(JUnitParamsRunner.class)
 public class VarIntTest {
@@ -60,6 +64,19 @@ public class VarIntTest {
         assertEquals(size, a.getOriginalSizeInBytes());
         assertEquals(size, a.encode().length);
         assertEquals(value, VarInt.ofBytes(a.encode(), 0).longValue());
+    }
+
+    @Test
+    @Parameters(method = "longTestVectors")
+    public void writeThenRead(long value, int size) {
+        VarInt varInt = VarInt.of(value);
+        ByteBuffer buf = ByteBuffer.allocate(varInt.getSizeInBytes());
+        varInt.write(buf);
+        assertFalse(buf.hasRemaining());
+        ((Buffer) buf).rewind();
+        VarInt varIntCopy = VarInt.read(buf);
+        assertFalse(buf.hasRemaining());
+        assertEquals(varInt, varIntCopy);
     }
 
     private Object[] integerTestVectors() {
