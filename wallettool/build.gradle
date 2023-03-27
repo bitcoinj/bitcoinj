@@ -19,7 +19,7 @@ boolean hasToolchains = (GradleVersion.current().compareTo(toolchainsMinVersion)
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'info.picocli:picocli:4.7.1'
-    implementation 'org.slf4j:slf4j-jdk14:1.7.36'
+    implementation 'org.slf4j:slf4j-jdk14:2.0.7'
     if (hasAnnotationProcessor) {
         annotationProcessor 'info.picocli:picocli-codegen:4.7.1'
     } else {
@@ -29,7 +29,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.0"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.0"
 
-    testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
+    testImplementation 'org.slf4j:slf4j-jdk14:2.0.7'
 }
 
 sourceCompatibility = 11
