@@ -38,6 +38,7 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
@@ -55,7 +56,7 @@ public class TransactionBroadcast {
     private final CompletableFuture<TransactionBroadcast> sentFuture = new CompletableFuture<>();
 
     // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
-    private final CompletableFuture<Transaction> seenFuture = new ListenableCompletableFuture<>();
+    private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
     private final PeerGroup peerGroup;
     private final Transaction tx;
     private int minConnections;
@@ -102,9 +103,11 @@ public class TransactionBroadcast {
 
     /**
      * @return future that completes when some number of remote peers has rebroadcast the transaction
+     * @deprecated Use {@link #awaitRelayed()} (and maybe {@link CompletableFuture#thenApply(Function)})
      */
+    @Deprecated
     public ListenableCompletableFuture<Transaction> future() {
-        return ListenableCompletableFuture.of(seenFuture);
+        return ListenableCompletableFuture.of(awaitRelayed().thenApply(TransactionBroadcast::transaction));
     }
 
     public void setMinConnections(int minConnections) {
@@ -145,7 +148,7 @@ public class TransactionBroadcast {
      *     <li>Wait until enough {@link org.bitcoinj.core.Peer}s are connected.</li>
      *     <li>Broadcast the transaction to a determined number of {@link org.bitcoinj.core.Peer}s</li>
      *     <li>Wait for confirmation from a determined number of remote peers that they have received the broadcast</li>
-     *     <li>Mark {@link TransactionBroadcast#future()} ("seen future") as complete</li>
+     *     <li>Mark {@link TransactionBroadcast#awaitRelayed()} ()} ("seen future") as complete</li>
      * </ol>
      * The future returned from this method completes when Step 2 is completed.
      * <p>
@@ -213,8 +216,15 @@ public class TransactionBroadcast {
      */
     public CompletableFuture<TransactionBroadcast> broadcastAndAwaitRelay() {
         return broadcastOnly()
-                .thenCompose(broadcast -> this.seenFuture)
-                .thenApply(tx -> this);
+                .thenCompose(broadcast -> this.seenFuture);
+    }
+
+    /**
+     * Wait for confirmation the transaction has been relayed.
+     * @return A future that completes when the message has been relayed by the appropriate number of remote peers
+     */
+    public CompletableFuture<TransactionBroadcast> awaitRelayed() {
+        return seenFuture;
     }
 
     /**
@@ -311,7 +321,7 @@ public class TransactionBroadcast {
                 log.info("broadcastTransaction: {} complete", tx.getTxId());
                 peerGroup.removePreMessageReceivedEventListener(rejectionListener);
                 conf.removeEventListener(this);
-                seenFuture.complete(tx);  // RE-ENTRANCY POINT
+                seenFuture.complete(TransactionBroadcast.this);  // RE-ENTRANCY POINT
             }
         }
     }

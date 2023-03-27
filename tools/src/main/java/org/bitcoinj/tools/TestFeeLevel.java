@@ -93,7 +93,7 @@ public class TestFeeLevel {
                 " peers connected"));
         kit.peerGroup().addConnectedEventListener((peer, peerCount) -> System.out.println(peerCount +
                 " peers connected"));
-        kit.peerGroup().broadcastTransaction(request.tx).future().get();
+        kit.peerGroup().broadcastTransaction(request.tx).awaitRelayed().get();
         System.out.println("Send complete, waiting for confirmation");
         request.tx.getConfidence().getDepthFuture(1).get();
 

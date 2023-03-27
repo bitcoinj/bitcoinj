@@ -187,7 +187,7 @@ public class ForwardingService implements Closeable {
             })
             .thenCompose(broadcast -> {
                 System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
-                return broadcast.future(); // Return a future that completes when Peers report they have seen the transaction
+                return broadcast.awaitRelayed().thenApply(TransactionBroadcast::transaction); // Wait until peers report they have seen the transaction
             })
             .thenAccept(tx ->
                 System.out.printf("Sent %s onwards and acknowledged by peers, via transaction %s\n", tx.getOutputSum().toFriendlyString(), tx.getTxId())
@@ -220,7 +220,7 @@ public class ForwardingService implements Closeable {
      *     <li>Wait until enough {@link org.bitcoinj.core.Peer}s are connected.</li>
      *     <li>Broadcast the transaction by a determined number of {@link org.bitcoinj.core.Peer}s</li>
      *     <li>Wait for confirmation from a determined number of remote peers that they have received the broadcast</li>
-     *     <li>Mark {@link TransactionBroadcast#future()} as complete</li>
+     *     <li>Mark {@link TransactionBroadcast#awaitRelayed()} as complete</li>
      * </ol>
      * Note: There is a pending PR (#2548) which will make available an additional {@link CompletableFuture} that will complete
      * after step 3 above. When and if that PR is merged, this method should probably return that future.

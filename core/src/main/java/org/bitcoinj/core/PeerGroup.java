@@ -2184,7 +2184,7 @@ public class PeerGroup implements TransactionBroadcaster {
     /**
      * <p>Given a transaction, sends it un-announced to one peer and then waits for it to be received back from other
      * peers. Once all connected peers have announced the transaction, the future available via the
-     * {@link TransactionBroadcast#future()} method will be completed. If anything goes
+     * {@link TransactionBroadcast#awaitRelayed()} ()} method will be completed. If anything goes
      * wrong the exception will be thrown when get() is called, or you can receive it via a callback on the
      * {@link ListenableCompletableFuture}. This method returns immediately, so if you want it to block just call get() on the
      * result.</p>
@@ -2214,9 +2214,9 @@ public class PeerGroup implements TransactionBroadcaster {
         broadcast.setMinConnections(minConnections);
         broadcast.setDropPeersAfterBroadcast(dropPeersAfterBroadcast && tx.getConfidence().numBroadcastPeers() == 0);
         // Send the TX to the wallet once we have a successful broadcast.
-        broadcast.future().whenComplete((transaction, throwable) -> {
-            if (transaction != null) {
-                runningBroadcasts.remove(broadcast);
+        broadcast.awaitRelayed().whenComplete((bcast, throwable) -> {
+            if (bcast != null) {
+                runningBroadcasts.remove(bcast);
                 // OK, now tell the wallet about the transaction. If the wallet created the transaction then
                 // it already knows and will ignore this. If it's a transaction we received from
                 // somebody else via a side channel and are now broadcasting, this will put it into the
@@ -2227,14 +2227,14 @@ public class PeerGroup implements TransactionBroadcaster {
                     // We may end up with two threads trying to do this in parallel - the wallet will
                     // ignore whichever one loses the race.
                     try {
-                        wallet.receivePending(transaction, null);
+                        wallet.receivePending(bcast.transaction(), null);
                     } catch (VerificationException e) {
                         throw new RuntimeException(e);   // Cannot fail to verify a tx we created ourselves.
                     }
                 }
             } else {
                 // This can happen if we get a reject message from a peer.
-                runningBroadcasts.remove(broadcast);
+                runningBroadcasts.remove(bcast);
             }
         });
         // Keep a reference to the TransactionBroadcast object. This is important because otherwise, the entire tree
