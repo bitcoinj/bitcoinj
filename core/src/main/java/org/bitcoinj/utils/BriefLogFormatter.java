@@ -42,17 +42,21 @@ public class BriefLogFormatter extends Formatter {
     // keep a reference to our custom logger around.
     private static final Logger logger = Logger.getLogger("");
 
-    /** Configures JDK logging to use this class for everything. */
     public static void init() {
+        init(Level.INFO);
+    }
+
+    /** Configures JDK logging to use this class for everything. */
+    public static void init(Level level) {
         final Handler[] handlers = logger.getHandlers();
         // In regular Java there is always a handler. Avian doesn't install one however.
         if (handlers.length > 0)
             handlers[0].setFormatter(new BriefLogFormatter());
+        logger.setLevel(level);
     }
 
     public static void initVerbose() {
-        init();
-        logger.setLevel(Level.ALL);
+        init(Level.ALL);
         logger.log(Level.FINE, "test");
     }
 
