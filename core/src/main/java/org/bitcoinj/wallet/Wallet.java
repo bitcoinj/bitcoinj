@@ -4277,6 +4277,55 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Initiate sending the transaction in a {@link SendRequest}. Calls {@link Wallet#sendCoins(SendRequest)} which
+     * performs the following significant operations internally:
+     * <ol>
+     *     <li>{@link Wallet#completeTx(SendRequest)} -- calculate change and sign</li>
+     *     <li>{@link Wallet#commitTx(Transaction)} -- puts the transaction in the {@code Wallet}'s pending pool</li>
+     *     <li>{@link org.bitcoinj.core.TransactionBroadcaster#broadcastTransaction(Transaction)} typically implemented by {@link org.bitcoinj.core.PeerGroup#broadcastTransaction(Transaction)} -- queues requests to send the transaction to a single remote {@code Peer}</li>
+     * </ol>
+     * This method will <i>complete</i> and return a {@link TransactionBroadcast} when the send to the remote peer occurs (is buffered.)
+     * The broadcast process includes the following steps:
+     * <ol>
+     *     <li>Wait until enough {@link org.bitcoinj.core.Peer}s are connected.</li>
+     *     <li>Broadcast (buffer for send) the transaction to a single remote {@link org.bitcoinj.core.Peer}</li>
+     *     <li>Mark {@link TransactionBroadcast#awaitSent()} as complete</li>
+     *     <li>Wait for a number of remote peers to confirm they have received the broadcast</li>
+     *     <li>Mark {@link TransactionBroadcast#future()} as complete</li>
+     * </ol>
+     * @param sendRequest transaction to send
+     * @return A future for the transaction broadcast
+     */
+    public CompletableFuture<TransactionBroadcast> sendTransaction(SendRequest sendRequest) {
+        try {
+            // Complete successfully when the transaction has been sent (or buffered, at least) to peers.
+            return sendCoins(sendRequest).broadcast.awaitSent();
+        } catch (KeyCrypterException | InsufficientMoneyException e) {
+            // We should never try to send more coins than we have, if we do we get an InsufficientMoneyException
+            return FutureUtils.failedFuture(e);
+        }
+    }
+
+    /**
+     * Wait for at least 1 confirmation on a transaction.
+     * @param tx the transaction we are waiting for
+     * @return a future for an object that contains transaction confidence information
+     */
+    public CompletableFuture<TransactionConfidence> waitForConfirmation(Transaction tx) {
+        return waitForConfirmations(tx, 1);
+    }
+
+    /**
+     * Wait for a required number of confirmations on a transaction.
+     * @param tx the transaction we are waiting for
+     * @param requiredConfirmations the minimum required confirmations before completing
+     * @return a future for an object that contains transaction confidence information
+     */
+    public CompletableFuture<TransactionConfidence> waitForConfirmations(Transaction tx, int requiredConfirmations) {
+        return tx.getConfidence().getDepthFuture(requiredConfirmations);
+    }
+
+    /**
      * Class of exceptions thrown in {@link Wallet#completeTx(SendRequest)}.
      */
     public static class CompletionException extends RuntimeException {

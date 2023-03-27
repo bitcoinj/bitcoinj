@@ -24,11 +24,8 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.base.DefaultAddressParser;
-import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
-import org.bitcoinj.core.TransactionConfidence;
-import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.CoinSelection;
@@ -40,7 +37,6 @@ import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.Closeable;
 import java.io.File;
-import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
@@ -175,7 +171,7 @@ public class ForwardingService implements Closeable {
         System.out.printf("Received tx for %s : %s\n", value.toFriendlyString(), incomingTx);
         System.out.println("Transaction will be forwarded after it confirms.");
         System.out.println("Waiting for confirmation...");
-        waitForConfirmation(incomingTx)
+        wallet.waitForConfirmations(incomingTx, REQUIRED_CONFIRMATIONS)
             .thenCompose(confidence -> {
                 // Required confirmations received, now compose a call to broadcast the forwarding transaction
                 System.out.printf("Incoming tx has received %d confirmations.\n", confidence.getDepthInBlocks());
@@ -183,7 +179,7 @@ public class ForwardingService implements Closeable {
                 SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
                 sendRequest.coinSelector = forwardingCoinSelector(incomingTx.getTxId());
                 System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
-                return sendTransaction(sendRequest);
+                return wallet.sendTransaction(sendRequest);
             })
             .thenCompose(broadcast -> {
                 System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
@@ -192,56 +188,6 @@ public class ForwardingService implements Closeable {
             .thenAccept(tx ->
                 System.out.printf("Sent %s onwards and acknowledged by peers, via transaction %s\n", tx.getOutputSum().toFriendlyString(), tx.getTxId())
             );
-    }
-
-    /**
-     * Wait for confirmation on a transaction.
-     * <p>
-     * TODO: Consider changing this so that the returned object contains a reference to the actual transaction rather than just its hash (id)
-     * <p>
-     * TODO: Consider adding this method (or equivalent) to the main bitcoinj API (Wallet or other class)
-     * @param tx the transaction we are waiting for
-     * @return a future for an object that contains transaction confidence information
-     */
-    CompletableFuture<TransactionConfidence> waitForConfirmation(Transaction tx) {
-        return tx.getConfidence().getDepthFuture(REQUIRED_CONFIRMATIONS);
-    }
-
-    /**
-     * Initiate sending the transaction in a {@link SendRequest}. Calls {@link Wallet#sendCoins(SendRequest)} which
-     * performs the following significant operations internally:
-     * <ol>
-     *     <li>{@link Wallet#completeTx(SendRequest)} -- calculate change and sign</li>
-     *     <li>{@link Wallet#commitTx(Transaction)} -- puts the transaction in the {@code Wallet}'s pending pool</li>
-     *     <li>{@link org.bitcoinj.core.TransactionBroadcaster#broadcastTransaction(Transaction)} typically implemented by {@link org.bitcoinj.core.PeerGroup#broadcastTransaction(Transaction)} -- queues requests to send the transaction to a determined number of {@code Peer}s</li>
-     * </ol>
-     * Note that this method will <i>complete</i> and return a {@link TransactionBroadcast} <i>before</i> the broadcast actually occurs. The broadcast process includes the following steps:
-     * <ol>
-     *     <li>Wait until enough {@link org.bitcoinj.core.Peer}s are connected.</li>
-     *     <li>Broadcast the transaction by a determined number of {@link org.bitcoinj.core.Peer}s</li>
-     *     <li>Wait for confirmation from a determined number of remote peers that they have received the broadcast</li>
-     *     <li>Mark {@link TransactionBroadcast#awaitRelayed()} as complete</li>
-     * </ol>
-     * Note: There is a pending PR (#2548) which will make available an additional {@link CompletableFuture} that will complete
-     * after step 3 above. When and if that PR is merged, this method should probably return that future.
-     * <p>
-     * TODO: Check the status of PR #2548
-     * <p>
-     * TODO: Consider adding this method (or equivalent) to the Wallet class
-     * @param sendRequest transaction to send
-     * @return A future for the transaction broadcast
-     */
-    CompletableFuture<TransactionBroadcast> sendTransaction(SendRequest sendRequest) {
-        CompletableFuture<TransactionBroadcast> future = new CompletableFuture<>();
-        try {
-            // Complete successfully when the transaction is ready to be sent to peers.
-            future.complete(kit.wallet().sendCoins(sendRequest).broadcast);
-        } catch (KeyCrypterException | InsufficientMoneyException e) {
-            // We should never try to send more coins than we have, if we do we get an InsufficientMoneyException
-            // We don't use encrypted wallets in this example - KeyCrypterException can never happen.
-            future.completeExceptionally(e);
-        }
-        return future;
     }
 
     static String getPrefix(BitcoinNetwork network) {
