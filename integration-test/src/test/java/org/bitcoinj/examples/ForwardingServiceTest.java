@@ -43,10 +43,10 @@ public class ForwardingServiceTest {
     }
 
     @Test
-    public void startViaStaticForwardAndImmediatelyInterrupt(@TempDir File tempDir) {
+    public void startAndImmediatelyInterrupt(@TempDir File tempDir) {
         // Start the service via the static forward() method and immediately interrupt
         Thread thread = new Thread(
-                () -> ForwardingService.forward(tempDir, network, forwardingAddress)
+                () -> new ForwardingService(tempDir, forwardingAddress, network)
         );
         thread.start();
         thread.interrupt();
