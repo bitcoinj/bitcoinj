@@ -36,6 +36,7 @@ import java.io.File;
 public class ForwardingServiceTest {
     static final BitcoinNetwork network = BitcoinNetwork.TESTNET;
     static final Address forwardingAddress = new ECKey().toAddress(ScriptType.P2WPKH, network);
+    static final String[] args = new String[] { forwardingAddress.toString(), network.toString() };
 
     @BeforeEach
     void setupTest() {
@@ -44,9 +45,9 @@ public class ForwardingServiceTest {
 
     @Test
     public void startAndImmediatelyInterrupt(@TempDir File tempDir) {
-        // Start the service via the static forward() method and immediately interrupt
+        // Start the service and immediately interrupt
         Thread thread = new Thread(
-                () -> new ForwardingService(tempDir, forwardingAddress, network)
+                () -> new ForwardingService(args).run()
         );
         thread.start();
         thread.interrupt();
@@ -55,10 +56,8 @@ public class ForwardingServiceTest {
     @Test
     public void startAndImmediatelyClose(@TempDir File tempDir) {
         // Instantiate the service, start it, and immediately close it
-        // Because ForwardingService disables "blocking mode" in WalletAppKit, start() returns as soon
-        // the PeerGroup was asynchronously started and the WalletAppKit enters the (Guava) RUNNING state.
-        ForwardingService service = new ForwardingService(tempDir, forwardingAddress, network);
-        service.start();
-        service.close();
+        try (ForwardingService service = new ForwardingService(args) ) {
+            service.run();
+        }
     }
 }

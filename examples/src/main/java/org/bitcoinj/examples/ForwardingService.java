@@ -46,10 +46,10 @@ public class ForwardingService implements Closeable {
     static final String USAGE = "Usage: address-to-forward-to [mainnet|testnet|signet|regtest]";
     static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
+    private final AddressParser addressParser = new DefaultAddressParser();
     private final BitcoinNetwork network;
     private final Address forwardingAddress;
-    private final WalletAppKit kit;
-    private final WalletCoinsReceivedEventListener listener;
+    private volatile WalletAppKit kit;
 
     /**
      * Run the forwarding service as a command line tool
@@ -65,32 +65,10 @@ public class ForwardingService implements Closeable {
             System.exit(1);
         }
 
-        // Figure out which network we should connect to. Each network gets its own set of files.
-        Address address;
-        BitcoinNetwork network;
-        AddressParser addressParser = new DefaultAddressParser();
-        if (args.length >= 2) {
-            // Verify address belongs to network
-            network = BitcoinNetwork.fromString(args[1]).orElseThrow();
-            address = addressParser.parseAddress(args[0], network);
-        } else {
-            // Infer network from address
-            address = addressParser.parseAddressAnyNetwork(args[0]);
-            network = (BitcoinNetwork) address.network();
-        }
-
-        System.out.println("Network: " + network.id());
-        System.out.println("Forwarding address: " + address);
-
-        // Create the Service (and WalletKit)
-        try (ForwardingService forwardingService = new ForwardingService(new File("."), address, network)) {
-            // Start the Service (and WalletKit)
-            Address receivingAddress = forwardingService.start();
-
-            // After we start listening, we can tell the user the receiving address
-            System.out.printf("Waiting to receive coins on: %s\n", receivingAddress);
-            System.out.println("Press Ctrl-C to quit.");
-
+        // Create and run the service, which will listen for transactions and forward coins until stopped
+        try (ForwardingService forwardingService = new ForwardingService(args)) {
+            forwardingService.run();
+            // Wait for Control-C
             try {
                 Thread.sleep(Long.MAX_VALUE);
             } catch (InterruptedException ignored) {}
@@ -98,28 +76,38 @@ public class ForwardingService implements Closeable {
     }
 
     /**
-     * Forwarding service. Creating this object creates the {@link WalletAppKit} object.
+     * Initialize by parsing the network and forwarding address command-line arguments.
      *
-     * @param directory directory for .wallet and .chain files
-     * @param forwardingAddress forwarding destination
-     * @param network Network to listen on
+     * @param args the arguments from {@link #main(String[])}
      */
-    public ForwardingService(File directory, Address forwardingAddress, BitcoinNetwork network) {
-        this.forwardingAddress = forwardingAddress;
-        this.network = network;
-        listener = this::coinForwardingListener;
-        // Start up a basic app using a class that automates some boilerplate.
-        kit = WalletAppKit.launch(network, directory, getPrefix(network), MAX_CONNECTIONS);
+    public ForwardingService(String[] args) {
+        if (args.length >= 2) {
+            // If network was specified, validate address against network
+            network = BitcoinNetwork.fromString(args[1]).orElseThrow();
+            forwardingAddress = addressParser.parseAddress(args[0], network);
+        } else {
+            // Else network not-specified, extract network from address
+            forwardingAddress = addressParser.parseAddressAnyNetwork(args[0]);
+            network = (BitcoinNetwork) forwardingAddress.network();
+        }
     }
 
     /**
-     * Start the ForwardingService
-     * @return The receiving address for the forwarding wallet
+     * Start the wallet and register the coin-forwarding listener.
      */
-    public Address start() {
-        // Start listening and forwarding
-        kit.wallet().addCoinsReceivedEventListener(listener);
-        return kit.wallet().currentReceiveAddress();
+    public void run() {
+        System.out.println("Network: " + network.id());
+        System.out.println("Forwarding address: " + forwardingAddress);
+
+        // Create and start the WalletKit
+        kit = WalletAppKit.launch(network, new File("."), getPrefix(network), MAX_CONNECTIONS);
+
+        // Add a listener that forwards received coins
+        kit.wallet().addCoinsReceivedEventListener(this::coinForwardingListener);
+
+        // After we start listening, we can tell the user the receiving address
+        System.out.printf("Waiting to receive coins on: %s\n", kit.wallet().currentReceiveAddress());
+        System.out.println("Press Ctrl-C to quit.");
     }
 
     /**
@@ -131,10 +119,12 @@ public class ForwardingService implements Closeable {
      */
     @Override
     public void close() {
-        if (kit.isRunning()) {
-            kit.wallet().removeCoinsReceivedEventListener(listener);
+        if (kit != null) {
+            if (kit.isRunning()) {
+                kit.wallet().removeCoinsReceivedEventListener(this::coinForwardingListener);
+            }
+            kit.close();
         }
-        kit.close();
     }
 
     /**
