@@ -4030,7 +4030,7 @@ public class Wallet extends BaseTaggableObject
         public SendResult(TransactionBroadcast broadcast) {
             this.tx = broadcast.transaction();
             this.broadcast = broadcast;
-            this.broadcastComplete = broadcast.future();
+            this.broadcastComplete = ListenableCompletableFuture.of(broadcast.awaitRelayed().thenApply(TransactionBroadcast::transaction));
         }
     }
 
@@ -5496,7 +5496,9 @@ public class Wallet extends BaseTaggableObject
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
         for (Transaction tx : txns) {
             try {
-                final CompletableFuture<Transaction> future = broadcaster.broadcastTransaction(tx).future();
+                final CompletableFuture<Transaction> future = broadcaster.broadcastTransaction(tx)
+                        .awaitRelayed()
+                        .thenApply(TransactionBroadcast::transaction);
                 futures.add(future);
                 future.whenComplete((transaction, throwable) -> {
                     if (transaction != null) {
