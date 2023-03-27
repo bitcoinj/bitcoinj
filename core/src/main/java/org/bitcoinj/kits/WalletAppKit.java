@@ -187,7 +187,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
      * @return the instance
      */
     public static WalletAppKit launch(BitcoinNetwork network, File directory, String filePrefix, int maxConnections) {
-        return WalletAppKit.launch(network, directory, filePrefix, (c) -> {}, 0);
+        return WalletAppKit.launch(network, directory, filePrefix, (c) -> {}, maxConnections);
     }
 
     /**
