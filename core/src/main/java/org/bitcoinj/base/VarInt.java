@@ -32,6 +32,11 @@ public class VarInt {
     private final long value;
     private final int originallyEncodedSize;
 
+    private static final int SIZE_BYTE = Byte.BYTES; // 1 data byte
+    private static final int SIZE_SHORT = Byte.BYTES + Short.BYTES; // 1 marker + 2 data bytes
+    private static final int SIZE_INT = Byte.BYTES + Integer.BYTES; // 1 marker + 4 data bytes
+    private static final int SIZE_LONG = Byte.BYTES + Long.BYTES; // 1 marker + 8 data bytes
+
     /**
      * Constructs a new VarInt with the given unsigned long value.
      *
@@ -68,16 +73,16 @@ public class VarInt {
         int originallyEncodedSize;
         if (first < 253) {
             value = first;
-            originallyEncodedSize = 1; // 1 data byte (8 bits)
+            originallyEncodedSize = SIZE_BYTE;
         } else if (first == 253) {
             value = Short.toUnsignedInt(buf.getShort());
-            originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
+            originallyEncodedSize = SIZE_SHORT;
         } else if (first == 254) {
             value = Integer.toUnsignedLong(buf.getInt());
-            originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
+            originallyEncodedSize = SIZE_INT;
         } else {
             value = buf.getLong();
-            originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
+            originallyEncodedSize = SIZE_LONG;
         }
         return new VarInt(value, originallyEncodedSize);
     }
@@ -132,11 +137,11 @@ public class VarInt {
      */
     public static int sizeOf(long value) {
         // if negative, it's actually a very large unsigned long value
-        if (value < 0) return 9; // 1 marker + 8 data bytes
-        if (value < 253) return 1; // 1 data byte
-        if (value <= 0xFFFFL) return 3; // 1 marker + 2 data bytes
-        if (value <= 0xFFFFFFFFL) return 5; // 1 marker + 4 data bytes
-        return 9; // 1 marker + 8 data bytes
+        if (value < 0) return SIZE_LONG;
+        if (value < 253) return SIZE_BYTE;
+        if (value <= 0xFFFFL) return SIZE_SHORT;
+        if (value <= 0xFFFFFFFFL) return SIZE_INT;
+        return SIZE_LONG;
     }
 
     /**
