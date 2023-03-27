@@ -24,6 +24,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
@@ -69,6 +70,7 @@ public class PaymentSessionTest {
 
     @Before
     public void setUp() {
+        Context.propagate(new Context());
         serverKey = new ECKey();
         tx = new Transaction(TESTNET);
         outputToMe = new TransactionOutput(TESTNET, tx, amount, serverKey);
