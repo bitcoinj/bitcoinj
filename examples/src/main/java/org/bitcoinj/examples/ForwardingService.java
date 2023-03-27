@@ -24,7 +24,6 @@ import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.CoinSelection;
@@ -169,10 +168,12 @@ public class ForwardingService implements Closeable {
             })
             .thenCompose(broadcast -> {
                 System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
-                return broadcast.awaitRelayed().thenApply(TransactionBroadcast::transaction); // Wait until peers report they have seen the transaction
+                return broadcast.awaitRelayed(); // Wait until peers report they have seen the transaction
             })
-            .thenAccept(tx ->
-                System.out.printf("Sent %s onwards and acknowledged by peers, via transaction %s\n", tx.getOutputSum().toFriendlyString(), tx.getTxId())
+            .thenAccept(broadcast ->
+                System.out.printf("Sent %s onwards and acknowledged by peers, via transaction %s\n",
+                        broadcast.transaction().getOutputSum().toFriendlyString(),
+                        broadcast.transaction().getTxId())
             );
     }
 
