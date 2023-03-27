@@ -44,7 +44,7 @@ import static java.util.stream.Collectors.toList;
  * sends them onwards to an address given on the command line.
  */
 public class ForwardingService implements Closeable {
-    static final String USAGE = "Usage: address-to-send-back-to [mainnet|testnet|signet|regtest]";
+    static final String USAGE = "Usage: address-to-forward-to [mainnet|testnet|signet|regtest]";
     static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
     private final BitcoinNetwork network;
