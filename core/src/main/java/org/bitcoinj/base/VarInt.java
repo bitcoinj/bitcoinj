@@ -63,20 +63,19 @@ public class VarInt {
     public static VarInt read(ByteBuffer buf) throws BufferUnderflowException {
         buf.order(ByteOrder.LITTLE_ENDIAN);
         int first = Byte.toUnsignedInt(buf.get());
+        int originallyEncodedSize = Byte.BYTES;
         long value;
-        int originallyEncodedSize;
         if (first < 253) {
             value = first;
-            originallyEncodedSize = 1; // 1 data byte (8 bits)
         } else if (first == 253) {
             value = Short.toUnsignedInt(buf.getShort());
-            originallyEncodedSize = 3; // 1 marker + 2 data bytes (16 bits)
+            originallyEncodedSize += Short.BYTES;
         } else if (first == 254) {
             value = Integer.toUnsignedLong(buf.getInt());
-            originallyEncodedSize = 5; // 1 marker + 4 data bytes (32 bits)
+            originallyEncodedSize += Integer.BYTES;
         } else {
             value = buf.getLong();
-            originallyEncodedSize = 9; // 1 marker + 8 data bytes (64 bits)
+            originallyEncodedSize = Long.BYTES;
         }
         return new VarInt(value, originallyEncodedSize);
     }
