@@ -28,7 +28,11 @@ import java.util.concurrent.Executor;
  * to implement {@code CompletionStage}.
  */
 public interface ListenableCompletionStage<V> extends CompletionStage<V>, ListenableFuture<V> {
+    /**
+     * @deprecated Use {@link java.util.concurrent.CompletableFuture} and {@link java.util.concurrent.CompletableFuture#thenRunAsync(Runnable, Executor)}
+     */
     @Override
+    @Deprecated
     default void addListener(Runnable listener, Executor executor) {
         this.thenRunAsync(listener, executor);
     }
