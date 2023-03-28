@@ -319,8 +319,10 @@ public class PeerGroup implements TransactionBroadcaster {
             Collections.shuffle(addresses);
             int numAdded = 0;
             for (PeerAddress address : addresses) {
-                // Add to inactive pool.
-                boolean added = addInactive(address, 0);
+                if (!address.getServices().has(requiredServices))
+                    continue;
+                // Add to inactive pool with slightly elevated priority because services fit.
+                boolean added = addInactive(address, 1);
                 if (added)
                     numAdded++;
                 // Limit addresses picked per message.
