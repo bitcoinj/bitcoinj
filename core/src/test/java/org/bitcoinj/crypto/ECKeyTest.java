@@ -31,6 +31,7 @@ import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,6 +190,50 @@ public class ECKeyTest {
         ECKey key = DumpedPrivateKey.fromBase58(TESTNET, privkey).getKey();
         assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toString());
         assertEquals(addr, key.toAddress(ScriptType.P2PKH, TESTNET).toString());
+    }
+
+    @Test
+    public void createP2PKAddress() {
+        String addr = "mqAJmaxMcG5pPHHc3H3NtyXzY7kGbJLuMF";
+        String privkey = "92shANodC6Y4evT5kFzjNFQAdjqTtHAnDTLzqBBq4BbKUPyx6CD";
+        ECKey key = DumpedPrivateKey.fromBase58(TESTNET, privkey).getKey();
+        Address address = key.toAddress(ScriptType.P2PKH, TESTNET);
+
+        assertTrue(address instanceof LegacyAddress);
+        assertEquals(addr, address.toString());
+    }
+
+    @Test
+    public void createP2WPKAddress() {
+        String addr = "tb1q0yy3juscd3zfavw76g4h3eqdqzda7qyf7pcpwg";
+
+        ECKey key = ECKey.fromPrivate(
+                ByteUtils.parseHex("eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf"));
+        assertEquals("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873",
+                key.getPublicKeyAsHex());
+
+        Address address = key.toAddress(ScriptType.P2WPKH, TESTNET);
+
+        assertTrue(address instanceof SegwitAddress);
+        assertEquals(((SegwitAddress) address).getWitnessVersion(), 0);
+        assertEquals(addr, address.toString());
+    }
+
+    @Test
+    @Ignore("Can't create Taproot addresses from keys yet")
+    public void createP2TRAddress() {
+        String addr = "TBD";
+
+        ECKey key = ECKey.fromPrivate(
+                ByteUtils.parseHex("eb696a065ef48a2192da5b28b694f87544b30fae8327c4510137a922f32c6dcf"));
+        assertEquals("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873",
+                key.getPublicKeyAsHex());
+
+        Address address = key.toAddress(ScriptType.P2TR, TESTNET);
+
+        assertTrue(address instanceof SegwitAddress);
+        assertEquals(((SegwitAddress) address).getWitnessVersion(), 1);
+        assertEquals(addr, address.toString());
     }
 
     @Test
