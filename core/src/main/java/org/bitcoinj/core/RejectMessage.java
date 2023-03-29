@@ -82,13 +82,12 @@ public class RejectMessage extends Message {
     private RejectCode code;
     private Sha256Hash messageHash;
 
-    public RejectMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public RejectMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */
-    public RejectMessage(NetworkParameters params, RejectCode code, Sha256Hash hash, String message, String reason) throws ProtocolException {
-        super(params);
+    public RejectMessage(RejectCode code, Sha256Hash hash, String message, String reason) {
         this.code = code;
         this.messageHash = hash;
         this.message = message;

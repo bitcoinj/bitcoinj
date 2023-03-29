@@ -144,7 +144,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertEquals(tx, outbound(channels[1]));
         assertEquals(tx, outbound(channels[2]));
         assertEquals(tx, outbound(channels[4]));
-        RejectMessage reject = new RejectMessage(TESTNET, RejectMessage.RejectCode.DUST, tx.getTxId(), "tx", "dust");
+        RejectMessage reject = new RejectMessage(RejectMessage.RejectCode.DUST, tx.getTxId(), "tx", "dust");
         inbound(channels[1], reject);
         inbound(channels[4], reject);
         try {
