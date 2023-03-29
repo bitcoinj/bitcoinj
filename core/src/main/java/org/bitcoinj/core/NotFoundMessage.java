@@ -29,16 +29,16 @@ import java.util.List;
 public class NotFoundMessage extends InventoryMessage {
     public static int MIN_PROTOCOL_VERSION = 70001;
 
-    public NotFoundMessage(NetworkParameters params) {
-        super(params);
+    public NotFoundMessage() {
+        super();
     }
 
-    public NotFoundMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public NotFoundMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
-    public NotFoundMessage(NetworkParameters params, List<InventoryItem> items) {
-        super(params);
+    public NotFoundMessage(List<InventoryItem> items) {
+        super();
         this.items = new ArrayList<>(items);
     }
 }

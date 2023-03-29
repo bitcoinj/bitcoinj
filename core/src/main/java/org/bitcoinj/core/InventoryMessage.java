@@ -33,24 +33,18 @@ public class InventoryMessage extends ListMessage {
     /** A hard coded constant in the protocol. */
     public static final int MAX_INV_SIZE = 50000;
 
-    public InventoryMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
-    }
-
     /**
      * Deserializes an 'inv' message.
-     * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public InventoryMessage(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer)
+    public InventoryMessage(ByteBuffer payload)
             throws ProtocolException {
-        super(params, payload, serializer);
+        super(payload);
     }
 
-    public InventoryMessage(NetworkParameters params) {
-        super(params);
+    public InventoryMessage() {
+        super();
     }
 
     public void addBlock(Block block) {
@@ -64,7 +58,7 @@ public class InventoryMessage extends ListMessage {
     /** Creates a new inv message for the given transactions. */
     public static InventoryMessage with(Transaction... txns) {
         checkArgument(txns.length > 0);
-        InventoryMessage result = new InventoryMessage(txns[0].getParams());
+        InventoryMessage result = new InventoryMessage();
         for (Transaction tx : txns)
             result.addTransaction(tx);
         return result;

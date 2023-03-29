@@ -188,7 +188,7 @@ public class BitcoindComparisonTool {
                     if (!found)
                         sendHeaders = headers;
                     bitcoind.sendMessage(new HeadersMessage(PARAMS, sendHeaders));
-                    InventoryMessage i = new InventoryMessage(PARAMS);
+                    InventoryMessage i = new InventoryMessage();
                     for (Block b : sendHeaders)
                         i.addBlock(b);
                     bitcoind.sendMessage(i);
@@ -272,7 +272,7 @@ public class BitcoindComparisonTool {
                 boolean shouldntRequest = blocksRequested.contains(nextBlock.getHash());
                 if (shouldntRequest)
                     blocksRequested.remove(nextBlock.getHash());
-                InventoryMessage message = new InventoryMessage(PARAMS);
+                InventoryMessage message = new InventoryMessage();
                 message.addBlock(nextBlock);
                 bitcoind.sendMessage(message);
                 log.info("Sent inv with block " + nextBlock.getHashAsString());

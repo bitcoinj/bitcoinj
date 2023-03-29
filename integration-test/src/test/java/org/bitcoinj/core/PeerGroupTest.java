@@ -246,7 +246,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         Coin value = COIN;
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, value, address);
-        InventoryMessage inv = new InventoryMessage(UNITTEST);
+        InventoryMessage inv = new InventoryMessage();
         inv.addTransaction(t1);
 
         // Note: we start with p2 here to verify that transactions are downloaded from whichever peer announces first
@@ -260,7 +260,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Asks for dependency.
         GetDataMessage getdata = (GetDataMessage) outbound(p2);
         assertNotNull(getdata);
-        inbound(p2, new NotFoundMessage(UNITTEST, getdata.getItems()));
+        inbound(p2, new NotFoundMessage(getdata.getItems()));
         pingAndWait(p2);
         assertEquals(value, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
     }
@@ -286,7 +286,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         Coin value = COIN;
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, value, address2);
-        InventoryMessage inv = new InventoryMessage(UNITTEST);
+        InventoryMessage inv = new InventoryMessage();
         inv.addTransaction(t1);
 
         inbound(p1, inv);
@@ -295,7 +295,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Asks for dependency.
         GetDataMessage getdata = (GetDataMessage) outbound(p1);
         assertNotNull(getdata);
-        inbound(p1, new NotFoundMessage(UNITTEST, getdata.getItems()));
+        inbound(p1, new NotFoundMessage(getdata.getItems()));
         pingAndWait(p1);
         assertEquals(value, wallet2.getBalance(Wallet.BalanceType.ESTIMATED));
     }
@@ -318,7 +318,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
 
         // Peer 1 and 2 receives an inv advertising a newly solved block.
-        InventoryMessage inv = new InventoryMessage(UNITTEST);
+        InventoryMessage inv = new InventoryMessage();
         inv.addBlock(b3);
         // Only peer 1 tries to download it.
         inbound(p1, inv);
@@ -357,7 +357,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(p1);
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We give back an inv with some blocks in it.
-        InventoryMessage inv = new InventoryMessage(UNITTEST);
+        InventoryMessage inv = new InventoryMessage();
         inv.addBlock(b1);
         inv.addBlock(b2);
         inv.addBlock(b3);
@@ -387,7 +387,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p3 = connectPeer(3);
 
         Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST, valueOf(20, 0), address);
-        InventoryMessage inv = new InventoryMessage(UNITTEST);
+        InventoryMessage inv = new InventoryMessage();
         inv.addTransaction(tx);
 
         assertEquals(0, tx.getConfidence().numBroadcastPeers());
@@ -644,7 +644,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertTrue(outbound(p1) instanceof GetDataMessage);
         final Sha256Hash dephash = tx.getInput(0).getOutpoint().getHash();
         final InventoryItem inv = new InventoryItem(InventoryItem.Type.TRANSACTION, dephash);
-        inbound(p1, new NotFoundMessage(UNITTEST, Collections.singletonList(inv)));
+        inbound(p1, new NotFoundMessage(Collections.singletonList(inv)));
         assertNull(outbound(p1));
         assertNull(outbound(p2));
         peerGroup.waitForJobQueue();
