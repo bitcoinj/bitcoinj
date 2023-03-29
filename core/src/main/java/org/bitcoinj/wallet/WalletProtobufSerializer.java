@@ -645,7 +645,7 @@ public class WalletProtobufSerializer {
 
         for (Protos.TransactionInput inputProto : txProto.getTransactionInputList()) {
             byte[] scriptBytes = inputProto.getScriptBytes().toByteArray();
-            TransactionOutPoint outpoint = new TransactionOutPoint(params,
+            TransactionOutPoint outpoint = new TransactionOutPoint(
                     inputProto.getTransactionOutPointIndex() & 0xFFFFFFFFL,
                     byteStringToHash(inputProto.getTransactionOutPointHash())
             );

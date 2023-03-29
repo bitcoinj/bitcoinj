@@ -973,7 +973,7 @@ public class Transaction extends Message {
      * @return the newly created input.
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
-        return addInput(new TransactionInput(params, this, script.getProgram(), new TransactionOutPoint(params, outputIndex, spendTxHash)));
+        return addInput(new TransactionInput(params, this, script.getProgram(), new TransactionOutPoint(outputIndex, spendTxHash)));
     }
 
     /**
