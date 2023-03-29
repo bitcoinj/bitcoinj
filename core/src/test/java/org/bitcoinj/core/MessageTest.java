@@ -33,12 +33,12 @@ public class MessageTest {
     public void readStrOfExtremeLength() {
         VarInt length = VarInt.of(Integer.MAX_VALUE);
         ByteBuffer payload = ByteBuffer.wrap(length.encode());
-        new VarStrMessage(TESTNET, payload);
+        new VarStrMessage(payload);
     }
 
     static class VarStrMessage extends Message {
-        public VarStrMessage(NetworkParameters params, ByteBuffer payload) {
-            super(params, payload);
+        public VarStrMessage(ByteBuffer payload) {
+            super(payload);
         }
 
         @Override
