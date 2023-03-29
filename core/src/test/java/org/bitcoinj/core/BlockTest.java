@@ -311,7 +311,7 @@ public class BlockTest {
     @Test
     public void parseBlockWithHugeDeclaredTransactionsSize() {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Block block = new Block(TESTNET, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
+        Block block = new Block(BitcoinNetwork.TESTNET, 1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 ByteUtils.writeInt32LE(getVersion(), stream);
@@ -335,7 +335,7 @@ public class BlockTest {
 
     @Test
     public void testGenesisBlock() {
-        Block genesisBlock = Block.createGenesis(MainNetParams.get());
+        Block genesisBlock = Block.createGenesis(BitcoinNetwork.MAINNET);
         genesisBlock.setDifficultyTarget(0x1d00ffffL);
         genesisBlock.setTime(Instant.ofEpochSecond(1231006505L));
         genesisBlock.setNonce(2083236893);

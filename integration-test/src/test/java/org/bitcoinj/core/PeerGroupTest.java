@@ -455,7 +455,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void noPings() throws Exception {
         peerGroup.start();
         peerGroup.setPingIntervalMsec(0);
-        VersionMessage versionMessage = new VersionMessage(UNITTEST, 2);
+        VersionMessage versionMessage = new VersionMessage(UNITTEST.network(), 2);
         versionMessage.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
         versionMessage.localServices = Services.of(Services.NODE_NETWORK);
         connectPeer(1, versionMessage);
@@ -467,7 +467,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void pings() throws Exception {
         peerGroup.start();
         peerGroup.setPingIntervalMsec(100);
-        VersionMessage versionMessage = new VersionMessage(UNITTEST, 2);
+        VersionMessage versionMessage = new VersionMessage(UNITTEST.network(), 2);
         versionMessage.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
         versionMessage.localServices = Services.of(Services.NODE_NETWORK);
         InboundMessageQueuer p1 = connectPeer(1, versionMessage);
@@ -484,10 +484,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void downloadPeerSelection() throws Exception {
         peerGroup.start();
-        VersionMessage v1 = new VersionMessage(UNITTEST, 2);
+        VersionMessage v1 = new VersionMessage(UNITTEST.network(), 2);
         v1.clientVersion = NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
         v1.localServices = Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
-        VersionMessage v2 = new VersionMessage(UNITTEST, 4);
+        VersionMessage v2 = new VersionMessage(UNITTEST.network(), 4);
         v2.clientVersion = NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
         v2.localServices = Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
         assertNull(peerGroup.getDownloadPeer());
@@ -633,7 +633,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         // Create a P2PK tx.
         Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST, COIN, key);
-        Transaction tx2 = new Transaction(UNITTEST);
+        Transaction tx2 = new Transaction(UNITTEST.network());
         tx2.addInput(tx.getOutput(0));
         TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
         assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));
@@ -709,10 +709,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         CompletableFuture<List<Peer>> future = peerGroup.waitForPeersOfVersion(2, bip111ver);
 
-        VersionMessage ver1 = new VersionMessage(UNITTEST, 10);
+        VersionMessage ver1 = new VersionMessage(UNITTEST.network(), 10);
         ver1.clientVersion = bip37ver;
         ver1.localServices = Services.of(Services.NODE_NETWORK);
-        VersionMessage ver2 = new VersionMessage(UNITTEST, 10);
+        VersionMessage ver2 = new VersionMessage(UNITTEST.network(), 10);
         ver2.clientVersion = bip111ver;
         ver2.localServices = Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM);
         peerGroup.start();
@@ -731,10 +731,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void waitForPeersWithServiceFlags() throws Exception {
         CompletableFuture<List<Peer>> future = peerGroup.waitForPeersWithServiceMask(2, 3);
 
-        VersionMessage ver1 = new VersionMessage(UNITTEST, 10);
+        VersionMessage ver1 = new VersionMessage(UNITTEST.network(), 10);
         ver1.clientVersion = 70001;
         ver1.localServices = Services.of(Services.NODE_NETWORK);
-        VersionMessage ver2 = new VersionMessage(UNITTEST, 10);
+        VersionMessage ver2 = new VersionMessage(UNITTEST.network(), 10);
         ver2.clientVersion = 70001;
         ver2.localServices = Services.of(Services.NODE_NETWORK | 2);
         peerGroup.start();
@@ -777,7 +777,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
             local.accept();   // Real connect
             // If we get here it used the local peer. Check no others are in use.
             assertEquals(1, peerGroup.getMaxConnections());
-            assertEquals(PeerAddress.localhost(UNITTEST), peerGroup.getPendingPeers().get(0).getAddress());
+            assertEquals(PeerAddress.localhost(UNITTEST.network()), peerGroup.getPendingPeers().get(0).getAddress());
         } finally {
             local.close();
         }

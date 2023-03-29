@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.net.InetAddresses;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -89,25 +90,26 @@ public class VersionMessage extends Message {
      */
     public boolean relayTxesBeforeFilter;
 
-    public VersionMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public VersionMessage(Network network, ByteBuffer payload) throws ProtocolException {
+        super(network, payload);
     }
 
     // It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
     // If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
     // back down the wire.
     
-    public VersionMessage(NetworkParameters params, int newBestHeight) {
-        super(params);
+    public VersionMessage(Network network, int newBestHeight) {
+        super(network);
         clientVersion = serializer.getProtocolVersion();
         localServices = Services.none();
         time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
+        int port = NetworkParameters.of(network).getPort();
         MessageSerializer serializer = new DummySerializer(0);
-        receivingAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
-        fromAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
+        receivingAddr = new PeerAddress(localhost, port, Services.none(), serializer);
+        fromAddr = new PeerAddress(localhost, port, Services.none(), serializer);
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
         relayTxesBeforeFilter = true;
@@ -196,7 +198,7 @@ public class VersionMessage extends Message {
     }
 
     public VersionMessage duplicate() {
-        VersionMessage v = new VersionMessage(params, (int) bestHeight);
+        VersionMessage v = new VersionMessage(network, (int) bestHeight);
         v.clientVersion = clientVersion;
         v.localServices = localServices;
         v.time = time;
@@ -248,13 +250,14 @@ public class VersionMessage extends Message {
      * If it is then {@link Peer#sendPing()} is usable.
      */
     public boolean isPingPongSupported() {
-        return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
+        return clientVersion >= getParams().getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
     }
 
     /**
      * Returns true if the peer supports bloom filtering according to BIP37 and BIP111.
      */
     public boolean isBloomFilteringSupported() {
+        NetworkParameters params = getParams();
         if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)
                 && clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111))
             return true;

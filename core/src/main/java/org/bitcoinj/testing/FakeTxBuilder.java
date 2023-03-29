@@ -18,6 +18,7 @@
 package org.bitcoinj.testing;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -59,14 +60,14 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 @VisibleForTesting
 public class FakeTxBuilder {
     /** Create a fake transaction, without change. */
-    public static Transaction createFakeTx(final NetworkParameters params) {
+    public static Transaction createFakeTx(NetworkParameters params) {
         return createFakeTxWithoutChangeAddress(params, Coin.COIN, randomAddress(params));
     }
 
     /** Create a fake transaction, without change. */
     public static Transaction createFakeTxWithoutChange(final NetworkParameters params, final TransactionOutput output) {
         Transaction prevTx = FakeTxBuilder.createFakeTx(params, Coin.COIN, randomAddress(params));
-        Transaction tx = new Transaction(params);
+        Transaction tx = new Transaction(params.network());
         tx.addOutput(output);
         tx.addInput(prevTx.getOutput(0));
         return tx;
@@ -74,9 +75,10 @@ public class FakeTxBuilder {
 
     /** Create a fake coinbase transaction. */
     public static Transaction createFakeCoinbaseTx(final NetworkParameters params) {
+        Network network = params.network();
         TransactionOutPoint outpoint = new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
         TransactionInput input = new TransactionInput(null, new byte[0], outpoint);
-        Transaction tx = new Transaction(params);
+        Transaction tx = new Transaction(network);
         tx.addInput(input);
         TransactionOutput outputToMe = new TransactionOutput(tx, Coin.FIFTY_COINS, randomAddress(params));
         tx.addOutput(outputToMe);
@@ -90,14 +92,15 @@ public class FakeTxBuilder {
      * else to simulate change. There is one random input.
      */
     public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, Address to, Address changeOutput) {
-        Transaction t = new Transaction(params);
+        Network network = params.network();
+        Transaction t = new Transaction(network);
         TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), changeOutput);
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
-        Transaction prevTx = new Transaction(params);
+        Transaction prevTx = new Transaction(network);
         TransactionOutput prevOut = new TransactionOutput(prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
@@ -112,7 +115,8 @@ public class FakeTxBuilder {
      * split randomly to create randomness.
      */
     public static Transaction createFakeTxWithoutChangeAddress(NetworkParameters params, Coin value, Address to) {
-        Transaction t = new Transaction(params);
+        Network network = params.network();
+        Transaction t = new Transaction(network);
         TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
 
@@ -126,7 +130,7 @@ public class FakeTxBuilder {
 
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
-        Transaction prevTx1 = new Transaction(params);
+        Transaction prevTx1 = new Transaction(network);
         TransactionOutput prevOut1 = new TransactionOutput(prevTx1, Coin.valueOf(split), to);
         prevTx1.addOutput(prevOut1);
         // Connect it.
@@ -134,7 +138,7 @@ public class FakeTxBuilder {
         // Fake signature.
 
         // Do it again
-        Transaction prevTx2 = new Transaction(params);
+        Transaction prevTx2 = new Transaction(network);
         TransactionOutput prevOut2 = new TransactionOutput(prevTx2, Coin.valueOf(value.getValue() - split), to);
         prevTx2.addOutput(prevOut2);
         t.addInput(prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
@@ -156,14 +160,15 @@ public class FakeTxBuilder {
      * else to simulate change. There is one random input.
      */
     public static Transaction createFakeTx(NetworkParameters params, Coin value, ECKey to) {
-        Transaction t = new Transaction(params);
+        Network network = params.network();
+        Transaction t = new Transaction(network);
         TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), new ECKey());
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
-        Transaction prevTx = new Transaction(params);
+        Transaction prevTx = new Transaction(network);
         TransactionOutput prevOut = new TransactionOutput(prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
@@ -179,19 +184,20 @@ public class FakeTxBuilder {
                                              Address to, Address from) {
         // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the
         // from address, to the to address with to one to somewhere else to simulate change.
-        Transaction t = new Transaction(params);
+        Network network = params.network();
+        Transaction t = new Transaction(network);
         TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
         TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), randomAddress(params));
         t.addOutput(change);
         // Make a feeder tx that sends to the from address specified. This feeder tx is not really valid but it doesn't
         // matter for our purposes.
-        Transaction feederTx = new Transaction(params);
+        Transaction feederTx = new Transaction(network);
         TransactionOutput feederOut = new TransactionOutput(feederTx, value, from);
         feederTx.addOutput(feederOut);
 
         // make a previous tx that sends from the feeder to the from address
-        Transaction prevTx = new Transaction(params);
+        Transaction prevTx = new Transaction(network);
         TransactionOutput prevOut = new TransactionOutput(prevTx, value, to);
         prevTx.addOutput(prevOut);
 
@@ -230,16 +236,17 @@ public class FakeTxBuilder {
         Coin value = COIN;
         Address someBadGuy = randomAddress(params);
 
-        doubleSpends.prevTx = new Transaction(params);
+        Network network = params.network();
+        doubleSpends.prevTx = new Transaction(network);
         TransactionOutput prevOut = new TransactionOutput(doubleSpends.prevTx, value, someBadGuy);
         doubleSpends.prevTx.addOutput(prevOut);
 
-        doubleSpends.t1 = new Transaction(params);
+        doubleSpends.t1 = new Transaction(network);
         TransactionOutput o1 = new TransactionOutput(doubleSpends.t1, value, to);
         doubleSpends.t1.addOutput(o1);
         doubleSpends.t1.addInput(prevOut);
 
-        doubleSpends.t2 = new Transaction(params);
+        doubleSpends.t2 = new Transaction(network);
         doubleSpends.t2.addInput(prevOut);
         TransactionOutput o2 = new TransactionOutput(doubleSpends.t2, value, someBadGuy);
         doubleSpends.t2.addOutput(o2);

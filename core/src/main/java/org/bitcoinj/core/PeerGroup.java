@@ -437,7 +437,7 @@ public class PeerGroup implements TransactionBroadcaster {
         maxConnections = 0;
 
         int height = chain == null ? 0 : chain.getBestChainHeight();
-        versionMessage = new VersionMessage(params, height);
+        versionMessage = new VersionMessage(params.network(), height);
         // We never request that the remote node wait for a bloom filter yet, as we have no wallets
         versionMessage.relayTxesBeforeFilter = true;
 
@@ -708,7 +708,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public void setUserAgent(String name, String version, @Nullable String comments) {
         //TODO Check that height is needed here (it wasnt, but it should be, no?)
         int height = chain == null ? 0 : chain.getBestChainHeight();
-        VersionMessage ver = new VersionMessage(params, height);
+        VersionMessage ver = new VersionMessage(params.network(), height);
         ver.relayTxesBeforeFilter = false;
         updateVersionMessageRelayTxesBeforeFilter(ver);
         ver.appendToSubVer(name, version, comments);
@@ -1469,7 +1469,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public Peer connectToLocalHost() {
         lock.lock();
         try {
-            final PeerAddress localhost = PeerAddress.localhost(params);
+            final PeerAddress localhost = PeerAddress.localhost(params.network());
             backoffMap.put(localhost, new ExponentialBackoff(peerBackoffParams));
             return connectTo(localhost, true, vConnectTimeout);
         } finally {

@@ -196,7 +196,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // Make sure we can create spends, and that they are announced. Then do the same with offline mode.
 
         // Set up connections and block chain.
-        VersionMessage ver = new VersionMessage(TESTNET, 2);
+        VersionMessage ver = new VersionMessage(BitcoinNetwork.TESTNET, 2);
         ver.localServices = Services.of(Services.NODE_NETWORK);
         InboundMessageQueuer p1 = connectPeer(1, ver);
         InboundMessageQueuer p2 = connectPeer(2);

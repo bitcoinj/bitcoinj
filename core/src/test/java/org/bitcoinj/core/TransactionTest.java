@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
@@ -164,7 +165,7 @@ public class TransactionTest {
 
     @Test
     public void testMessageSize() {
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         int length = tx.getMessageSize();
 
         // add fake transaction input
@@ -205,7 +206,7 @@ public class TransactionTest {
 
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
         TransactionOutput output = new TransactionOutput(null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
@@ -228,7 +229,7 @@ public class TransactionTest {
 
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
@@ -249,7 +250,7 @@ public class TransactionTest {
 
         // Roundtrip without witness
         hex = "0100000003362c10b042d48378b428d60c5c98d8b8aca7a03e1a2ca1048bfd469934bbda95010000008b483045022046c8bc9fb0e063e2fc8c6b1084afe6370461c16cbf67987d97df87827917d42d022100c807fa0ab95945a6e74c59838cc5f9e850714d8850cec4db1e7f3bcf71d5f5ef0141044450af01b4cc0d45207bddfb47911744d01f768d23686e9ac784162a5b3a15bc01e6653310bdd695d8c35d22e9bb457563f8de116ecafea27a0ec831e4a3e9feffffffffc19529a54ae15c67526cc5e20e535973c2d56ef35ff51bace5444388331c4813000000008b48304502201738185959373f04cc73dbbb1d061623d51dc40aac0220df56dabb9b80b72f49022100a7f76bde06369917c214ee2179e583fefb63c95bf876eb54d05dfdf0721ed772014104e6aa2cf108e1c650e12d8dd7ec0a36e478dad5a5d180585d25c30eb7c88c3df0c6f5fd41b3e70b019b777abd02d319bf724de184001b3d014cb740cb83ed21a6ffffffffbaae89b5d2e3ca78fd3f13cf0058784e7c089fb56e1e596d70adcfa486603967010000008b483045022055efbaddb4c67c1f1a46464c8f770aab03d6b513779ad48735d16d4c5b9907c2022100f469d50a5e5556fc2c932645f6927ac416aa65bc83d58b888b82c3220e1f0b73014104194b3f8aa08b96cae19b14bd6c32a92364bea3051cb9f018b03e3f09a57208ff058f4b41ebf96b9911066aef3be22391ac59175257af0984d1432acb8f2aefcaffffffff0340420f00000000001976a914c0fbb13eb10b57daa78b47660a4ffb79c29e2e6b88ac204e0000000000001976a9142cae94ffdc05f8214ccb2b697861c9c07e3948ee88ac1c2e0100000000001976a9146e03561cd4d6033456cc9036d409d2bf82721e9888ac00000000";
-        tx = new Transaction(NetworkParameters.of(BitcoinNetwork.MAINNET), ByteBuffer.wrap(ByteUtils.parseHex(hex)));
+        tx = new Transaction(BitcoinNetwork.MAINNET, ByteBuffer.wrap(ByteUtils.parseHex(hex)));
         assertFalse(tx.hasWitnesses());
         assertEquals(3, tx.getInputs().size());
         for (TransactionInput in : tx.getInputs())
@@ -263,7 +264,7 @@ public class TransactionTest {
 
         // Roundtrip with witness
         hex = "0100000000010213206299feb17742091c3cb2ab45faa3aa87922d3c030cafb3f798850a2722bf0000000000feffffffa12f2424b9599898a1d30f06e1ce55eba7fabfeee82ae9356f07375806632ff3010000006b483045022100fcc8cf3014248e1a0d6dcddf03e80f7e591605ad0dbace27d2c0d87274f8cd66022053fcfff64f35f22a14deb657ac57f110084fb07bb917c3b42e7d033c54c7717b012102b9e4dcc33c9cc9cb5f42b96dddb3b475b067f3e21125f79e10c853e5ca8fba31feffffff02206f9800000000001976a9144841b9874d913c430048c78a7b18baebdbea440588ac8096980000000000160014e4873ef43eac347471dd94bc899c51b395a509a502483045022100dd8250f8b5c2035d8feefae530b10862a63030590a851183cb61b3672eb4f26e022057fe7bc8593f05416c185d829b574290fb8706423451ebd0a0ae50c276b87b43012102179862f40b85fa43487500f1d6b13c864b5eb0a83999738db0f7a6b91b2ec64f00db080000";
-        tx = new Transaction(NetworkParameters.of(BitcoinNetwork.MAINNET), ByteBuffer.wrap(ByteUtils.parseHex(hex)));
+        tx = new Transaction(BitcoinNetwork.MAINNET, ByteBuffer.wrap(ByteUtils.parseHex(hex)));
         assertTrue(tx.hasWitnesses());
         assertEquals(2, tx.getInputs().size());
         assertTrue(tx.getInput(0).hasWitness());
@@ -288,7 +289,7 @@ public class TransactionTest {
                 + "202cb20600000000" + "1976a914" + "8280b37df378db99f66f85c95a783a76ac7a6d59" + "88ac" // txOut
                 + "9093510d00000000" + "1976a914" + "3bde42dbee7e4dbe6a21b2d50ce2f0167faa8159" + "88ac" // txOut
                 + "11000000"; // nLockTime
-        Transaction tx = new Transaction(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
         assertEquals(txHex, tx.toHexString());
         assertEquals(txHex.length() / 2, tx.getMessageSize());
         assertEquals(2, tx.getInputs().size());
@@ -369,7 +370,7 @@ public class TransactionTest {
                 + "b8b4eb0b00000000" + "1976a914" + "a457b684d7f0d539a46a45bbc043f35b59d0d963" + "88ac" // txOut
                 + "0008af2f00000000" + "1976a914" + "fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c" + "88ac" // txOut
                 + "92040000"; // nLockTime
-        Transaction tx = new Transaction(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
         assertEquals(txHex, tx.toHexString());
         assertEquals(txHex.length() / 2, tx.getMessageSize());
         assertEquals(1, tx.getInputs().size());
@@ -439,7 +440,7 @@ public class TransactionTest {
                 + "00e9a43500000000" + "1976a914" + "389ffce9cd9ae88dcc0631e88a821ffdbe9bfe26" + "88ac" // txOut
                 + "c0832f0500000000" + "1976a914" + "7480a33f950689af511e6e84c138dbbd3c3ee415" + "88ac" // txOut
                 + "00000000"; // nLockTime
-        Transaction tx = new Transaction(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
 
         ECKey pubKey = ECKey.fromPublicOnly(ByteUtils.parseHex(
                 "02d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b"));
@@ -502,7 +503,7 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         assertEquals(tx.toString().contains("No inputs!"), true);
     }
 
@@ -540,7 +541,7 @@ public class TransactionTest {
         Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         TransactionOutput fakeOutput = FakeTxBuilder.createFakeTx(TESTNET, Coin.COIN, addr).getOutput(0);
 
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         tx.addOutput(fakeOutput);
 
         Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
@@ -651,10 +652,10 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredInputsSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(TESTNET, true, false, false);
+        Transaction tx = new HugeDeclaredSizeTransaction(BitcoinNetwork.TESTNET, true, false, false);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
-            new Transaction(TESTNET, ByteBuffer.wrap(serializedTx));
+            new Transaction(BitcoinNetwork.TESTNET, ByteBuffer.wrap(serializedTx));
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
@@ -663,10 +664,10 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredOutputsSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(TESTNET, false, true, false);
+        Transaction tx = new HugeDeclaredSizeTransaction(BitcoinNetwork.TESTNET, false, true, false);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
-            new Transaction(TESTNET, ByteBuffer.wrap(serializedTx));
+            new Transaction(BitcoinNetwork.TESTNET, ByteBuffer.wrap(serializedTx));
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
@@ -675,10 +676,10 @@ public class TransactionTest {
 
     @Test
     public void parseTransactionWithHugeDeclaredWitnessPushCountSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(TESTNET, false, false, true);
+        Transaction tx = new HugeDeclaredSizeTransaction(BitcoinNetwork.TESTNET, false, false, true);
         byte[] serializedTx = tx.bitcoinSerialize();
         try {
-            new Transaction(TESTNET, ByteBuffer.wrap(serializedTx));
+            new Transaction(BitcoinNetwork.TESTNET, ByteBuffer.wrap(serializedTx));
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
@@ -691,16 +692,16 @@ public class TransactionTest {
         private boolean hackOutputsSize;
         private boolean hackWitnessPushCountSize;
 
-        public HugeDeclaredSizeTransaction(NetworkParameters params, boolean hackInputsSize, boolean hackOutputsSize, boolean hackWitnessPushCountSize) {
-            super(params);
-            Transaction inputTx = new Transaction(params);
-            inputTx.addOutput(Coin.FIFTY_COINS, ECKey.fromPrivate(BigInteger.valueOf(123456)).toAddress(ScriptType.P2PKH, params.network()));
+        public HugeDeclaredSizeTransaction(Network network, boolean hackInputsSize, boolean hackOutputsSize, boolean hackWitnessPushCountSize) {
+            super(network);
+            Transaction inputTx = new Transaction(network);
+            inputTx.addOutput(Coin.FIFTY_COINS, ECKey.fromPrivate(BigInteger.valueOf(123456)).toAddress(ScriptType.P2PKH, network));
             this.addInput(inputTx.getOutput(0));
             this.getInput(0).disconnect();
             TransactionWitness witness = new TransactionWitness(1);
             witness.setPush(0, new byte[] {0});
             this.getInput(0).setWitness(witness);
-            Address to = ECKey.fromPrivate(BigInteger.valueOf(1000)).toAddress(ScriptType.P2PKH, params.network());
+            Address to = ECKey.fromPrivate(BigInteger.valueOf(1000)).toAddress(ScriptType.P2PKH, network);
             this.addOutput(Coin.COIN, to);
 
             this.hackInputsSize = hackInputsSize;
@@ -751,7 +752,7 @@ public class TransactionTest {
     public void getWeightAndVsize() {
         // example from https://en.bitcoin.it/wiki/Weight_units
         String txHex = "0100000000010115e180dc28a2327e687facc33f10f2a20da717e5548406f7ae8b4c811072f85603000000171600141d7cd6c75c2e86f4cbf98eaed221b30bd9a0b928ffffffff019caef505000000001976a9141d7cd6c75c2e86f4cbf98eaed221b30bd9a0b92888ac02483045022100f764287d3e99b1474da9bec7f7ed236d6c81e793b20c4b5aa1f3051b9a7daa63022016a198031d5554dbb855bdbe8534776a4be6958bd8d530dc001c32b828f6f0ab0121038262a6c6cec93c2d3ecd6c6072efea86d02ff8e3328bbd0242b20af3425990ac00000000";
-        Transaction tx = new Transaction(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
         assertEquals(218, tx.getMessageSize());
         assertEquals(542, tx.getWeight());
         assertEquals(136, tx.getVsize());

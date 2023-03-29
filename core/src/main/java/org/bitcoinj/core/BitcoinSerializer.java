@@ -217,7 +217,7 @@ public class BitcoinSerializer extends MessageSerializer {
         ByteBuffer payload = ByteBuffer.wrap(payloadBytes);
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
-            return new VersionMessage(params, payload);
+            return new VersionMessage(params.network(), payload);
         } else if (command.equals("inv")) { 
             return makeInventoryMessage(payload);
         } else if (command.equals("block")) {
@@ -247,7 +247,7 @@ public class BitcoinSerializer extends MessageSerializer {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new VersionAck();
         } else if (command.equals("headers")) {
-            return new HeadersMessage(params, payload);
+            return new HeadersMessage(params.network(), payload);
         } else if (command.equals("filterload")) {
             return makeBloomFilter(payload);
         } else if (command.equals("notfound")) {
@@ -298,7 +298,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public Block makeBlock(ByteBuffer payload) throws ProtocolException {
-        return new Block(params, payload);
+        return new Block(params.network(), payload);
     }
 
     /**
@@ -316,7 +316,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public FilteredBlock makeFilteredBlock(ByteBuffer payload) throws ProtocolException {
-        return new FilteredBlock(params, payload);
+        return new FilteredBlock(params.network(), payload);
     }
 
     /**
@@ -335,7 +335,7 @@ public class BitcoinSerializer extends MessageSerializer {
     @Override
     public Transaction makeTransaction(ByteBuffer payload, byte[] hashFromHeader)
             throws ProtocolException {
-        return new Transaction(params, payload, this, hashFromHeader);
+        return new Transaction(params.network(), payload, this, hashFromHeader);
     }
 
     @Override

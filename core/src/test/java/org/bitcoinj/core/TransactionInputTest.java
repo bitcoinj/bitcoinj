@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
@@ -49,7 +50,7 @@ public class TransactionInputTest {
         Address a = w.currentReceiveAddress();
         Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(TESTNET, Coin.COIN, a);
         w.receivePending(tx1, null);
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction(BitcoinNetwork.TESTNET);
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         SendRequest req = SendRequest.forTx(tx2);
         req.allowUnconfirmed();
@@ -89,7 +90,7 @@ public class TransactionInputTest {
             }
         });
 
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction(BitcoinNetwork.TESTNET);
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         w.completeTx(SendRequest.forTx(tx2));
 

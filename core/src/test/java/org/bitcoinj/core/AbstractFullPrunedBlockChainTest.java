@@ -159,7 +159,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         }
 
         rollingBlock = rollingBlock.createNextBlock(null);
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS.network());
         t.addOutput(new TransactionOutput(t, FIFTY_COINS, new byte[] {}));
         TransactionInput input = t.addInput(spendableOutput);
         // Invalid script.
@@ -204,7 +204,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
                 (store.getTransactionOutput(transactionOutPoint.getHash(), transactionOutPoint.getIndex()));
         rollingBlock = rollingBlock.createNextBlock(null);
         
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS.network());
         // Entirely invalid scriptPubKey
         t.addOutput(new TransactionOutput(t, FIFTY_COINS, new byte[]{}));
         t.addSignedInput(transactionOutPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
@@ -281,7 +281,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Address address = toKey.toAddress(ScriptType.P2PKH, PARAMS.network());
         Coin totalAmount = Coin.ZERO;
 
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS.network());
         t.addOutput(new TransactionOutput(t, amount, toKey));
         t.addSignedInput(spendableOutputPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);
@@ -336,7 +336,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(100000000);
 
-        Transaction t = new Transaction(PARAMS);
+        Transaction t = new Transaction(PARAMS.network());
         t.addOutput(new TransactionOutput(t, amount, toKey));
         t.addSignedInput(spendableOutPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);

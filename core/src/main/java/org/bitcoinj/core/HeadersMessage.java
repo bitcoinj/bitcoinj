@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.VarInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,17 +45,17 @@ public class HeadersMessage extends Message {
 
     private List<Block> blockHeaders;
 
-    public HeadersMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public HeadersMessage(Network network, ByteBuffer payload) throws ProtocolException {
+        super(network, payload);
     }
 
-    public HeadersMessage(NetworkParameters params, Block... headers) throws ProtocolException {
-        super(params);
+    public HeadersMessage(Network network, Block... headers) throws ProtocolException {
+        super(network);
         blockHeaders = Arrays.asList(headers);
     }
 
-    public HeadersMessage(NetworkParameters params, List<Block> headers) throws ProtocolException {
-        super(params);
+    public HeadersMessage(Network network, List<Block> headers) throws ProtocolException {
+        super(network);
         blockHeaders = headers;
     }
 
@@ -75,10 +76,9 @@ public class HeadersMessage extends Message {
                                          MAX_HEADERS);
 
         blockHeaders = new ArrayList<>();
-        final BitcoinSerializer serializer = this.params.getSerializer();
 
         for (int i = 0; i < numHeaders; ++i) {
-            final Block newBlockHeader = new Block(params, payload);
+            final Block newBlockHeader = new Block(network, payload);
             if (newBlockHeader.hasTransactions()) {
                 throw new ProtocolException("Block header does not end with a null byte");
             }

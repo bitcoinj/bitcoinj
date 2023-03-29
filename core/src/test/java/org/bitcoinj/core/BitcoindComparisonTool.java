@@ -89,10 +89,10 @@ public class BitcoindComparisonTool {
             System.exit(1);
         }
 
-        VersionMessage ver = new VersionMessage(PARAMS, 42);
+        VersionMessage ver = new VersionMessage(PARAMS.network(), 42);
         ver.appendToSubVer("BlockAcceptanceComparisonTool", "1.1", null);
         ver.localServices = Services.of(Services.NODE_NETWORK);
-        final Peer bitcoind = new Peer(PARAMS, ver, PeerAddress.localhost(PARAMS),
+        final Peer bitcoind = new Peer(PARAMS, ver, PeerAddress.localhost(PARAMS.network()),
                 new BlockChain(PARAMS, new MemoryBlockStore(PARAMS)));
         checkState(bitcoind.getVersionMessage().hasBlockChain());
 
@@ -187,7 +187,7 @@ public class BitcoindComparisonTool {
                     }
                     if (!found)
                         sendHeaders = headers;
-                    bitcoind.sendMessage(new HeadersMessage(PARAMS, sendHeaders));
+                    bitcoind.sendMessage(new HeadersMessage(PARAMS.network(), sendHeaders));
                     InventoryMessage i = new InventoryMessage();
                     for (Block b : sendHeaders)
                         i.addBlock(b);

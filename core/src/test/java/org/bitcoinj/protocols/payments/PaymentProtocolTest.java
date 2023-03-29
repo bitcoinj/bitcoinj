@@ -139,7 +139,7 @@ public class PaymentProtocolTest {
 
         // Parse
         Payment parsedPayment = Payment.parseFrom(paymentBytes);
-        List<Transaction> parsedTransactions = PaymentProtocol.parseTransactionsFromPaymentMessage(TESTNET,
+        List<Transaction> parsedTransactions = PaymentProtocol.parseTransactionsFromPaymentMessage(BitcoinNetwork.TESTNET,
                 parsedPayment);
         assertEquals(transactions, parsedTransactions);
         assertEquals(1, parsedPayment.getRefundToCount());

@@ -76,7 +76,7 @@ public class TestFeeLevel {
 
         Coin value = kit.wallet().getBalance().divide(2); // Keep a chunk for the fee.
         Coin outputValue = value.divide(numOutputs);
-        Transaction transaction = new Transaction(kit.params());
+        Transaction transaction = new Transaction(kit.network());
         for (int i = 0; i < numOutputs - 1; i++) {
             transaction.addOutput(outputValue, kit.wallet().freshReceiveAddress());
             value = value.subtract(outputValue);

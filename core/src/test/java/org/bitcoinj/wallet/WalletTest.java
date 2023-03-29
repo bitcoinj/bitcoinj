@@ -537,7 +537,7 @@ public class WalletTest extends TestWithWallet {
         Coin v3 = valueOf(0, 75);
         Coin v4 = valueOf(1, 25);
 
-        Transaction t2 = new Transaction(TESTNET);
+        Transaction t2 = new Transaction(BitcoinNetwork.TESTNET);
         t2.addOutput(v2, OTHER_ADDRESS);
         t2.addOutput(v3, OTHER_ADDRESS);
         t2.addOutput(v4, OTHER_ADDRESS);
@@ -612,7 +612,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void balanceWithIdenticalOutputs() {
         assertEquals(Coin.ZERO, wallet.getBalance(BalanceType.ESTIMATED));
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         tx.addOutput(Coin.COIN, myAddress);
         tx.addOutput(Coin.COIN, myAddress); // identical to the above
         wallet.addWalletTransaction(new WalletTransaction(Pool.UNSPENT, tx));
@@ -788,7 +788,7 @@ public class WalletTest extends TestWithWallet {
         // transactions you can't check they add up.
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx);
         // Now the other guy creates a transaction which spends that change.
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction(BitcoinNetwork.TESTNET);
         tx2.addInput(output);
         tx2.addOutput(new TransactionOutput(tx2, valueOf(0, 5), myAddress));
         // tx2 doesn't send any coins from us, even though the output is in the wallet.
@@ -814,7 +814,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, outbound1);
         assertTrue(outbound1.getWalletOutputs(wallet).size() <= 1); //the change address at most
         // That other guy gives us the coins right back.
-        Transaction inbound2 = new Transaction(TESTNET);
+        Transaction inbound2 = new Transaction(BitcoinNetwork.TESTNET);
         inbound2.addOutput(new TransactionOutput(inbound2, coinHalf, myAddress));
         assertTrue(outbound1.getWalletOutputs(wallet).size() >= 1);
         inbound2.addInput(outbound1.getOutputs().get(0));
@@ -1134,7 +1134,7 @@ public class WalletTest extends TestWithWallet {
         FakeTxBuilder.DoubleSpends doubleSpends = FakeTxBuilder.createFakeDoubleSpendTxns(TESTNET, myAddress);
         // doubleSpends.t1 spends to our wallet. doubleSpends.t2 double spends somewhere else.
 
-        Transaction t1b = new Transaction(TESTNET);
+        Transaction t1b = new Transaction(BitcoinNetwork.TESTNET);
         TransactionOutput t1bo = new TransactionOutput(t1b, valueOf(0, 50), OTHER_ADDRESS);
         t1b.addOutput(t1bo);
         t1b.addInput(doubleSpends.t1.getOutput(0));
@@ -1401,14 +1401,14 @@ public class WalletTest extends TestWithWallet {
 
         // Create two transactions that share the same input tx.
         Address badGuy = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        Transaction doubleSpentTx = new Transaction(TESTNET);
+        Transaction doubleSpentTx = new Transaction(BitcoinNetwork.TESTNET);
         TransactionOutput doubleSpentOut = new TransactionOutput(doubleSpentTx, nanos, badGuy);
         doubleSpentTx.addOutput(doubleSpentOut);
-        Transaction t1 = new Transaction(TESTNET);
+        Transaction t1 = new Transaction(BitcoinNetwork.TESTNET);
         TransactionOutput o1 = new TransactionOutput(t1, nanos, myAddress);
         t1.addOutput(o1);
         t1.addInput(doubleSpentOut);
-        Transaction t2 = new Transaction(TESTNET);
+        Transaction t2 = new Transaction(BitcoinNetwork.TESTNET);
         TransactionOutput o2 = new TransactionOutput(t2, nanos, badGuy);
         t2.addOutput(o2);
         t2.addInput(doubleSpentOut);
@@ -1661,7 +1661,7 @@ public class WalletTest extends TestWithWallet {
         Transaction t2 = createFakeTx(TESTNET, COIN, OTHER_ADDRESS);
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, t1);
         assertEquals(baseElements + 2, wallet.getBloomFilterElementCount());
-        Transaction st2 = new Transaction(TESTNET);
+        Transaction st2 = new Transaction(BitcoinNetwork.TESTNET);
         st2.addOutput(CENT, OTHER_ADDRESS);
         st2.addOutput(COIN, OTHER_ADDRESS);
         st2.addInput(t1.getOutput(0));
@@ -1849,7 +1849,7 @@ public class WalletTest extends TestWithWallet {
         // First create our current transaction
         ECKey k2 = wallet.freshReceiveKey();
         Coin v2 = valueOf(0, 50);
-        Transaction t2 = new Transaction(TESTNET);
+        Transaction t2 = new Transaction(BitcoinNetwork.TESTNET);
         TransactionOutput o2 = new TransactionOutput(t2, v2, k2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         t2.addOutput(o2);
         SendRequest req = SendRequest.forTx(t2);
@@ -1864,7 +1864,7 @@ public class WalletTest extends TestWithWallet {
         // Now try to the spend the output.
         ECKey k3 = new ECKey();
         Coin v3 = valueOf(0, 25);
-        Transaction t3 = new Transaction(TESTNET);
+        Transaction t3 = new Transaction(BitcoinNetwork.TESTNET);
         t3.addOutput(v3, k3.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         t3.addInput(o2);
         wallet.signTransaction(SendRequest.forTx(t3));
@@ -1886,7 +1886,7 @@ public class WalletTest extends TestWithWallet {
         // chain without emptying the memory pool (or refilling it from a peer).
         Coin value = COIN;
         Transaction tx1 = createFakeTx(TESTNET, value, myAddress);
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction(BitcoinNetwork.TESTNET);
         tx2.addInput(tx1.getOutput(0));
         tx2.addOutput(valueOf(0, 9), OTHER_ADDRESS);
         // Add a change address to ensure this tx is relevant.
@@ -1906,7 +1906,7 @@ public class WalletTest extends TestWithWallet {
         // with a change address but the network delivers the transactions to us in order B then A.
         Coin value = COIN;
         Transaction a = createFakeTx(TESTNET, value, myAddress);
-        Transaction b = new Transaction(TESTNET);
+        Transaction b = new Transaction(BitcoinNetwork.TESTNET);
         b.addInput(a.getOutput(0));
         b.addOutput(CENT, OTHER_ADDRESS);
         Coin v = COIN.subtract(CENT);
@@ -2119,7 +2119,7 @@ public class WalletTest extends TestWithWallet {
     public void respectMaxStandardSize() throws Exception {
         // Check that we won't create txns > 100kb. Average tx size is ~220 bytes so this would have to be enormous.
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(100, 0));
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         byte[] bits = new byte[20];
         new Random().nextBytes(bits);
         Coin v = CENT;
@@ -2135,7 +2135,7 @@ public class WalletTest extends TestWithWallet {
     public void opReturnOneOutputTest() throws Exception {
         // Tests basic send of transaction with one output that doesn't transfer any value but just writes OP_RETURN.
         receiveATransaction(wallet, myAddress);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         Coin messagePrice = Coin.ZERO;
         Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(messagePrice, script);
@@ -2147,7 +2147,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void opReturnMaxBytes() throws Exception {
         receiveATransaction(wallet, myAddress);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         Script script = ScriptBuilder.createOpReturnScript(new byte[80]);
         tx.addOutput(Coin.ZERO, script);
         SendRequest request = SendRequest.forTx(tx);
@@ -2159,7 +2159,7 @@ public class WalletTest extends TestWithWallet {
     public void opReturnOneOutputWithValueTest() throws Exception {
         // Tests basic send of transaction with one output that destroys coins and has an OP_RETURN.
         receiveATransaction(wallet, myAddress);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         Coin messagePrice = CENT;
         Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(messagePrice, script);
@@ -2171,7 +2171,7 @@ public class WalletTest extends TestWithWallet {
     public void opReturnTwoOutputsTest() throws Exception {
         // Tests sending transaction where one output transfers BTC, the other one writes OP_RETURN.
         receiveATransaction(wallet, myAddress);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         Coin messagePrice = Coin.ZERO;
         Script script = ScriptBuilder.createOpReturnScript("hello world!".getBytes());
         tx.addOutput(CENT, OTHER_ADDRESS);
@@ -2184,7 +2184,7 @@ public class WalletTest extends TestWithWallet {
     public void twoOpReturnsPerTransactionTest() throws Exception {
         // Tests sending transaction where there are 2 attempts to write OP_RETURN scripts - this should fail and throw MultipleOpReturnRequested.
         receiveATransaction(wallet, myAddress);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         Coin messagePrice = Coin.ZERO;
         Script script1 = ScriptBuilder.createOpReturnScript("hello world 1!".getBytes());
         Script script2 = ScriptBuilder.createOpReturnScript("hello world 2!".getBytes());
@@ -2198,7 +2198,7 @@ public class WalletTest extends TestWithWallet {
     @Test(expected = Wallet.DustySendRequested.class)
     public void sendDustTest() throws InsufficientMoneyException {
         // Tests sending dust, should throw DustySendRequested.
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         Coin dustThreshold = new TransactionOutput(null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue();
         tx.addOutput(dustThreshold.subtract(SATOSHI), OTHER_ADDRESS);
         SendRequest request = SendRequest.forTx(tx);
@@ -2209,7 +2209,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void sendMultipleCentsTest() throws Exception {
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         Coin c = CENT.subtract(SATOSHI);
         tx.addOutput(c, OTHER_ADDRESS);
         tx.addOutput(c, OTHER_ADDRESS);
@@ -2223,7 +2223,7 @@ public class WalletTest extends TestWithWallet {
     public void sendDustAndOpReturnWithoutValueTest() throws Exception {
         // Tests sending dust and OP_RETURN without value, should throw DustySendRequested because sending sending dust is not allowed in any case.
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         tx.addOutput(Coin.ZERO, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         tx.addOutput(Coin.SATOSHI, OTHER_ADDRESS);
         SendRequest request = SendRequest.forTx(tx);
@@ -2235,7 +2235,7 @@ public class WalletTest extends TestWithWallet {
     public void sendDustAndMessageWithValueTest() throws Exception {
         // Tests sending dust and OP_RETURN with value, should throw DustySendRequested
         receiveATransaction(wallet, myAddress);
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction(BitcoinNetwork.TESTNET);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         Coin dustThreshold = new TransactionOutput(null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue();
         tx.addOutput(dustThreshold.subtract(SATOSHI), OTHER_ADDRESS);
@@ -2506,7 +2506,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(CENT, request25.tx.getInput(1).getValue());
 
         // Spend our CENT output.
-        Transaction spendTx5 = new Transaction(TESTNET);
+        Transaction spendTx5 = new Transaction(BitcoinNetwork.TESTNET);
         spendTx5.addOutput(CENT, OTHER_ADDRESS);
         spendTx5.addInput(tx5.getOutput(0));
         wallet.signTransaction(SendRequest.forTx(spendTx5));
@@ -3420,7 +3420,7 @@ public class WalletTest extends TestWithWallet {
         Transaction tx0 = createFakeTx(TESTNET);
         Transaction tx1 = createFakeTx(TESTNET);
 
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction(BitcoinNetwork.TESTNET);
         tx2.addInput(tx0.getOutput(0));
         tx2.addOutput(COIN, myAddress);
         tx2.addOutput(COIN, OTHER_ADDRESS);
@@ -3428,14 +3428,14 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx2, tx1, tx0);
 
         // tx3 and tx4 double spend each other
-        Transaction tx3 = new Transaction(TESTNET);
+        Transaction tx3 = new Transaction(BitcoinNetwork.TESTNET);
         tx3.addInput(tx1.getOutput(0));
         tx3.addOutput(COIN, myAddress);
         tx3.addOutput(COIN, OTHER_ADDRESS);
         wallet.receivePending(tx3, null);
 
         // tx4 also spends irrelevant output from tx2
-        Transaction tx4 = new Transaction(TESTNET);
+        Transaction tx4 = new Transaction(BitcoinNetwork.TESTNET);
         tx4.addInput(tx1.getOutput(0)); // spends same output
         tx4.addInput(tx2.getOutput(1));
         tx4.addOutput(COIN, OTHER_ADDRESS);
@@ -3453,7 +3453,7 @@ public class WalletTest extends TestWithWallet {
     public void overridingDeadTxTest() throws Exception {
         Transaction tx0 = createFakeTx(TESTNET);
 
-        Transaction tx1 = new Transaction(TESTNET);
+        Transaction tx1 = new Transaction(BitcoinNetwork.TESTNET);
         tx1.addInput(tx0.getOutput(0));
         tx1.addOutput(COIN, OTHER_ADDRESS);
         tx1.addOutput(COIN, OTHER_ADDRESS);
@@ -3462,7 +3462,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, tx0, tx1);
 
         // tx2, tx3 and tx4 double spend each other
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction(BitcoinNetwork.TESTNET);
         tx2.addInput(tx1.getOutput(0));
         tx2.addInput(tx1.getOutput(1));
         tx2.addOutput(COIN, myAddress);
@@ -3470,12 +3470,12 @@ public class WalletTest extends TestWithWallet {
         wallet.receivePending(tx2, null);
 
         // irrelevant to the wallet
-        Transaction tx3 = new Transaction(TESTNET);
+        Transaction tx3 = new Transaction(BitcoinNetwork.TESTNET);
         tx3.addInput(tx1.getOutput(0)); // spends same output as tx2
         tx3.addOutput(COIN, OTHER_ADDRESS);
 
         // irrelevant to the wallet
-        Transaction tx4 = new Transaction(TESTNET);
+        Transaction tx4 = new Transaction(BitcoinNetwork.TESTNET);
         tx4.addInput(tx1.getOutput(1)); // spends different output, but also in tx2
         tx4.addOutput(COIN, OTHER_ADDRESS);
 
@@ -3551,7 +3551,7 @@ public class WalletTest extends TestWithWallet {
 
         // Both wallet1 and wallet2 receive coins in the same tx
         Transaction tx0 = createFakeTx(TESTNET);
-        Transaction tx1 = new Transaction(TESTNET);
+        Transaction tx1 = new Transaction(BitcoinNetwork.TESTNET);
         tx1.addInput(tx0.getOutput(0));
         tx1.addOutput(COIN, address1); // to wallet1
         tx1.addOutput(COIN, address2); // to wallet2

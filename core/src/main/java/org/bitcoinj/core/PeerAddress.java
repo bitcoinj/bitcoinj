@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -136,8 +137,8 @@ public class PeerAddress extends Message {
         this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
-    public static PeerAddress localhost(NetworkParameters params) {
-        return new PeerAddress(InetAddress.getLoopbackAddress(), params.getPort());
+    public static PeerAddress localhost(Network network) {
+        return new PeerAddress(InetAddress.getLoopbackAddress(), NetworkParameters.of(network).getPort());
     }
 
     @Override

@@ -85,8 +85,8 @@ public class GenerateLowSTests {
         // Generate a fictional output transaction we take values from, and
         // an input transaction for the test case
 
-        final Transaction outputTransaction = new Transaction(params);
-        final Transaction inputTransaction = new Transaction(params);
+        final Transaction outputTransaction = new Transaction(network);
+        final Transaction inputTransaction = new Transaction(network);
         final TransactionOutput output = new TransactionOutput(inputTransaction, Coin.ZERO, key.toAddress(ScriptType.P2PKH, network));
 
         inputTransaction.addOutput(output);

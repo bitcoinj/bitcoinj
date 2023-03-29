@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
@@ -133,8 +134,8 @@ public class Block extends Message {
     private Sha256Hash hash;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
-    Block(NetworkParameters params, long setVersion) {
-        super(params);
+    Block(Network network, long setVersion) {
+        super(network);
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
         difficultyTarget = 0x1d07fff8L;
@@ -148,9 +149,9 @@ public class Block extends Message {
      * @param payload the payload to extract the block from.
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, ByteBuffer payload)
+    public Block(Network network, ByteBuffer payload)
             throws ProtocolException {
-        super(params, payload);
+        super(network, payload);
     }
 
     /**
@@ -163,10 +164,10 @@ public class Block extends Message {
      * @param serializer the serializer to use for this block.
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, ByteBuffer payload, int offset, @Nullable Message parent, MessageSerializer serializer)
+    public Block(Network network, ByteBuffer payload, int offset, @Nullable Message parent, MessageSerializer serializer)
             throws ProtocolException {
         // TODO: Keep the parent
-        super(params, payload, serializer);
+        super(network, payload, serializer);
     }
 
     /**
@@ -180,9 +181,9 @@ public class Block extends Message {
      * @param nonce Arbitrary number to make the block hash lower than the target.
      * @param transactions List of transactions including the coinbase.
      */
-    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
+    public Block(Network network, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
                  long difficultyTarget, long nonce, List<Transaction> transactions) {
-        super(params);
+        super(network);
         this.version = version;
         this.prevBlockHash = prevBlockHash;
         this.merkleRoot = merkleRoot;
@@ -206,16 +207,16 @@ public class Block extends Message {
      * @deprecated use {@link #Block(NetworkParameters, long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
      */
     @Deprecated
-    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
+    public Block(Network network, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
                  long difficultyTarget, long nonce, List<Transaction> transactions) {
-        this(params, version, prevBlockHash, merkleRoot, Instant.ofEpochSecond(time), difficultyTarget, nonce,
+        this(network, version, prevBlockHash, merkleRoot, Instant.ofEpochSecond(time), difficultyTarget, nonce,
                 transactions);
     }
 
     /** @deprecated Use {@link BitcoinNetworkParams#getBlockInflation(int)} */
     @Deprecated
     public Coin getBlockInflation(int height) {
-        return ((BitcoinNetworkParams) params).getBlockInflation(height);
+        return ((BitcoinNetworkParams) getParams()).getBlockInflation(height);
     }
 
     /**
@@ -226,7 +227,7 @@ public class Block extends Message {
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, serializer, null);
+            Transaction tx = new Transaction(network, payload, serializer, null);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
@@ -251,15 +252,15 @@ public class Block extends Message {
             parseTransactions(payload);
     }
 
-    public static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
-        Transaction t = createGenesisTransaction(n, genesisTxInputScriptBytes, FIFTY_COINS, genesisTxScriptPubKeyBytes);
+    public static Block createGenesis(Network network) {
+        Block genesisBlock = new Block(network, BLOCK_VERSION_GENESIS);
+        Transaction t = createGenesisTransaction(network, genesisTxInputScriptBytes, FIFTY_COINS, genesisTxScriptPubKeyBytes);
         genesisBlock.addTransaction(t);
         return genesisBlock;
     }
 
-    private static Transaction createGenesisTransaction(NetworkParameters n, byte[] inputScriptBytes, Coin amount, byte[] scriptPubKeyBytes) {
-        Transaction t = new Transaction(n);
+    private static Transaction createGenesisTransaction(Network network, byte[] inputScriptBytes, Coin amount, byte[] scriptPubKeyBytes) {
+        Transaction t = new Transaction(network);
         t.addInput(new TransactionInput(t, inputScriptBytes));
         t.addOutput(new TransactionOutput(t, amount, scriptPubKeyBytes));
         return t;
@@ -402,7 +403,7 @@ public class Block extends Message {
      * @return new, header-only {@code Block}
      */
     public Block cloneAsHeader() {
-        Block block = new Block(params, version);
+        Block block = new Block(network, version);
         block.difficultyTarget = difficultyTarget;
         block.time = time;
         block.nonce = nonce;
@@ -471,7 +472,7 @@ public class Block extends Message {
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
         BigInteger target = ByteUtils.decodeCompactBits(difficultyTarget);
-        if (target.signum() <= 0 || target.compareTo(params.maxTarget) > 0)
+        if (target.signum() <= 0 || target.compareTo(getParams().maxTarget) > 0)
             throw new VerificationException("Difficulty target is bad: " + target.toString());
         return target;
     }
@@ -878,7 +879,7 @@ public class Block extends Message {
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
         transactions = new ArrayList<>();
-        Transaction coinbase = new Transaction(params);
+        Transaction coinbase = new Transaction(network);
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
         if (height >= Block.BLOCK_HEIGHT_GENESIS) {
@@ -922,13 +923,13 @@ public class Block extends Message {
                           @Nullable TransactionOutPoint prevOut, final Instant time,
                           final byte[] pubKey, final Coin coinbaseValue,
                           final int height) {
-        Block b = new Block(params, version);
+        Block b = new Block(network, version);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
-            Transaction t = new Transaction(params);
+            Transaction t = new Transaction(network);
             t.addOutput(new TransactionOutput(t, FIFTY_COINS, to));
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;

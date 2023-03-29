@@ -233,7 +233,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
 
     /** Will only connect to localhost. Cannot be called after startup. */
     public WalletAppKit connectToLocalHost() {
-        return setPeerNodes(PeerAddress.localhost(params));
+        return setPeerNodes(PeerAddress.localhost(network));
     }
 
     /** If true, the wallet will save itself to disk automatically whenever it changes. */

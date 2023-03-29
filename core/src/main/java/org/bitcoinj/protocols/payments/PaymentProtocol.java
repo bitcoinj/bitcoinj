@@ -23,6 +23,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
@@ -366,11 +367,11 @@ public class PaymentProtocol {
      * @param paymentMessage payment message to parse
      * @return list of transactions
      */
-    public static List<Transaction> parseTransactionsFromPaymentMessage(NetworkParameters params,
+    public static List<Transaction> parseTransactionsFromPaymentMessage(Network network,
             Protos.Payment paymentMessage) {
         final List<Transaction> transactions = new ArrayList<>(paymentMessage.getTransactionsCount());
         for (final ByteString transaction : paymentMessage.getTransactionsList())
-            transactions.add(params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(transaction.toByteArray())));
+            transactions.add(NetworkParameters.of(network).getDefaultSerializer().makeTransaction(ByteBuffer.wrap(transaction.toByteArray())));
         return transactions;
     }
 

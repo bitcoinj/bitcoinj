@@ -72,7 +72,7 @@ public class PaymentSessionTest {
     public void setUp() {
         Context.propagate(new Context());
         serverKey = new ECKey();
-        tx = new Transaction(TESTNET);
+        tx = new Transaction(BitcoinNetwork.TESTNET);
         outputToMe = new TransactionOutput(tx, amount, serverKey);
         tx.addOutput(outputToMe);
     }

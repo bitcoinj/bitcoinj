@@ -78,7 +78,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     public void setUp(BlockStore blockStore) throws Exception {
         super.setUp(blockStore);
 
-        remoteVersionMessage = new VersionMessage(UNITTEST, 1);
+        remoteVersionMessage = new VersionMessage(UNITTEST.network(), 1);
         remoteVersionMessage.localServices =
                 Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
         remoteVersionMessage.clientVersion =

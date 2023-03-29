@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,38 +45,38 @@ public abstract class Message {
     protected final MessageSerializer serializer;
 
     @Nullable
-    protected final NetworkParameters params;
+    protected final Network network;
 
     protected Message() {
-        this.params = null;
+        this.network = null;
         this.serializer = DummySerializer.DEFAULT;
     }
 
-    protected Message(NetworkParameters params) {
-        this.params = params;
-        this.serializer = params.getDefaultSerializer();
+    protected Message(Network network) {
+        this.network = network;
+        this.serializer = NetworkParameters.of(network).getDefaultSerializer();
     }
 
     protected Message(MessageSerializer serializer) {
-        this.params = null;
+        this.network = null;
         this.serializer = serializer;
     }
 
-    protected Message(NetworkParameters params, MessageSerializer serializer) {
-        this.params = params;
+    protected Message(Network network, MessageSerializer serializer) {
+        this.network = network;
         this.serializer = serializer;
     }
 
     /**
      * 
-     * @param params NetworkParameters object.
+     * @param network the network this message is created for
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    protected Message(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
+    protected Message(Network network, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
         this.serializer = serializer;
-        this.params = params;
+        this.network = network;
 
         try {
             parse(payload);
@@ -92,8 +93,8 @@ public abstract class Message {
         this(null, payload, serializer);
     }
 
-    protected Message(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        this(params, payload, params.getDefaultSerializer());
+    protected Message(Network network, ByteBuffer payload) throws ProtocolException {
+        this(network, payload, NetworkParameters.of(network).getDefaultSerializer());
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
@@ -144,8 +145,17 @@ public abstract class Message {
         return bitcoinSerialize().length;
     }
 
+    /**
+     * Gets the network this message was created for.
+     *
+     * @return network this message was created for
+     */
+    public Network network() {
+        return Objects.requireNonNull(network);
+    }
+
     /** Network parameters this message was created with. */
     public NetworkParameters getParams() {
-        return Objects.requireNonNull(params);
+        return NetworkParameters.of(network);
     }
 }

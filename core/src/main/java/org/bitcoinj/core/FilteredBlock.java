@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.Buffers;
 
@@ -47,12 +48,12 @@ public class FilteredBlock extends Message {
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions
     private Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<>();
     
-    public FilteredBlock(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public FilteredBlock(Network network, ByteBuffer payload) throws ProtocolException {
+        super(network, payload);
     }
 
-    public FilteredBlock(NetworkParameters params, Block header, PartialMerkleTree pmt) {
-        super(params);
+    public FilteredBlock(Network network, Block header, PartialMerkleTree pmt) {
+        super(network);
         this.header = header;
         this.merkleTree = pmt;
     }
@@ -69,7 +70,7 @@ public class FilteredBlock extends Message {
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         byte[] headerBytes = Buffers.readBytes(payload, Block.HEADER_SIZE);
-        header = new Block(params, ByteBuffer.wrap(headerBytes));
+        header = new Block(network, ByteBuffer.wrap(headerBytes));
         merkleTree = new PartialMerkleTree(payload);
     }
     
