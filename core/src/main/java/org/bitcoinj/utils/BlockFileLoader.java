@@ -79,7 +79,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
         return defaultBlocksDir;
     }
 
-    private Iterator<File> fileIt;
+    private final Iterator<File> fileIt;
     private File file = null;
     private FileInputStream currentFileStream = null;
     private Block nextBlock = null;
