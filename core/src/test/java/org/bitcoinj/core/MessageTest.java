@@ -52,12 +52,12 @@ public class MessageTest {
     public void readByteArrayOfExtremeLength() {
         VarInt length = VarInt.of(Integer.MAX_VALUE);
         ByteBuffer payload = ByteBuffer.wrap(length.encode());
-        new VarBytesMessage(TESTNET, payload);
+        new VarBytesMessage(payload);
     }
 
     static class VarBytesMessage extends Message {
-        public VarBytesMessage(NetworkParameters params, ByteBuffer payload) {
-            super(params, payload);
+        public VarBytesMessage(ByteBuffer payload) {
+            super(payload);
         }
 
         @Override
