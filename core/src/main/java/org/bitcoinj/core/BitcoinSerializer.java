@@ -298,7 +298,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public Block makeBlock(ByteBuffer payload) throws ProtocolException {
-        return new Block(params, payload, this);
+        return new Block(params, payload);
     }
 
     /**

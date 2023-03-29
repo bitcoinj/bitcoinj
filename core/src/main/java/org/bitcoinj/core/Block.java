@@ -146,12 +146,11 @@ public class Block extends Message {
      * Construct a block object from the Bitcoin wire format.
      * @param params NetworkParameters object.
      * @param payload the payload to extract the block from.
-     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer)
+    public Block(NetworkParameters params, ByteBuffer payload)
             throws ProtocolException {
-        super(params, payload, serializer);
+        super(params, payload);
     }
 
     /**
