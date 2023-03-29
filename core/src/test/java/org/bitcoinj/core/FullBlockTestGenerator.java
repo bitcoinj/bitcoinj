@@ -126,7 +126,7 @@ class TransactionOutPointWithValue {
     }
 
     public TransactionOutPointWithValue(Transaction tx, int output) {
-        this(new TransactionOutPoint(tx.getParams(), output, tx.getTxId()),
+        this(new TransactionOutPoint(output, tx.getTxId()),
                 tx.getOutput(output).getValue(), tx.getOutput(output).getScriptPubKey());
     }
 }
@@ -214,14 +214,14 @@ public class FullBlockTestGenerator {
         Block chainHead = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
         blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
-                new TransactionOutPoint(params, 0, chainHead.getTransactions().get(0).getTxId()),
+                new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
                 FIFTY_COINS, chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
             chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
             chainHeadHeight++;
             blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
-                    new TransactionOutPoint(params, 0, chainHead.getTransactions().get(0).getTxId()),
+                    new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
                     FIFTY_COINS, chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
         }
 
@@ -712,7 +712,7 @@ public class FullBlockTestGenerator {
                 tx.addOutput(new TransactionOutput(params, tx, SATOSHI, scriptPubKey.toByteArray()));
                 tx.addOutput(new TransactionOutput(params, tx, lastOutputValue, new byte[]{OP_1}));
                 addOnlyInputToTransaction(tx, out11);
-                lastOutPoint = new TransactionOutPoint(params, 1, tx.getTxId());
+                lastOutPoint = new TransactionOutPoint(1, tx.getTxId());
                 b39.addTransaction(tx);
             }
             b39numP2SHOutputs++;
@@ -725,7 +725,7 @@ public class FullBlockTestGenerator {
                 tx.addOutput(new TransactionOutput(params, tx, SATOSHI, scriptPubKey.toByteArray()));
                 tx.addOutput(new TransactionOutput(params, tx, lastOutputValue, new byte[]{OP_1}));
                 tx.addInput(new TransactionInput(params, tx, new byte[]{OP_1}, lastOutPoint));
-                lastOutPoint = new TransactionOutPoint(params, 1, tx.getTxId());
+                lastOutPoint = new TransactionOutPoint(1, tx.getTxId());
 
                 if (b39.block.getMessageSize() + tx.getMessageSize() < Block.MAX_BLOCK_SIZE) {
                     b39.addTransaction(tx);
@@ -750,7 +750,7 @@ public class FullBlockTestGenerator {
             int numTxes = (Block.MAX_BLOCK_SIGOPS - sigOps) / b39sigOpsPerOutput;
             checkState(numTxes <= b39numP2SHOutputs);
 
-            TransactionOutPoint lastOutPoint = new TransactionOutPoint(params, 1, b40.block.getTransactions().get(1).getTxId());
+            TransactionOutPoint lastOutPoint = new TransactionOutPoint(1, b40.block.getTransactions().get(1).getTxId());
 
             byte[] scriptSig = null;
             for (int i = 1; i <= numTxes; i++) {
@@ -759,7 +759,7 @@ public class FullBlockTestGenerator {
                 tx.addInput(new TransactionInput(params, tx, new byte[]{OP_1}, lastOutPoint));
 
                 TransactionInput input = new TransactionInput(params, tx, new byte[]{},
-                        new TransactionOutPoint(params, 0, b39.block.getTransactions().get(i).getTxId()));
+                        new TransactionOutPoint(0, b39.block.getTransactions().get(i).getTxId()));
                 tx.addInput(input);
 
                 if (scriptSig == null) {
@@ -786,7 +786,7 @@ public class FullBlockTestGenerator {
 
                 input.setScriptBytes(scriptSig);
 
-                lastOutPoint = new TransactionOutPoint(params, 0, tx.getTxId());
+                lastOutPoint = new TransactionOutPoint(0, tx.getTxId());
 
                 b40.addTransaction(tx);
             }
@@ -816,7 +816,7 @@ public class FullBlockTestGenerator {
                 checkState(numTxes <= b39numP2SHOutputs);
 
                 TransactionOutPoint lastOutPoint = new TransactionOutPoint(
-                        params, 1, b41.block.getTransactions().get(1).getTxId());
+                        1, b41.block.getTransactions().get(1).getTxId());
 
                 byte[] scriptSig = null;
                 for (int i = 1; i <= numTxes; i++) {
@@ -827,7 +827,7 @@ public class FullBlockTestGenerator {
                             new byte[] {OP_1}, lastOutPoint));
 
                     TransactionInput input = new TransactionInput(params, tx,
-                            new byte[] {}, new TransactionOutPoint(params, 0,
+                            new byte[] {}, new TransactionOutPoint(0,
                             b39.block.getTransactions().get(i).getTxId()));
                     tx.addInput(input);
 
@@ -861,7 +861,7 @@ public class FullBlockTestGenerator {
 
                     input.setScriptBytes(scriptSig);
 
-                    lastOutPoint = new TransactionOutPoint(params, 0,
+                    lastOutPoint = new TransactionOutPoint(0,
                             tx.getTxId());
 
                     b41.addTransaction(tx);
@@ -1088,21 +1088,21 @@ public class FullBlockTestGenerator {
             Transaction tx2 = new Transaction(params);
             tx2.addOutput(new TransactionOutput(params, tx2, SATOSHI, new byte[] {OP_TRUE}));
             addOnlyInputToTransaction(tx2, new TransactionOutPointWithValue(
-                    new TransactionOutPoint(params, 0, tx1.getTxId()),
+                    new TransactionOutPoint(0, tx1.getTxId()),
                     SATOSHI, tx1.getOutputs().get(0).getScriptPubKey()));
             b57p2.addTransaction(tx2);
 
             b56p2txToDuplicate1 = new Transaction(params);
             b56p2txToDuplicate1.addOutput(new TransactionOutput(params, b56p2txToDuplicate1, SATOSHI, new byte[]{OP_TRUE}));
             addOnlyInputToTransaction(b56p2txToDuplicate1, new TransactionOutPointWithValue(
-                    new TransactionOutPoint(params, 0, tx2.getTxId()),
+                    new TransactionOutPoint(0, tx2.getTxId()),
                     SATOSHI, tx2.getOutputs().get(0).getScriptPubKey()));
             b57p2.addTransaction(b56p2txToDuplicate1);
 
             b56p2txToDuplicate2 = new Transaction(params);
             b56p2txToDuplicate2.addOutput(new TransactionOutput(params, b56p2txToDuplicate2, SATOSHI, new byte[]{}));
             addOnlyInputToTransaction(b56p2txToDuplicate2, new TransactionOutPointWithValue(
-                    new TransactionOutPoint(params, 0, b56p2txToDuplicate1.getTxId()),
+                    new TransactionOutPoint(0, b56p2txToDuplicate1.getTxId()),
                     SATOSHI, b56p2txToDuplicate1.getOutputs().get(0).getScriptPubKey()));
             b57p2.addTransaction(b56p2txToDuplicate2);
         }
@@ -1528,7 +1528,7 @@ public class FullBlockTestGenerator {
             Transaction tx2 = new Transaction(params);
             tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_TRUE}));
             tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_FALSE},
-                    new TransactionOutPoint(params, 0, tx1.getTxId())));
+                    new TransactionOutPoint(0, tx1.getTxId())));
             b83.addTransaction(tx2);
         }
         b83.solve();
@@ -1558,24 +1558,24 @@ public class FullBlockTestGenerator {
             Transaction tx2 = new Transaction(params);
             tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_RETURN}));
             tx2.addOutput(new TransactionOutput(params, tx2, ZERO, new byte[]{OP_RETURN}));
-            tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 1, b84tx1)));
+            tx2.addInput(new TransactionInput(params, tx2, new byte[]{OP_TRUE}, new TransactionOutPoint(1, b84tx1)));
             b84.addTransaction(tx2);
 
             Transaction tx3 = new Transaction(params);
             tx3.addOutput(new TransactionOutput(params, tx3, ZERO, new byte[]{OP_RETURN}));
             tx3.addOutput(new TransactionOutput(params, tx3, ZERO, new byte[]{OP_TRUE}));
-            tx3.addInput(new TransactionInput(params, tx3, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 2, b84tx1)));
+            tx3.addInput(new TransactionInput(params, tx3, new byte[]{OP_TRUE}, new TransactionOutPoint(2, b84tx1)));
             b84.addTransaction(tx3);
 
             Transaction tx4 = new Transaction(params);
             tx4.addOutput(new TransactionOutput(params, tx4, ZERO, new byte[]{OP_TRUE}));
             tx4.addOutput(new TransactionOutput(params, tx4, ZERO, new byte[]{OP_RETURN}));
-            tx4.addInput(new TransactionInput(params, tx4, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 3, b84tx1)));
+            tx4.addInput(new TransactionInput(params, tx4, new byte[]{OP_TRUE}, new TransactionOutPoint(3, b84tx1)));
             b84.addTransaction(tx4);
 
             Transaction tx5 = new Transaction(params);
             tx5.addOutput(new TransactionOutput(params, tx5, ZERO, new byte[]{OP_RETURN}));
-            tx5.addInput(new TransactionInput(params, tx5, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 4, b84tx1)));
+            tx5.addInput(new TransactionInput(params, tx5, new byte[]{OP_TRUE}, new TransactionOutPoint(4, b84tx1)));
             b84.addTransaction(tx5);
         }
         b84.solve();
@@ -1600,7 +1600,7 @@ public class FullBlockTestGenerator {
         {
             Transaction tx = new Transaction(params);
             tx.addOutput(new TransactionOutput(params, tx, ZERO, new byte[] {OP_TRUE}));
-            tx.addInput(new TransactionInput(params, tx, new byte[]{OP_TRUE}, new TransactionOutPoint(params, 0, b84tx1)));
+            tx.addInput(new TransactionInput(params, tx, new byte[]{OP_TRUE}, new TransactionOutPoint(0, b84tx1)));
             b89.addTransaction(tx);
             b89.solve();
         }
@@ -1676,7 +1676,7 @@ public class FullBlockTestGenerator {
             checkArgument(blockStorageFile != null);
 
             NewBlock lastBlock = b1001;
-            TransactionOutPoint lastOutput = new TransactionOutPoint(params, 1, b1001.block.getTransactions().get(1).getTxId());
+            TransactionOutPoint lastOutput = new TransactionOutPoint(1, b1001.block.getTransactions().get(1).getTxId());
             int blockCountAfter1001;
             int nextHeight = heightAfter1001;
 
@@ -1689,7 +1689,7 @@ public class FullBlockTestGenerator {
                     tx.addInput(lastOutput.getHash(), lastOutput.getIndex(), OP_NOP_SCRIPT);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
-                    lastOutput = new TransactionOutPoint(params, 1, tx.getTxId());
+                    lastOutput = new TransactionOutPoint(1, tx.getTxId());
                     hashesToSpend.add(tx.getTxId());
                     block.addTransaction(tx);
                 }

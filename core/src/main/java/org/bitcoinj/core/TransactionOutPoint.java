@@ -58,8 +58,8 @@ public class TransactionOutPoint extends ChildMessage {
     // The connected output.
     TransactionOutput connectedOutput;
 
-    public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
-        super(params);
+    public TransactionOutPoint(long index, @Nullable Transaction fromTx) {
+        super();
         checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
                 "index out of range: " + index);
         this.index = index;
@@ -72,16 +72,16 @@ public class TransactionOutPoint extends ChildMessage {
         }
     }
 
-    public TransactionOutPoint(NetworkParameters params, long index, Sha256Hash hash) {
-        super(params);
+    public TransactionOutPoint(long index, Sha256Hash hash) {
+        super();
         checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
                 "index out of range: " + index);
         this.index = index;
         this.hash = hash;
     }
 
-    public TransactionOutPoint(NetworkParameters params, TransactionOutput connectedOutput) {
-        this(params, connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
+    public TransactionOutPoint(TransactionOutput connectedOutput) {
+        this(connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
         this.connectedOutput = connectedOutput;
     }
 
@@ -89,17 +89,16 @@ public class TransactionOutPoint extends ChildMessage {
     /**
      * Deserializes the message. This is usually part of a transaction message.
      */
-    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public TransactionOutPoint(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     /**
      * Deserializes the message. This is usually part of a transaction message.
-     * @param params NetworkParameters object.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, Message parent) throws ProtocolException {
-        super(params, payload, parent);
+    public TransactionOutPoint(ByteBuffer payload, Message parent) throws ProtocolException {
+        super(payload, parent);
     }
 
     @Override

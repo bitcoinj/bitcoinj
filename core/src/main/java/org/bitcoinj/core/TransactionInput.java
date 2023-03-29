@@ -92,7 +92,7 @@ public class TransactionInput extends ChildMessage {
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes) {
-        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(params, UNCONNECTED, (Transaction) null));
+        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(UNCONNECTED, (Transaction) null));
     }
 
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
@@ -117,9 +117,9 @@ public class TransactionInput extends ChildMessage {
         super(params);
         long outputIndex = output.getIndex();
         if(output.getParentTransaction() != null ) {
-            outpoint = new TransactionOutPoint(params, outputIndex, output.getParentTransaction());
+            outpoint = new TransactionOutPoint(outputIndex, output.getParentTransaction());
         } else {
-            outpoint = new TransactionOutPoint(params, output);
+            outpoint = new TransactionOutPoint(output);
         }
         scriptBytes = EMPTY_ARRAY;
         sequence = NO_SEQUENCE;
@@ -162,7 +162,7 @@ public class TransactionInput extends ChildMessage {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        outpoint = new TransactionOutPoint(params, payload, this);
+        outpoint = new TransactionOutPoint(payload, this);
         int scriptLen = VarInt.read(payload).intValue();
         scriptBytes = Buffers.readBytes(payload, scriptLen);
         sequence = ByteUtils.readUint32(payload);

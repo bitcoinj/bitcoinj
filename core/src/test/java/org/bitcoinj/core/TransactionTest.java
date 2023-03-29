@@ -169,7 +169,7 @@ public class TransactionTest {
 
         // add fake transaction input
         TransactionInput input = new TransactionInput(TESTNET, null, ScriptBuilder.createEmpty().getProgram(),
-                new TransactionOutPoint(TESTNET, 0, Sha256Hash.ZERO_HASH));
+                new TransactionOutPoint(0, Sha256Hash.ZERO_HASH));
         tx.addInput(input);
         length += input.getMessageSize();
 
@@ -206,7 +206,7 @@ public class TransactionTest {
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction(TESTNET);
-        TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
+        TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
         TransactionOutput output = new TransactionOutput(TESTNET, null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
@@ -229,7 +229,7 @@ public class TransactionTest {
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction(TESTNET);
-        TransactionOutPoint outPoint = new TransactionOutPoint(TESTNET, 0, utxo_id);
+        TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 

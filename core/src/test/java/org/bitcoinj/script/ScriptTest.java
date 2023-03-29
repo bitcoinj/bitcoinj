@@ -343,7 +343,7 @@ public class ScriptTest {
                 index = ByteUtils.MAX_UNSIGNED_INTEGER;
             String script = input.get(2).asText();
             Sha256Hash sha256Hash = Sha256Hash.wrap(ByteUtils.parseHex(hash));
-            scriptPubKeys.put(new TransactionOutPoint(TESTNET, index, sha256Hash), parseScriptString(script));
+            scriptPubKeys.put(new TransactionOutPoint(index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
     }

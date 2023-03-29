@@ -29,6 +29,19 @@ public abstract class ChildMessage extends Message {
 
     @Nullable protected Message parent;
 
+    public ChildMessage() {
+        super();
+    }
+
+    public ChildMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
+    }
+
+    public ChildMessage(ByteBuffer payload, @Nullable Message parent) throws ProtocolException {
+        super(payload);
+        this.parent = parent;
+    }
+
     public ChildMessage(NetworkParameters params) {
         super(params);
     }
@@ -39,11 +52,6 @@ public abstract class ChildMessage extends Message {
 
     public ChildMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
         super(params, payload);
-    }
-
-    public ChildMessage(NetworkParameters params, ByteBuffer payload, @Nullable Message parent) throws ProtocolException {
-        super(params, payload);
-        this.parent = parent;
     }
 
     public ChildMessage(NetworkParameters params, ByteBuffer payload, @Nullable Message parent,

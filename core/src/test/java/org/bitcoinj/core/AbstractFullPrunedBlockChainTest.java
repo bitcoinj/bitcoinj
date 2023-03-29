@@ -318,7 +318,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
-        TransactionOutPoint spendableOutPoint = new TransactionOutPoint(PARAMS, 0, transaction.getTxId());
+        TransactionOutPoint spendableOutPoint = new TransactionOutPoint(0, transaction.getTxId());
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
