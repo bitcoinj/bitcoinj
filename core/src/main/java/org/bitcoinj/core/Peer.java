@@ -909,7 +909,7 @@ public class Peer extends PeerSocketHandler {
      * @return A GetDataMessage that will query those IDs
      */
     private GetDataMessage buildMultiTransactionDataMessage(Set<Sha256Hash> txIds) {
-        GetDataMessage getdata = new GetDataMessage(params);
+        GetDataMessage getdata = new GetDataMessage();
         txIds.forEach(txId ->
             getdata.addTransaction(txId, vPeerVersionMessage.isWitnessSupported()));
         return getdata;
@@ -1160,7 +1160,7 @@ public class Peer extends PeerSocketHandler {
             }
         }
 
-        GetDataMessage getdata = new GetDataMessage(params);
+        GetDataMessage getdata = new GetDataMessage();
 
         Iterator<InventoryItem> it = transactions.iterator();
         while (it.hasNext()) {
@@ -1265,7 +1265,7 @@ public class Peer extends PeerSocketHandler {
     public ListenableCompletableFuture<Block> getBlock(Sha256Hash blockHash) {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
-        GetDataMessage getdata = new GetDataMessage(params);
+        GetDataMessage getdata = new GetDataMessage();
         getdata.addBlock(blockHash, true);
         return ListenableCompletableFuture.of(sendSingleGetData(getdata));
     }
@@ -1283,7 +1283,7 @@ public class Peer extends PeerSocketHandler {
         // This does not need to be locked.
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
-        GetDataMessage getdata = new GetDataMessage(params);
+        GetDataMessage getdata = new GetDataMessage();
         getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
         return ListenableCompletableFuture.of(sendSingleGetData(getdata));
     }
@@ -1756,7 +1756,7 @@ public class Peer extends PeerSocketHandler {
             sendPing().thenRunAsync(() -> {
                 lock.lock();
                 Objects.requireNonNull(awaitingFreshFilter);
-                GetDataMessage getdata = new GetDataMessage(params);
+                GetDataMessage getdata = new GetDataMessage();
                 for (Sha256Hash hash : awaitingFreshFilter)
                     getdata.addFilteredBlock(hash);
                 awaitingFreshFilter = null;

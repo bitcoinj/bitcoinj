@@ -29,24 +29,17 @@ import java.nio.ByteBuffer;
  */
 public class GetDataMessage extends ListMessage {
 
-    public GetDataMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
-    }
-
     /**
      * Deserializes a 'getdata' message.
-     * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public GetDataMessage(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer)
-            throws ProtocolException {
-        super(params, payload, serializer);
+    public GetDataMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
-    public GetDataMessage(NetworkParameters params) {
-        super(params);
+    public GetDataMessage() {
+        super();
     }
 
     public void addTransaction(Sha256Hash hash, boolean includeWitness) {

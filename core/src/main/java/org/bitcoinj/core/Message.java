@@ -84,6 +84,10 @@ public abstract class Message {
         this.payload = null;
     }
 
+    protected Message(ByteBuffer payload) throws ProtocolException {
+        this(null, payload, DummySerializer.DEFAULT);
+    }
+
     protected Message(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
         this(params, payload, params.getDefaultSerializer());
     }
