@@ -1,6 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +16,6 @@
 
 package org.bitcoinj.core;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.BufferUnderflowException;
-
 /**
  * <p>The "mempool" message asks a remote peer to announce all transactions in its memory pool, possibly restricted by
  * any Bloom filter set on the connection. The list of transaction hashes comes back in an inv message. Note that
@@ -30,10 +25,5 @@ import java.nio.BufferUnderflowException;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class MemoryPoolMessage extends Message {
-    @Override
-    protected void parse() throws BufferUnderflowException, ProtocolException {}
-
-    @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {}
+public class MemoryPoolMessage extends EmptyMessage {
 }
