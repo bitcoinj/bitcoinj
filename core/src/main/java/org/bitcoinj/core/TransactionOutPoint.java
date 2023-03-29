@@ -99,7 +99,7 @@ public class TransactionOutPoint extends ChildMessage {
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, Message parent, MessageSerializer serializer) throws ProtocolException {
+    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, TransactionInput parent, MessageSerializer serializer) throws ProtocolException {
         super(params, payload, parent, serializer);
     }
 
