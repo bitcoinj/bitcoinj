@@ -16,8 +16,6 @@
 
 package org.bitcoinj.core;
 
-import java.nio.ByteBuffer;
-
 /**
  * <p>
  * A new message, "sendheaders", which indicates that a node prefers to receive new block announcements via a "headers"
@@ -30,9 +28,5 @@ import java.nio.ByteBuffer;
  */
 public class SendHeadersMessage extends EmptyMessage {
     public SendHeadersMessage() {
-    }
-
-    // this is needed by the BitcoinSerializer
-    public SendHeadersMessage(NetworkParameters params, ByteBuffer payload) {
     }
 }

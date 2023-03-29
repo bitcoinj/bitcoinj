@@ -1670,7 +1670,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         // Discovery more peers.
         if (vDiscoverPeersViaP2P)
-            peer.sendMessage(new GetAddrMessage(params));
+            peer.sendMessage(new GetAddrMessage());
     }
 
     @Nullable private volatile ScheduledFuture<?> vPingTask;

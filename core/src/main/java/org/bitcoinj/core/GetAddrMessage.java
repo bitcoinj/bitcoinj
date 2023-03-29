@@ -26,7 +26,7 @@ import org.bitcoinj.base.Address;
  */
 public class GetAddrMessage extends EmptyMessage {
 
-    public GetAddrMessage(NetworkParameters params) {
-        super(params);
+    public GetAddrMessage() {
+        super();
     }
 }

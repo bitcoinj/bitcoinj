@@ -25,7 +25,7 @@ package org.bitcoinj.core;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class SendAddrV2Message extends EmptyMessage {
-    public SendAddrV2Message(NetworkParameters params) {
-        super(params);
+    public SendAddrV2Message() {
+        super();
     }
 }
