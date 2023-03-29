@@ -150,7 +150,7 @@ public class TransactionInput extends ChildMessage {
     }
 
     /**
-     * Gets the index of this input in the parent transaction, or throws if this input is free standing. Iterates
+     * Gets the index of this input in the parent transaction, or throws if this input is freestanding. Iterates
      * over the parents list to discover this.
      */
     public int getIndex() {
