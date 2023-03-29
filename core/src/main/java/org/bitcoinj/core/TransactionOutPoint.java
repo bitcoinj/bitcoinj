@@ -47,6 +47,8 @@ public class TransactionOutPoint extends ChildMessage {
 
     static final int MESSAGE_LENGTH = 36;
 
+    private TransactionInput parent;
+
     /** Hash of the transaction to which we refer. */
     private Sha256Hash hash;
     /** Which output of that transaction we are talking about. */
@@ -98,8 +100,15 @@ public class TransactionOutPoint extends ChildMessage {
      * @param params NetworkParameters object.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, Message parent) throws ProtocolException {
-        super(params, payload, parent);
+    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, TransactionInput parent) throws ProtocolException {
+        super(params, payload);
+        this.parent = parent;
+    }
+
+    @Nullable
+    @Override
+    public TransactionInput getParent() {
+        return parent;
     }
 
     @Override

@@ -97,6 +97,6 @@ public class KeyTimeCoinSelector implements CoinSelector {
     }
 
     private boolean isConfirmed(TransactionOutput output) {
-        return output.getParentTransaction().getConfidence().getConfidenceType().equals(TransactionConfidence.ConfidenceType.BUILDING);
+        return output.getParent().getConfidence().getConfidenceType().equals(TransactionConfidence.ConfidenceType.BUILDING);
     }
 }

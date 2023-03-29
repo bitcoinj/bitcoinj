@@ -27,8 +27,6 @@ import java.nio.ByteBuffer;
  */
 public abstract class ChildMessage extends Message {
 
-    @Nullable protected Message parent;
-
     public ChildMessage(NetworkParameters params) {
         super(params);
     }
@@ -43,24 +41,13 @@ public abstract class ChildMessage extends Message {
 
     public ChildMessage(NetworkParameters params, ByteBuffer payload, @Nullable Message parent) throws ProtocolException {
         super(params, payload);
-        this.parent = parent;
     }
 
-    public ChildMessage(NetworkParameters params, ByteBuffer payload, @Nullable Message parent,
-                        MessageSerializer serializer) throws ProtocolException {
+    public ChildMessage(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
         super(params, payload, serializer);
-        this.parent = parent;
     }
 
-    public final void setParent(@Nullable Message parent) {
-        if (this.parent != null && this.parent != parent && parent != null) {
-            // After old parent is unlinked it won't be able to receive notice if this ChildMessage
-            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
-            // manually on serialization.
-            this.parent.unCache();
-        }
-        this.parent = parent;
-    }
+    protected abstract Message getParent();
 
     /* (non-Javadoc)
       * @see Message#unCache()
@@ -68,7 +55,7 @@ public abstract class ChildMessage extends Message {
     @Override
     protected void unCache() {
         super.unCache();
-        if (parent != null)
-            parent.unCache();
+        if (getParent() != null)
+            getParent().unCache();
     }
 }

@@ -24,6 +24,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Inet4Address;
@@ -51,6 +52,7 @@ import java.util.stream.Stream;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PeerAddress extends ChildMessage {
+    private Message parent;
     private InetAddress addr;   // Used for IPV4, IPV6, null otherwise or if not-yet-parsed
     private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
@@ -90,7 +92,28 @@ public class PeerAddress extends ChildMessage {
      * @throws ProtocolException
      */
     public PeerAddress(NetworkParameters params, ByteBuffer payload, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, parent, serializer);
+        super(params, payload, serializer);
+        this.parent = parent;
+    }
+
+    /**
+     * We can't narrow the message type here because there are about 3 different types of parent messages.
+     * @return
+     */
+    @Nullable
+    @Override
+    public Message getParent() {
+        return parent;
+    }
+
+    public final void setParent(@Nullable Message parent) {
+        if (this.parent != null && this.parent != parent && parent != null) {
+            // After old parent is unlinked it won't be able to receive notice if this ChildMessage
+            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
+            // manually on serialization.
+            this.parent.unCache();
+        }
+        this.parent = parent;
     }
 
     /**

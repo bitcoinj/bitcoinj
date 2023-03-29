@@ -55,6 +55,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 public class TransactionOutput extends ChildMessage {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
 
+    private Transaction parent;
+
     // The output's value is kept as a native type in order to save class instances.
     private long value;
 
@@ -90,7 +92,8 @@ public class TransactionOutput extends ChildMessage {
      * @throws ProtocolException
      */
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, parent, serializer);
+        super(params, payload, serializer);
+        this.parent = parent;
         availableForSpending = true;
     }
 
@@ -184,7 +187,7 @@ public class TransactionOutput extends ChildMessage {
      * over the parents list to discover this.
      */
     public int getIndex() {
-        List<TransactionOutput> outputs = getParentTransaction().getOutputs();
+        List<TransactionOutput> outputs = getParent().getOutputs();
         for (int i = 0; i < outputs.size(); i++) {
             if (outputs.get(i) == this)
                 return i;
@@ -254,7 +257,7 @@ public class TransactionOutput extends ChildMessage {
         checkState(availableForSpending);
         availableForSpending = false;
         spentBy = input;
-        if (parent != null)
+        if (getParent() != null)
             if (log.isDebugEnabled()) log.debug("Marked {}:{} as spent by {}", getParentTransactionHash(), getIndex(), input);
         else
             if (log.isDebugEnabled()) log.debug("Marked floating output as spent by {}", input);
@@ -264,7 +267,7 @@ public class TransactionOutput extends ChildMessage {
      * Resets the spent pointer / availableForSpending flag to null.
      */
     public void markAsUnspent() {
-        if (parent != null)
+        if (getParent() != null)
             if (log.isDebugEnabled()) log.debug("Un-marked {}:{} as spent by {}", getParentTransactionHash(), getIndex(), spentBy);
         else
             if (log.isDebugEnabled()) log.debug("Un-marked floating output as spent by {}", spentBy);
@@ -333,7 +336,7 @@ public class TransactionOutput extends ChildMessage {
         } catch (ScriptException e) {
             // Just means we didn't understand the output of this transaction: ignore it.
             log.debug("Could not parse tx {} output script: {}",
-                    parent != null ? ((Transaction) parent).getTxId() : "(no parent)", e.toString());
+                    getParent() != null ? ((Transaction) getParent()).getTxId() : "(no parent)", e.toString());
             return false;
         }
     }
@@ -374,9 +377,20 @@ public class TransactionOutput extends ChildMessage {
     /**
      * Returns the transaction that owns this output.
      */
+    @Override
     @Nullable
-    public Transaction getParentTransaction() {
-        return (Transaction)parent;
+    public Transaction getParent() {
+        return parent;
+    }
+
+    public final void setParent(@Nullable Transaction parent) {
+        if (this.parent != null && this.parent != parent && parent != null) {
+            // After old parent is unlinked it won't be able to receive notice if this ChildMessage
+            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
+            // manually on serialization.
+            this.parent.unCache();
+        }
+        this.parent = parent;
     }
 
     /**
@@ -384,7 +398,7 @@ public class TransactionOutput extends ChildMessage {
      */
     @Nullable
     public Sha256Hash getParentTransactionHash() {
-        return parent == null ? null : ((Transaction) parent).getTxId();
+        return getParent() == null ? null : (getParent()).getTxId();
     }
 
     /**
@@ -395,8 +409,8 @@ public class TransactionOutput extends ChildMessage {
      * @return The tx depth or -1.
      */
     public int getParentTransactionDepthInBlocks() {
-        if (getParentTransaction() != null) {
-            TransactionConfidence confidence = getParentTransaction().getConfidence();
+        if (getParent() != null) {
+            TransactionConfidence confidence = getParent().getConfidence();
             if (confidence.getConfidenceType() == TransactionConfidence.ConfidenceType.BUILDING) {
                 return confidence.getDepthInBlocks();
             }
@@ -409,7 +423,7 @@ public class TransactionOutput extends ChildMessage {
      * Requires that this output is not detached.
      */
     public TransactionOutPoint getOutPointFor() {
-        return new TransactionOutPoint(params, getIndex(), getParentTransaction());
+        return new TransactionOutPoint(params, getIndex(), getParent());
     }
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */
@@ -422,12 +436,12 @@ public class TransactionOutput extends ChildMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionOutput other = (TransactionOutput) o;
-        return value == other.value && (parent == null || (parent == other.parent && getIndex() == other.getIndex()))
+        return value == other.value && (getParent() == null || (getParent() == other.getParent() && getIndex() == other.getIndex()))
                 && Arrays.equals(scriptBytes, other.scriptBytes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, parent, Arrays.hashCode(scriptBytes));
+        return Objects.hash(value, getParent(), Arrays.hashCode(scriptBytes));
     }
 }

@@ -154,6 +154,8 @@ public class Transaction extends ChildMessage {
      */
     public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 1 mBTC
 
+    private Block parent;
+
     // These are bitcoin serialized.
     private long version;
     private ArrayList<TransactionInput> inputs;
@@ -256,9 +258,10 @@ public class Transaction extends ChildMessage {
      * is performed on this hash.
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, ByteBuffer payload, @Nullable Message parent,
+    public Transaction(NetworkParameters params, ByteBuffer payload, @Nullable Block parent,
             MessageSerializer setSerializer, @Nullable byte[] hashFromHeader) throws ProtocolException {
-        super(params, payload, parent, setSerializer);
+        super(params, payload, setSerializer);
+        this.parent = parent;
         if (hashFromHeader != null) {
             cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
             if (!hasWitnesses())
@@ -269,9 +272,10 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, ByteBuffer payload, @Nullable Message parent, MessageSerializer setSerializer)
+    public Transaction(NetworkParameters params, ByteBuffer payload, @Nullable Block parent, MessageSerializer setSerializer)
             throws ProtocolException {
-        super(params, payload, parent, setSerializer);
+        super(params, payload, setSerializer);
+        this.parent = parent;
     }
 
     /**
@@ -607,6 +611,22 @@ public class Transaction extends ChildMessage {
         cachedWTxId = null;
     }
 
+    @Nullable
+    @Override
+    public Block getParent() {
+        return parent;
+    }
+
+    public final void setParent(@Nullable Block parent) {
+        if (this.parent != null && this.parent != parent && parent != null) {
+            // After old parent is unlinked it won't be able to receive notice if this ChildMessage
+            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
+            // manually on serialization.
+            this.parent.unCache();
+        }
+        this.parent = parent;
+    }
+
     protected static int calcLength(byte[] buf, int offset) {
         VarInt varint;
         // jump past version (uint32)
@@ -907,7 +927,7 @@ public class Transaction extends ChildMessage {
                     final TransactionInput spentBy = out.getSpentBy();
                     if (spentBy != null) {
                         s.append(" by:");
-                        s.append(spentBy.getParentTransaction().getTxId()).append(':')
+                        s.append(spentBy.getParent().getTxId()).append(':')
                                 .append(spentBy.getIndex());
                     }
                 }

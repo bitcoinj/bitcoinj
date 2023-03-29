@@ -55,7 +55,7 @@ public class DefaultCoinSelector implements CoinSelector {
         for (TransactionOutput output : sortedOutputs) {
             if (total >= target.value) break;
             // Only pick chain-included transactions, or transactions that are ours and pending.
-            if (!shouldSelect(output.getParentTransaction())) continue;
+            if (!shouldSelect(output.getParent())) continue;
             selected.add(output);
             total = Math.addExact(total, output.getValue().value);
         }

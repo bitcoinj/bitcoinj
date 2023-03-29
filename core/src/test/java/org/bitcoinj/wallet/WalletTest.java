@@ -921,7 +921,7 @@ public class WalletTest extends TestWithWallet {
         send2 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send2.bitcoinSerialize()));
         // Broadcast send1.
         wallet.commitTx(send1);
-        assertEquals(send1, received.getOutput(0).getSpentBy().getParentTransaction());
+        assertEquals(send1, received.getOutput(0).getSpentBy().getParent());
         // Receive a block that overrides it.
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, send2);
         Threading.waitForUserCode();
@@ -929,7 +929,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(send2, eventReplacement[0]);
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                 send1.getConfidence().getConfidenceType());
-        assertEquals(send2, received.getOutput(0).getSpentBy().getParentTransaction());
+        assertEquals(send2, received.getOutput(0).getSpentBy().getParent());
 
         FakeTxBuilder.DoubleSpends doubleSpends = FakeTxBuilder.createFakeDoubleSpendTxns(TESTNET, myAddress);
         // t1 spends to our wallet. t2 double spends somewhere else.
@@ -3153,11 +3153,11 @@ public class WalletTest extends TestWithWallet {
         // Selected inputs can be in any order.
         for (int i = 0; i < req.tx.getInputs().size(); i++) {
             TransactionInput input = req.tx.getInput(i);
-            if (input.getConnectedOutput().getParentTransaction().equals(t1)) {
+            if (input.getConnectedOutput().getParent().equals(t1)) {
                 assertArrayEquals(expectedSig, input.getScriptSig().getChunks().get(0).data);
-            } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
+            } else if (input.getConnectedOutput().getParent().equals(t2)) {
                 assertArrayEquals(expectedSig, input.getScriptSig().getChunks().get(0).data);
-            } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
+            } else if (input.getConnectedOutput().getParent().equals(t3)) {
                 input.getScriptSig().correctlySpends(
                         req.tx, i, null, null, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
             }

@@ -45,9 +45,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -454,7 +452,7 @@ public class TransactionTest {
 
     private boolean correctlySpends(TransactionInput txIn, Script scriptPubKey, int inputIndex) {
         try {
-            txIn.getScriptSig().correctlySpends(txIn.getParentTransaction(), inputIndex, txIn.getWitness(),
+            txIn.getScriptSig().correctlySpends(txIn.getParent(), inputIndex, txIn.getWitness(),
                     txIn.getValue(), scriptPubKey, Script.ALL_VERIFY_FLAGS);
             return true;
         } catch (ScriptException x) {

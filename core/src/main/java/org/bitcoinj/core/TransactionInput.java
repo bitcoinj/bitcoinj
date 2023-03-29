@@ -71,6 +71,7 @@ public class TransactionInput extends ChildMessage {
     // Magic outpoint index that indicates the input is in fact unconnected.
     private static final long UNCONNECTED = 0xFFFFFFFFL;
 
+    private Transaction parent;
     // Allows for altering transactions after they were broadcast. Values below NO_SEQUENCE-1 mean it can be altered.
     private long sequence;
     // Data needed to connect to the output of the transaction we're gathering coins from.
@@ -116,8 +117,8 @@ public class TransactionInput extends ChildMessage {
     TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
         super(params);
         long outputIndex = output.getIndex();
-        if(output.getParentTransaction() != null ) {
-            outpoint = new TransactionOutPoint(params, outputIndex, output.getParentTransaction());
+        if(output.getParent() != null ) {
+            outpoint = new TransactionOutPoint(params, outputIndex, output.getParent());
         } else {
             outpoint = new TransactionOutPoint(params, output);
         }
@@ -145,7 +146,8 @@ public class TransactionInput extends ChildMessage {
      */
     public TransactionInput(NetworkParameters params, Transaction parentTransaction, ByteBuffer payload, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, parentTransaction, serializer);
+        super(params, payload, serializer);
+        this.parent = parentTransaction;
         this.value = null;
     }
 
@@ -154,7 +156,7 @@ public class TransactionInput extends ChildMessage {
      * over the parents list to discover this.
      */
     public int getIndex() {
-        final int myIndex = getParentTransaction().getInputs().indexOf(this);
+        final int myIndex = getParent().getInputs().indexOf(this);
         if (myIndex < 0)
             throw new IllegalStateException("Input linked to wrong parent transaction?");
         return myIndex;
@@ -272,8 +274,20 @@ public class TransactionInput extends ChildMessage {
     /**
      * @return The Transaction that owns this input.
      */
-    public Transaction getParentTransaction() {
-        return (Transaction) parent;
+    @Override
+    @Nullable
+    public Transaction getParent() {
+        return parent;
+    }
+
+    public final void setParent(@Nullable Transaction parent) {
+        if (this.parent != null && this.parent != parent && parent != null) {
+            // After old parent is unlinked it won't be able to receive notice if this ChildMessage
+            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
+            // manually on serialization.
+            this.parent.unCache();
+        }
+        this.parent = parent;
     }
 
     /**
@@ -379,13 +393,13 @@ public class TransactionInput extends ChildMessage {
                 "corrupt transaction: " + outpointIndex);
         TransactionOutput out = transaction.getOutput(outpointIndex);
         if (!out.isAvailableForSpending()) {
-            if (getParentTransaction().equals(outpoint.fromTx)) {
+            if (getParent().equals(outpoint.fromTx)) {
                 // Already connected.
                 return ConnectionResult.SUCCESS;
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
                 out.markAsUnspent();
             } else if (mode == ConnectMode.ABORT_ON_CONFLICT) {
-                outpoint.fromTx = out.getParentTransaction();
+                outpoint.fromTx = out.getParent();
                 return TransactionInput.ConnectionResult.ALREADY_SPENT;
             }
         }
@@ -395,7 +409,7 @@ public class TransactionInput extends ChildMessage {
 
     /** Internal use only: connects this TransactionInput to the given output (updates pointers and spent flags) */
     public void connect(TransactionOutput out) {
-        outpoint.fromTx = out.getParentTransaction();
+        outpoint.fromTx = out.getParent();
         out.markAsSpent(this);
         value = out.getValue();
     }
@@ -475,14 +489,14 @@ public class TransactionInput extends ChildMessage {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify(TransactionOutput output) throws VerificationException {
-        if (output.parent != null) {
-            if (!getOutpoint().getHash().equals(output.getParentTransaction().getTxId()))
+        if (output.getParent() != null) {
+            if (!getOutpoint().getHash().equals(output.getParent().getTxId()))
                 throw new VerificationException("This input does not refer to the tx containing the output.");
             if (getOutpoint().getIndex() != output.getIndex())
                 throw new VerificationException("This input refers to a different output on the given tx.");
         }
         Script pubKey = output.getScriptPubKey();
-        getScriptSig().correctlySpends(getParentTransaction(), getIndex(), getWitness(), getValue(), pubKey,
+        getScriptSig().correctlySpends(getParent(), getIndex(), getWitness(), getValue(), pubKey,
                 Script.ALL_VERIFY_FLAGS);
     }
 
@@ -527,7 +541,7 @@ public class TransactionInput extends ChildMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionInput other = (TransactionInput) o;
-        return sequence == other.sequence && parent == other.parent
+        return sequence == other.sequence && getParent() == other.getParent()
             && outpoint.equals(other.outpoint) && Arrays.equals(scriptBytes, other.scriptBytes);
     }
 

@@ -2626,7 +2626,7 @@ public class Wallet extends BaseTaggableObject
                     log.warn("Saw two pending transactions double spend each other");
                     log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
                     log.warn("{}: {}", tx.getTxId(), tx.toHexString());
-                    Transaction other = output.getSpentBy().getParentTransaction();
+                    Transaction other = output.getSpentBy().getParent();
                     log.warn("{}: {}", other.getTxId(), other.toHexString());
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
@@ -2692,7 +2692,7 @@ public class Wallet extends BaseTaggableObject
                 if (connected == null) continue;
                 if (connected.getConfidence().getConfidenceType() != ConfidenceType.DEAD && deadInput.getConnectedOutput().getSpentBy() != null && deadInput.getConnectedOutput().getSpentBy().equals(deadInput)) {
                     checkState(myUnspents.add(deadInput.getConnectedOutput()));
-                    log.info("Added to UNSPENTS: {} in {}", deadInput.getConnectedOutput(), deadInput.getConnectedOutput().getParentTransaction().getTxId());
+                    log.info("Added to UNSPENTS: {} in {}", deadInput.getConnectedOutput(), deadInput.getConnectedOutput().getParent().getTxId());
                 }
                 deadInput.disconnect();
                 maybeMovePool(connected, "kill");
@@ -2705,7 +2705,7 @@ public class Wallet extends BaseTaggableObject
                     log.info("XX Removed from UNSPENTS: {}", deadOutput);
                 TransactionInput connected = deadOutput.getSpentBy();
                 if (connected == null) continue;
-                final Transaction parentTransaction = connected.getParentTransaction();
+                final Transaction parentTransaction = connected.getParent();
                 log.info("This death invalidated dependent tx {}", parentTransaction.getTxId());
                 work.push(parentTransaction);
             }
@@ -4613,7 +4613,7 @@ public class Wallet extends BaseTaggableObject
             if (vUTXOProvider == null) {
                 candidates = myUnspents.stream()
                     .filter(output ->   (!excludeUnsignable || canSignFor(output.getScriptPubKey())) &&
-                                        (!excludeImmatureCoinbases || Objects.requireNonNull(output.getParentTransaction()).isMature()))
+                                        (!excludeImmatureCoinbases || Objects.requireNonNull(output.getParent()).isMature()))
                     .collect(StreamUtils.toUnmodifiableList());
             } else {
                 candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);

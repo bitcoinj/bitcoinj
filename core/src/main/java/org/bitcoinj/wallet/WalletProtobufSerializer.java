@@ -52,12 +52,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -295,7 +293,7 @@ public class WalletProtobufSerializer {
                 .setValue(output.getValue().value);
             final TransactionInput spentBy = output.getSpentBy();
             if (spentBy != null) {
-                Sha256Hash spendingHash = spentBy.getParentTransaction().getTxId();
+                Sha256Hash spendingHash = spentBy.getParent().getTxId();
                 outputBuilder.setSpentByTransactionHash(hashToByteString(spendingHash))
                              .setSpentByTransactionIndex(spentBy.getIndex());
             }
