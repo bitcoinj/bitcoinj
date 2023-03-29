@@ -43,7 +43,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class TransactionOutPoint extends ChildMessage {
+public class TransactionOutPoint extends Message {
 
     static final int MESSAGE_LENGTH = 36;
 
@@ -86,20 +86,12 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     /**
-    /**
-     * Deserializes the message. This is usually part of a transaction message.
-     */
-    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
-    }
-
-    /**
      * Deserializes the message. This is usually part of a transaction message.
      * @param params NetworkParameters object.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, Message parent) throws ProtocolException {
-        super(params, payload, parent);
+    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
     }
 
     @Override
