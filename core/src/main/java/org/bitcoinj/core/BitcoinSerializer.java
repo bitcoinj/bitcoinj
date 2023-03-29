@@ -307,7 +307,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public Message makeBloomFilter(ByteBuffer payload) throws ProtocolException {
-        return new BloomFilter(params, payload);
+        return new BloomFilter(payload);
     }
 
     /**

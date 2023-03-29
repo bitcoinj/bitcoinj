@@ -79,8 +79,8 @@ public class BloomFilter extends Message {
     /**
      * Construct a BloomFilter by deserializing payload
      */
-    public BloomFilter(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public BloomFilter(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
     
     /**

@@ -827,7 +827,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Send the chain that doesn't have all the transactions in it. The blocks after the exhaustion point should all
         // be ignored.
         int epoch = wallet.getKeyChainGroupCombinedKeyLookaheadEpochs();
-        BloomFilter filter = new BloomFilter(UNITTEST, ByteBuffer.wrap(p1.lastReceivedFilter.bitcoinSerialize()));
+        BloomFilter filter = new BloomFilter(ByteBuffer.wrap(p1.lastReceivedFilter.bitcoinSerialize()));
         filterAndSend(p1, blocks, filter);
         Block exhaustionPoint = blocks.get(3);
         pingAndWait(p1);
