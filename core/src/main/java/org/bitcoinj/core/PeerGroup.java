@@ -1493,7 +1493,6 @@ public class PeerGroup implements TransactionBroadcaster {
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         ver.receivingAddr = address;
-        ver.receivingAddr.setParent(ver);
 
         Peer peer = createPeer(address, ver);
         peer.addConnectedEventListener(Threading.SAME_THREAD, startupListener);

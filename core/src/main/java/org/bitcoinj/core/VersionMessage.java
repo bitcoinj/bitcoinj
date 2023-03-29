@@ -105,9 +105,7 @@ public class VersionMessage extends Message {
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
         MessageSerializer serializer = this.serializer.withProtocolVersion(0);
         receivingAddr = new PeerAddress(params, localhost, params.getPort(), Services.none(), serializer);
-        receivingAddr.setParent(this);
         fromAddr = new PeerAddress(params, localhost, params.getPort(), Services.none(), serializer);
-        fromAddr.setParent(this);
         subVer = LIBRARY_SUBVER;
         bestHeight = newBestHeight;
         relayTxesBeforeFilter = true;
@@ -118,9 +116,9 @@ public class VersionMessage extends Message {
         clientVersion = (int) ByteUtils.readUint32(payload);
         localServices = Services.read(payload);
         time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
-        receivingAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
+        receivingAddr = new PeerAddress(params, payload, serializer.withProtocolVersion(0));
         if (clientVersion >= 106) {
-            fromAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
+            fromAddr = new PeerAddress(params, payload, serializer.withProtocolVersion(0));
             // uint64 localHostNonce (random data)
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
             // there are NATs and proxies in the way. However we don't listen for inbound connections so it's

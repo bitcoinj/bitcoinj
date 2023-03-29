@@ -57,7 +57,7 @@ public class AddressV2Message extends AddressMessage {
         addresses = new ArrayList<>(numAddresses);
         MessageSerializer serializer = this.serializer.withProtocolVersion(2);
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(params, payload, this, serializer);
+            PeerAddress addr = new PeerAddress(params, payload, serializer);
             addresses.add(addr);
         }
     }
@@ -67,8 +67,6 @@ public class AddressV2Message extends AddressMessage {
         if (protocolVersion != 2)
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
-        unCache();
-        address.setParent(this);
         addresses.add(address);
     }
 

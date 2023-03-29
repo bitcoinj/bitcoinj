@@ -77,9 +77,7 @@ public class VersionMessageTest {
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
         ver.localServices = Services.of(1);
         ver.fromAddr = new PeerAddress(TESTNET, InetAddress.getByName("1.2.3.4"), 3888);
-        ver.fromAddr.setParent(ver);
         ver.receivingAddr = new PeerAddress(TESTNET, InetAddress.getByName("4.3.2.1"), 8333);
-        ver.receivingAddr.setParent(ver);
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(TESTNET, ByteBuffer.wrap(serialized));
         assertEquals(1234, ver2.bestHeight);
@@ -101,9 +99,7 @@ public class VersionMessageTest {
         ver.clientVersion = NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
         ver.localServices = Services.of(1);
         ver.fromAddr = new PeerAddress(TESTNET, InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 3888);
-        ver.fromAddr.setParent(ver);
         ver.receivingAddr = new PeerAddress(TESTNET, InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
-        ver.receivingAddr.setParent(ver);
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(TESTNET, ByteBuffer.wrap(serialized));
         assertEquals(1234, ver2.bestHeight);

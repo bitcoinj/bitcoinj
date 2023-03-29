@@ -48,7 +48,6 @@ public abstract class AddressMessage extends Message {
     public void removeAddress(int index) {
         unCache();
         PeerAddress address = addresses.remove(index);
-        address.setParent(null);
     }
 
     /**

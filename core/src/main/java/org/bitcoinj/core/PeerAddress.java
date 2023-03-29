@@ -50,7 +50,7 @@ import java.util.stream.Stream;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class PeerAddress extends ChildMessage {
+public class PeerAddress extends Message {
     private InetAddress addr;   // Used for IPV4, IPV6, null otherwise or if not-yet-parsed
     private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
@@ -89,8 +89,8 @@ public class PeerAddress extends ChildMessage {
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public PeerAddress(NetworkParameters params, ByteBuffer payload, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, parent, serializer);
+    public PeerAddress(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
+        super(params, payload, serializer);
     }
 
     /**
