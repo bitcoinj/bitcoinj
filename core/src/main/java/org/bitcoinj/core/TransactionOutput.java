@@ -52,8 +52,10 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class TransactionOutput extends ChildMessage {
+public class TransactionOutput extends Message {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
+
+    @Nullable protected Transaction parent;
 
     // The output's value is kept as a native type in order to save class instances.
     private long value;
@@ -90,7 +92,8 @@ public class TransactionOutput extends ChildMessage {
      * @throws ProtocolException
      */
     public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, parent, serializer);
+        super(params, payload, serializer);
+        setParent(parent);
         availableForSpending = true;
     }
 
@@ -376,7 +379,7 @@ public class TransactionOutput extends ChildMessage {
      */
     @Nullable
     public Transaction getParentTransaction() {
-        return (Transaction)parent;
+        return parent;
     }
 
     /**
@@ -415,6 +418,26 @@ public class TransactionOutput extends ChildMessage {
     /** Returns a copy of the output detached from its containing transaction, if need be. */
     public TransactionOutput duplicateDetached() {
         return new TransactionOutput(params, null, Coin.valueOf(value), Arrays.copyOf(scriptBytes, scriptBytes.length));
+    }
+
+    public final void setParent(@Nullable Transaction parent) {
+        if (this.parent != null && this.parent != parent && parent != null) {
+            // After old parent is unlinked it won't be able to receive notice if this child
+            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
+            // manually on serialization.
+            this.parent.unCache();
+        }
+        this.parent = parent;
+    }
+
+    /* (non-Javadoc)
+     * @see Message#unCache()
+     */
+    @Override
+    protected void unCache() {
+        super.unCache();
+        if (parent != null)
+            parent.unCache();
     }
 
     @Override

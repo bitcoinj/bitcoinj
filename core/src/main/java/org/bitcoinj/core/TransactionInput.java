@@ -49,7 +49,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class TransactionInput extends ChildMessage {
+public class TransactionInput extends Message {
     /** Magic sequence number that indicates there is no sequence number. */
     public static final long NO_SEQUENCE = 0xFFFFFFFFL;
     /**
@@ -70,6 +70,8 @@ public class TransactionInput extends ChildMessage {
     private static final byte[] EMPTY_ARRAY = new byte[0];
     // Magic outpoint index that indicates the input is in fact unconnected.
     private static final long UNCONNECTED = 0xFFFFFFFFL;
+
+    @Nullable protected Transaction parent;
 
     // Allows for altering transactions after they were broadcast. Values below NO_SEQUENCE-1 mean it can be altered.
     private long sequence;
@@ -145,7 +147,8 @@ public class TransactionInput extends ChildMessage {
      */
     public TransactionInput(NetworkParameters params, Transaction parentTransaction, ByteBuffer payload, MessageSerializer serializer)
             throws ProtocolException {
-        super(params, payload, parentTransaction, serializer);
+        super(params, payload, serializer);
+        setParent(parentTransaction);
         this.value = null;
     }
 
@@ -273,7 +276,7 @@ public class TransactionInput extends ChildMessage {
      * @return The Transaction that owns this input.
      */
     public Transaction getParentTransaction() {
-        return (Transaction) parent;
+        return parent;
     }
 
     /**
@@ -520,6 +523,26 @@ public class TransactionInput extends ChildMessage {
      */
     public DefaultRiskAnalysis.RuleViolation isStandard() {
         return DefaultRiskAnalysis.isInputStandard(this);
+    }
+
+    public final void setParent(@Nullable Transaction parent) {
+        if (this.parent != null && this.parent != parent && parent != null) {
+            // After old parent is unlinked it won't be able to receive notice if this child
+            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
+            // manually on serialization.
+            this.parent.unCache();
+        }
+        this.parent = parent;
+    }
+
+    /* (non-Javadoc)
+     * @see Message#unCache()
+     */
+    @Override
+    protected void unCache() {
+        super.unCache();
+        if (parent != null)
+            parent.unCache();
     }
 
     @Override
