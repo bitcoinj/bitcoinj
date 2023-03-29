@@ -37,8 +37,8 @@ import static org.bitcoinj.base.internal.Preconditions.check;
 public class FeeFilterMessage extends Message {
     private Coin feeRate;
 
-    public FeeFilterMessage(NetworkParameters params, ByteBuffer payload, BitcoinSerializer serializer) {
-        super(params, payload, serializer);
+    public FeeFilterMessage(ByteBuffer payload) {
+        super(payload);
     }
 
     @Override
