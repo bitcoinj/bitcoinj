@@ -4755,7 +4755,7 @@ public class Wallet extends BaseTaggableObject
 
     // ***************************************************************************************************************
     /**
-     * A custom {@link TransactionOutput} that is free standing. This contains all the information
+     * A custom {@link TransactionOutput} that is freestanding. This contains all the information
      * required for spending without actually having all the linked data (i.e parent tx).
      *
      */
@@ -4764,9 +4764,9 @@ public class Wallet extends BaseTaggableObject
         private final int chainHeight;
 
         /**
-         * Construct a free standing Transaction Output.
+         * Construct a freestanding Transaction Output.
          * @param params The network parameters.
-         * @param output The stored output (free standing).
+         * @param output The stored output (freestanding).
          */
         public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, int chainHeight) {
             super(params, null, output.getValue(), output.getScript().getProgram());

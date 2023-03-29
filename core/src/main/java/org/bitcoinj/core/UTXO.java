@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * A UTXO message contains the information necessary to check a spending transaction.
  * It avoids having to store the entire parentTransaction just to get the hash and index.
- * Useful when working with free standing outputs.
+ * Useful when working with freestanding outputs.
  */
 public class UTXO {
     private final Coin value;

@@ -180,7 +180,7 @@ public class TransactionOutput extends ChildMessage {
     }
 
     /**
-     * Gets the index of this output in the parent transaction, or throws if this output is free standing. Iterates
+     * Gets the index of this output in the parent transaction, or throws if this output is freestanding. Iterates
      * over the parents list to discover this.
      */
     public int getIndex() {
