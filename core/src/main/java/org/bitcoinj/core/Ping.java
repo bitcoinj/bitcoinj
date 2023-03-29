@@ -33,8 +33,8 @@ import java.util.Random;
 public class Ping extends Message {
     private long nonce;
 
-    public Ping(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public Ping(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     /**

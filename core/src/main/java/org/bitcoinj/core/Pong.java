@@ -32,8 +32,8 @@ import java.nio.ByteBuffer;
 public class Pong extends Message {
     private long nonce;
 
-    public Pong(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public Pong(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
     
     /**
