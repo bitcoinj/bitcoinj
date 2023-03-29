@@ -1452,12 +1452,13 @@ public class Peer extends PeerSocketHandler {
         lastGetBlocksBegin = chainHeadHash;
         lastGetBlocksEnd = toHash;
 
+        long protocolVersion = params.getSerializer().getProtocolVersion();
         if (downloadBlockBodies) {
-            GetBlocksMessage message = new GetBlocksMessage(params, blockLocator, toHash);
+            GetBlocksMessage message = new GetBlocksMessage(protocolVersion, blockLocator, toHash);
             sendMessage(message);
         } else {
             // Downloading headers for a while instead of full blocks.
-            GetHeadersMessage message = new GetHeadersMessage(params, blockLocator, toHash);
+            GetHeadersMessage message = new GetHeadersMessage(protocolVersion, blockLocator, toHash);
             sendMessage(message);
         }
     }

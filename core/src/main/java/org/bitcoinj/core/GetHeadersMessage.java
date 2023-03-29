@@ -29,12 +29,12 @@ import java.nio.ByteBuffer;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class GetHeadersMessage extends GetBlocksMessage {
-    public GetHeadersMessage(NetworkParameters params, BlockLocator locator, Sha256Hash stopHash) {
-        super(params, locator, stopHash);
+    public GetHeadersMessage(long protocolVersion, BlockLocator locator, Sha256Hash stopHash) {
+        super(protocolVersion, locator, stopHash);
     }
 
-    public GetHeadersMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public GetHeadersMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     @Override

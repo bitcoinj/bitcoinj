@@ -38,15 +38,14 @@ public class GetBlocksMessage extends Message {
     protected BlockLocator locator;
     protected Sha256Hash stopHash;
 
-    public GetBlocksMessage(NetworkParameters params, BlockLocator locator, Sha256Hash stopHash) {
-        super(params);
-        this.version = serializer.getProtocolVersion();
+    public GetBlocksMessage(long protocolVersion, BlockLocator locator, Sha256Hash stopHash) {
+        this.version = protocolVersion;
         this.locator = locator;
         this.stopHash = stopHash;
     }
 
-    public GetBlocksMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public GetBlocksMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     @Override
@@ -78,7 +77,7 @@ public class GetBlocksMessage extends Message {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         // Version, for some reason.
-        ByteUtils.writeInt32LE(serializer.getProtocolVersion(), stream);
+        ByteUtils.writeInt32LE(version, stream);
         // Then a vector of block hashes. This is actually a "block locator", a set of block
         // identifiers that spans the entire chain with exponentially increasing gaps between
         // them, until we end up at the genesis block. See CBlockLocator::Set()

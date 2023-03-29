@@ -227,9 +227,9 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("getdata")) {
             return new GetDataMessage(payload);
         } else if (command.equals("getblocks")) {
-            return new GetBlocksMessage(params, payload);
+            return new GetBlocksMessage(payload);
         } else if (command.equals("getheaders")) {
-            return new GetHeadersMessage(params, payload);
+            return new GetHeadersMessage(payload);
         } else if (command.equals("tx")) {
             return makeTransaction(payload, hash);
         } else if (command.equals("sendaddrv2")) {

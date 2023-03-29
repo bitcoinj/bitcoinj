@@ -304,7 +304,7 @@ public class BitcoindComparisonTool {
                 //bitcoind.sendMessage(nextBlock);
                 locator = new BlockLocator();
                 locator = locator.add(bitcoindChainHead);
-                bitcoind.sendMessage(new GetHeadersMessage(PARAMS, locator, hashTo));
+                bitcoind.sendMessage(new GetHeadersMessage(PARAMS.getSerializer().getProtocolVersion(), locator, hashTo));
                 bitcoind.sendPing().get();
                 if (!chain.getChainHead().getHeader().getHash().equals(bitcoindChainHead)) {
                     rulesSinceFirstFail++;
