@@ -793,7 +793,7 @@ public class Transaction extends ChildMessage {
     }
 
     /**
-     * A human readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
+     * A human-readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
      * @param chain If provided, will be used to estimate lock times (if set). Can be null.
      */
     public String toString(@Nullable AbstractBlockChain chain, @Nullable CharSequence nullableIndent) {

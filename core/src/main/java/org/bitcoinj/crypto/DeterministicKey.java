@@ -191,7 +191,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Returns the path of this key as a human readable string starting with M or m to indicate the master key.
+     * Returns the path of this key as a human-readable string starting with M or m to indicate the master key.
      */
     public String getPathAsString() {
         return getPath().toString();

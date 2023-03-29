@@ -33,7 +33,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>
- * Utility for formatting and parsing coin values to and from human readable form.
+ * Utility for formatting and parsing coin values to and from human-readable form.
  * </p>
  * 
  * <p>
@@ -358,7 +358,7 @@ public final class MonetaryFormat {
     }
 
     /**
-     * Format the given monetary value to a human readable form.
+     * Format the given monetary value to a human-readable form.
      */
     public CharSequence format(Monetary monetary) {
         // determine maximum number of decimals that can be visible in the formatted string
@@ -461,7 +461,7 @@ public final class MonetaryFormat {
     }
 
     /**
-     * Parse a human readable coin value to a {@link Coin} instance.
+     * Parse a human-readable coin value to a {@link Coin} instance.
      * 
      * @throws NumberFormatException
      *             if the string cannot be parsed for some reason
@@ -471,7 +471,7 @@ public final class MonetaryFormat {
     }
 
     /**
-     * Parse a human readable fiat value to a {@link Fiat} instance.
+     * Parse a human-readable fiat value to a {@link Fiat} instance.
      * 
      * @throws NumberFormatException
      *             if the string cannot be parsed for some reason

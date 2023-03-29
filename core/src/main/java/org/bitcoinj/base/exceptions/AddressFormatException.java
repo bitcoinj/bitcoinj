@@ -117,7 +117,7 @@ public class AddressFormatException extends IllegalArgumentException {
         }
 
         public WrongNetwork(String hrp) {
-            super("Human readable part of address did not match acceptable HRPs for network: " + hrp);
+            super("human-readable part of address did not match acceptable HRPs for network: " + hrp);
         }
     }
 }

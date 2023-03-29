@@ -31,7 +31,7 @@ import java.util.Set;
  * Utility class that holds all the registered {@link NetworkParameters} types used for address auto discovery.
  * By default only {@link MainNetParams} and {@link TestNet3Params} are used. If you want to use {@link RegTestParams}
  * or {@link UnitTestParams} use {@code register} and then {@code unregister} the {@code TestNet3Params} as they don't
- * have their own Base58 version/type code (although for {@link SegwitAddress} the human readable
+ * have their own Base58 version/type code (although for {@link SegwitAddress} the human-readable
  * parts for RegTest and TestNet are different.)
  */
 public class Networks {

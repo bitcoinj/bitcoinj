@@ -537,7 +537,7 @@ public class TransactionInput extends ChildMessage {
     }
 
     /**
-     * Returns a human readable debug string.
+     * Returns a human-readable debug string.
      */
     @Override
     public String toString() {

@@ -339,7 +339,7 @@ public class TransactionOutput extends ChildMessage {
     }
 
     /**
-     * Returns a human readable debug string.
+     * Returns a human-readable debug string.
      */
     @Override
     public String toString() {

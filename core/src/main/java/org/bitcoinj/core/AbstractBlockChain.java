@@ -1032,7 +1032,7 @@ public abstract class AbstractBlockChain {
 
     /**
      * Returns an estimate of when the given block will be reached, assuming a perfect 10 minute average for each
-     * block. This is useful for turning transaction lock times into human readable times. Note that a height in
+     * block. This is useful for turning transaction lock times into human-readable times. Note that a height in
      * the past will still be estimated, even though the time of solving is actually known (we won't scan backwards
      * through the chain to obtain the right answer).
      * @param height block time to estimate
