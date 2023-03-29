@@ -18,6 +18,7 @@ package org.bitcoinj.utils;
 
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.MessageSerializer;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 
@@ -83,7 +84,8 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     private File file = null;
     private FileInputStream currentFileStream = null;
     private Block nextBlock = null;
-    private NetworkParameters params;
+    private final long packetMagic;
+    private final MessageSerializer serializer;
 
     public BlockFileLoader(NetworkParameters params, File blocksDir) {
         this(params, getReferenceClientBlockFileList(blocksDir));
@@ -91,7 +93,8 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
 
     public BlockFileLoader(NetworkParameters params, List<File> files) {
         fileIt = files.iterator();
-        this.params = params;
+        packetMagic = params.getPacketMagic();
+        serializer = params.getDefaultSerializer();
     }
     
     @Override
@@ -142,18 +145,18 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
             try {
                 int nextChar = currentFileStream.read();
                 while (nextChar != -1) {
-                    if (nextChar != ((params.getPacketMagic() >>> 24) & 0xff)) {
+                    if (nextChar != ((packetMagic >>> 24) & 0xff)) {
                         nextChar = currentFileStream.read();
                         continue;
                     }
                     nextChar = currentFileStream.read();
-                    if (nextChar != ((params.getPacketMagic() >>> 16) & 0xff))
+                    if (nextChar != ((packetMagic >>> 16) & 0xff))
                         continue;
                     nextChar = currentFileStream.read();
-                    if (nextChar != ((params.getPacketMagic() >>> 8) & 0xff))
+                    if (nextChar != ((packetMagic >>> 8) & 0xff))
                         continue;
                     nextChar = currentFileStream.read();
-                    if (nextChar == (params.getPacketMagic() & 0xff))
+                    if (nextChar == (packetMagic & 0xff))
                         break;
                 }
                 byte[] bytes = new byte[4];
@@ -162,7 +165,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 bytes = new byte[(int) size];
                 currentFileStream.read(bytes, 0, (int) size);
                 try {
-                    nextBlock = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(bytes));
+                    nextBlock = serializer.makeBlock(ByteBuffer.wrap(bytes));
                 } catch (ProtocolException e) {
                     nextBlock = null;
                     continue;
