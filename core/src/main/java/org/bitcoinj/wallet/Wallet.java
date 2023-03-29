@@ -141,6 +141,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
+import static org.bitcoinj.wallet.WalletTxHelper.isMature;
 
 // To do list:
 //
@@ -216,6 +217,8 @@ public class Wallet extends BaseTaggableObject
     private final Map<Sha256Hash, Transaction> unspent;
     private final Map<Sha256Hash, Transaction> spent;
     private final Map<Sha256Hash, Transaction> dead;
+
+    private final Map<Sha256Hash, Integer> appearedAtChainHeight;
 
     // All transactions together.
     protected final Map<Sha256Hash, Transaction> transactions;
@@ -521,6 +524,7 @@ public class Wallet extends BaseTaggableObject
         // Use a linked hash map to ensure ordering of event listeners is correct.
         confidenceChanged = new LinkedHashMap<>();
         signers = new ArrayList<>();
+        appearedAtChainHeight = new HashMap<>();
         addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
     }
@@ -2317,6 +2321,9 @@ public class Wallet extends BaseTaggableObject
             // confidence object about the block and sets its depth appropriately.
             tx.setBlockAppearance(block, bestChain, relativityOffset);
             if (bestChain) {
+                appearedAtChainHeight.put(txHash, block.getHeight());
+                tx.getConfidence().setConfidenceType(ConfidenceType.BUILDING);
+
                 // Don't notify this tx of work done in notifyNewBestBlock which will be called immediately after
                 // this method has been called by BlockChain for all relevant transactions. Otherwise we'd double
                 // count.
@@ -2334,6 +2341,7 @@ public class Wallet extends BaseTaggableObject
                     if (txDependency.getConfidence().getConfidenceType().equals(ConfidenceType.IN_CONFLICT)) {
                         if (isNotSpendingTxnsInConfidenceType(txDependency, ConfidenceType.IN_CONFLICT)) {
                             txDependency.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+                            appearedAtChainHeight.remove(txDependency.getTxId());
                             confidenceChanged.put(txDependency, TransactionConfidence.Listener.ChangeReason.TYPE);
                         }
                     }
@@ -2477,7 +2485,7 @@ public class Wallet extends BaseTaggableObject
                         // included once again. We could have a separate was-in-chain-and-now-isn't confidence type
                         // but this way is backwards compatible with existing software, and the new state probably
                         // wouldn't mean anything different to just remembering peers anyway.
-                        if (confidence.incrementDepthInBlocks() > Context.getOrCreate().getEventHorizon())
+                        if (calcDepth(tx.getTxId()) > Context.getOrCreate().getEventHorizon())
                             confidence.clearBroadcastBy();
                         confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                     }
@@ -2497,6 +2505,10 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
+    }
+
+    public int calcDepth(Sha256Hash txId) {
+        return WalletTxHelper.calcDepth(appearedAtChainHeight.get(txId), lastBlockSeenHeight);
     }
 
     /**
@@ -2811,6 +2823,7 @@ public class Wallet extends BaseTaggableObject
                 addTransactionsDependingOn(doubleSpendPendingTxns, getTransactions(true));
                 for (Transaction doubleSpendTx : doubleSpendPendingTxns) {
                     doubleSpendTx.getConfidence().setConfidenceType(ConfidenceType.IN_CONFLICT);
+                    appearedAtChainHeight.remove(doubleSpendTx.getTxId());
                     confidenceChanged.put(doubleSpendTx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 }
             } else {
@@ -2818,6 +2831,7 @@ public class Wallet extends BaseTaggableObject
                 // Add to the pending pool and schedule confidence listener notifications.
                 log.info("->pending: {}", tx.getTxId());
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
+                appearedAtChainHeight.remove(tx.getTxId());
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.PENDING, tx);
             }
@@ -3351,7 +3365,7 @@ public class Wallet extends BaseTaggableObject
         try {
             LinkedList<TransactionOutput> candidates = new LinkedList<>();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-                if (excludeImmatureCoinbases && !tx.isMature()) continue;
+                if (excludeImmatureCoinbases && !isMature(params, tx, appearedAtChainHeight.get(tx.getTxId()), lastBlockSeenHeight)) continue;
                 for (TransactionOutput output : tx.getOutputs()) {
                     if (!output.isAvailableForSpending()) continue;
                     try {
@@ -3557,11 +3571,11 @@ public class Wallet extends BaseTaggableObject
                 }
                 if (unspent.size() > 0) {
                     builder.append("\n>>> UNSPENT:\n");
-                    toStringHelper(builder, unspent, chain, Transaction.SORT_TX_BY_HEIGHT);
+                    toStringHelper(builder, unspent, chain, Transaction.SORT_TX_BY_HEIGHT(appearedAtChainHeight));
                 }
                 if (spent.size() > 0) {
                     builder.append("\n>>> SPENT:\n");
-                    toStringHelper(builder, spent, chain, Transaction.SORT_TX_BY_HEIGHT);
+                    toStringHelper(builder, spent, chain, Transaction.SORT_TX_BY_HEIGHT(appearedAtChainHeight));
                 }
                 if (dead.size() > 0) {
                     builder.append("\n>>> DEAD:\n");
@@ -3834,7 +3848,7 @@ public class Wallet extends BaseTaggableObject
         try {
             if (balanceType == BalanceType.AVAILABLE || balanceType == BalanceType.AVAILABLE_SPENDABLE) {
                 List<TransactionOutput> candidates = calculateAllSpendCandidates(true, balanceType == BalanceType.AVAILABLE_SPENDABLE);
-                CoinSelection selection = coinSelector.select(BitcoinNetwork.MAX_MONEY, candidates);
+                CoinSelection selection = coinSelector.select(BitcoinNetwork.MAX_MONEY, candidates, this::calcDepth);
                 return selection.totalValue();
             } else if (balanceType == BalanceType.ESTIMATED || balanceType == BalanceType.ESTIMATED_SPENDABLE) {
                 List<TransactionOutput> all = calculateAllSpendCandidates(false, balanceType == BalanceType.ESTIMATED_SPENDABLE);
@@ -3859,7 +3873,7 @@ public class Wallet extends BaseTaggableObject
         try {
             Objects.requireNonNull(selector);
             List<TransactionOutput> candidates = calculateAllSpendCandidates(true, false);
-            CoinSelection selection = selector.select((Coin) params.network().maxMoney(), candidates);
+            CoinSelection selection = selector.select((Coin) params.network().maxMoney(), candidates, this::calcDepth);
             return selection.totalValue();
         } finally {
             lock.unlock();
@@ -4456,7 +4470,7 @@ public class Wallet extends BaseTaggableObject
                 checkState(req.tx.getOutputs().size() == 1, () ->
                         "empty wallet TX must have a single output only");
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
-                bestCoinSelection = selector.select((Coin) params.network().maxMoney(), candidates);
+                bestCoinSelection = selector.select((Coin) params.network().maxMoney(), candidates, this::calcDepth);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.totalValue());
                 log.info("  emptying {}", bestCoinSelection.totalValue().toFriendlyString());
@@ -4612,8 +4626,12 @@ public class Wallet extends BaseTaggableObject
             List<TransactionOutput> candidates;
             if (vUTXOProvider == null) {
                 candidates = myUnspents.stream()
-                    .filter(output ->   (!excludeUnsignable || canSignFor(output.getScriptPubKey())) &&
-                                        (!excludeImmatureCoinbases || Objects.requireNonNull(output.getParentTransaction()).isMature()))
+                    .filter(output -> {
+                        Transaction parentTx = Objects.requireNonNull(output.getParentTransaction());
+                        return (!excludeUnsignable || canSignFor(output.getScriptPubKey())) &&
+                                            (!excludeImmatureCoinbases ||
+                                                    isMature(params, parentTx, appearedAtChainHeight.get(parentTx.getTxId()), lastBlockSeenHeight));
+                    })
                     .collect(StreamUtils.toUnmodifiableList());
             } else {
                 candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
@@ -4684,7 +4702,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
             // Add change outputs. Do not try and spend coinbases that were mined too recently, the protocol forbids it.
-            if (!excludeImmatureCoinbases || tx.isMature()) {
+            if (!excludeImmatureCoinbases || isMature(params, tx, appearedAtChainHeight.get(tx.getTxId()), lastBlockSeenHeight)) {
                 for (TransactionOutput output : tx.getOutputs()) {
                     if (output.isAvailableForSpending() && output.isMine(this)) {
                         candidates.add(output);
@@ -4780,16 +4798,6 @@ public class Wallet extends BaseTaggableObject
          */
         public UTXO getUTXO() {
             return output;
-        }
-
-        /**
-         * Get the depth withing the chain of the parent tx, depth is 1 if it the output height is the height of
-         * the latest block.
-         * @return The depth.
-         */
-        @Override
-        public int getParentTransactionDepthInBlocks() {
-            return chainHeight - output.getHeight() + 1;
         }
 
         @Override
@@ -4923,6 +4931,7 @@ public class Wallet extends BaseTaggableObject
                 log.info("  ->pending {}", tx.getTxId());
 
                 tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);  // Wipe height/depth/work data.
+                appearedAtChainHeight.remove(tx.getTxId());
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
                 addWalletTransaction(Pool.PENDING, tx);
                 updateForSpends(tx, false);
@@ -4933,15 +4942,9 @@ public class Wallet extends BaseTaggableObject
             // doesn't matter - the miners deleted T1 from their mempool, will resurrect T2 and put that into the
             // mempool and so T1 is still seen as a losing double spend.
 
-            // The old blocks have contributed to the depth for all the transactions in the
-            // wallet that are in blocks up to and including the chain split block.
-            // The total depth is calculated here and then subtracted from the appropriate transactions.
-            int depthToSubtract = oldBlocks.size();
-            log.info("depthToSubtract = " + depthToSubtract);
-            // Remove depthToSubtract from all transactions in the wallet except for pending.
-            subtractDepth(depthToSubtract, spent.values());
-            subtractDepth(depthToSubtract, unspent.values());
-            subtractDepth(depthToSubtract, dead.values());
+            notifyBuildingConfidenceListeners(spent.values());
+            notifyBuildingConfidenceListeners(unspent.values());
+            notifyBuildingConfidenceListeners(dead.values());
 
             // The effective last seen block is now the split point so set the lastSeenBlockHash.
             setLastBlockSeenHash(splitPoint.getHeader().getHash());
@@ -4978,16 +4981,39 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /**
-     * Subtract the supplied depth from the given transactions.
-     */
-    private void subtractDepth(int depthToSubtract, Collection<Transaction> transactions) {
+    private void notifyBuildingConfidenceListeners(Collection<Transaction> transactions) {
         for (Transaction tx : transactions) {
             if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
-                tx.getConfidence().setDepthInBlocks(tx.getConfidence().getDepthInBlocks() - depthToSubtract);
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
             }
         }
+    }
+
+    // TODO: 2023-03-24 maybe return a ListenableCompletableFuture<Transaction> instead?
+    /**
+     * Returns a future that completes when the transaction has been confirmed by "depth" blocks. For instance setting
+     * depth to one will wait until it appears in a block on the best chain, and zero will wait until it has been seen
+     * on the network.
+     */
+    public synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(Sha256Hash txHash, int depth, Executor executor) {
+        final ListenableCompletableFuture<TransactionConfidence> result = new ListenableCompletableFuture<>();
+        TransactionConfidence confidence = getTransaction(txHash).getConfidence();
+        if (calcDepth(txHash) >= depth) {
+            result.complete(confidence);
+        }
+        confidence.addEventListener(executor, new Listener() {
+            @Override public void onConfidenceChanged(TransactionConfidence confidence, ChangeReason reason) {
+                if (calcDepth(txHash) >= depth) {
+                    confidence.removeEventListener(this);
+                    result.complete(confidence);
+                }
+            }
+        });
+        return result;
+    }
+
+    public synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(Sha256Hash txHash, int depth) {
+        return getDepthFuture(txHash, depth, Threading.USER_THREAD);
     }
 
     //endregion
@@ -5288,7 +5314,7 @@ public class Wallet extends BaseTaggableObject
             }
             CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
             // selector is allowed to modify candidates list.
-            CoinSelection selection = selector.select(valueNeeded, new LinkedList<>(candidates));
+            CoinSelection selection = selector.select(valueNeeded, new LinkedList<>(candidates), this::calcDepth);
             result.bestCoinSelection = selection;
             // Can we afford this?
             if (selection.totalValue().compareTo(valueNeeded) < 0) {
@@ -5682,7 +5708,7 @@ public class Wallet extends BaseTaggableObject
             for (Transaction other : others)
                 selector.excludeOutputsSpentBy(other);
             // TODO: Make this use the standard SendRequest.
-            CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
+            CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates(), this::calcDepth);
             if (toMove.totalValue().equals(Coin.ZERO)) return null;  // Nothing to do.
             Transaction rekeyTx = new Transaction(params);
             for (TransactionOutput output : toMove.outputs()) {

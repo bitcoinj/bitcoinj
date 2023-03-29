@@ -89,7 +89,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
 
         // Check we selected just the oldest one.
         DefaultCoinSelector selector = DefaultCoinSelector.get();
-        CoinSelection selection = selector.select(COIN, wallet.calculateAllSpendCandidates());
+        CoinSelection selection = selector.select(COIN, wallet.calculateAllSpendCandidates(), wallet::calcDepth);
         assertTrue(selection.outputs().contains(t1.getOutputs().get(0)));
         assertEquals(COIN, selection.totalValue());
 
@@ -97,7 +97,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         ArrayList<TransactionOutput> candidates = new ArrayList<>();
         candidates.add(t2.getOutput(0));
         candidates.add(t1.getOutput(0));
-        DefaultCoinSelector.sortOutputs(candidates);
+        DefaultCoinSelector.sortOutputs(candidates, depthProvider);
         assertEquals(t1.getOutput(0), candidates.get(0));
         assertEquals(t2.getOutput(0), candidates.get(1));
     }
@@ -118,7 +118,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         candidates.add(t3.getOutput(0));
         candidates.add(t2.getOutput(0));
         candidates.add(t1.getOutput(0));
-        DefaultCoinSelector.sortOutputs(candidates);
+        DefaultCoinSelector.sortOutputs(candidates, depthProvider);
         assertEquals(t2.getOutput(0), candidates.get(0));
         assertEquals(t1.getOutput(0), candidates.get(1));
         assertEquals(t3.getOutput(0), candidates.get(2));
@@ -137,7 +137,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
 
         DefaultCoinSelector selector = DefaultCoinSelector.get();
-        CoinSelection selection = selector.select(COIN.multiply(2), outputs);
+        CoinSelection selection = selector.select(COIN.multiply(2), outputs); //??
 
         assertTrue(selection.outputs().size() == 4);
     }

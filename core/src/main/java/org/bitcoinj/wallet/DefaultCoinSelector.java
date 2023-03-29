@@ -38,7 +38,7 @@ public class DefaultCoinSelector implements CoinSelector {
     }
 
     @Override
-    public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
+    public CoinSelection select(Coin target, List<TransactionOutput> candidates, DepthProvider depthProvider) {
         ArrayList<TransactionOutput> selected = new ArrayList<>();
         // Sort the inputs by age*value so we get the highest "coindays" spent.
         // TODO: Consider changing the wallets internal format to track just outputs and keep them ordered.
@@ -47,7 +47,7 @@ public class DefaultCoinSelector implements CoinSelector {
         // them in order to improve performance.
         // TODO: Take in network parameters when instantiated, and then test against the current network. Or just have a boolean parameter for "give me everything"
         if (!target.equals(BitcoinNetwork.MAX_MONEY)) {
-            sortOutputs(sortedOutputs);
+            sortOutputs(sortedOutputs, depthProvider);
         }
         // Now iterate over the sorted outputs until we have got as close to the target as possible or a little
         // bit over (excessive value will be change).
@@ -64,10 +64,10 @@ public class DefaultCoinSelector implements CoinSelector {
         return new CoinSelection(selected);
     }
 
-    @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
+    @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs, DepthProvider depthProvider) {
         Collections.sort(outputs, (a, b) -> {
-            int depth1 = a.getParentTransactionDepthInBlocks();
-            int depth2 = b.getParentTransactionDepthInBlocks();
+            int depth1 = depthProvider.apply(a.getParentTransactionHash());
+            int depth2 = depthProvider.apply(b.getParentTransactionHash());
             Coin aValue = a.getValue();
             Coin bValue = b.getValue();
             BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));
