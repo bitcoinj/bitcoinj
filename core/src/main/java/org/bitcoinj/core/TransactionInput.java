@@ -162,7 +162,7 @@ public class TransactionInput extends ChildMessage {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        outpoint = new TransactionOutPoint(params, payload, this, serializer);
+        outpoint = new TransactionOutPoint(params, payload, this);
         int scriptLen = VarInt.read(payload).intValue();
         scriptBytes = Buffers.readBytes(payload, scriptLen);
         sequence = ByteUtils.readUint32(payload);

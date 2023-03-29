@@ -96,11 +96,10 @@ public class TransactionOutPoint extends ChildMessage {
     /**
      * Deserializes the message. This is usually part of a transaction message.
      * @param params NetworkParameters object.
-     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, Message parent, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, parent, serializer);
+    public TransactionOutPoint(NetworkParameters params, ByteBuffer payload, Message parent) throws ProtocolException {
+        super(params, payload, parent);
     }
 
     @Override
