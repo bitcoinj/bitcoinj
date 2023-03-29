@@ -547,7 +547,7 @@ public class Peer extends PeerSocketHandler {
             throw new ProtocolException("Peer reports invalid best height: " + peerVersionMessage.bestHeight);
         // Now it's our turn ...
         // Send a sendaddrv2 message, indicating that we prefer to receive addrv2 messages.
-        sendMessage(new SendAddrV2Message(params));
+        sendMessage(new SendAddrV2Message());
         // Send an ACK message stating we accept the peers protocol version.
         sendMessage(new VersionAck());
         if (log.isDebugEnabled())
@@ -1304,7 +1304,7 @@ public class Peer extends PeerSocketHandler {
         synchronized (getAddrFutures) {
             getAddrFutures.add(future);
         }
-        sendMessage(new GetAddrMessage(params));
+        sendMessage(new GetAddrMessage());
         return future;
     }
 

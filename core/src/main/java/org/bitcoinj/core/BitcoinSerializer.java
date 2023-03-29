@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.bitcoinj.base.internal.ByteUtils.readUint32;
+import static org.bitcoinj.base.internal.Preconditions.check;
 
 /**
  * <p>Methods to serialize and de-serialize messages to the Bitcoin network format as defined in
@@ -232,7 +233,8 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("tx")) {
             return makeTransaction(payload, hash);
         } else if (command.equals("sendaddrv2")) {
-            return new SendAddrV2Message(params);
+            check(!payload.hasRemaining(), ProtocolException::new);
+            return new SendAddrV2Message();
         } else if (command.equals("addr")) {
             return makeAddressV1Message(payload);
         } else if (command.equals("addrv2")) {
@@ -242,7 +244,8 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("pong")) {
             return new Pong(params, payload);
         } else if (command.equals("verack")) {
-            return new VersionAck(params, payload);
+            check(!payload.hasRemaining(), ProtocolException::new);
+            return new VersionAck();
         } else if (command.equals("headers")) {
             return new HeadersMessage(params, payload);
         } else if (command.equals("filterload")) {
@@ -254,11 +257,13 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("reject")) {
             return new RejectMessage(params, payload);
         } else if (command.equals("sendheaders")) {
-            return new SendHeadersMessage(params, payload);
+            check(!payload.hasRemaining(), ProtocolException::new);
+            return new SendHeadersMessage();
         } else if (command.equals("feefilter")) {
             return new FeeFilterMessage(params, payload, this);
         } else {
-            return new UnknownMessage(params, command, payload);
+            check(!payload.hasRemaining(), ProtocolException::new);
+            return new UnknownMessage(command);
         }
     }
 
