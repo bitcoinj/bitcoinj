@@ -90,7 +90,7 @@ import static org.bitcoinj.base.internal.ByteUtils.writeInt64LE;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Transaction extends ChildMessage {
+public class Transaction extends Message {
     private static final Comparator<Transaction> SORT_TX_BY_ID = Comparator.comparing(Transaction::getTxId);
 
     /**
@@ -249,16 +249,15 @@ public class Transaction extends ChildMessage {
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param parent The parent of the transaction.
      * @param setSerializer The serializer to use for this transaction.
      * @param hashFromHeader Used by BitcoinSerializer. The serializer has to calculate a hash for checksumming so to
      * avoid wasting the considerable effort a set method is provided so the serializer can set it. No verification
      * is performed on this hash.
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, ByteBuffer payload, @Nullable Message parent,
+    public Transaction(NetworkParameters params, ByteBuffer payload,
             MessageSerializer setSerializer, @Nullable byte[] hashFromHeader) throws ProtocolException {
-        super(params, payload, parent, setSerializer);
+        super(params, payload, setSerializer);
         if (hashFromHeader != null) {
             cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
             if (!hasWitnesses())
@@ -269,9 +268,9 @@ public class Transaction extends ChildMessage {
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, ByteBuffer payload, @Nullable Message parent, MessageSerializer setSerializer)
+    public Transaction(NetworkParameters params, ByteBuffer payload, MessageSerializer setSerializer)
             throws ProtocolException {
-        super(params, payload, parent, setSerializer);
+        super(params, payload, setSerializer);
     }
 
     /**
@@ -602,7 +601,6 @@ public class Transaction extends ChildMessage {
 
     @Override
     protected void unCache() {
-        super.unCache();
         cachedTxId = null;
         cachedWTxId = null;
     }

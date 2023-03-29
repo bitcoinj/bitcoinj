@@ -226,7 +226,7 @@ public class Block extends Message {
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, this, serializer, null);
+            Transaction tx = new Transaction(params, payload, serializer, null);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
@@ -760,7 +760,6 @@ public class Block extends Message {
         if (transactions == null) {
             transactions = new ArrayList<>();
         }
-        t.setParent(this);
         if (runSanityChecks && transactions.size() == 0 && !t.isCoinBase())
             throw new RuntimeException("Attempted to add a non-coinbase transaction as the first transaction: " + t);
         else if (runSanityChecks && transactions.size() > 0 && t.isCoinBase())
@@ -898,7 +897,6 @@ public class Block extends Message {
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                 ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
-        coinbase.setParent(this);
     }
 
     private static final byte[] EMPTY_BYTES = new byte[32];
