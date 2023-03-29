@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.Script;
@@ -149,14 +150,14 @@ public class BloomFilter extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        data = readByteArray();
+        data = Buffers.readLengthPrefixedBytes(payload);
         if (data.length > MAX_FILTER_SIZE)
             throw new ProtocolException ("Bloom filter out of size range.");
-        hashFuncs = readUint32();
+        hashFuncs = ByteUtils.readUint32(payload);
         if (hashFuncs > MAX_HASH_FUNCS)
             throw new ProtocolException("Bloom filter hash function count out of range");
-        nTweak = readInt32();
-        nFlags = readByte();
+        nTweak = ByteUtils.readInt32(payload);
+        nFlags = payload.get();
     }
     
     /**

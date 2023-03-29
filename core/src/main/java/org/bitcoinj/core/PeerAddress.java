@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -234,14 +235,14 @@ public class PeerAddress extends ChildMessage {
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
         if (protocolVersion >= 1) {
-            time = Optional.of(Instant.ofEpochSecond(readUint32()));
+            time = Optional.of(Instant.ofEpochSecond(ByteUtils.readUint32(payload)));
         } else {
             time = Optional.empty();
         }
         if (protocolVersion == 2) {
             services = Services.of(VarInt.read(payload).longValue());
-            int networkId = readByte();
-            byte[] addrBytes = readByteArray();
+            int networkId = payload.get();
+            byte[] addrBytes = Buffers.readLengthPrefixedBytes(payload);
             int addrLen = addrBytes.length;
             Optional<NetworkId> id = NetworkId.of(networkId);
             if (id.isPresent()) {
@@ -289,7 +290,7 @@ public class PeerAddress extends ChildMessage {
             }
         } else {
             services = Services.read(payload);
-            byte[] addrBytes = readBytes(16);
+            byte[] addrBytes = Buffers.readBytes(payload, 16);
             if (Arrays.equals(ONIONCAT_PREFIX, Arrays.copyOf(addrBytes, 6))) {
                 byte[] onionAddress = Arrays.copyOfRange(addrBytes, 6, 16);
                 hostname = BASE32.encode(onionAddress) + ".onion";

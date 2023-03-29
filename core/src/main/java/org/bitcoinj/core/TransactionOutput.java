@@ -22,6 +22,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.Script;
@@ -134,12 +135,12 @@ public class TransactionOutput extends ChildMessage {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        value = readInt64();
+        value = ByteUtils.readInt64(payload);
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         check(value >= 0 || value == -1, () -> new ProtocolException("value out of range: " + value));
-        int scriptLen = readVarInt().intValue();
-        scriptBytes = readBytes(scriptLen);
+        int scriptLen = VarInt.read(payload).intValue();
+        scriptBytes = Buffers.readBytes(payload, scriptLen);
     }
 
     @Override

@@ -21,7 +21,6 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
@@ -50,7 +49,7 @@ public class FeeFilterMessage extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        feeRate = Coin.ofSat(readInt64());
+        feeRate = Coin.ofSat(ByteUtils.readInt64(payload));
         check(feeRate.signum() >= 0, () -> new ProtocolException("fee rate out of range: " + feeRate));
     }
 

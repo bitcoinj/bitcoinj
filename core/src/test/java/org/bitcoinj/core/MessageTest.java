@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
@@ -42,7 +43,7 @@ public class MessageTest {
 
         @Override
         protected void parse() throws BufferUnderflowException, ProtocolException {
-            readStr();
+            Buffers.readLengthPrefixedString(payload);
         }
     }
 
@@ -61,7 +62,7 @@ public class MessageTest {
 
         @Override
         protected void parse() throws BufferUnderflowException, ProtocolException {
-            readByteArray();
+            Buffers.readLengthPrefixedBytes(payload);
         }
     }
 }

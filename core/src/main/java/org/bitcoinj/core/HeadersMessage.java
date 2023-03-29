@@ -69,7 +69,7 @@ public class HeadersMessage extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        int numHeaders = readVarInt().intValue();
+        int numHeaders = VarInt.read(payload).intValue();
         if (numHeaders > MAX_HEADERS)
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
                                          MAX_HEADERS);

@@ -58,7 +58,7 @@ public class Ping extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        nonce = readInt64();
+        nonce = ByteUtils.readInt64(payload);
     }
 
     /** @deprecated returns true */

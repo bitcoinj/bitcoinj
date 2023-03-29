@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.ByteUtils;
 
@@ -71,7 +72,7 @@ public abstract class ListMessage extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        long arrayLen = readVarInt().longValue();
+        long arrayLen = VarInt.read(payload).longValue();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);
 
@@ -81,11 +82,11 @@ public abstract class ListMessage extends Message {
             if (payload.remaining() < InventoryItem.MESSAGE_LENGTH) {
                 throw new ProtocolException("Ran off the end of the INV");
             }
-            int typeCode = (int) readUint32();
+            int typeCode = (int) ByteUtils.readUint32(payload);
             InventoryItem.Type type = InventoryItem.Type.ofCode(typeCode);
             if (type == null)
                 throw new ProtocolException("Unknown CInv type: " + typeCode);
-            InventoryItem item = new InventoryItem(type, readHash());
+            InventoryItem item = new InventoryItem(type, Sha256Hash.read(payload));
             items.add(item);
         }
     }

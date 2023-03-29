@@ -105,8 +105,8 @@ public class TransactionOutPoint extends ChildMessage {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        hash = readHash();
-        index = readUint32();
+        hash = Sha256Hash.read(payload);
+        index = ByteUtils.readUint32(payload);
     }
 
     @Override

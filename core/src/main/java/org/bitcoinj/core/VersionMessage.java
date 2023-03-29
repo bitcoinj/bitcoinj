@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import com.google.common.net.InetAddresses;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 
@@ -114,9 +115,9 @@ public class VersionMessage extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        clientVersion = (int) readUint32();
+        clientVersion = (int) ByteUtils.readUint32(payload);
         localServices = Services.read(payload);
-        time = Instant.ofEpochSecond(readInt64());
+        time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
         receivingAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
         if (clientVersion >= 106) {
             fromAddr = new PeerAddress(params, payload, this, serializer.withProtocolVersion(0));
@@ -124,13 +125,13 @@ public class VersionMessage extends Message {
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
             // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
             // irrelevant.
-            skipBytes(8);
+            Buffers.skipBytes(payload, 8);
             // string subVer (currently "")
-            subVer = readStr();
+            subVer = Buffers.readLengthPrefixedString(payload);
             // int bestHeight (size of known block chain).
-            bestHeight = readUint32();
+            bestHeight = ByteUtils.readUint32(payload);
             if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
-                relayTxesBeforeFilter = readByte() != 0;
+                relayTxesBeforeFilter = payload.get() != 0;
             } else {
                 relayTxesBeforeFilter = true;
             }

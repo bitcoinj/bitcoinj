@@ -22,6 +22,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
@@ -222,7 +223,7 @@ public class Block extends Message {
      * Parse transactions from the block.
      */
     protected void parseTransactions() throws ProtocolException {
-        VarInt numTransactionsVarInt = readVarInt();
+        VarInt numTransactionsVarInt = VarInt.read(payload);
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
@@ -237,14 +238,14 @@ public class Block extends Message {
     protected void parse() throws BufferUnderflowException, ProtocolException {
         // header
         payload.mark();
-        version = readUint32();
-        prevBlockHash = readHash();
-        merkleRoot = readHash();
-        time = Instant.ofEpochSecond(readUint32());
-        difficultyTarget = readUint32();
-        nonce = readUint32();
+        version = ByteUtils.readUint32(payload);
+        prevBlockHash = Sha256Hash.read(payload);
+        merkleRoot = Sha256Hash.read(payload);
+        time = Instant.ofEpochSecond(ByteUtils.readUint32(payload));
+        difficultyTarget = ByteUtils.readUint32(payload);
+        nonce = ByteUtils.readUint32(payload);
         payload.reset(); // read again from the mark for the hash
-        hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(readBytes(HEADER_SIZE)));
+        hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(Buffers.readBytes(payload, HEADER_SIZE)));
 
         // transactions
         if (payload.hasRemaining()) // otherwise this message is just a header

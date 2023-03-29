@@ -18,9 +18,6 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.base.VarInt;
-import org.bitcoinj.base.internal.Buffers;
-import org.bitcoinj.base.internal.ByteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +25,6 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
@@ -147,51 +143,6 @@ public abstract class Message {
      */
     public int getMessageSize() {
         return bitcoinSerialize().length;
-    }
-
-    protected int readInt32() throws BufferUnderflowException {
-        return ByteUtils.readInt32(payload);
-    }
-
-    protected long readUint32() throws BufferUnderflowException {
-        return ByteUtils.readUint32(payload);
-    }
-
-    protected long readInt64() throws BufferUnderflowException {
-        return ByteUtils.readInt64(payload);
-    }
-
-    protected BigInteger readUint64() throws BufferUnderflowException {
-        // Java does not have an unsigned 64 bit type. So scrape it off the wire then flip.
-        return new BigInteger(ByteUtils.reverseBytes(readBytes(8)));
-    }
-
-    protected VarInt readVarInt() throws BufferUnderflowException {
-        return VarInt.read(payload);
-    }
-
-    protected byte[] readBytes(int length) throws BufferUnderflowException {
-        return Buffers.readBytes(payload, length);
-    }
-
-    protected byte readByte() throws BufferUnderflowException {
-        return payload.get();
-    }
-
-    protected byte[] readByteArray() throws BufferUnderflowException {
-        return Buffers.readLengthPrefixedBytes(payload);
-    }
-
-    protected String readStr() throws BufferUnderflowException {
-        return Buffers.readLengthPrefixedString(payload);
-    }
-
-    protected Sha256Hash readHash() throws BufferUnderflowException {
-        return Sha256Hash.read(payload);
-    }
-
-    protected void skipBytes(int numBytes) throws BufferUnderflowException {
-        Buffers.skipBytes(payload, numBytes);
     }
 
     /** Network parameters this message was created with. */

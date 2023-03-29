@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -96,11 +97,11 @@ public class RejectMessage extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        message = readStr();
-        code = RejectCode.fromCode(readByte());
-        reason = readStr();
+        message = Buffers.readLengthPrefixedString(payload);
+        code = RejectCode.fromCode(payload.get());
+        reason = Buffers.readLengthPrefixedString(payload);
         if (message.equals("block") || message.equals("tx"))
-            messageHash = readHash();
+            messageHash = Sha256Hash.read(payload);
     }
 
     @Override

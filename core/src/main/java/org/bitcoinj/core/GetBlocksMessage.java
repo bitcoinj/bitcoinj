@@ -51,15 +51,15 @@ public class GetBlocksMessage extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        version = readUint32();
-        int startCount = readVarInt().intValue();
+        version = ByteUtils.readUint32(payload);
+        int startCount = VarInt.read(payload).intValue();
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
         locator = new BlockLocator();
         for (int i = 0; i < startCount; i++) {
-            locator = locator.add(readHash());
+            locator = locator.add(Sha256Hash.read(payload));
         }
-        stopHash = readHash();
+        stopHash = Sha256Hash.read(payload);
     }
 
     public BlockLocator getLocator() {

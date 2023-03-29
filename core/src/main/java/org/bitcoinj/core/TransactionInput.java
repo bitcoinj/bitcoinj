@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.script.Script;
@@ -162,9 +163,9 @@ public class TransactionInput extends ChildMessage {
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
         outpoint = new TransactionOutPoint(params, payload, this, serializer);
-        int scriptLen = readVarInt().intValue();
-        scriptBytes = readBytes(scriptLen);
-        sequence = readUint32();
+        int scriptLen = VarInt.read(payload).intValue();
+        scriptBytes = Buffers.readBytes(payload, scriptLen);
+        sequence = ByteUtils.readUint32(payload);
     }
 
     @Override

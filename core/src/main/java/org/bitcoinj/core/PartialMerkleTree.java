@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.IOException;
@@ -123,15 +124,15 @@ public class PartialMerkleTree extends Message {
 
     @Override
     protected void parse() throws BufferUnderflowException, ProtocolException {
-        transactionCount = (int)readUint32();
+        transactionCount = (int) ByteUtils.readUint32(payload);
 
-        int nHashes = readVarInt().intValue();
+        int nHashes = VarInt.read(payload).intValue();
         hashes = new ArrayList<>(Math.min(nHashes, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < nHashes; i++)
-            hashes.add(readHash());
+            hashes.add(Sha256Hash.read(payload));
 
-        int nFlagBytes = readVarInt().intValue();
-        matchedChildBits = readBytes(nFlagBytes);
+        int nFlagBytes = VarInt.read(payload).intValue();
+        matchedChildBits = Buffers.readBytes(payload, nFlagBytes);
     }
 
     // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.

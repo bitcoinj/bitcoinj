@@ -23,6 +23,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.LockTime.HeightLock;
 import org.bitcoinj.core.LockTime.TimeLock;
@@ -653,13 +654,13 @@ public class Transaction extends ChildMessage {
 
 
         // version
-        version = readUint32();
+        version = ByteUtils.readUint32(payload);
         byte flags = 0;
         // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
         parseInputs();
         if (inputs.size() == 0 && allowWitness) {
             // We read a dummy or an empty input
-            flags = readByte();
+            flags = payload.get();
 
             if (flags != 0) {
                 parseInputs();
@@ -687,50 +688,50 @@ public class Transaction extends ChildMessage {
             throw new ProtocolException("Unknown transaction optional data");
         }
         // lock_time
-        vLockTime = LockTime.of(readUint32());
+        vLockTime = LockTime.of(ByteUtils.readUint32(payload));
     }
 
     private void parseInputs() {
-        VarInt numInputsVarInt = readVarInt();
+        VarInt numInputsVarInt = VarInt.read(payload);
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
             TransactionInput input = new TransactionInput(params, this, payload.slice(), serializer);
             inputs.add(input);
             // intentionally read again, due to the slice above
-            skipBytes(TransactionOutPoint.MESSAGE_LENGTH);
-            VarInt scriptLenVarInt = readVarInt();
+            Buffers.skipBytes(payload, TransactionOutPoint.MESSAGE_LENGTH);
+            VarInt scriptLenVarInt = VarInt.read(payload);
             int scriptLen = scriptLenVarInt.intValue();
-            skipBytes(scriptLen + 4);
+            Buffers.skipBytes(payload, scriptLen + 4);
         }
     }
 
     private void parseOutputs() {
-        VarInt numOutputsVarInt = readVarInt();
+        VarInt numOutputsVarInt = VarInt.read(payload);
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
             TransactionOutput output = new TransactionOutput(params, this, payload.slice(), serializer);
             outputs.add(output);
             // intentionally read again, due to the slice above
-            skipBytes(8); // value
-            VarInt scriptLenVarInt = readVarInt();
+            Buffers.skipBytes(payload, 8); // value
+            VarInt scriptLenVarInt = VarInt.read(payload);
             int scriptLen = scriptLenVarInt.intValue();
-            skipBytes(scriptLen);
+            Buffers.skipBytes(payload, scriptLen);
         }
     }
 
     private void parseWitnesses() {
         int numWitnesses = inputs.size();
         for (int i = 0; i < numWitnesses; i++) {
-            VarInt pushCountVarInt = readVarInt();
+            VarInt pushCountVarInt = VarInt.read(payload);
             int pushCount = pushCountVarInt.intValue();
             TransactionWitness witness = new TransactionWitness(pushCount);
             getInput(i).setWitness(witness);
             for (int y = 0; y < pushCount; y++) {
-                VarInt pushSizeVarInt = readVarInt();
+                VarInt pushSizeVarInt = VarInt.read(payload);
                 int pushSize = pushSizeVarInt.intValue();
-                byte[] push = readBytes(pushSize);
+                byte[] push = Buffers.readBytes(payload, pushSize);
                 witness.setPush(y, push);
             }
         }
