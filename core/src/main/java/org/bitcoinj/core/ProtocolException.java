@@ -18,6 +18,9 @@ package org.bitcoinj.core;
 
 @SuppressWarnings("serial")
 public class ProtocolException extends VerificationException {
+    public ProtocolException() {
+        super();
+    }
 
     public ProtocolException(String msg) {
         super(msg);
