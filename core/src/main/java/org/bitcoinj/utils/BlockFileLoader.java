@@ -16,6 +16,7 @@
 
 package org.bitcoinj.utils;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.MessageSerializer;
@@ -87,16 +88,29 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     private final long packetMagic;
     private final MessageSerializer serializer;
 
-    public BlockFileLoader(NetworkParameters params, File blocksDir) {
-        this(params, getReferenceClientBlockFileList(blocksDir));
+    public BlockFileLoader(Network network, File blocksDir) {
+        this(network, getReferenceClientBlockFileList(blocksDir));
     }
 
+    public BlockFileLoader(Network network, List<File> files) {
+        fileIt = files.iterator();
+        NetworkParameters params = NetworkParameters.of(network);
+        packetMagic = params.getPacketMagic();
+        serializer = params.getDefaultSerializer();
+    }
+
+    @Deprecated
+    public BlockFileLoader(NetworkParameters params, File blocksDir) {
+        this(params.network(), getReferenceClientBlockFileList(blocksDir));
+    }
+
+    @Deprecated
     public BlockFileLoader(NetworkParameters params, List<File> files) {
         fileIt = files.iterator();
         packetMagic = params.getPacketMagic();
         serializer = params.getDefaultSerializer();
     }
-    
+
     @Override
     public boolean hasNext() {
         if (nextBlock == null)
