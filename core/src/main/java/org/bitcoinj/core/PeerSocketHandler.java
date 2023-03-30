@@ -67,7 +67,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     private BitcoinSerializer.BitcoinPacketHeader header;
 
     public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
-        this(params, new PeerAddress(params, remoteIp));
+        this(params, new PeerAddress(remoteIp));
     }
 
     public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {

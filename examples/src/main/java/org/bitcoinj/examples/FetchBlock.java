@@ -64,7 +64,7 @@ public class FetchBlock implements Callable<Integer> {
         if (localhost) {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));
         } else {
-            PeerAddress addr = new PeerAddress(params, InetAddress.getLocalHost());
+            PeerAddress addr = PeerAddress.localhost(params);
             peerGroup.addAddress(addr);
         }
         peerGroup.start();

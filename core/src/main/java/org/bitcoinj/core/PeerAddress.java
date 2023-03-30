@@ -84,20 +84,19 @@ public class PeerAddress extends Message {
 
     /**
      * Construct a peer address from a serialized payload.
-     * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public PeerAddress(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, serializer);
+    public PeerAddress(ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
+        super(payload, serializer);
     }
 
     /**
      * Construct a peer address from a memorized or hardcoded address.
      */
-    public PeerAddress(NetworkParameters params, InetAddress addr, int port, Services services, MessageSerializer serializer) {
-        super(params, serializer);
+    public PeerAddress(InetAddress addr, int port, Services services, MessageSerializer serializer) {
+        super(serializer);
         this.addr = Objects.requireNonNull(addr);
         this.port = port;
         this.services = services;
@@ -107,38 +106,30 @@ public class PeerAddress extends Message {
     /**
      * Constructs a peer address from the given IP address, port and services. Version number is default for the given parameters.
      */
-    public PeerAddress(NetworkParameters params, InetAddress addr, int port, Services services) {
-        this(params, addr, port, services, params.getDefaultSerializer().withProtocolVersion(0));
+    public PeerAddress(InetAddress addr, int port, Services services) {
+        this(addr, port, services, DummySerializer.DEFAULT);
     }
 
     /**
      * Constructs a peer address from the given IP address and port. Version number is default for the given parameters.
      */
-    public PeerAddress(NetworkParameters params, InetAddress addr, int port) {
-        this(params, addr, port, Services.none());
-    }
-
-    /**
-     * Constructs a peer address from the given IP address. Port and version number are default for the given
-     * parameters.
-     */
-    public PeerAddress(NetworkParameters params, InetAddress addr) {
-        this(params, addr, params.getPort());
+    public PeerAddress(InetAddress addr, int port) {
+        this(addr, port, Services.none());
     }
 
     /**
      * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
      * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
      */
-    public PeerAddress(NetworkParameters params, InetSocketAddress addr) {
-        this(params, addr.getAddress(), addr.getPort());
+    public PeerAddress(InetSocketAddress addr) {
+        this(addr.getAddress(), addr.getPort());
     }
 
     /**
      * Constructs a peer address from a stringified hostname+port. Use this if you want to connect to a Tor .onion address.
      */
-    public PeerAddress(NetworkParameters params, String hostname, int port) {
-        super(params);
+    public PeerAddress(String hostname, int port) {
+        super();
         this.hostname = hostname;
         this.port = port;
         this.services = Services.none();
@@ -146,7 +137,7 @@ public class PeerAddress extends Message {
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
-        return new PeerAddress(params, InetAddress.getLoopbackAddress(), params.getPort());
+        return new PeerAddress(InetAddress.getLoopbackAddress(), params.getPort());
     }
 
     @Override
