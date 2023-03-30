@@ -358,7 +358,7 @@ public class ScriptTest {
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
-        TransactionOutput txOutput = new TransactionOutput(TESTNET, tx, Coin.ZERO, scriptPubKey.getProgram());
+        TransactionOutput txOutput = new TransactionOutput(tx, Coin.ZERO, scriptPubKey.getProgram());
         tx.addOutput(txOutput);
 
         return tx;
@@ -373,7 +373,7 @@ public class ScriptTest {
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
-        TransactionOutput txOutput = new TransactionOutput(TESTNET, tx, creditingTransaction.getOutput(0).getValue(),
+        TransactionOutput txOutput = new TransactionOutput(tx, creditingTransaction.getOutput(0).getValue(),
                 new Script(new byte[] {}).getProgram());
         tx.addOutput(txOutput);
 

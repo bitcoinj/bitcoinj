@@ -4669,7 +4669,7 @@ public class Wallet extends BaseTaggableObject
                 int depth = chainHeight - output.getHeight() + 1; // the current depth of the output (1 = same as head).
                 // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
                 if (!excludeImmatureCoinbases || !coinbase || depth >= params.getSpendableCoinbaseDepth()) {
-                    candidates.add(new FreeStandingTransactionOutput(params, output, chainHeight));
+                    candidates.add(new FreeStandingTransactionOutput(output, chainHeight));
                 }
             }
         } catch (UTXOProviderException e) {
@@ -4765,11 +4765,10 @@ public class Wallet extends BaseTaggableObject
 
         /**
          * Construct a freestanding Transaction Output.
-         * @param params The network parameters.
          * @param output The stored output (freestanding).
          */
-        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output, int chainHeight) {
-            super(params, null, output.getValue(), output.getScript().getProgram());
+        public FreeStandingTransactionOutput(UTXO output, int chainHeight) {
+            super(null, output.getValue(), output.getScript().getProgram());
             this.output = output;
             this.chainHeight = chainHeight;
         }
@@ -5269,7 +5268,7 @@ public class Wallet extends BaseTaggableObject
                 result.updatedOutputValues = new ArrayList<>();
             }
             for (int i = 0; i < req.tx.getOutputs().size(); i++) {
-                TransactionOutput output = new TransactionOutput(params, tx,
+                TransactionOutput output = new TransactionOutput(tx,
                         ByteBuffer.wrap(req.tx.getOutputs().get(i).bitcoinSerialize()));
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
@@ -5303,7 +5302,7 @@ public class Wallet extends BaseTaggableObject
                 Address changeAddress = req.changeAddress;
                 if (changeAddress == null)
                     changeAddress = currentChangeAddress();
-                TransactionOutput changeOutput = new TransactionOutput(params, tx, change, changeAddress);
+                TransactionOutput changeOutput = new TransactionOutput(tx, change, changeAddress);
                 if (req.recipientsPayFees && changeOutput.isDust()) {
                     // We do not move dust-change to fees, because the sender would end up paying more than requested.
                     // This would be against the purpose of the all-inclusive feature.

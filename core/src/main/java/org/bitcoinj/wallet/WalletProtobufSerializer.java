@@ -639,7 +639,7 @@ public class WalletProtobufSerializer {
         for (Protos.TransactionOutput outputProto : txProto.getTransactionOutputList()) {
             Coin value = Coin.valueOf(outputProto.getValue());
             byte[] scriptBytes = outputProto.getScriptBytes().toByteArray();
-            TransactionOutput output = new TransactionOutput(params, tx, value, scriptBytes);
+            TransactionOutput output = new TransactionOutput(tx, value, scriptBytes);
             tx.addOutput(output);
         }
 

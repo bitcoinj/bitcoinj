@@ -708,7 +708,7 @@ public class Transaction extends Message {
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, payload.slice());
+            TransactionOutput output = new TransactionOutput(this, payload.slice());
             outputs.add(output);
             // intentionally read again, due to the slice above
             Buffers.skipBytes(payload, 8); // value
@@ -1121,7 +1121,7 @@ public class Transaction extends Message {
      * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
     public TransactionOutput addOutput(Coin value, Address address) {
-        return addOutput(new TransactionOutput(params, this, value, address));
+        return addOutput(new TransactionOutput(this, value, address));
     }
 
     /**
@@ -1129,7 +1129,7 @@ public class Transaction extends Message {
      * transaction, and returns the new output.
      */
     public TransactionOutput addOutput(Coin value, ECKey pubkey) {
-        return addOutput(new TransactionOutput(params, this, value, pubkey));
+        return addOutput(new TransactionOutput(this, value, pubkey));
     }
 
     /**
@@ -1137,7 +1137,7 @@ public class Transaction extends Message {
      * you won't normally need to use it unless you're doing unusual things.
      */
     public TransactionOutput addOutput(Coin value, Script script) {
-        return addOutput(new TransactionOutput(params, this, value, script.getProgram()));
+        return addOutput(new TransactionOutput(this, value, script.getProgram()));
     }
 
 
@@ -1326,7 +1326,7 @@ public class Transaction extends Message {
                 // that position are "nulled out". Unintuitively, the value in a "null" transaction is set to -1.
                 tx.outputs = new ArrayList<>(tx.outputs.subList(0, inputIndex + 1));
                 for (int i = 0; i < inputIndex; i++)
-                    tx.outputs.set(i, new TransactionOutput(tx.params, tx, Coin.NEGATIVE_SATOSHI, new byte[] {}));
+                    tx.outputs.set(i, new TransactionOutput(tx, Coin.NEGATIVE_SATOSHI, new byte[] {}));
                 // The signature isn't broken by new versions of the transaction issued by other parties.
                 for (int i = 0; i < tx.inputs.size(); i++)
                     if (i != inputIndex)

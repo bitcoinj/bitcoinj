@@ -73,7 +73,7 @@ public class PaymentSessionTest {
         Context.propagate(new Context());
         serverKey = new ECKey();
         tx = new Transaction(TESTNET);
-        outputToMe = new TransactionOutput(TESTNET, tx, amount, serverKey);
+        outputToMe = new TransactionOutput(tx, amount, serverKey);
         tx.addOutput(outputToMe);
     }
 
@@ -102,7 +102,7 @@ public class PaymentSessionTest {
         assertEquals(merchantData, payment.getMerchantData());
         assertEquals(1, payment.getRefundToCount());
         assertEquals(amount.value, payment.getRefundTo(0).getAmount());
-        TransactionOutput refundOutput = new TransactionOutput(TESTNET, null, amount, refundAddr);
+        TransactionOutput refundOutput = new TransactionOutput(null, amount, refundAddr);
         ByteString refundScript = ByteString.copyFrom(refundOutput.getScriptBytes());
         assertTrue(refundScript.equals(payment.getRefundTo(0).getScript()));
     }

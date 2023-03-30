@@ -261,7 +261,7 @@ public class Block extends Message {
     private static Transaction createGenesisTransaction(NetworkParameters n, byte[] inputScriptBytes, Coin amount, byte[] scriptPubKeyBytes) {
         Transaction t = new Transaction(n);
         t.addInput(new TransactionInput(t, inputScriptBytes));
-        t.addOutput(new TransactionOutput(n, t, amount, scriptPubKeyBytes));
+        t.addOutput(new TransactionOutput(t, amount, scriptPubKeyBytes));
         return t;
     }
 
@@ -893,7 +893,7 @@ public class Block extends Message {
         // counter in the scriptSig so every transaction has a different hash.
         coinbase.addInput(new TransactionInput(coinbase,
                 inputBuilder.build().getProgram()));
-        coinbase.addOutput(new TransactionOutput(params, coinbase, value,
+        coinbase.addOutput(new TransactionOutput(coinbase, value,
                 ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
         transactions.add(coinbase);
     }
@@ -929,7 +929,7 @@ public class Block extends Message {
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
             Transaction t = new Transaction(params);
-            t.addOutput(new TransactionOutput(params, t, FIFTY_COINS, to));
+            t.addOutput(new TransactionOutput(t, FIFTY_COINS, to));
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
             if (prevOut == null) {
