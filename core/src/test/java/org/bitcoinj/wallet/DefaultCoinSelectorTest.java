@@ -129,10 +129,10 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         // Add four outputs to a transaction with same value and destination. Select them all.
         Transaction t = new Transaction(TESTNET);
         List<TransactionOutput> outputs = Arrays.asList(
-            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress),
-            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress),
-            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress),
-            new TransactionOutput(TESTNET, t, Coin.valueOf(30302787), myAddress)
+            new TransactionOutput(t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(t, Coin.valueOf(30302787), myAddress),
+            new TransactionOutput(t, Coin.valueOf(30302787), myAddress)
         );
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
 

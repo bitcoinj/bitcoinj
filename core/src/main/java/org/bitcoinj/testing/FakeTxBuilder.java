@@ -78,8 +78,7 @@ public class FakeTxBuilder {
         TransactionInput input = new TransactionInput(null, new byte[0], outpoint);
         Transaction tx = new Transaction(params);
         tx.addInput(input);
-        TransactionOutput outputToMe = new TransactionOutput(params, tx, Coin.FIFTY_COINS,
-                randomAddress(params));
+        TransactionOutput outputToMe = new TransactionOutput(tx, Coin.FIFTY_COINS, randomAddress(params));
         tx.addOutput(outputToMe);
 
         checkState(tx.isCoinBase());
@@ -92,14 +91,14 @@ public class FakeTxBuilder {
      */
     public static Transaction createFakeTxWithChangeAddress(NetworkParameters params, Coin value, Address to, Address changeOutput) {
         Transaction t = new Transaction(params);
-        TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
+        TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), changeOutput);
+        TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), changeOutput);
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
         Transaction prevTx = new Transaction(params);
-        TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
+        TransactionOutput prevOut = new TransactionOutput(prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
         t.addInput(prevOut).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
@@ -114,7 +113,7 @@ public class FakeTxBuilder {
      */
     public static Transaction createFakeTxWithoutChangeAddress(NetworkParameters params, Coin value, Address to) {
         Transaction t = new Transaction(params);
-        TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
+        TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
 
         // Make a random split in the output value so we get a distinct hash when we call this multiple times with same args
@@ -128,7 +127,7 @@ public class FakeTxBuilder {
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
         Transaction prevTx1 = new Transaction(params);
-        TransactionOutput prevOut1 = new TransactionOutput(params, prevTx1, Coin.valueOf(split), to);
+        TransactionOutput prevOut1 = new TransactionOutput(prevTx1, Coin.valueOf(split), to);
         prevTx1.addOutput(prevOut1);
         // Connect it.
         t.addInput(prevOut1).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
@@ -136,7 +135,7 @@ public class FakeTxBuilder {
 
         // Do it again
         Transaction prevTx2 = new Transaction(params);
-        TransactionOutput prevOut2 = new TransactionOutput(params, prevTx2, Coin.valueOf(value.getValue() - split), to);
+        TransactionOutput prevOut2 = new TransactionOutput(prevTx2, Coin.valueOf(value.getValue() - split), to);
         prevTx2.addOutput(prevOut2);
         t.addInput(prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
 
@@ -158,14 +157,14 @@ public class FakeTxBuilder {
      */
     public static Transaction createFakeTx(NetworkParameters params, Coin value, ECKey to) {
         Transaction t = new Transaction(params);
-        TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
+        TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), new ECKey());
+        TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), new ECKey());
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
         Transaction prevTx = new Transaction(params);
-        TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
+        TransactionOutput prevOut = new TransactionOutput(prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
         t.addInput(prevOut);
@@ -181,19 +180,19 @@ public class FakeTxBuilder {
         // Create fake TXes of sufficient realism to exercise the unit tests. This transaction send BTC from the
         // from address, to the to address with to one to somewhere else to simulate change.
         Transaction t = new Transaction(params);
-        TransactionOutput outputToMe = new TransactionOutput(params, t, value, to);
+        TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(params, t, valueOf(1, 11), randomAddress(params));
+        TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), randomAddress(params));
         t.addOutput(change);
         // Make a feeder tx that sends to the from address specified. This feeder tx is not really valid but it doesn't
         // matter for our purposes.
         Transaction feederTx = new Transaction(params);
-        TransactionOutput feederOut = new TransactionOutput(params, feederTx, value, from);
+        TransactionOutput feederOut = new TransactionOutput(feederTx, value, from);
         feederTx.addOutput(feederOut);
 
         // make a previous tx that sends from the feeder to the from address
         Transaction prevTx = new Transaction(params);
-        TransactionOutput prevOut = new TransactionOutput(params, prevTx, value, to);
+        TransactionOutput prevOut = new TransactionOutput(prevTx, value, to);
         prevTx.addOutput(prevOut);
 
         // Connect up the txes
@@ -232,17 +231,17 @@ public class FakeTxBuilder {
         Address someBadGuy = randomAddress(params);
 
         doubleSpends.prevTx = new Transaction(params);
-        TransactionOutput prevOut = new TransactionOutput(params, doubleSpends.prevTx, value, someBadGuy);
+        TransactionOutput prevOut = new TransactionOutput(doubleSpends.prevTx, value, someBadGuy);
         doubleSpends.prevTx.addOutput(prevOut);
 
         doubleSpends.t1 = new Transaction(params);
-        TransactionOutput o1 = new TransactionOutput(params, doubleSpends.t1, value, to);
+        TransactionOutput o1 = new TransactionOutput(doubleSpends.t1, value, to);
         doubleSpends.t1.addOutput(o1);
         doubleSpends.t1.addInput(prevOut);
 
         doubleSpends.t2 = new Transaction(params);
         doubleSpends.t2.addInput(prevOut);
-        TransactionOutput o2 = new TransactionOutput(params, doubleSpends.t2, value, someBadGuy);
+        TransactionOutput o2 = new TransactionOutput(doubleSpends.t2, value, someBadGuy);
         doubleSpends.t2.addOutput(o2);
 
         try {

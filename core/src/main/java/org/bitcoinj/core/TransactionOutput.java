@@ -77,12 +77,11 @@ public class TransactionOutput extends Message {
     /**
      * Deserializes a transaction output message. This is usually part of a transaction message.
      *
-     * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @throws ProtocolException
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public TransactionOutput(@Nullable Transaction parent, ByteBuffer payload) throws ProtocolException {
+        super(payload);
         setParent(parent);
         availableForSpending = true;
     }
@@ -92,8 +91,8 @@ public class TransactionOutput extends Message {
      * something like {@link Coin#valueOf(int, int)}. Typically you would use
      * {@link Transaction#addOutput(Coin, Address)} instead of creating a TransactionOutput directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, Address to) {
-        this(params, parent, value, ScriptBuilder.createOutputScript(to).getProgram());
+    public TransactionOutput(@Nullable Transaction parent, Coin value, Address to) {
+        this(parent, value, ScriptBuilder.createOutputScript(to).getProgram());
     }
 
     /**
@@ -101,18 +100,16 @@ public class TransactionOutput extends Message {
      * amount should be created with something like {@link Coin#valueOf(int, int)}. Typically you would use
      * {@link Transaction#addOutput(Coin, ECKey)} instead of creating an output directly.
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, ECKey to) {
-        this(params, parent, value, ScriptBuilder.createP2PKOutputScript(to).getProgram());
+    public TransactionOutput(@Nullable Transaction parent, Coin value, ECKey to) {
+        this(parent, value, ScriptBuilder.createP2PKOutputScript(to).getProgram());
     }
 
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, byte[] scriptBytes) {
-        super(params);
+    public TransactionOutput(@Nullable Transaction parent, Coin value, byte[] scriptBytes) {
+        super();
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), () ->
                 "negative values not allowed");
-        checkArgument(!params.network().exceedsMaxMoney(value), () ->
-                "values larger than MAX_MONEY not allowed");
         this.value = value.value;
         this.scriptBytes = scriptBytes;
         setParent(parent);
@@ -407,7 +404,7 @@ public class TransactionOutput extends Message {
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */
     public TransactionOutput duplicateDetached() {
-        return new TransactionOutput(params, null, Coin.valueOf(value), Arrays.copyOf(scriptBytes, scriptBytes.length));
+        return new TransactionOutput(null, Coin.valueOf(value), Arrays.copyOf(scriptBytes, scriptBytes.length));
     }
 
     public final void setParent(@Nullable Transaction parent) {

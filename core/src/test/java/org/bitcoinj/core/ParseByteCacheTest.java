@@ -83,7 +83,7 @@ public class ParseByteCacheTest {
         
         // add a second input so can test granularity of byte cache.
         Transaction prevTx = new Transaction(TESTNET);
-        TransactionOutput prevOut = new TransactionOutput(TESTNET, prevTx, COIN, wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        TransactionOutput prevOut = new TransactionOutput(prevTx, COIN, wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         prevTx.addOutput(prevOut);
         // Connect it.
         tx1.addInput(prevOut);

@@ -149,7 +149,7 @@ public class DefaultRiskAnalysisTest {
 
         Transaction edgeCaseTx = new Transaction(MAINNET);
         edgeCaseTx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
-        Coin dustThreshold = new TransactionOutput(MAINNET, null, Coin.COIN, key1).getMinNonDustValue();
+        Coin dustThreshold = new TransactionOutput(null, Coin.COIN, key1).getMinNonDustValue();
         edgeCaseTx.addOutput(dustThreshold, key1);
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, edgeCaseTx, NO_DEPS).analyze());
     }
@@ -166,7 +166,7 @@ public class DefaultRiskAnalysisTest {
         // Test non-standard script as an output.
         tx.clearInputs();
         assertEquals(DefaultRiskAnalysis.RuleViolation.NONE, DefaultRiskAnalysis.isStandard(tx));
-        tx.addOutput(new TransactionOutput(MAINNET, null, COIN, nonStandardScript));
+        tx.addOutput(new TransactionOutput(null, COIN, nonStandardScript));
         assertEquals(DefaultRiskAnalysis.RuleViolation.SHORTEST_POSSIBLE_PUSHDATA, DefaultRiskAnalysis.isStandard(tx));
     }
 

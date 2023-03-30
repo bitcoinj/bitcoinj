@@ -174,7 +174,7 @@ public class TransactionTest {
         length += input.getMessageSize();
 
         // add fake transaction output
-        TransactionOutput output = new TransactionOutput(TESTNET, null, Coin.COIN, ADDRESS);
+        TransactionOutput output = new TransactionOutput(null, Coin.COIN, ADDRESS);
         tx.addOutput(output);
         length += output.getMessageSize();
 
@@ -207,7 +207,7 @@ public class TransactionTest {
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction(TESTNET);
         TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
-        TransactionOutput output = new TransactionOutput(TESTNET, null, inAmount, fromAddress);
+        TransactionOutput output = new TransactionOutput(null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 
@@ -304,7 +304,7 @@ public class TransactionTest {
         assertEquals("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357", key1.getPublicKeyAsHex());
         Script scriptPubKey1 = ScriptBuilder.createP2WPKHOutputScript(key1);
         assertEquals("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1", ByteUtils.formatHex(scriptPubKey1.getProgram()));
-        txIn1.connect(new TransactionOutput(TESTNET, null, Coin.COIN.multiply(6), scriptPubKey1.getProgram()));
+        txIn1.connect(new TransactionOutput(null, Coin.COIN.multiply(6), scriptPubKey1.getProgram()));
 
         assertEquals("63cec688ee06a91e913875356dd4dea2f8e0f2a2659885372da2a37e32c7532e",
                 tx.hashForSignature(0, scriptPubKey0, Transaction.SigHash.ALL, false).toString());

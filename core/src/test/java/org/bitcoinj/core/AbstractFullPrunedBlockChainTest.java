@@ -160,7 +160,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         rollingBlock = rollingBlock.createNextBlock(null);
         Transaction t = new Transaction(PARAMS);
-        t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[] {}));
+        t.addOutput(new TransactionOutput(t, FIFTY_COINS, new byte[] {}));
         TransactionInput input = t.addInput(spendableOutput);
         // Invalid script.
         input.clearScriptBytes();
@@ -206,7 +206,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         
         Transaction t = new Transaction(PARAMS);
         // Entirely invalid scriptPubKey
-        t.addOutput(new TransactionOutput(PARAMS, t, FIFTY_COINS, new byte[]{}));
+        t.addOutput(new TransactionOutput(t, FIFTY_COINS, new byte[]{}));
         t.addSignedInput(transactionOutPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
@@ -282,7 +282,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Coin totalAmount = Coin.ZERO;
 
         Transaction t = new Transaction(PARAMS);
-        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
+        t.addOutput(new TransactionOutput(t, amount, toKey));
         t.addSignedInput(spendableOutputPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
@@ -337,7 +337,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Coin amount = Coin.valueOf(100000000);
 
         Transaction t = new Transaction(PARAMS);
-        t.addOutput(new TransactionOutput(PARAMS, t, amount, toKey));
+        t.addOutput(new TransactionOutput(t, amount, toKey));
         t.addSignedInput(spendableOutPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
         rollingBlock.addTransaction(t);
         rollingBlock.solve();
