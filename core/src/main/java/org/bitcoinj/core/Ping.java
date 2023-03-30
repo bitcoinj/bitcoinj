@@ -33,8 +33,15 @@ import java.util.Random;
 public class Ping extends BaseMessage {
     private long nonce;
 
-    public Ping(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    /**
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static Ping read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return new Ping(ByteUtils.readInt64(payload));
     }
 
     /**
@@ -58,7 +65,7 @@ public class Ping extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        nonce = ByteUtils.readInt64(payload);
+        throw new UnsupportedOperationException();
     }
 
     /** @deprecated returns true */
