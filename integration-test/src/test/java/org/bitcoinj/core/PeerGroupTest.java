@@ -732,10 +732,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
         CompletableFuture<List<Peer>> future = peerGroup.waitForPeersWithServiceMask(2, 3);
 
         VersionMessage ver1 = new VersionMessage(UNITTEST, 10);
-        ver1.clientVersion = 70000;
+        ver1.clientVersion = 70001;
         ver1.localServices = Services.of(Services.NODE_NETWORK);
         VersionMessage ver2 = new VersionMessage(UNITTEST, 10);
-        ver2.clientVersion = 70000;
+        ver2.clientVersion = 70001;
         ver2.localServices = Services.of(Services.NODE_NETWORK | 2);
         peerGroup.start();
         assertFalse(future.isDone());
