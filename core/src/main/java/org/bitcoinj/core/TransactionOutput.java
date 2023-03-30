@@ -76,23 +76,13 @@ public class TransactionOutput extends Message {
 
     /**
      * Deserializes a transaction output message. This is usually part of a transaction message.
-     */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
-        setParent(parent);
-        availableForSpending = true;
-    }
-
-    /**
-     * Deserializes a transaction output message. This is usually part of a transaction message.
      *
      * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, serializer);
+    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, ByteBuffer payload) throws ProtocolException {
+        super(params, payload);
         setParent(parent);
         availableForSpending = true;
     }
