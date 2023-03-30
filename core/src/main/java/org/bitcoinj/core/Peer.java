@@ -245,7 +245,7 @@ public class Peer extends PeerSocketHandler {
         this.getAddrFutures = new LinkedList<>();
         this.fastCatchupTime = params.getGenesisBlock().time();
         this.pendingPings = new CopyOnWriteArrayList<>();
-        this.vMinProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
+        this.vMinProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.MINIMUM);
         this.wallets = new CopyOnWriteArrayList<>();
         this.context = Context.get();
 
