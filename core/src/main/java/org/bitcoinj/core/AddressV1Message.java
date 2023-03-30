@@ -35,16 +35,10 @@ public class AddressV1Message extends AddressMessage {
 
     /**
      * Construct a new 'addr' message.
-     * @param params NetworkParameters object.
-     * @param serializer the serializer to use for this block.
      * @throws ProtocolException
      */
-    AddressV1Message(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, serializer);
-    }
-
-    AddressV1Message(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload, params.getDefaultSerializer());
+    AddressV1Message(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     @Override
@@ -63,10 +57,6 @@ public class AddressV1Message extends AddressMessage {
     }
 
     public void addAddress(PeerAddress address) {
-        int protocolVersion = address.serializer.getProtocolVersion();
-        if (protocolVersion != 1)
-            throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
-
         addresses.add(address);
     }
 

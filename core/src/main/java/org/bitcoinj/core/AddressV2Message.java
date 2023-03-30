@@ -35,16 +35,10 @@ import java.util.ArrayList;
 public class AddressV2Message extends AddressMessage {
     /**
      * Construct a new 'addrv2' message.
-     * @param params NetworkParameters object.
-     * @param serializer the serializer to use for this block.
      * @throws ProtocolException
      */
-    AddressV2Message(NetworkParameters params, ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
-        super(params, payload, serializer);
-    }
-
-    AddressV2Message(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload, params.getDefaultSerializer());
+    AddressV2Message(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     @Override
@@ -63,10 +57,6 @@ public class AddressV2Message extends AddressMessage {
     }
 
     public void addAddress(PeerAddress address) {
-        int protocolVersion = address.serializer.getProtocolVersion();
-        if (protocolVersion != 2)
-            throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
-
         addresses.add(address);
     }
 
