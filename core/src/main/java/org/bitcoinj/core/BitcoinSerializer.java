@@ -280,7 +280,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public AddressV1Message makeAddressV1Message(ByteBuffer payload) throws ProtocolException {
-        return new AddressV1Message(params, payload, this);
+        return new AddressV1Message(payload);
     }
 
     /**
@@ -289,7 +289,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public AddressV2Message makeAddressV2Message(ByteBuffer payload) throws ProtocolException {
-        return new AddressV2Message(params, payload, this);
+        return new AddressV2Message(payload);
     }
 
     /**

@@ -75,7 +75,7 @@ public class AddressV2MessageTest {
 
     @Test
     public void roundtrip() {
-        AddressMessage message = new AddressV2Message(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(MESSAGE_HEX)));
+        AddressMessage message = new AddressV2Message(ByteBuffer.wrap(ByteUtils.parseHex(MESSAGE_HEX)));
 
         List<PeerAddress> addresses = message.getAddresses();
         assertEquals(5, addresses.size());
