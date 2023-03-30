@@ -815,7 +815,7 @@ public class WalletProtobufSerializer {
             }
             int port = proto.getPort();
             Services services = Services.of(proto.getServices());
-            PeerAddress address = new PeerAddress(params, ip, port, services);
+            PeerAddress address = new PeerAddress(ip, port, services);
             confidence.markBroadcastBy(address);
         }
         if (confidenceProto.hasLastBroadcastedAt())

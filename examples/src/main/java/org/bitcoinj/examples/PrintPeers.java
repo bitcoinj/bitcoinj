@@ -83,7 +83,7 @@ public class PrintPeers {
         for (final InetAddress addr : addrs) {
             InetSocketAddress address = new InetSocketAddress(addr, params.getPort());
             final Peer peer = new Peer(params, new VersionMessage(params, 0),
-                    new PeerAddress(params, address), null);
+                    new PeerAddress(address), null);
             final CompletableFuture<Void> future = new CompletableFuture<>();
             // Once the connection has completed version handshaking ...
             peer.addConnectedEventListener((p, peerCount) -> {

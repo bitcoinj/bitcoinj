@@ -191,8 +191,8 @@ public class ChainSplitTest {
         wallet.commitTx(spend);
         // Waiting for confirmation ... make it eligible for selection.
         assertEquals(Coin.ZERO, wallet.getBalance());
-        spend.getConfidence().markBroadcastBy(new PeerAddress(TESTNET, InetAddress.getByAddress(new byte[]{1, 2, 3, 4})));
-        spend.getConfidence().markBroadcastBy(new PeerAddress(TESTNET, InetAddress.getByAddress(new byte[]{5,6,7,8})));
+        spend.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1, 2, 3, 4}), TESTNET.getPort()));
+        spend.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{5,6,7,8}), TESTNET.getPort()));
         assertEquals(ConfidenceType.PENDING, spend.getConfidence().getConfidenceType());
         assertEquals(valueOf(40, 0), wallet.getBalance());
         Block b2 = b1.createNextBlock(someOtherGuy);

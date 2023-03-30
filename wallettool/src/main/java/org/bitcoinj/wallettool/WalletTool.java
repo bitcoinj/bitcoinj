@@ -1016,7 +1016,7 @@ public class WalletTool implements Callable<Integer> {
             String[] peerAddrs = peersStr.split(",");
             for (String peer : peerAddrs) {
                 try {
-                    peerGroup.addAddress(new PeerAddress(params, InetAddress.getByName(peer)));
+                    peerGroup.addAddress(new PeerAddress(InetAddress.getByName(peer), params.getPort()));
                 } catch (UnknownHostException e) {
                     System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
                     System.exit(1);

@@ -56,6 +56,11 @@ public abstract class Message {
         this.serializer = params.getDefaultSerializer();
     }
 
+    protected Message(MessageSerializer serializer) {
+        this.params = null;
+        this.serializer = serializer;
+    }
+
     protected Message(NetworkParameters params, MessageSerializer serializer) {
         this.params = params;
         this.serializer = serializer;
@@ -81,6 +86,10 @@ public abstract class Message {
 
     protected Message(ByteBuffer payload) throws ProtocolException {
         this(null, payload, DummySerializer.DEFAULT);
+    }
+
+    protected Message(ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
+        this(null, payload, serializer);
     }
 
     protected Message(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
