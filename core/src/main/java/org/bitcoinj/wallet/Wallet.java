@@ -5359,7 +5359,7 @@ public class Wallet extends BaseTaggableObject
 
     private void addSuppliedInputs(Transaction tx, List<TransactionInput> originalInputs) {
         for (TransactionInput input : originalInputs)
-            tx.addInput(new TransactionInput(params, tx, input.bitcoinSerialize()));
+            tx.addInput(new TransactionInput(tx, input.bitcoinSerialize()));
     }
 
     private int estimateVirtualBytesForSigning(CoinSelection selection) {

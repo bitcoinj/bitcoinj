@@ -248,7 +248,7 @@ public class ScriptTest {
     public void testOp0() {
         // Check that OP_0 doesn't NPE and pushes an empty stack frame.
         Transaction tx = new Transaction(TESTNET);
-        tx.addInput(new TransactionInput(TESTNET, tx, new byte[] {}));
+        tx.addInput(new TransactionInput(tx, new byte[] {}));
         Script script = new ScriptBuilder().smallNum(0).build();
 
         LinkedList<byte[]> stack = new LinkedList<>();
@@ -353,7 +353,7 @@ public class ScriptTest {
         tx.setVersion(1);
         tx.setLockTime(0);
 
-        TransactionInput txInput = new TransactionInput(TESTNET, null,
+        TransactionInput txInput = new TransactionInput(null,
                 new ScriptBuilder().number(0).number(0).build().getProgram());
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
@@ -369,7 +369,7 @@ public class ScriptTest {
         tx.setVersion(1);
         tx.setLockTime(0);
 
-        TransactionInput txInput = new TransactionInput(TESTNET, creditingTransaction, scriptSig.getProgram());
+        TransactionInput txInput = new TransactionInput(creditingTransaction, scriptSig.getProgram());
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 

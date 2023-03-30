@@ -693,7 +693,7 @@ public class Transaction extends Message {
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, payload.slice());
+            TransactionInput input = new TransactionInput(this, payload.slice());
             inputs.add(input);
             // intentionally read again, due to the slice above
             Buffers.skipBytes(payload, TransactionOutPoint.MESSAGE_LENGTH);
@@ -953,7 +953,7 @@ public class Transaction extends Message {
      * @return the newly created input.
      */
     public TransactionInput addInput(TransactionOutput from) {
-        return addInput(new TransactionInput(params, this, from));
+        return addInput(new TransactionInput(this, from));
     }
 
     /**
@@ -972,7 +972,7 @@ public class Transaction extends Message {
      * @return the newly created input.
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
-        return addInput(new TransactionInput(params, this, script.getProgram(), new TransactionOutPoint(outputIndex, spendTxHash)));
+        return addInput(new TransactionInput(this, script.getProgram(), new TransactionOutPoint(outputIndex, spendTxHash)));
     }
 
     /**
@@ -998,7 +998,7 @@ public class Transaction extends Message {
         if (amount == null || amount.value <= 0) {
             log.warn("Illegal amount value. Amount is required for SegWit transactions.");
         }
-        TransactionInput input = new TransactionInput(params, this, new byte[] {}, prevOut, amount);
+        TransactionInput input = new TransactionInput(this, new byte[] {}, prevOut, amount);
         addInput(input);
         int inputIndex = inputs.size() - 1;
         if (ScriptPattern.isP2PK(scriptPubKey)) {

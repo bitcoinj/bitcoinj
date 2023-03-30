@@ -260,7 +260,7 @@ public class Block extends Message {
 
     private static Transaction createGenesisTransaction(NetworkParameters n, byte[] inputScriptBytes, Coin amount, byte[] scriptPubKeyBytes) {
         Transaction t = new Transaction(n);
-        t.addInput(new TransactionInput(n, t, inputScriptBytes));
+        t.addInput(new TransactionInput(t, inputScriptBytes));
         t.addOutput(new TransactionOutput(n, t, amount, scriptPubKeyBytes));
         return t;
     }
@@ -891,7 +891,7 @@ public class Block extends Message {
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
-        coinbase.addInput(new TransactionInput(params, coinbase,
+        coinbase.addInput(new TransactionInput(coinbase,
                 inputBuilder.build().getProgram()));
         coinbase.addOutput(new TransactionOutput(params, coinbase, value,
                 ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
@@ -935,7 +935,7 @@ public class Block extends Message {
             if (prevOut == null) {
                 prevOut = new TransactionOutPoint(0, nextTestOutPointHash());
             }
-            input = new TransactionInput(params, t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
+            input = new TransactionInput(t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
             t.addInput(input);
             b.addTransaction(t);
         }

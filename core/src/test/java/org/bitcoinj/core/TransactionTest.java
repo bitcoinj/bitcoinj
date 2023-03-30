@@ -168,7 +168,7 @@ public class TransactionTest {
         int length = tx.getMessageSize();
 
         // add fake transaction input
-        TransactionInput input = new TransactionInput(TESTNET, null, ScriptBuilder.createEmpty().getProgram(),
+        TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().getProgram(),
                 new TransactionOutPoint(0, Sha256Hash.ZERO_HASH));
         tx.addInput(input);
         length += input.getMessageSize();
@@ -489,7 +489,7 @@ public class TransactionTest {
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
-        TransactionInput ti = new TransactionInput(TESTNET, tx, new byte[0]) {
+        TransactionInput ti = new TransactionInput(tx, new byte[0]) {
             @Override
             public Script getScriptSig() throws ScriptException {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "");

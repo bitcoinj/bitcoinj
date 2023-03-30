@@ -93,18 +93,18 @@ public class TransactionInput extends Message {
     /**
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
      */
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes) {
-        this(params, parentTransaction, scriptBytes, new TransactionOutPoint(UNCONNECTED, (Transaction) null));
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes) {
+        this(parentTransaction, scriptBytes, new TransactionOutPoint(UNCONNECTED, (Transaction) null));
     }
 
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint) {
-        this(params, parentTransaction, scriptBytes, outpoint, null);
+        this(parentTransaction, scriptBytes, outpoint, null);
     }
 
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, byte[] scriptBytes,
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
             TransactionOutPoint outpoint, @Nullable Coin value) {
-        super(params);
+        super();
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
         this.sequence = NO_SEQUENCE;
@@ -115,8 +115,8 @@ public class TransactionInput extends Message {
     /**
      * Creates an UNSIGNED input that links to the given output
      */
-    TransactionInput(NetworkParameters params, Transaction parentTransaction, TransactionOutput output) {
-        super(params);
+    TransactionInput(Transaction parentTransaction, TransactionOutput output) {
+        super();
         long outputIndex = output.getIndex();
         if(output.getParentTransaction() != null ) {
             outpoint = new TransactionOutPoint(outputIndex, output.getParentTransaction());
@@ -131,12 +131,11 @@ public class TransactionInput extends Message {
 
     /**
      * Deserializes an input message. This is usually part of a transaction message.
-     * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @throws ProtocolException
      */
-    public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public TransactionInput(@Nullable Transaction parentTransaction, ByteBuffer payload) throws ProtocolException {
+        super(payload);
         setParent(parentTransaction);
         this.value = null;
     }
@@ -500,7 +499,7 @@ public class TransactionInput extends Message {
 
     /** Returns a copy of the input detached from its containing transaction, if need be. */
     public TransactionInput duplicateDetached() {
-        return new TransactionInput(params, null, ByteBuffer.wrap(bitcoinSerialize()));
+        return new TransactionInput(null, ByteBuffer.wrap(bitcoinSerialize()));
     }
 
     /**
