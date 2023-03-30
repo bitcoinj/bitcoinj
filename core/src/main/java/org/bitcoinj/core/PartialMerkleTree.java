@@ -130,9 +130,7 @@ public class PartialMerkleTree extends Message {
         hashes = new ArrayList<>(Math.min(nHashes, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < nHashes; i++)
             hashes.add(Sha256Hash.read(payload));
-
-        int nFlagBytes = VarInt.read(payload).intValue();
-        matchedChildBits = Buffers.readBytes(payload, nFlagBytes);
+        matchedChildBits = Buffers.readLengthPrefixedBytes(payload);
     }
 
     // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.

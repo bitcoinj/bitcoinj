@@ -154,8 +154,7 @@ public class TransactionInput extends Message {
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         outpoint = new TransactionOutPoint(payload);
-        int scriptLen = VarInt.read(payload).intValue();
-        scriptBytes = Buffers.readBytes(payload, scriptLen);
+        scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         sequence = ByteUtils.readUint32(payload);
     }
 

@@ -726,9 +726,7 @@ public class Transaction extends Message {
             TransactionWitness witness = new TransactionWitness(pushCount);
             getInput(i).setWitness(witness);
             for (int y = 0; y < pushCount; y++) {
-                VarInt pushSizeVarInt = VarInt.read(payload);
-                int pushSize = pushSizeVarInt.intValue();
-                byte[] push = Buffers.readBytes(payload, pushSize);
+                byte[] push = Buffers.readLengthPrefixedBytes(payload);
                 witness.setPush(y, push);
             }
         }

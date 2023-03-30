@@ -129,8 +129,7 @@ public class TransactionOutput extends Message {
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         check(value >= 0 || value == -1, () -> new ProtocolException("value out of range: " + value));
-        int scriptLen = VarInt.read(payload).intValue();
-        scriptBytes = Buffers.readBytes(payload, scriptLen);
+        scriptBytes = Buffers.readLengthPrefixedBytes(payload);
     }
 
     @Override
