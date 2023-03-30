@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -238,7 +239,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testFirst100KBlocks() throws Exception {
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(MAINNET, Arrays.asList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Arrays.asList(blockFile));
         
         store = createStore(MAINNET, 10);
         resetStore(store);
