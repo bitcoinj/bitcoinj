@@ -24,7 +24,6 @@ import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.*;
-import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
@@ -555,7 +554,7 @@ public class WalletTool implements Callable<Integer> {
         String[] xpubkeys = xpubKeysStr.split(",");
         List<DeterministicKey> keys = new ArrayList<>();
         for (String xpubkey : xpubkeys) {
-            keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim(), params));
+            keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim(), net));
         }
         MarriedKeyChain chain = MarriedKeyChain.builder()
                 .random(new SecureRandom())
@@ -639,7 +638,7 @@ public class WalletTool implements Callable<Integer> {
             return;
         }
         try {
-            Address address = LegacyAddress.fromBase58(addrStr, params.network());
+            Address address = LegacyAddress.fromBase58(addrStr, net);
             // If no creation time is specified, assume genesis (zero).
             getCreationTime().ifPresentOrElse(
                     creationTime -> wallet.addWatchedAddress(address, creationTime),
@@ -1009,7 +1008,7 @@ public class WalletTool implements Callable<Integer> {
             peerGroup = new PeerGroup(net, chain);
         }
         peerGroup.setUserAgent("WalletTool", "1.0");
-        if (params == RegTestParams.get())
+        if (net == BitcoinNetwork.REGTEST)
             peerGroup.setMinBroadcastConnections(1);
         peerGroup.addWallet(wallet);
         if (peersStr != null) {
@@ -1125,7 +1124,7 @@ public class WalletTool implements Callable<Integer> {
         Optional<Instant> creationTime = getCreationTime();
         if (privKeyStr != null) {
             try {
-                DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(params.network(), privKeyStr); // WIF
+                DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(net, privKeyStr); // WIF
                 key = dpk.getKey();
             } catch (AddressFormatException e) {
                 byte[] decode = parseAsHexOrBase58(privKeyStr);
@@ -1167,9 +1166,9 @@ public class WalletTool implements Callable<Integer> {
         if (!key.isCompressed())
             System.out.println("WARNING: Importing an uncompressed key");
         wallet.importKey(key);
-        System.out.print("Addresses: " + key.toAddress(ScriptType.P2PKH, params.network()));
+        System.out.print("Addresses: " + key.toAddress(ScriptType.P2PKH, net));
         if (key.isCompressed())
-            System.out.print("," + key.toAddress(ScriptType.P2WPKH, params.network()));
+            System.out.print("," + key.toAddress(ScriptType.P2WPKH, net));
         System.out.println();
     }
 
