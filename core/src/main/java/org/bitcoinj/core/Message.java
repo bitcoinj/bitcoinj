@@ -92,15 +92,6 @@ public abstract class Message {
     protected abstract void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException;
 
     /**
-     * <p>To be called before any change of internal values including any setters. This ensures any cached byte array is
-     * removed.</p>
-     * <p>Child messages of this object(e.g. Transactions belonging to a Block) will not have their internal byte caches
-     * invalidated unless they are also modified internally.</p>
-     */
-    protected void unCache() {
-    }
-
-    /**
      * <p>Serialize this message to a byte array that conforms to the bitcoin wire protocol.</p>
      *
      * @return a byte array

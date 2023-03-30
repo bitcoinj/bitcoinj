@@ -46,7 +46,6 @@ public abstract class AddressMessage extends Message {
     public abstract void addAddress(PeerAddress address);
 
     public void removeAddress(int index) {
-        unCache();
         PeerAddress address = addresses.remove(index);
     }
 

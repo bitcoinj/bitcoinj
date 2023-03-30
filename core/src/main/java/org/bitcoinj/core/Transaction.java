@@ -599,7 +599,6 @@ public class Transaction extends Message {
      */
     public static final byte SIGHASH_ANYONECANPAY_VALUE = (byte) 0x80;
 
-    @Override
     protected void unCache() {
         cachedTxId = null;
         cachedWTxId = null;
