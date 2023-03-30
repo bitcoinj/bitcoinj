@@ -70,7 +70,7 @@ public class FilteredBlock extends Message {
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         byte[] headerBytes = Buffers.readBytes(payload, Block.HEADER_SIZE);
         header = new Block(params, ByteBuffer.wrap(headerBytes));
-        merkleTree = new PartialMerkleTree(params, payload);
+        merkleTree = new PartialMerkleTree(payload);
     }
     
     /**

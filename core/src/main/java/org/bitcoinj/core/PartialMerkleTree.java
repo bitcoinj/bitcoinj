@@ -76,16 +76,16 @@ public class PartialMerkleTree extends Message {
     // txids and internal hashes
     private List<Sha256Hash> hashes;
     
-    public PartialMerkleTree(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public PartialMerkleTree(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
     /**
      * Constructs a new PMT with the given bit set (little endian) and the raw list of hashes including internal hashes,
      * taking ownership of the list.
      */
-    public PartialMerkleTree(NetworkParameters params, byte[] bits, List<Sha256Hash> hashes, int origTxCount) {
-        super(params);
+    public PartialMerkleTree(byte[] bits, List<Sha256Hash> hashes, int origTxCount) {
+        super();
         this.matchedChildBits = bits;
         this.hashes = hashes;
         this.transactionCount = origTxCount;
@@ -95,7 +95,7 @@ public class PartialMerkleTree extends Message {
      * Calculates a PMT given the list of leaf hashes and which leaves need to be included. The relevant interior hashes
      * are calculated and a new PMT returned.
      */
-    public static PartialMerkleTree buildFromLeaves(NetworkParameters params, byte[] includeBits, List<Sha256Hash> allLeafHashes) {
+    public static PartialMerkleTree buildFromLeaves(byte[] includeBits, List<Sha256Hash> allLeafHashes) {
         // Calculate height of the tree.
         int height = 0;
         while (getTreeWidth(allLeafHashes.size(), height) > 1)
@@ -107,7 +107,7 @@ public class PartialMerkleTree extends Message {
         for (int i = 0; i < bitList.size(); i++)
             if (bitList.get(i))
                 ByteUtils.setBitLE(bits, i);
-        return new PartialMerkleTree(params, bits, hashes, allLeafHashes.size());
+        return new PartialMerkleTree(bits, hashes, allLeafHashes.size());
     }
 
     @Override

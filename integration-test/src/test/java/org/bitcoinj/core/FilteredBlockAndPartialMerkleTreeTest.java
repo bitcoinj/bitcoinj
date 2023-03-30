@@ -144,7 +144,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         byte[] includeBits = new byte[2];
         ByteUtils.setBitLE(includeBits, 9);
         ByteUtils.setBitLE(includeBits, 10);
-        PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(TESTNET, includeBits, hashes);
+        PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(includeBits, hashes);
         List<Sha256Hash> matchedHashes = new ArrayList<>();
         pmt.getTxnHashAndMerkleRoot(matchedHashes);
     }
@@ -234,7 +234,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000001"));
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000002"));
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000003"));
-        PartialMerkleTree pmt = new PartialMerkleTree(TESTNET, bits, hashes, 3) {
+        PartialMerkleTree pmt = new PartialMerkleTree(bits, hashes, 3) {
             public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 writeInt32LE(getTransactionCount(), stream);
                 // Add Integer.MAX_VALUE instead of hashes.size()
@@ -249,7 +249,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         };
         byte[] serializedPmt = pmt.bitcoinSerialize();
         try {
-            new PartialMerkleTree(TESTNET, ByteBuffer.wrap(serializedPmt));
+            new PartialMerkleTree(ByteBuffer.wrap(serializedPmt));
             fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
         } catch (ProtocolException e) {
             //Expected, do nothing
