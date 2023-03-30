@@ -554,6 +554,7 @@ public abstract class NetworkParameters {
 
     public static enum ProtocolVersion {
         MINIMUM(70000),
+        @Deprecated
         PONG(60001),
         BLOOM_FILTER(70001), // BIP37
         BLOOM_FILTER_BIP111(70011), // BIP111
