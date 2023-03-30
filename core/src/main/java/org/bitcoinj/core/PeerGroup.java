@@ -1691,8 +1691,6 @@ public class PeerGroup implements TransactionBroadcaster {
                     return;  // Disabled.
                 }
                 for (Peer peer : getConnectedPeers()) {
-                    if (peer.getPeerVersionMessage().clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG))
-                        continue;
                     peer.sendPing();
                 }
             } catch (Throwable e) {

@@ -1545,8 +1545,6 @@ public class Peer extends PeerSocketHandler {
 
     protected CompletableFuture<Duration> sendPing(long nonce) {
         final VersionMessage ver = vPeerVersionMessage;
-        if (!ver.isPingPongSupported())
-            return FutureUtils.failedFuture(new ProtocolException("Peer version is too low for measurable pings: " + ver));
         if (pendingPings.size() > PENDING_PINGS_LIMIT) {
             log.info("{}: Too many pending pings, disconnecting", this);
             close();

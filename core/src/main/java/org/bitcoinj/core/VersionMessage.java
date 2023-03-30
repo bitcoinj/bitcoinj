@@ -243,12 +243,10 @@ public class VersionMessage extends Message {
             throw new IllegalArgumentException("name contains invalid characters");
     }
 
-    /**
-     * Returns true if the clientVersion field is {@link NetworkParameters.ProtocolVersion#PONG} or higher.
-     * If it is then {@link Peer#sendPing()} is usable.
-     */
+    /** @deprecated just assume {@code true} */
+    @Deprecated
     public boolean isPingPongSupported() {
-        return clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
+        return true;
     }
 
     /**
