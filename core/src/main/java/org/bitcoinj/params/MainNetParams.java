@@ -44,7 +44,7 @@ public class MainNetParams extends BitcoinNetworkParams {
         maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
 
         port = 8333;
-        packetMagic = 0xf9beb4d9L;
+        packetMagic = 0xf9beb4d9;
         dumpedPrivateKeyHeader = 128;
         addressHeader = 0;
         p2shHeader = 5;
