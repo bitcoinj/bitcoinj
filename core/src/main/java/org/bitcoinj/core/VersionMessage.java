@@ -103,7 +103,7 @@ public class VersionMessage extends Message {
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
-        MessageSerializer serializer = this.serializer.withProtocolVersion(0);
+        MessageSerializer serializer = new DummySerializer(0);
         receivingAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
         fromAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
         subVer = LIBRARY_SUBVER;
@@ -116,9 +116,9 @@ public class VersionMessage extends Message {
         clientVersion = (int) ByteUtils.readUint32(payload);
         localServices = Services.read(payload);
         time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
-        receivingAddr = new PeerAddress(payload, serializer.withProtocolVersion(0));
+        receivingAddr = new PeerAddress(payload, new DummySerializer(0));
         if (clientVersion >= 106) {
-            fromAddr = new PeerAddress(payload, serializer.withProtocolVersion(0));
+            fromAddr = new PeerAddress(payload, new DummySerializer(0));
             // uint64 localHostNonce (random data)
             // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
             // there are NATs and proxies in the way. However we don't listen for inbound connections so it's

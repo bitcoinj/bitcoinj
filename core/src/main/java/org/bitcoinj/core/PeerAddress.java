@@ -107,7 +107,7 @@ public class PeerAddress extends Message {
      * Constructs a peer address from the given IP address, port and services. Version number is default for the given parameters.
      */
     public PeerAddress(InetAddress addr, int port, Services services) {
-        this(addr, port, services, DummySerializer.DEFAULT);
+        this(addr, port, services, new DummySerializer(0));
     }
 
     /**

@@ -30,17 +30,24 @@ class DummySerializer extends MessageSerializer {
 
     private static final String DEFAULT_EXCEPTION_MESSAGE = "Dummy serializer cannot serialize/deserialize objects as it does not know which network they belong to.";
 
+    private final int protocolVersion;
+
     public DummySerializer() {
+        this.protocolVersion = 0;
+    }
+
+    public DummySerializer(int protocolVersion) {
+        this.protocolVersion = protocolVersion;
     }
 
     @Override
     public DummySerializer withProtocolVersion(int protocolVersion) {
-        return this;
+        return new DummySerializer(protocolVersion);
     }
 
     @Override
     public int getProtocolVersion() {
-        return 0;
+        return protocolVersion;
     }
 
     @Override

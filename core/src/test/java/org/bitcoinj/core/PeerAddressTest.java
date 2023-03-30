@@ -52,9 +52,9 @@ public class PeerAddressTest {
 
     @Test
     public void parse_versionVariant() {
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
         // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
         String hex = "010000000000000000000000000000000000ffff0a000001208d";
+        MessageSerializer serializer = new DummySerializer(0);
         PeerAddress pa = new PeerAddress(ByteBuffer.wrap(ByteUtils.parseHex(hex)), serializer);
         assertEquals(Services.NODE_NETWORK, pa.getServices().bits());
         assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
@@ -63,7 +63,7 @@ public class PeerAddressTest {
 
     @Test
     public void bitcoinSerialize_versionVariant() throws Exception {
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
+        MessageSerializer serializer = new DummySerializer(0);
         PeerAddress pa = new PeerAddress(InetAddress.getByName(null), 8333, Services.none(), serializer);
         assertEquals("000000000000000000000000000000000000ffff7f000001208d", ByteUtils.formatHex(pa.bitcoinSerialize()));
     }
@@ -71,7 +71,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv4_addressV2Variant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(2);
+        MessageSerializer serializer = new DummySerializer(2);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), serializer);
         byte[] serialized = pa.bitcoinSerialize();
         PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
@@ -84,7 +84,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv4_addressVariant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(1);
+        MessageSerializer serializer = new DummySerializer(1);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), serializer);
         byte[] serialized = pa.bitcoinSerialize();
         PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
@@ -96,7 +96,7 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv4_versionVariant() throws Exception {
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
+        MessageSerializer serializer = new DummySerializer(0);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), serializer);
         byte[] serialized = pa.bitcoinSerialize();
         PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
@@ -109,7 +109,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv6_addressV2Variant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(2);
+        MessageSerializer serializer = new DummySerializer(2);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 Services.none(), serializer);
         byte[] serialized = pa.bitcoinSerialize();
@@ -123,7 +123,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv6_addressVariant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(1);
+        MessageSerializer serializer = new DummySerializer(1);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 Services.none(), serializer);
         byte[] serialized = pa.bitcoinSerialize();
@@ -136,7 +136,7 @@ public class PeerAddressTest {
 
     @Test
     public void roundtrip_ipv6_versionVariant() throws Exception {
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(0);
+        MessageSerializer serializer = new DummySerializer(0);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 Services.none(), serializer);
         byte[] serialized = pa.bitcoinSerialize();
@@ -150,7 +150,7 @@ public class PeerAddressTest {
     @Test
     @Parameters(method = "deserializeToStringValues")
     public void deserializeToString(int version, String expectedToString, String hex) {
-        MessageSerializer serializer = MAINNET.getDefaultSerializer().withProtocolVersion(version);
+        MessageSerializer serializer = new DummySerializer(version);
         PeerAddress pa = new PeerAddress(ByteBuffer.wrap(ByteUtils.parseHex(hex)), serializer);
 
         assertEquals(expectedToString, pa.toString());

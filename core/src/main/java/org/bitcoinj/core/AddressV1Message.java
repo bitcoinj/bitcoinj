@@ -55,7 +55,7 @@ public class AddressV1Message extends AddressMessage {
         if (numAddresses > MAX_ADDRESSES)
             throw new ProtocolException("Address message too large.");
         addresses = new ArrayList<>(numAddresses);
-        MessageSerializer serializer = this.serializer.withProtocolVersion(1);
+        MessageSerializer serializer = new DummySerializer(1);
         for (int i = 0; i < numAddresses; i++) {
             PeerAddress addr = new PeerAddress(payload, serializer);
             addresses.add(addr);
