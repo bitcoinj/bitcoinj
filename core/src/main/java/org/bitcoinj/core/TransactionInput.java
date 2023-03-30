@@ -131,23 +131,12 @@ public class TransactionInput extends Message {
 
     /**
      * Deserializes an input message. This is usually part of a transaction message.
+     * @param params NetworkParameters object.
+     * @param payload Bitcoin protocol formatted byte array containing message content.
+     * @throws ProtocolException
      */
     public TransactionInput(NetworkParameters params, @Nullable Transaction parentTransaction, ByteBuffer payload) throws ProtocolException {
         super(params, payload);
-        setParent(parentTransaction);
-        this.value = null;
-    }
-
-    /**
-     * Deserializes an input message. This is usually part of a transaction message.
-     * @param params NetworkParameters object.
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param serializer the serializer to use for this message.
-     * @throws ProtocolException
-     */
-    public TransactionInput(NetworkParameters params, Transaction parentTransaction, ByteBuffer payload, MessageSerializer serializer)
-            throws ProtocolException {
-        super(params, payload, serializer);
         setParent(parentTransaction);
         this.value = null;
     }

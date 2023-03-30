@@ -694,7 +694,7 @@ public class Transaction extends Message {
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(params, this, payload.slice(), serializer);
+            TransactionInput input = new TransactionInput(params, this, payload.slice());
             inputs.add(input);
             // intentionally read again, due to the slice above
             Buffers.skipBytes(payload, TransactionOutPoint.MESSAGE_LENGTH);
@@ -709,7 +709,7 @@ public class Transaction extends Message {
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(params, this, payload.slice(), serializer);
+            TransactionOutput output = new TransactionOutput(params, this, payload.slice());
             outputs.add(output);
             // intentionally read again, due to the slice above
             Buffers.skipBytes(payload, 8); // value
