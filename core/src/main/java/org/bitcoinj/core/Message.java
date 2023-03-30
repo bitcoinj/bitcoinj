@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * <p>A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -151,6 +152,6 @@ public abstract class Message {
 
     /** Network parameters this message was created with. */
     public NetworkParameters getParams() {
-        return params;
+        return Objects.requireNonNull(params);
     }
 }
