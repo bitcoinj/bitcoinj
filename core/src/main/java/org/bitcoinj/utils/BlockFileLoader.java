@@ -175,7 +175,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 }
                 byte[] bytes = new byte[4];
                 currentFileStream.read(bytes, 0, 4);
-                long size = ByteUtils.readUint32BE(ByteUtils.reverseBytes(bytes), 0);
+                long size = ByteUtils.readUint32(bytes, 0);
                 bytes = new byte[(int) size];
                 currentFileStream.read(bytes, 0, (int) size);
                 try {
