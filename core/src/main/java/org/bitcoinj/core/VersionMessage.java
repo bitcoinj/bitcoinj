@@ -34,6 +34,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Objects;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
+
 /**
  * <p>A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
  * particularly interesting. The subVer field, since BIP 14, acts as a User-Agent string would. You can and should 
@@ -114,32 +116,25 @@ public class VersionMessage extends Message {
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         clientVersion = (int) ByteUtils.readUint32(payload);
+        check(clientVersion >= NetworkParameters.ProtocolVersion.MINIMUM.getBitcoinProtocolVersion(),
+                ProtocolException::new);
         localServices = Services.read(payload);
         time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
         receivingAddr = new PeerAddress(payload, new DummySerializer(0));
-        if (clientVersion >= 106) {
-            fromAddr = new PeerAddress(payload, new DummySerializer(0));
-            // uint64 localHostNonce (random data)
-            // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
-            // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
-            // irrelevant.
-            Buffers.skipBytes(payload, 8);
-            // string subVer (currently "")
-            subVer = Buffers.readLengthPrefixedString(payload);
-            // int bestHeight (size of known block chain).
-            bestHeight = ByteUtils.readUint32(payload);
-            if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
-                relayTxesBeforeFilter = payload.get() != 0;
-            } else {
-                relayTxesBeforeFilter = true;
-            }
-        } else {
-            // Default values for flags which may not be sent by old nodes
-            fromAddr = null;
-            subVer = "";
-            bestHeight = 0;
-            relayTxesBeforeFilter = true;
-        }
+        fromAddr = new PeerAddress(payload, new DummySerializer(0));
+        // uint64 localHostNonce (random data)
+        // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
+        // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
+        // irrelevant.
+        Buffers.skipBytes(payload, 8);
+        // string subVer (currently "")
+        subVer = Buffers.readLengthPrefixedString(payload);
+        // int bestHeight (size of known block chain).
+        bestHeight = ByteUtils.readUint32(payload);
+        relayTxesBeforeFilter =
+                clientVersion >= NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion() ?
+                payload.get() != 0 :
+                true;
     }
 
     @Override
@@ -160,9 +155,7 @@ public class VersionMessage extends Message {
         buf.write(subVerBytes);
         // Size of known block chain.
         ByteUtils.writeInt32LE(bestHeight, buf);
-        if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)) {
-            buf.write(relayTxesBeforeFilter ? 1 : 0);
-        }
+        buf.write(relayTxesBeforeFilter ? 1 : 0);
     }
 
     @Override

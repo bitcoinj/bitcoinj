@@ -60,13 +60,10 @@ public class VersionMessageTest {
         assertEquals("/bitcoinj:0.13/", ver.subVer);
     }
 
-    @Test
+    @Test(expected = ProtocolException.class)
     public void decode_relay_noBestHeight_noSubVer() {
         String hex = "00000000000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000";
         VersionMessage ver = new VersionMessage(TESTNET, ByteBuffer.wrap(ByteUtils.parseHex(hex)));
-        assertTrue(ver.relayTxesBeforeFilter);
-        assertEquals(0, ver.bestHeight);
-        assertEquals("", ver.subVer);
     }
 
     @Test
