@@ -56,12 +56,10 @@ public abstract class ListMessage extends Message {
     }
 
     public void addItem(InventoryItem item) {
-        unCache();
         items.add(item);
     }
 
     public void removeItem(int index) {
-        unCache();
         items.remove(index);
     }
 

@@ -433,9 +433,7 @@ public class TransactionOutput extends Message {
     /* (non-Javadoc)
      * @see Message#unCache()
      */
-    @Override
     protected void unCache() {
-        super.unCache();
         if (parent != null)
             parent.unCache();
     }

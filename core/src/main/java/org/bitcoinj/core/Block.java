@@ -326,7 +326,6 @@ public class Block extends Message {
         writeTransactions(stream);
     }
 
-    @Override
     protected void unCache() {
         // Since we have alternate uncache methods to use internally this will only ever be called by a child
         // transaction so we only need to invalidate that part of the cache.
