@@ -32,8 +32,14 @@ import java.nio.ByteBuffer;
 public class Pong extends BaseMessage {
     private long nonce;
 
-    public Pong(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    /**
+     * Deserialize this message from a given payload.
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static Pong read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return new Pong(ByteUtils.readInt64(payload));
     }
     
     /**
@@ -46,7 +52,7 @@ public class Pong extends BaseMessage {
     
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        nonce = ByteUtils.readInt64(payload);
+        throw new UnsupportedOperationException();
     }
     
     @Override

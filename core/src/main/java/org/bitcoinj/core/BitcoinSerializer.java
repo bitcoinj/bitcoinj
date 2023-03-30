@@ -242,7 +242,7 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("ping")) {
             return Ping.read(payload);
         } else if (command.equals("pong")) {
-            return new Pong(payload);
+            return Pong.read(payload);
         } else if (command.equals("verack")) {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new VersionAck();
