@@ -860,7 +860,7 @@ public class Transaction extends Message {
                         Script scriptPubKey = connectedOutput.getScriptPubKey();
                         ScriptType scriptType = scriptPubKey.getScriptType();
                         if (scriptType != null)
-                            s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params));
+                            s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params.network()));
                         else
                             s.append("unknown script type");
                     } else {
@@ -896,7 +896,7 @@ public class Transaction extends Message {
                 s.append(indent).append("        ");
                 ScriptType scriptType = scriptPubKey.getScriptType();
                 if (scriptType != null)
-                    s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params));
+                    s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params.network()));
                 else
                     s.append("unknown script type");
                 if (!out.isAvailableForSpending()) {

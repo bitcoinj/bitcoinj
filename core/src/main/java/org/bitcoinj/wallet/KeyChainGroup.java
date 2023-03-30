@@ -287,7 +287,7 @@ public class KeyChainGroup implements KeyBag {
             for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
                 Address address = ScriptBuilder
                         .createP2SHOutputScript(getActiveKeyChain().getRedeemData(entry.getValue()).redeemScript)
-                        .getToAddress(params);
+                        .getToAddress(params.network());
                 currentAddresses.put(entry.getKey(), address);
             }
         }

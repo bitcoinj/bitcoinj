@@ -339,7 +339,7 @@ public class TransactionOutput extends Message {
             buf.append(Coin.valueOf(value).toFriendlyString());
             if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2TR(script)
                     || ScriptPattern.isP2SH(script))
-                buf.append(" to ").append(script.getToAddress(params));
+                buf.append(" to ").append(script.getToAddress(params.network()));
             else if (ScriptPattern.isP2PK(script))
                 buf.append(" to pubkey ").append(ByteUtils.formatHex(ScriptPattern.extractKeyFromP2PK(script)));
             else if (ScriptPattern.isSentToMultisig(script))

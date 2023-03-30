@@ -414,19 +414,27 @@ public class Script {
     /**
      * Gets the destination address from this script, if it's in the required form.
      */
-    public Address getToAddress(NetworkParameters params) throws ScriptException {
-        return getToAddress(params, false);
+    public Address getToAddress(Network network) throws ScriptException {
+        return getToAddress(network, false);
     }
 
     /**
      * Gets the destination address from this script, if it's in the required form.
-     * 
+     * @deprecated Use {@link #getToAddress(Network)}
+     */
+    @Deprecated
+    public Address getToAddress(NetworkParameters params) throws ScriptException {
+        return getToAddress(params.network(), false);
+    }
+
+    /**
+     * Gets the destination address from this script, if it's in the required form.
+     *
      * @param forcePayToPubKey
      *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
      *            showing addresses rather than pubkeys.
      */
-    public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
-        Network network = params.network();
+    public Address getToAddress(Network network, boolean forcePayToPubKey) throws ScriptException {
         if (ScriptPattern.isP2PKH(this))
             return LegacyAddress.fromPubKeyHash(network, ScriptPattern.extractHashFromP2PKH(this));
         else if (ScriptPattern.isP2SH(this))
@@ -439,6 +447,19 @@ public class Script {
             return SegwitAddress.fromProgram(network, 1, ScriptPattern.extractOutputKeyFromP2TR(this));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to an address");
+    }
+
+    /**
+     * Gets the destination address from this script, if it's in the required form.
+     *
+     * @param forcePayToPubKey
+     *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
+     *            showing addresses rather than pubkeys.
+     * @deprecated Use {@link #getToAddress(Network, boolean)}
+     */
+    @Deprecated
+    public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
+        return getToAddress(params.network(), forcePayToPubKey);
     }
 
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
