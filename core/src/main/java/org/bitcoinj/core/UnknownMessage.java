@@ -22,7 +22,7 @@ package org.bitcoinj.core;
  */
 public class UnknownMessage extends EmptyMessage {
 
-    private String name;
+    private final String name;
 
     public UnknownMessage(String name) throws ProtocolException {
         super();
