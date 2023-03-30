@@ -469,28 +469,28 @@ public class ScriptTest {
         // P2PK
         ECKey toKey = new ECKey();
         Address toAddress = toKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        assertEquals(toAddress, ScriptBuilder.createP2PKOutputScript(toKey).getToAddress(TESTNET, true));
+        assertEquals(toAddress, ScriptBuilder.createP2PKOutputScript(toKey).getToAddress(BitcoinNetwork.TESTNET, true));
         // pay to pubkey hash
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(BitcoinNetwork.TESTNET));
         // pay to script hash
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(new byte[20]);
         Address scriptAddress = LegacyAddress.fromScriptHash(BitcoinNetwork.TESTNET,
                 ScriptPattern.extractHashFromP2SH(p2shScript));
-        assertEquals(scriptAddress, p2shScript.getToAddress(TESTNET));
+        assertEquals(scriptAddress, p2shScript.getToAddress(BitcoinNetwork.TESTNET));
         // P2WPKH
         toAddress = toKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(BitcoinNetwork.TESTNET));
         // P2WSH
         Script p2wshScript = ScriptBuilder.createP2WSHOutputScript(new byte[32]);
         scriptAddress = SegwitAddress.fromHash(BitcoinNetwork.TESTNET, ScriptPattern.extractHashFromP2WH(p2wshScript));
-        assertEquals(scriptAddress, p2wshScript.getToAddress(TESTNET));
+        assertEquals(scriptAddress, p2wshScript.getToAddress(BitcoinNetwork.TESTNET));
         // P2TR
         toAddress = SegwitAddress.fromProgram(BitcoinNetwork.TESTNET, 1, new byte[32]);
-        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(TESTNET));
+        assertEquals(toAddress, ScriptBuilder.createOutputScript(toAddress).getToAddress(BitcoinNetwork.TESTNET));
     }
 
     @Test(expected = ScriptException.class)
     public void getToAddressNoPubKey() {
-        ScriptBuilder.createP2PKOutputScript(new ECKey()).getToAddress(TESTNET, false);
+        ScriptBuilder.createP2PKOutputScript(new ECKey()).getToAddress(BitcoinNetwork.TESTNET, false);
     }
 }

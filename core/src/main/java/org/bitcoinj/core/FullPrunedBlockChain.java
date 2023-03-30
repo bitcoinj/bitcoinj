@@ -188,7 +188,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         String address = "";
         try {
             if (script != null) {
-                address = script.getToAddress(params, true).toString();
+                address = script.getToAddress(params.network(), true).toString();
             }
         } catch (Exception e) {
         }

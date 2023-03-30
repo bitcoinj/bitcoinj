@@ -1195,7 +1195,7 @@ public class Wallet extends BaseTaggableObject
             List<Address> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
                 if (ScriptPattern.isP2PKH(script))
-                    addresses.add(script.getToAddress(params));
+                    addresses.add(script.getToAddress(params.network()));
             return addresses;
         } finally {
             keyChainGroupLock.unlock();

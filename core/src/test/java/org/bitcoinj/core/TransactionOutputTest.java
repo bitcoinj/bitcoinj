@@ -82,7 +82,7 @@ public class TransactionOutputTest extends TestWithWallet {
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
         Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.COIN, script);
-        assertEquals(P2SHAddressString, tx.getOutput(0).getScriptPubKey().getToAddress(MAINNET).toString());
+        assertEquals(P2SHAddressString, tx.getOutput(0).getScriptPubKey().getToAddress(BitcoinNetwork.MAINNET).toString());
     }
 
     @Test

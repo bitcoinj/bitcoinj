@@ -481,8 +481,8 @@ public class WalletTest extends TestWithWallet {
     private void basicSanityChecks(Wallet wallet, Transaction t, Address destination) throws VerificationException {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
-        assertEquals(destination, t.getOutput(0).getScriptPubKey().getToAddress(TESTNET));
-        assertEquals(wallet.currentChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(TESTNET));
+        assertEquals(destination, t.getOutput(0).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
+        assertEquals(wallet.currentChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
         assertEquals(valueOf(0, 50), t.getOutputs().get(1).getValue());
         // Check the script runs and signatures verify.
         t.getInputs().get(0).verify();
@@ -513,8 +513,8 @@ public class WalletTest extends TestWithWallet {
         req.shuffleOutputs = false;
         wallet.completeTx(req);
         Transaction t3 = req.tx;
-        assertNotEquals(t2.getOutput(1).getScriptPubKey().getToAddress(TESTNET),
-                        t3.getOutput(1).getScriptPubKey().getToAddress(TESTNET));
+        assertNotEquals(t2.getOutput(1).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET),
+                        t3.getOutput(1).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
         assertNotNull(t3);
         wallet.commitTx(t3);
         assertTrue(wallet.isConsistent());
@@ -2255,7 +2255,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void sendRequestP2PKHTest() {
         SendRequest req = SendRequest.to(OTHER_ADDRESS, SATOSHI.multiply(12));
-        assertEquals(OTHER_ADDRESS, req.tx.getOutputs().get(0).getScriptPubKey().getToAddress(TESTNET));
+        assertEquals(OTHER_ADDRESS, req.tx.getOutputs().get(0).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
     }
 
     @Test
@@ -2930,7 +2930,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(THREE_CENTS, tx.getValueSentFromMe(wallet));
         assertEquals(THREE_CENTS.subtract(tx.getFee()), tx.getValueSentToMe(wallet));
         // TX sends to one of our addresses (for now we ignore married wallets).
-        final Address toAddress = tx.getOutput(0).getScriptPubKey().getToAddress(TESTNET);
+        final Address toAddress = tx.getOutput(0).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET);
         final ECKey rotatingToKey = wallet.findKeyFromPubKeyHash(toAddress.getHash(), toAddress.getOutputScriptType());
         assertNotNull(rotatingToKey);
         assertFalse(wallet.isKeyRotating(rotatingToKey));

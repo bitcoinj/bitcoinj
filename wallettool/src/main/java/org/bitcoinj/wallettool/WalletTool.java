@@ -454,7 +454,7 @@ public class WalletTool implements Callable<Integer> {
                             List<TransactionOutput> gathered = new LinkedList<TransactionOutput>();
                             for (TransactionOutput candidate : candidates) {
                                 try {
-                                    Address candidateAddr = candidate.getScriptPubKey().getToAddress(params);
+                                    Address candidateAddr = candidate.getScriptPubKey().getToAddress(net);
                                     if (validSelectAddr.equals(candidateAddr))
                                         gathered.add(candidate);
                                 } catch (ScriptException x) {
