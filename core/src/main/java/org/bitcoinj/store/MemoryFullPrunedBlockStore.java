@@ -410,12 +410,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
                 return true;
         return false;
     }
-
-    @Override
-    public NetworkParameters getParams() {
-        return params;
-    }
-
+    
     @Override
     public Network network() {
         return params.network();

@@ -309,11 +309,6 @@ public class SPVBlockStore implements BlockStore {
         }
     }
 
-    @Override
-    public NetworkParameters getParams() {
-        return params;
-    }
-
     protected static final int RECORD_SIZE = 32 /* hash */ + StoredBlock.COMPACT_SERIALIZED_SIZE;
 
     // File format:
