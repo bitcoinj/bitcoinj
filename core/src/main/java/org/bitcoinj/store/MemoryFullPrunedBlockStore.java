@@ -16,6 +16,7 @@
 
 package org.bitcoinj.store;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.crypto.ECKey;
@@ -413,6 +414,11 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public NetworkParameters getParams() {
         return params;
+    }
+
+    @Override
+    public Network network() {
+        return params.network();
     }
 
     @Override

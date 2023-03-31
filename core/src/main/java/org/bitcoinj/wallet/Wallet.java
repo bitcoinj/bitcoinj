@@ -4744,7 +4744,7 @@ public class Wallet extends BaseTaggableObject
     public void setUTXOProvider(@Nullable UTXOProvider provider) {
         lock.lock();
         try {
-            checkArgument(provider == null || provider.getParams().equals(params));
+            checkArgument(provider == null || provider.network() == params.network());
             this.vUTXOProvider = provider;
         } finally {
             lock.unlock();
