@@ -34,6 +34,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.wallet.Wallet;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -184,16 +185,17 @@ public class TransactionTest {
 
     @Test
     public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
+        Wallet wallet = Wallet.createBasic(TESTNET);
         Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(TESTNET);
 
         tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
-        assertFalse(tx.isMature());
+        assertFalse(wallet.isTransactionMature(tx));
 
         tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-        assertFalse(tx.isMature());
+        assertFalse(wallet.isTransactionMature(tx));
 
         tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
-        assertFalse(tx.isMature());
+        assertFalse(wallet.isTransactionMature(tx));
     }
 
     @Test

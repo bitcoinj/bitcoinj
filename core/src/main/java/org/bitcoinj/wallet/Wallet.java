@@ -2150,6 +2150,19 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * A transaction is mature if it is either a building coinbase tx that is as deep or deeper than the required coinbase depth, or a non-coinbase tx.
+     */
+    public boolean isTransactionMature(Transaction tx) {
+        if (!tx.isCoinBase())
+            return true;
+
+        if (tx.getConfidence().getConfidenceType() != ConfidenceType.BUILDING)
+            return false;
+
+        return tx.getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
+    }
+
+    /**
      * Finds transactions in the specified candidates that double spend "tx". Not a general check, but it can work even if
      * the double spent inputs are not ours.
      * @return The set of transactions that double spend "tx".
@@ -3352,7 +3365,7 @@ public class Wallet extends BaseTaggableObject
         try {
             LinkedList<TransactionOutput> candidates = new LinkedList<>();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-                if (excludeImmatureCoinbases && !tx.isMature()) continue;
+                if (excludeImmatureCoinbases && !isTransactionMature(tx)) continue;
                 for (TransactionOutput output : tx.getOutputs()) {
                     if (!output.isAvailableForSpending()) continue;
                     try {
@@ -4614,7 +4627,7 @@ public class Wallet extends BaseTaggableObject
             if (vUTXOProvider == null) {
                 candidates = myUnspents.stream()
                     .filter(output ->   (!excludeUnsignable || canSignFor(output.getScriptPubKey())) &&
-                                        (!excludeImmatureCoinbases || Objects.requireNonNull(output.getParentTransaction()).isMature()))
+                                        (!excludeImmatureCoinbases || isTransactionMature(output.getParentTransaction())))
                     .collect(StreamUtils.toUnmodifiableList());
             } else {
                 candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
@@ -4685,7 +4698,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
             // Add change outputs. Do not try and spend coinbases that were mined too recently, the protocol forbids it.
-            if (!excludeImmatureCoinbases || tx.isMature()) {
+            if (!excludeImmatureCoinbases || isTransactionMature(tx)) {
                 for (TransactionOutput output : tx.getOutputs()) {
                     if (output.isAvailableForSpending() && output.isMine(this)) {
                         candidates.add(output);

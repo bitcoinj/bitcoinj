@@ -756,19 +756,6 @@ public class Transaction extends Message {
         return inputs.size() == 1 && inputs.get(0).isCoinBase();
     }
 
-    /**
-     * A transaction is mature if it is either a building coinbase tx that is as deep or deeper than the required coinbase depth, or a non-coinbase tx.
-     */
-    public boolean isMature() {
-        if (!isCoinBase())
-            return true;
-
-        if (getConfidence().getConfidenceType() != ConfidenceType.BUILDING)
-            return false;
-
-        return getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
-    }
-
     @Override
     public String toString() {
         MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
