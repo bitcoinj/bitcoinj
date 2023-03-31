@@ -36,16 +36,13 @@ public class MemoryBlockStore implements BlockStore {
         }
     };
     private StoredBlock chainHead;
-    private NetworkParameters params;
 
     public MemoryBlockStore(NetworkParameters params) {
-        // Insert the genesis block.
         try {
             Block genesisHeader = params.getGenesisBlock().cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
             put(storedGenesis);
             setChainHead(storedGenesis);
-            this.params = params;
         } catch (BlockStoreException | VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -79,10 +76,5 @@ public class MemoryBlockStore implements BlockStore {
     @Override
     public void close() {
         blockMap = null;
-    }
-
-    @Override
-    public NetworkParameters getParams() {
-        return params;
     }
 }
