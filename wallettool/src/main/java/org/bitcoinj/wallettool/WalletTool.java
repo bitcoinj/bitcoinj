@@ -986,7 +986,7 @@ public class WalletTool implements Callable<Integer> {
             reset();
         }
         if (mode == ValidationMode.SPV) {
-            store = new SPVBlockStore(params, chainFile);
+            store = new SPVBlockStore(params.getGenesisBlock(), chainFile);
             if (reset) {
                 try {
                     CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,

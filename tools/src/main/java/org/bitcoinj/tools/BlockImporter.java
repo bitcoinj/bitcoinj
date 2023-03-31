@@ -52,7 +52,7 @@ public class BlockImporter {
                 break;
             case "SPV":
                 checkArgument(args.length == 3);
-                store = new SPVBlockStore(params, new File(args[2]));
+                store = new SPVBlockStore(params.getGenesisBlock(), new File(args[2]));
                 break;
             default:
                 System.err.println("Unknown store " + args[1]);
