@@ -629,42 +629,6 @@ public class Transaction extends Message {
         cachedWTxId = null;
     }
 
-    protected static int calcLength(byte[] buf, int offset) {
-        VarInt varint;
-        // jump past version (uint32)
-        int cursor = offset + 4;
-
-        int i;
-        int scriptLen;
-
-        varint = VarInt.ofBytes(buf, cursor);
-        int txInCount = varint.intValue();
-        cursor += varint.getOriginalSizeInBytes();
-
-        for (i = 0; i < txInCount; i++) {
-            // 36 = length of previous_outpoint
-            cursor += 36;
-            varint = VarInt.ofBytes(buf, cursor);
-            scriptLen = varint.intValue();
-            // 4 = length of sequence field (unint32)
-            cursor += scriptLen + 4 + varint.getOriginalSizeInBytes();
-        }
-
-        varint = VarInt.ofBytes(buf, cursor);
-        int txOutCount = varint.intValue();
-        cursor += varint.getOriginalSizeInBytes();
-
-        for (i = 0; i < txOutCount; i++) {
-            // 8 = length of tx value field (uint64)
-            cursor += 8;
-            varint = VarInt.ofBytes(buf, cursor);
-            scriptLen = varint.intValue();
-            cursor += scriptLen + varint.getOriginalSizeInBytes();
-        }
-        // 4 = length of lock_time field (uint32)
-        return cursor - offset + 4;
-    }
-
     /**
      * Deserialize according to <a href="https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki">BIP144</a> or
      * the <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if the
