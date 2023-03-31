@@ -727,6 +727,11 @@ public class WalletTool implements Callable<Integer> {
         try {
             setup();
             peerGroup.start();
+        } catch (BlockStoreException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
             // network. Once propagation is complete and we heard the transaction back from all our peers, it will
             // be committed to the wallet.
@@ -735,7 +740,7 @@ public class WalletTool implements Callable<Integer> {
             List<Peer> peerList = peerGroup.getConnectedPeers();
             if (peerList.size() == 1)
                 peerList.get(0).sendPing().get();
-        } catch (BlockStoreException | ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
