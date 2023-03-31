@@ -5282,8 +5282,8 @@ public class Wallet extends BaseTaggableObject
                 result.updatedOutputValues = new ArrayList<>();
             }
             for (int i = 0; i < req.tx.getOutputs().size(); i++) {
-                TransactionOutput output = new TransactionOutput(tx,
-                        ByteBuffer.wrap(req.tx.getOutputs().get(i).bitcoinSerialize()));
+                TransactionOutput output = TransactionOutput.read(
+                        ByteBuffer.wrap(req.tx.getOutputs().get(i).bitcoinSerialize()), tx);
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
                     output.setValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));

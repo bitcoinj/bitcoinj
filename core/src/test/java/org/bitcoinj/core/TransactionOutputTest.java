@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
@@ -31,15 +33,21 @@ import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(JUnitParamsRunner.class)
 public class TransactionOutputTest extends TestWithWallet {
 
     @Before
@@ -116,5 +124,34 @@ public class TransactionOutputTest extends TestWithWallet {
         TransactionOutput p2wpkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2WPKH,
                 BitcoinNetwork.TESTNET));
         p2wpkh.toString();
+    }
+
+    @Test
+    @Parameters(method = "randomOutputs")
+    public void write(TransactionOutput output) {
+        ByteBuffer buf = ByteBuffer.allocate(output.getMessageSize());
+        output.write(buf);
+        assertFalse(buf.hasRemaining());
+    }
+
+    private Iterator<TransactionOutput> randomOutputs() {
+        Random random = new Random();
+        Transaction parent = new Transaction();
+        return Stream.generate(() -> {
+            byte[] randomBytes = new byte[100];
+            random.nextBytes(randomBytes);
+            return new TransactionOutput(parent, Coin.ofSat(Math.abs(random.nextLong())), randomBytes);
+        }).limit(10).iterator();
+    }
+
+    @Test
+    public void negativeValue_minusOne() {
+        // -1 is allowed because it is used as a sentinel value
+        new TransactionOutput(new Transaction(), Coin.ofSat(-1), new byte[0]);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void negativeValue() {
+        new TransactionOutput(new Transaction(), Coin.ofSat(-2), new byte[0]);
     }
 }
