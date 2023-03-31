@@ -100,7 +100,7 @@ public class TransactionInput extends Message {
         Objects.requireNonNull(parentTransaction);
         checkArgument(scriptBytes.length >= 2 && scriptBytes.length <= 100, () ->
                 "script must be between 2 and 100 bytes: " + scriptBytes.length);
-        return new TransactionInput(parentTransaction, scriptBytes, TransactionOutPoint.unconnected());
+        return new TransactionInput(parentTransaction, scriptBytes, TransactionOutPoint.UNCONNECTED);
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,

@@ -47,6 +47,10 @@ public class TransactionOutPoint extends Message {
 
     static final int MESSAGE_LENGTH = 36;
 
+    /** Special outpoint that normally marks a coinbase input. It's also used as a test dummy. */
+    public static final TransactionOutPoint UNCONNECTED =
+            new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
+
     /** Hash of the transaction to which we refer. */
     private Sha256Hash hash;
     /** Which output of that transaction we are talking about. */
@@ -57,15 +61,6 @@ public class TransactionOutPoint extends Message {
 
     // The connected output.
     TransactionOutput connectedOutput;
-
-    /**
-     * Construct the special outpoint that normally marks a coinbase input. It's also used as a test dummy.
-     *
-     * @return unconnected outpoint
-     */
-    public static TransactionOutPoint unconnected() {
-        return new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
-    }
 
     public TransactionOutPoint(long index, Transaction fromTx) {
         super();
