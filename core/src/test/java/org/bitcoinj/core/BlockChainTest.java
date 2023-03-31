@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
@@ -110,7 +111,7 @@ public class BlockChainTest {
         resetBlockStore();
         chain = new BlockChain(UNITTEST, wallet, blockStore);
 
-        coinbaseTo = wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, UNITTEST.network());
+        coinbaseTo = wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
     }
 
     @Test
@@ -144,9 +145,9 @@ public class BlockChainTest {
     public void receiveCoins() throws Exception {
         int height = 1;
         // Quick check that we can actually receive coins.
-        Transaction tx1 = createFakeTx(UNITTEST,
+        Transaction tx1 = createFakeTx(TESTNET,
                                        COIN,
-                                       wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, UNITTEST.network()));
+                                       wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Block b1 = createFakeBlock(blockStore, height, tx1).block;
         chain.add(b1);
         assertTrue(wallet.getBalance().signum() > 0);
@@ -309,13 +310,13 @@ public class BlockChainTest {
     public void intraBlockDependencies() throws Exception {
         // Covers issue 166 in which transactions that depend on each other inside a block were not always being
         // considered relevant.
-        Address somebodyElse = new ECKey().toAddress(ScriptType.P2PKH, UNITTEST.network());
+        Address somebodyElse = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(somebodyElse);
         ECKey key = wallet.freshReceiveKey();
-        Address addr = key.toAddress(ScriptType.P2PKH, UNITTEST.network());
+        Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
-        Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, COIN, addr);
-        Transaction t2 = new Transaction(UNITTEST);
+        Transaction t1 = FakeTxBuilder.createFakeTx(TESTNET, COIN, addr);
+        Transaction t2 = new Transaction(TESTNET);
         t2.addInput(t1.getOutputs().get(0));
         t2.addOutput(valueOf(2, 0), somebodyElse);
         b1.addTransaction(t1);
@@ -330,12 +331,12 @@ public class BlockChainTest {
         // Check that a coinbase transaction is only available to spend after NetworkParameters.getSpendableCoinbaseDepth() blocks.
 
         // Create a second wallet to receive the coinbase spend.
-        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
+        Wallet wallet2 = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         ECKey receiveKey = wallet2.freshReceiveKey();
         int height = 1;
         chain.addWallet(wallet2);
 
-        Address addressToSendTo = receiveKey.toAddress(ScriptType.P2PKH, UNITTEST.network());
+        Address addressToSendTo = receiveKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
         Block b1 = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
@@ -359,7 +360,7 @@ public class BlockChainTest {
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
         for (int i = 0; i < UNITTEST.getSpendableCoinbaseDepth() - 2; i++) {
             // Non relevant tx - just for fake block creation.
-            Transaction tx2 = createFakeTx(UNITTEST, COIN, new ECKey().toAddress(ScriptType.P2PKH, UNITTEST.network()));
+            Transaction tx2 = createFakeTx(TESTNET, COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
 
             Block b2 = createFakeBlock(blockStore, height++, tx2).block;
             chain.add(b2);
@@ -380,7 +381,7 @@ public class BlockChainTest {
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
-        Transaction tx3 = createFakeTx(UNITTEST, COIN, new ECKey().toAddress(ScriptType.P2PKH, UNITTEST.network()));
+        Transaction tx3 = createFakeTx(TESTNET, COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
         Block b3 = createFakeBlock(blockStore, height++, tx3).block;
         chain.add(b3);
 
