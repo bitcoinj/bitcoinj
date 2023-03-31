@@ -322,8 +322,7 @@ public class Transaction extends Message {
     /**
      * Returns if tx witnesses are allowed based on the protocol version
      */
-    private boolean allowWitness() {
-        int protocolVersion = serializer.getProtocolVersion();
+    private static boolean allowWitness(int protocolVersion) {
         return (protocolVersion & SERIALIZE_TRANSACTION_NO_WITNESS) == 0
                 && protocolVersion >= WITNESS_VERSION.getBitcoinProtocolVersion();
     }
@@ -636,7 +635,7 @@ public class Transaction extends Message {
      */
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        boolean allowWitness = allowWitness();
+        boolean allowWitness = allowWitness(serializer.getProtocolVersion());
 
 
         // version
@@ -1493,7 +1492,7 @@ public class Transaction extends Message {
 
     @Override
     public int getMessageSize() {
-        boolean useSegwit = hasWitnesses() && allowWitness();
+        boolean useSegwit = hasWitnesses() && allowWitness(serializer.getProtocolVersion());
         int size = 4; // version
         if (useSegwit)
             size += 2; // marker, flag
@@ -1512,7 +1511,7 @@ public class Transaction extends Message {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        boolean useSegwit = hasWitnesses() && allowWitness();
+        boolean useSegwit = hasWitnesses() && allowWitness(serializer.getProtocolVersion());
         bitcoinSerializeToStream(stream, useSegwit);
     }
 
