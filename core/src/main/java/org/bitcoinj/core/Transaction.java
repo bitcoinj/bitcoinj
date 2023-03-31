@@ -825,7 +825,7 @@ public class Transaction extends Message {
             s.append(", wtxid ").append(wTxId);
         s.append('\n');
         int weight = getWeight();
-        int size = bitcoinSerialize().length;
+        int size = getMessageSize();
         int vsize = getVsize();
         s.append(indent).append("weight: ").append(weight).append(" wu, ");
         if (size != vsize)
