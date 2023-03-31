@@ -21,6 +21,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.math.IntMath;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
@@ -771,16 +772,27 @@ public class Transaction extends Message {
     @Override
     public String toString() {
         MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(toString(null, null));
+        helper.addValue(toString(null, params.network()));
         return helper.toString();
     }
 
     /**
      * A human-readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
-     * @param chain If provided, will be used to estimate lock times (if set). Can be null.
+     * @param chain if provided, will be used to estimate lock times (if set)
+     * @param network if provided, network for output scripts converted to addresses
      */
-    public String toString(@Nullable AbstractBlockChain chain, @Nullable CharSequence nullableIndent) {
-        final CharSequence indent = nullableIndent != null ? nullableIndent : "";
+    public String toString(@Nullable AbstractBlockChain chain, @Nullable Network network) {
+        return toString(chain, network, "");
+    }
+
+    /**
+     * A human-readable version of the transaction useful for debugging. The format is not guaranteed to be stable.
+     * @param chain if provided, will be used to estimate lock times (if set)
+     * @param network if provided, network for output scripts converted to addresses
+     * @param indent characters that will be prepended to each line of the output
+     */
+    public String toString(@Nullable AbstractBlockChain chain, @Nullable Network network, CharSequence indent) {
+        Objects.requireNonNull(indent);
         StringBuilder s = new StringBuilder();
         Sha256Hash txId = getTxId(), wTxId = getWTxId();
         s.append(indent).append(txId);
@@ -845,10 +857,13 @@ public class Transaction extends Message {
                     if (connectedOutput != null) {
                         Script scriptPubKey = connectedOutput.getScriptPubKey();
                         ScriptType scriptType = scriptPubKey.getScriptType();
-                        if (scriptType != null)
-                            s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params.network()));
-                        else
+                        if (scriptType != null) {
+                            s.append(scriptType);
+                            if (network != null)
+                                s.append(" addr:").append(scriptPubKey.getToAddress(network));
+                        } else {
                             s.append("unknown script type");
+                        }
                     } else {
                         s.append("unconnected");
                     }
@@ -881,10 +896,13 @@ public class Transaction extends Message {
                 s.append('\n');
                 s.append(indent).append("        ");
                 ScriptType scriptType = scriptPubKey.getScriptType();
-                if (scriptType != null)
-                    s.append(scriptType).append(" addr:").append(scriptPubKey.getToAddress(params.network()));
-                else
+                if (scriptType != null) {
+                    s.append(scriptType);
+                    if (network != null)
+                        s.append(" addr:").append(scriptPubKey.getToAddress(network));
+                } else {
                     s.append("unknown script type");
+                }
                 if (!out.isAvailableForSpending()) {
                     s.append("  spent");
                     final TransactionInput spentBy = out.getSpentBy();

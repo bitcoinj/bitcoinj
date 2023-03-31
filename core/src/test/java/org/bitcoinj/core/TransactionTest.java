@@ -463,6 +463,13 @@ public class TransactionTest {
     }
 
     @Test
+    public void testToString() {
+        int lengthWithAddresses = tx.toString(null, BitcoinNetwork.TESTNET).length();
+        int lengthWithoutAddresses = tx.toString(null, null).length();
+        assertTrue(lengthWithAddresses > lengthWithoutAddresses);
+    }
+
+    @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         TransactionInput input = tx.getInput(0);
@@ -480,7 +487,7 @@ public class TransactionTest {
 
         replay(mockBlockChain);
 
-        String str = tx.toString(mockBlockChain, null);
+        String str = tx.toString(mockBlockChain, BitcoinNetwork.TESTNET);
 
         assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
         assertEquals(str.contains("estimated to be reached at"), true);
