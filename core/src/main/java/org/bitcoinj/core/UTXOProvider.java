@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.store.FullPrunedBlockStore;
 
@@ -44,8 +45,8 @@ public interface UTXOProvider {
     int getChainHeadHeight() throws UTXOProviderException;
 
     /**
-     * The {@link NetworkParameters} of this provider.
-     * @return The network parameters.
+     * The {@link Network} of this provider.
+     * @return the network
      */
-    NetworkParameters getParams();
+    Network network();
 }
