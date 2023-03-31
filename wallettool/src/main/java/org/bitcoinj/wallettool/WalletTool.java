@@ -700,27 +700,31 @@ public class WalletTool implements Callable<Integer> {
 
         try {
             wallet.completeTx(req);
+        } catch (InsufficientMoneyException e) {
+            System.err.println("Insufficient funds: have " + balance.toFriendlyString());
+        }
 
-            try {
-                if (lockTimeStr != null) {
-                    tx.setLockTime(parseLockTimeStr(lockTimeStr));
-                    // For lock times to take effect, at least one output must have a non-final sequence number.
-                    tx.getInputs().get(0).setSequenceNumber(0);
-                    // And because we modified the transaction after it was completed, we must re-sign the inputs.
-                    wallet.signTransaction(req);
-                }
-            } catch (ParseException e) {
-                System.err.println("Could not understand --locktime of " + lockTimeStr);
-                return;
-            } catch (ScriptException e) {
-                throw new RuntimeException(e);
+        try {
+            if (lockTimeStr != null) {
+                tx.setLockTime(parseLockTimeStr(lockTimeStr));
+                // For lock times to take effect, at least one output must have a non-final sequence number.
+                tx.getInputs().get(0).setSequenceNumber(0);
+                // And because we modified the transaction after it was completed, we must re-sign the inputs.
+                wallet.signTransaction(req);
             }
-            System.out.println(tx.getTxId());
-            if (offline) {
-                wallet.commitTx(tx);
-                return;
-            }
+        } catch (ParseException e) {
+            System.err.println("Could not understand --locktime of " + lockTimeStr);
+            return;
+        } catch (ScriptException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(tx.getTxId());
+        if (offline) {
+            wallet.commitTx(tx);
+            return;
+        }
 
+        try {
             setup();
             peerGroup.start();
             // Wait for peers to connect, the tx to be sent to one of them and for it to be propagated across the
@@ -733,8 +737,6 @@ public class WalletTool implements Callable<Integer> {
                 peerList.get(0).sendPing().get();
         } catch (BlockStoreException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
-        } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + balance.toFriendlyString());
         }
     }
 
