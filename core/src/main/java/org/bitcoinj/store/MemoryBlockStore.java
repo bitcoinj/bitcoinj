@@ -17,7 +17,6 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
@@ -37,9 +36,9 @@ public class MemoryBlockStore implements BlockStore {
     };
     private StoredBlock chainHead;
 
-    public MemoryBlockStore(NetworkParameters params) {
+    public MemoryBlockStore(Block genesisBlock) {
         try {
-            Block genesisHeader = params.getGenesisBlock().cloneAsHeader();
+            Block genesisHeader = genesisBlock.cloneAsHeader();
             StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
             put(storedGenesis);
             setChainHead(storedGenesis);

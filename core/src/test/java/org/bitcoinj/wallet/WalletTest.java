@@ -153,7 +153,7 @@ public class WalletTest extends TestWithWallet {
 
     private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
         wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
-        blockStore = new MemoryBlockStore(TESTNET);
+        blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
         chain = new BlockChain(TESTNET, wallet, blockStore);
 
         List<DeterministicKey> followingKeys = new ArrayList<>();
@@ -3297,7 +3297,7 @@ public class WalletTest extends TestWithWallet {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(TESTNET.network());
         Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET, serialized);
-        blockStore = new MemoryBlockStore(TESTNET);
+        blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
         chain = new BlockChain(TESTNET, wallet, blockStore);
 
         final DeterministicKeyChain keyChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();

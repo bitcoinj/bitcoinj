@@ -39,7 +39,7 @@ public class FetchTransactions {
         final Network network = BitcoinNetwork.TESTNET;
         final NetworkParameters params = NetworkParameters.of(network);
 
-        BlockStore blockStore = new MemoryBlockStore(params);
+        BlockStore blockStore = new MemoryBlockStore(params.getGenesisBlock());
         BlockChain chain = new BlockChain(params, blockStore);
         PeerGroup peerGroup = new PeerGroup(network, chain);
         peerGroup.start();
