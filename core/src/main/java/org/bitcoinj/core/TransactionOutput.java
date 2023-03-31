@@ -406,7 +406,7 @@ public class TransactionOutput extends Message {
         return new TransactionOutput(null, Coin.valueOf(value), Arrays.copyOf(scriptBytes, scriptBytes.length));
     }
 
-    public final void setParent(@Nullable Transaction parent) {
+    protected final void setParent(@Nullable Transaction parent) {
         if (this.parent != null && this.parent != parent && parent != null) {
             // After old parent is unlinked it won't be able to receive notice if this child
             // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds

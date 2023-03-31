@@ -513,7 +513,7 @@ public class TransactionInput extends Message {
         return DefaultRiskAnalysis.isInputStandard(this);
     }
 
-    public final void setParent(@Nullable Transaction parent) {
+    protected final void setParent(@Nullable Transaction parent) {
         if (this.parent != null && this.parent != parent && parent != null) {
             // After old parent is unlinked it won't be able to receive notice if this child
             // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
