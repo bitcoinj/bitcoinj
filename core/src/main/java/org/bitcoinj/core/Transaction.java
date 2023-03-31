@@ -912,14 +912,6 @@ public class Transaction extends Message {
     }
 
     /**
-     * Serializes the transaction into the Bitcoin network format and encodes it as hex string.
-     * @return raw transaction in hex format
-     */
-    public String toHexString() {
-        return ByteUtils.formatHex(bitcoinSerialize());
-    }
-
-    /**
      * Removes all the inputs from this transaction.
      * Note that this also invalidates the length attribute
      */

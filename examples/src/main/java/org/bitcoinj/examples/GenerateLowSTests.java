@@ -113,7 +113,7 @@ public class GenerateLowSTests {
             + inputTransaction.getTxId() + "\", "
             + output.getIndex() + ", \""
             + scriptToString(output.getScriptPubKey()) + "\"]],\n"
-            + "\"" + proposedTransaction.partialTx.toHexString() + "\", \""
+            + "\"" + ByteUtils.formatHex(proposedTransaction.partialTx.bitcoinSerialize()) + "\", \""
             + Script.VerifyFlag.P2SH.name() + "," + Script.VerifyFlag.LOW_S.name() + "\"],");
 
         final BigInteger highS = HIGH_S_DIFFERENCE.subtract(signature.s);
@@ -128,7 +128,7 @@ public class GenerateLowSTests {
             + inputTransaction.getTxId() + "\", "
             + output.getIndex() + ", \""
             + scriptToString(output.getScriptPubKey()) + "\"]],\n"
-            + "\"" + proposedTransaction.partialTx.toHexString() + "\", \""
+            + "\"" + ByteUtils.formatHex(proposedTransaction.partialTx.bitcoinSerialize()) + "\", \""
             + Script.VerifyFlag.P2SH.name() + "\"],");
 
         // Lastly a conventional high-S transaction with the LOW_S flag, for the tx_invalid.json set
@@ -137,7 +137,7 @@ public class GenerateLowSTests {
             + inputTransaction.getTxId() + "\", "
             + output.getIndex() + ", \""
             + scriptToString(output.getScriptPubKey()) + "\"]],\n"
-            + "\"" + proposedTransaction.partialTx.toHexString() + "\", \""
+            + "\"" + ByteUtils.formatHex(proposedTransaction.partialTx.bitcoinSerialize()) + "\", \""
             + Script.VerifyFlag.P2SH.name() + "," + Script.VerifyFlag.LOW_S.name() + "\"],");
     }
 

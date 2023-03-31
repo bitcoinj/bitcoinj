@@ -26,6 +26,7 @@ import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.StreamUtils;
@@ -2625,9 +2626,9 @@ public class Wallet extends BaseTaggableObject
                     // so the exact nature of the mutation can be examined.
                     log.warn("Saw two pending transactions double spend each other");
                     log.warn("  offending input is input {}", tx.getInputs().indexOf(input));
-                    log.warn("{}: {}", tx.getTxId(), tx.toHexString());
+                    log.warn("{}: {}", tx.getTxId(), ByteUtils.formatHex(tx.bitcoinSerialize()));
                     Transaction other = output.getSpentBy().getParentTransaction();
-                    log.warn("{}: {}", other.getTxId(), other.toHexString());
+                    log.warn("{}: {}", other.getTxId(), ByteUtils.formatHex(other.bitcoinSerialize()));
                 }
             } else if (result == TransactionInput.ConnectionResult.SUCCESS) {
                 // Otherwise we saw a transaction spend our coins, but we didn't try and spend them ourselves yet.
