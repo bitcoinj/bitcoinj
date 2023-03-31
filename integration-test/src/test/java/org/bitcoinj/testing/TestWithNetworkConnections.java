@@ -100,7 +100,7 @@ public class TestWithNetworkConnections {
     }
 
     public void setUp() throws Exception {
-        setUp(new MemoryBlockStore(UNITTEST));
+        setUp(new MemoryBlockStore(UNITTEST.getGenesisBlock()));
     }
     
     public void setUp(BlockStore blockStore) throws Exception {

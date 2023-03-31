@@ -41,7 +41,7 @@ public class RefreshWallet {
         // Set up the components and link them together.
         final Network network = BitcoinNetwork.TESTNET;
         final NetworkParameters params = NetworkParameters.of(network);
-        BlockStore blockStore = new MemoryBlockStore(params);
+        BlockStore blockStore = new MemoryBlockStore(params.getGenesisBlock());
         BlockChain chain = new BlockChain(params, wallet, blockStore);
 
         final PeerGroup peerGroup = new PeerGroup(network, chain);

@@ -83,7 +83,7 @@ public class BlockChainTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(UNITTEST);
+        blockStore = new MemoryBlockStore(UNITTEST.getGenesisBlock());
     }
 
     @Before
@@ -91,7 +91,7 @@ public class BlockChainTest {
         BriefLogFormatter.initVerbose();
         TimeUtils.setMockClock(); // Use mock clock
         Context.propagate(new Context(100, Coin.ZERO, false, false));
-        testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET));
+        testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET.getGenesisBlock()));
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         NetworkParameters params = TESTNET;
         wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(ScriptType.P2PKH).build()) {
@@ -255,7 +255,7 @@ public class BlockChainTest {
 
     private void testDeprecatedBlockVersion(final long deprecatedVersion, final long newVersion)
             throws Exception {
-        final BlockStore versionBlockStore = new MemoryBlockStore(UNITTEST);
+        final BlockStore versionBlockStore = new MemoryBlockStore(UNITTEST.getGenesisBlock());
         final BlockChain versionChain = new BlockChain(UNITTEST, versionBlockStore);
 
         // Build a historical chain of version 3 blocks
@@ -436,7 +436,7 @@ public class BlockChainTest {
 
     @Test
     public void estimatedBlockTime() throws Exception {
-        BlockChain prod = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET));
+        BlockChain prod = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
         Instant t = prod.estimateBlockTimeInstant(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
         Instant expected = Instant.from(DateTimeFormatter.ISO_INSTANT.parse("2012-10-23T15:35:05Z"));

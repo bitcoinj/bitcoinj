@@ -107,7 +107,7 @@ public class VersionTallyTest {
     @Test
     public void testInitialize() throws BlockStoreException {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        final BlockStore blockStore = new MemoryBlockStore(TESTNET);
+        final BlockStore blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
         final BlockChain chain = new BlockChain(TESTNET, blockStore);
 
         // Build a historical chain of version 2 blocks

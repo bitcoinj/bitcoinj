@@ -100,7 +100,7 @@ public class BuildCheckpoints implements Callable<Integer> {
 
         // Configure bitcoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
-        final BlockStore store = new MemoryBlockStore(params);
+        final BlockStore store = new MemoryBlockStore(params.getGenesisBlock());
         final BlockChain chain = new BlockChain(params, store);
         final PeerGroup peerGroup = new PeerGroup(net, chain);
 
