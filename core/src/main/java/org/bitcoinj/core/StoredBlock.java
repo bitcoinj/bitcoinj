@@ -141,14 +141,14 @@ public class StoredBlock {
     }
 
     /** De-serializes the stored block from a custom packed format. Used by {@link CheckpointManager}. */
-    public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
+    public static StoredBlock deserializeCompact(MessageSerializer serializer, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = ByteUtils.bytesToBigInteger(chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
         byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
         buffer.get(header, 0, Block.HEADER_SIZE);
-        return new StoredBlock(params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(header)), chainWork, height);
+        return new StoredBlock(serializer.makeBlock(ByteBuffer.wrap(header)), chainWork, height);
     }
 
     @Override
