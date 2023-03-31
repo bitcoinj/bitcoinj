@@ -824,7 +824,7 @@ public class PeerTest extends TestWithNetworkConnections {
         });
         connect();
         Transaction t1 = new Transaction(TESTNET);
-        t1.addInput(new TransactionInput(t1, new byte[]{}));
+        t1.addInput(new TransactionInput(t1, new byte[0], TransactionOutPoint.UNCONNECTED));
         t1.addOutput(COIN, new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Transaction t2 = new Transaction(TESTNET);
         t2.addInput(t1.getOutput(0));

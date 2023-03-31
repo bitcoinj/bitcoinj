@@ -253,16 +253,10 @@ public class Block extends Message {
 
     public static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
-        Transaction t = createGenesisTransaction(n, genesisTxInputScriptBytes, FIFTY_COINS, genesisTxScriptPubKeyBytes);
-        genesisBlock.addTransaction(t);
+        Transaction tx = Transaction.coinbase(n, genesisTxInputScriptBytes);
+        tx.addOutput(new TransactionOutput(tx, FIFTY_COINS, genesisTxScriptPubKeyBytes));
+        genesisBlock.addTransaction(tx);
         return genesisBlock;
-    }
-
-    private static Transaction createGenesisTransaction(NetworkParameters n, byte[] inputScriptBytes, Coin amount, byte[] scriptPubKeyBytes) {
-        Transaction t = new Transaction(n);
-        t.addInput(new TransactionInput(t, inputScriptBytes));
-        t.addOutput(new TransactionOutput(t, amount, scriptPubKeyBytes));
-        return t;
     }
 
     // A script containing the difficulty bits and the following message:
@@ -891,7 +885,7 @@ public class Block extends Message {
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
-        coinbase.addInput(new TransactionInput(coinbase,
+        coinbase.addInput(TransactionInput.coinbaseInput(coinbase,
                 inputBuilder.build().getProgram()));
         coinbase.addOutput(new TransactionOutput(coinbase, value,
                 ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));

@@ -92,9 +92,15 @@ public class TransactionInput extends Message {
 
     /**
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
+     *
+     * @param parentTransaction parent transaction
+     * @param scriptBytes       arbitrary bytes in the script
      */
-    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes) {
-        this(parentTransaction, scriptBytes, new TransactionOutPoint(UNCONNECTED, (Transaction) null));
+    public static TransactionInput coinbaseInput(Transaction parentTransaction, byte[] scriptBytes) {
+        Objects.requireNonNull(parentTransaction);
+        checkArgument(scriptBytes.length >= 2 && scriptBytes.length <= 100, () ->
+                "script must be between 2 and 100 bytes: " + scriptBytes.length);
+        return new TransactionInput(parentTransaction, scriptBytes, TransactionOutPoint.UNCONNECTED);
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,

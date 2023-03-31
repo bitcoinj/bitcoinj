@@ -1007,7 +1007,7 @@ public class FullBlockTestGenerator {
         NewBlock b51 = createNextBlock(b44, chainHeadHeight + 16, out15, null);
         {
             Transaction coinbase = new Transaction(params);
-            coinbase.addInput(new TransactionInput(coinbase, new byte[]{(byte) 0xff, 110, 1}));
+            coinbase.addInput(TransactionInput.coinbaseInput(coinbase, new byte[]{(byte) 0xff, 110, 1}));
             coinbase.addOutput(new TransactionOutput(coinbase, SATOSHI, outScriptBytes));
             b51.block.addTransaction(coinbase, false);
         }

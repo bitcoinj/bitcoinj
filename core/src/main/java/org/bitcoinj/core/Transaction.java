@@ -222,6 +222,31 @@ public class Transaction extends Message {
     @Nullable
     private String memo;
 
+    /**
+     * Constructs an incomplete coinbase transaction with a minimal input script and no outputs.
+     *
+     * @param params network to use
+     * @return coinbase transaction
+     */
+    public static Transaction coinbase(NetworkParameters params) {
+        Transaction tx = new Transaction(params);
+        tx.addInput(TransactionInput.coinbaseInput(tx, new byte[2])); // 2 is minimum
+        return tx;
+    }
+
+    /**
+     * Constructs an incomplete coinbase transaction with given bytes for the input script and no outputs.
+     *
+     * @param params            network to use
+     * @param inputScriptBytes  arbitrary bytes for the coinbase input
+     * @return coinbase transaction
+     */
+    public static Transaction coinbase(NetworkParameters params, byte[] inputScriptBytes) {
+        Transaction tx = new Transaction(params);
+        tx.addInput(TransactionInput.coinbaseInput(tx, inputScriptBytes));
+        return tx;
+    }
+
     public Transaction(NetworkParameters params) {
         super(params);
         version = 1;
