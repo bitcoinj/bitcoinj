@@ -107,7 +107,7 @@ public class TransactionTest {
     public void duplicateOutPoint() {
         TransactionInput input = tx.getInput(0);
         input.setScriptBytes(new byte[1]);
-        tx.addInput(input.duplicateDetached());
+        tx.addInput(input);
         tx.verify();
     }
 

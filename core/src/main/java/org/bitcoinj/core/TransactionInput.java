@@ -496,11 +496,6 @@ public class TransactionInput extends Message {
         return getOutpoint().fromTx;
     }
 
-    /** Returns a copy of the input detached from its containing transaction, if need be. */
-    public TransactionInput duplicateDetached() {
-        return new TransactionInput(null, ByteBuffer.wrap(bitcoinSerialize()));
-    }
-
     /**
      * <p>Returns either RuleViolation.NONE if the input is standard, or which rule makes it non-standard if so.
      * The "IsStandard" rules control whether the default Bitcoin Core client blocks relay of a tx / refuses to mine it,
