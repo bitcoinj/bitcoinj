@@ -741,7 +741,7 @@ public class TransactionTest {
             long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : getOutputs().size();
             stream.write(VarInt.of(outputsSize).serialize());
             for (TransactionOutput out : getOutputs())
-                out.bitcoinSerializeToStream(stream);
+                stream.write(out.serialize());
             // script_witnisses
             if (useSegwit) {
                 for (TransactionInput in : getInputs()) {

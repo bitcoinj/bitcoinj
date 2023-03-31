@@ -694,7 +694,7 @@ public class Transaction extends Message {
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = new TransactionOutput(this, payload.slice());
+            TransactionOutput output = TransactionOutput.read(payload.slice(), this);
             outputs.add(output);
             // intentionally read again, due to the slice above
             Buffers.skipBytes(payload, 8); // value
@@ -1529,7 +1529,7 @@ public class Transaction extends Message {
         // txout_count, txouts
         stream.write(VarInt.of(outputs.size()).serialize());
         for (TransactionOutput out : outputs)
-            out.bitcoinSerializeToStream(stream);
+            stream.write(out.serialize());
         // script_witnisses
         if (useSegwit) {
             for (TransactionInput in : inputs) {

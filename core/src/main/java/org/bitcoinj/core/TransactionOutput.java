@@ -35,15 +35,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
@@ -53,7 +51,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class TransactionOutput extends Message {
+public class TransactionOutput {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
 
     @Nullable protected Transaction parent;
@@ -76,15 +74,18 @@ public class TransactionOutput extends Message {
     @Nullable private TransactionInput spentBy;
 
     /**
-     * Deserializes a transaction output message. This is usually part of a transaction message.
+     * Deserialize this transaction input from a given payload.
      *
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @throws ProtocolException
+     * @param payload           payload to deserialize from
+     * @param parentTransaction parent transaction of the input
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    public TransactionOutput(@Nullable Transaction parent, ByteBuffer payload) throws ProtocolException {
-        super(payload);
-        setParent(parent);
-        availableForSpending = true;
+    public static TransactionOutput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
+        Objects.requireNonNull(parentTransaction);
+        Coin value = Coin.valueOf(ByteUtils.readInt64(payload));
+        byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
+        return new TransactionOutput(parentTransaction, value, scriptBytes);
     }
 
     /**
@@ -111,6 +112,7 @@ public class TransactionOutput extends Message {
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), () ->
                 "negative values not allowed");
+        Objects.requireNonNull(scriptBytes);
         this.value = value.value;
         this.scriptBytes = scriptBytes;
         setParent(parent);
@@ -124,29 +126,44 @@ public class TransactionOutput extends Message {
         return scriptPubKey;
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        value = ByteUtils.readInt64(payload);
-        // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
-        // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
-        check(value >= 0 || value == -1, () -> new ProtocolException("value out of range: " + value));
-        scriptBytes = Buffers.readLengthPrefixedBytes(payload);
+    /**
+     * Write this transaction input into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the input doesn't fit the remaining buffer
+     */
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        ByteUtils.writeInt64LE(value, buf);
+        Buffers.writeLengthPrefixedBytes(buf, scriptBytes);
+        return buf;
     }
 
-    @Override
+    /**
+     * Allocates a byte array and writes this transaction output into it.
+     *
+     * @return byte array containing the transaction output
+     */
+    public byte[] serialize() {
+        return write(ByteBuffer.allocate(getMessageSize())).array();
+    }
+
+    /** @deprecated use {@link #serialize()} */
+    @Deprecated
+    public byte[] bitcoinSerialize() {
+        return serialize();
+    }
+
+    /**
+     * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
+     * size can differ from the size of the original payload.
+     *
+     * @return size of the serialized message in bytes
+     */
     public int getMessageSize() {
         int size = 8; // value
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         return size;
-    }
-
-    @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        Objects.requireNonNull(scriptBytes);
-        ByteUtils.writeInt64LE(value, stream);
-        // TODO: Move script serialization into the Script class, where it belongs.
-        stream.write(VarInt.of(scriptBytes.length).serialize());
-        stream.write(scriptBytes);
     }
 
     /**
