@@ -74,14 +74,10 @@ public class FakeTxBuilder {
 
     /** Create a fake coinbase transaction. */
     public static Transaction createFakeCoinbaseTx(final NetworkParameters params) {
-        TransactionOutPoint outpoint = new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
-        TransactionInput input = new TransactionInput(null, new byte[0], outpoint);
-        Transaction tx = new Transaction(params);
-        tx.addInput(input);
+        Transaction tx = Transaction.coinbase(params);
         TransactionOutput outputToMe = new TransactionOutput(tx, Coin.FIFTY_COINS, randomAddress(params));
-        tx.addOutput(outputToMe);
-
         checkState(tx.isCoinBase());
+        tx.addOutput(outputToMe);
         return tx;
     }
 

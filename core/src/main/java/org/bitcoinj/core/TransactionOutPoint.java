@@ -58,18 +58,22 @@ public class TransactionOutPoint extends Message {
     // The connected output.
     TransactionOutput connectedOutput;
 
-    public TransactionOutPoint(long index, @Nullable Transaction fromTx) {
+    /**
+     * Construct the special outpoint that normally marks a coinbase input. It's also used as a test dummy.
+     *
+     * @return unconnected outpoint
+     */
+    public static TransactionOutPoint unconnected() {
+        return new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
+    }
+
+    public TransactionOutPoint(long index, Transaction fromTx) {
         super();
         checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
                 "index out of range: " + index);
         this.index = index;
-        if (fromTx != null) {
-            this.hash = fromTx.getTxId();
-            this.fromTx = fromTx;
-        } else {
-            // This happens when constructing the genesis block.
-            hash = Sha256Hash.ZERO_HASH;
-        }
+        this.hash = fromTx.getTxId();
+        this.fromTx = fromTx;
     }
 
     public TransactionOutPoint(long index, Sha256Hash hash) {

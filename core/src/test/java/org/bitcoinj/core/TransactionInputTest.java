@@ -36,6 +36,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class TransactionInputTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
@@ -104,5 +105,11 @@ public class TransactionInputTest {
 
         assertNull(txInToDisconnect.getOutpoint().fromTx);
         assertNull(txInToDisconnect.getOutpoint().connectedOutput);
+    }
+
+    @Test
+    public void coinbaseInput() {
+        TransactionInput coinbaseInput = TransactionInput.coinbaseInput(new Transaction(TESTNET), new byte[2]);
+        assertTrue(coinbaseInput.isCoinBase());
     }
 }

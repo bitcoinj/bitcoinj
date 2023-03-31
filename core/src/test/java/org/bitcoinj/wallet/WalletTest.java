@@ -751,7 +751,8 @@ public class WalletTest extends TestWithWallet {
         TransactionOutput to = createMock(TransactionOutput.class);
         EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
         EasyMock.expect(to.isMineOrWatched(wallet)).andReturn(true);
-        EasyMock.expect(to.getSpentBy()).andReturn(new TransactionInput(null, new byte[0]));
+        EasyMock.expect(to.getSpentBy()).andReturn(
+                new TransactionInput(null, new byte[0], TransactionOutPoint.unconnected()));
 
         Transaction tx = FakeTxBuilder.createFakeTxWithoutChange(TESTNET, to);
 

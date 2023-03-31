@@ -25,6 +25,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
@@ -90,7 +91,7 @@ public class PaymentSessionTest {
 
         // Send the payment and verify that the correct information is sent.
         // Add a dummy input to tx so it is considered valid.
-        tx.addInput(new TransactionInput(tx, outputToMe.getScriptBytes()));
+        tx.addInput(new TransactionInput(tx, outputToMe.getScriptBytes(), TransactionOutPoint.unconnected()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
         Address refundAddr = serverKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
@@ -130,7 +131,7 @@ public class PaymentSessionTest {
         assertTrue(paymentSession.isExpired());
         // Send the payment and verify that an exception is thrown.
         // Add a dummy input to tx so it is considered valid.
-        tx.addInput(new TransactionInput(tx, outputToMe.getScriptBytes()));
+        tx.addInput(new TransactionInput(tx, outputToMe.getScriptBytes(), TransactionOutPoint.unconnected()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
 
@@ -169,7 +170,7 @@ public class PaymentSessionTest {
 
         // Send the payment and verify that the correct information is sent.
         // Add a dummy input to tx so it is considered valid.
-        tx.addInput(new TransactionInput(tx, outputToMe.getScriptBytes()));
+        tx.addInput(new TransactionInput(tx, outputToMe.getScriptBytes(), TransactionOutPoint.unconnected()));
         ArrayList<Transaction> txns = new ArrayList<>();
         txns.add(tx);
         Address refundAddr = serverKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
