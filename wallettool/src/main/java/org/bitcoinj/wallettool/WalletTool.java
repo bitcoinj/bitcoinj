@@ -731,7 +731,7 @@ public class WalletTool implements Callable<Integer> {
             List<Peer> peerList = peerGroup.getConnectedPeers();
             if (peerList.size() == 1)
                 peerList.get(0).sendPing().get();
-        } catch (BlockStoreException | ExecutionException | InterruptedException | KeyCrypterException e) {
+        } catch (BlockStoreException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         } catch (InsufficientMoneyException e) {
             System.err.println("Insufficient funds: have " + balance.toFriendlyString());
