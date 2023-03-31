@@ -17,6 +17,7 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.MessageSerializer;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.base.Sha256Hash;
@@ -60,7 +61,8 @@ public class SPVBlockStore implements BlockStore {
     public static final String HEADER_MAGIC = "SPVB";
 
     protected volatile MappedByteBuffer buffer;
-    protected final NetworkParameters params;
+    private final Block genesisHeader;
+    private final MessageSerializer serializer;
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
     // faulted in. Unfortunately, in theory practice and theory are the same. In practice they aren't.
@@ -99,8 +101,8 @@ public class SPVBlockStore implements BlockStore {
      * @param file file to use for the block store
      * @throws BlockStoreException if something goes wrong
      */
-    public SPVBlockStore(NetworkParameters params, File file) throws BlockStoreException {
-        this(params, file, DEFAULT_CAPACITY, false);
+    public SPVBlockStore(Block genesisBlock, File file) throws BlockStoreException {
+        this(genesisBlock, file, DEFAULT_CAPACITY, false);
     }
 
     /**
@@ -111,9 +113,10 @@ public class SPVBlockStore implements BlockStore {
      * @param grow wether or not to migrate an existing block store of different capacity
      * @throws BlockStoreException if something goes wrong
      */
-    public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
+    public SPVBlockStore(Block genesisBlock, File file, int capacity, boolean grow) throws BlockStoreException {
         Objects.requireNonNull(file);
-        this.params = Objects.requireNonNull(params);
+        this.genesisHeader = Objects.requireNonNull(genesisBlock).cloneAsHeader();
+        this.serializer = genesisHeader.getParams().getDefaultSerializer(); // TODO: Better way of getting serializer?
         checkArgument(capacity > 0);
         try {
             boolean exists = file.exists();
@@ -159,7 +162,7 @@ public class SPVBlockStore implements BlockStore {
                 if (!new String(header, StandardCharsets.US_ASCII).equals(HEADER_MAGIC))
                     throw new BlockStoreException("Header bytes do not equal " + HEADER_MAGIC);
             } else {
-                initNewStore(params);
+                initNewStore(genesisHeader);
             }
         } catch (Exception e) {
             try {
@@ -171,7 +174,7 @@ public class SPVBlockStore implements BlockStore {
         }
     }
 
-    private void initNewStore(NetworkParameters params) throws Exception {
+    private void initNewStore(Block genesisHeader) throws Exception {
         byte[] header;
         header = HEADER_MAGIC.getBytes(StandardCharsets.US_ASCII);
         buffer.put(header);
@@ -182,8 +185,7 @@ public class SPVBlockStore implements BlockStore {
         } finally {
             lock.unlock();
         }
-        Block genesis = params.getGenesisBlock().cloneAsHeader();
-        StoredBlock storedGenesis = new StoredBlock(genesis, genesis.getWork(), 0);
+        StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
         put(storedGenesis);
         setChainHead(storedGenesis);
     }
@@ -246,7 +248,7 @@ public class SPVBlockStore implements BlockStore {
                 buffer.get(scratch);
                 if (Arrays.equals(scratch, targetHashBytes)) {
                     // Found the target.
-                    StoredBlock storedBlock = StoredBlock.deserializeCompact(params.getDefaultSerializer(), buffer);
+                    StoredBlock storedBlock = StoredBlock.deserializeCompact(serializer, buffer);
                     blockCache.put(hash, storedBlock);
                     return storedBlock;
                 }
@@ -350,7 +352,7 @@ public class SPVBlockStore implements BlockStore {
             }
             // Initialize store again
             ((Buffer) buffer).position(0);
-            initNewStore(params);
+            initNewStore(genesisHeader);
         } finally { lock.unlock(); }
     }
 }

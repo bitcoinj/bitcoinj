@@ -64,7 +64,7 @@ public class SPVBlockStoreTest {
     @Test
     public void basics() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
 
         Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         // Check the first block in a new store is the genesis block.
@@ -79,7 +79,7 @@ public class SPVBlockStoreTest {
         store.close();
 
         // Check we can get it back out again if we rebuild the store object.
-        store = new SPVBlockStore(TESTNET, blockStoreFile);
+        store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
         StoredBlock b2 = store.get(b1.getHeader().getHash());
         assertEquals(b1, b2);
         // Check the chain head was stored correctly also.
@@ -90,29 +90,29 @@ public class SPVBlockStoreTest {
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_onSameFile() throws Exception {
-        new SPVBlockStore(TESTNET, blockStoreFile);
-        new SPVBlockStore(TESTNET, blockStoreFile);
+        new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
+        new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
     }
 
     @Test
     public void twoStores_butSequentially() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
         store.close();
-        store = new SPVBlockStore(TESTNET, blockStoreFile);
+        store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
     }
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_sequentially_butMismatchingCapacity() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, false);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile, 10, false);
         store.close();
-        store = new SPVBlockStore(TESTNET, blockStoreFile, 20, false);
+        store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile, 20, false);
     }
 
     @Test
     public void twoStores_sequentially_grow() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile, 10, true);
         final StoredBlock block0 = store.getChainHead();
         final StoredBlock block1 = block0.build(block0.getHeader().createNextBlock(to).cloneAsHeader());
         store.put(block1);
@@ -121,7 +121,7 @@ public class SPVBlockStoreTest {
         store.setChainHead(block2);
         store.close();
 
-        store = new SPVBlockStore(TESTNET, blockStoreFile, 20, true);
+        store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile, 20, true);
         final StoredBlock read2 = store.getChainHead();
         assertEquals(block2, read2);
         final StoredBlock read1 = read2.getPrev(store);
@@ -134,9 +134,9 @@ public class SPVBlockStoreTest {
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_sequentially_shrink() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 20, true);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile, 20, true);
         store.close();
-        store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
+        store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile, 10, true);
     }
 
     @Test
@@ -145,7 +145,7 @@ public class SPVBlockStoreTest {
         // us.
         final int ITERATIONS = 100000;
         final Duration THRESHOLD = Duration.ofSeconds(5);
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
         Instant start = TimeUtils.currentTime();
         for (int i = 0; i < ITERATIONS; i++) {
             // Using i as the nonce so that the block hashes are different.
@@ -164,7 +164,7 @@ public class SPVBlockStoreTest {
     @Test
     public void clear() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
 
         // Build a new block.
         Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
@@ -181,7 +181,7 @@ public class SPVBlockStoreTest {
 
     @Test
     public void oneStoreDelete() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        SPVBlockStore store = new SPVBlockStore(TESTNET.getGenesisBlock(), blockStoreFile);
         store.close();
         boolean deleted = blockStoreFile.delete();
         if (!PlatformUtils.isWindows()) {
