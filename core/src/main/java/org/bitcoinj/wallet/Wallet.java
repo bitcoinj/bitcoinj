@@ -1329,7 +1329,7 @@ public class Wallet extends BaseTaggableObject
                         byte[] pubkeyHash = ScriptPattern.extractHashFromP2PKH(script);
                         keyChainGroup.markPubKeyHashAsUsed(pubkeyHash);
                     } else if (ScriptPattern.isP2SH(script)) {
-                        LegacyAddress a = LegacyAddress.fromScriptHash(tx.getParams().network(),
+                        LegacyAddress a = LegacyAddress.fromScriptHash(network(),
                                 ScriptPattern.extractHashFromP2SH(script));
                         keyChainGroup.markP2SHAddressAsUsed(a);
                     } else if (ScriptPattern.isP2WH(script)) {
@@ -2019,7 +2019,7 @@ public class Wallet extends BaseTaggableObject
 
                 // Clone transaction to avoid multiple wallets pointing to the same transaction. This can happen when
                 // two wallets depend on the same transaction.
-                Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx.bitcoinSerialize()));
+                Transaction cloneTx = params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx.bitcoinSerialize()));
                 cloneTx.setPurpose(tx.getPurpose());
                 Optional<Instant> updateTime = tx.updateTime();
                 if (updateTime.isPresent())
@@ -2042,7 +2042,7 @@ public class Wallet extends BaseTaggableObject
 
             // Clone transaction to avoid multiple wallets pointing to the same transaction. This can happen when
             // two wallets depend on the same transaction.
-            Transaction cloneTx = tx.getParams().getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx.bitcoinSerialize()));
+            Transaction cloneTx = params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx.bitcoinSerialize()));
             cloneTx.setPurpose(tx.getPurpose());
             Optional<Instant> updateTime = tx.updateTime();
             if (updateTime.isPresent())

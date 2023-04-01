@@ -224,7 +224,7 @@ public class SendRequest {
         // TODO spend another confirmed output of own wallet if needed
         Objects.requireNonNull(outputToSpend, "Can't find adequately sized output that spends to us");
 
-        final Transaction tx = new Transaction(parentTransaction.getParams());
+        final Transaction tx = new Transaction(wallet.getParams());
         tx.addInput(outputToSpend);
         tx.addOutput(outputToSpend.getValue().subtract(feeRaise), wallet.freshAddress(KeyPurpose.CHANGE));
         tx.setPurpose(Transaction.Purpose.RAISE_FEE);
