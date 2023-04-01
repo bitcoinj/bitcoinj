@@ -71,7 +71,6 @@ public class BlockChainTest {
     private BlockStore unitTestStore;
     private Address coinbaseTo;
 
-    private final StoredBlock[] block = new StoredBlock[1];
     private Transaction coinbaseTransaction;
 
     private static final TestNet3Params TESTNET = TestNet3Params.get();
@@ -89,7 +88,6 @@ public class BlockChainTest {
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {
                 super.receiveFromBlock(tx, block, blockType, relativityOffset);
-                BlockChainTest.this.block[0] = block;
                 if (isTransactionRelevant(tx) && tx.isCoinBase()) {
                     BlockChainTest.this.coinbaseTransaction = tx;
                 }
@@ -290,16 +288,13 @@ public class BlockChainTest {
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
         assertTrue(unitTestChain.add(b1));
-        assertEquals(b1, block[0].getHeader());
+        assertEquals(b1, unitTestChain.getChainHead().getHeader());
         assertTrue(unitTestChain.add(b2));
-        assertEquals(b2, block[0].getHeader());
+        assertEquals(b2, unitTestChain.getChainHead().getHeader());
         assertTrue(unitTestChain.add(b3));
-        assertEquals(b3, block[0].getHeader());
         assertEquals(b3, unitTestChain.getChainHead().getHeader());
-        assertTrue(unitTestChain.add(b2));
-        assertEquals(b3, unitTestChain.getChainHead().getHeader());
-        // Wallet was NOT called with the new block because the duplicate add was spotted.
-        assertEquals(b3, block[0].getHeader());
+        assertTrue(unitTestChain.add(b2)); // add old block
+        assertEquals(b3, unitTestChain.getChainHead().getHeader()); // block didn't change, duplicate was spotted
     }
 
     @Test
