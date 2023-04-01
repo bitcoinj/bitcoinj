@@ -684,8 +684,8 @@ public class Block extends Message {
         checkTransactions(height, flags);
         checkMerkleRoot();
         checkSigOps();
-        for (Transaction transaction : transactions)
-            transaction.verify();
+        for (Transaction tx : transactions)
+            Transaction.verify(params, tx);
         }
 
     /**
