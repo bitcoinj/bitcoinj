@@ -28,7 +28,7 @@ public class AllowUnconfirmedCoinSelector extends DefaultCoinSelector {
         return true;
     }
 
-    public static AllowUnconfirmedCoinSelector get() {
+    public static CoinSelector get() {
         return new AllowUnconfirmedCoinSelector();
     }
 }

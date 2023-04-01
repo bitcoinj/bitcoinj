@@ -104,7 +104,7 @@ public class DefaultCoinSelector implements CoinSelector {
                (confidence.numBroadcastPeers() > 0 || tx.getParams().network() == BitcoinNetwork.REGTEST);
     }
 
-    public static DefaultCoinSelector get() {
+    public static CoinSelector get() {
         return new DefaultCoinSelector();
     }
 }
