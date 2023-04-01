@@ -347,7 +347,7 @@ public class BlockChainTest {
 
         // The coinbase tx is not yet available to spend.
         assertEquals(Coin.ZERO, wallet.getBalance());
-        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
+        assertEquals(FIFTY_COINS, wallet.getBalance(BalanceType.ESTIMATED));
         assertTrue(!coinbaseTransaction.isMature());
 
         // Attempt to spend the coinbase - this should fail as the coinbase is not mature yet.
@@ -367,7 +367,7 @@ public class BlockChainTest {
 
             // Wallet still does not have the coinbase transaction available for spend.
             assertEquals(Coin.ZERO, wallet.getBalance());
-            assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
+            assertEquals(FIFTY_COINS, wallet.getBalance(BalanceType.ESTIMATED));
 
             // The coinbase transaction is still not mature.
             assertTrue(!coinbaseTransaction.isMature());
@@ -386,8 +386,8 @@ public class BlockChainTest {
         chain.add(b3);
 
         // Wallet now has the coinbase transaction available for spend.
-        assertEquals(wallet.getBalance(), FIFTY_COINS);
-        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), FIFTY_COINS);
+        assertEquals(FIFTY_COINS, wallet.getBalance());
+        assertEquals(FIFTY_COINS, wallet.getBalance(BalanceType.ESTIMATED));
         assertTrue(coinbaseTransaction.isMature());
 
         // Create a spend with the coinbase BTC to the address in the second wallet - this should now succeed.
@@ -396,18 +396,18 @@ public class BlockChainTest {
 
         // Commit the coinbaseSpend to the first wallet and check the balances decrement.
         wallet.commitTx(coinbaseSend2);
-        assertEquals(wallet.getBalance(BalanceType.ESTIMATED), COIN);
+        assertEquals(COIN, wallet.getBalance(BalanceType.ESTIMATED));
         // Available balance is zero as change has not been received from a block yet.
-        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), ZERO);
+        assertEquals(ZERO, wallet.getBalance(BalanceType.AVAILABLE));
 
         // Give it one more block - change from coinbaseSpend should now be available in the first wallet.
         Block b4 = createFakeBlock(blockStore, height++, coinbaseSend2).block;
         chain.add(b4);
-        assertEquals(wallet.getBalance(BalanceType.AVAILABLE), COIN);
+        assertEquals(COIN, wallet.getBalance(BalanceType.AVAILABLE));
 
         // Check the balances in the second wallet.
-        assertEquals(wallet2.getBalance(BalanceType.ESTIMATED), valueOf(49, 0));
-        assertEquals(wallet2.getBalance(BalanceType.AVAILABLE), valueOf(49, 0));
+        assertEquals(valueOf(49, 0), wallet2.getBalance(BalanceType.ESTIMATED));
+        assertEquals(valueOf(49, 0), wallet2.getBalance(BalanceType.AVAILABLE));
     }
 
     // Some blocks from the test net.
