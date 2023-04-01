@@ -84,8 +84,7 @@ public class BlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET.getGenesisBlock()));
         Context.propagate(new Context(100, Coin.ZERO, false, false));
-        NetworkParameters params = TESTNET;
-        wallet = new Wallet(params, KeyChainGroup.builder(params).fromRandom(ScriptType.P2PKH).build()) {
+        wallet = new Wallet(TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build()) {
             @Override
             public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
                                          int relativityOffset) throws VerificationException {
