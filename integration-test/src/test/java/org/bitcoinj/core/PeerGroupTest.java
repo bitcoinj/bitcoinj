@@ -633,8 +633,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
         // Create a P2PK tx.
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST, COIN, key);
-        Transaction tx2 = new Transaction(UNITTEST);
+        Transaction tx = FakeTxBuilder.createFakeTx(COIN, key);
+        Transaction tx2 = new Transaction();
         tx2.addInput(tx.getOutput(0));
         TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
         assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));

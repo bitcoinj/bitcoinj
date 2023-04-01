@@ -50,9 +50,9 @@ public class TransactionInputTest {
     public void testStandardWalletDisconnect() throws Exception {
         Wallet w = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         Address a = w.currentReceiveAddress();
-        Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(TESTNET, Coin.COIN, a);
+        Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(Coin.COIN, a);
         w.receivePending(tx1, null);
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction();
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         SendRequest req = SendRequest.forTx(tx2);
         req.allowUnconfirmed();
@@ -92,7 +92,7 @@ public class TransactionInputTest {
             }
         });
 
-        Transaction tx2 = new Transaction(TESTNET);
+        Transaction tx2 = new Transaction();
         tx2.addOutput(Coin.valueOf(99000000), new ECKey());
         w.completeTx(SendRequest.forTx(tx2));
 
@@ -109,7 +109,7 @@ public class TransactionInputTest {
 
     @Test
     public void coinbaseInput() {
-        TransactionInput coinbaseInput = TransactionInput.coinbaseInput(new Transaction(TESTNET), new byte[2]);
+        TransactionInput coinbaseInput = TransactionInput.coinbaseInput(new Transaction(), new byte[2]);
         assertTrue(coinbaseInput.isCoinBase());
     }
 }

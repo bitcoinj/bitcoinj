@@ -1744,7 +1744,7 @@ public class Script {
         // Clone the transaction because executing the script involves editing it, and if we die, we'll leave
         // the tx half broken (also it's not so thread safe to work on it directly.
         try {
-            txContainingThis = txContainingThis.getParams().getDefaultSerializer().makeTransaction(ByteBuffer.wrap(txContainingThis.bitcoinSerialize()));
+            txContainingThis = new Transaction(ByteBuffer.wrap(txContainingThis.bitcoinSerialize()));
         } catch (ProtocolException e) {
             throw new RuntimeException(e);   // Should not happen unless we were given a totally broken transaction.
         }

@@ -156,7 +156,7 @@ public class ScriptTest {
         byte[] bytes = ByteUtils.parseHex("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
         Transaction transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(bytes));
         TransactionOutput output = transaction.getOutput(1);
-        Transaction spendTx = new Transaction(TESTNET);
+        Transaction spendTx = new Transaction();
         Address address = LegacyAddress.fromBase58("n3CFiCmBXVt5d3HXKQ15EFZyhPz4yj5F3H", BitcoinNetwork.TESTNET);
         Script outputScript = ScriptBuilder.createOutputScript(address);
         spendTx.addOutput(output.getValue(), outputScript);
@@ -247,7 +247,7 @@ public class ScriptTest {
     @Test
     public void testOp0() {
         // Check that OP_0 doesn't NPE and pushes an empty stack frame.
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction();
         tx.addInput(new TransactionInput(tx, new byte[0], TransactionOutPoint.UNCONNECTED));
         Script script = new ScriptBuilder().smallNum(0).build();
 
@@ -349,7 +349,7 @@ public class ScriptTest {
     }
 
     private Transaction buildCreditingTransaction(Script scriptPubKey) {
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction();
         tx.setVersion(1);
         tx.setLockTime(0);
 
@@ -365,7 +365,7 @@ public class ScriptTest {
     }
 
     private Transaction buildSpendingTransaction(Transaction creditingTransaction, Script scriptSig) {
-        Transaction tx = new Transaction(TESTNET);
+        Transaction tx = new Transaction();
         tx.setVersion(1);
         tx.setLockTime(0);
 

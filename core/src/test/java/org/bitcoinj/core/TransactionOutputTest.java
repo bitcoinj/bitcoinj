@@ -62,7 +62,7 @@ public class TransactionOutputTest extends TestWithWallet {
         ECKey otherKey = new ECKey();
 
         // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(TESTNET);
+        Transaction multiSigTransaction = new Transaction();
         List<ECKey> keys = Arrays.asList(myKey, otherKey);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
@@ -80,14 +80,14 @@ public class TransactionOutputTest extends TestWithWallet {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
         Address P2SHAddress = LegacyAddress.fromBase58(P2SHAddressString, BitcoinNetwork.MAINNET);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
-        Transaction tx = new Transaction(MAINNET);
+        Transaction tx = new Transaction();
         tx.addOutput(Coin.COIN, script);
         assertEquals(P2SHAddressString, tx.getOutput(0).getScriptPubKey().getToAddress(BitcoinNetwork.MAINNET).toString());
     }
 
     @Test
     public void getAddressTests() {
-        Transaction tx = new Transaction(MAINNET);
+        Transaction tx = new Transaction();
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
         assertTrue(ScriptPattern.isOpReturn(tx.getOutput(0).getScriptPubKey()));
         assertFalse(ScriptPattern.isP2PK(tx.getOutput(0).getScriptPubKey()));

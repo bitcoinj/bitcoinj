@@ -654,7 +654,7 @@ public class WalletTool implements Callable<Integer> {
         Coin balance = coinSelector != null ? wallet.getBalance(coinSelector) : wallet.getBalance(allowUnconfirmed ?
                 BalanceType.ESTIMATED : BalanceType.AVAILABLE);
         // Convert the input strings to outputs.
-        Transaction tx = new Transaction(params);
+        Transaction tx = new Transaction();
         for (String spec : outputs) {
             try {
                 OutputSpec outputSpec = new OutputSpec(spec);

@@ -64,7 +64,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Test
     public void selectable() throws Exception {
         Transaction t;
-        t = new Transaction(TESTNET);
+        t = new Transaction();
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
         assertFalse(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
@@ -73,10 +73,10 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8"), TESTNET.getPort()));
         assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
-        t = new Transaction(TESTNET);
+        t = new Transaction();
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
         assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
-        t = new Transaction(REGTEST);
+        t = new Transaction();
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
         assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.REGTEST));
@@ -128,7 +128,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Test
     public void identicalInputs() {
         // Add four outputs to a transaction with same value and destination. Select them all.
-        Transaction t = new Transaction(TESTNET);
+        Transaction t = new Transaction();
         List<TransactionOutput> outputs = Arrays.asList(
             new TransactionOutput(t, Coin.valueOf(30302787), myAddress),
             new TransactionOutput(t, Coin.valueOf(30302787), myAddress),

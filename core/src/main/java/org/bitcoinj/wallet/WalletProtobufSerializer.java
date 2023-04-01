@@ -624,7 +624,7 @@ public class WalletProtobufSerializer {
     }
 
     private void readTransaction(Protos.Transaction txProto, NetworkParameters params) throws UnreadableWalletException {
-        Transaction tx = new Transaction(params);
+        Transaction tx = new Transaction();
 
         tx.setVersion(txProto.getVersion());
 

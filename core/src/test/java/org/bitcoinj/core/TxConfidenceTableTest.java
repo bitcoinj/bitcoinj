@@ -57,8 +57,8 @@ public class TxConfidenceTableTest {
         Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Address change = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
-        tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(TESTNET, COIN, to, change);
-        tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(TESTNET, COIN, to, change);
+        tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(COIN, to, change);
+        tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(COIN, to, change);
         assertEquals(tx1.getTxId(), tx2.getTxId());
 
         address1 = new PeerAddress(InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }), TESTNET.getPort());

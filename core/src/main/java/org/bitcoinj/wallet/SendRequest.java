@@ -171,9 +171,7 @@ public class SendRequest {
      * rejected by the network.</p>
      */
     public static SendRequest to(Address destination, Coin value) {
-        final NetworkParameters parameters = NetworkParameters.of(destination.network());
-        Objects.requireNonNull(parameters, "Address is for an unknown network");
-        Transaction tx = new Transaction(parameters);
+        Transaction tx = new Transaction();
         tx.addOutput(value, destination);
         return new SendRequest(tx);
     }
@@ -186,10 +184,16 @@ public class SendRequest {
      * rejected by the network. Note that using {@link SendRequest#to(Address, Coin)} will result
      * in a smaller output, and thus the ability to use a smaller output value without rejection.</p>
      */
-    public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
-        Transaction tx = new Transaction(params);
+    public static SendRequest to(ECKey destination, Coin value) {
+        Transaction tx = new Transaction();
         tx.addOutput(value, destination);
         return new SendRequest(tx);
+    }
+
+    /** @deprecated use {@link #to(ECKey, Coin)} */
+    @Deprecated
+    public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
+        return to(destination, value);
     }
 
     /** Simply wraps a pre-built incomplete transaction provided by you. */
@@ -198,9 +202,7 @@ public class SendRequest {
     }
 
     public static SendRequest emptyWallet(Address destination) {
-        final NetworkParameters parameters = NetworkParameters.of(destination.network());
-        Objects.requireNonNull(parameters, "Address is for an unknown network");
-        Transaction tx = new Transaction(parameters);
+        Transaction tx = new Transaction();
         tx.addOutput(Coin.ZERO, destination);
         SendRequest req = new SendRequest(tx);
         req.emptyWallet = true;
@@ -224,7 +226,7 @@ public class SendRequest {
         // TODO spend another confirmed output of own wallet if needed
         Objects.requireNonNull(outputToSpend, "Can't find adequately sized output that spends to us");
 
-        final Transaction tx = new Transaction(wallet.getParams());
+        final Transaction tx = new Transaction();
         tx.addInput(outputToSpend);
         tx.addOutput(outputToSpend.getValue().subtract(feeRaise), wallet.freshAddress(KeyPurpose.CHANGE));
         tx.setPurpose(Transaction.Purpose.RAISE_FEE);
