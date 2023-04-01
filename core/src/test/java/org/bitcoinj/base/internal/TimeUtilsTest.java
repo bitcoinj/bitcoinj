@@ -18,6 +18,7 @@
 
 package org.bitcoinj.base.internal;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Duration;
@@ -30,6 +31,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TimeUtilsTest {
+    @Before
+    public void setUp() {
+        TimeUtils.clearMockClock();
+    }
+
     @Test
     public void setAndRollMockClock() {
         TimeUtils.setMockClock(Instant.ofEpochSecond(25200));
