@@ -162,28 +162,6 @@ public class PaymentSessionTest {
         assertEquals("The USERTRUST Network, Salt Lake City, US", pkiData.rootAuthorityName);
     }
 
-    @Test(expected = PaymentProtocolException.InvalidNetwork.class)
-    public void testWrongNetwork() throws Throwable {
-        // Create a PaymentRequest and make sure the correct values are parsed by the PaymentSession.
-        MockPaymentSession paymentSession = new MockPaymentSession(newSimplePaymentRequest("main"));
-        assertEquals(MAINNET, paymentSession.getNetworkParameters());
-
-        // Send the payment and verify that the correct information is sent.
-        // Add a dummy input to tx so it is considered valid.
-        tx.addInput(new TransactionInput(tx, outputToMe.getScriptBytes(), TransactionOutPoint.UNCONNECTED));
-        ArrayList<Transaction> txns = new ArrayList<>();
-        txns.add(tx);
-        Address refundAddr = serverKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        try {
-            paymentSession.sendPayment(txns, refundAddr, paymentMemo).get();
-        } catch (InterruptedException e) {
-            fail("Incorrect exception type");
-        } catch (ExecutionException e) {
-            // We're expecting PaymentProtocolException.InvalidNetwork as the cause
-            throw e.getCause();
-        }
-    }
-
     private Protos.PaymentRequest newSimplePaymentRequest(String netID) {
         Protos.Output.Builder outputBuilder = Protos.Output.newBuilder()
                 .setAmount(amount.value)

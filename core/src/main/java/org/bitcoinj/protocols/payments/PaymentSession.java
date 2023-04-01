@@ -342,7 +342,7 @@ public class PaymentSession {
         Protos.Payment payment = null;
         try {
             payment = getPayment(txns, refundAddr, memo);
-        } catch (IOException | PaymentProtocolException.InvalidNetwork e) {
+        } catch (IOException e) {
             return ListenableCompletableFuture.failedFuture(e);
         }
         if (payment == null)
@@ -368,11 +368,8 @@ public class PaymentSession {
      */
     @Nullable
     public Protos.Payment getPayment(List<Transaction> txns, @Nullable Address refundAddr, @Nullable String memo)
-            throws IOException, PaymentProtocolException.InvalidNetwork {
+            throws IOException {
         if (paymentDetails.hasPaymentUrl()) {
-            for (Transaction tx : txns)
-                if (!tx.getParams().equals(params))
-                    throw new PaymentProtocolException.InvalidNetwork(PaymentProtocol.protocolIdFromParams(params));
             return PaymentProtocol.createPaymentMessage(txns, totalValue, refundAddr, memo, getMerchantData());
         } else {
             return null;
