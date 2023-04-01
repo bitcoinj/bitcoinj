@@ -18,6 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
@@ -178,7 +179,7 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
 
         // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
         // two weeks after the initial block chain download.
-        Instant start = TimeUtils.currentTime();
+        Stopwatch watch = Stopwatch.start();
         Sha256Hash hash = prev.getHash();
         StoredBlock cursor = null;
         final int interval = this.getInterval();
@@ -193,9 +194,9 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
         }
         checkState(cursor != null && isDifficultyTransitionPoint(cursor.getHeight() - 1), () ->
                 "didn't arrive at a transition point");
-        Duration elapsed = TimeUtils.elapsedTime(start);
-        if (elapsed.toMillis() > 50)
-            log.info("Difficulty transition traversal took {} ms", elapsed.toMillis());
+        watch.stop();
+        if (watch.elapsed().toMillis() > 50)
+            log.info("Difficulty transition traversal took {}", watch);
 
         Block blockIntervalAgo = cursor.getHeader();
         int timespan = (int) (prev.getTimeSeconds() - blockIntervalAgo.getTimeSeconds());

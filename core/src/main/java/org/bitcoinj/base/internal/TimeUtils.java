@@ -72,6 +72,8 @@ public class TimeUtils {
 
     /**
      * Returns elapsed time between given start and current time as a Duration.
+     * <p>
+     * Note that this method is affected by the mock clock. If you want to raise real debug data use {@link Stopwatch}.
      */
     public static Duration elapsedTime(Instant start) {
         return Duration.between(start, currentTime());

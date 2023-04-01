@@ -20,6 +20,7 @@ import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -1272,12 +1273,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         log.info("{} keys needed for {} = {} issued + {} lookahead size + {} lookahead threshold - {} num children",
                 limit, parent.getPathAsString(), issued, lookaheadSize, lookaheadThreshold, numChildren);
 
-        Instant start = TimeUtils.currentTime();
+        Stopwatch watch = Stopwatch.start();
         List<DeterministicKey> result = HDKeyDerivation.generate(parent, numChildren)
                 .limit(limit)
                 .map(DeterministicKey::dropPrivateBytes)
                 .collect(StreamUtils.toUnmodifiableList());
-        log.info("Took {} ms", TimeUtils.elapsedTime(start).toMillis());
+        log.info("Took {}", watch);
         return result;
     }
 
