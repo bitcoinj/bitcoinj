@@ -74,12 +74,7 @@ public class BlockChainTest {
     private final StoredBlock[] block = new StoredBlock[1];
     private Transaction coinbaseTransaction;
 
-    private static class TweakableTestNet3Params extends TestNet3Params {
-        public void setMaxTarget(BigInteger limit) {
-            maxTarget = limit;
-        }
-    }
-    private static final TweakableTestNet3Params TESTNET = new TweakableTestNet3Params();
+    private static final TestNet3Params TESTNET = TestNet3Params.get();
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
@@ -196,12 +191,20 @@ public class BlockChainTest {
         // Successfully traversed a difficulty transition period.
     }
 
+    private static class TweakableTestNet3Params extends TestNet3Params {
+        public void setMaxTarget(BigInteger limit) {
+            maxTarget = limit;
+        }
+    }
+
     @Test
     public void badDifficulty() throws Exception {
+        TweakableTestNet3Params TWEAKABLE_TESTNET = new TweakableTestNet3Params();
+
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
-        Block bad = new Block(TESTNET, Block.BLOCK_VERSION_GENESIS);
+        Block bad = new Block(TWEAKABLE_TESTNET, Block.BLOCK_VERSION_GENESIS);
         // Merkle root can be anything here, doesn't matter.
         bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         // Nonce was just some number that made the hash < difficulty limit set below, it can be anything.
@@ -222,8 +225,8 @@ public class BlockChainTest {
         }
 
         // Accept any level of difficulty now.
-        BigInteger oldVal = TESTNET.getMaxTarget();
-        TESTNET.setMaxTarget(new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16));
+        BigInteger oldVal = TWEAKABLE_TESTNET.getMaxTarget();
+        TWEAKABLE_TESTNET.setMaxTarget(new BigInteger("00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16));
         try {
             testNetChain.add(bad);
             // We should not get here as the difficulty target should not be changing at this point.
@@ -231,7 +234,7 @@ public class BlockChainTest {
         } catch (VerificationException e) {
             assertTrue(e.getMessage(), e.getCause().getMessage().contains("Unexpected change in difficulty"));
         }
-        TESTNET.setMaxTarget(oldVal);
+        TWEAKABLE_TESTNET.setMaxTarget(oldVal);
 
         // TODO: Test difficulty change is not out of range when a transition period becomes valid.
     }
