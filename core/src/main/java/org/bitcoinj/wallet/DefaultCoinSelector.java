@@ -104,14 +104,7 @@ public class DefaultCoinSelector implements CoinSelector {
                (confidence.numBroadcastPeers() > 0 || tx.getParams().network() == BitcoinNetwork.REGTEST);
     }
 
-    private static DefaultCoinSelector instance;
-
-    /** Returns a global static instance of the selector. */
     public static DefaultCoinSelector get() {
-        // This doesn't have to be thread safe as the object has no state, so discarded duplicates are
-        // harmless.
-        if (instance == null)
-            instance = new DefaultCoinSelector();
-        return instance;
+        return new DefaultCoinSelector();
     }
 }
