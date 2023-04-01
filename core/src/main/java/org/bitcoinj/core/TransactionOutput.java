@@ -337,13 +337,15 @@ public class TransactionOutput extends Message {
             StringBuilder buf = new StringBuilder("TxOut of ");
             buf.append(Coin.valueOf(value).toFriendlyString());
             if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2TR(script)
-                    || ScriptPattern.isP2SH(script))
-                buf.append(" to ").append(script.getToAddress(params.network()));
-            else if (ScriptPattern.isP2PK(script))
+                    || ScriptPattern.isP2SH(script)) {
+                buf.append(" to ").append(script.getScriptType().name());
+                if (params != null)
+                    buf.append(" ").append(script.getToAddress(params.network()));
+            } else if (ScriptPattern.isP2PK(script)) {
                 buf.append(" to pubkey ").append(ByteUtils.formatHex(ScriptPattern.extractKeyFromP2PK(script)));
-            else if (ScriptPattern.isSentToMultisig(script))
-                buf.append(" to multisig");
-            else
+            } else if (ScriptPattern.isSentToMultisig(script)) {
+                final StringBuilder append = buf.append(" to multisig");
+            } else
                 buf.append(" (unknown type)");
             buf.append(" script:").append(script);
             return buf.toString();

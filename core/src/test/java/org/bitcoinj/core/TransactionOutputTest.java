@@ -105,4 +105,16 @@ public class TransactionOutputTest extends TestWithWallet {
                 BitcoinNetwork.TESTNET));
         assertEquals(Coin.valueOf(294), p2wpkh.getMinNonDustValue());
     }
+
+    @Test
+    public void toString_() {
+        TransactionOutput p2pk = new TransactionOutput(null, Coin.COIN, myKey);
+        p2pk.toString();
+        TransactionOutput p2pkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2PKH,
+                BitcoinNetwork.TESTNET));
+        p2pkh.toString();
+        TransactionOutput p2wpkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2WPKH,
+                BitcoinNetwork.TESTNET));
+        p2wpkh.toString();
+    }
 }
