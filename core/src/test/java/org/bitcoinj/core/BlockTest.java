@@ -81,7 +81,7 @@ public class BlockTest {
 
     @Test
     public void testBlockVerification() {
-        block700000.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
+        Block.verify(TESTNET, block700000, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
     }
     
     @Test
@@ -103,7 +103,7 @@ public class BlockTest {
         Block block = TWEAK_TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(block700000Bytes));
         block.setNonce(12346);
         try {
-            block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
+            Block.verify(TWEAK_TESTNET, block, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
             fail();
         } catch (VerificationException e) {
             // Expected.
@@ -112,18 +112,18 @@ public class BlockTest {
         // from containing artificially weak difficulties.
         block.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
         // Now it should pass.
-        block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
+        Block.verify(TWEAK_TESTNET, block, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
         // Break the nonce again at the lower difficulty level so we can try solving for it.
         block.setNonce(1);
         try {
-            block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
+            Block.verify(TWEAK_TESTNET, block, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
             fail();
         } catch (VerificationException e) {
             // Expected to fail as the nonce is no longer correct.
         }
         // Should find an acceptable nonce.
         block.solve();
-        block.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
+        Block.verify(TWEAK_TESTNET, block, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
     }
 
     @Test
@@ -134,7 +134,7 @@ public class BlockTest {
         block700000.transactions.set(0, tx2);
         block700000.transactions.set(1, tx1);
         try {
-            block700000.verify(Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
+            Block.verify(TESTNET, block700000, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
             fail();
         } catch (VerificationException e) {
             // We should get here.
@@ -168,7 +168,7 @@ public class BlockTest {
 
         // Check block.
         assertEquals("0000000004053156021d8e42459d284220a7f6e087bf78f30179c3703ca4eefa", block.getHashAsString());
-        block.verify(21066, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
+        Block.verify(TESTNET, block, 21066, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
 
         // Testnet block 32768 (hash 000000007590ba495b58338a5806c2b6f10af921a70dbd814e0da3c6957c0c03)
         // contains a coinbase transaction whose height is three bytes, but could
@@ -180,7 +180,7 @@ public class BlockTest {
 
         // Check block.
         assertEquals("000000007590ba495b58338a5806c2b6f10af921a70dbd814e0da3c6957c0c03", block.getHashAsString());
-        block.verify(32768, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
+        Block.verify(TESTNET, block, 32768, EnumSet.of(Block.VerifyFlag.HEIGHT_IN_COINBASE));
     }
 
     @Test
@@ -199,7 +199,7 @@ public class BlockTest {
 
         // Check block.
         assertNotNull(block169482);
-        block169482.verify(169482, EnumSet.noneOf(Block.VerifyFlag.class));
+        Block.verify(MAINNET, block169482, 169482, EnumSet.noneOf(Block.VerifyFlag.class));
         assertEquals(BLOCK_NONCE, block169482.getNonce());
 
         StoredBlock storedBlock = new StoredBlock(block169482, BigInteger.ONE, 169482); // Nonsense work - not used in test.

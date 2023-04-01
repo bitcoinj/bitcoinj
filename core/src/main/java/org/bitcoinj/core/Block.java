@@ -645,62 +645,6 @@ public class Block extends Message {
         }
     }
 
-    /**
-     * Checks the block data to ensure it follows the rules laid out in the network parameters. Specifically,
-     * throws an exception if the proof of work is invalid, or if the timestamp is too far from what it should be.
-     * This is <b>not</b> everything that is required for a block to be valid, only what is checkable independent
-     * of the chain and without a transaction index.
-     *
-     * @throws VerificationException
-     */
-    public void verifyHeader() throws VerificationException {
-        // Prove that this block is OK. It might seem that we can just ignore most of these checks given that the
-        // network is also verifying the blocks, but we cannot as it'd open us to a variety of obscure attacks.
-        //
-        // Firstly we need to ensure this block does in fact represent real work done. If the difficulty is high
-        // enough, it's probably been done by the network.
-        checkProofOfWork(true);
-        checkTimestamp();
-    }
-
-    /**
-     * Checks the block contents
-     *
-     * @param height block height, if known, or -1 otherwise. If valid, used
-     * to validate the coinbase input script of v2 and above blocks.
-     * @param flags flags to indicate which tests should be applied (i.e.
-     * whether to test for height in the coinbase transaction).
-     * @throws VerificationException if there was an error verifying the block.
-     */
-    public void verifyTransactions(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
-        // Now we need to check that the body of the block actually matches the headers. The network won't generate
-        // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
-        // valid block from the network and simply replace the transactions in it with their own fictional
-        // transactions that reference spent or non-existent inputs.
-        if (transactions.isEmpty())
-            throw new VerificationException("Block had no transactions");
-        if (this.getMessageSize() > MAX_BLOCK_SIZE)
-            throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
-        checkTransactions(height, flags);
-        checkMerkleRoot();
-        checkSigOps();
-        for (Transaction tx : transactions)
-            Transaction.verify(params, tx);
-        }
-
-    /**
-     * Verifies both the header and that the transactions hash to the merkle root.
-     *
-     * @param height block height, if known, or -1 otherwise.
-     * @param flags flags to indicate which tests should be applied (i.e.
-     * whether to test for height in the coinbase transaction).
-     * @throws VerificationException if there was an error verifying the block.
-     */
-    public void verify(final int height, final EnumSet<VerifyFlag> flags) throws VerificationException {
-        verifyHeader();
-        verifyTransactions(height, flags);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -943,7 +887,7 @@ public class Block extends Message {
             b.setTime(bitcoinTime);
         b.solve();
         try {
-            b.verifyHeader();
+            Block.verifyHeader(b);
         } catch (VerificationException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1025,5 +969,67 @@ public class Block extends Message {
      */
     public boolean isBIP65() {
         return version >= BLOCK_VERSION_BIP65;
+    }
+
+    /**
+     * Verifies both the header and that the transactions hash to the merkle root.
+     *
+     * @param params parameters for the verification rules
+     * @param block  block to verify
+     * @param height block height, if known, or -1 otherwise.
+     * @param flags flags to indicate which tests should be applied (i.e.
+     * whether to test for height in the coinbase transaction).
+     * @throws VerificationException if at least one of the rules is violated
+     */
+    public static void verify(NetworkParameters params, Block block, int height, EnumSet<VerifyFlag> flags) throws VerificationException {
+        verifyHeader(block);
+        verifyTransactions(params, block, height, flags);
+    }
+
+    /**
+     * Checks the block data to ensure it follows the rules laid out in the network parameters. Specifically,
+     * throws an exception if the proof of work is invalid, or if the timestamp is too far from what it should be.
+     * This is <b>not</b> everything that is required for a block to be valid, only what is checkable independent
+     * of the chain and without a transaction index.
+     *
+     * @param block  block to verify
+     * @throws VerificationException if at least one of the rules is violated
+     */
+    public static void verifyHeader(Block block) throws VerificationException {
+        // Prove that this block is OK. It might seem that we can just ignore most of these checks given that the
+        // network is also verifying the blocks, but we cannot as it'd open us to a variety of obscure attacks.
+        //
+        // Firstly we need to ensure this block does in fact represent real work done. If the difficulty is high
+        // enough, it's probably been done by the network.
+        block.checkProofOfWork(true);
+        block.checkTimestamp();
+    }
+
+    /**
+     * Checks the block contents
+     *
+     * @param params parameters for the verification rules
+     * @param block  block to verify
+     * @param height block height, if known, or -1 otherwise. If valid, used
+     * to validate the coinbase input script of v2 and above blocks.
+     * @param flags flags to indicate which tests should be applied (i.e.
+     * whether to test for height in the coinbase transaction).
+     * @throws VerificationException if at least one of the rules is violated
+     */
+    public static void verifyTransactions(NetworkParameters params, Block block, int height,
+                                          EnumSet<VerifyFlag> flags) throws VerificationException {
+        // Now we need to check that the body of the block actually matches the headers. The network won't generate
+        // an invalid block, but if we didn't validate this then an untrusted man-in-the-middle could obtain the next
+        // valid block from the network and simply replace the transactions in it with their own fictional
+        // transactions that reference spent or non-existent inputs.
+        if (block.transactions.isEmpty())
+            throw new VerificationException("Block had no transactions");
+        if (block.getMessageSize() > MAX_BLOCK_SIZE)
+            throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
+        block.checkTransactions(height, flags);
+        block.checkMerkleRoot();
+        block.checkSigOps();
+        for (Transaction tx : block.transactions)
+            Transaction.verify(params, tx);
     }
 }
