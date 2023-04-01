@@ -294,7 +294,7 @@ public class Wallet extends BaseTaggableObject
     @Nullable
     private volatile Instant vKeyRotationTime = null;
 
-    protected final CoinSelector coinSelector = DefaultCoinSelector.get();
+    protected final CoinSelector coinSelector;
 
     // The wallet version. This is an int that can be used to track breaking changes in the wallet format.
     // You can also use it to detect wallets that come from the future (ie they contain features you
@@ -511,6 +511,7 @@ public class Wallet extends BaseTaggableObject
      */
     public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
         this.params = Objects.requireNonNull(params);
+        this.coinSelector = DefaultCoinSelector.get(params.network());
         this.keyChainGroup = Objects.requireNonNull(keyChainGroup);
         watchedScripts = new HashSet<>();
         unspent = new HashMap<>();
