@@ -75,7 +75,7 @@ public class FakeTxBuilder {
     /** Create a fake coinbase transaction. */
     public static Transaction createFakeCoinbaseTx(final NetworkParameters params) {
         Transaction tx = Transaction.coinbase(params);
-        TransactionOutput outputToMe = new TransactionOutput(tx, Coin.FIFTY_COINS, randomAddress(params));
+        TransactionOutput outputToMe = new TransactionOutput(tx, Coin.FIFTY_COINS, randomKey());
         checkState(tx.isCoinBase());
         tx.addOutput(outputToMe);
         return tx;
@@ -344,6 +344,10 @@ public class FakeTxBuilder {
     }
 
     private static Address randomAddress(NetworkParameters params) {
-        return new ECKey().toAddress(ScriptType.P2PKH, params.network());
+        return randomKey().toAddress(ScriptType.P2PKH, params.network());
+    }
+
+    private static ECKey randomKey() {
+        return new ECKey();
     }
 }
