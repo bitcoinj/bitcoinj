@@ -78,34 +78,35 @@ public class TransactionTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
     private static final Address ADDRESS = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
-    private Transaction tx;
-
     @Before
     public void setUp() {
-        tx = FakeTxBuilder.createFakeTx(TESTNET);
         Context.propagate(new Context());
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
     public void emptyOutputs() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.clearOutputs();
         tx.verify();
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
     public void emptyInputs() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.clearInputs();
         tx.verify();
     }
 
     @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
     public void tooHuge() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.getInput(0).setScriptBytes(new byte[Block.MAX_BLOCK_SIZE]);
         tx.verify();
     }
 
     @Test(expected = VerificationException.DuplicatedOutPoint.class)
     public void duplicateOutPoint() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         TransactionInput input = tx.getInput(0);
         input.setScriptBytes(new byte[1]);
         tx.addInput(input);
@@ -114,12 +115,14 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.NegativeValueOutput.class)
     public void negativeOutput() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
         tx.verify();
     }
 
     @Test(expected = VerificationException.ExcessiveValue.class)
     public void exceedsMaxMoney2() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         Coin half = BitcoinNetwork.MAX_MONEY.divide(2).add(Coin.SATOSHI);
         tx.getOutput(0).setValue(half);
         tx.addOutput(half, ADDRESS);
@@ -128,12 +131,14 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
     public void coinbaseInputInNonCoinbaseTX() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
         tx.verify();
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
     public void coinbaseScriptSigTooSmall() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.clearInputs();
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
         tx.verify();
@@ -141,6 +146,7 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
     public void coinbaseScriptSigTooLarge() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.clearInputs();
         TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[99]).build());
         assertEquals(101, input.getScriptBytes().length);
@@ -466,6 +472,7 @@ public class TransactionTest {
 
     @Test
     public void testToString() {
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         int lengthWithAddresses = tx.toString(null, BitcoinNetwork.TESTNET).length();
         int lengthWithoutAddresses = tx.toString(null, null).length();
         assertTrue(lengthWithAddresses > lengthWithoutAddresses);
@@ -781,7 +788,7 @@ public class TransactionTest {
         MessageSerializer serializer = TESTNET.getDefaultSerializer();
         String txHex = "0100000000010100000000000000016af1f2f3f4";
         int protoVersionNoWitness = serializer.getProtocolVersion() | Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
-        tx = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
+        Transaction tx = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
         assertEquals(txHex, ByteUtils.formatHex(tx.bitcoinSerialize()));
     }
 }
