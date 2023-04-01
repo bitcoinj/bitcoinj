@@ -77,10 +77,6 @@ public class BlockChainTest {
     private static final TestNet3Params TESTNET = TestNet3Params.get();
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
-    private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(UNITTEST.getGenesisBlock());
-    }
-
     @Before
     public void setUp() throws Exception {
         BriefLogFormatter.initVerbose();
@@ -102,7 +98,7 @@ public class BlockChainTest {
         };
         wallet.freshReceiveKey();
 
-        resetBlockStore();
+        blockStore = new MemoryBlockStore(UNITTEST.getGenesisBlock());
         chain = new BlockChain(UNITTEST, wallet, blockStore);
 
         coinbaseTo = wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
