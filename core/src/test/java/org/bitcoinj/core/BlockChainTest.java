@@ -76,7 +76,6 @@ public class BlockChainTest {
 
     private static final TestNet3Params TESTNET = TestNet3Params.get();
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
-    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private void resetBlockStore() {
         blockStore = new MemoryBlockStore(UNITTEST.getGenesisBlock());
@@ -440,6 +439,7 @@ public class BlockChainTest {
 
     @Test
     public void estimatedBlockTime() throws Exception {
+        NetworkParameters MAINNET = MainNetParams.get();
         BlockChain prod = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
         Instant t = prod.estimateBlockTimeInstant(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
