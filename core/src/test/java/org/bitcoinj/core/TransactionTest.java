@@ -710,14 +710,13 @@ public class TransactionTest {
         public HugeDeclaredSizeTransaction(NetworkParameters params, boolean hackInputsSize, boolean hackOutputsSize, boolean hackWitnessPushCountSize) {
             super(params);
             Transaction inputTx = new Transaction(params);
-            inputTx.addOutput(Coin.FIFTY_COINS, ECKey.fromPrivate(BigInteger.valueOf(123456)).toAddress(ScriptType.P2PKH, params.network()));
+            inputTx.addOutput(Coin.FIFTY_COINS, new ECKey());
             this.addInput(inputTx.getOutput(0));
             this.getInput(0).disconnect();
             TransactionWitness witness = new TransactionWitness(1);
             witness.setPush(0, new byte[] {0});
             this.getInput(0).setWitness(witness);
-            Address to = ECKey.fromPrivate(BigInteger.valueOf(1000)).toAddress(ScriptType.P2PKH, params.network());
-            this.addOutput(Coin.COIN, to);
+            this.addOutput(Coin.COIN, new ECKey());
 
             this.hackInputsSize = hackInputsSize;
             this.hackOutputsSize = hackOutputsSize;
