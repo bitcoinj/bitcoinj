@@ -21,6 +21,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.PlatformUtils;
+import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Context;
@@ -146,7 +147,7 @@ public class SPVBlockStoreTest {
         final int ITERATIONS = 100000;
         final Duration THRESHOLD = Duration.ofSeconds(5);
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
-        Instant start = TimeUtils.currentTime();
+        Stopwatch watch = Stopwatch.start();
         for (int i = 0; i < ITERATIONS; i++) {
             // Using i as the nonce so that the block hashes are different.
             Block block = new Block(TESTNET, 0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0, 0, i,
@@ -155,9 +156,9 @@ public class SPVBlockStoreTest {
             store.put(b);
             store.setChainHead(b);
         }
-        Duration elapsed = TimeUtils.elapsedTime(start);
-        assertTrue("took " + elapsed.toMillis() + " ms for " + ITERATIONS + " iterations",
-                elapsed.compareTo(THRESHOLD) < 0);
+        watch.stop();
+        assertTrue("took " + watch + " for " + ITERATIONS + " iterations",
+                watch.elapsed().compareTo(THRESHOLD) < 0);
         store.close();
     }
 

@@ -22,6 +22,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.listeners.PeerConnectedEventListener;
@@ -535,7 +536,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerConnectedFuture.complete(null));
         peerGroup.addDisconnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> peerDisconnectedFuture.complete(null));
         // connect to peer but don't do handshake
-        Instant start = TimeUtils.currentTime(); // before connection so we don't get elapsed < timeout
+        Stopwatch watch = Stopwatch.start(); // before connection so we don't get elapsed < timeout
         connectPeerWithoutVersionExchange(0);
         // wait for disconnect (plus a bit more, in case test server is overloaded)
         try {
@@ -545,8 +546,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         }
         // check things after disconnect
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
-        Duration elapsed = TimeUtils.elapsedTime(start);
-        assertTrue(elapsed.toMillis() + " ms",elapsed.compareTo(timeout) >= 0); // should not disconnect before timeout
+        watch.stop();
+        assertTrue(watch.toString(), watch.elapsed().compareTo(timeout) >= 0); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 
