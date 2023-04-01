@@ -203,14 +203,7 @@ public class FakeTxBuilder {
      * Roundtrip a transaction so that it appears as if it has just come from the wire
      */
     public static Transaction roundTripTransaction(NetworkParameters params, Transaction tx) {
-        try {
-            MessageSerializer bs = params.getDefaultSerializer();
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bs.serialize(tx, bos);
-            return (Transaction) bs.deserialize(ByteBuffer.wrap(bos.toByteArray()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);   // Should not happen.
-        }
+        return new Transaction(params, tx.bitcoinSerialize());
     }
 
     public static class DoubleSpends {
