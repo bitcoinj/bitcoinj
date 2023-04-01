@@ -187,13 +187,13 @@ public class TransactionTest {
         Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(TESTNET);
 
         tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
-        assertEquals(tx.isMature(), false);
+        assertFalse(tx.isMature());
 
         tx.getConfidence().setConfidenceType(ConfidenceType.PENDING);
-        assertEquals(tx.isMature(), false);
+        assertFalse(tx.isMature());
 
         tx.getConfidence().setConfidenceType(ConfidenceType.DEAD);
-        assertEquals(tx.isMature(), false);
+        assertFalse(tx.isMature());
     }
 
     @Test
@@ -489,8 +489,8 @@ public class TransactionTest {
 
         String str = tx.toString(mockBlockChain, BitcoinNetwork.TESTNET);
 
-        assertEquals(str.contains("block " + TEST_LOCK_TIME), true);
-        assertEquals(str.contains("estimated to be reached at"), true);
+        assertTrue(str.contains("block " + TEST_LOCK_TIME));
+        assertTrue(str.contains("estimated to be reached at"));
     }
 
     @Test
@@ -504,13 +504,13 @@ public class TransactionTest {
         };
 
         tx.addInput(ti);
-        assertEquals(tx.toString().contains("[exception: "), true);
+        assertTrue(tx.toString().contains("[exception: "));
     }
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
         Transaction tx = new Transaction(TESTNET);
-        assertEquals(tx.toString().contains("No inputs!"), true);
+        assertTrue(tx.toString().contains("No inputs!"));
     }
 
     @Test
@@ -531,14 +531,14 @@ public class TransactionTest {
 
         Iterator<Transaction> iterator = set.iterator();
 
-        assertEquals(tx1.equals(tx2), false);
-        assertEquals(tx1.equals(tx3), false);
-        assertEquals(tx1.equals(tx1), true);
+        assertFalse(tx1.equals(tx2));
+        assertFalse(tx1.equals(tx3));
+        assertTrue(tx1.equals(tx1));
 
-        assertEquals(iterator.next().equals(tx3), true);
-        assertEquals(iterator.next().equals(tx2), true);
-        assertEquals(iterator.next().equals(tx1), true);
-        assertEquals(iterator.hasNext(), false);
+        assertTrue(iterator.next().equals(tx3));
+        assertTrue(iterator.next().equals(tx2));
+        assertTrue(iterator.next().equals(tx1));
+        assertFalse(iterator.hasNext());
     }
 
     @Test(expected = ScriptException.class)
