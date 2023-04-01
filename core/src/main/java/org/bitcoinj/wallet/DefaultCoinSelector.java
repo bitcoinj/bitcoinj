@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
@@ -34,7 +35,14 @@ import java.util.List;
  * "spending" more priority than would be required to get the transaction we are creating confirmed.
  */
 public class DefaultCoinSelector implements CoinSelector {
+    private final Network network;
+
     protected DefaultCoinSelector() {
+        this.network = null;
+    }
+
+    private DefaultCoinSelector(Network network) {
+        this.network = network;
     }
 
     @Override
@@ -45,7 +53,6 @@ public class DefaultCoinSelector implements CoinSelector {
         ArrayList<TransactionOutput> sortedOutputs = new ArrayList<>(candidates);
         // When calculating the wallet balance, we may be asked to select all possible coins, if so, avoid sorting
         // them in order to improve performance.
-        // TODO: Take in network parameters when instantiated, and then test against the current network. Or just have a boolean parameter for "give me everything"
         if (!target.equals(BitcoinNetwork.MAX_MONEY)) {
             sortOutputs(sortedOutputs);
         }
@@ -87,12 +94,20 @@ public class DefaultCoinSelector implements CoinSelector {
     /** Sub-classes can override this to just customize whether transactions are usable, but keep age sorting. */
     protected boolean shouldSelect(Transaction tx) {
         if (tx != null) {
-            return isSelectable(tx);
+            return isSelectable(tx, network);
         }
         return true;
     }
 
-    public static boolean isSelectable(Transaction tx) {
+    /**
+     * Helper to determine if this selector would select a given transaction. Note that in a regtest network outgoing
+     * payments will likely not see propagation, so there is a special exception.
+     *
+     * @param tx      transaction to determine if it would be selected
+     * @param network network the transaction is on
+     * @return true if it would be selected, false otherwise
+     */
+    public static boolean isSelectable(Transaction tx, Network network) {
         // Only pick chain-included transactions, or transactions that are ours and pending.
         TransactionConfidence confidence = tx.getConfidence();
         TransactionConfidence.ConfidenceType type = confidence.getConfidenceType();
@@ -101,10 +116,10 @@ public class DefaultCoinSelector implements CoinSelector {
                type.equals(TransactionConfidence.ConfidenceType.PENDING) &&
                confidence.getSource().equals(TransactionConfidence.Source.SELF) &&
                // In regtest mode we expect to have only one peer, so we won't see transactions propagate.
-               (confidence.numBroadcastPeers() > 0 || tx.getParams().network() == BitcoinNetwork.REGTEST);
+               (confidence.numBroadcastPeers() > 0 || network == BitcoinNetwork.REGTEST);
     }
 
-    public static CoinSelector get() {
-        return new DefaultCoinSelector();
+    public static CoinSelector get(Network network) {
+        return new DefaultCoinSelector(network);
     }
 }

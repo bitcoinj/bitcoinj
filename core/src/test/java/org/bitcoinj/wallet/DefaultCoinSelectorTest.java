@@ -16,6 +16,7 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
@@ -65,20 +66,20 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         Transaction t;
         t = new Transaction(TESTNET);
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
-        assertFalse(DefaultCoinSelector.isSelectable(t));
+        assertFalse(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
-        assertFalse(DefaultCoinSelector.isSelectable(t));
+        assertFalse(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4"), TESTNET.getPort()));
-        assertTrue(DefaultCoinSelector.isSelectable(t));
+        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8"), TESTNET.getPort()));
-        assertTrue(DefaultCoinSelector.isSelectable(t));
+        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t = new Transaction(TESTNET);
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
-        assertTrue(DefaultCoinSelector.isSelectable(t));
+        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t = new Transaction(REGTEST);
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
-        assertTrue(DefaultCoinSelector.isSelectable(t));
+        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.REGTEST));
     }
 
     @Test
@@ -88,7 +89,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         Transaction t2 = Objects.requireNonNull(sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN));
 
         // Check we selected just the oldest one.
-        CoinSelector selector = DefaultCoinSelector.get();
+        CoinSelector selector = wallet.getCoinSelector();
         CoinSelection selection = selector.select(COIN, wallet.calculateAllSpendCandidates());
         assertTrue(selection.outputs().contains(t1.getOutputs().get(0)));
         assertEquals(COIN, selection.totalValue());
@@ -136,7 +137,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         );
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
 
-        CoinSelector selector = DefaultCoinSelector.get();
+        CoinSelector selector = DefaultCoinSelector.get(BitcoinNetwork.TESTNET);
         CoinSelection selection = selector.select(COIN.multiply(2), outputs);
 
         assertTrue(selection.outputs().size() == 4);
