@@ -23,6 +23,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
+import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
@@ -445,6 +446,8 @@ public class Block extends Message {
      */
     @VisibleForTesting
     public void solve() {
+        Duration fairlyLong = Duration.ofSeconds(5);
+        Stopwatch watch = Stopwatch.start();
         while (true) {
             try {
                 // Is our proof of work valid yet?
@@ -452,6 +455,11 @@ public class Block extends Message {
                     return;
                 // No, so increment the nonce and try again.
                 setNonce(getNonce() + 1);
+
+                if (watch.isRunning() && watch.elapsed().compareTo(fairlyLong) > 0) {
+                    watch.stop();
+                    log.warn("trying to solve block for longer than {} seconds", fairlyLong.getSeconds());
+                }
             } catch (VerificationException e) {
                 throw new RuntimeException(e); // Cannot happen.
             }
