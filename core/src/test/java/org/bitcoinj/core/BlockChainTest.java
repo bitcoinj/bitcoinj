@@ -71,8 +71,6 @@ public class BlockChainTest {
     private BlockStore unitTestStore;
     private Address coinbaseTo;
 
-    private Transaction coinbaseTransaction;
-
     private static final TestNet3Params TESTNET = TestNet3Params.get();
     private static final NetworkParameters UNITTEST = UnitTestParams.get();
 
@@ -83,16 +81,7 @@ public class BlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         testNetChain = new BlockChain(TESTNET, Wallet.createDeterministic(TESTNET, ScriptType.P2PKH), new MemoryBlockStore(TESTNET.getGenesisBlock()));
         Context.propagate(new Context(100, Coin.ZERO, false, false));
-        wallet = new Wallet(TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build()) {
-            @Override
-            public void receiveFromBlock(Transaction tx, StoredBlock block, BlockChain.NewBlockType blockType,
-                                         int relativityOffset) throws VerificationException {
-                super.receiveFromBlock(tx, block, blockType, relativityOffset);
-                if (isTransactionRelevant(tx) && tx.isCoinBase()) {
-                    BlockChainTest.this.coinbaseTransaction = tx;
-                }
-            }
-        };
+        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         wallet.freshReceiveKey();
         coinbaseTo = wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
@@ -332,6 +321,7 @@ public class BlockChainTest {
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
         Block b1 = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
         unitTestChain.add(b1);
+        final Transaction coinbaseTransaction = b1.getTransactions().get(0);
 
         // Check a transaction has been received.
         assertNotNull(coinbaseTransaction);
