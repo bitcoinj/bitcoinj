@@ -497,7 +497,7 @@ public abstract class AbstractBlockChain {
             // are only lightly verified: presence in a valid connecting block is taken as proof of validity. See the
             // article here for more details: https://bitcoinj.github.io/security-model
             try {
-                block.verifyHeader();
+                Block.verifyHeader(block);
                 storedPrev = getStoredBlockInCurrentScope(block.getPrevBlockHash());
                 if (storedPrev != null) {
                     height = storedPrev.getHeight() + 1;
@@ -506,7 +506,7 @@ public abstract class AbstractBlockChain {
                 }
                 flags = params.getBlockVerificationFlags(block, versionTally, height);
                 if (shouldVerifyTransactions())
-                    block.verifyTransactions(height, flags);
+                    Block.verifyTransactions(params, block, height, flags);
             } catch (VerificationException e) {
                 log.error("Failed to verify block: ", e);
                 log.error(block.getHashAsString());
