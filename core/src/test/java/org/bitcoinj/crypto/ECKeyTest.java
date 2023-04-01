@@ -387,14 +387,14 @@ public class ECKeyTest {
         ECKey key = new ECKey();
         Optional<Instant> time = key.creationTime();
         assertTrue(time.isPresent());
-        assertTrue(!key.isEncrypted());
+        assertFalse(key.isEncrypted());
         byte[] originalPrivateKeyBytes = key.getPrivKeyBytes();
         ECKey encryptedKey = key.encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
         assertEquals(time, encryptedKey.creationTime());
         assertTrue(encryptedKey.isEncrypted());
         assertNull(encryptedKey.getSecretBytes());
         key = encryptedKey.decrypt(keyCrypter.deriveKey(PASSWORD1));
-        assertTrue(!key.isEncrypted());
+        assertFalse(key.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, key.getPrivKeyBytes());
     }
 
@@ -408,7 +408,7 @@ public class ECKeyTest {
         assertTrue(encryptedKey.isEncrypted());
         assertNull(encryptedKey.getSecretBytes());
         ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter.deriveKey(PASSWORD1));
-        assertTrue(!rebornUnencryptedKey.isEncrypted());
+        assertFalse(rebornUnencryptedKey.isEncrypted());
         assertArrayEquals(originalPrivateKeyBytes, rebornUnencryptedKey.getPrivKeyBytes());
     }
 

@@ -571,10 +571,10 @@ public class ChainSplitTest {
         // Check the coinbase transaction is building and in the unspent pool only.
         final Transaction coinbase = txns.get(0);
         assertEquals(ConfidenceType.BUILDING, coinbase.getConfidence().getConfidenceType());
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
         assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.UNSPENT, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.DEAD, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.DEAD, coinbase.getTxId()));
 
         // Add blocks to b3 until we can spend the coinbase.
         Block firstTip = b3;
@@ -614,9 +614,9 @@ public class ChainSplitTest {
         // Transaction 1 (in block b2) is now on a side chain and should have confidence type of dead and be in
         // the dead pool only.
         assertEquals(TransactionConfidence.ConfidenceType.DEAD, coinbase.getConfidence().getConfidenceType());
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.UNSPENT, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.UNSPENT, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
         assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.DEAD, coinbase.getTxId()));
         assertTrue(fodderIsDead.get());
 
@@ -636,10 +636,10 @@ public class ChainSplitTest {
 
         // The coinbase transaction should now have confidence type of building once more and in the unspent pool only.
         assertEquals(TransactionConfidence.ConfidenceType.BUILDING, coinbase.getConfidence().getConfidenceType());
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
         assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.UNSPENT, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.DEAD, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.DEAD, coinbase.getTxId()));
         // However, fodder is still dead. Bitcoin Core doesn't keep killed transactions around in case they become
         // valid again later. They are just deleted from the mempool for good.
 
@@ -659,9 +659,9 @@ public class ChainSplitTest {
 
         // The coinbase transaction should now have the confidence type of dead and be in the dead pool only.
         assertEquals(TransactionConfidence.ConfidenceType.DEAD, coinbase.getConfidence().getConfidenceType());
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.UNSPENT, coinbase.getTxId()));
-        assertTrue(!wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.PENDING, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.UNSPENT, coinbase.getTxId()));
+        assertFalse(wallet.poolContainsTxHash(WalletTransaction.Pool.SPENT, coinbase.getTxId()));
         assertTrue(wallet.poolContainsTxHash(WalletTransaction.Pool.DEAD, coinbase.getTxId()));
     }
 }

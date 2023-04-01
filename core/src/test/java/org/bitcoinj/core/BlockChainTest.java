@@ -348,7 +348,7 @@ public class BlockChainTest {
         // The coinbase tx is not yet available to spend.
         assertEquals(Coin.ZERO, wallet.getBalance());
         assertEquals(FIFTY_COINS, wallet.getBalance(BalanceType.ESTIMATED));
-        assertTrue(!coinbaseTransaction.isMature());
+        assertFalse(coinbaseTransaction.isMature());
 
         // Attempt to spend the coinbase - this should fail as the coinbase is not mature yet.
         try {
@@ -370,7 +370,7 @@ public class BlockChainTest {
             assertEquals(FIFTY_COINS, wallet.getBalance(BalanceType.ESTIMATED));
 
             // The coinbase transaction is still not mature.
-            assertTrue(!coinbaseTransaction.isMature());
+            assertFalse(coinbaseTransaction.isMature());
 
             // Attempt to spend the coinbase - this should fail.
             try {
