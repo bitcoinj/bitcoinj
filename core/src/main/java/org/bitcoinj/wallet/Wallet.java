@@ -5271,7 +5271,7 @@ public class Wallet extends BaseTaggableObject
         Coin fee = Coin.ZERO;
         while (true) {
             result = new FeeCalculation();
-            Transaction tx = new Transaction(params);
+            Transaction tx = new Transaction();
             addSuppliedInputs(tx, req.tx.getInputs());
 
             Coin valueNeeded = value;
@@ -5697,7 +5697,7 @@ public class Wallet extends BaseTaggableObject
             // TODO: Make this use the standard SendRequest.
             CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
             if (toMove.totalValue().equals(Coin.ZERO)) return null;  // Nothing to do.
-            Transaction rekeyTx = new Transaction(params);
+            Transaction rekeyTx = new Transaction();
             for (TransactionOutput output : toMove.outputs()) {
                 rekeyTx.addInput(output);
             }

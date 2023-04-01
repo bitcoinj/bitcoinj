@@ -227,7 +227,7 @@ public class Block extends Message {
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(params, payload, serializer, null);
+            Transaction tx = new Transaction(payload, serializer, null);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
@@ -254,7 +254,7 @@ public class Block extends Message {
 
     public static Block createGenesis(NetworkParameters n) {
         Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
-        Transaction tx = Transaction.coinbase(n, genesisTxInputScriptBytes);
+        Transaction tx = Transaction.coinbase(genesisTxInputScriptBytes);
         tx.addOutput(new TransactionOutput(tx, FIFTY_COINS, genesisTxScriptPubKeyBytes));
         genesisBlock.addTransaction(tx);
         return genesisBlock;
@@ -824,7 +824,7 @@ public class Block extends Message {
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
         transactions = new ArrayList<>();
-        Transaction coinbase = new Transaction(params);
+        Transaction coinbase = new Transaction();
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
         if (height >= Block.BLOCK_HEIGHT_GENESIS) {
@@ -885,7 +885,7 @@ public class Block extends Message {
 
         if (to != null) {
             // Add a transaction paying 50 coins to the "to" address.
-            Transaction t = new Transaction(params);
+            Transaction t = new Transaction();
             t.addOutput(new TransactionOutput(t, FIFTY_COINS, to));
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;

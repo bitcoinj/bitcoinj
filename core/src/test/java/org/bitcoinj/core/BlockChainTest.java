@@ -316,7 +316,7 @@ public class BlockChainTest {
         Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
         Transaction t1 = FakeTxBuilder.createFakeTx(TESTNET, COIN, addr);
-        Transaction t2 = new Transaction(TESTNET);
+        Transaction t2 = new Transaction();
         t2.addInput(t1.getOutputs().get(0));
         t2.addOutput(valueOf(2, 0), somebodyElse);
         b1.addTransaction(t1);

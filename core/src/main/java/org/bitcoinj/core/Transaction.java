@@ -226,11 +226,10 @@ public class Transaction extends Message {
     /**
      * Constructs an incomplete coinbase transaction with a minimal input script and no outputs.
      *
-     * @param params network to use
      * @return coinbase transaction
      */
-    public static Transaction coinbase(NetworkParameters params) {
-        Transaction tx = new Transaction(params);
+    public static Transaction coinbase() {
+        Transaction tx = new Transaction();
         tx.addInput(TransactionInput.coinbaseInput(tx, new byte[2])); // 2 is minimum
         return tx;
     }
@@ -238,18 +237,17 @@ public class Transaction extends Message {
     /**
      * Constructs an incomplete coinbase transaction with given bytes for the input script and no outputs.
      *
-     * @param params            network to use
      * @param inputScriptBytes  arbitrary bytes for the coinbase input
      * @return coinbase transaction
      */
-    public static Transaction coinbase(NetworkParameters params, byte[] inputScriptBytes) {
-        Transaction tx = new Transaction(params);
+    public static Transaction coinbase(byte[] inputScriptBytes) {
+        Transaction tx = new Transaction();
         tx.addInput(TransactionInput.coinbaseInput(tx, inputScriptBytes));
         return tx;
     }
 
-    public Transaction(NetworkParameters params) {
-        super(params);
+    public Transaction() {
+        super(new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
         version = 1;
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
@@ -260,20 +258,19 @@ public class Transaction extends Message {
     /**
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
-    public Transaction(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public Transaction(ByteBuffer payload) throws ProtocolException {
+        super(payload, new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
         // inputs/outputs will be created in parse()
     }
 
-    /** @deprecated use {@link #Transaction(NetworkParameters, ByteBuffer)} or {@link MessageSerializer#makeTransaction(ByteBuffer)} */
+    /** @deprecated use {@link #Transaction(ByteBuffer)} or {@link MessageSerializer#makeTransaction(ByteBuffer)} */
     @Deprecated
     public Transaction(NetworkParameters params, byte[] payload) throws ProtocolException {
-        this(params, ByteBuffer.wrap(payload));
+        this(ByteBuffer.wrap(payload));
     }
 
     /**
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
-     * @param params NetworkParameters object.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param setSerializer The serializer to use for this transaction.
      * @param hashFromHeader Used by BitcoinSerializer. The serializer has to calculate a hash for checksumming so to
@@ -281,9 +278,9 @@ public class Transaction extends Message {
      * is performed on this hash.
      * @throws ProtocolException
      */
-    public Transaction(NetworkParameters params, ByteBuffer payload,
+    public Transaction(ByteBuffer payload,
             MessageSerializer setSerializer, @Nullable byte[] hashFromHeader) throws ProtocolException {
-        super(params, payload, setSerializer);
+        super(payload, setSerializer);
         if (hashFromHeader != null) {
             cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
             if (!hasWitnesses())
@@ -294,9 +291,9 @@ public class Transaction extends Message {
     /**
      * Creates a transaction by reading payload. Length of a transaction is fixed.
      */
-    public Transaction(NetworkParameters params, ByteBuffer payload, MessageSerializer setSerializer)
+    public Transaction(ByteBuffer payload, MessageSerializer setSerializer)
             throws ProtocolException {
-        super(params, payload, setSerializer);
+        super(payload, setSerializer);
     }
 
     /**
@@ -759,7 +756,7 @@ public class Transaction extends Message {
     @Override
     public String toString() {
         MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(toString(null, params.network()));
+        helper.addValue(toString(null, null));
         return helper.toString();
     }
 
@@ -1259,7 +1256,7 @@ public class Transaction extends Message {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = new Transaction(params, ByteBuffer.wrap(bitcoinSerialize()));
+            Transaction tx = new Transaction(ByteBuffer.wrap(bitcoinSerialize()));
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
