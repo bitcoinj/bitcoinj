@@ -67,8 +67,8 @@ public class BlockChainTest {
     private BlockChain testNetChain;
 
     private Wallet wallet;
-    private BlockChain chain;
-    private BlockStore blockStore;
+    private BlockChain unitTestChain;
+    private BlockStore unitTestStore;
     private Address coinbaseTo;
 
     private final StoredBlock[] block = new StoredBlock[1];
@@ -96,11 +96,10 @@ public class BlockChainTest {
             }
         };
         wallet.freshReceiveKey();
-
-        blockStore = new MemoryBlockStore(UNITTEST.getGenesisBlock());
-        chain = new BlockChain(UNITTEST, wallet, blockStore);
-
         coinbaseTo = wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+
+        unitTestStore = new MemoryBlockStore(UNITTEST.getGenesisBlock());
+        unitTestChain = new BlockChain(UNITTEST, wallet, unitTestStore);
     }
 
     @Test
@@ -137,8 +136,8 @@ public class BlockChainTest {
         Transaction tx1 = createFakeTx(TESTNET,
                                        COIN,
                                        wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
-        Block b1 = createFakeBlock(blockStore, height, tx1).block;
-        chain.add(b1);
+        Block b1 = createFakeBlock(unitTestStore, height, tx1).block;
+        unitTestChain.add(b1);
         assertTrue(wallet.getBalance().signum() > 0);
     }
 
@@ -148,13 +147,13 @@ public class BlockChainTest {
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
         // Connected.
-        assertTrue(chain.add(b1));
+        assertTrue(unitTestChain.add(b1));
         // Unconnected but stored. The head of the chain is still b1.
-        assertFalse(chain.add(b3));
-        assertEquals(chain.getChainHead().getHeader(), b1.cloneAsHeader());
+        assertFalse(unitTestChain.add(b3));
+        assertEquals(unitTestChain.getChainHead().getHeader(), b1.cloneAsHeader());
         // Add in the middle block.
-        assertTrue(chain.add(b2));
-        assertEquals(chain.getChainHead().getHeader(), b3.cloneAsHeader());
+        assertTrue(unitTestChain.add(b2));
+        assertEquals(unitTestChain.getChainHead().getHeader(), b3.cloneAsHeader());
     }
 
     @Test
@@ -165,14 +164,14 @@ public class BlockChainTest {
         TimeUtils.setMockClock();
         for (int height = 0; height < UNITTEST.getInterval() - 1; height++) {
             Block newBlock = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), height);
-            assertTrue(chain.add(newBlock));
+            assertTrue(unitTestChain.add(newBlock));
             prev = newBlock;
             // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
             TimeUtils.rollMockClock(Duration.ofSeconds(2));
         }
         // Now add another block that has no difficulty adjustment, it should be rejected.
         try {
-            chain.add(prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), UNITTEST.getInterval()));
+            unitTestChain.add(prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), UNITTEST.getInterval()));
             fail();
         } catch (VerificationException e) {
         }
@@ -181,7 +180,7 @@ public class BlockChainTest {
         Block b = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), UNITTEST.getInterval() + 1);
         b.setDifficultyTarget(0x201fFFFFL);
         b.solve();
-        assertTrue(chain.add(b));
+        assertTrue(unitTestChain.add(b));
         // Successfully traversed a difficulty transition period.
     }
 
@@ -290,15 +289,15 @@ public class BlockChainTest {
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         Block b3 = b2.createNextBlock(coinbaseTo);
-        assertTrue(chain.add(b1));
+        assertTrue(unitTestChain.add(b1));
         assertEquals(b1, block[0].getHeader());
-        assertTrue(chain.add(b2));
+        assertTrue(unitTestChain.add(b2));
         assertEquals(b2, block[0].getHeader());
-        assertTrue(chain.add(b3));
+        assertTrue(unitTestChain.add(b3));
         assertEquals(b3, block[0].getHeader());
-        assertEquals(b3, chain.getChainHead().getHeader());
-        assertTrue(chain.add(b2));
-        assertEquals(b3, chain.getChainHead().getHeader());
+        assertEquals(b3, unitTestChain.getChainHead().getHeader());
+        assertTrue(unitTestChain.add(b2));
+        assertEquals(b3, unitTestChain.getChainHead().getHeader());
         // Wallet was NOT called with the new block because the duplicate add was spotted.
         assertEquals(b3, block[0].getHeader());
     }
@@ -319,7 +318,7 @@ public class BlockChainTest {
         b1.addTransaction(t1);
         b1.addTransaction(t2);
         b1.solve();
-        chain.add(b1);
+        unitTestChain.add(b1);
         assertEquals(Coin.ZERO, wallet.getBalance());
     }
 
@@ -331,13 +330,13 @@ public class BlockChainTest {
         Wallet wallet2 = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         ECKey receiveKey = wallet2.freshReceiveKey();
         int height = 1;
-        chain.addWallet(wallet2);
+        unitTestChain.addWallet(wallet2);
 
         Address addressToSendTo = receiveKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
         Block b1 = UNITTEST.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, wallet.currentReceiveKey().getPubKey(), height++);
-        chain.add(b1);
+        unitTestChain.add(b1);
 
         // Check a transaction has been received.
         assertNotNull(coinbaseTransaction);
@@ -359,8 +358,8 @@ public class BlockChainTest {
             // Non relevant tx - just for fake block creation.
             Transaction tx2 = createFakeTx(TESTNET, COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
 
-            Block b2 = createFakeBlock(blockStore, height++, tx2).block;
-            chain.add(b2);
+            Block b2 = createFakeBlock(unitTestStore, height++, tx2).block;
+            unitTestChain.add(b2);
 
             // Wallet still does not have the coinbase transaction available for spend.
             assertEquals(Coin.ZERO, wallet.getBalance());
@@ -379,8 +378,8 @@ public class BlockChainTest {
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
         Transaction tx3 = createFakeTx(TESTNET, COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
-        Block b3 = createFakeBlock(blockStore, height++, tx3).block;
-        chain.add(b3);
+        Block b3 = createFakeBlock(unitTestStore, height++, tx3).block;
+        unitTestChain.add(b3);
 
         // Wallet now has the coinbase transaction available for spend.
         assertEquals(FIFTY_COINS, wallet.getBalance());
@@ -398,8 +397,8 @@ public class BlockChainTest {
         assertEquals(ZERO, wallet.getBalance(BalanceType.AVAILABLE));
 
         // Give it one more block - change from coinbaseSpend should now be available in the first wallet.
-        Block b4 = createFakeBlock(blockStore, height++, coinbaseSend2).block;
-        chain.add(b4);
+        Block b4 = createFakeBlock(unitTestStore, height++, coinbaseSend2).block;
+        unitTestChain.add(b4);
         assertEquals(COIN, wallet.getBalance(BalanceType.AVAILABLE));
 
         // Check the balances in the second wallet.
@@ -445,28 +444,28 @@ public class BlockChainTest {
     @Test
     public void falsePositives() {
         double decay = AbstractBlockChain.FP_ESTIMATOR_ALPHA;
-        assertTrue(0 == chain.getFalsePositiveRate()); // Exactly
-        chain.trackFalsePositives(55);
-        assertEquals(decay * 55, chain.getFalsePositiveRate(), 1e-4);
-        chain.trackFilteredTransactions(550);
-        double rate1 = chain.getFalsePositiveRate();
+        assertTrue(0 == unitTestChain.getFalsePositiveRate()); // Exactly
+        unitTestChain.trackFalsePositives(55);
+        assertEquals(decay * 55, unitTestChain.getFalsePositiveRate(), 1e-4);
+        unitTestChain.trackFilteredTransactions(550);
+        double rate1 = unitTestChain.getFalsePositiveRate();
         // Run this scenario a few more time for the filter to converge
         for (int i = 1 ; i < 10 ; i++) {
-            chain.trackFalsePositives(55);
-            chain.trackFilteredTransactions(550);
+            unitTestChain.trackFalsePositives(55);
+            unitTestChain.trackFilteredTransactions(550);
         }
 
         // Ensure we are within 10%
-        assertEquals(0.1, chain.getFalsePositiveRate(), 0.01);
+        assertEquals(0.1, unitTestChain.getFalsePositiveRate(), 0.01);
 
         // Check that we get repeatable results after a reset
-        chain.resetFalsePositiveEstimate();
-        assertTrue(0 == chain.getFalsePositiveRate()); // Exactly
+        unitTestChain.resetFalsePositiveEstimate();
+        assertTrue(0 == unitTestChain.getFalsePositiveRate()); // Exactly
 
-        chain.trackFalsePositives(55);
-        assertEquals(decay * 55, chain.getFalsePositiveRate(), 1e-4);
-        chain.trackFilteredTransactions(550);
-        assertEquals(rate1, chain.getFalsePositiveRate(), 1e-4);
+        unitTestChain.trackFalsePositives(55);
+        assertEquals(decay * 55, unitTestChain.getFalsePositiveRate(), 1e-4);
+        unitTestChain.trackFilteredTransactions(550);
+        assertEquals(rate1, unitTestChain.getFalsePositiveRate(), 1e-4);
     }
 
     @Test
@@ -476,25 +475,25 @@ public class BlockChainTest {
         Block b1 = UNITTEST.getGenesisBlock().createNextBlock(coinbaseTo);
         Block b2 = b1.createNextBlock(coinbaseTo);
         // Add block 1, no frills.
-        assertTrue(chain.add(b1));
-        assertEquals(b1.cloneAsHeader(), chain.getChainHead().getHeader());
-        assertEquals(1, chain.getBestChainHeight());
+        assertTrue(unitTestChain.add(b1));
+        assertEquals(b1.cloneAsHeader(), unitTestChain.getChainHead().getHeader());
+        assertEquals(1, unitTestChain.getBestChainHeight());
         assertEquals(1, wallet.getLastBlockSeenHeight());
         // Add block 2 while wallet is disconnected, to simulate crash.
-        chain.removeWallet(wallet);
-        assertTrue(chain.add(b2));
-        assertEquals(b2.cloneAsHeader(), chain.getChainHead().getHeader());
-        assertEquals(2, chain.getBestChainHeight());
+        unitTestChain.removeWallet(wallet);
+        assertTrue(unitTestChain.add(b2));
+        assertEquals(b2.cloneAsHeader(), unitTestChain.getChainHead().getHeader());
+        assertEquals(2, unitTestChain.getBestChainHeight());
         assertEquals(1, wallet.getLastBlockSeenHeight());
         // Add wallet back. This will detect the height mismatch and repair the damage done.
-        chain.addWallet(wallet);
-        assertEquals(b1.cloneAsHeader(), chain.getChainHead().getHeader());
-        assertEquals(1, chain.getBestChainHeight());
+        unitTestChain.addWallet(wallet);
+        assertEquals(b1.cloneAsHeader(), unitTestChain.getChainHead().getHeader());
+        assertEquals(1, unitTestChain.getBestChainHeight());
         assertEquals(1, wallet.getLastBlockSeenHeight());
         // Now add block 2 correctly.
-        assertTrue(chain.add(b2));
-        assertEquals(b2.cloneAsHeader(), chain.getChainHead().getHeader());
-        assertEquals(2, chain.getBestChainHeight());
+        assertTrue(unitTestChain.add(b2));
+        assertEquals(b2.cloneAsHeader(), unitTestChain.getChainHead().getHeader());
+        assertEquals(2, unitTestChain.getBestChainHeight());
         assertEquals(2, wallet.getLastBlockSeenHeight());
     }
 }
