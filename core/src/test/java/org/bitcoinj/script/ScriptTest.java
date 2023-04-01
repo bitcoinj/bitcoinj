@@ -392,7 +392,7 @@ public class ScriptTest {
             try {
                 Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
                 transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(test.get(1).asText().toLowerCase())));
-                transaction.verify();
+                Transaction.verify(TESTNET, transaction);
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
@@ -433,7 +433,7 @@ public class ScriptTest {
 
             boolean valid = true;
             try {
-                transaction.verify();
+                Transaction.verify(TESTNET, transaction);
             } catch (VerificationException e) {
                 valid = false;
             }

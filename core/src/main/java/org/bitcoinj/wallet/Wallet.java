@@ -2002,7 +2002,7 @@ public class Wallet extends BaseTaggableObject
         // spend against one of our other pending transactions.
         lock.lock();
         try {
-            tx.verify();
+            Transaction.verify(params, tx);
             // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
             // between pools.
             EnumSet<Pool> containingPools = getContainingPools(tx);
@@ -2782,7 +2782,7 @@ public class Wallet extends BaseTaggableObject
      * @throws VerificationException If transaction fails to verify
      */
     public boolean maybeCommitTx(Transaction tx) throws VerificationException {
-        tx.verify();
+        Transaction.verify(params, tx);
         lock.lock();
         try {
             if (pending.containsKey(tx.getTxId()))

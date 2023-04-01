@@ -713,7 +713,7 @@ public class Peer extends PeerSocketHandler {
 
     protected void processTransaction(final Transaction tx) throws VerificationException {
         // Check a few basic syntax issues to ensure the received TX isn't nonsense.
-        tx.verify();
+        tx.verify(params, tx);
         lock.lock();
         try {
             if (log.isDebugEnabled())

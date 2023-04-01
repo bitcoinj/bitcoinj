@@ -345,7 +345,6 @@ public class PaymentProtocol {
             @Nullable List<Protos.Output> refundOutputs, @Nullable String memo, @Nullable byte[] merchantData) {
         Protos.Payment.Builder builder = Protos.Payment.newBuilder();
         for (Transaction transaction : transactions) {
-            transaction.verify();
             builder.addTransactions(ByteString.copyFrom(transaction.bitcoinSerialize()));
         }
         if (refundOutputs != null) {
