@@ -266,8 +266,7 @@ public class FakeTxBuilder {
                                             Instant time, int height, Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
-            Address to = randomAddress(previousBlock.getParams());
-            Block b = previousBlock.createNextBlock(to, version, time, height);
+            Block b = previousBlock.createNextBlock(null, version, time, height);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
