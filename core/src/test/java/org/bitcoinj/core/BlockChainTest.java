@@ -25,8 +25,8 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.SigNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
@@ -69,7 +69,9 @@ public class BlockChainTest {
     private BlockChain testNetChain;
     private Address coinbaseTo;
 
-    private static final TestNet3Params TESTNET = TestNet3Params.get();
+    private static final NetworkParameters TESTNET = TestNet3Params.get();
+    private static final NetworkParameters SIGNET = SigNetParams.get();
+    private static final NetworkParameters MAINNET = MainNetParams.get();
 
     @Before
     public void setUp() throws Exception {
@@ -138,37 +140,77 @@ public class BlockChainTest {
         assertEquals(testNetChain.getChainHead().getHeader(), b3.cloneAsHeader());
     }
 
-    @Test
-    public void difficultyTransitions() throws Exception {
-        NetworkParameters UNITTEST = UnitTestParams.get();
-        BlockChain unitTestChain = new BlockChain(UNITTEST,
-                Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH),
-                new MemoryBlockStore(UNITTEST.getGenesisBlock()));
-
-        // Add a bunch of blocks in a loop until we reach a difficulty transition point. The unit test params have an
-        // artificially shortened period.
-        Block prev = UNITTEST.getGenesisBlock();
-        TimeUtils.setMockClock();
-        for (int height = 0; height < UNITTEST.getInterval() - 1; height++) {
-            Block newBlock = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), height);
-            assertTrue(unitTestChain.add(newBlock));
+    // adds 2015 (interval-1) intermediate blocks between the transition points
+    private static void addIntermediteBlocks(BlockChain chain, int epoch, Duration spacing) throws PrunedException {
+        int interval = chain.params.interval;
+        Block prev = chain.getChainHead().getHeader();
+        // there is an additional spacing here, to account for the fact that for the difficulty adjustment only
+        // interval minus 1 blocks are taken into account
+        Instant newTime = prev.time().plus(spacing);
+        for (int i = 1; i < interval; i++) {
+            newTime = newTime.plus(spacing);
+            Block newBlock = prev.createNextBlock(null, 1, newTime, epoch * interval + i);
+            assertTrue(chain.add(newBlock));
             prev = newBlock;
-            // The fake chain should seem to be "fast" for the purposes of difficulty calculations.
-            TimeUtils.rollMockClock(Duration.ofSeconds(2));
         }
-        // Now add another block that has no difficulty adjustment, it should be rejected.
-        try {
-            unitTestChain.add(prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), UNITTEST.getInterval()));
-            fail();
-        } catch (VerificationException e) {
-        }
-        // Create a new block with the right difficulty target given our blistering speed relative to the huge amount
-        // of time it's supposed to take (set in the unit test network parameters).
-        Block b = prev.createNextBlock(coinbaseTo, 1, TimeUtils.currentTime(), UNITTEST.getInterval() + 1);
-        b.setDifficultyTarget(0x201fFFFFL);
-        b.solve();
-        assertTrue(unitTestChain.add(b));
-        // Successfully traversed a difficulty transition period.
+    }
+
+    private static void addTransitionBlock(BlockChain chain, int epoch, Duration spacing) throws PrunedException {
+        int interval = chain.params.interval;
+        Block prev = chain.getChainHead().getHeader();
+        Instant newTime = prev.time().plus(spacing);
+        Block newBlock = prev.createNextBlock(null, 1, newTime, epoch * interval);
+        assertTrue(chain.add(newBlock));
+    }
+
+    @Test
+    public void difficultyTransitions_perfectSpacing() throws Exception {
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
+        BlockChain chain = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        // genesis block is already there
+        addIntermediteBlocks(chain, 0, Duration.ofMinutes(10));
+        addTransitionBlock(chain, 1, Duration.ofMinutes(10));
+    }
+
+    @Test(expected = VerificationException.class)
+    public void difficultyTransitions_tooQuick() throws Exception {
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
+        BlockChain chain = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        // genesis block is already there
+        addIntermediteBlocks(chain, 0, Duration.ofMinutes(10).minusSeconds(1));
+        addTransitionBlock(chain, 1, Duration.ofMinutes(10).minusSeconds(1));
+    }
+
+    @Test(expected = VerificationException.class)
+    public void difficultyTransitions_tooSlow() throws Exception {
+        // we're using signet because it's not at max target from the start
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
+        BlockChain chain = new BlockChain(SIGNET, new MemoryBlockStore(SIGNET.getGenesisBlock()));
+        // genesis block is already there
+        addIntermediteBlocks(chain, 0, Duration.ofMinutes(10).plusSeconds(1));
+        addTransitionBlock(chain, 1, Duration.ofMinutes(10).plusSeconds(1));
+    }
+
+    @Test
+    public void difficultyTransitions_tooSlow_butIsAtMax() throws Exception {
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
+        BlockChain chain = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        // genesis block is already there
+        addIntermediteBlocks(chain, 0, Duration.ofMinutes(20));
+        // we can add the transition block with the old target, becuase it is already at the maximum (genesis block)
+        addTransitionBlock(chain, 1, Duration.ofMinutes(20));
+    }
+
+    @Test(expected = VerificationException.class)
+    public void difficultyTransitions_unexpectedChange() throws Exception {
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
+        BlockChain chain = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        // genesis block is already there
+        Block prev = chain.getChainHead().getHeader();
+        Instant newTime = prev.time().plus(Duration.ofMinutes(10));
+        Block newBlock = prev.createNextBlock(null, 1, newTime, 1);
+        newBlock.setDifficultyTarget(newBlock.getDifficultyTarget() + 10);
+        assertTrue(chain.add(newBlock));
     }
 
     private static class TweakableTestNet3Params extends TestNet3Params {
@@ -420,7 +462,6 @@ public class BlockChainTest {
 
     @Test
     public void estimatedBlockTime() throws Exception {
-        NetworkParameters MAINNET = MainNetParams.get();
         BlockChain prod = new BlockChain(MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
         Instant t = prod.estimateBlockTimeInstant(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
