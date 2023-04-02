@@ -211,9 +211,12 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
         newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
         newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
 
-        if (newTarget.compareTo(this.getMaxTarget()) > 0) {
-            log.info("Difficulty hit proof of work limit: {}", newTarget.toString(16));
-            newTarget = this.getMaxTarget();
+        BigInteger maxTarget = this.getMaxTarget();
+        if (newTarget.compareTo(maxTarget) > 0) {
+            log.info("Difficulty hit proof of work limit: {} vs {}",
+                    Long.toHexString(ByteUtils.encodeCompactBits(newTarget)),
+                    Long.toHexString(ByteUtils.encodeCompactBits(maxTarget)));
+            newTarget = maxTarget;
         }
 
         int accuracyBytes = (int) (nextBlock.getDifficultyTarget() >>> 24) - 3;
