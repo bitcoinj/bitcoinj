@@ -234,7 +234,7 @@ public class BlockChainTest {
             // allowable difficulty.
             fail();
         } catch (VerificationException e) {
-            assertTrue(e.getMessage(), e.getCause().getMessage().contains("Difficulty target is bad"));
+            assertTrue(e.getMessage(), e.getCause().getMessage().contains("Difficulty target is out of range"));
         }
     }
 

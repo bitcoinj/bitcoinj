@@ -452,14 +452,12 @@ public class Block extends Message {
 
     /**
      * Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash. Inside a block the
-     * target is represented using a compact form. If this form decodes to a value that is out of bounds, an exception
-     * is thrown.
+     * target is represented using a compact form.
+     *
+     * @return difficulty target as 256-bit value
      */
-    public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
-        BigInteger target = ByteUtils.decodeCompactBits(difficultyTarget);
-        if (target.signum() <= 0 || target.compareTo(params.maxTarget) > 0)
-            throw new VerificationException("Difficulty target is bad: " + target.toString());
-        return target;
+    public BigInteger getDifficultyTargetAsInteger() {
+        return ByteUtils.decodeCompactBits(difficultyTarget);
     }
 
     /** Returns true if the hash of the block is OK (lower than difficulty target). */

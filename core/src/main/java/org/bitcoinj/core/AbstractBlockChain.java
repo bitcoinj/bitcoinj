@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -477,6 +478,10 @@ public abstract class AbstractBlockChain {
             if (tryConnecting && orphanBlocks.containsKey(block.getHash())) {
                 return false;
             }
+
+            BigInteger target = block.getDifficultyTargetAsInteger();
+            if (target.signum() <= 0 || target.compareTo(params.maxTarget) > 0)
+                throw new VerificationException("Difficulty target is out of range: " + target.toString());
 
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
             if (shouldVerifyTransactions() && block.getTransactions() == null)
