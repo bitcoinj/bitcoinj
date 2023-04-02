@@ -898,7 +898,7 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out14 = spendableOutputs.poll();
 
         // A valid block created exactly like b44 to make sure the creation itself works
-        Block b44 = new Block(params, Block.BLOCK_VERSION_GENESIS);
+        Block b44 = new Block(Block.BLOCK_VERSION_GENESIS);
         byte[] outScriptBytes = ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).getProgram();
         {
             b44.setDifficultyTarget(b43.block.getDifficultyTarget());
@@ -922,7 +922,7 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out15 = spendableOutputs.poll();
 
         // A block with a non-coinbase as the first tx
-        Block b45 = new Block(params, Block.BLOCK_VERSION_GENESIS);
+        Block b45 = new Block(Block.BLOCK_VERSION_GENESIS);
         {
             b45.setDifficultyTarget(b44.getDifficultyTarget());
             //b45.addCoinbaseTransaction(pubKey, coinbaseValue);
@@ -948,7 +948,7 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(b45, false, true, b44.getHash(), chainHeadHeight + 15, "b45"));
 
         // A block with no txn
-        Block b46 = new Block(params, Block.BLOCK_VERSION_GENESIS);
+        Block b46 = new Block(Block.BLOCK_VERSION_GENESIS);
         {
             b46.transactions = new ArrayList<>();
             b46.setDifficultyTarget(b44.getDifficultyTarget());
