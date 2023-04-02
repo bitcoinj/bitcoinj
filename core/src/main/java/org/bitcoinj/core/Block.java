@@ -134,8 +134,8 @@ public class Block extends Message {
     private Sha256Hash hash;
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
-    Block(NetworkParameters params, long setVersion) {
-        super(params);
+    Block(long setVersion) {
+        super(new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
         difficultyTarget = 0x1d07fff8L;
@@ -145,18 +145,15 @@ public class Block extends Message {
 
     /**
      * Construct a block object from the Bitcoin wire format.
-     * @param params NetworkParameters object.
      * @param payload the payload to extract the block from.
      * @throws ProtocolException
      */
-    public Block(NetworkParameters params, ByteBuffer payload)
-            throws ProtocolException {
-        super(params, payload);
+    public Block(ByteBuffer payload) throws ProtocolException {
+        super(payload, new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
     }
 
     /**
      * Construct a block initialized with all the given fields.
-     * @param params Which network the block is for.
      * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
      * @param prevBlockHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
      * @param merkleRoot The root of the merkle tree formed by the transactions.
@@ -165,9 +162,9 @@ public class Block extends Message {
      * @param nonce Arbitrary number to make the block hash lower than the target.
      * @param transactions List of transactions including the coinbase.
      */
-    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
+    public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
                  long difficultyTarget, long nonce, List<Transaction> transactions) {
-        super(params);
+        super();
         this.version = version;
         this.prevBlockHash = prevBlockHash;
         this.merkleRoot = merkleRoot;
@@ -180,7 +177,6 @@ public class Block extends Message {
 
     /**
      * Construct a block initialized with all the given fields.
-     * @param params Which network the block is for.
      * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
      * @param prevBlockHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
      * @param merkleRoot The root of the merkle tree formed by the transactions.
@@ -188,12 +184,12 @@ public class Block extends Message {
      * @param difficultyTarget Number which this block hashes lower than.
      * @param nonce Arbitrary number to make the block hash lower than the target.
      * @param transactions List of transactions including the coinbase.
-     * @deprecated use {@link #Block(NetworkParameters, long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
+     * @deprecated use {@link #Block(long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
      */
     @Deprecated
-    public Block(NetworkParameters params, long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
+    public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
                  long difficultyTarget, long nonce, List<Transaction> transactions) {
-        this(params, version, prevBlockHash, merkleRoot, Instant.ofEpochSecond(time), difficultyTarget, nonce,
+        this(version, prevBlockHash, merkleRoot, Instant.ofEpochSecond(time), difficultyTarget, nonce,
                 transactions);
     }
 
@@ -236,8 +232,8 @@ public class Block extends Message {
             parseTransactions(payload);
     }
 
-    public static Block createGenesis(NetworkParameters n) {
-        Block genesisBlock = new Block(n, BLOCK_VERSION_GENESIS);
+    public static Block createGenesis() {
+        Block genesisBlock = new Block(BLOCK_VERSION_GENESIS);
         Transaction tx = Transaction.coinbase(genesisTxInputScriptBytes);
         tx.addOutput(new TransactionOutput(tx, FIFTY_COINS, genesisTxScriptPubKeyBytes));
         genesisBlock.addTransaction(tx);
@@ -381,7 +377,7 @@ public class Block extends Message {
      * @return new, header-only {@code Block}
      */
     public Block cloneAsHeader() {
-        Block block = new Block(params, version);
+        Block block = new Block(version);
         block.difficultyTarget = difficultyTarget;
         block.time = time;
         block.nonce = nonce;
@@ -861,7 +857,7 @@ public class Block extends Message {
     @VisibleForTesting
     Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint prevOut, Instant time,
                           byte[] pubKey, Coin coinbaseValue, int height) {
-        Block b = new Block(params, version);
+        Block b = new Block(version);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 

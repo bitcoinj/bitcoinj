@@ -298,7 +298,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public Block makeBlock(ByteBuffer payload) throws ProtocolException {
-        return new Block(params, payload);
+        return new Block(payload);
     }
 
     /**
@@ -316,7 +316,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public FilteredBlock makeFilteredBlock(ByteBuffer payload) throws ProtocolException {
-        return new FilteredBlock(params, payload);
+        return new FilteredBlock(payload);
     }
 
     /**
