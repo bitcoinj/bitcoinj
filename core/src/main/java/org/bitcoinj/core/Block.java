@@ -851,23 +851,34 @@ public class Block extends Message {
 
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
+     *
+     * @param to      if not null, 50 coins are sent to the address
+     * @param version version of the block to create
+     * @param time    time of the block to create
+     * @param height  block height if known, or -1 otherwise
+     * @return created block
      */
     @VisibleForTesting
-    public Block createNextBlock(Address to, long version, Instant time, int blockHeight) {
-        return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, blockHeight);
+    public Block createNextBlock(@Nullable Address to, long version, Instant time, int height) {
+        return createNextBlock(to, version, null, time, pubkeyForTesting, FIFTY_COINS, height);
     }
 
     /**
      * Returns a solved block that builds on top of this one. This exists for unit tests.
      * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
-     * 
-     * @param height block height, if known, or -1 otherwise.
+     *
+     * @param to            if not null, 50 coins are sent to the address
+     * @param version       version of the block to create
+     * @param prevOut       previous output to spend by the "50 coins transaction"
+     * @param time          time of the block to create
+     * @param pubKey        for the coinbase
+     * @param coinbaseValue for the coinbase
+     * @param height        block height if known, or -1 otherwise
+     * @return created block
      */
     @VisibleForTesting
-    Block createNextBlock(@Nullable final Address to, final long version,
-                          @Nullable TransactionOutPoint prevOut, final Instant time,
-                          final byte[] pubKey, final Coin coinbaseValue,
-                          final int height) {
+    Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint prevOut, Instant time,
+                          byte[] pubKey, Coin coinbaseValue, int height) {
         Block b = new Block(params, version);
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
@@ -914,35 +925,71 @@ public class Block extends Message {
         return Sha256Hash.wrap(counter);
     }
 
+    /**
+     * This method is intended for test use only.
+     *
+     * @param to      if not null, 50 coins are sent to the address
+     * @param prevOut previous output to spend by the "50 coins transaction"
+     * @return created block
+     */
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, time().plusSeconds(5), pubkeyForTesting, FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, time().plusSeconds(5), pubkeyForTesting,
+                FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
 
+    /**
+     * This method is intended for test use only.
+     *
+     * @param to            if not null, 50 coins are sent to the address
+     * @param coinbaseValue for the coinbase
+     * @return created block
+     */
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, Coin value) {
-        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, time().plusSeconds(5), pubkeyForTesting, value, BLOCK_HEIGHT_UNKNOWN);
+    public Block createNextBlock(@Nullable Address to, Coin coinbaseValue) {
+        return createNextBlock(to, BLOCK_VERSION_GENESIS, null, time().plusSeconds(5), pubkeyForTesting,
+                coinbaseValue, BLOCK_HEIGHT_UNKNOWN);
     }
 
+    /**
+     * This method is intended for test use only.
+     *
+     * @param to if not null, 50 coins are sent to the address
+     * @return created block
+     */
     @VisibleForTesting
     public Block createNextBlock(@Nullable Address to) {
         return createNextBlock(to, FIFTY_COINS);
     }
 
+    /**
+     * This method is intended for test use only.
+     *
+     * @param version       version of the block to create
+     * @param pubKey        for the coinbase
+     * @param coinbaseValue for the coinbase
+     * @param height        block height if known, or -1 otherwise
+     * @return created block
+     */
     @VisibleForTesting
-    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, final int height) {
-        return createNextBlock(null, version, (TransactionOutPoint) null,
-                               TimeUtils.currentTime(), pubKey, coinbaseValue, height);
+    public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, int height) {
+        return createNextBlock(null, version, (TransactionOutPoint) null, TimeUtils.currentTime(), pubKey,
+                coinbaseValue, height);
     }
 
     /**
      * Create a block sending 50BTC as a coinbase transaction to the public key specified.
      * This method is intended for test use only.
+     *
+     * @param version version of the block to create
+     * @param pubKey  for the coinbase
+     * @param height  block height if known, or -1 otherwise
+     * @return created block
      */
     @VisibleForTesting
-    Block createNextBlockWithCoinbase(long version, byte[] pubKey, final int height) {
-        return createNextBlock(null, version, (TransactionOutPoint) null,
-                               TimeUtils.currentTime(), pubKey, FIFTY_COINS, height);
+    Block createNextBlockWithCoinbase(long version, byte[] pubKey, int height) {
+        return createNextBlock(null, version, (TransactionOutPoint) null, TimeUtils.currentTime(), pubKey,
+                FIFTY_COINS, height);
     }
 
     /**
