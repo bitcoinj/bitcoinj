@@ -41,6 +41,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -329,11 +330,10 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
-        Address to = randomAddress(prev.getParams());
-        return makeSolvedTestBlock(prev, to, transactions);
+        return makeSolvedTestBlock(prev, null, transactions);
     }
 
-    public static Block makeSolvedTestBlock(Block prev, Address to, Transaction... transactions) throws BlockStoreException {
+    public static Block makeSolvedTestBlock(Block prev, @Nullable Address to, Transaction... transactions) throws BlockStoreException {
         Block b = prev.createNextBlock(to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {

@@ -820,7 +820,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         for (ECKey key1 : keys) {
             Address addr = key1.toAddress(ScriptType.P2PKH, UNITTEST.network());
             Block next = FakeTxBuilder.makeSolvedTestBlock(prev, FakeTxBuilder.createFakeTx(UNITTEST, Coin.FIFTY_COINS, addr));
-            expectedBalance = expectedBalance.add(next.getTransactions().get(2).getOutput(0).getValue());
+            expectedBalance = expectedBalance.add(next.getTransactions().get(1).getOutput(0).getValue());
             blocks.add(next);
             prev = next;
         }
