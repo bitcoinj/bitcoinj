@@ -66,7 +66,7 @@ public class FakeTxBuilder {
 
     /** Create a fake transaction, without change. */
     public static Transaction createFakeTxWithoutChange(final NetworkParameters params, final TransactionOutput output) {
-        Transaction prevTx = FakeTxBuilder.createFakeTx(params, Coin.COIN, randomAddress(params));
+        Transaction prevTx = FakeTxBuilder.createFakeTx(params, Coin.COIN, randomKey());
         Transaction tx = new Transaction(params);
         tx.addOutput(output);
         tx.addInput(prevTx.getOutput(0));
@@ -179,7 +179,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction(params);
         TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), randomAddress(params));
+        TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), randomKey());
         t.addOutput(change);
         // Make a feeder tx that sends to the from address specified. This feeder tx is not really valid but it doesn't
         // matter for our purposes.
