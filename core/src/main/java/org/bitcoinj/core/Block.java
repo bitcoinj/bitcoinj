@@ -456,10 +456,7 @@ public class Block extends Message {
      * is thrown.
      */
     public BigInteger getDifficultyTargetAsInteger() throws VerificationException {
-        BigInteger target = ByteUtils.decodeCompactBits(difficultyTarget);
-        if (target.signum() <= 0 || target.compareTo(params.maxTarget) > 0)
-            throw new VerificationException("Difficulty target is bad: " + target.toString());
-        return target;
+        return ByteUtils.decodeCompactBits(difficultyTarget);
     }
 
     /** Returns true if the hash of the block is OK (lower than difficulty target). */
