@@ -218,7 +218,7 @@ public class FakeTxBuilder {
     public static DoubleSpends createFakeDoubleSpendTxns(NetworkParameters params, Address to) {
         DoubleSpends doubleSpends = new DoubleSpends();
         Coin value = COIN;
-        Address someBadGuy = randomAddress(params);
+        ECKey someBadGuy = randomKey();
 
         doubleSpends.prevTx = new Transaction(params);
         TransactionOutput prevOut = new TransactionOutput(doubleSpends.prevTx, value, someBadGuy);
