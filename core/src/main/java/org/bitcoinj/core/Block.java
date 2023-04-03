@@ -184,7 +184,7 @@ public class Block extends Message {
      * @param difficultyTarget Number which this block hashes lower than.
      * @param nonce Arbitrary number to make the block hash lower than the target.
      * @param transactions List of transactions including the coinbase.
-     * @deprecated use {@link #Block(NetworkParameters, long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
+     * @deprecated use {@link #Block(long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
      */
     @Deprecated
     public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
