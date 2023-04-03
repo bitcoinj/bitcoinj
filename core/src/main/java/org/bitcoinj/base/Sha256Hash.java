@@ -269,9 +269,11 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
     }
 
     /**
-     * Returns a reversed copy of the internal byte array.
+     * Allocates a byte array and writes the hash into it, in reversed order.
+     *
+     * @return byte array containing the hash
      */
-    public byte[] getReversedBytes() {
+    public byte[] serialize() {
         return ByteUtils.reverseBytes(bytes);
     }
 
@@ -284,7 +286,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      */
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
         // we have to flip it around, as on the wire it's in little endian
-        buf.put(getReversedBytes());
+        buf.put(serialize());
         return buf;
     }
 

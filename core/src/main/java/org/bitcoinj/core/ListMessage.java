@@ -91,7 +91,7 @@ public abstract class ListMessage extends Message {
             // Write out the type code.
             ByteUtils.writeInt32LE(i.type.code, stream);
             // And now the hash.
-            stream.write(i.hash.getReversedBytes());
+            stream.write(i.hash.serialize());
         }
     }
 

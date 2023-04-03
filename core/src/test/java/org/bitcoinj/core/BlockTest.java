@@ -315,8 +315,8 @@ public class BlockTest {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 ByteUtils.writeInt32LE(getVersion(), stream);
-                stream.write(getPrevBlockHash().getReversedBytes());
-                stream.write(getMerkleRoot().getReversedBytes());
+                stream.write(getPrevBlockHash().serialize());
+                stream.write(getMerkleRoot().serialize());
                 ByteUtils.writeInt32LE(getTimeSeconds(), stream);
                 ByteUtils.writeInt32LE(getDifficultyTarget(), stream);
                 ByteUtils.writeInt32LE(getNonce(), stream);

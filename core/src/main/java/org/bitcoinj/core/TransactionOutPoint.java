@@ -105,7 +105,7 @@ public class TransactionOutPoint extends Message {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(hash.getReversedBytes());
+        stream.write(hash.serialize());
         ByteUtils.writeInt32LE(index, stream);
     }
 
