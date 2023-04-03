@@ -1225,7 +1225,7 @@ public class Peer extends PeerSocketHandler {
                         // the duplicate check in blockChainDownloadLocked(). But Bitcoin Core may change in future so
                         // it's better to be safe here.
                         if (!pendingBlockDownloads.contains(item.hash)) {
-                            if (vPeerVersionMessage.isBloomFilteringSupported() && useFilteredBlocks) {
+                            if (isBloomFilteringSupported(vPeerVersionMessage) && useFilteredBlocks) {
                                 getdata.addFilteredBlock(item.hash);
                                 pingAfterGetData = true;
                             } else {
@@ -1728,7 +1728,7 @@ public class Peer extends PeerSocketHandler {
         Objects.requireNonNull(filter, "Clearing filters is not currently supported");
         final VersionMessage version = vPeerVersionMessage;
         Objects.requireNonNull(version, "Cannot set filter before version handshake is complete");
-        if (version.isBloomFilteringSupported()) {
+        if (isBloomFilteringSupported(version)) {
             vBloomFilter = filter;
             log.info("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
             sendMessage(filter);
@@ -1807,5 +1807,18 @@ public class Peer extends PeerSocketHandler {
      */
     public void setDownloadTxDependencies(int depth) {
         vDownloadTxDependencyDepth = depth;
+    }
+
+    /**
+     * Returns true if the peer supports bloom filtering according to BIP37 and BIP111.
+     */
+    private boolean isBloomFilteringSupported(VersionMessage version) {
+        int clientVersion = version.clientVersion();
+        if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)
+                && clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111))
+            return true;
+        if (version.services().has(Services.NODE_BLOOM))
+            return true;
+        return false;
     }
 }
