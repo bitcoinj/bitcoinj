@@ -1680,10 +1680,10 @@ public class WalletTest extends TestWithWallet {
         wallet.addWatchedAddress(watchedAddress);
 
         // Note that this has a 1e-12 chance of failing this unit test due to a false positive
-        assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+        assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
 
         sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, t1);
-        assertTrue(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+        assertTrue(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
     }
 
     @Test
@@ -1733,10 +1733,10 @@ public class WalletTest extends TestWithWallet {
             TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
 
             // Note that this has a 1e-12 chance of failing this unit test due to a false positive
-            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
 
             sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, t1);
-            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.bitcoinSerialize()));
+            assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
         }
     }
 
@@ -1751,10 +1751,10 @@ public class WalletTest extends TestWithWallet {
         Transaction t1 = createFakeTx(TESTNET, CENT, address);
         TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
 
-        assertFalse(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.bitcoinSerialize()));
+        assertFalse(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.serialize()));
 
         sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, t1);
-        assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.bitcoinSerialize()));
+        assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.serialize()));
     }
 
     @Test

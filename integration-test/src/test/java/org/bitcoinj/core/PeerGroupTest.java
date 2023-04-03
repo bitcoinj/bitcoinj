@@ -653,7 +653,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p3 = connectPeer(3);
         assertTrue(p3.lastReceivedFilter.contains(key.getPubKey()));
         assertTrue(p3.lastReceivedFilter.contains(key.getPubKeyHash()));
-        assertTrue(p3.lastReceivedFilter.contains(outpoint.bitcoinSerialize()));
+        assertTrue(p3.lastReceivedFilter.contains(outpoint.serialize()));
     }
 
     @Test

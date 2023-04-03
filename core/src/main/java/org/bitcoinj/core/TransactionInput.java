@@ -159,14 +159,14 @@ public class TransactionInput extends Message {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        outpoint = new TransactionOutPoint(payload);
+        outpoint = TransactionOutPoint.read(payload);
         scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         sequence = ByteUtils.readUint32(payload);
     }
 
     @Override
     public int getMessageSize() {
-        int size = outpoint.getMessageSize();
+        int size = TransactionOutPoint.BYTES;
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         size += 4; // sequence
         return size;
@@ -174,7 +174,7 @@ public class TransactionInput extends Message {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        outpoint.bitcoinSerializeToStream(stream);
+        stream.write(outpoint.serialize());
         stream.write(VarInt.of(scriptBytes.length).serialize());
         stream.write(scriptBytes);
         ByteUtils.writeInt32LE(sequence, stream);

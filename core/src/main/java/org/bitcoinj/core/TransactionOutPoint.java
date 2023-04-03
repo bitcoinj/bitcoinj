@@ -29,8 +29,8 @@ import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.Buffer;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -43,9 +43,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class TransactionOutPoint extends Message {
-
-    static final int MESSAGE_LENGTH = 36;
+public class TransactionOutPoint {
+    public static final int BYTES = 36;
 
     /** Special outpoint that normally marks a coinbase input. It's also used as a test dummy. */
     public static final TransactionOutPoint UNCONNECTED =
@@ -61,6 +60,19 @@ public class TransactionOutPoint extends Message {
 
     // The connected output.
     TransactionOutput connectedOutput;
+
+    /**
+     * Deserialize this transaction outpoint from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read transaction outpoint
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static TransactionOutPoint read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        Sha256Hash hash = Sha256Hash.read(payload);
+        long index = ByteUtils.readUint32(payload);
+        return new TransactionOutPoint(index, hash);
+    }
 
     public TransactionOutPoint(long index, Transaction fromTx) {
         super();
@@ -85,28 +97,37 @@ public class TransactionOutPoint extends Message {
     }
 
     /**
-     * Deserializes the message. This is usually part of a transaction message.
-     * @throws ProtocolException
+     * Write this transaction outpoint into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the outpoint doesn't fit the remaining buffer
      */
-    public TransactionOutPoint(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        buf.put(hash.serialize());
+        ByteUtils.writeInt32LE(index, buf);
+        return buf;
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        hash = Sha256Hash.read(payload);
-        index = ByteUtils.readUint32(payload);
+    /**
+     * Allocates a byte array and writes this transaction outpoint into it.
+     *
+     * @return byte array containing the transaction outpoint
+     */
+    public byte[] serialize() {
+        return write(ByteBuffer.allocate(BYTES)).array();
     }
 
-    @Override
+    /** @deprecated use {@link #serialize()} */
+    @Deprecated
+    public byte[] bitcoinSerialize() {
+        return serialize();
+    }
+
+    /** @deprecated use {@link #BYTES} */
+    @Deprecated
     public int getMessageSize() {
-        return MESSAGE_LENGTH;
-    }
-
-    @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(hash.serialize());
-        ByteUtils.writeInt32LE(index, stream);
+        return BYTES;
     }
 
     /**

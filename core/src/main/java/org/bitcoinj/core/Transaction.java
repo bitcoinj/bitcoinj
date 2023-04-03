@@ -682,7 +682,7 @@ public class Transaction extends Message {
             TransactionInput input = new TransactionInput(this, payload.slice());
             inputs.add(input);
             // intentionally read again, due to the slice above
-            Buffers.skipBytes(payload, TransactionOutPoint.MESSAGE_LENGTH);
+            Buffers.skipBytes(payload, TransactionOutPoint.BYTES);
             VarInt scriptLenVarInt = VarInt.read(payload);
             int scriptLen = scriptLenVarInt.intValue();
             Buffers.skipBytes(payload, scriptLen + 4);
