@@ -25,7 +25,6 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.MessageSerializer;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.base.Sha256Hash;
@@ -235,8 +234,8 @@ public class FakeTxBuilder {
         doubleSpends.t2.addOutput(o2);
 
         try {
-            doubleSpends.t1 = params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(doubleSpends.t1.bitcoinSerialize()));
-            doubleSpends.t2 = params.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(doubleSpends.t2.bitcoinSerialize()));
+            doubleSpends.t1 = roundTripTransaction(params, doubleSpends.t1);
+            doubleSpends.t2 = roundTripTransaction(params, doubleSpends.t2);
         } catch (ProtocolException e) {
             throw new RuntimeException(e);
         }
