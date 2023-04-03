@@ -636,7 +636,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Transaction tx = FakeTxBuilder.createFakeTx(COIN, key);
         Transaction tx2 = new Transaction();
         tx2.addInput(tx.getOutput(0));
-        TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
+        ConnectedTransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
         assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));
         assertTrue(p1.lastReceivedFilter.contains(key.getPubKeyHash()));
         assertFalse(p1.lastReceivedFilter.contains(tx.getTxId().getBytes()));

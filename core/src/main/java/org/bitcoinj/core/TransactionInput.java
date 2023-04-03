@@ -76,7 +76,7 @@ public class TransactionInput extends Message {
     // Allows for altering transactions after they were broadcast. Values below NO_SEQUENCE-1 mean it can be altered.
     private long sequence;
     // Data needed to connect to the output of the transaction we're gathering coins from.
-    private TransactionOutPoint outpoint;
+    private ConnectedTransactionOutPoint outpoint;
     // The "script bytes" might not actually be a script. In coinbase transactions where new coins are minted there
     // is no input transaction, so instead the scriptBytes contains some extra stuff (like a rollover nonce) that we
     // don't care about much. The bytes are turned into a Script object (cached below) on demand via a getter.
@@ -100,16 +100,16 @@ public class TransactionInput extends Message {
         Objects.requireNonNull(parentTransaction);
         checkArgument(scriptBytes.length >= 2 && scriptBytes.length <= 100, () ->
                 "script must be between 2 and 100 bytes: " + scriptBytes.length);
-        return new TransactionInput(parentTransaction, scriptBytes, TransactionOutPoint.UNCONNECTED);
+        return new TransactionInput(parentTransaction, scriptBytes, ConnectedTransactionOutPoint.UNCONNECTED);
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-                            TransactionOutPoint outpoint) {
+                            ConnectedTransactionOutPoint outpoint) {
         this(parentTransaction, scriptBytes, outpoint, null);
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-            TransactionOutPoint outpoint, @Nullable Coin value) {
+                            ConnectedTransactionOutPoint outpoint, @Nullable Coin value) {
         super();
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
@@ -125,9 +125,9 @@ public class TransactionInput extends Message {
         super();
         long outputIndex = output.getIndex();
         if(output.getParentTransaction() != null ) {
-            outpoint = new TransactionOutPoint(outputIndex, output.getParentTransaction());
+            outpoint = new ConnectedTransactionOutPoint(outputIndex, output.getParentTransaction());
         } else {
-            outpoint = new TransactionOutPoint(output);
+            outpoint = new ConnectedTransactionOutPoint(output);
         }
         scriptBytes = EMPTY_ARRAY;
         sequence = NO_SEQUENCE;
@@ -159,14 +159,14 @@ public class TransactionInput extends Message {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        outpoint = TransactionOutPoint.read(payload);
+        outpoint = ConnectedTransactionOutPoint.read(payload);
         scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         sequence = ByteUtils.readUint32(payload);
     }
 
     @Override
     public int getMessageSize() {
-        int size = TransactionOutPoint.BYTES;
+        int size = ConnectedTransactionOutPoint.BYTES;
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         size += 4; // sequence
         return size;
@@ -237,7 +237,7 @@ public class TransactionInput extends Message {
      * @return The previous output transaction reference, as an OutPoint structure.  This contains the 
      * data needed to connect to the output of the transaction we're gathering coins from.
      */
-    public TransactionOutPoint getOutpoint() {
+    public ConnectedTransactionOutPoint getOutpoint() {
         return outpoint;
     }
 
@@ -311,7 +311,7 @@ public class TransactionInput extends Message {
         SUCCESS
     }
 
-    // TODO: Clean all this up once TransactionOutPoint disappears.
+    // TODO: Clean all this up once ConnectedTransactionOutPoint disappears.
 
     /**
      * Locates the referenced output from the given pool of transactions.
@@ -328,7 +328,7 @@ public class TransactionInput extends Message {
 
     /**
      * Alias for getOutpoint().getConnectedRedeemData(keyBag)
-     * @see TransactionOutPoint#getConnectedRedeemData(KeyBag)
+     * @see ConnectedTransactionOutPoint#getConnectedRedeemData(KeyBag)
      */
     @Nullable
     public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {

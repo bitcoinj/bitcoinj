@@ -31,7 +31,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.ConnectedTransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -52,12 +52,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -645,7 +643,7 @@ public class WalletProtobufSerializer {
 
         for (Protos.TransactionInput inputProto : txProto.getTransactionInputList()) {
             byte[] scriptBytes = inputProto.getScriptBytes().toByteArray();
-            TransactionOutPoint outpoint = new TransactionOutPoint(
+            ConnectedTransactionOutPoint outpoint = new ConnectedTransactionOutPoint(
                     inputProto.getTransactionOutPointIndex() & 0xFFFFFFFFL,
                     byteStringToHash(inputProto.getTransactionOutPointHash())
             );

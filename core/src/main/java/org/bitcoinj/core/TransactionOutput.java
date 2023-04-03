@@ -408,11 +408,11 @@ public class TransactionOutput extends Message {
     }
 
     /**
-     * Returns a new {@link TransactionOutPoint}, which is essentially a structure pointing to this output.
+     * Returns a new {@link ConnectedTransactionOutPoint}, which is essentially a structure pointing to this output.
      * Requires that this output is not detached.
      */
-    public TransactionOutPoint getOutPointFor() {
-        return new TransactionOutPoint(getIndex(), getParentTransaction());
+    public ConnectedTransactionOutPoint getOutPointFor() {
+        return new ConnectedTransactionOutPoint(getIndex(), getParentTransaction());
     }
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */

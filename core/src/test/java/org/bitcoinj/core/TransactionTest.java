@@ -41,14 +41,11 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -176,7 +173,7 @@ public class TransactionTest {
 
         // add fake transaction input
         TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().getProgram(),
-                new TransactionOutPoint(0, Sha256Hash.ZERO_HASH));
+                new ConnectedTransactionOutPoint(0, Sha256Hash.ZERO_HASH));
         tx.addInput(input);
         length += input.getMessageSize();
 
@@ -214,7 +211,7 @@ public class TransactionTest {
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
+        ConnectedTransactionOutPoint outPoint = new ConnectedTransactionOutPoint(0, utxo_id);
         TransactionOutput output = new TransactionOutput(null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
@@ -237,7 +234,7 @@ public class TransactionTest {
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
+        ConnectedTransactionOutPoint outPoint = new ConnectedTransactionOutPoint(0, utxo_id);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 
@@ -505,7 +502,7 @@ public class TransactionTest {
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
-        TransactionInput ti = new TransactionInput(tx, new byte[0], TransactionOutPoint.UNCONNECTED) {
+        TransactionInput ti = new TransactionInput(tx, new byte[0], ConnectedTransactionOutPoint.UNCONNECTED) {
             @Override
             public Script getScriptSig() throws ScriptException {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "");

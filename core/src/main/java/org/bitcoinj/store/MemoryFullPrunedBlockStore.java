@@ -19,13 +19,13 @@ package org.bitcoinj.store;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.core.ConnectedTransactionOutPoint;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.VerificationException;
@@ -42,7 +42,7 @@ import java.util.Set;
 
 /**
  * Used as a key for memory map (to avoid having to think about NetworkParameters,
- * which is required for {@link TransactionOutPoint}
+ * which is required for {@link ConnectedTransactionOutPoint}
  */
 class StoredTransactionOutPoint {
 
