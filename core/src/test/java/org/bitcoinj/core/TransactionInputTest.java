@@ -141,7 +141,7 @@ public class TransactionInputTest {
         return Stream.generate(() -> {
             byte[] randomBytes = new byte[100];
             random.nextBytes(randomBytes);
-            return new TransactionInput(parent, randomBytes, TransactionOutPoint.UNCONNECTED,
+            return new TransactionInput(parent, randomBytes, TransactionOutPoint.Connected.UNCONNECTED,
                     Coin.ofSat(random.nextLong()));
         }).limit(10).iterator();
     }

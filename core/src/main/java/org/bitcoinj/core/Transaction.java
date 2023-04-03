@@ -682,7 +682,7 @@ public class Transaction extends Message {
             TransactionInput input = TransactionInput.read(payload.slice(), this);
             inputs.add(input);
             // intentionally read again, due to the slice above
-            Buffers.skipBytes(payload, TransactionOutPoint.BYTES);
+            Buffers.skipBytes(payload, TransactionOutPoint.Connected.BYTES);
             VarInt scriptLenVarInt = VarInt.read(payload);
             int scriptLen = scriptLenVarInt.intValue();
             Buffers.skipBytes(payload, scriptLen + 4);
@@ -835,7 +835,7 @@ public class Transaction extends Message {
                         s.append(in.getWitness());
                         s.append('\n');
                     }
-                    final TransactionOutPoint outpoint = in.getOutpoint();
+                    final TransactionOutPoint.Connected outpoint = in.getOutpoint();
                     final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
                     s.append(indent).append("        ");
                     if (connectedOutput != null) {
@@ -952,7 +952,7 @@ public class Transaction extends Message {
      * @return the newly created input.
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
-        return addInput(new TransactionInput(this, script.getProgram(), new TransactionOutPoint(outputIndex, spendTxHash)));
+        return addInput(new TransactionInput(this, script.getProgram(), new TransactionOutPoint.Connected(outputIndex, spendTxHash)));
     }
 
     /**
@@ -970,7 +970,7 @@ public class Transaction extends Message {
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey,
+    public TransactionInput addSignedInput(TransactionOutPoint.Connected prevOut, Script scriptPubKey, Coin amount, ECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), () ->
@@ -1011,10 +1011,10 @@ public class Transaction extends Message {
      * @param anyoneCanPay anyone-can-pay hashing
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)}
+     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint.Connected, Script, Coin, ECKey, SigHash, boolean)}
      */
     @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
+    public TransactionInput addSignedInput(TransactionOutPoint.Connected prevOut, Script scriptPubKey, ECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, null, sigKey, sigHash, anyoneCanPay);
     }
@@ -1030,7 +1030,7 @@ public class Transaction extends Message {
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
+    public TransactionInput addSignedInput(TransactionOutPoint.Connected prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, amount, sigKey, SigHash.ALL, false);
     }
 
@@ -1040,10 +1040,10 @@ public class Transaction extends Message {
      * @param sigKey The signing key
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey)}
+     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint.Connected, Script, Coin, ECKey)}
      */
     @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
+    public TransactionInput addSignedInput(TransactionOutPoint.Connected prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, null, sigKey);
     }
 
@@ -1061,7 +1061,7 @@ public class Transaction extends Message {
     /**
      * Adds an input that points to the given output and contains a valid signature for it, calculated using the
      * signing key.
-     * @see Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)
+     * @see Transaction#addSignedInput(TransactionOutPoint.Connected, Script, Coin, ECKey, SigHash, boolean)
      * @param output output to sign and use as input
      * @param sigKey The signing key
      * @param sigHash enum specifying how the transaction hash is calculated

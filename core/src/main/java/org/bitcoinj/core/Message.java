@@ -101,7 +101,7 @@ public abstract class Message {
         log.error("Error: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
     }
 
-    /** @deprecated use {@link Transaction#getTxId()}, {@link Block#getHash()}, {@link FilteredBlock#getHash()} or {@link TransactionOutPoint#hash()} */
+    /** @deprecated use {@link Transaction#getTxId()}, {@link Block#getHash()}, {@link FilteredBlock#getHash()} or {@link TransactionOutPoint.Connected#hash()} */
     @Deprecated
     public Sha256Hash getHash() {
         throw new UnsupportedOperationException();
