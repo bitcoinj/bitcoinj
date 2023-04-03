@@ -171,7 +171,7 @@ public class VersionMessage extends Message {
     @Override
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
         ByteUtils.writeInt32LE(clientVersion, buf);
-        buf.write(localServices.buffer().array());
+        buf.write(localServices.serialize());
         ByteUtils.writeInt64LE(time.getEpochSecond(), buf);
         receivingAddr.bitcoinSerializeToStream(buf);
         fromAddr.bitcoinSerializeToStream(buf);
