@@ -107,10 +107,20 @@ public class Services {
      * Checks if given specific node services are signaled by this bitfield.
      *
      * @param bitmask bitmask representing the services to be checked for
-     * @return true if the given services are allsignaled, false otherwise
+     * @return true if the given services are all signaled, false otherwise
      */
     public boolean has(long bitmask) {
         return (bits & bitmask) == bitmask;
+    }
+
+    /**
+     * Checks if at least one of the given node services is signaled by this bitfield.
+     *
+     * @param bitmask bitmask representing the services to be checked for
+     * @return true if at least one of the given services is signaled, false otherwise
+     */
+    public boolean anyOf(long bitmask) {
+        return (bits & bitmask) != 0;
     }
 
     /**
