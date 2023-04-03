@@ -30,9 +30,8 @@ import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -49,7 +48,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class TransactionInput extends Message {
+public class TransactionInput {
     /** Magic sequence number that indicates there is no sequence number. */
     public static final long NO_SEQUENCE = 0xFFFFFFFFL;
     /**
@@ -103,17 +102,37 @@ public class TransactionInput extends Message {
         return new TransactionInput(parentTransaction, scriptBytes, TransactionOutPoint.UNCONNECTED);
     }
 
-    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-                            TransactionOutPoint outpoint) {
-        this(parentTransaction, scriptBytes, outpoint, null);
+    /**
+     * Deserialize this transaction input from a given payload.
+     *
+     * @param payload           payload to deserialize from
+     * @param parentTransaction parent transaction of the input
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static TransactionInput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
+        Objects.requireNonNull(parentTransaction);
+        TransactionOutPoint outpoint = TransactionOutPoint.read(payload);
+        byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
+        long sequence = ByteUtils.readUint32(payload);
+        return new TransactionInput(parentTransaction, scriptBytes, outpoint, sequence, null);
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-            TransactionOutPoint outpoint, @Nullable Coin value) {
-        super();
+                            TransactionOutPoint outpoint) {
+        this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, null);
+    }
+
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
+                            TransactionOutPoint outpoint, @Nullable Coin value) {
+        this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, value);
+    }
+
+    private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
+                            TransactionOutPoint outpoint, long sequence, @Nullable Coin value) {
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
-        this.sequence = NO_SEQUENCE;
+        this.sequence = sequence;
         this.value = value;
         setParent(parentTransaction);
     }
@@ -136,17 +155,6 @@ public class TransactionInput extends Message {
     }
 
     /**
-     * Deserializes an input message. This is usually part of a transaction message.
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @throws ProtocolException
-     */
-    public TransactionInput(@Nullable Transaction parentTransaction, ByteBuffer payload) throws ProtocolException {
-        super(payload);
-        setParent(parentTransaction);
-        this.value = null;
-    }
-
-    /**
      * Gets the index of this input in the parent transaction, or throws if this input is freestanding. Iterates
      * over the parents list to discover this.
      */
@@ -157,27 +165,46 @@ public class TransactionInput extends Message {
         return myIndex;
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        outpoint = TransactionOutPoint.read(payload);
-        scriptBytes = Buffers.readLengthPrefixedBytes(payload);
-        sequence = ByteUtils.readUint32(payload);
+    /**
+     * Write this transaction input into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the input doesn't fit the remaining buffer
+     */
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        buf.put(outpoint.serialize());
+        Buffers.writeLengthPrefixedBytes(buf, scriptBytes);
+        ByteUtils.writeInt32LE(sequence, buf);
+        return buf;
     }
 
-    @Override
+    /**
+     * Allocates a byte array and writes this transaction input into it.
+     *
+     * @return byte array containing the transaction input
+     */
+    public byte[] serialize() {
+        return write(ByteBuffer.allocate(getMessageSize())).array();
+    }
+
+    /** @deprecated use {@link #serialize()} */
+    @Deprecated
+    public byte[] bitcoinSerialize() {
+        return serialize();
+    }
+
+    /**
+     * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
+     * size can differ from the size of the original payload.
+     *
+     * @return size of the serialized message in bytes
+     */
     public int getMessageSize() {
         int size = TransactionOutPoint.BYTES;
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         size += 4; // sequence
         return size;
-    }
-
-    @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(outpoint.serialize());
-        stream.write(VarInt.of(scriptBytes.length).serialize());
-        stream.write(scriptBytes);
-        ByteUtils.writeInt32LE(sequence, stream);
     }
 
     /**

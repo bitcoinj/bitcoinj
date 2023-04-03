@@ -679,7 +679,7 @@ public class Transaction extends Message {
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = new TransactionInput(this, payload.slice());
+            TransactionInput input = TransactionInput.read(payload.slice(), this);
             inputs.add(input);
             // intentionally read again, due to the slice above
             Buffers.skipBytes(payload, TransactionOutPoint.BYTES);
@@ -1525,7 +1525,7 @@ public class Transaction extends Message {
         // txin_count, txins
         stream.write(VarInt.of(inputs.size()).serialize());
         for (TransactionInput in : inputs)
-            in.bitcoinSerializeToStream(stream);
+            stream.write(in.serialize());
         // txout_count, txouts
         stream.write(VarInt.of(outputs.size()).serialize());
         for (TransactionOutput out : outputs)
