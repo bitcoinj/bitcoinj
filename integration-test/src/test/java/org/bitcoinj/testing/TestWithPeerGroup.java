@@ -175,9 +175,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
         checkState(writeTarget.nextMessageBlocking() instanceof SendAddrV2Message);
         checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);
-        if (versionMessage.isBloomFilteringSupported()) {
-            checkState(writeTarget.nextMessageBlocking() instanceof BloomFilter);
-            checkState(writeTarget.nextMessageBlocking() instanceof MemoryPoolMessage);
-        }
+        checkState(writeTarget.nextMessageBlocking() instanceof BloomFilter);
+        checkState(writeTarget.nextMessageBlocking() instanceof MemoryPoolMessage);
     }
 }

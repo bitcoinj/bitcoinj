@@ -114,6 +114,15 @@ public class VersionMessage extends Message {
     }
 
     /**
+     * Gets the client version.
+     *
+     * @return client version
+     */
+    public int clientVersion() {
+        return clientVersion;
+    }
+
+    /**
      * Get the service bitfield that represents the node services being provided.
      *
      * @return service bitfield
@@ -256,17 +265,5 @@ public class VersionMessage extends Message {
     @Deprecated
     public boolean isPingPongSupported() {
         return true;
-    }
-
-    /**
-     * Returns true if the peer supports bloom filtering according to BIP37 and BIP111.
-     */
-    public boolean isBloomFilteringSupported() {
-        if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)
-                && clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111))
-            return true;
-        if (localServices.has(Services.NODE_BLOOM))
-            return true;
-        return false;
     }
 }
