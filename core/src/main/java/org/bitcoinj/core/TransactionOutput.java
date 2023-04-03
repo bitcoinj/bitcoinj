@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
@@ -329,9 +330,19 @@ public class TransactionOutput extends Message {
 
     /**
      * Returns a human-readable debug string.
+     * @return debug string
      */
     @Override
     public String toString() {
+        return toString(null);
+    }
+
+    /**
+     * Returns a human-readable debug string.
+     * @param network if provided, addresses (of that network) will be printed for standard scripts
+     * @return debug string
+     */
+    public String toString(@Nullable Network network) {
         try {
             Script script = getScriptPubKey();
             StringBuilder buf = new StringBuilder("TxOut of ");
@@ -339,8 +350,8 @@ public class TransactionOutput extends Message {
             if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2TR(script)
                     || ScriptPattern.isP2SH(script)) {
                 buf.append(" to ").append(script.getScriptType().name());
-                if (params != null)
-                    buf.append(" ").append(script.getToAddress(params.network()));
+                if (network != null)
+                    buf.append(" ").append(script.getToAddress(network));
             } else if (ScriptPattern.isP2PK(script)) {
                 buf.append(" to pubkey ").append(ByteUtils.formatHex(ScriptPattern.extractKeyFromP2PK(script)));
             } else if (ScriptPattern.isSentToMultisig(script)) {
