@@ -477,7 +477,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(getheaders.getLocator(), expectedLocator);
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
         // Now send all the headers.
-        HeadersMessage headers = new HeadersMessage(TESTNET, b2.cloneAsHeader(),
+        HeadersMessage headers = new HeadersMessage(b2.cloneAsHeader(),
                 b3.cloneAsHeader(), b4.cloneAsHeader());
         // We expect to be asked for b3 and b4 again, but this time, with a body.
         expectedLocator = new BlockLocator();

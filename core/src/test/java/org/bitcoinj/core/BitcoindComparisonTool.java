@@ -187,7 +187,7 @@ public class BitcoindComparisonTool {
                     }
                     if (!found)
                         sendHeaders = headers;
-                    bitcoind.sendMessage(new HeadersMessage(PARAMS, sendHeaders));
+                    bitcoind.sendMessage(new HeadersMessage(sendHeaders));
                     InventoryMessage i = new InventoryMessage();
                     for (Block b : sendHeaders)
                         i.addBlock(b);

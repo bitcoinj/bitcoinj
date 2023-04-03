@@ -44,17 +44,17 @@ public class HeadersMessage extends Message {
 
     private List<Block> blockHeaders;
 
-    public HeadersMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public HeadersMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
-    public HeadersMessage(NetworkParameters params, Block... headers) throws ProtocolException {
-        super(params);
+    public HeadersMessage(Block... headers) throws ProtocolException {
+        super();
         blockHeaders = Arrays.asList(headers);
     }
 
-    public HeadersMessage(NetworkParameters params, List<Block> headers) throws ProtocolException {
-        super(params);
+    public HeadersMessage(List<Block> headers) throws ProtocolException {
+        super();
         blockHeaders = headers;
     }
 
