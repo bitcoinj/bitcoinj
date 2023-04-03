@@ -113,7 +113,7 @@ public class RejectMessage extends Message {
         stream.write(VarInt.of(reasonBytes.length).encode());
         stream.write(reasonBytes);
         if ("block".equals(message) || "tx".equals(message))
-            stream.write(messageHash.getReversedBytes());
+            stream.write(messageHash.serialize());
     }
 
     /**

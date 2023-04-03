@@ -241,7 +241,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
                 stream.write(VarInt.of(Integer.MAX_VALUE).encode());
                 //stream.write(VarInt.of(hashes.size()).encode());
                 for (Sha256Hash hash : hashes)
-                    stream.write(hash.getReversedBytes());
+                    stream.write(hash.serialize());
 
                 stream.write(VarInt.of(bits.length).encode());
                 stream.write(bits);

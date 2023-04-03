@@ -116,7 +116,7 @@ public class PartialMerkleTree extends Message {
 
         stream.write(VarInt.of(hashes.size()).encode());
         for (Sha256Hash hash : hashes)
-            stream.write(hash.getReversedBytes());
+            stream.write(hash.serialize());
 
         stream.write(VarInt.of(matchedChildBits.length).encode());
         stream.write(matchedChildBits);

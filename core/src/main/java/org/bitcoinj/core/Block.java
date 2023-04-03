@@ -269,8 +269,8 @@ public class Block extends Message {
     // default for testing
     void writeHeader(OutputStream stream) throws IOException {
         ByteUtils.writeInt32LE(version, stream);
-        stream.write(prevBlockHash.getReversedBytes());
-        stream.write(getMerkleRoot().getReversedBytes());
+        stream.write(prevBlockHash.serialize());
+        stream.write(getMerkleRoot().serialize());
         ByteUtils.writeInt32LE(time.getEpochSecond(), stream);
         ByteUtils.writeInt32LE(difficultyTarget, stream);
         ByteUtils.writeInt32LE(nonce, stream);
@@ -520,7 +520,7 @@ public class Block extends Message {
             if (witnessReserved.length != 32)
                 throw new VerificationException("Coinbase witness reserved invalid: length");
 
-            Sha256Hash witnessRootHash = Sha256Hash.twiceOf(getWitnessRoot().getReversedBytes(), witnessReserved);
+            Sha256Hash witnessRootHash = Sha256Hash.twiceOf(getWitnessRoot().serialize(), witnessReserved);
             if (!witnessRootHash.equals(witnessCommitment))
                 throw new VerificationException("Witness merkle root invalid. Expected " + witnessCommitment.toString()
                         + " but got " + witnessRootHash.toString());
@@ -594,8 +594,8 @@ public class Block extends Message {
                 Sha256Hash leftHash = tree.get(levelOffset + left);
                 Sha256Hash rightHash = tree.get(levelOffset + right);
                 tree.add(Sha256Hash.wrapReversed(hashTwice(
-                        leftHash.getReversedBytes(),
-                        rightHash.getReversedBytes())));
+                        leftHash.serialize(),
+                        rightHash.serialize())));
             }
             // Move to the next level.
             levelOffset += levelSize;
