@@ -145,7 +145,7 @@ public class TransactionOutput extends Message {
         Objects.requireNonNull(scriptBytes);
         ByteUtils.writeInt64LE(value, stream);
         // TODO: Move script serialization into the Script class, where it belongs.
-        stream.write(VarInt.of(scriptBytes.length).encode());
+        stream.write(VarInt.of(scriptBytes.length).serialize());
         stream.write(scriptBytes);
     }
 

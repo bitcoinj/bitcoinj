@@ -86,7 +86,7 @@ public abstract class ListMessage extends Message {
 
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(VarInt.of(items.size()).encode());
+        stream.write(VarInt.of(items.size()).serialize());
         for (InventoryItem i : items) {
             // Write out the type code.
             ByteUtils.writeInt32LE(i.type.code, stream);

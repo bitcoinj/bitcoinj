@@ -32,7 +32,7 @@ public class MessageTest {
     @Test(expected = ProtocolException.class)
     public void readStrOfExtremeLength() {
         VarInt length = VarInt.of(Integer.MAX_VALUE);
-        ByteBuffer payload = ByteBuffer.wrap(length.encode());
+        ByteBuffer payload = ByteBuffer.wrap(length.serialize());
         new VarStrMessage(payload);
     }
 
@@ -51,7 +51,7 @@ public class MessageTest {
     @Test(expected = ProtocolException.class)
     public void readByteArrayOfExtremeLength() {
         VarInt length = VarInt.of(Integer.MAX_VALUE);
-        ByteBuffer payload = ByteBuffer.wrap(length.encode());
+        ByteBuffer payload = ByteBuffer.wrap(length.serialize());
         new VarBytesMessage(payload);
     }
 

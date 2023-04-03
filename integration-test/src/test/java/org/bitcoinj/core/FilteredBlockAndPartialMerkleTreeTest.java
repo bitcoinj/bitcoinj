@@ -238,12 +238,12 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
             public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 writeInt32LE(getTransactionCount(), stream);
                 // Add Integer.MAX_VALUE instead of hashes.size()
-                stream.write(VarInt.of(Integer.MAX_VALUE).encode());
+                stream.write(VarInt.of(Integer.MAX_VALUE).serialize());
                 //stream.write(VarInt.of(hashes.size()).encode());
                 for (Sha256Hash hash : hashes)
                     stream.write(hash.getReversedBytes());
 
-                stream.write(VarInt.of(bits.length).encode());
+                stream.write(VarInt.of(bits.length).serialize());
                 stream.write(bits);
             }
         };

@@ -283,7 +283,7 @@ public class Block extends Message {
             return;
         }
 
-        stream.write(VarInt.of(transactions.size()).encode());
+        stream.write(VarInt.of(transactions.size()).serialize());
         for (Transaction tx : transactions) {
             tx.bitcoinSerializeToStream(stream);
         }

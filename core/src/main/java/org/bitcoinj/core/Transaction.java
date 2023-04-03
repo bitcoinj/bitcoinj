@@ -1451,7 +1451,7 @@ public class Transaction extends Message {
                             BigInteger.valueOf(output.getValue().getValue()),
                             bosHashOutputs
                     );
-                    bosHashOutputs.write(VarInt.of(output.getScriptBytes().length).encode());
+                    bosHashOutputs.write(VarInt.of(output.getScriptBytes().length).serialize());
                     bosHashOutputs.write(output.getScriptBytes());
                 }
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
@@ -1461,7 +1461,7 @@ public class Transaction extends Message {
                         BigInteger.valueOf(this.outputs.get(inputIndex).getValue().getValue()),
                         bosHashOutputs
                 );
-                bosHashOutputs.write(VarInt.of(this.outputs.get(inputIndex).getScriptBytes().length).encode());
+                bosHashOutputs.write(VarInt.of(this.outputs.get(inputIndex).getScriptBytes().length).serialize());
                 bosHashOutputs.write(this.outputs.get(inputIndex).getScriptBytes());
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             }
@@ -1470,7 +1470,7 @@ public class Transaction extends Message {
             bos.write(hashSequence);
             bos.write(inputs.get(inputIndex).getOutpoint().getHash().getReversedBytes());
             writeInt32LE(inputs.get(inputIndex).getOutpoint().getIndex(), bos);
-            bos.write(VarInt.of(scriptCode.length).encode());
+            bos.write(VarInt.of(scriptCode.length).serialize());
             bos.write(scriptCode);
             writeInt64LE(BigInteger.valueOf(prevValue.getValue()), bos);
             writeInt32LE(inputs.get(inputIndex).getSequenceNumber(), bos);
@@ -1523,11 +1523,11 @@ public class Transaction extends Message {
             stream.write(1);
         }
         // txin_count, txins
-        stream.write(VarInt.of(inputs.size()).encode());
+        stream.write(VarInt.of(inputs.size()).serialize());
         for (TransactionInput in : inputs)
             in.bitcoinSerializeToStream(stream);
         // txout_count, txouts
-        stream.write(VarInt.of(outputs.size()).encode());
+        stream.write(VarInt.of(outputs.size()).serialize());
         for (TransactionOutput out : outputs)
             out.bitcoinSerializeToStream(stream);
         // script_witnisses

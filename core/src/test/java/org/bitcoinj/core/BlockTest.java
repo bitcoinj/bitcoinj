@@ -321,7 +321,7 @@ public class BlockTest {
                 ByteUtils.writeInt32LE(getDifficultyTarget(), stream);
                 ByteUtils.writeInt32LE(getNonce(), stream);
 
-                stream.write(VarInt.of(Integer.MAX_VALUE).encode());
+                stream.write(VarInt.of(Integer.MAX_VALUE).serialize());
             }
         };
         byte[] serializedBlock = block.bitcoinSerialize();
