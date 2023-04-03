@@ -27,6 +27,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.Ping;
 import org.bitcoinj.core.Pong;
+import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionAck;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
@@ -168,7 +169,7 @@ public class TestWithNetworkConnections {
     }
 
     protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws Exception {
-        checkArgument(versionMessage.hasBlockChain());
+        checkArgument(versionMessage.getServices().has(Services.NODE_NETWORK));
         final AtomicBoolean doneConnecting = new AtomicBoolean(false);
         final Thread thisThread = Thread.currentThread();
         peer.addDisconnectedEventListener((p, peerCount) -> {

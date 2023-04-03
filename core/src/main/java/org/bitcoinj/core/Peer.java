@@ -522,21 +522,22 @@ public class Peer extends PeerSocketHandler {
         // mode nodes because we can't download the data from them we need to find/verify transactions. Some bogus
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
-        if (!peerVersionMessage.hasLimitedBlockChain() ||
+        Services services = peerVersionMessage.getServices();
+        if (!(services.has(Services.NODE_NETWORK) || services.has(Services.NODE_NETWORK_LIMITED)) ||
                 (!params.allowEmptyPeerChain() && peerVersionMessage.bestHeight == 0)) {
             // Shut down the channel gracefully.
             log.info("{}: Peer does not have at least a recent part of the block chain.", this);
             close();
             return;
         }
-        if (!peerVersionMessage.localServices.has(requiredServices)) {
+        if (!services.has(requiredServices)) {
             log.info("{}: Peer doesn't support these required services: {}", this,
                     Services.of(requiredServices & ~peerVersionMessage.localServices.bits()).toString());
             // Shut down the channel gracefully.
             close();
             return;
         }
-        if (peerVersionMessage.localServices.has(Services.NODE_BITCOIN_CASH)) {
+        if (services.has(Services.NODE_BITCOIN_CASH)) {
             log.info("{}: Peer follows an incompatible block chain.", this);
             // Shut down the channel gracefully.
             close();
@@ -911,7 +912,7 @@ public class Peer extends PeerSocketHandler {
     private GetDataMessage buildMultiTransactionDataMessage(Set<Sha256Hash> txIds) {
         GetDataMessage getdata = new GetDataMessage();
         txIds.forEach(txId ->
-            getdata.addTransaction(txId, vPeerVersionMessage.isWitnessSupported()));
+                getdata.addTransaction(txId, vPeerVersionMessage.getServices().has(Services.NODE_WITNESS)));
         return getdata;
     }
 
@@ -1183,7 +1184,7 @@ public class Peer extends PeerSocketHandler {
             } else {
                 if (log.isDebugEnabled())
                     log.debug("{}: getdata on tx {}", getAddress(), item.hash);
-                getdata.addTransaction(item.hash, vPeerVersionMessage.isWitnessSupported());
+                getdata.addTransaction(item.hash, vPeerVersionMessage.getServices().has(Services.NODE_WITNESS));
                 if (pendingTxDownloads.size() > PENDING_TX_DOWNLOADS_LIMIT) {
                     log.info("{}: Too many pending transactions, disconnecting", this);
                     close();
@@ -1228,7 +1229,7 @@ public class Peer extends PeerSocketHandler {
                                 getdata.addFilteredBlock(item.hash);
                                 pingAfterGetData = true;
                             } else {
-                                getdata.addBlock(item.hash, vPeerVersionMessage.isWitnessSupported());
+                                getdata.addBlock(item.hash, vPeerVersionMessage.getServices().has(Services.NODE_WITNESS));
                             }
                             pendingBlockDownloads.add(item.hash);
                         }
@@ -1284,7 +1285,7 @@ public class Peer extends PeerSocketHandler {
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
         GetDataMessage getdata = new GetDataMessage();
-        getdata.addTransaction(hash, vPeerVersionMessage.isWitnessSupported());
+        getdata.addTransaction(hash, vPeerVersionMessage.getServices().has(Services.NODE_WITNESS));
         return ListenableCompletableFuture.of(sendSingleGetData(getdata));
     }
 

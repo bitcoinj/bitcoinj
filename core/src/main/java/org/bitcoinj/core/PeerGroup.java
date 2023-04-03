@@ -2379,9 +2379,9 @@ public class PeerGroup implements TransactionBroadcaster {
             final VersionMessage versionMessage = peer.getPeerVersionMessage();
             if (versionMessage.clientVersion < MINIMUM_VERSION)
                 continue;
-            if (!versionMessage.hasBlockChain())
+            if (!versionMessage.getServices().has(Services.NODE_NETWORK))
                 continue;
-            if (!versionMessage.isWitnessSupported())
+            if (!versionMessage.getServices().has(Services.NODE_WITNESS))
                 continue;
             final long peerHeight = peer.getBestHeight();
             if (peerHeight < mostCommonChainHeight || peerHeight > mostCommonChainHeight + 1)
