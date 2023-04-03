@@ -304,6 +304,13 @@ public class PeerGroup implements TransactionBroadcaster {
             }
         }
 
+        /**
+         * Called when a peer receives an {@code addr} or {@code addrv2} message, usually in response to a
+         * {@code getaddr} message.
+         *
+         * @param peer    the peer that received the addr or addrv2 message
+         * @param message the addr or addrv2 message that was received
+         */
         @Override
         public void onAddr(Peer peer, AddressMessage message) {
             if (!vDiscoverPeersViaP2P)

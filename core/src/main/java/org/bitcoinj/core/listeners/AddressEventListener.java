@@ -25,7 +25,8 @@ import org.bitcoinj.core.Peer;
 public interface AddressEventListener {
 
     /**
-     * <p>Called when a peer receives an addr or addrv2 message, usually in response to a getaddr message.</p>
+     * Called when a peer receives an {@code addr} or {@code addrv2} message, usually in response to a
+     * {@code getaddr} message.
      *
      * @param peer    the peer that received the addr or addrv2 message
      * @param message the addr or addrv2 message that was received
