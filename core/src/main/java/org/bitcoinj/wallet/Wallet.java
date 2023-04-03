@@ -2151,16 +2151,15 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * A transaction is mature if it is either a building coinbase tx that is as deep or deeper than the required coinbase depth, or a non-coinbase tx.
+     * Determine if a transaction is <i>mature</i>. A coinbase transaction is <i>mature</i> if it has been confirmed at least
+     * {@link NetworkParameters#getSpendableCoinbaseDepth()} times. On {@link BitcoinNetwork#MAINNET} this value is {@code 100}.
+     * For purposes of this method, non-coinbase transactions are also considered <i>mature</i>.
+     * @param tx the transaction to evaluate
+     * @return {@code true} if it is a mature coinbase transaction or if it is not a coinbase transaction
      */
     public boolean isTransactionMature(Transaction tx) {
-        if (!tx.isCoinBase())
-            return true;
-
-        if (tx.getConfidence().getConfidenceType() != ConfidenceType.BUILDING)
-            return false;
-
-        return tx.getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
+        return !tx.isCoinBase() ||
+                tx.getConfidence().getDepthInBlocks() >= params.getSpendableCoinbaseDepth();
     }
 
     /**
