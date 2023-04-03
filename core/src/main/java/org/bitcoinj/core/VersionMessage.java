@@ -89,28 +89,41 @@ public class VersionMessage extends Message {
      */
     public boolean relayTxesBeforeFilter;
 
-    public VersionMessage(NetworkParameters params, ByteBuffer payload) throws ProtocolException {
-        super(params, payload);
+    public VersionMessage(ByteBuffer payload) throws ProtocolException {
+        super(payload);
     }
 
-    // It doesn't really make sense to ever lazily parse a version message or to retain the backing bytes.
-    // If you're receiving this on the wire you need to check the protocol version and it will never need to be sent
-    // back down the wire.
-    
-    public VersionMessage(NetworkParameters params, int newBestHeight) {
-        super(params);
-        clientVersion = serializer.getProtocolVersion();
-        localServices = Services.none();
-        time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
+    /**
+     * Construct own version message from given {@link NetworkParameters} and our best height of the chain.
+     *
+     * @param params     network parameters to construct own version message from
+     * @param bestHeight our best height to announce
+     */
+    public VersionMessage(NetworkParameters params, int bestHeight) {
+        this.clientVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
+        this.localServices = Services.none();
+        this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
         // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
         MessageSerializer serializer = new DummySerializer(0);
-        receivingAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
-        fromAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
-        subVer = LIBRARY_SUBVER;
-        bestHeight = newBestHeight;
-        relayTxesBeforeFilter = true;
+        this.receivingAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
+        this.fromAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
+        this.subVer = LIBRARY_SUBVER;
+        this.bestHeight = bestHeight;
+        this.relayTxesBeforeFilter = true;
+    }
+
+    private VersionMessage(int clientVersion, Services localServices, Instant time, PeerAddress receivingAddr,
+                           PeerAddress fromAddr, String subVer, long bestHeight, boolean relayTxesBeforeFilter) {
+        this.clientVersion = clientVersion;
+        this.localServices = localServices;
+        this.time = time;
+        this.receivingAddr = receivingAddr;
+        this.fromAddr = fromAddr;
+        this.subVer = subVer;
+        this.bestHeight = bestHeight;
+        this.relayTxesBeforeFilter = relayTxesBeforeFilter;
     }
 
     /**
@@ -214,15 +227,8 @@ public class VersionMessage extends Message {
     }
 
     public VersionMessage duplicate() {
-        VersionMessage v = new VersionMessage(params, (int) bestHeight);
-        v.clientVersion = clientVersion;
-        v.localServices = localServices;
-        v.time = time;
-        v.receivingAddr = receivingAddr;
-        v.fromAddr = fromAddr;
-        v.subVer = subVer;
-        v.relayTxesBeforeFilter = relayTxesBeforeFilter;
-        return v;
+        return new VersionMessage(clientVersion, localServices, time, receivingAddr, fromAddr, subVer, bestHeight,
+                relayTxesBeforeFilter);
     }
 
     /**
