@@ -18,6 +18,7 @@ package org.bitcoinj.base.internal;
 
 import org.bitcoinj.base.VarInt;
 
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -60,6 +61,18 @@ public class Buffers {
     }
 
     /**
+     * First write the length of the byte array as a {@link VarInt}. Then write the array contents.
+     *
+     * @param buf   buffer to write to
+     * @param bytes bytes to write
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeLengthPrefixedBytes(ByteBuffer buf, byte[] bytes) throws BufferOverflowException {
+        return buf.put(VarInt.of(bytes.length).serialize()).put(bytes);
+    }
+
+    /**
      * First read a {@link VarInt} from the buffer and use it to determine the number of bytes to read. Then read
      * that many bytes and interpret it as an UTF-8 encoded string to be returned. This construct is frequently used
      * by Bitcoin protocols.
@@ -70,6 +83,20 @@ public class Buffers {
      */
     public static String readLengthPrefixedString(ByteBuffer buf) throws BufferUnderflowException {
         return new String(readLengthPrefixedBytes(buf), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Encode a given string using UTF-8. Then write the lnegth of the encoded bytes as a {@link VarInt}. Then write
+     * the bytes themselves.
+     *
+     * @param buf buffer to write to
+     * @param str string to write
+     * @return the buffer
+     * @throws BufferOverflowException if the value doesn't fit the remaining buffer
+     */
+    public static ByteBuffer writeLengthPrefixedString(ByteBuffer buf, String str) throws BufferOverflowException {
+        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        return writeLengthPrefixedBytes(buf, bytes);
     }
 
     /**
