@@ -146,7 +146,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     }
 
     protected InboundMessageQueuer connectPeer(int id, VersionMessage versionMessage) throws Exception {
-        checkArgument(versionMessage.hasBlockChain());
+        checkArgument(versionMessage.services().has(Services.NODE_NETWORK));
         InboundMessageQueuer writeTarget = connectPeerWithoutVersionExchange(id);
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
@@ -163,7 +163,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     // handle peer discovered by PeerGroup
     protected InboundMessageQueuer handleConnectToPeer(int id, VersionMessage versionMessage) throws Exception {
         InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
-        checkArgument(versionMessage.hasBlockChain());
+        checkArgument(versionMessage.services().has(Services.NODE_NETWORK));
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());

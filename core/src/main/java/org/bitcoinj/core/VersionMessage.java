@@ -113,6 +113,15 @@ public class VersionMessage extends Message {
         relayTxesBeforeFilter = true;
     }
 
+    /**
+     * Get the service bitfield that represents the node services being provided.
+     *
+     * @return service bitfield
+     */
+    public Services services() {
+        return localServices;
+    }
+
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         clientVersion = (int) ByteUtils.readUint32(payload);
@@ -259,23 +268,5 @@ public class VersionMessage extends Message {
         if (localServices.has(Services.NODE_BLOOM))
             return true;
         return false;
-    }
-
-    /** Returns true if a peer can be asked for blocks and transactions including witness data. */
-    public boolean isWitnessSupported() {
-        return localServices.has(Services.NODE_WITNESS);
-    }
-
-    /**
-     * Returns true if the version message indicates the sender has a full copy of the block chain, or false if it's
-     * running in client mode (only has the headers).
-     */
-    public boolean hasBlockChain() {
-        return localServices.has(Services.NODE_NETWORK);
-    }
-
-    /** Returns true if the peer has at least the last two days worth of blockchain (BIP159). */
-    public boolean hasLimitedBlockChain() {
-        return hasBlockChain() || localServices.has(Services.NODE_NETWORK_LIMITED);
     }
 }
