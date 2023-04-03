@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.net.discovery.PeerDiscovery;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,6 +25,10 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Abstract superclass for address messages on the P2P network, which contain network addresses of other peers. This is
+ * one of the ways peers can find each other without using the {@link PeerDiscovery} mechanism.
+ */
 public abstract class AddressMessage extends Message {
 
     protected static final long MAX_ADDRESSES = 1000;

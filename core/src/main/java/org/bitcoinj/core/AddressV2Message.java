@@ -18,19 +18,19 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.net.discovery.PeerDiscovery;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
- * <p>Represents an "addrv2" message on the P2P network, which contains broadcast IP addresses of other peers. This is
- * one of the ways peers can find each other without using the DNS or IRC discovery mechanisms. However storing and
- * using addrv2 messages is not presently implemented.</p>
- *
- * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0155.mediawiki">BIP155</a> for details.</p>
- *
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ * Represents an "addrv2" message on the P2P network, which contains broadcast addresses of other peers. This is
+ * one of the ways peers can find each other without using the {@link PeerDiscovery} mechanism.
+ * <p>
+ * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0155.mediawiki">BIP155</a> for details.
+ * <p>
+ * Instances of this class are not safe for use by multiple threads.
  */
 public class AddressV2Message extends AddressMessage {
     /**
