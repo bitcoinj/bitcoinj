@@ -193,7 +193,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         chain.add(rollingBlock);
         TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
-        ConnectedTransactionOutPoint transactionOutPoint = spendableOutput.getOutPointFor();
+        TransactionOutPoint.ConnectedTransactionOutPoint transactionOutPoint = spendableOutput.getOutPointFor();
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
@@ -267,7 +267,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
-        ConnectedTransactionOutPoint spendableOutputPoint = spendableOutput.getOutPointFor();
+        TransactionOutPoint.ConnectedTransactionOutPoint spendableOutputPoint = spendableOutput.getOutPointFor();
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
@@ -319,7 +319,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
-        ConnectedTransactionOutPoint spendableOutPoint = new ConnectedTransactionOutPoint(0, transaction.getTxId());
+        TransactionOutPoint.ConnectedTransactionOutPoint spendableOutPoint = new TransactionOutPoint.ConnectedTransactionOutPoint(0, transaction.getTxId());
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);

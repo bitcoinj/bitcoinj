@@ -30,7 +30,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.StreamUtils;
-import org.bitcoinj.core.ConnectedTransactionOutPoint;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.base.Address;
@@ -2171,7 +2171,7 @@ public class Wallet extends BaseTaggableObject
         checkState(lock.isHeldByCurrentThread());
         if (tx.isCoinBase()) return new HashSet<>();
         // Compile a set of outpoints that are spent by tx.
-        HashSet<ConnectedTransactionOutPoint> outpoints = new HashSet<>();
+        HashSet<TransactionOutPoint.ConnectedTransactionOutPoint> outpoints = new HashSet<>();
         for (TransactionInput input : tx.getInputs()) {
             outpoints.add(input.getOutpoint());
         }
@@ -2183,7 +2183,7 @@ public class Wallet extends BaseTaggableObject
             for (TransactionInput input : p.getInputs()) {
                 // This relies on the fact that ConnectedTransactionOutPoint equality is defined at the protocol not object
                 // level - outpoints from two different inputs that point to the same output compare the same.
-                ConnectedTransactionOutPoint outpoint = input.getOutpoint();
+                TransactionOutPoint.ConnectedTransactionOutPoint outpoint = input.getOutpoint();
                 if (outpoints.contains(outpoint)) {
                     // It does, it's a double spend against the candidates, which makes it relevant.
                     doubleSpendTxns.add(p);
@@ -5009,7 +5009,7 @@ public class Wallet extends BaseTaggableObject
 
     //region Bloom filtering
 
-    private final ArrayList<ConnectedTransactionOutPoint> bloomOutPoints = new ArrayList<>();
+    private final ArrayList<TransactionOutPoint.ConnectedTransactionOutPoint> bloomOutPoints = new ArrayList<>();
     // Used to track whether we must automatically begin/end a filter calculation and calc outpoints/take the locks.
     private final AtomicInteger bloomFilterGuard = new AtomicInteger(0);
 
@@ -5110,7 +5110,7 @@ public class Wallet extends BaseTaggableObject
                     }
                 }
             }
-            for (ConnectedTransactionOutPoint point : bloomOutPoints)
+            for (TransactionOutPoint.ConnectedTransactionOutPoint point : bloomOutPoints)
                 filter.insert(point);
             return filter;
         } finally {

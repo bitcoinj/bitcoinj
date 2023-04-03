@@ -17,9 +17,9 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.ConnectedTransactionOutPoint;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 
 import java.util.HashSet;
@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class FilteringCoinSelector implements CoinSelector {
     protected CoinSelector delegate;
-    protected HashSet<ConnectedTransactionOutPoint> spent = new HashSet<>();
+    protected HashSet<TransactionOutPoint.ConnectedTransactionOutPoint> spent = new HashSet<>();
 
     public FilteringCoinSelector(CoinSelector delegate) {
         this.delegate = delegate;

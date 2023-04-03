@@ -21,7 +21,7 @@ import com.google.common.collect.Lists;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.core.ConnectedTransactionOutPoint;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
@@ -752,7 +752,7 @@ public class WalletTest extends TestWithWallet {
         EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
         EasyMock.expect(to.isMineOrWatched(wallet)).andReturn(true);
         EasyMock.expect(to.getSpentBy()).andReturn(
-                new TransactionInput(null, new byte[0], ConnectedTransactionOutPoint.UNCONNECTED));
+                new TransactionInput(null, new byte[0], TransactionOutPoint.ConnectedTransactionOutPoint.UNCONNECTED));
 
         Transaction tx = FakeTxBuilder.createFakeTxWithoutChange(to);
 
@@ -1676,7 +1676,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsBloomFilter() {
         Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction t1 = createFakeTx(TESTNET, CENT, watchedAddress);
-        ConnectedTransactionOutPoint outPoint = new ConnectedTransactionOutPoint(0, t1);
+        TransactionOutPoint.ConnectedTransactionOutPoint outPoint = new TransactionOutPoint.ConnectedTransactionOutPoint(0, t1);
         wallet.addWatchedAddress(watchedAddress);
 
         // Note that this has a 1e-12 chance of failing this unit test due to a false positive
@@ -1730,7 +1730,7 @@ public class WalletTest extends TestWithWallet {
 
         for (Address addr : addressesForRemoval) {
             Transaction t1 = createFakeTx(TESTNET, CENT, addr);
-            ConnectedTransactionOutPoint outPoint = new ConnectedTransactionOutPoint(0, t1);
+            TransactionOutPoint.ConnectedTransactionOutPoint outPoint = new TransactionOutPoint.ConnectedTransactionOutPoint(0, t1);
 
             // Note that this has a 1e-12 chance of failing this unit test due to a false positive
             assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
@@ -1749,7 +1749,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(address.getHash()));
 
         Transaction t1 = createFakeTx(TESTNET, CENT, address);
-        ConnectedTransactionOutPoint outPoint = new ConnectedTransactionOutPoint(0, t1);
+        TransactionOutPoint.ConnectedTransactionOutPoint outPoint = new TransactionOutPoint.ConnectedTransactionOutPoint(0, t1);
 
         assertFalse(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.serialize()));
 
@@ -2775,7 +2775,7 @@ public class WalletTest extends TestWithWallet {
 
         // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new ConnectedTransactionOutPoint(0, tx3.getTxId())));
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint.ConnectedTransactionOutPoint(0, tx3.getTxId())));
         // Now completeTx will result in two inputs, two outputs and a fee of a CENT
         // Note that it is simply assumed that the inputs are correctly signed, though in fact the first is not
         request3.shuffleOutputs = false;

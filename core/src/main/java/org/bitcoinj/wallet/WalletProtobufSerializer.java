@@ -31,7 +31,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.ConnectedTransactionOutPoint;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -643,7 +643,7 @@ public class WalletProtobufSerializer {
 
         for (Protos.TransactionInput inputProto : txProto.getTransactionInputList()) {
             byte[] scriptBytes = inputProto.getScriptBytes().toByteArray();
-            ConnectedTransactionOutPoint outpoint = new ConnectedTransactionOutPoint(
+            TransactionOutPoint.ConnectedTransactionOutPoint outpoint = new TransactionOutPoint.ConnectedTransactionOutPoint(
                     inputProto.getTransactionOutPointIndex() & 0xFFFFFFFFL,
                     byteStringToHash(inputProto.getTransactionOutPointHash())
             );

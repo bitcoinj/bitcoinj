@@ -173,7 +173,7 @@ public class TransactionTest {
 
         // add fake transaction input
         TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().getProgram(),
-                new ConnectedTransactionOutPoint(0, Sha256Hash.ZERO_HASH));
+                new TransactionOutPoint.ConnectedTransactionOutPoint(0, Sha256Hash.ZERO_HASH));
         tx.addInput(input);
         length += input.getMessageSize();
 
@@ -211,7 +211,7 @@ public class TransactionTest {
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        ConnectedTransactionOutPoint outPoint = new ConnectedTransactionOutPoint(0, utxo_id);
+        TransactionOutPoint.ConnectedTransactionOutPoint outPoint = new TransactionOutPoint.ConnectedTransactionOutPoint(0, utxo_id);
         TransactionOutput output = new TransactionOutput(null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
@@ -234,7 +234,7 @@ public class TransactionTest {
         ECKey fromKey = new ECKey();
         Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        ConnectedTransactionOutPoint outPoint = new ConnectedTransactionOutPoint(0, utxo_id);
+        TransactionOutPoint.ConnectedTransactionOutPoint outPoint = new TransactionOutPoint.ConnectedTransactionOutPoint(0, utxo_id);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 
@@ -502,7 +502,7 @@ public class TransactionTest {
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
-        TransactionInput ti = new TransactionInput(tx, new byte[0], ConnectedTransactionOutPoint.UNCONNECTED) {
+        TransactionInput ti = new TransactionInput(tx, new byte[0], TransactionOutPoint.ConnectedTransactionOutPoint.UNCONNECTED) {
             @Override
             public Script getScriptSig() throws ScriptException {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "");

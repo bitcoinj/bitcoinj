@@ -26,6 +26,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
@@ -37,7 +38,6 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.ConnectedTransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -248,7 +248,7 @@ public class ScriptTest {
     public void testOp0() {
         // Check that OP_0 doesn't NPE and pushes an empty stack frame.
         Transaction tx = new Transaction();
-        tx.addInput(new TransactionInput(tx, new byte[0], ConnectedTransactionOutPoint.UNCONNECTED));
+        tx.addInput(new TransactionInput(tx, new byte[0], TransactionOutPoint.ConnectedTransactionOutPoint.UNCONNECTED));
         Script script = new ScriptBuilder().smallNum(0).build();
 
         LinkedList<byte[]> stack = new LinkedList<>();
@@ -334,8 +334,8 @@ public class ScriptTest {
         }
     }
 
-    private Map<ConnectedTransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
-        Map<ConnectedTransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
+    private Map<TransactionOutPoint.ConnectedTransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
+        Map<TransactionOutPoint.ConnectedTransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (JsonNode input : inputs) {
             String hash = input.get(0).asText();
             long index = input.get(1).asLong();
@@ -343,7 +343,7 @@ public class ScriptTest {
                 index = ByteUtils.MAX_UNSIGNED_INTEGER;
             String script = input.get(2).asText();
             Sha256Hash sha256Hash = Sha256Hash.wrap(ByteUtils.parseHex(hash));
-            scriptPubKeys.put(new ConnectedTransactionOutPoint(index, sha256Hash), parseScriptString(script));
+            scriptPubKeys.put(new TransactionOutPoint.ConnectedTransactionOutPoint(index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
     }
@@ -354,7 +354,7 @@ public class ScriptTest {
         tx.setLockTime(0);
 
         TransactionInput txInput = new TransactionInput(null,
-                new ScriptBuilder().number(0).number(0).build().getProgram(), ConnectedTransactionOutPoint.UNCONNECTED);
+                new ScriptBuilder().number(0).number(0).build().getProgram(), TransactionOutPoint.ConnectedTransactionOutPoint.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
@@ -370,7 +370,7 @@ public class ScriptTest {
         tx.setLockTime(0);
 
         TransactionInput txInput = new TransactionInput(creditingTransaction, scriptSig.getProgram(),
-                ConnectedTransactionOutPoint.UNCONNECTED);
+                TransactionOutPoint.ConnectedTransactionOutPoint.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
@@ -390,7 +390,7 @@ public class ScriptTest {
                 continue; // This is a comment.
             Transaction transaction = null;
             try {
-                Map<ConnectedTransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
+                Map<TransactionOutPoint.ConnectedTransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
                 transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(test.get(1).asText().toLowerCase())));
                 Transaction.verify(TESTNET, transaction);
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
@@ -417,7 +417,7 @@ public class ScriptTest {
         for (JsonNode test : json) {
             if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
                 continue; // This is a comment.
-            Map<ConnectedTransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
+            Map<TransactionOutPoint.ConnectedTransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
             byte[] txBytes = ByteUtils.parseHex(test.get(1).asText().toLowerCase());
             MessageSerializer serializer = TESTNET.getDefaultSerializer();
             Transaction transaction;
@@ -440,7 +440,7 @@ public class ScriptTest {
 
             // Bitcoin Core checks this case in CheckTransaction, but we leave it to
             // later where we will see an attempt to double-spend, so we explicitly check here
-            HashSet<ConnectedTransactionOutPoint> set = new HashSet<>();
+            HashSet<TransactionOutPoint.ConnectedTransactionOutPoint> set = new HashSet<>();
             for (TransactionInput input : transaction.getInputs()) {
                 if (set.contains(input.getOutpoint()))
                     valid = false;

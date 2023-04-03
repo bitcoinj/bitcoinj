@@ -573,9 +573,9 @@ public class PeerTest extends TestWithNetworkConnections {
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
         Sha256Hash t7hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(t1, new byte[]{}, new ConnectedTransactionOutPoint(0, t7hash)));
+        t1.addInput(new TransactionInput(t1, new byte[]{}, new TransactionOutPoint.ConnectedTransactionOutPoint(0, t7hash)));
         Sha256Hash t8hash = Sha256Hash.wrap("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(t1, new byte[]{}, new ConnectedTransactionOutPoint(1, t8hash)));
+        t1.addInput(new TransactionInput(t1, new byte[]{}, new TransactionOutPoint.ConnectedTransactionOutPoint(1, t8hash)));
         t1.addOutput(COIN, to);
         t1 = roundTripTransaction(t1);
         t2 = roundTripTransaction(t2);
@@ -648,7 +648,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
         Sha256Hash t4hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
         Transaction t3 = new Transaction();
-        t3.addInput(new TransactionInput(t3, new byte[]{}, new ConnectedTransactionOutPoint(0, t4hash)));
+        t3.addInput(new TransactionInput(t3, new byte[]{}, new TransactionOutPoint.ConnectedTransactionOutPoint(0, t4hash)));
         t3.addOutput(COIN, new ECKey());
         t3 = roundTripTransaction(t3);
         Transaction t2 = new Transaction();
@@ -751,7 +751,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.of("abc".getBytes(StandardCharsets.UTF_8));
-        t2.addInput(new TransactionInput(t2, new byte[]{}, new ConnectedTransactionOutPoint(0, t3)));
+        t2.addInput(new TransactionInput(t2, new byte[]{}, new TransactionOutPoint.ConnectedTransactionOutPoint(0, t3)));
         t2.getInput(0).setSequenceNumber(0xDEADBEEF);
         t2.addOutput(COIN, new ECKey());
         Transaction t1 = new Transaction();
@@ -824,7 +824,7 @@ public class PeerTest extends TestWithNetworkConnections {
         });
         connect();
         Transaction t1 = new Transaction();
-        t1.addInput(new TransactionInput(t1, new byte[0], ConnectedTransactionOutPoint.UNCONNECTED));
+        t1.addInput(new TransactionInput(t1, new byte[0], TransactionOutPoint.ConnectedTransactionOutPoint.UNCONNECTED));
         t1.addOutput(COIN, new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Transaction t2 = new Transaction();
         t2.addInput(t1.getOutput(0));

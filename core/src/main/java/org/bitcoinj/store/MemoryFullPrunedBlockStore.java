@@ -19,7 +19,7 @@ package org.bitcoinj.store;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.core.ConnectedTransactionOutPoint;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
@@ -42,7 +42,7 @@ import java.util.Set;
 
 /**
  * Used as a key for memory map (to avoid having to think about NetworkParameters,
- * which is required for {@link ConnectedTransactionOutPoint}
+ * which is required for {@link TransactionOutPoint.ConnectedTransactionOutPoint}
  */
 class StoredTransactionOutPoint {
 
