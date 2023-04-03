@@ -211,8 +211,8 @@ public class TransactionInput {
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {
-        return outpoint.getHash().equals(Sha256Hash.ZERO_HASH) &&
-                (outpoint.getIndex() & 0xFFFFFFFFL) == 0xFFFFFFFFL;  // -1 but all is serialized to the wire as unsigned int.
+        return outpoint.hash().equals(Sha256Hash.ZERO_HASH) &&
+                (outpoint.index() & 0xFFFFFFFFL) == 0xFFFFFFFFL;  // -1 but all is serialized to the wire as unsigned int.
     }
 
     /**
@@ -347,10 +347,10 @@ public class TransactionInput {
      */
     @Nullable
     TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
-        Transaction tx = transactions.get(outpoint.getHash());
+        Transaction tx = transactions.get(outpoint.hash());
         if (tx == null)
             return null;
-        return tx.getOutputs().get((int) outpoint.getIndex());
+        return tx.getOutputs().get((int) outpoint.index());
     }
 
     /**
@@ -378,7 +378,7 @@ public class TransactionInput {
      * @return NO_SUCH_TX if the prevtx wasn't found, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */
     public ConnectionResult connect(Map<Sha256Hash, Transaction> transactions, ConnectMode mode) {
-        Transaction tx = transactions.get(outpoint.getHash());
+        Transaction tx = transactions.get(outpoint.hash());
         if (tx == null) {
             return TransactionInput.ConnectionResult.NO_SUCH_TX;
         }
@@ -395,9 +395,9 @@ public class TransactionInput {
      * @return NO_SUCH_TX if transaction is not the prevtx, ALREADY_SPENT if there was a conflict, SUCCESS if not.
      */
     public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
-        if (!transaction.getTxId().equals(outpoint.getHash()))
+        if (!transaction.getTxId().equals(outpoint.hash()))
             return ConnectionResult.NO_SUCH_TX;
-        int outpointIndex = (int) outpoint.getIndex();
+        int outpointIndex = (int) outpoint.index();
         checkArgument(outpointIndex >= 0 && outpointIndex < transaction.getOutputs().size(), () ->
                 "corrupt transaction: " + outpointIndex);
         TransactionOutput out = transaction.getOutput(outpointIndex);
@@ -433,7 +433,7 @@ public class TransactionInput {
         TransactionOutput connectedOutput;
         if (outpoint.fromTx != null) {
             // The outpoint is connected using a "standard" wallet, disconnect it.
-            connectedOutput = outpoint.fromTx.getOutput((int) outpoint.getIndex());
+            connectedOutput = outpoint.fromTx.getOutput((int) outpoint.index());
             outpoint.fromTx = null;
         } else if (outpoint.connectedOutput != null) {
             // The outpoint is connected using a UTXO based wallet, disconnect it.
@@ -483,7 +483,7 @@ public class TransactionInput {
      */
     public void verify() throws VerificationException {
         final Transaction fromTx = getOutpoint().fromTx;
-        long spendingIndex = getOutpoint().getIndex();
+        long spendingIndex = getOutpoint().index();
         Objects.requireNonNull(fromTx, "Not connected");
         final TransactionOutput output = fromTx.getOutput((int) spendingIndex);
         verify(output);
@@ -499,9 +499,9 @@ public class TransactionInput {
      */
     public void verify(TransactionOutput output) throws VerificationException {
         if (output.parent != null) {
-            if (!getOutpoint().getHash().equals(output.getParentTransaction().getTxId()))
+            if (!getOutpoint().hash().equals(output.getParentTransaction().getTxId()))
                 throw new VerificationException("This input does not refer to the tx containing the output.");
-            if (getOutpoint().getIndex() != output.getIndex())
+            if (getOutpoint().index() != output.getIndex())
                 throw new VerificationException("This input refers to a different output on the given tx.");
         }
         Script pubKey = output.getScriptPubKey();

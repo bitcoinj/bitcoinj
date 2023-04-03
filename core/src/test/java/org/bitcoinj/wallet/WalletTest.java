@@ -2111,7 +2111,7 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < ITERATIONS; i++) {
             Transaction spend = wallet.createSend(OTHER_ADDRESS, COIN);
             assertEquals(spend.getInputs().size(), 1);
-            assertEquals("Failed on iteration " + i, spend.getInput(0).getOutpoint().getHash(), txns[i].getTxId());
+            assertEquals("Failed on iteration " + i, spend.getInput(0).getOutpoint().hash(), txns[i].getTxId());
             wallet.commitTx(spend);
         }
     }

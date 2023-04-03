@@ -840,7 +840,7 @@ public class Peer extends PeerSocketHandler {
         // We may end up requesting transactions that we've already downloaded and thrown away here.
         // There may be multiple inputs that connect to the same transaction.
         Set<Sha256Hash> txIdsToRequest = rootTx.getInputs().stream()
-                .map(input -> input.getOutpoint().getHash())
+                .map(input -> input.getOutpoint().hash())
                 .collect(Collectors.toSet());
         lock.lock();
         try {

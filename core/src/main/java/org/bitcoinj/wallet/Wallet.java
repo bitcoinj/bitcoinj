@@ -2207,7 +2207,7 @@ public class Wallet extends BaseTaggableObject
             for (Transaction anotherTx : txPool) {
                 if (anotherTx.equals(tx)) continue;
                 for (TransactionInput input : anotherTx.getInputs()) {
-                    if (input.getOutpoint().getHash().equals(tx.getTxId())) {
+                    if (input.getOutpoint().hash().equals(tx.getTxId())) {
                         if (txQueue.get(anotherTx.getTxId()) == null) {
                             txQueue.put(anotherTx.getTxId(), anotherTx);
                             txSet.add(anotherTx);
@@ -2398,7 +2398,7 @@ public class Wallet extends BaseTaggableObject
     /** Finds if tx is NOT spending other txns which are in the specified confidence type */
     private boolean isNotSpendingTxnsInConfidenceType(Transaction tx, ConfidenceType confidenceType) {
         for (TransactionInput txInput : tx.getInputs()) {
-            Transaction connectedTx = this.getTransaction(txInput.getOutpoint().getHash());
+            Transaction connectedTx = this.getTransaction(txInput.getOutpoint().hash());
             if (connectedTx != null && connectedTx.getConfidence().getConfidenceType().equals(confidenceType)) {
                 return false;
             }
@@ -2435,7 +2435,7 @@ public class Wallet extends BaseTaggableObject
     /** Finds whether txA spends txB */
     boolean spends(Transaction txA, Transaction txB) {
         for (TransactionInput txInput : txA.getInputs()) {
-            if (txInput.getOutpoint().getHash().equals(txB.getTxId())) {
+            if (txInput.getOutpoint().hash().equals(txB.getTxId())) {
                 return true;
             }
         }
@@ -4569,7 +4569,7 @@ public class Wallet extends BaseTaggableObject
 
                 RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
                 Objects.requireNonNull(redeemData, () ->
-                        "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().getHash());
+                        "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().hash());
                 txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
                 txIn.setWitness(scriptPubKey.createEmptyWitness(redeemData.keys.get(0)));
             }

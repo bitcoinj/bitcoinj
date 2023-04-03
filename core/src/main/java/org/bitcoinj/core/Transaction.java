@@ -1430,8 +1430,8 @@ public class Transaction extends Message {
             if (!anyoneCanPay) {
                 ByteArrayOutputStream bosHashPrevouts = new ByteArrayOutputStream(256);
                 for (TransactionInput input : this.inputs) {
-                    bosHashPrevouts.write(input.getOutpoint().getHash().serialize());
-                    writeInt32LE(input.getOutpoint().getIndex(), bosHashPrevouts);
+                    bosHashPrevouts.write(input.getOutpoint().hash().serialize());
+                    writeInt32LE(input.getOutpoint().index(), bosHashPrevouts);
                 }
                 hashPrevouts = Sha256Hash.hashTwice(bosHashPrevouts.toByteArray());
             }
@@ -1468,8 +1468,8 @@ public class Transaction extends Message {
             writeInt32LE(version, bos);
             bos.write(hashPrevouts);
             bos.write(hashSequence);
-            bos.write(inputs.get(inputIndex).getOutpoint().getHash().serialize());
-            writeInt32LE(inputs.get(inputIndex).getOutpoint().getIndex(), bos);
+            bos.write(inputs.get(inputIndex).getOutpoint().hash().serialize());
+            writeInt32LE(inputs.get(inputIndex).getOutpoint().index(), bos);
             bos.write(VarInt.of(scriptCode.length).serialize());
             bos.write(scriptCode);
             writeInt64LE(BigInteger.valueOf(prevValue.getValue()), bos);

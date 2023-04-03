@@ -643,7 +643,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         inbound(p1, tx);
         // p1 requests dep resolution, p2 is quiet.
         assertTrue(outbound(p1) instanceof GetDataMessage);
-        final Sha256Hash dephash = tx.getInput(0).getOutpoint().getHash();
+        final Sha256Hash dephash = tx.getInput(0).getOutpoint().hash();
         final InventoryItem inv = new InventoryItem(InventoryItem.Type.TRANSACTION, dephash);
         inbound(p1, new NotFoundMessage(Collections.singletonList(inv)));
         assertNull(outbound(p1));

@@ -562,9 +562,9 @@ public class PeerTest extends TestWithNetworkConnections {
         //      -> [t8]
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
         Transaction t2 = createFakeTx(COIN, to);
-        Sha256Hash t5hash = t2.getInput(0).getOutpoint().getHash();
+        Sha256Hash t5hash = t2.getInput(0).getOutpoint().hash();
         Transaction t4 = createFakeTx(COIN, new ECKey());
-        Sha256Hash t6hash = t4.getInput(0).getOutpoint().getHash();
+        Sha256Hash t6hash = t4.getInput(0).getOutpoint().hash();
         t4.addOutput(COIN, new ECKey());
         Transaction t3 = new Transaction();
         t3.addInput(t4.getOutput(0));
@@ -612,7 +612,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertFalse(futures.isDone());
         // It will recursively ask for the dependencies of t2: t5 and t4, but not t3 because it already found t4.
         getdata = (GetDataMessage) outbound(writeTarget);
-        assertEquals(getdata.getItems().get(0).hash, t2.getInput(0).getOutpoint().getHash());
+        assertEquals(getdata.getItems().get(0).hash, t2.getInput(0).getOutpoint().hash());
         // t5 isn't found and t4 is.
         notFound = new NotFoundMessage();
         notFound.addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, t5hash));
@@ -830,7 +830,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.addInput(t1.getOutput(0));
         t2.addOutput(COIN, wallet.currentChangeAddress());
         inbound(writeTarget, t2);
-        final InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.TRANSACTION, t2.getInput(0).getOutpoint().getHash());
+        final InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.TRANSACTION, t2.getInput(0).getOutpoint().hash());
         final NotFoundMessage nfm = new NotFoundMessage(Lists.newArrayList(inventoryItem));
         inbound(writeTarget, nfm);
         pingAndWait(writeTarget);
