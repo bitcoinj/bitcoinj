@@ -736,7 +736,7 @@ public class TransactionTest {
             long inputsSize = hackInputsSize ? Integer.MAX_VALUE : getInputs().size();
             stream.write(VarInt.of(inputsSize).serialize());
             for (TransactionInput in : getInputs())
-                in.bitcoinSerializeToStream(stream);
+                stream.write(in.serialize());
             // txout_count, txouts
             long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : getOutputs().size();
             stream.write(VarInt.of(outputsSize).serialize());
