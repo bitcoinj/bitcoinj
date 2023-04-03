@@ -523,7 +523,7 @@ public class Peer extends PeerSocketHandler {
         // implementations claim to have a block chain in their services field but then report a height of zero, filter
         // them out here.
         Services services = peerVersionMessage.services();
-        if (!(services.has(Services.NODE_NETWORK) || services.has(Services.NODE_NETWORK_LIMITED)) ||
+        if (!services.anyOf(Services.NODE_NETWORK | Services.NODE_NETWORK_LIMITED) ||
                 (!params.allowEmptyPeerChain() && peerVersionMessage.bestHeight == 0)) {
             // Shut down the channel gracefully.
             log.info("{}: Peer does not have at least a recent part of the block chain.", this);
