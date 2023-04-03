@@ -145,11 +145,11 @@ public class VarInt {
     }
 
     /**
-     * Encodes the value into its minimal representation.
+     * Allocates a byte array and serializes the value into its minimal representation.
      *
      * @return the minimal encoded bytes of the value
      */
-    public byte[] encode() {
+    public byte[] serialize() {
         ByteBuffer buf = ByteBuffer.allocate(sizeOf(value));
         return write(buf).array();
     }

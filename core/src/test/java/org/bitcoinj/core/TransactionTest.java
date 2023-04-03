@@ -734,12 +734,12 @@ public class TransactionTest {
             }
             // txin_count, txins
             long inputsSize = hackInputsSize ? Integer.MAX_VALUE : getInputs().size();
-            stream.write(VarInt.of(inputsSize).encode());
+            stream.write(VarInt.of(inputsSize).serialize());
             for (TransactionInput in : getInputs())
                 in.bitcoinSerializeToStream(stream);
             // txout_count, txouts
             long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : getOutputs().size();
-            stream.write(VarInt.of(outputsSize).encode());
+            stream.write(VarInt.of(outputsSize).serialize());
             for (TransactionOutput out : getOutputs())
                 out.bitcoinSerializeToStream(stream);
             // script_witnisses
@@ -747,10 +747,10 @@ public class TransactionTest {
                 for (TransactionInput in : getInputs()) {
                     TransactionWitness witness = in.getWitness();
                     long pushCount = hackWitnessPushCountSize ? Integer.MAX_VALUE : witness.getPushCount();
-                    stream.write(VarInt.of(pushCount).encode());
+                    stream.write(VarInt.of(pushCount).serialize());
                     for (int i = 0; i < witness.getPushCount(); i++) {
                         byte[] push = witness.getPush(i);
-                        stream.write(VarInt.of(push.length).encode());
+                        stream.write(VarInt.of(push.length).serialize());
                         stream.write(push);
                     }
 

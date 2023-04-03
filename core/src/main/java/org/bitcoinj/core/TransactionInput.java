@@ -175,7 +175,7 @@ public class TransactionInput extends Message {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         outpoint.bitcoinSerializeToStream(stream);
-        stream.write(VarInt.of(scriptBytes.length).encode());
+        stream.write(VarInt.of(scriptBytes.length).serialize());
         stream.write(scriptBytes);
         ByteUtils.writeInt32LE(sequence, stream);
     }

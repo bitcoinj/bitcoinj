@@ -81,7 +81,7 @@ public class GetBlocksMessage extends Message {
         // Then a vector of block hashes. This is actually a "block locator", a set of block
         // identifiers that spans the entire chain with exponentially increasing gaps between
         // them, until we end up at the genesis block. See CBlockLocator::Set()
-        stream.write(VarInt.of(locator.size()).encode());
+        stream.write(VarInt.of(locator.size()).serialize());
         for (Sha256Hash hash : locator.getHashes()) {
             // Have to reverse as wire format is little endian.
             stream.write(hash.getReversedBytes());

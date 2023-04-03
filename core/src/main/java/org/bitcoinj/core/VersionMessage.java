@@ -182,7 +182,7 @@ public class VersionMessage extends Message {
         ByteUtils.writeInt32LE(0, buf);
         // Now comes subVer.
         byte[] subVerBytes = subVer.getBytes(StandardCharsets.UTF_8);
-        buf.write(VarInt.of(subVerBytes.length).encode());
+        buf.write(VarInt.of(subVerBytes.length).serialize());
         buf.write(subVerBytes);
         // Size of known block chain.
         ByteUtils.writeInt32LE(bestHeight, buf);

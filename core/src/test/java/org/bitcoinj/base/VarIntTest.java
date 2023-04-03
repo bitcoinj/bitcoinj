@@ -37,8 +37,8 @@ public class VarIntTest {
         assertEquals(value, a.intValue());
         assertEquals(size, a.getSizeInBytes());
         assertEquals(size, a.getOriginalSizeInBytes());
-        assertEquals(size, a.encode().length);
-        assertEquals(value, VarInt.ofBytes(a.encode(), 0).intValue());
+        assertEquals(size, a.serialize().length);
+        assertEquals(value, VarInt.ofBytes(a.serialize(), 0).intValue());
     }
 
     @Test(expected = RuntimeException.class)
@@ -52,7 +52,7 @@ public class VarIntTest {
     @Parameters(method = "longTestVectors")
     public void testIntGetErr2(int value, int size) {
         VarInt a = VarInt.of(value);
-        VarInt.ofBytes(a.encode(), 0).intValue();
+        VarInt.ofBytes(a.serialize(), 0).intValue();
     }
 
     @Test
@@ -62,8 +62,8 @@ public class VarIntTest {
         assertEquals(value, a.longValue());
         assertEquals(size, a.getSizeInBytes());
         assertEquals(size, a.getOriginalSizeInBytes());
-        assertEquals(size, a.encode().length);
-        assertEquals(value, VarInt.ofBytes(a.encode(), 0).longValue());
+        assertEquals(size, a.serialize().length);
+        assertEquals(value, VarInt.ofBytes(a.serialize(), 0).longValue());
     }
 
     @Test
