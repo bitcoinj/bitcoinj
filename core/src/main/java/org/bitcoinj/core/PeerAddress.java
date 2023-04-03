@@ -189,7 +189,7 @@ public class PeerAddress extends Message {
                 throw new IllegalStateException();
             }
         } else {
-            stream.write(services.buffer().array());
+            stream.write(services.serialize());
             if (addr != null) {
                 // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
                 // hand.

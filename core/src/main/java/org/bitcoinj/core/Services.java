@@ -136,15 +136,12 @@ public class Services {
     }
 
     /**
-     * Allocates a buffer and writes the node service bits into it. The buffer is backed by a byte array and it's
-     * already rewound for reading.
+     * Allocates a byte array and writes the node service bits into it.
      *
-     * @return buffer containing the service bits
+     * @return byte array containing the service bits
      */
-    public ByteBuffer buffer() {
-        ByteBuffer buf = write(ByteBuffer.allocate(BYTES));
-        ((Buffer) buf).rewind();
-        return buf;
+    public byte[] serialize() {
+        return write(ByteBuffer.allocate(BYTES)).array();
     }
 
     public String toString() {
