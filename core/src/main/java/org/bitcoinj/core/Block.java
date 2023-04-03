@@ -193,12 +193,6 @@ public class Block extends Message {
                 transactions);
     }
 
-    /** @deprecated Use {@link BitcoinNetworkParams#getBlockInflation(int)} */
-    @Deprecated
-    public Coin getBlockInflation(int height) {
-        return ((BitcoinNetworkParams) params).getBlockInflation(height);
-    }
-
     /**
      * Parse transactions from the block.
      */
