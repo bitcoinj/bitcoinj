@@ -148,7 +148,7 @@ public class GenerateLowSTests {
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
             RedeemData redeemData = txIn.getConnectedRedeemData(bag);
             Objects.requireNonNull(redeemData, () ->
-                    "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().getHash());
+                    "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().hash());
             txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
         }
     }

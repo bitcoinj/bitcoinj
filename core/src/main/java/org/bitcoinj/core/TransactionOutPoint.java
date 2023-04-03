@@ -29,7 +29,6 @@ import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
 import javax.annotation.Nullable;
-import java.nio.Buffer;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -51,9 +50,9 @@ public class TransactionOutPoint {
             new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
 
     /** Hash of the transaction to which we refer. */
-    private Sha256Hash hash;
+    private final Sha256Hash hash;
     /** Which output of that transaction we are talking about. */
-    private long index;
+    private final long index;
 
     // This is not part of bitcoin serialization. It points to the connected transaction.
     Transaction fromTx;
@@ -219,32 +218,31 @@ public class TransactionOutPoint {
     /**
      * Returns the hash of the transaction this outpoint references/spends/is connected to.
      */
-    public Sha256Hash getHash() {
+    public Sha256Hash hash() {
         return hash;
     }
 
     /**
-     * @param hash new hash
-     * @deprecated Don't mutate this class -- create a new instance instead.
+     * @return the index of this outpoint
      */
-    @Deprecated
-    void setHash(Sha256Hash hash) {
-        this.hash = hash;
-    }
-
-    public long getIndex() {
+    public long index() {
         return index;
     }
 
     /**
-     * @param index new index
-     * @deprecated Don't mutate this class -- create a new instance instead.
+     * @deprecated Use {@link #hash()}
      */
     @Deprecated
-    public void setIndex(long index) {
-        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
-                "index out of range: " + index);
-        this.index = index;
+    public Sha256Hash getHash() {
+        return hash();
+    }
+
+    /**
+     * @deprecated Use {@link #index()}
+     */
+    @Deprecated
+    public long getIndex() {
+        return index();
     }
 
     @Override
@@ -252,11 +250,11 @@ public class TransactionOutPoint {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionOutPoint other = (TransactionOutPoint) o;
-        return getIndex() == other.getIndex() && getHash().equals(other.getHash());
+        return index() == other.index() && hash().equals(other.hash());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getIndex(), getHash());
+        return Objects.hash(index(), hash());
     }
 }

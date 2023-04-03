@@ -1131,7 +1131,8 @@ public class FullBlockTestGenerator {
         {
             Transaction tx = new Transaction();
             tx.addOutput(new TransactionOutput(tx, ZERO, new byte[] {}));
-            b58.getSpendableOutput().outpoint.setIndex(42);
+            // Replace the TransactionOutPoint with an out-of-range OutPoint
+            b58.getSpendableOutput().outpoint = new TransactionOutPoint(42, tx);;
             addOnlyInputToTransaction(tx, b58);
             b58.addTransaction(tx);
         }
@@ -1683,7 +1684,7 @@ public class FullBlockTestGenerator {
                 NewBlock block = createNextBlock(lastBlock, nextHeight++, null, null);
                 while (block.block.getMessageSize() < Block.MAX_BLOCK_SIZE - 500) {
                     Transaction tx = new Transaction();
-                    tx.addInput(lastOutput.getHash(), lastOutput.getIndex(), OP_NOP_SCRIPT);
+                    tx.addInput(lastOutput.hash(), lastOutput.index(), OP_NOP_SCRIPT);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                     lastOutput = new TransactionOutPoint(1, tx.getTxId());
@@ -1848,13 +1849,13 @@ public class FullBlockTestGenerator {
 
         public BlockAndValidity(NewBlock block, boolean connects, boolean throwsException, Sha256Hash hashChainTipAfterBlock, int heightAfterBlock, String blockName) {
             this(block.block, connects, throwsException, hashChainTipAfterBlock, heightAfterBlock, blockName);
-            coinbaseBlockMap.put(block.getCoinbaseOutput().outpoint.getHash(), block.getHash());
+            coinbaseBlockMap.put(block.getCoinbaseOutput().outpoint.hash(), block.getHash());
             Integer blockHeight = blockToHeightMap.get(block.block.getPrevBlockHash());
             if (blockHeight != null) {
                 blockHeight++;
                 for (Transaction t : block.block.getTransactions())
                     for (TransactionInput in : t.getInputs()) {
-                        Sha256Hash blockSpendingHash = coinbaseBlockMap.get(in.getOutpoint().getHash());
+                        Sha256Hash blockSpendingHash = coinbaseBlockMap.get(in.getOutpoint().hash());
                         checkState(blockSpendingHash == null || blockToHeightMap.get(blockSpendingHash) == null ||
                                 blockToHeightMap.get(blockSpendingHash) == blockHeight - params.getSpendableCoinbaseDepth());
                     }

@@ -201,7 +201,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         }
         
         WeakReference<UTXO> out = new WeakReference<>
-                (store.getTransactionOutput(transactionOutPoint.getHash(), transactionOutPoint.getIndex()));
+                (store.getTransactionOutput(transactionOutPoint.hash(), transactionOutPoint.index()));
         rollingBlock = rollingBlock.createNextBlock(null);
         
         Transaction t = new Transaction();
