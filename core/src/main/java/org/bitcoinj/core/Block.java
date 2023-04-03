@@ -155,22 +155,6 @@ public class Block extends Message {
     }
 
     /**
-     * Construct a block object from the Bitcoin wire format. Used in the case of a block
-     * contained within another message (i.e. for AuxPoW header).
-     *
-     * @param params NetworkParameters object.
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param parent The message element which contains this block, maybe null for no parent.
-     * @param serializer the serializer to use for this block.
-     * @throws ProtocolException
-     */
-    public Block(NetworkParameters params, ByteBuffer payload, int offset, @Nullable Message parent, MessageSerializer serializer)
-            throws ProtocolException {
-        // TODO: Keep the parent
-        super(params, payload, serializer);
-    }
-
-    /**
      * Construct a block initialized with all the given fields.
      * @param params Which network the block is for.
      * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
