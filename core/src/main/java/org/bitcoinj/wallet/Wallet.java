@@ -5009,7 +5009,7 @@ public class Wallet extends BaseTaggableObject
 
     //region Bloom filtering
 
-    private final ArrayList<TransactionOutPoint> bloomOutPoints = new ArrayList<>();
+    private final ArrayList<TransactionOutPoint.Connected> bloomOutPoints = new ArrayList<>();
     // Used to track whether we must automatically begin/end a filter calculation and calc outpoints/take the locks.
     private final AtomicInteger bloomFilterGuard = new AtomicInteger(0);
 
@@ -5110,7 +5110,7 @@ public class Wallet extends BaseTaggableObject
                     }
                 }
             }
-            for (TransactionOutPoint point : bloomOutPoints)
+            for (TransactionOutPoint.Connected point : bloomOutPoints)
                 filter.insert(point);
             return filter;
         } finally {

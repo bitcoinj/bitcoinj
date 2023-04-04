@@ -35,7 +35,7 @@ import static org.junit.Assert.assertFalse;
 public class TransactionOutPointTest {
     @Test
     @Parameters(method = "randomOutPoints")
-    public void readAndWrite(TransactionOutPoint outpoint) {
+    public void readAndWrite(TransactionOutPoint.Connected outpoint) {
         ByteBuffer buf = ByteBuffer.allocate(TransactionOutPoint.BYTES);
         outpoint.write(buf);
         assertFalse(buf.hasRemaining());
@@ -45,12 +45,12 @@ public class TransactionOutPointTest {
         assertEquals(outpoint, outpointCopy);
     }
 
-    private Iterator<TransactionOutPoint> randomOutPoints() {
+    private Iterator<TransactionOutPoint.Connected> randomOutPoints() {
         Random random = new Random();
         return Stream.generate(() -> {
             byte[] randomBytes = new byte[Sha256Hash.LENGTH];
             random.nextBytes(randomBytes);
-            return new TransactionOutPoint(Integer.toUnsignedLong(random.nextInt()), Sha256Hash.wrap(randomBytes));
+            return new TransactionOutPoint.Connected(Integer.toUnsignedLong(random.nextInt()), Sha256Hash.wrap(randomBytes));
         }).limit(10).iterator();
     }
 }

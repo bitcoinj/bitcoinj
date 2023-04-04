@@ -248,7 +248,7 @@ public class ScriptTest {
     public void testOp0() {
         // Check that OP_0 doesn't NPE and pushes an empty stack frame.
         Transaction tx = new Transaction();
-        tx.addInput(new TransactionInput(tx, new byte[0], TransactionOutPoint.UNCONNECTED));
+        tx.addInput(new TransactionInput(tx, new byte[0], TransactionOutPoint.Connected.UNCONNECTED));
         Script script = new ScriptBuilder().smallNum(0).build();
 
         LinkedList<byte[]> stack = new LinkedList<>();
@@ -343,7 +343,7 @@ public class ScriptTest {
                 index = ByteUtils.MAX_UNSIGNED_INTEGER;
             String script = input.get(2).asText();
             Sha256Hash sha256Hash = Sha256Hash.wrap(ByteUtils.parseHex(hash));
-            scriptPubKeys.put(new TransactionOutPoint(index, sha256Hash), parseScriptString(script));
+            scriptPubKeys.put(new TransactionOutPoint.Connected(index, sha256Hash), parseScriptString(script));
         }
         return scriptPubKeys;
     }
@@ -354,7 +354,7 @@ public class ScriptTest {
         tx.setLockTime(0);
 
         TransactionInput txInput = new TransactionInput(null,
-                new ScriptBuilder().number(0).number(0).build().getProgram(), TransactionOutPoint.UNCONNECTED);
+                new ScriptBuilder().number(0).number(0).build().getProgram(), TransactionOutPoint.Connected.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
@@ -370,7 +370,7 @@ public class ScriptTest {
         tx.setLockTime(0);
 
         TransactionInput txInput = new TransactionInput(creditingTransaction, scriptSig.getProgram(),
-                TransactionOutPoint.UNCONNECTED);
+                TransactionOutPoint.Connected.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 

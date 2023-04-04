@@ -849,7 +849,7 @@ public class Block extends Message {
      * @return created block
      */
     @VisibleForTesting
-    Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint prevOut, Instant time,
+    Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint.Connected prevOut, Instant time,
                           byte[] pubKey, Coin coinbaseValue, int height) {
         Block b = new Block(version);
         b.setDifficultyTarget(difficultyTarget);
@@ -862,7 +862,7 @@ public class Block extends Message {
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
             if (prevOut == null) {
-                prevOut = new TransactionOutPoint(0, nextTestOutPointHash());
+                prevOut = new TransactionOutPoint.Connected(0, nextTestOutPointHash());
             }
             input = new TransactionInput(t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
             t.addInput(input);
@@ -905,7 +905,7 @@ public class Block extends Message {
      * @return created block
      */
     @VisibleForTesting
-    public Block createNextBlock(@Nullable Address to, TransactionOutPoint prevOut) {
+    public Block createNextBlock(@Nullable Address to, TransactionOutPoint.Connected prevOut) {
         return createNextBlock(to, BLOCK_VERSION_GENESIS, prevOut, time().plusSeconds(5), pubkeyForTesting,
                 FIFTY_COINS, BLOCK_HEIGHT_UNKNOWN);
     }
@@ -945,7 +945,7 @@ public class Block extends Message {
      */
     @VisibleForTesting
     public Block createNextBlockWithCoinbase(long version, byte[] pubKey, Coin coinbaseValue, int height) {
-        return createNextBlock(null, version, (TransactionOutPoint) null, TimeUtils.currentTime(), pubKey,
+        return createNextBlock(null, version, (TransactionOutPoint.Connected) null, TimeUtils.currentTime(), pubKey,
                 coinbaseValue, height);
     }
 
@@ -960,7 +960,7 @@ public class Block extends Message {
      */
     @VisibleForTesting
     Block createNextBlockWithCoinbase(long version, byte[] pubKey, int height) {
-        return createNextBlock(null, version, (TransactionOutPoint) null, TimeUtils.currentTime(), pubKey,
+        return createNextBlock(null, version, (TransactionOutPoint.Connected) null, TimeUtils.currentTime(), pubKey,
                 FIFTY_COINS, height);
     }
 

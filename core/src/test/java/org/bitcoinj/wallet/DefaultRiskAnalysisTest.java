@@ -162,7 +162,7 @@ public class DefaultRiskAnalysisTest {
         // Test non-standard script as an input.
         Transaction tx = new Transaction();
         assertEquals(DefaultRiskAnalysis.RuleViolation.NONE, DefaultRiskAnalysis.isStandard(tx));
-        tx.addInput(new TransactionInput(null, nonStandardScript, TransactionOutPoint.UNCONNECTED));
+        tx.addInput(new TransactionInput(null, nonStandardScript, TransactionOutPoint.Connected.UNCONNECTED));
         assertEquals(DefaultRiskAnalysis.RuleViolation.SHORTEST_POSSIBLE_PUSHDATA, DefaultRiskAnalysis.isStandard(tx));
         // Test non-standard script as an output.
         tx.clearInputs();
@@ -176,14 +176,14 @@ public class DefaultRiskAnalysisTest {
         TransactionSignature sig = TransactionSignature.dummy();
         Script scriptOk = ScriptBuilder.createInputScript(sig);
         assertEquals(RuleViolation.NONE,
-                DefaultRiskAnalysis.isInputStandard(new TransactionInput(null, scriptOk.getProgram(), TransactionOutPoint.UNCONNECTED)));
+                DefaultRiskAnalysis.isInputStandard(new TransactionInput(null, scriptOk.getProgram(), TransactionOutPoint.Connected.UNCONNECTED)));
 
         byte[] sigBytes = sig.encodeToBitcoin();
         // Appending a zero byte makes the signature uncanonical without violating DER encoding.
         Script scriptUncanonicalEncoding = new ScriptBuilder().data(Arrays.copyOf(sigBytes, sigBytes.length + 1))
                 .build();
         assertEquals(RuleViolation.SIGNATURE_CANONICAL_ENCODING, DefaultRiskAnalysis.isInputStandard(
-                new TransactionInput(null, scriptUncanonicalEncoding.getProgram(), TransactionOutPoint.UNCONNECTED)));
+                new TransactionInput(null, scriptUncanonicalEncoding.getProgram(), TransactionOutPoint.Connected.UNCONNECTED)));
     }
 
     @Test
@@ -193,7 +193,7 @@ public class DefaultRiskAnalysisTest {
         Script scriptHighS = ScriptBuilder
                 .createInputScript(new TransactionSignature(sig.r, ECKey.CURVE.getN().subtract(sig.s)));
         assertEquals(RuleViolation.SIGNATURE_CANONICAL_ENCODING, DefaultRiskAnalysis.isInputStandard(
-                new TransactionInput(null, scriptHighS.getProgram(), TransactionOutPoint.UNCONNECTED)));
+                new TransactionInput(null, scriptHighS.getProgram(), TransactionOutPoint.Connected.UNCONNECTED)));
 
         // This is a real transaction. Its signatures S component is "low".
         Transaction tx1 = new Transaction(ByteBuffer.wrap(ByteUtils.parseHex(

@@ -42,7 +42,7 @@ import java.util.Set;
 
 /**
  * Used as a key for memory map (to avoid having to think about NetworkParameters,
- * which is required for {@link TransactionOutPoint}
+ * which is required for {@link TransactionOutPoint.Connected}
  */
 class StoredTransactionOutPoint {
 
