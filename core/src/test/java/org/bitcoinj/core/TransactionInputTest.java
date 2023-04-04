@@ -142,7 +142,12 @@ public class TransactionInputTest {
             byte[] randomBytes = new byte[100];
             random.nextBytes(randomBytes);
             return new TransactionInput(parent, randomBytes, TransactionOutPoint.UNCONNECTED,
-                    Coin.ofSat(random.nextLong()));
+                    Coin.ofSat(Math.abs(random.nextLong())));
         }).limit(10).iterator();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void negativeValue() {
+        new TransactionInput(new Transaction(), new byte[0], TransactionOutPoint.UNCONNECTED, Coin.ofSat(-1));
     }
 }
