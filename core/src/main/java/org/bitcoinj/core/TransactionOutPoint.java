@@ -80,6 +80,7 @@ public class TransactionOutPoint {
         this.index = index;
         this.hash = fromTx.getTxId();
         this.fromTx = fromTx;
+        this.connectedOutput = Objects.requireNonNull(fromTx.getOutput(index));
     }
 
     public TransactionOutPoint(long index, Sha256Hash hash) {

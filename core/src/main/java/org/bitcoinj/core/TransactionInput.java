@@ -435,6 +435,7 @@ public class TransactionInput {
             // The outpoint is connected using a "standard" wallet, disconnect it.
             connectedOutput = outpoint.fromTx.getOutput((int) outpoint.index());
             outpoint.fromTx = null;
+            outpoint.connectedOutput = null;
         } else if (outpoint.connectedOutput != null) {
             // The outpoint is connected using a UTXO based wallet, disconnect it.
             connectedOutput = outpoint.connectedOutput;
