@@ -130,6 +130,7 @@ public class TransactionInput {
 
     private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint, long sequence, @Nullable Coin value) {
+        checkArgument(value == null || value.signum() >= 0, () -> "value out of range: " + value);
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
         this.sequence = sequence;
