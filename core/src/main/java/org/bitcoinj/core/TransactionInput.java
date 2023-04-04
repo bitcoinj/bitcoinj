@@ -578,20 +578,21 @@ public class TransactionInput {
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder("TxIn");
-        try {
-            if (isCoinBase()) {
-                s.append(": COINBASE");
-            } else {
-                s.append(" for [").append(outpoint).append("]: ").append(getScriptSig());
+        if (isCoinBase()) {
+            s.append(": COINBASE");
+        } else {
+            s.append(" for [").append(outpoint).append("]: ");
+            try {
+                s.append(getScriptSig());
                 String flags = InternalUtils.commaJoin(hasWitness() ? "witness" : null,
                         hasSequence() ? "sequence: " + Long.toHexString(sequence) : null,
                         isOptInFullRBF() ? "opts into full RBF" : null);
                 if (!flags.isEmpty())
                     s.append(" (").append(flags).append(')');
+            } catch (ScriptException e) {
+                s.append(" [exception: ").append(e.getMessage()).append("]");
             }
-            return s.toString();
-        } catch (ScriptException e) {
-            throw new RuntimeException(e);
         }
+        return s.toString();
     }
 }
