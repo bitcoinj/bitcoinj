@@ -28,6 +28,7 @@ import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -89,19 +90,19 @@ public interface TransactionOutPoint {
 
     class Unconnected implements TransactionOutPoint {
         /** Hash of the transaction to which we refer. */
-        private final Sha256Hash hash;
+        @Nonnull private final Sha256Hash hash;
         /** Which output of that transaction we are talking about. */
         private final long index;
 
-        public Unconnected(Sha256Hash hash, long index) {
+        public Unconnected(@Nonnull Sha256Hash hash, long index) {
             checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
                     "index out of range: " + index);
-            this.hash = hash;
+            this.hash = Objects.requireNonNull(hash);
             this.index = index;
         }
 
-        public Unconnected(Transaction transaction, long index) {
-            this(transaction.getTxId(), index);
+        public Unconnected(@Nonnull Transaction transaction, long index) {
+            this(Objects.requireNonNull(transaction).getTxId(), index);
         }
 
         @Override
@@ -204,19 +205,17 @@ public interface TransactionOutPoint {
         // The connected output.
         TransactionOutput connectedOutput;
 
-        public Connected(long index, Transaction fromTx) {
-            super(fromTx.getTxId(), index);
+        public Connected(long index, @Nonnull Transaction fromTx) {
+            super(Objects.requireNonNull(fromTx).getTxId(), index);
             this.fromTx = fromTx;
         }
 
-        public Connected(long index, Sha256Hash hash) {
+        public Connected(long index, @Nonnull Sha256Hash hash) {
             super(hash, index);
-            checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
-                    "index out of range: " + index);
         }
 
-        public Connected(TransactionOutput connectedOutput) {
-            this(connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
+        public Connected(@Nonnull TransactionOutput connectedOutput) {
+            this(Objects.requireNonNull(connectedOutput).getIndex(), Objects.requireNonNull(connectedOutput.getParentTransactionHash()));
             this.connectedOutput = connectedOutput;
         }
 
