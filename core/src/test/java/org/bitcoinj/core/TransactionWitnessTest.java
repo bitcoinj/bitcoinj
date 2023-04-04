@@ -14,16 +14,28 @@
 
 package org.bitcoinj.core;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.SignatureDecodeException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
+@RunWith(JUnitParamsRunner.class)
 public class TransactionWitnessTest {
 
     @Test
@@ -56,5 +68,28 @@ public class TransactionWitnessTest {
         assertArrayEquals(signature1.encodeToBitcoin(), witness.getPush(1));
         assertArrayEquals(signature2.encodeToBitcoin(), witness.getPush(2));
         assertArrayEquals(witnessScript.getProgram(), witness.getPush(3));
+    }
+
+    @Test
+    @Parameters(method = "randomWitness")
+    public void readAndWrite(TransactionWitness witness) {
+        ByteBuffer buf = ByteBuffer.allocate(witness.getMessageSize());
+        witness.write(buf);
+        assertFalse(buf.hasRemaining());
+        ((Buffer) buf).rewind();
+        TransactionWitness witnessCopy = TransactionWitness.read(buf);
+        assertFalse(buf.hasRemaining());
+        assertEquals(witness, witnessCopy);
+    }
+
+    private Iterator<TransactionWitness> randomWitness() {
+        Random random = new Random();
+        return Stream.generate(() -> {
+            return TransactionWitness.of(Stream.generate(() -> {
+                byte[] randomBytes = new byte[random.nextInt(50)];
+                random.nextBytes(randomBytes);
+                return randomBytes;
+            }).limit(random.nextInt(10)).collect(Collectors.toList()));
+        }).limit(10).iterator();
     }
 }
