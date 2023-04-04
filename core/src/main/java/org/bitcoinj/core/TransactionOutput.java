@@ -343,10 +343,10 @@ public class TransactionOutput extends Message {
      * @return debug string
      */
     public String toString(@Nullable Network network) {
+        StringBuilder buf = new StringBuilder("TxOut of ");
+        buf.append(Coin.valueOf(value).toFriendlyString());
         try {
             Script script = getScriptPubKey();
-            StringBuilder buf = new StringBuilder("TxOut of ");
-            buf.append(Coin.valueOf(value).toFriendlyString());
             if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2TR(script)
                     || ScriptPattern.isP2SH(script)) {
                 buf.append(" to ").append(script.getScriptType().name());
@@ -360,10 +360,10 @@ public class TransactionOutput extends Message {
                 buf.append(" (unknown type)");
             }
             buf.append(" script:").append(script);
-            return buf.toString();
         } catch (ScriptException e) {
-            throw new RuntimeException(e);
+            buf.append(" [exception: ").append(e.getMessage()).append("]");
         }
+        return buf.toString();
     }
 
     /**
