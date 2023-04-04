@@ -754,7 +754,7 @@ public class TransactionTest {
                         stream.write(push);
                     }
 
-                    in.getWitness().bitcoinSerializeToStream(stream);
+                    stream.write(in.getWitness().serialize());
                 }
             }
             // lock_time

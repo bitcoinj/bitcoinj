@@ -15,6 +15,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.ECKey;
@@ -22,8 +23,9 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,10 +62,39 @@ public class TransactionWitness {
         return witness;
     }
 
+    /**
+     * Construct a transaction witness from a given list of arbitrary pushes.
+     *
+     * @param pushes list of pushes
+     * @return constructed transaction witness
+     */
+    public static TransactionWitness of(List<byte[]> pushes) {
+        return new TransactionWitness(pushes);
+    }
+
+    /**
+     * Deserialize this transaction witness from a given payload.
+     *
+     * @param payload           payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static TransactionWitness read(ByteBuffer payload) throws BufferUnderflowException {
+        int pushCount = VarInt.read(payload).intValue();
+        List<byte[]> pushes = new ArrayList<>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
+        for (int y = 0; y < pushCount; y++)
+            pushes.add(Buffers.readLengthPrefixedBytes(payload));
+        return new TransactionWitness(pushes);
+    }
+
     private final List<byte[]> pushes;
 
     public TransactionWitness(int pushCount) {
         pushes = new ArrayList<>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
+    }
+
+    private TransactionWitness(List<byte[]> pushes) {
+        this.pushes = pushes;
     }
 
     public byte[] getPush(int i) {
@@ -81,19 +112,40 @@ public class TransactionWitness {
         pushes.set(i, value);
     }
 
-    protected int getMessageSize() {
+    /**
+     * Write this transaction witness into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the serialized data doesn't fit the remaining buffer
+     */
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        VarInt.of(pushes.size()).write(buf);
+        for (byte[] push : pushes)
+            Buffers.writeLengthPrefixedBytes(buf, push);
+        return buf;
+    }
+
+    /**
+     * Allocates a byte array and writes this transaction witness into it.
+     *
+     * @return byte array containing the transaction witness
+     */
+    public byte[] serialize() {
+        return write(ByteBuffer.allocate(getMessageSize())).array();
+    }
+
+    /**
+     * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
+     * size can differ from the size of the original payload.
+     *
+     * @return size of the serialized message in bytes
+     */
+    public int getMessageSize() {
         int size = VarInt.sizeOf(pushes.size());
         for (byte[] push : pushes)
             size += VarInt.sizeOf(push.length) + push.length;
         return size;
-    }
-
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(VarInt.of(pushes.size()).serialize());
-        for (byte[] push : pushes) {
-            stream.write(VarInt.of(push.length).serialize());
-            stream.write(push);
-        }
     }
 
     @Override

@@ -706,16 +706,8 @@ public class Transaction extends Message {
 
     private void parseWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         int numWitnesses = inputs.size();
-        for (int i = 0; i < numWitnesses; i++) {
-            VarInt pushCountVarInt = VarInt.read(payload);
-            int pushCount = pushCountVarInt.intValue();
-            TransactionWitness witness = new TransactionWitness(pushCount);
-            getInput(i).setWitness(witness);
-            for (int y = 0; y < pushCount; y++) {
-                byte[] push = Buffers.readLengthPrefixedBytes(payload);
-                witness.setPush(y, push);
-            }
-        }
+        for (int i = 0; i < numWitnesses; i++)
+            getInput(i).setWitness(TransactionWitness.read(payload));
     }
 
     /** @return true of the transaction has any witnesses in any of its inputs */
@@ -1532,9 +1524,8 @@ public class Transaction extends Message {
             out.bitcoinSerializeToStream(stream);
         // script_witnisses
         if (useSegwit) {
-            for (TransactionInput in : inputs) {
-                in.getWitness().bitcoinSerializeToStream(stream);
-            }
+            for (TransactionInput in : inputs)
+                stream.write(in.getWitness().serialize());
         }
         // lock_time
         writeInt32LE(vLockTime.rawValue(), stream);
