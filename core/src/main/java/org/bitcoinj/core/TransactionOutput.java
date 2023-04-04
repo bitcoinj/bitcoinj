@@ -443,7 +443,7 @@ public class TransactionOutput extends Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionOutput other = (TransactionOutput) o;
-        return value == other.value && (parent == null || (parent == other.parent && getIndex() == other.getIndex()))
+        return value == other.value && (parent == null || (parent.equals(other.parent) && getIndex() == other.getIndex()))
                 && Arrays.equals(scriptBytes, other.scriptBytes);
     }
 
