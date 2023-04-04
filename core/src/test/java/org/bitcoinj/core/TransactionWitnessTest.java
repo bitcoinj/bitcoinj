@@ -40,16 +40,14 @@ public class TransactionWitnessTest {
 
     @Test
     public void testToString() {
-        TransactionWitness w1 = new TransactionWitness(0);
+        TransactionWitness w1 = TransactionWitness.EMPTY;
         assertEquals("", w1.toString());
 
-        TransactionWitness w2 = new TransactionWitness(2);
-        assertEquals("", w2.toString());
+        TransactionWitness w2 = TransactionWitness.of(new byte[0], new byte[0]);
+        assertEquals("EMPTY EMPTY", w2.toString());
 
-        TransactionWitness w3 = new TransactionWitness(3);
-        w3.setPush(0, ByteUtils.parseHex("123aaa"));
-        w3.setPush(1, ByteUtils.parseHex("123bbb"));
-        w3.setPush(3, ByteUtils.parseHex("123ccc"));
+        TransactionWitness w3 = TransactionWitness.of(ByteUtils.parseHex("123aaa"), ByteUtils.parseHex("123bbb"),
+                new byte[0], ByteUtils.parseHex("123ccc"));
         assertEquals("123aaa 123bbb EMPTY 123ccc", w3.toString());
     }
 

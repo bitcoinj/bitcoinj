@@ -713,8 +713,7 @@ public class TransactionTest {
             inputTx.addOutput(Coin.FIFTY_COINS, new ECKey());
             this.addInput(inputTx.getOutput(0));
             this.getInput(0).disconnect();
-            TransactionWitness witness = new TransactionWitness(1);
-            witness.setPush(0, new byte[] {0});
+            TransactionWitness witness = TransactionWitness.of(new byte[] { 0 });
             this.getInput(0).setWitness(witness);
             this.addOutput(Coin.COIN, new ECKey());
 

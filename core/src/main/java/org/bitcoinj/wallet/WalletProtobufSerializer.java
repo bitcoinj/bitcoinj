@@ -656,10 +656,10 @@ public class WalletProtobufSerializer {
             if (inputProto.hasWitness()) {
                 Protos.ScriptWitness witnessProto = inputProto.getWitness();
                 if (witnessProto.getDataCount() > 0) {
-                    TransactionWitness witness = new TransactionWitness(witnessProto.getDataCount());
+                    List<byte[]> pushes = new ArrayList<>(witnessProto.getDataCount());
                     for (int j = 0; j < witnessProto.getDataCount(); j++)
-                        witness.setPush(j, witnessProto.getData(j).toByteArray());
-                    input.setWitness(witness);
+                        pushes.add(witnessProto.getData(j).toByteArray());
+                    input.setWitness(TransactionWitness.of(pushes));
                 }
             }
             tx.addInput(input);
