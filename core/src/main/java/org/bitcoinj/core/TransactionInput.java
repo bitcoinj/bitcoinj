@@ -563,7 +563,7 @@ public class TransactionInput {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionInput other = (TransactionInput) o;
-        return sequence == other.sequence && parent == other.parent
+        return sequence == other.sequence && parent != null && parent.equals(other.parent)
             && outpoint.equals(other.outpoint) && Arrays.equals(scriptBytes, other.scriptBytes);
     }
 
