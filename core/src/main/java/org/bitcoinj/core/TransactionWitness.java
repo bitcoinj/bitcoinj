@@ -100,6 +100,8 @@ public class TransactionWitness {
     private final List<byte[]> pushes;
 
     private TransactionWitness(List<byte[]> pushes) {
+        for (byte[] push : pushes)
+            Objects.requireNonNull(push);
         this.pushes = pushes;
     }
 
@@ -151,9 +153,7 @@ public class TransactionWitness {
     public String toString() {
         List<String> stringPushes = new ArrayList<>(pushes.size());
         for (byte[] push : pushes) {
-            if (push == null) {
-                stringPushes.add("NULL");
-            } else if (push.length == 0) {
+            if (push.length == 0) {
                 stringPushes.add("EMPTY");
             } else {
                 stringPushes.add(ByteUtils.formatHex(push));
@@ -178,7 +178,7 @@ public class TransactionWitness {
     public int hashCode() {
         int hashCode = 1;
         for (byte[] push : pushes) {
-            hashCode = 31 * hashCode + (push == null ? 0 : Arrays.hashCode(push));
+            hashCode = 31 * hashCode + Arrays.hashCode(push);
         }
         return hashCode;
     }
