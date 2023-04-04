@@ -112,7 +112,7 @@ public class TransactionInput {
      */
     public static TransactionInput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
         Objects.requireNonNull(parentTransaction);
-        TransactionOutPoint.Connected outpoint = TransactionOutPoint.Connected.read(payload);
+        TransactionOutPoint.Connected outpoint = TransactionOutPoint.read(payload);
         byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         long sequence = ByteUtils.readUint32(payload);
         return new TransactionInput(parentTransaction, scriptBytes, outpoint, sequence, null);
@@ -201,7 +201,7 @@ public class TransactionInput {
      * @return size of the serialized message in bytes
      */
     public int getMessageSize() {
-        int size = TransactionOutPoint.Connected.BYTES;
+        int size = TransactionOutPoint.BYTES;
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         size += 4; // sequence
         return size;

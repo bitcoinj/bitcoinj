@@ -38,11 +38,16 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
- * <p>This message is a reference or pointer to an output of a different transaction.</p>
+ * Represents a reference or pointer to an output of a transaction. At a minimum this is specified
+ * by a {@link Sha256Hash} and {@code long} output index -- all instances are guaranteed to have
+ * those.  The {@link TransactionOutPoint.Connected} subclass has object references to {@link Transaction} or
+ * {@link TransactionOutput} and is used in wallet logic, etc.
  *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public interface TransactionOutPoint {
+    int BYTES = 36;
+    
     /**
      * Returns the hash of the transaction this outpoint references/spends/is connected to.
      */
@@ -52,58 +57,101 @@ public interface TransactionOutPoint {
      * @return the index of this outpoint
      */
     long index();
-    
-    class Connected implements TransactionOutPoint {
-        public static final int BYTES = 36;
 
-        /** Special outpoint that normally marks a coinbase input. It's also used as a test dummy. */
-        public static final Connected UNCONNECTED =
-                new Connected(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
+    /**
+     * Write this transaction outpoint into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the outpoint doesn't fit the remaining buffer
+     */
+    ByteBuffer write(ByteBuffer buf) throws BufferOverflowException;
 
+    /**
+     * Allocates a byte array and writes this transaction outpoint into it.
+     *
+     * @return byte array containing the transaction outpoint
+     */
+    byte[] serialize();
+
+    /**
+     * Deserialize this transaction outpoint from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read transaction outpoint (currently returns as {@link TransactionOutPoint.Connected} for compatibility)
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    static Connected read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        Sha256Hash hash = Sha256Hash.read(payload);
+        long index = ByteUtils.readUint32(payload);
+        return new Connected(index, hash);
+    }
+
+    class Unconnected implements TransactionOutPoint {
         /** Hash of the transaction to which we refer. */
         private final Sha256Hash hash;
         /** Which output of that transaction we are talking about. */
         private final long index;
 
-        // This is not part of bitcoin serialization. It points to the connected transaction.
-        Transaction fromTx;
+        public Unconnected(Sha256Hash hash, long index) {
+            checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                    "index out of range: " + index);
+            this.hash = hash;
+            this.index = index;
+        }
 
-        // The connected output.
-        TransactionOutput connectedOutput;
+        public Unconnected(Transaction transaction, long index) {
+            this(transaction.getTxId(), index);
+        }
+
+        @Override
+        public String toString() {
+            return hash() + ":" + index();
+        }
 
         /**
-         * Deserialize this transaction outpoint from a given payload.
-         *
-         * @param payload payload to deserialize from
-         * @return read transaction outpoint
-         * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+         * Returns the hash of the transaction this outpoint references/spends/is connected to.
          */
-        public static Connected read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-            Sha256Hash hash = Sha256Hash.read(payload);
-            long index = ByteUtils.readUint32(payload);
-            return new Connected(index, hash);
+        @Override
+        public Sha256Hash hash() {
+            return hash;
         }
 
-        public Connected(long index, Transaction fromTx) {
-            super();
-            checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
-                    "index out of range: " + index);
-            this.index = index;
-            this.hash = fromTx.getTxId();
-            this.fromTx = fromTx;
+        /**
+         * @return the index of this outpoint
+         */
+        @Override
+        public long index() {
+            return index;
         }
 
-        public Connected(long index, Sha256Hash hash) {
-            super();
-            checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
-                    "index out of range: " + index);
-            this.index = index;
-            this.hash = hash;
+        /**
+         * @deprecated Use {@link #hash()}
+         */
+        @Deprecated
+        public Sha256Hash getHash() {
+            return hash();
         }
 
-        public Connected(TransactionOutput connectedOutput) {
-            this(connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
-            this.connectedOutput = connectedOutput;
+        /**
+         * @deprecated Use {@link #index()}
+         */
+        @Deprecated
+        public long getIndex() {
+            return index();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TransactionOutPoint other = (TransactionOutPoint) o;
+            return index() == other.index() && hash().equals(other.hash());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(index(), hash());
         }
 
         /**
@@ -113,9 +161,10 @@ public interface TransactionOutPoint {
          * @return the buffer
          * @throws BufferOverflowException if the outpoint doesn't fit the remaining buffer
          */
+        @Override
         public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-            buf.put(hash.serialize());
-            ByteUtils.writeInt32LE(index, buf);
+            buf.put(hash().serialize());
+            ByteUtils.writeInt32LE(index(), buf);
             return buf;
         }
 
@@ -124,6 +173,7 @@ public interface TransactionOutPoint {
          *
          * @return byte array containing the transaction outpoint
          */
+        @Override
         public byte[] serialize() {
             return write(ByteBuffer.allocate(BYTES)).array();
         }
@@ -139,6 +189,36 @@ public interface TransactionOutPoint {
         public int getMessageSize() {
             return BYTES;
         }
+    }
+
+    class Connected extends Unconnected implements TransactionOutPoint  {
+
+        /** Special outpoint that normally marks a coinbase input. It's also used as a test dummy. */
+        public static final Connected UNCONNECTED =
+                new Connected(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
+
+
+        // This is not part of bitcoin serialization. It points to the connected transaction.
+        Transaction fromTx;
+
+        // The connected output.
+        TransactionOutput connectedOutput;
+
+        public Connected(long index, Transaction fromTx) {
+            super(fromTx.getTxId(), index);
+            this.fromTx = fromTx;
+        }
+
+        public Connected(long index, Sha256Hash hash) {
+            super(hash, index);
+            checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                    "index out of range: " + index);
+        }
+
+        public Connected(TransactionOutput connectedOutput) {
+            this(connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
+            this.connectedOutput = connectedOutput;
+        }
 
         /**
          * An outpoint is a part of a transaction input that points to the output of another transaction. If we have both
@@ -148,7 +228,7 @@ public interface TransactionOutPoint {
         @Nullable
         public TransactionOutput getConnectedOutput() {
             if (fromTx != null) {
-                return fromTx.getOutputs().get((int) index);
+                return fromTx.getOutputs().get((int) index());
             } else if (connectedOutput != null) {
                 return connectedOutput;
             }
@@ -219,56 +299,6 @@ public interface TransactionOutPoint {
             } else {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
             }
-        }
-
-        @Override
-        public String toString() {
-            return hash + ":" + index;
-        }
-
-        /**
-         * Returns the hash of the transaction this outpoint references/spends/is connected to.
-         */
-        @Override
-        public Sha256Hash hash() {
-            return hash;
-        }
-
-        /**
-         * @return the index of this outpoint
-         */
-        @Override
-        public long index() {
-            return index;
-        }
-
-        /**
-         * @deprecated Use {@link #hash()}
-         */
-        @Deprecated
-        public Sha256Hash getHash() {
-            return hash();
-        }
-
-        /**
-         * @deprecated Use {@link #index()}
-         */
-        @Deprecated
-        public long getIndex() {
-            return index();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            TransactionOutPoint other = (TransactionOutPoint) o;
-            return index() == other.index() && hash().equals(other.hash());
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(index(), hash());
         }
     }
 }

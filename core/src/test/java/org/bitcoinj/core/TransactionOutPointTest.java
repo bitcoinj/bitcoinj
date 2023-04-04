@@ -36,11 +36,11 @@ public class TransactionOutPointTest {
     @Test
     @Parameters(method = "randomOutPoints")
     public void readAndWrite(TransactionOutPoint.Connected outpoint) {
-        ByteBuffer buf = ByteBuffer.allocate(TransactionOutPoint.Connected.BYTES);
+        ByteBuffer buf = ByteBuffer.allocate(TransactionOutPoint.BYTES);
         outpoint.write(buf);
         assertFalse(buf.hasRemaining());
         ((Buffer) buf).rewind();
-        TransactionOutPoint outpointCopy = TransactionOutPoint.Connected.read(buf);
+        TransactionOutPoint outpointCopy = TransactionOutPoint.read(buf);
         assertFalse(buf.hasRemaining());
         assertEquals(outpoint, outpointCopy);
     }

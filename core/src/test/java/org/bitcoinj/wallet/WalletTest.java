@@ -1676,7 +1676,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsBloomFilter() {
         Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction t1 = createFakeTx(TESTNET, CENT, watchedAddress);
-        TransactionOutPoint.Connected outPoint = new TransactionOutPoint.Connected(0, t1);
+        TransactionOutPoint outPoint = new TransactionOutPoint.Unconnected(t1, 0);
         wallet.addWatchedAddress(watchedAddress);
 
         // Note that this has a 1e-12 chance of failing this unit test due to a false positive
@@ -1730,7 +1730,7 @@ public class WalletTest extends TestWithWallet {
 
         for (Address addr : addressesForRemoval) {
             Transaction t1 = createFakeTx(TESTNET, CENT, addr);
-            TransactionOutPoint.Connected outPoint = new TransactionOutPoint.Connected(0, t1);
+            TransactionOutPoint outPoint = new TransactionOutPoint.Unconnected(t1, 0);
 
             // Note that this has a 1e-12 chance of failing this unit test due to a false positive
             assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
@@ -1749,7 +1749,7 @@ public class WalletTest extends TestWithWallet {
         assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(address.getHash()));
 
         Transaction t1 = createFakeTx(TESTNET, CENT, address);
-        TransactionOutPoint.Connected outPoint = new TransactionOutPoint.Connected(0, t1);
+        TransactionOutPoint outPoint = new TransactionOutPoint.Unconnected(t1.getTxId(), 0);
 
         assertFalse(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.serialize()));
 
