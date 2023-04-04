@@ -28,12 +28,14 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 public class TransactionWitness {
-    public static final TransactionWitness EMPTY = new TransactionWitness(0);
+    public static final TransactionWitness EMPTY = TransactionWitness.of(Collections.emptyList());
 
     /**
      * Creates the stack pushes necessary to redeem a P2WPKH output. If given signature is null, an empty push will be
@@ -42,24 +44,22 @@ public class TransactionWitness {
     public static TransactionWitness redeemP2WPKH(@Nullable TransactionSignature signature, ECKey pubKey) {
         checkArgument(pubKey.isCompressed(), () ->
                 "only compressed keys allowed");
-        TransactionWitness witness = new TransactionWitness(2);
-        witness.setPush(0, signature != null ? signature.encodeToBitcoin() : new byte[0]); // signature
-        witness.setPush(1, pubKey.getPubKey()); // pubkey
-        return witness;
+        List<byte[]> pushes = new ArrayList<>(2);
+        pushes.add(signature != null ? signature.encodeToBitcoin() : new byte[0]); // signature
+        pushes.add(pubKey.getPubKey()); // pubkey
+        return TransactionWitness.of(pushes);
     }
 
     /**
      * Creates the stack pushes necessary to redeem a P2WSH output.
      */
     public static TransactionWitness redeemP2WSH(Script witnessScript, TransactionSignature... signatures) {
-        TransactionWitness witness = new TransactionWitness(signatures.length + 2);
-        witness.setPush(0, new byte[]{});
-        int i;
-        for (i = 0; i < signatures.length; i++) {
-            witness.setPush(i + 1, signatures[i].encodeToBitcoin());
-        }
-        witness.setPush(i + 1, witnessScript.getProgram());
-        return witness;
+        List<byte[]> pushes = new ArrayList<>(signatures.length + 2);
+        pushes.add(new byte[] {});
+        for (TransactionSignature signature : signatures)
+            pushes.add(signature.encodeToBitcoin());
+        pushes.add(witnessScript.getProgram());
+        return TransactionWitness.of(pushes);
     }
 
     /**
@@ -70,6 +70,16 @@ public class TransactionWitness {
      */
     public static TransactionWitness of(List<byte[]> pushes) {
         return new TransactionWitness(pushes);
+    }
+
+    /**
+     * Construct a transaction witness from a given list of arbitrary pushes.
+     *
+     * @param pushes list of pushes
+     * @return constructed transaction witness
+     */
+    public static TransactionWitness of(byte[]... pushes) {
+        return of(Arrays.asList(pushes));
     }
 
     /**
@@ -89,10 +99,6 @@ public class TransactionWitness {
 
     private final List<byte[]> pushes;
 
-    public TransactionWitness(int pushCount) {
-        pushes = new ArrayList<>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
-    }
-
     private TransactionWitness(List<byte[]> pushes) {
         this.pushes = pushes;
     }
@@ -103,13 +109,6 @@ public class TransactionWitness {
 
     public int getPushCount() {
         return pushes.size();
-    }
-
-    public void setPush(int i, byte[] value) {
-        while (i >= pushes.size()) {
-            pushes.add(new byte[]{});
-        }
-        pushes.set(i, value);
     }
 
     /**
