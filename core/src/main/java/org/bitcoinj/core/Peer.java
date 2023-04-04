@@ -1144,6 +1144,9 @@ public class Peer extends PeerSocketHandler {
                     throw new IllegalStateException("Not implemented: " + item.type);
             }
         }
+        if (log.isDebugEnabled())
+            log.debug("{}: processing 'inv' with {} items: {} blocks, {} txns", this, items.size(), blocks.size(),
+                    transactions.size());
 
         final boolean downloadData = this.vDownloadData;
 
