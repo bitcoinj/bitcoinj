@@ -402,7 +402,7 @@ public class ScriptBuilder {
                 sigs.add(signature.encodeToBitcoin());
             }
         }
-        return createMultiSigInputScriptBytes(sigs, multisigProgram.getProgram());
+        return createMultiSigInputScriptBytes(sigs, multisigProgram.program());
     }
 
     /**
@@ -560,7 +560,7 @@ public class ScriptBuilder {
      * @return an output script that sends to the redeem script
      */
     public static Script createP2SHOutputScript(Script redeemScript) {
-        byte[] hash = CryptoUtils.sha256hash160(redeemScript.getProgram());
+        byte[] hash = CryptoUtils.sha256hash160(redeemScript.program());
         return ScriptBuilder.createP2SHOutputScript(hash);
     }
 
@@ -576,7 +576,7 @@ public class ScriptBuilder {
      * Creates a segwit scriptPubKey for the given redeem script.
      */
     public static Script createP2WSHOutputScript(Script redeemScript) {
-        byte[] hash = Sha256Hash.hash(redeemScript.getProgram());
+        byte[] hash = Sha256Hash.hash(redeemScript.program());
         return ScriptBuilder.createP2WSHOutputScript(hash);
     }
 

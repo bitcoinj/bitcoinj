@@ -728,7 +728,7 @@ public class Transaction extends Message {
         for (TransactionInput input : inputs) {
             // 41: min size of an input
             // 110: enough to cover a compressed pubkey p2sh redemption (somewhat arbitrary).
-            int benefit = 41 + Math.min(110, input.getScriptSig().getProgram().length);
+            int benefit = 41 + Math.min(110, input.getScriptSig().program().length);
             if (size > benefit)
                 size -= benefit;
         }
@@ -944,7 +944,7 @@ public class Transaction extends Message {
      * @return the newly created input.
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
-        return addInput(new TransactionInput(this, script.getProgram(), new TransactionOutPoint(outputIndex, spendTxHash)));
+        return addInput(new TransactionInput(this, script.program(), new TransactionOutPoint(outputIndex, spendTxHash)));
     }
 
     /**
@@ -1109,7 +1109,7 @@ public class Transaction extends Message {
      * you won't normally need to use it unless you're doing unusual things.
      */
     public TransactionOutput addOutput(Coin value, Script script) {
-        return addOutput(new TransactionOutput(this, value, script.getProgram()));
+        return addOutput(new TransactionOutput(this, value, script.program()));
     }
 
 
@@ -1148,7 +1148,7 @@ public class Transaction extends Message {
     public TransactionSignature calculateSignature(int inputIndex, ECKey key,
                                                                  Script redeemScript,
                                                                  SigHash hashType, boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignature(inputIndex, redeemScript.program(), hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
@@ -1191,7 +1191,7 @@ public class Transaction extends Message {
                                                    @Nullable AesKey aesKey,
                                                    Script redeemScript,
                                                    SigHash hashType, boolean anyoneCanPay) {
-        Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
+        Sha256Hash hash = hashForSignature(inputIndex, redeemScript.program(), hashType, anyoneCanPay);
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
 
@@ -1232,7 +1232,7 @@ public class Transaction extends Message {
     public Sha256Hash hashForSignature(int inputIndex, Script redeemScript,
                                                     SigHash type, boolean anyoneCanPay) {
         int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForSignature(inputIndex, redeemScript.getProgram(), (byte) sigHash);
+        return hashForSignature(inputIndex, redeemScript.program(), (byte) sigHash);
     }
 
     /**
@@ -1345,7 +1345,7 @@ public class Transaction extends Message {
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        return calculateWitnessSignature(inputIndex, key, scriptCode.getProgram(), value, hashType, anyoneCanPay);
+        return calculateWitnessSignature(inputIndex, key, scriptCode.program(), value, hashType, anyoneCanPay);
     }
 
     public TransactionSignature calculateWitnessSignature(
@@ -1368,7 +1368,7 @@ public class Transaction extends Message {
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        return calculateWitnessSignature(inputIndex, key, aesKey, scriptCode.getProgram(), value, hashType, anyoneCanPay);
+        return calculateWitnessSignature(inputIndex, key, aesKey, scriptCode.program(), value, hashType, anyoneCanPay);
     }
 
     public synchronized Sha256Hash hashForWitnessSignature(
@@ -1402,7 +1402,7 @@ public class Transaction extends Message {
             Coin prevValue,
             SigHash type,
             boolean anyoneCanPay) {
-        return hashForWitnessSignature(inputIndex, scriptCode.getProgram(), prevValue, type, anyoneCanPay);
+        return hashForWitnessSignature(inputIndex, scriptCode.program(), prevValue, type, anyoneCanPay);
     }
 
     public synchronized Sha256Hash hashForWitnessSignature(
@@ -1690,7 +1690,7 @@ public class Transaction extends Message {
         final TransactionInput in = this.getInput(0);
         final ScriptBuilder builder = new ScriptBuilder();
         builder.number(height);
-        final byte[] expected = builder.build().getProgram();
+        final byte[] expected = builder.build().program();
         final byte[] actual = in.getScriptBytes();
         if (actual.length < expected.length) {
             throw new VerificationException.CoinbaseHeightMismatch("Block height mismatch in coinbase.");

@@ -175,7 +175,7 @@ public class TransactionTest {
         int length = tx.getMessageSize();
 
         // add fake transaction input
-        TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().getProgram(),
+        TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().program(),
                 new TransactionOutPoint(0, Sha256Hash.ZERO_HASH));
         tx.addInput(input);
         length += input.getMessageSize();
@@ -307,12 +307,12 @@ public class TransactionTest {
         ECKey key0 = ECKey.fromPrivate(ByteUtils.parseHex("bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866"));
         Script scriptPubKey0 = ScriptBuilder.createP2PKOutputScript(key0);
         assertEquals("2103c9f4836b9a4f77fc0d81f7bcb01b7f1b35916864b9476c241ce9fc198bd25432ac",
-                ByteUtils.formatHex(scriptPubKey0.getProgram()));
+                ByteUtils.formatHex(scriptPubKey0.program()));
         ECKey key1 = ECKey.fromPrivate(ByteUtils.parseHex("619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9"));
         assertEquals("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357", key1.getPublicKeyAsHex());
         Script scriptPubKey1 = ScriptBuilder.createP2WPKHOutputScript(key1);
-        assertEquals("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1", ByteUtils.formatHex(scriptPubKey1.getProgram()));
-        txIn1.connect(new TransactionOutput(null, Coin.COIN.multiply(6), scriptPubKey1.getProgram()));
+        assertEquals("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1", ByteUtils.formatHex(scriptPubKey1.program()));
+        txIn1.connect(new TransactionOutput(null, Coin.COIN.multiply(6), scriptPubKey1.program()));
 
         assertEquals("63cec688ee06a91e913875356dd4dea2f8e0f2a2659885372da2a37e32c7532e",
                 tx.hashForSignature(0, scriptPubKey0, Transaction.SigHash.ALL, false).toString());
@@ -324,7 +324,7 @@ public class TransactionTest {
 
         Script witnessScript = ScriptBuilder.createP2PKHOutputScript(key1);
         assertEquals("76a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac",
-                ByteUtils.formatHex(witnessScript.getProgram()));
+                ByteUtils.formatHex(witnessScript.program()));
 
         assertEquals("c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670",
                 tx.hashForWitnessSignature(1, witnessScript, txIn1.getValue(), Transaction.SigHash.ALL, false).toString());
@@ -391,16 +391,16 @@ public class TransactionTest {
 
         Script redeemScript = ScriptBuilder.createP2WPKHOutputScript(key);
         assertEquals("001479091972186c449eb1ded22b78e40d009bdf0089",
-                ByteUtils.formatHex(redeemScript.getProgram()));
+                ByteUtils.formatHex(redeemScript.program()));
 
-        byte[] p2wpkhHash = CryptoUtils.sha256hash160(redeemScript.getProgram());
+        byte[] p2wpkhHash = CryptoUtils.sha256hash160(redeemScript.program());
         Script scriptPubKey = ScriptBuilder.createP2SHOutputScript(p2wpkhHash);
         assertEquals("a9144733f37cf4db86fbc2efed2500b4f4e49f31202387",
-                ByteUtils.formatHex(scriptPubKey.getProgram()));
+                ByteUtils.formatHex(scriptPubKey.program()));
 
         Script witnessScript = ScriptBuilder.createP2PKHOutputScript(key);
         assertEquals("76a91479091972186c449eb1ded22b78e40d009bdf008988ac",
-                ByteUtils.formatHex(witnessScript.getProgram()));
+                ByteUtils.formatHex(witnessScript.program()));
 
         assertEquals("64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6",
                 tx.hashForWitnessSignature(0, witnessScript, Coin.COIN.multiply(10), Transaction.SigHash.ALL, false)
@@ -414,7 +414,7 @@ public class TransactionTest {
 
         assertFalse(correctlySpends(txIn, scriptPubKey, 0));
         txIn.setWitness(TransactionWitness.redeemP2WPKH(txSig, key));
-        txIn.setScriptSig(new ScriptBuilder().data(redeemScript.getProgram()).build());
+        txIn.setScriptSig(new ScriptBuilder().data(redeemScript.program()).build());
         assertTrue(correctlySpends(txIn, scriptPubKey, 0));
 
         String signedTxHex = "01000000" // version

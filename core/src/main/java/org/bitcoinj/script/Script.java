@@ -224,7 +224,7 @@ public class Script {
     private final List<ScriptChunk> chunks;
     // Unfortunately, scripts are not ever re-serialized or canonicalized when used in signature hashing. Thus we
     // must preserve the exact bytes that we read off the wire, along with the parsed form.
-    protected byte[] program;
+    private final byte[] program;
 
     // Creation time of the associated keys, or null if unknown.
     @Nullable private Instant creationTime;
@@ -334,6 +334,32 @@ public class Script {
     }
 
     /**
+     * Gets the serialized program as a newly created byte array.
+     *
+     * @return serialized program
+     */
+    public byte[] program() {
+        if (program != null)
+            // Don't round-trip as Bitcoin Core doesn't and it would introduce a mismatch.
+            return Arrays.copyOf(program, program.length);
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            for (ScriptChunk chunk : chunks) {
+                chunk.write(bos);
+            }
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
+
+    /** @deprecated use {@link #program()} */
+    @Deprecated
+    public byte[] getProgram() {
+        return program();
+    }
+
+    /**
      * Gets an immutable list of the scripts parsed form. Each chunk is either an opcode or data element.
      *
      * @return script chunks
@@ -398,23 +424,6 @@ public class Script {
             return InternalUtils.SPACE_JOINER.join(chunks);
         else
             return "<empty>";
-    }
-
-    /** Returns the serialized program as a newly created byte array. */
-    public byte[] getProgram() {
-        try {
-            // Don't round-trip as Bitcoin Core doesn't and it would introduce a mismatch.
-            if (program != null)
-                return Arrays.copyOf(program, program.length);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            for (ScriptChunk chunk : chunks) {
-                chunk.write(bos);
-            }
-            program = bos.toByteArray();
-            return program;
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
     }
 
     private static final ScriptChunk[] STANDARD_TRANSACTION_SCRIPT_CHUNKS = {
@@ -799,7 +808,7 @@ public class Script {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
             checkArgument(redeemScript != null, () ->
                     "P2SH script requires redeemScript to be spent");
-            return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.getProgram().length;
+            return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.program().length;
         } else if (ScriptPattern.isSentToMultisig(this)) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
             return getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + 1;
@@ -1571,7 +1580,7 @@ public class Script {
         byte[] pubKey = stack.pollLast();
         byte[] sigBytes = stack.pollLast();
 
-        byte[] prog = script.getProgram();
+        byte[] prog = script.program();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
         ByteArrayOutputStream outStream = new ByteArrayOutputStream(sigBytes.length + 1);
@@ -1647,7 +1656,7 @@ public class Script {
             sigs.add(sig);
         }
 
-        byte[] prog = script.getProgram();
+        byte[] prog = script.program();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
         for (byte[] sig : sigs) {
@@ -1779,7 +1788,7 @@ public class Script {
         } catch (ProtocolException e) {
             throw new RuntimeException(e);   // Should not happen unless we were given a totally broken transaction.
         }
-        if (getProgram().length > MAX_SCRIPT_SIZE || scriptPubKey.getProgram().length > MAX_SCRIPT_SIZE)
+        if (program().length > MAX_SCRIPT_SIZE || scriptPubKey.program().length > MAX_SCRIPT_SIZE)
             throw new ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, "Script larger than 10,000 bytes");
         
         LinkedList<byte[]> stack = new LinkedList<>();
@@ -1835,7 +1844,7 @@ public class Script {
     private byte[] getQuickProgram() {
         if (program != null)
             return program;
-        return getProgram();
+        return program();
     }
 
     /**

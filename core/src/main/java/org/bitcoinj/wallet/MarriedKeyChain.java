@@ -304,7 +304,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
             filter = new BloomFilter(size, falsePositiveRate, tweak);
             for (Map.Entry<ByteString, RedeemData> entry : marriedKeysRedeemData.entrySet()) {
                 filter.insert(entry.getKey().toByteArray());
-                filter.insert(entry.getValue().redeemScript.getProgram());
+                filter.insert(entry.getValue().redeemScript.program());
             }
         } finally {
             lock.unlock();

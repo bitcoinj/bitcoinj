@@ -94,7 +94,7 @@ public class TransactionOutput {
      * {@link Transaction#addOutput(Coin, Address)} instead of creating a TransactionOutput directly.
      */
     public TransactionOutput(@Nullable Transaction parent, Coin value, Address to) {
-        this(parent, value, ScriptBuilder.createOutputScript(to).getProgram());
+        this(parent, value, ScriptBuilder.createOutputScript(to).program());
     }
 
     /**
@@ -103,7 +103,7 @@ public class TransactionOutput {
      * {@link Transaction#addOutput(Coin, ECKey)} instead of creating an output directly.
      */
     public TransactionOutput(@Nullable Transaction parent, Coin value, ECKey to) {
-        this(parent, value, ScriptBuilder.createP2PKOutputScript(to).getProgram());
+        this(parent, value, ScriptBuilder.createP2PKOutputScript(to).program());
     }
 
     public TransactionOutput(@Nullable Transaction parent, Coin value, byte[] scriptBytes) {

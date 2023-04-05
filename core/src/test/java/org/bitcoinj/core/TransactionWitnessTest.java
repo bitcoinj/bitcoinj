@@ -67,7 +67,7 @@ public class TransactionWitnessTest {
         assertArrayEquals(new byte[]{}, witness.getPush(0));
         assertArrayEquals(signature1.encodeToBitcoin(), witness.getPush(1));
         assertArrayEquals(signature2.encodeToBitcoin(), witness.getPush(2));
-        assertArrayEquals(witnessScript.getProgram(), witness.getPush(3));
+        assertArrayEquals(witnessScript.program(), witness.getPush(3));
     }
 
     @Test

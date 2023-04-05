@@ -110,7 +110,7 @@ public class LocalTransactionSigner implements TransactionSigner {
             Script inputScript = txIn.getScriptSig();
             // script here would be either a standard CHECKSIG program for P2PKH or P2PK inputs or
             // a CHECKMULTISIG program for P2SH inputs
-            byte[] script = redeemData.redeemScript.getProgram();
+            byte[] script = redeemData.redeemScript.program();
             try {
                 if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2PKH(scriptPubKey)
                         || ScriptPattern.isP2SH(scriptPubKey)) {

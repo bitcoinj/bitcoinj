@@ -176,7 +176,7 @@ public class ScriptTest {
         // Assert that the input script created contains the original multisig
         // script as the last chunk
         ScriptChunk scriptChunk = inputScript.chunks().get(inputScript.chunks().size() - 1);
-        assertArrayEquals(scriptChunk.data, multisigScript.getProgram());
+        assertArrayEquals(scriptChunk.data, multisigScript.program());
 
         // Create regular multisig input script
         inputScript = ScriptBuilder.createMultiSigInputScript(Arrays.asList(party1TransactionSignature, party2TransactionSignature));
@@ -187,7 +187,7 @@ public class ScriptTest {
         // Assert that the input script created does not end with the original
         // multisig script
         scriptChunk = inputScript.chunks().get(inputScript.chunks().size() - 1);
-        assertThat(scriptChunk.data, IsNot.not(equalTo(multisigScript.getProgram())));
+        assertThat(scriptChunk.data, IsNot.not(equalTo(multisigScript.program())));
     }
 
     @Test
@@ -215,25 +215,25 @@ public class ScriptTest {
         assertThat(inputScript.chunks().get(0).opcode, equalTo(OP_0));
         assertThat(inputScript.chunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
         assertThat(inputScript.chunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
-        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.getProgram()));
+        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.program()));
 
         inputScript = ScriptBuilder.createP2SHMultiSigInputScript(null, multisigScript);
         assertThat(inputScript.chunks().get(0).opcode, equalTo(OP_0));
         assertThat(inputScript.chunks().get(1).opcode, equalTo(OP_0));
         assertThat(inputScript.chunks().get(2).opcode, equalTo(OP_0));
-        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.getProgram()));
+        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.program()));
 
         inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 0, 1, 1);
         assertThat(inputScript.chunks().get(0).opcode, equalTo(OP_0));
         assertThat(inputScript.chunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
         assertThat(inputScript.chunks().get(2).opcode, equalTo(OP_0));
-        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.getProgram()));
+        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.program()));
 
         inputScript = ScriptBuilder.updateScriptWithSignature(inputScript, dummySig.encodeToBitcoin(), 1, 1, 1);
         assertThat(inputScript.chunks().get(0).opcode, equalTo(OP_0));
         assertThat(inputScript.chunks().get(1).data, equalTo(dummySig.encodeToBitcoin()));
         assertThat(inputScript.chunks().get(2).data, equalTo(dummySig.encodeToBitcoin()));
-        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.getProgram()));
+        assertThat(inputScript.chunks().get(3).data, equalTo(multisigScript.program()));
 
         // updating scriptSig with no missing signatures
         try {
@@ -354,11 +354,11 @@ public class ScriptTest {
         tx.setLockTime(0);
 
         TransactionInput txInput = new TransactionInput(null,
-                new ScriptBuilder().number(0).number(0).build().getProgram(), TransactionOutPoint.UNCONNECTED);
+                new ScriptBuilder().number(0).number(0).build().program(), TransactionOutPoint.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
-        TransactionOutput txOutput = new TransactionOutput(tx, Coin.ZERO, scriptPubKey.getProgram());
+        TransactionOutput txOutput = new TransactionOutput(tx, Coin.ZERO, scriptPubKey.program());
         tx.addOutput(txOutput);
 
         return tx;
@@ -369,13 +369,13 @@ public class ScriptTest {
         tx.setVersion(1);
         tx.setLockTime(0);
 
-        TransactionInput txInput = new TransactionInput(creditingTransaction, scriptSig.getProgram(),
+        TransactionInput txInput = new TransactionInput(creditingTransaction, scriptSig.program(),
                 TransactionOutPoint.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
         tx.addInput(txInput);
 
         TransactionOutput txOutput = new TransactionOutput(tx, creditingTransaction.getOutput(0).getValue(),
-                Script.parse(new byte[] {}).getProgram());
+                Script.parse(new byte[] {}).program());
         tx.addOutput(txOutput);
 
         return tx;

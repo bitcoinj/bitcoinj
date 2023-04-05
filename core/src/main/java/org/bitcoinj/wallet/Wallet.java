@@ -4780,7 +4780,7 @@ public class Wallet extends BaseTaggableObject
          * @param output The stored output (freestanding).
          */
         public FreeStandingTransactionOutput(UTXO output, int chainHeight) {
-            super(null, output.getValue(), output.getScript().getProgram());
+            super(null, output.getValue(), output.getScript().program());
             this.output = output;
             this.chainHeight = chainHeight;
         }
