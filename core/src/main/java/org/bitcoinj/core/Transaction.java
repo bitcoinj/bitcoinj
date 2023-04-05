@@ -68,6 +68,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -1630,6 +1631,16 @@ public class Transaction extends Message {
     /** Same as getOutputs().get(index) */
     public TransactionOutput getOutput(long index) {
         return outputs.get((int)index);
+    }
+
+    /**
+     * Wait for confirmations
+     * @param requiredConfirmations How many confirmations to wait for
+     * @return A future for this transaction once it has the required confirmations
+     */
+    public CompletableFuture<Transaction> waitForConfirmation(int requiredConfirmations) {
+        return getConfidence().getDepthFuture(requiredConfirmations)
+                .thenApply(c -> this);
     }
 
     /**
