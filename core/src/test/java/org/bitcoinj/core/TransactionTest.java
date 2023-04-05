@@ -451,7 +451,7 @@ public class TransactionTest {
 
         ECKey pubKey = ECKey.fromPublicOnly(ByteUtils.parseHex(
                 "02d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b"));
-        Script script = new Script(ByteUtils.parseHex(
+        Script script = Script.parse(ByteUtils.parseHex(
                 "56210307b8ae49ac90a048e9b53357a2354b3334e9c8bee813ecb98e99a7e07e8c3ba32103b28f0c28bfab54554ae8c658ac5c3e0ce6e79ad336331f78c428dd43eea8449b21034b8113d703413d57761b8b9781957b8c0ac1dfe69f492580ca4195f50376ba4a21033400f6afecb833092a9a21cfdf1ed1376e58c5d1f47de74683123987e967a8f42103a6d48b1131e94ba04d9737d61acdaa1322008af9602b3b14862c07a1789aac162102d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b56ae"));
         Sha256Hash hash = tx.hashForWitnessSignature(0, script, Coin.valueOf(987654321L),
                 Transaction.SigHash.SINGLE, true);
@@ -570,11 +570,11 @@ public class TransactionTest {
         int size1 = tx1.getMessageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
-        tx1.getInput(0).setScriptSig(new Script(new byte[109]));
+        tx1.getInput(0).setScriptSig(Script.parse(new byte[109]));
         assertEquals(78, tx1.getMessageSizeForPriorityCalc());
-        tx1.getInput(0).setScriptSig(new Script(new byte[110]));
+        tx1.getInput(0).setScriptSig(Script.parse(new byte[110]));
         assertEquals(78, tx1.getMessageSizeForPriorityCalc());
-        tx1.getInput(0).setScriptSig(new Script(new byte[111]));
+        tx1.getInput(0).setScriptSig(Script.parse(new byte[111]));
         assertEquals(79, tx1.getMessageSizeForPriorityCalc());
     }
 

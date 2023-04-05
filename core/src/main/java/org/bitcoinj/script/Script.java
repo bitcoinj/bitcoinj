@@ -229,38 +229,91 @@ public class Script {
     // Creation time of the associated keys, or null if unknown.
     @Nullable private Instant creationTime;
 
-    /** Creates an empty script that serializes to nothing. */
-    private Script() {
-        chunks = new ArrayList<>();
+    /**
+     * Construct a script that copies and wraps a given program. The array is parsed and checked for syntactic
+     * validity. Programs like this are e.g. used in {@link TransactionInput} and {@link TransactionOutput}.
+     *
+     * @param program array of program bytes
+     * @return parsed program
+     * @throws ScriptException if the program could not be parsed
+     */
+    public static Script parse(byte[] program) throws ScriptException {
+        return parse(program, TimeUtils.currentTime());
+    }
+
+    /**
+     * Construct a script that copies and wraps a given program, and a creation time. The array is parsed and checked
+     * for syntactic validity. Programs like this are e.g. used in {@link TransactionInput} and
+     * {@link TransactionOutput}.
+     *
+     * @param program      Array of program bytes from a transaction.
+     * @param creationTime creation time of the script
+     * @return parsed program
+     * @throws ScriptException if the program could not be parsed
+     */
+    public static Script parse(byte[] program, Instant creationTime) throws ScriptException {
+        Objects.requireNonNull(creationTime);
+        program = Arrays.copyOf(program, program.length); // defensive copy
+        List<ScriptChunk> chunks = new ArrayList<>(5); // common size
+        parseIntoChunks(program, chunks);
+        return new Script(program, chunks, creationTime);
+    }
+
+    /**
+     * To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical
+     * opcodes. Then we can run the parsed chunks.
+     */
+    private static void parseIntoChunks(byte[] program, List<ScriptChunk> chunks) throws ScriptException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(program);
+        while (bis.available() > 0) {
+            int opcode = bis.read();
+
+            long dataToRead = -1;
+            if (opcode >= 0 && opcode < OP_PUSHDATA1) {
+                // Read some bytes of data, where how many is the opcode value itself.
+                dataToRead = opcode;
+            } else if (opcode == OP_PUSHDATA1) {
+                if (bis.available() < 1) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
+                dataToRead = bis.read();
+            } else if (opcode == OP_PUSHDATA2) {
+                // Read a short, then read that many bytes of data.
+                if (bis.available() < 2) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
+                dataToRead = ByteUtils.readUint16(bis);
+            } else if (opcode == OP_PUSHDATA4) {
+                // Read a uint32, then read that many bytes of data.
+                // Though this is allowed, because its value cannot be > 520, it should never actually be used
+                if (bis.available() < 4) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
+                dataToRead = ByteUtils.readUint32(bis);
+            }
+
+            ScriptChunk chunk;
+            if (dataToRead == -1) {
+                chunk = new ScriptChunk(opcode, null);
+            } else {
+                if (dataToRead > bis.available())
+                    throw new ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, "Push of data element that is larger than remaining data: " + dataToRead + " vs " + bis.available());
+                byte[] data = new byte[(int)dataToRead];
+                checkState(dataToRead == 0 || bis.read(data, 0, (int) dataToRead) == dataToRead);
+                chunk = new ScriptChunk(opcode, data);
+            }
+            // Save some memory by eliminating redundant copies of the same chunk objects.
+            for (ScriptChunk c : STANDARD_TRANSACTION_SCRIPT_CHUNKS) {
+                if (c.equals(chunk)) chunk = c;
+            }
+            chunks.add(chunk);
+        }
+    }
+
+    private Script(byte[] programBytes, List<ScriptChunk> chunks, Instant creationTime) {
+        this.program = programBytes;
+        this.chunks = chunks;
+        this.creationTime = creationTime;
     }
 
     // Used from ScriptBuilder.
     Script(List<ScriptChunk> chunks, Instant creationTime) {
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
         this.creationTime = creationTime;
-    }
-
-    /**
-     * Construct a Script that copies and wraps the programBytes array. The array is parsed and checked for syntactic
-     * validity. Use this if the creation time is not known.
-     * @param programBytes Array of program bytes from a transaction.
-     */
-    public Script(byte[] programBytes) throws ScriptException {
-        this.program = programBytes;
-        parse(programBytes);
-        this.creationTime = null;
-    }
-
-    /**
-     * Construct a Script that copies and wraps the programBytes array. The array is parsed and checked for syntactic
-     * validity.
-     * @param programBytes Array of program bytes from a transaction.
-     * @param creationTime creation time of the script
-     */
-    public Script(byte[] programBytes, Instant creationTime) throws ScriptException {
-        this.program = programBytes;
-        parse(programBytes);
-        this.creationTime = Objects.requireNonNull(creationTime);
     }
 
     /**
@@ -344,56 +397,6 @@ public class Script {
         new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null),
     };
 
-    /**
-     * <p>To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical
-     * opcodes. Then we can run the parsed chunks.</p>
-     *
-     * <p>The reason for this split, instead of just interpreting directly, is to make it easier
-     * to reach into a programs structure and pull out bits of data without having to run it.
-     * This is necessary to render the to addresses of transactions in a user interface.
-     * Bitcoin Core does something similar.</p>
-     */
-    private void parse(byte[] program) throws ScriptException {
-        chunks = new ArrayList<>(5);   // Common size.
-        ByteArrayInputStream bis = new ByteArrayInputStream(program);
-        while (bis.available() > 0) {
-            int opcode = bis.read();
-
-            long dataToRead = -1;
-            if (opcode >= 0 && opcode < OP_PUSHDATA1) {
-                // Read some bytes of data, where how many is the opcode value itself.
-                dataToRead = opcode;
-            } else if (opcode == OP_PUSHDATA1) {
-                if (bis.available() < 1) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = bis.read();
-            } else if (opcode == OP_PUSHDATA2) {
-                // Read a short, then read that many bytes of data.
-                if (bis.available() < 2) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = ByteUtils.readUint16(bis);
-            } else if (opcode == OP_PUSHDATA4) {
-                // Read a uint32, then read that many bytes of data.
-                // Though this is allowed, because its value cannot be > 520, it should never actually be used
-                if (bis.available() < 4) throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Unexpected end of script");
-                dataToRead = ByteUtils.readUint32(bis);
-            }
-
-            ScriptChunk chunk;
-            if (dataToRead == -1) {
-                chunk = new ScriptChunk(opcode, null);
-            } else {
-                if (dataToRead > bis.available())
-                    throw new ScriptException(ScriptError.SCRIPT_ERR_BAD_OPCODE, "Push of data element that is larger than remaining data: " + dataToRead + " vs " + bis.available());
-                byte[] data = new byte[(int)dataToRead];
-                checkState(dataToRead == 0 || bis.read(data, 0, (int) dataToRead) == dataToRead);
-                chunk = new ScriptChunk(opcode, data);
-            }
-            // Save some memory by eliminating redundant copies of the same chunk objects.
-            for (ScriptChunk c : STANDARD_TRANSACTION_SCRIPT_CHUNKS) {
-                if (c.equals(chunk)) chunk = c;
-            }
-            chunks.add(chunk);
-        }
-    }
 
     /**
      * <p>If the program somehow pays to a hash, returns the hash.</p>
@@ -595,7 +598,7 @@ public class Script {
         List<ScriptChunk> existingChunks = chunks.subList(1, chunks.size() - 1);
         ScriptChunk redeemScriptChunk = chunks.get(chunks.size() - 1);
         Objects.requireNonNull(redeemScriptChunk.data);
-        Script redeemScript = new Script(redeemScriptChunk.data);
+        Script redeemScript = Script.parse(redeemScriptChunk.data);
 
         int sigCount = 0;
         int myIndex = redeemScript.findKeyInRedeem(signingKey);
@@ -713,31 +716,32 @@ public class Script {
      * Gets the count of regular SigOps in the script program (counting multisig ops as 20)
      */
     public static int getSigOpCount(byte[] program) throws ScriptException {
-        Script script = new Script();
+        List<ScriptChunk> chunks = new ArrayList<>(5); // common size
         try {
-            script.parse(program);
+            parseIntoChunks(program, chunks);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
-        return getSigOpCount(script.chunks, false);
+        return getSigOpCount(chunks, false);
     }
-    
+
     /**
      * Gets the count of P2SH Sig Ops in the Script scriptSig
      */
     public static long getP2SHSigOpCount(byte[] scriptSig) throws ScriptException {
-        Script script = new Script();
+        List<ScriptChunk> chunks = new ArrayList<>(5); // common size
         try {
-            script.parse(scriptSig);
+            parseIntoChunks(scriptSig, chunks);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
-        for (int i = script.chunks.size() - 1; i >= 0; i--)
-            if (!script.chunks.get(i).isOpCode()) {
-                Script subScript =  new Script();
-                subScript.parse(script.chunks.get(i).data);
+        Collections.reverse(chunks);
+        for (ScriptChunk chunk : chunks) {
+            if (!chunk.isOpCode()) {
+                Script subScript = parse(chunk.data);
                 return getSigOpCount(subScript.chunks, true);
             }
+        }
         return 0;
     }
 
@@ -1786,7 +1790,7 @@ public class Script {
                     throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained the script op " + chunk);
             
             byte[] scriptPubKeyBytes = p2shStack.pollLast();
-            Script scriptPubKeyP2SH = new Script(scriptPubKeyBytes);
+            Script scriptPubKeyP2SH = Script.parse(scriptPubKeyBytes);
             
             executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack, verifyFlags);
             

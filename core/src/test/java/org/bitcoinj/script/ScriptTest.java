@@ -91,7 +91,7 @@ public class ScriptTest {
     @Test
     public void testScriptSig() {
         byte[] sigProgBytes = ByteUtils.parseHex(sigProg);
-        Script script = new Script(sigProgBytes);
+        Script script = Script.parse(sigProgBytes);
         assertEquals(
                 "PUSHDATA(71)[304402202b4da291cc39faf8433911988f9f49fc5c995812ca2f94db61468839c228c3e90220628bff3ff32ec95825092fa051cba28558a981fcf59ce184b14f2e215e69106701] PUSHDATA(65)[0414b38f4be3bb9fa0f4f32b74af07152b2f2f630bc02122a491137b6c523e46f18a0d5034418966f93dfc37cc3739ef7b2007213a302b7fba161557f4ad644a1c]",
                 script.toString());
@@ -101,7 +101,7 @@ public class ScriptTest {
     public void testScriptPubKey() {
         // Check we can extract the to address
         byte[] pubkeyBytes = ByteUtils.parseHex(pubkeyProg);
-        Script pubkey = new Script(pubkeyBytes);
+        Script pubkey = Script.parse(pubkeyBytes);
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", pubkey.toString());
         Address toAddr = LegacyAddress.fromPubKeyHash(BitcoinNetwork.TESTNET, ScriptPattern.extractHashFromP2PKH(pubkey));
         assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", toAddr.toString());
@@ -142,7 +142,7 @@ public class ScriptTest {
     @Test
     public void testIp() {
         byte[] bytes = ByteUtils.parseHex("41043e96222332ea7848323c08116dddafbfa917b8e37f0bdf63841628267148588a09a43540942d58d49717ad3fabfe14978cf4f0a8b84d2435dad16e9aa4d7f935ac");
-        Script s = new Script(bytes);
+        Script s = Script.parse(bytes);
         assertTrue(ScriptPattern.isP2PK(s));
     }
     
@@ -289,7 +289,7 @@ public class ScriptTest {
             }                        
         }
         
-        return new Script(out.toByteArray());
+        return Script.parse(out.toByteArray());
     }
 
     private Set<VerifyFlag> parseVerifyFlags(String str) {
@@ -375,7 +375,7 @@ public class ScriptTest {
         tx.addInput(txInput);
 
         TransactionOutput txOutput = new TransactionOutput(tx, creditingTransaction.getOutput(0).getValue(),
-                new Script(new byte[] {}).getProgram());
+                Script.parse(new byte[] {}).getProgram());
         tx.addOutput(txOutput);
 
         return tx;

@@ -121,7 +121,7 @@ public class TransactionOutput {
 
     public Script getScriptPubKey() throws ScriptException {
         if (scriptPubKey == null) {
-            scriptPubKey = new Script(scriptBytes);
+            scriptPubKey = Script.parse(scriptBytes);
         }
         return scriptPubKey;
     }

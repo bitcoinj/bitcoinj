@@ -225,7 +225,7 @@ public class TransactionInput {
         // parameter is overloaded to be something totally different.
         Script script = scriptSig == null ? null : scriptSig.get();
         if (script == null) {
-            script = new Script(scriptBytes);
+            script = Script.parse(scriptBytes);
             scriptSig = new WeakReference<>(script);
         }
         return script;

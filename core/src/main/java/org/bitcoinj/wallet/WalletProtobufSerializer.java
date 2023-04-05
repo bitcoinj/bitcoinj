@@ -507,9 +507,9 @@ public class WalletProtobufSerializer {
                 byte[] programBytes = protoScript.getProgram().toByteArray();
                 Script script;
                 if (creationTimestamp > 0)
-                    script = new Script(programBytes, Instant.ofEpochMilli(creationTimestamp));
+                    script = Script.parse(programBytes, Instant.ofEpochMilli(creationTimestamp));
                 else
-                    script = new Script(programBytes);
+                    script = Script.parse(programBytes);
                 scripts.add(script);
             } catch (ScriptException e) {
                 throw new UnreadableWalletException("Unparseable script in wallet");
