@@ -317,14 +317,18 @@ public class ScriptBuilder {
             else
                 throw new IllegalStateException("Cannot handle " + scriptType);
         } else if (to instanceof SegwitAddress) {
-            // OP_0 <pubKeyHash|scriptHash>
-            SegwitAddress toSegwit = (SegwitAddress) to;
-            smallNum(toSegwit.getWitnessVersion());
-            data(toSegwit.getWitnessProgram());
+            p2whOutputScript((SegwitAddress) to);
         } else {
             throw new IllegalStateException("Cannot handle " + to);
         }
         return this;
+    }
+
+    private ScriptBuilder p2whOutputScript(SegwitAddress address) {
+        checkState(chunks.isEmpty());
+        // OP_0 <pubKeyHash|scriptHash>
+        return smallNum(address.getWitnessVersion())
+                .data(address.getWitnessProgram());
     }
 
     /**
