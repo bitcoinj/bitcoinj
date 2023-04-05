@@ -57,15 +57,15 @@ public class ScriptChunkTest {
 
     @Test
     public void testShortestPossibleDataPush() {
-        assertTrue("empty push", new ScriptBuilder().data(new byte[0]).build().getChunks().get(0)
+        assertTrue("empty push", new ScriptBuilder().data(new byte[0]).build().chunks().get(0)
                 .isShortestPossiblePushData());
 
         for (byte i = -1; i < 127; i++)
-            assertTrue("push of single byte " + i, new ScriptBuilder().data(new byte[] { i }).build().getChunks()
+            assertTrue("push of single byte " + i, new ScriptBuilder().data(new byte[] { i }).build().chunks()
                     .get(0).isShortestPossiblePushData());
 
         for (int len = 2; len < Script.MAX_SCRIPT_ELEMENT_SIZE; len++)
-            assertTrue("push of " + len + " bytes", new ScriptBuilder().data(new byte[len]).build().getChunks().get(0)
+            assertTrue("push of " + len + " bytes", new ScriptBuilder().data(new byte[len]).build().chunks().get(0)
                     .isShortestPossiblePushData());
 
         // non-standard chunks

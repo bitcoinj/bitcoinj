@@ -5099,7 +5099,7 @@ public class Wallet extends BaseTaggableObject
         try {
             BloomFilter filter = keyChainGroup.getBloomFilter(size, falsePositiveRate, nTweak);
             for (Script script : watchedScripts) {
-                for (ScriptChunk chunk : script.getChunks()) {
+                for (ScriptChunk chunk : script.chunks()) {
                     // Only add long (at least 64 bit) data to the bloom filter.
                     // If any long constants become popular in scripts, we will need logic
                     // here to exclude them.

@@ -30,7 +30,7 @@ public class ScriptBuilderTest {
     public void testNumber() {
         for (int i = -100; i <= 100; i++) {
             Script s = new ScriptBuilder().number(i).build();
-            for (ScriptChunk ch : s.chunks) {
+            for (ScriptChunk ch : s.chunks()) {
                 assertTrue(Integer.toString(i), ch.isShortestPossiblePushData());
             }
         }

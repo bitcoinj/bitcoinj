@@ -70,7 +70,7 @@ public class ScriptBuilder {
 
     /** Creates a fresh ScriptBuilder with the given program as the starting point. */
     public ScriptBuilder(Script template) {
-        chunks = new ArrayList<>(template.getChunks());
+        chunks = new ArrayList<>(template.chunks());
     }
 
     /**
@@ -433,7 +433,7 @@ public class ScriptBuilder {
     public static Script updateScriptWithSignature(Script scriptSig, byte[] signature, int targetIndex,
                                                    int sigsPrefixCount, int sigsSuffixCount) {
         ScriptBuilder builder = new ScriptBuilder();
-        List<ScriptChunk> inputChunks = scriptSig.getChunks();
+        List<ScriptChunk> inputChunks = scriptSig.chunks();
         int totalChunks = inputChunks.size();
 
         // Check if we have a place to insert, otherwise just return given scriptSig unchanged.

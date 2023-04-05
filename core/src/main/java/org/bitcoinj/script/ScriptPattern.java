@@ -48,7 +48,7 @@ public class ScriptPattern {
      * way to make payments due to the short and recognizable base58 form addresses come in.
      */
     public static boolean isP2PKH(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (chunks.size() != 5)
             return false;
         if (!chunks.get(0).equalsOpCode(OP_DUP))
@@ -72,7 +72,7 @@ public class ScriptPattern {
      * will want to guard calls to this method with {@link #isP2PKH(Script)}.
      */
     public static byte[] extractHashFromP2PKH(Script script) {
-        return script.chunks.get(2).data;
+        return script.chunks().get(2).data;
     }
 
     /**
@@ -86,7 +86,7 @@ public class ScriptPattern {
      * </p>
      */
     public static boolean isP2SH(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         // We check for the effective serialized form because BIP16 defines a P2SH output using an exact byte
         // template, not the logical program structure. Thus you can have two programs that look identical when
         // printed out but one is a P2SH script and the other isn't! :(
@@ -114,7 +114,7 @@ public class ScriptPattern {
      * will want to guard calls to this method with {@link #isP2SH(Script)}.
      */
     public static byte[] extractHashFromP2SH(Script script) {
-        return script.chunks.get(1).data;
+        return script.chunks().get(1).data;
     }
 
     /**
@@ -124,7 +124,7 @@ public class ScriptPattern {
      * useful more exotic types of transaction, but today most payments are to addresses.
      */
     public static boolean isP2PK(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (chunks.size() != 2)
             return false;
         ScriptChunk chunk0 = chunks.get(0);
@@ -145,7 +145,7 @@ public class ScriptPattern {
      * want to guard calls to this method with {@link #isP2PK(Script)}.
      */
     public static byte[] extractKeyFromP2PK(Script script) {
-        return script.chunks.get(0).data;
+        return script.chunks().get(0).data;
     }
 
     /**
@@ -153,7 +153,7 @@ public class ScriptPattern {
      * two script types were introduced with segwit.
      */
     public static boolean isP2WH(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (chunks.size() != 2)
             return false;
         if (!chunks.get(0).equalsOpCode(OP_0))
@@ -174,7 +174,7 @@ public class ScriptPattern {
     public static boolean isP2WPKH(Script script) {
         if (!isP2WH(script))
             return false;
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (!chunks.get(0).equalsOpCode(OP_0))
             return false;
         byte[] chunk1data = chunks.get(1).data;
@@ -188,7 +188,7 @@ public class ScriptPattern {
     public static boolean isP2WSH(Script script) {
         if (!isP2WH(script))
             return false;
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (!chunks.get(0).equalsOpCode(OP_0))
             return false;
         byte[] chunk1data = chunks.get(1).data;
@@ -201,7 +201,7 @@ public class ScriptPattern {
      * {@link #isP2WH(Script)}.
      */
     public static byte[] extractHashFromP2WH(Script script) {
-        return script.chunks.get(1).data;
+        return script.chunks().get(1).data;
     }
 
     /**
@@ -209,7 +209,7 @@ public class ScriptPattern {
      * script type was introduced with taproot.
      */
     public static boolean isP2TR(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (chunks.size() != 2)
             return false;
         if (!chunks.get(0).equalsOpCode(OP_1))
@@ -227,7 +227,7 @@ public class ScriptPattern {
      * form, so you will want to guard calls to this method with {@link #isP2TR(Script)}.
      */
     public static byte[] extractOutputKeyFromP2TR(Script script) {
-        return script.chunks.get(1).data;
+        return script.chunks().get(1).data;
     }
 
     /**
@@ -235,7 +235,7 @@ public class ScriptPattern {
      * {@code [m] [keys...] [n] CHECKMULTISIG}
      */
     public static boolean isSentToMultisig(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (chunks.size() < 4) return false;
         ScriptChunk chunk = chunks.get(chunks.size() - 1);
         // Must end in OP_CHECKMULTISIG[VERIFY].
@@ -257,7 +257,7 @@ public class ScriptPattern {
      * Returns whether this script is using OP_RETURN to store arbitrary data.
      */
     public static boolean isOpReturn(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         return chunks.size() > 0 && chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN);
     }
 
@@ -268,7 +268,7 @@ public class ScriptPattern {
      * transaction).
      */
     public static boolean isWitnessCommitment(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
+        List<ScriptChunk> chunks = script.chunks();
         if (chunks.size() < 2)
             return false;
         if (!chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN))
@@ -285,6 +285,6 @@ public class ScriptPattern {
      * Retrieves the hash from a segwit commitment (in an output of the coinbase transaction).
      */
     public static Sha256Hash extractWitnessCommitmentHash(Script script) {
-        return Sha256Hash.wrap(Arrays.copyOfRange(script.chunks.get(1).data, 4, 36));
+        return Sha256Hash.wrap(Arrays.copyOfRange(script.chunks().get(1).data, 4, 36));
     }
 }

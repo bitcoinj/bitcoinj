@@ -1800,7 +1800,7 @@ public class FullBlockTestGenerator {
         input.setSequenceNumber(sequence);
         t.addInput(input);
 
-        if (prevOut.scriptPubKey.getChunks().get(0).equalsOpCode(OP_TRUE)) {
+        if (prevOut.scriptPubKey.chunks().get(0).equalsOpCode(OP_TRUE)) {
             input.setScriptSig(new ScriptBuilder().op(OP_1).build());
         } else {
             // Sign input
