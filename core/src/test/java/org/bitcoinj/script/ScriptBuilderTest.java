@@ -45,7 +45,7 @@ public class ScriptBuilderTest {
         builder.number(0);
         assertArrayEquals(new byte[] {
             0x00         // Pushed data
-        }, builder.build().getProgram());
+        }, builder.build().program());
     }
 
     @Test
@@ -55,7 +55,7 @@ public class ScriptBuilderTest {
         builder.number(5);
         assertArrayEquals(new byte[] {
             0x55         // Pushed data
-        }, builder.build().getProgram());
+        }, builder.build().program());
     }
 
     @Test
@@ -68,12 +68,12 @@ public class ScriptBuilderTest {
         assertArrayEquals(new byte[] {
             0x02,             // Length of the pushed data
             0x4a, 0x52        // Pushed data
-        }, builder.build().getProgram());
+        }, builder.build().program());
 
         // Test the trimming code ignores zeroes in the middle
         builder = new ScriptBuilder();
         builder.number(0x110011);
-        assertEquals(4, builder.build().getProgram().length);
+        assertEquals(4, builder.build().program().length);
 
         // Check encoding of a value where signed/unsigned encoding differs
         // because the most significant byte is 0x80, and therefore a
@@ -83,7 +83,7 @@ public class ScriptBuilderTest {
         assertArrayEquals(new byte[] {
             0x03,             // Length of the pushed data
             0x00, (byte) 0x80, 0x00  // Pushed data
-        }, builder.build().getProgram());
+        }, builder.build().program());
     }
 
     @Test
@@ -94,7 +94,7 @@ public class ScriptBuilderTest {
         assertArrayEquals(new byte[] {
             0x01,        // Length of the pushed data
             ((byte) 133) // Pushed data
-        }, builder.build().getProgram());
+        }, builder.build().program());
     }
 
     @Test
@@ -110,14 +110,14 @@ public class ScriptBuilderTest {
     @Test
     public void testOpTrue() {
         byte[] expected = new byte[] { OP_TRUE };
-        byte[] s = new ScriptBuilder().opTrue().build().getProgram();
+        byte[] s = new ScriptBuilder().opTrue().build().program();
         assertArrayEquals(expected, s);
     }
 
     @Test
     public void testOpFalse() {
         byte[] expected = new byte[] { OP_FALSE };
-        byte[] s = new ScriptBuilder().opFalse().build().getProgram();
+        byte[] s = new ScriptBuilder().opFalse().build().program();
         assertArrayEquals(expected, s);
     }
 }

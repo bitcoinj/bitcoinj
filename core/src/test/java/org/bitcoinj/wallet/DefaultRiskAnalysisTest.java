@@ -158,7 +158,7 @@ public class DefaultRiskAnalysisTest {
     @Test
     public void nonShortestPossiblePushData() {
         ScriptChunk nonStandardChunk = new ScriptChunk(OP_PUSHDATA1, new byte[75]);
-        byte[] nonStandardScript = new ScriptBuilder().addChunk(nonStandardChunk).build().getProgram();
+        byte[] nonStandardScript = new ScriptBuilder().addChunk(nonStandardChunk).build().program();
         // Test non-standard script as an input.
         Transaction tx = new Transaction();
         assertEquals(DefaultRiskAnalysis.RuleViolation.NONE, DefaultRiskAnalysis.isStandard(tx));
@@ -176,14 +176,14 @@ public class DefaultRiskAnalysisTest {
         TransactionSignature sig = TransactionSignature.dummy();
         Script scriptOk = ScriptBuilder.createInputScript(sig);
         assertEquals(RuleViolation.NONE,
-                DefaultRiskAnalysis.isInputStandard(new TransactionInput(null, scriptOk.getProgram(), TransactionOutPoint.UNCONNECTED)));
+                DefaultRiskAnalysis.isInputStandard(new TransactionInput(null, scriptOk.program(), TransactionOutPoint.UNCONNECTED)));
 
         byte[] sigBytes = sig.encodeToBitcoin();
         // Appending a zero byte makes the signature uncanonical without violating DER encoding.
         Script scriptUncanonicalEncoding = new ScriptBuilder().data(Arrays.copyOf(sigBytes, sigBytes.length + 1))
                 .build();
         assertEquals(RuleViolation.SIGNATURE_CANONICAL_ENCODING, DefaultRiskAnalysis.isInputStandard(
-                new TransactionInput(null, scriptUncanonicalEncoding.getProgram(), TransactionOutPoint.UNCONNECTED)));
+                new TransactionInput(null, scriptUncanonicalEncoding.program(), TransactionOutPoint.UNCONNECTED)));
     }
 
     @Test
@@ -193,7 +193,7 @@ public class DefaultRiskAnalysisTest {
         Script scriptHighS = ScriptBuilder
                 .createInputScript(new TransactionSignature(sig.r, ECKey.CURVE.getN().subtract(sig.s)));
         assertEquals(RuleViolation.SIGNATURE_CANONICAL_ENCODING, DefaultRiskAnalysis.isInputStandard(
-                new TransactionInput(null, scriptHighS.getProgram(), TransactionOutPoint.UNCONNECTED)));
+                new TransactionInput(null, scriptHighS.program(), TransactionOutPoint.UNCONNECTED)));
 
         // This is a real transaction. Its signatures S component is "low".
         Transaction tx1 = new Transaction(ByteBuffer.wrap(ByteUtils.parseHex(

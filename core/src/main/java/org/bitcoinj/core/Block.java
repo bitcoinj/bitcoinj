@@ -810,9 +810,9 @@ public class Block extends Message {
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
         coinbase.addInput(TransactionInput.coinbaseInput(coinbase,
-                inputBuilder.build().getProgram()));
+                inputBuilder.build().program()));
         coinbase.addOutput(new TransactionOutput(coinbase, value,
-                ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).getProgram()));
+                ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).program()));
         transactions.add(coinbase);
     }
 

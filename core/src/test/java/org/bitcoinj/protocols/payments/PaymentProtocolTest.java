@@ -120,7 +120,7 @@ public class PaymentProtocolTest {
         final List<Output> parsedOutputs = parsedPaymentRequest.getOutputs();
         assertEquals(1, parsedOutputs.size());
         assertEquals(AMOUNT, parsedOutputs.get(0).amount);
-        assertArrayEquals(ScriptBuilder.createOutputScript(TO_ADDRESS).getProgram(), parsedOutputs.get(0).scriptData);
+        assertArrayEquals(ScriptBuilder.createOutputScript(TO_ADDRESS).program(), parsedOutputs.get(0).scriptData);
         assertEquals(MEMO, parsedPaymentRequest.getMemo());
         assertEquals(PAYMENT_URL, parsedPaymentRequest.getPaymentUrl());
         assertArrayEquals(MERCHANT_DATA, parsedPaymentRequest.getMerchantData());

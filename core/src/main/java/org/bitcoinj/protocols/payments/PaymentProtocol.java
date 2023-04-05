@@ -434,7 +434,7 @@ public class PaymentProtocol {
         } else {
             output.setAmount(0);
         }
-        output.setScript(ByteString.copyFrom(ScriptBuilder.createOutputScript(address).getProgram()));
+        output.setScript(ByteString.copyFrom(ScriptBuilder.createOutputScript(address).program()));
         return output.build();
     }
 

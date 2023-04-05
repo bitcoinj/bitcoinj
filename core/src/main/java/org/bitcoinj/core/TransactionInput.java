@@ -235,7 +235,7 @@ public class TransactionInput {
     public void setScriptSig(Script scriptSig) {
         this.scriptSig = new WeakReference<>(Objects.requireNonNull(scriptSig));
         // TODO: This should all be cleaned up so we have a consistent internal representation.
-        setScriptBytes(scriptSig.getProgram());
+        setScriptBytes(scriptSig.program());
     }
 
     /**
