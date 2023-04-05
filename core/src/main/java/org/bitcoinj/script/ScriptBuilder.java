@@ -277,7 +277,7 @@ public class ScriptBuilder {
 
     /** Creates a new immutable Script based on the state of the builder. */
     public Script build() {
-        return new Script(chunks, creationTime);
+        return Script.of(chunks, creationTime);
     }
 
     /** Creates an empty script. */

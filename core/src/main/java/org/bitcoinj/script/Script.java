@@ -230,6 +230,29 @@ public class Script {
     @Nullable private Instant creationTime;
 
     /**
+     * Wraps given script chunks.
+     *
+     * @param chunks chunks to wrap
+     * @return script that wraps the chunks
+     */
+    public static Script of(List<ScriptChunk> chunks) {
+        return of(chunks, TimeUtils.currentTime());
+    }
+
+    /**
+     * Wraps given script chunks.
+     *
+     * @param chunks       chunks to wrap
+     * @param creationTime creation time of the script
+     * @return script that wraps the chunks
+     */
+    public static Script of(List<ScriptChunk> chunks, Instant creationTime) {
+        chunks = Collections.unmodifiableList(new ArrayList<>(chunks)); // defensive copy
+        Objects.requireNonNull(creationTime);
+        return new Script(null, chunks, creationTime);
+    }
+
+    /**
      * Construct a script that copies and wraps a given program. The array is parsed and checked for syntactic
      * validity. Programs like this are e.g. used in {@link TransactionInput} and {@link TransactionOutput}.
      *
@@ -307,12 +330,6 @@ public class Script {
     private Script(byte[] programBytes, List<ScriptChunk> chunks, Instant creationTime) {
         this.program = programBytes;
         this.chunks = chunks;
-        this.creationTime = creationTime;
-    }
-
-    // Used from ScriptBuilder.
-    Script(List<ScriptChunk> chunks, Instant creationTime) {
-        this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
         this.creationTime = creationTime;
     }
 
