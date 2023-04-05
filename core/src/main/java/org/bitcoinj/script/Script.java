@@ -235,9 +235,9 @@ public class Script {
     }
 
     // Used from ScriptBuilder.
-    Script(List<ScriptChunk> chunks) {
+    Script(List<ScriptChunk> chunks, Instant creationTime) {
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));
-        creationTime = TimeUtils.currentTime();
+        this.creationTime = creationTime;
     }
 
     /**

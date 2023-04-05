@@ -1076,8 +1076,7 @@ public class Wallet extends BaseTaggableObject
     public int addWatchedAddresses(final List<Address> addresses, Instant creationTime) {
         List<Script> scripts = new ArrayList<>();
         for (Address address : addresses) {
-            Script script = ScriptBuilder.createOutputScript(address);
-            script.setCreationTime(creationTime);
+            Script script = ScriptBuilder.createOutputScript(address, creationTime);
             scripts.add(script);
         }
         return addWatchedScripts(scripts);
@@ -1093,7 +1092,6 @@ public class Wallet extends BaseTaggableObject
         List<Script> scripts = new ArrayList<>();
         for (Address address : addresses) {
             Script script = ScriptBuilder.createOutputScript(address);
-            script.clearCreationTime();
             scripts.add(script);
         }
         return addWatchedScripts(scripts);
