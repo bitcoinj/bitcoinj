@@ -221,7 +221,7 @@ public class Script {
     public static final int MAX_P2SH_SIGOPS = 15;
 
     // The program is a set of chunks where each element is either [opcode] or [data, data, data ...]
-    protected List<ScriptChunk> chunks;
+    private final List<ScriptChunk> chunks;
     // Unfortunately, scripts are not ever re-serialized or canonicalized when used in signature hashing. Thus we
     // must preserve the exact bytes that we read off the wire, along with the parsed form.
     protected byte[] program;
@@ -334,6 +334,21 @@ public class Script {
     }
 
     /**
+     * Gets an immutable list of the scripts parsed form. Each chunk is either an opcode or data element.
+     *
+     * @return script chunks
+     */
+    public List<ScriptChunk> chunks() {
+        return Collections.unmodifiableList(chunks);
+    }
+
+    /** @deprecated use {@link #chunks()} */
+    @Deprecated
+    public List<ScriptChunk> getChunks() {
+        return chunks();
+    }
+
+    /**
      * Gets the creation time of this script, or empty if unknown.
      * @return creation time of this script, or empty if unknown
      */
@@ -400,11 +415,6 @@ public class Script {
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-    }
-
-    /** Returns an immutable list of the scripts parsed form. Each chunk is either an opcode or data element. */
-    public List<ScriptChunk> getChunks() {
-        return Collections.unmodifiableList(chunks);
     }
 
     private static final ScriptChunk[] STANDARD_TRANSACTION_SCRIPT_CHUNKS = {

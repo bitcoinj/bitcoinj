@@ -173,7 +173,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     public static RuleViolation isOutputStandard(TransactionOutput output) {
         if (output.isDust())
             return RuleViolation.DUST;
-        for (ScriptChunk chunk : output.getScriptPubKey().getChunks()) {
+        for (ScriptChunk chunk : output.getScriptPubKey().chunks()) {
             if (chunk.isPushData() && !chunk.isShortestPossiblePushData())
                 return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
         }
@@ -182,7 +182,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
     /** Checks if the given input passes some of the AreInputsStandard checks. Not complete. */
     public static RuleViolation isInputStandard(TransactionInput input) {
-        for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
+        for (ScriptChunk chunk : input.getScriptSig().chunks()) {
             if (chunk.data != null && !chunk.isShortestPossiblePushData())
                 return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
             if (chunk.isPushData()) {

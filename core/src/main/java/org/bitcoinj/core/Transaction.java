@@ -866,7 +866,7 @@ public class Transaction extends Message {
             s.append("out  ");
             try {
                 Script scriptPubKey = out.getScriptPubKey();
-                s.append(scriptPubKey.getChunks().size() > 0 ? scriptPubKey.toString() : "<no scriptPubKey>");
+                s.append(scriptPubKey.chunks().size() > 0 ? scriptPubKey.toString() : "<no scriptPubKey>");
                 s.append("  ");
                 s.append(out.getValue().toFriendlyString());
                 s.append('\n');

@@ -346,7 +346,7 @@ public class BloomFilter extends Message {
         BloomUpdate flag = getUpdateFlag();
         for (TransactionOutput output : tx.getOutputs()) {
             Script script = output.getScriptPubKey();
-            for (ScriptChunk chunk : script.getChunks()) {
+            for (ScriptChunk chunk : script.chunks()) {
                 if (!chunk.isPushData())
                     continue;
                 if (contains(chunk.data)) {
@@ -362,7 +362,7 @@ public class BloomFilter extends Message {
             if (contains(input.getOutpoint().serialize())) {
                 return true;
             }
-            for (ScriptChunk chunk : input.getScriptSig().getChunks()) {
+            for (ScriptChunk chunk : input.getScriptSig().chunks()) {
                 if (chunk.isPushData() && contains(chunk.data))
                     return true;
             }

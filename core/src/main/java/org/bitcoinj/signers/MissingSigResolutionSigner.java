@@ -74,8 +74,8 @@ public class MissingSigResolutionSigner implements TransactionSigner {
             if (ScriptPattern.isP2SH(scriptPubKey) || ScriptPattern.isSentToMultisig(scriptPubKey)) {
                 int sigSuffixCount = ScriptPattern.isP2SH(scriptPubKey) ? 1 : 0;
                 // all chunks except the first one (OP_0) and the last (redeem script) are signatures
-                for (int j = 1; j < inputScript.getChunks().size() - sigSuffixCount; j++) {
-                    ScriptChunk scriptChunk = inputScript.getChunks().get(j);
+                for (int j = 1; j < inputScript.chunks().size() - sigSuffixCount; j++) {
+                    ScriptChunk scriptChunk = inputScript.chunks().get(j);
                     if (scriptChunk.equalsOpCode(0)) {
                         if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                             throw new MissingSignatureException();
@@ -85,7 +85,7 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                     }
                 }
             } else if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2PKH(scriptPubKey)) {
-                if (inputScript.getChunks().get(0).equalsOpCode(0)) {
+                if (inputScript.chunks().get(0).equalsOpCode(0)) {
                     if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
                     } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
