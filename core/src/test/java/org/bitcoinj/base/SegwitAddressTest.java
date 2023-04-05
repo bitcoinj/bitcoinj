@@ -152,7 +152,7 @@ public class SegwitAddressTest {
                     ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).getProgram()));
             assertEquals(valid.address.toLowerCase(Locale.ROOT), address.toBech32());
             if (valid.expectedWitnessVersion == 0) {
-                Script expectedScriptPubKey = new Script(ByteUtils.parseHex(valid.expectedScriptPubKey));
+                Script expectedScriptPubKey = Script.parse(ByteUtils.parseHex(valid.expectedScriptPubKey));
                 assertEquals(address, SegwitAddress.fromHash(valid.expectedNetwork,
                         ScriptPattern.extractHashFromP2WH(expectedScriptPubKey)));
             }

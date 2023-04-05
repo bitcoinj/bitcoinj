@@ -60,7 +60,7 @@ public class TransactionWitnessTest {
         ECKey.ECDSASignature ecdsaSignature2 = TransactionSignature.decodeFromDER(ByteUtils.parseHex("3045022100fcfe4a58f2878047ef7c5889fc52a3816ad2dd218807daa3c3eafd4841ffac4d022073454df7e212742f0fee20416b418a2c1340a33eebed5583d19a61088b112832"));
         TransactionSignature signature2 = new TransactionSignature(ecdsaSignature2, Transaction.SigHash.ALL, false);
 
-        Script witnessScript = new Script(ByteUtils.parseHex("522102bb65b325a986c5b15bd75e0d81cf149219597617a70995efedec6309b4600fa02103c54f073f5db9f68915019801435058c9232cb72c6528a2ca15af48eb74ca8b9a52ae"));
+        Script witnessScript = Script.parse(ByteUtils.parseHex("522102bb65b325a986c5b15bd75e0d81cf149219597617a70995efedec6309b4600fa02103c54f073f5db9f68915019801435058c9232cb72c6528a2ca15af48eb74ca8b9a52ae"));
 
         TransactionWitness witness = TransactionWitness.redeemP2WSH(witnessScript, signature1, signature2);
         assertEquals(4, witness.getPushCount());

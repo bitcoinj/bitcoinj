@@ -172,9 +172,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      */
     private Script getScript(byte[] scriptBytes) {
         try {
-            return new Script(scriptBytes);
+            return Script.parse(scriptBytes);
         } catch (Exception e) {
-            return new Script(new byte[0]);
+            return Script.parse(new byte[0]);
         }
     }
 
