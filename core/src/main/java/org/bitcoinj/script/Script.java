@@ -227,7 +227,7 @@ public class Script {
     private final byte[] program;
 
     // Creation time of the associated keys, or null if unknown.
-    @Nullable private Instant creationTime;
+    @Nullable private final Instant creationTime;
 
     /**
      * Wraps given script chunks.
@@ -386,33 +386,6 @@ public class Script {
     @Deprecated
     public long getCreationTimeSeconds() {
         return creationTime().orElse(Instant.EPOCH).getEpochSecond();
-    }
-
-    /**
-     * Sets the creation time of this script.
-     * @param creationTime creation time of this script
-     */
-    public void setCreationTime(Instant creationTime) {
-        this.creationTime = Objects.requireNonNull(creationTime);
-    }
-
-    /**
-     * Clears the creation time of this script. This is mainly used deserialization and cloning. Normally you should not
-     * need to usethis, as keys should have proper creation times whenever possible.
-     */
-    public void clearCreationTime() {
-        this.creationTime = null;
-    }
-
-    /** @deprecated use {@link #setCreationTime(Instant)} */
-    @Deprecated
-    public void setCreationTimeSeconds(long creationTimeSecs) {
-        if (creationTimeSecs > 0)
-            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
-        else if (creationTimeSecs == 0)
-            clearCreationTime();
-        else
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
     }
 
     /**
