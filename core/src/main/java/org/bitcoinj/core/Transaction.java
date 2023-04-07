@@ -1539,7 +1539,7 @@ public class Transaction extends Message {
      * @return lock time, wrapped in a {@link LockTime}
      */
     public LockTime lockTime() {
-        return vLockTime;
+        return vLockTime != null ? vLockTime : LockTime.unset();
     }
 
     /** @deprecated use {@link #lockTime()} */
