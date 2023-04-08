@@ -1624,6 +1624,19 @@ public class Transaction extends Message {
     }
 
     /**
+     * Gets the output the gihven outpoint is referring to. Note the output must belong to this transaction, or else
+     * an {@link IllegalArgumentException} will occur.
+     *
+     * @param outpoint outpoint referring to the output to get
+     * @return output referred to by the given outpoint
+     */
+    public TransactionOutput getOutput(TransactionOutPoint outpoint) {
+        checkArgument(outpoint.hash().equals(this.getTxId()), () ->
+                "outpoint poins to a different transaction");
+        return getOutput(outpoint.index());
+    }
+
+    /**
      * Returns the confidence object for this transaction from the {@link TxConfidenceTable}
      * referenced by the implicit {@link Context}.
      */

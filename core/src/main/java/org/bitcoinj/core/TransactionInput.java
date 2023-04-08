@@ -351,7 +351,7 @@ public class TransactionInput {
         Transaction tx = transactions.get(outpoint.hash());
         if (tx == null)
             return null;
-        return tx.getOutputs().get((int) outpoint.index());
+        return tx.getOutput(outpoint);
     }
 
     /**
@@ -398,10 +398,7 @@ public class TransactionInput {
     public ConnectionResult connect(Transaction transaction, ConnectMode mode) {
         if (!transaction.getTxId().equals(outpoint.hash()))
             return ConnectionResult.NO_SUCH_TX;
-        int outpointIndex = (int) outpoint.index();
-        checkArgument(outpointIndex >= 0 && outpointIndex < transaction.getOutputs().size(), () ->
-                "corrupt transaction: " + outpointIndex);
-        TransactionOutput out = transaction.getOutput(outpointIndex);
+        TransactionOutput out = transaction.getOutput(outpoint);
         if (!out.isAvailableForSpending()) {
             if (getParentTransaction().equals(outpoint.fromTx)) {
                 // Already connected.
@@ -434,7 +431,7 @@ public class TransactionInput {
         TransactionOutput connectedOutput;
         if (outpoint.fromTx != null) {
             // The outpoint is connected using a "standard" wallet, disconnect it.
-            connectedOutput = outpoint.fromTx.getOutput((int) outpoint.index());
+            connectedOutput = outpoint.fromTx.getOutput(outpoint);
             outpoint.fromTx = null;
         } else if (outpoint.connectedOutput != null) {
             // The outpoint is connected using a UTXO based wallet, disconnect it.
@@ -484,9 +481,8 @@ public class TransactionInput {
      */
     public void verify() throws VerificationException {
         final Transaction fromTx = getOutpoint().fromTx;
-        long spendingIndex = getOutpoint().index();
         Objects.requireNonNull(fromTx, "Not connected");
-        final TransactionOutput output = fromTx.getOutput((int) spendingIndex);
+        final TransactionOutput output = fromTx.getOutput(outpoint);
         verify(output);
     }
 
