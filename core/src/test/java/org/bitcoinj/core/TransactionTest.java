@@ -87,21 +87,21 @@ public class TransactionTest {
     public void emptyOutputs() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.clearOutputs();
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
     public void emptyInputs() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.clearInputs();
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
     public void tooHuge() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.getInput(0).setScriptBytes(new byte[Block.MAX_BLOCK_SIZE]);
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.DuplicatedOutPoint.class)
@@ -110,14 +110,14 @@ public class TransactionTest {
         TransactionInput input = tx.getInput(0);
         input.setScriptBytes(new byte[1]);
         tx.addInput(input);
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.NegativeValueOutput.class)
     public void negativeOutput() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.ExcessiveValue.class)
@@ -126,14 +126,14 @@ public class TransactionTest {
         Coin half = BitcoinNetwork.MAX_MONEY.divide(2).add(Coin.SATOSHI);
         tx.getOutput(0).setValue(half);
         tx.addOutput(half, ADDRESS);
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
     public void coinbaseInputInNonCoinbaseTX() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
@@ -141,7 +141,7 @@ public class TransactionTest {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         tx.clearInputs();
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
@@ -150,7 +150,7 @@ public class TransactionTest {
         tx.clearInputs();
         TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[99]).build());
         assertEquals(101, input.getScriptBytes().length);
-        Transaction.verify(TESTNET, tx);
+        Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test

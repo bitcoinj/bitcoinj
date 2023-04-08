@@ -1057,6 +1057,6 @@ public class Block extends Message {
         block.checkMerkleRoot();
         block.checkSigOps();
         for (Transaction tx : block.transactions)
-            Transaction.verify(params, tx);
+            Transaction.verify(params.network(), tx);
     }
 }
