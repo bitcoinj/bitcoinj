@@ -58,7 +58,7 @@ public class TransactionOutPoint {
     Transaction fromTx;
 
     // The connected output.
-    TransactionOutput connectedOutput;
+    final TransactionOutput connectedOutput;
 
     /**
      * Deserialize this transaction outpoint from a given payload.
@@ -74,24 +74,24 @@ public class TransactionOutPoint {
     }
 
     public TransactionOutPoint(long index, Transaction fromTx) {
-        super();
-        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
-                "index out of range: " + index);
-        this.index = index;
-        this.hash = fromTx.getTxId();
-        this.fromTx = fromTx;
+        this(fromTx.getTxId(), index, fromTx, null);
     }
 
     public TransactionOutPoint(long index, Sha256Hash hash) {
-        super();
-        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
-                "index out of range: " + index);
-        this.index = index;
-        this.hash = hash;
+        this(hash, index, null, null);
     }
 
     public TransactionOutPoint(TransactionOutput connectedOutput) {
-        this(connectedOutput.getIndex(), connectedOutput.getParentTransactionHash());
+        this(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null, connectedOutput);
+    }
+
+    private TransactionOutPoint(Sha256Hash hash, long index, @Nullable Transaction fromTx,
+                                @Nullable TransactionOutput connectedOutput) {
+        this.hash = Objects.requireNonNull(hash);
+        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                "index out of range: " + index);
+        this.index = index;
+        this.fromTx = fromTx;
         this.connectedOutput = connectedOutput;
     }
 
@@ -208,6 +208,14 @@ public class TransactionOutPoint {
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
         }
+    }
+
+    /**
+     * Returns a copy of this outpoint, but with the connectedOutput removed.
+     * @return outpoint with removed connectedOutput
+     */
+    public TransactionOutPoint disconnectOutput() {
+        return new TransactionOutPoint(hash, index, fromTx, null);
     }
 
     @Override
