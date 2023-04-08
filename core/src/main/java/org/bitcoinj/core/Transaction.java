@@ -168,10 +168,6 @@ public class Transaction extends Message {
     // list of transactions from a wallet, which is helpful for presenting to users.
     @Nullable private Instant updateTime = null;
 
-    // These are in memory helpers only. They contain the transaction hashes without and with witness.
-    private Sha256Hash cachedTxId;
-    private Sha256Hash cachedWTxId;
-
     // Data about how confirmed this tx is. Serialized, may be null.
     @Nullable private TransactionConfidence confidence;
 
@@ -273,26 +269,10 @@ public class Transaction extends Message {
      * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
      * @param payload Bitcoin protocol formatted byte array containing message content.
      * @param setSerializer The serializer to use for this transaction.
-     * @param hashFromHeader Used by BitcoinSerializer. The serializer has to calculate a hash for checksumming so to
-     * avoid wasting the considerable effort a set method is provided so the serializer can set it. No verification
-     * is performed on this hash.
      * @throws ProtocolException
      */
     public Transaction(ByteBuffer payload,
-            MessageSerializer setSerializer, @Nullable byte[] hashFromHeader) throws ProtocolException {
-        super(payload, setSerializer);
-        if (hashFromHeader != null) {
-            cachedWTxId = Sha256Hash.wrapReversed(hashFromHeader);
-            if (!hasWitnesses())
-                cachedTxId = cachedWTxId;
-        }
-    }
-
-    /**
-     * Creates a transaction by reading payload. Length of a transaction is fixed.
-     */
-    public Transaction(ByteBuffer payload, MessageSerializer setSerializer)
-            throws ProtocolException {
+            MessageSerializer setSerializer) throws ProtocolException {
         super(payload, setSerializer);
     }
 
@@ -301,20 +281,13 @@ public class Transaction extends Message {
      * via outpoints.
      */
     public Sha256Hash getTxId() {
-        if (cachedTxId == null) {
-            if (!hasWitnesses() && cachedWTxId != null) {
-                cachedTxId = cachedWTxId;
-            } else {
-                ByteArrayOutputStream stream = new ByteArrayOutputStream(255); // just a guess at an average tx length
-                try {
-                    bitcoinSerializeToStream(stream, false);
-                } catch (IOException e) {
-                    throw new RuntimeException(e); // cannot happen
-                }
-                cachedTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(stream.toByteArray()));
-            }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            bitcoinSerializeToStream(baos, false);
+        } catch (IOException e) {
+            throw new RuntimeException(e); // cannot happen
         }
-        return cachedTxId;
+        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
     }
 
     /**
@@ -330,20 +303,13 @@ public class Transaction extends Message {
      * same as {@link #getTxId()}.
      */
     public Sha256Hash getWTxId() {
-        if (cachedWTxId == null) {
-            if (!hasWitnesses() && cachedTxId != null) {
-                cachedWTxId = cachedTxId;
-            } else {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                try {
-                    bitcoinSerializeToStream(baos, hasWitnesses());
-                } catch (IOException e) {
-                    throw new RuntimeException(e); // cannot happen
-                }
-                cachedWTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
-            }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            bitcoinSerializeToStream(baos, hasWitnesses());
+        } catch (IOException e) {
+            throw new RuntimeException(e); // cannot happen
         }
-        return cachedWTxId;
+        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
     }
 
     /** Gets the transaction weight as defined in BIP141. */
@@ -622,8 +588,6 @@ public class Transaction extends Message {
     public static final byte SIGHASH_ANYONECANPAY_VALUE = (byte) 0x80;
 
     protected void unCache() {
-        cachedTxId = null;
-        cachedWTxId = null;
     }
 
     /**
