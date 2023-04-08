@@ -257,7 +257,6 @@ public class TransactionInput {
     public void setSequenceNumber(long sequence) {
         checkArgument(sequence >= 0 && sequence <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
                 "sequence out of range: " + sequence);
-        unCache();
         this.sequence = sequence;
     }
 
@@ -288,7 +287,6 @@ public class TransactionInput {
      * @param scriptBytes the scriptBytes to set
      */
     void setScriptBytes(byte[] scriptBytes) {
-        unCache();
         this.scriptSig = null;
         this.scriptBytes = scriptBytes;
     }
@@ -538,21 +536,7 @@ public class TransactionInput {
     }
 
     protected final void setParent(@Nullable Transaction parent) {
-        if (this.parent != null && this.parent != parent && parent != null) {
-            // After old parent is unlinked it won't be able to receive notice if this child
-            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
-            // manually on serialization.
-            this.parent.unCache();
-        }
         this.parent = parent;
-    }
-
-    /* (non-Javadoc)
-     * @see Message#unCache()
-     */
-    protected void unCache() {
-        if (parent != null)
-            parent.unCache();
     }
 
     @Override

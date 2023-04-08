@@ -182,7 +182,6 @@ public class TransactionOutput {
         // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
         // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
         checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), () -> "value out of range: " + value);
-        unCache();
         this.value = value.value;
     }
 
@@ -438,21 +437,7 @@ public class TransactionOutput {
     }
 
     protected final void setParent(@Nullable Transaction parent) {
-        if (this.parent != null && this.parent != parent && parent != null) {
-            // After old parent is unlinked it won't be able to receive notice if this child
-            // changes internally.  To be safe we invalidate the parent cache to ensure it rebuilds
-            // manually on serialization.
-            this.parent.unCache();
-        }
         this.parent = parent;
-    }
-
-    /* (non-Javadoc)
-     * @see Message#unCache()
-     */
-    protected void unCache() {
-        if (parent != null)
-            parent.unCache();
     }
 
     @Override
