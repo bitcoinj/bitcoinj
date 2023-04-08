@@ -1862,11 +1862,11 @@ public class Transaction extends Message {
      *     coinbase inputs in the tx.</li>
      * </ul>
      *
-     * @param params parameters for the verification rules
-     * @param tx     transaction to verify
+     * @param network network for the verification rules
+     * @param tx transaction to verify
      * @throws VerificationException if at least one of the rules is violated
      */
-    public static void verify(NetworkParameters params, Transaction tx) throws VerificationException {
+    public static void verify(Network network, Transaction tx) throws VerificationException {
         if (tx.inputs.size() == 0 || tx.outputs.size() == 0)
             throw new VerificationException.EmptyInputsOrOutputs();
         if (tx.getMessageSize() > Block.MAX_BLOCK_SIZE)
@@ -1889,7 +1889,7 @@ public class Transaction extends Message {
             } catch (ArithmeticException e) {
                 throw new VerificationException.ExcessiveValue();
             }
-            if (params.network().exceedsMaxMoney(valueOut))
+            if (network.exceedsMaxMoney(valueOut))
                 throw new VerificationException.ExcessiveValue();
         }
 
@@ -1901,5 +1901,13 @@ public class Transaction extends Message {
                 if (input.isCoinBase())
                     throw new VerificationException.UnexpectedCoinbaseInput();
         }
+    }
+
+    /**
+     * @deprecated  use {@link #verify(Network, Transaction)}
+     */
+    @Deprecated
+    public static void verify(NetworkParameters params, Transaction tx) throws VerificationException {
+        verify(params.network(), tx);
     }
 }
