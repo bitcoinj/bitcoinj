@@ -75,11 +75,12 @@ public class TransactionOutPoint {
 
     public TransactionOutPoint(long index, Transaction fromTx) {
         super();
-        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER && index < fromTx.getOutputs().size(), () ->
                 "index out of range: " + index);
         this.index = index;
         this.hash = fromTx.getTxId();
         this.fromTx = fromTx;
+        this.connectedOutput = Objects.requireNonNull(fromTx.getOutput(index));
     }
 
     public TransactionOutPoint(long index, Sha256Hash hash) {
