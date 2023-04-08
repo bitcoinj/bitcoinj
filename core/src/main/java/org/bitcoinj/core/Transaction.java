@@ -587,9 +587,6 @@ public class Transaction extends Message {
      */
     public static final byte SIGHASH_ANYONECANPAY_VALUE = (byte) 0x80;
 
-    protected void unCache() {
-    }
-
     /**
      * Deserialize according to <a href="https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki">BIP144</a> or
      * the <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if the
@@ -874,7 +871,6 @@ public class Transaction extends Message {
      * Note that this also invalidates the length attribute
      */
     public void clearInputs() {
-        unCache();
         for (TransactionInput input : inputs) {
             input.setParent(null);
         }
@@ -897,7 +893,6 @@ public class Transaction extends Message {
      * @return the new input.
      */
     public TransactionInput addInput(TransactionInput input) {
-        unCache();
         input.setParent(this);
         inputs.add(input);
         return input;
@@ -1036,7 +1031,6 @@ public class Transaction extends Message {
      * Note that this also invalidates the length attribute
      */
     public void clearOutputs() {
-        unCache();
         for (TransactionOutput output : outputs) {
             output.setParent(null);
         }
@@ -1047,7 +1041,6 @@ public class Transaction extends Message {
      * Adds the given output to this transaction. The output must be completely initialized. Returns the given output.
      */
     public TransactionOutput addOutput(TransactionOutput to) {
-        unCache();
         to.setParent(this);
         outputs.add(to);
         return to;
@@ -1519,7 +1512,6 @@ public class Transaction extends Message {
      * standard and won't be relayed or included in the memory pool either.
      */
     public void setLockTime(long lockTime) {
-        unCache();
         boolean seqNumSet = false;
         for (TransactionInput input : inputs) {
             if (input.getSequenceNumber() != TransactionInput.NO_SEQUENCE) {
@@ -1541,7 +1533,6 @@ public class Transaction extends Message {
 
     public void setVersion(int version) {
         this.version = version;
-        unCache();
     }
 
     /** Returns an unmodifiable view of all inputs. */
