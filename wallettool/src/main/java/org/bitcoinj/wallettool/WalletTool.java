@@ -707,7 +707,7 @@ public class WalletTool implements Callable<Integer> {
             if (lockTimeStr != null) {
                 tx.setLockTime(parseLockTimeStr(lockTimeStr));
                 // For lock times to take effect, at least one output must have a non-final sequence number.
-                tx.getInputs().get(0).setSequenceNumber(0);
+                tx.getInput(0).setSequenceNumber(0);
                 // And because we modified the transaction after it was completed, we must re-sign the inputs.
                 wallet.signTransaction(req);
             }

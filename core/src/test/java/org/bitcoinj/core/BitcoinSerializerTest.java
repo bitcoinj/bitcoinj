@@ -110,7 +110,7 @@ public class BitcoinSerializerTest {
         transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
         assertNotNull(transaction);
 
-        transaction.getInputs().get(0).setSequenceNumber(1);
+        transaction.getInput(0).setSequenceNumber(1);
 
         bos = new ByteArrayOutputStream();
         serializer.serialize(transaction, bos);
@@ -127,7 +127,7 @@ public class BitcoinSerializerTest {
         transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
         assertNotNull(transaction);
 
-        transaction.getInputs().get(0).setSequenceNumber(transaction.getInputs().get(0).getSequenceNumber());
+        transaction.getInput(0).setSequenceNumber(transaction.getInputs().get(0).getSequenceNumber());
 
         bos = new ByteArrayOutputStream();
         serializer.serialize(transaction, bos);

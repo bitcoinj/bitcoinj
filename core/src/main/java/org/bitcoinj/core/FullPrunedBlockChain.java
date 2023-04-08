@@ -157,7 +157,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             try {
                 ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
                 for (int index = 0; index < tx.getInputs().size(); index++) {
-                    tx.getInputs().get(index).getScriptSig().correctlySpends(tx, index, null, null, prevOutIt.next(),
+                    tx.getInput(index).getScriptSig().correctlySpends(tx, index, null, null, prevOutIt.next(),
                             verifyFlags);
                 }
             } catch (VerificationException e) {
@@ -242,7 +242,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     // For each input of the transaction remove the corresponding output from the set of unspent
                     // outputs.
                     for (int index = 0; index < tx.getInputs().size(); index++) {
-                        TransactionInput in = tx.getInputs().get(index);
+                        TransactionInput in = tx.getInput(index);
                         UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().hash(),
                                 in.getOutpoint().index());
                         if (prevOut == null)
@@ -373,7 +373,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                     if (!isCoinBase) {
                         for (int index = 0; index < tx.getInputs().size(); index++) {
-                            final TransactionInput in = tx.getInputs().get(index);
+                            final TransactionInput in = tx.getInput(index);
                             final UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().hash(),
                                     in.getOutpoint().index());
                             if (prevOut == null)

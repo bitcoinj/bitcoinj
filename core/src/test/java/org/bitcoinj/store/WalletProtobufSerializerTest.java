@@ -164,7 +164,7 @@ public class WalletProtobufSerializerTest {
         assertEquals(Protos.Transaction.Pool.PENDING, t1p.getPool());
         assertFalse(t1p.hasLockTime());
         assertFalse(t1p.getTransactionInput(0).hasSequence());
-        assertArrayEquals(t1.getInputs().get(0).getOutpoint().hash().getBytes(),
+        assertArrayEquals(t1.getInput(0).getOutpoint().hash().getBytes(),
                 t1p.getTransactionInput(0).getTransactionOutPointHash().toByteArray());
         assertEquals(0, t1p.getTransactionInput(0).getTransactionOutPointIndex());
         assertEquals(t1p.getTransactionOutput(0).getValue(), v1.value);

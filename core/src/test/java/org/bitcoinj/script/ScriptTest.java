@@ -396,7 +396,7 @@ public class ScriptTest {
                 Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
-                    TransactionInput input = transaction.getInputs().get(i);
+                    TransactionInput input = transaction.getInput(i);
                     assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                     input.getScriptSig().correctlySpends(transaction, i, null, null,
                             scriptPubKeys.get(input.getOutpoint()), verifyFlags);
@@ -448,7 +448,7 @@ public class ScriptTest {
             }
 
             for (int i = 0; i < transaction.getInputs().size() && valid; i++) {
-                TransactionInput input = transaction.getInputs().get(i);
+                TransactionInput input = transaction.getInput(i);
                 assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                 try {
                     input.getScriptSig().correctlySpends(transaction, i, null, null,

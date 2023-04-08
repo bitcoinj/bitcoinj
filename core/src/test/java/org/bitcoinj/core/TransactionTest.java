@@ -608,7 +608,7 @@ public class TransactionTest {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
         assertFalse(tx.isOptInFullRBF());
 
-        tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+        tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
         assertTrue(tx.isOptInFullRBF());
     }
 

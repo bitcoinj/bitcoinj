@@ -1687,7 +1687,7 @@ public class Transaction extends Message {
         checkState(isCoinBase());
 
         // Check block height is in coinbase input script
-        final TransactionInput in = this.getInputs().get(0);
+        final TransactionInput in = this.getInput(0);
         final ScriptBuilder builder = new ScriptBuilder();
         builder.number(height);
         final byte[] expected = builder.build().getProgram();

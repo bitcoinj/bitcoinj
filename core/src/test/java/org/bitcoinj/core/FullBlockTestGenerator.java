@@ -483,7 +483,7 @@ public class FullBlockTestGenerator {
         //
         NewBlock b26 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         // 1 is too small, but we already generate every other block with 2, so that is tested
-        b26.block.getTransactions().get(0).getInputs().get(0).clearScriptBytes();
+        b26.block.getTransactions().get(0).getInput(0).clearScriptBytes();
         b26.block.setMerkleRoot(null);
         b26.solve();
         blocks.add(new BlockAndValidity(b26, false, true, b23.getHash(), chainHeadHeight + 7, "b26"));
@@ -496,7 +496,7 @@ public class FullBlockTestGenerator {
         {
             byte[] coinbase = new byte[101];
             Arrays.fill(coinbase, (byte)0);
-            b28.block.getTransactions().get(0).getInputs().get(0).setScriptBytes(coinbase);
+            b28.block.getTransactions().get(0).getInput(0).setScriptBytes(coinbase);
         }
         b28.block.setMerkleRoot(null);
         b28.solve();
@@ -510,7 +510,7 @@ public class FullBlockTestGenerator {
         {
             byte[] coinbase = new byte[100];
             Arrays.fill(coinbase, (byte)0);
-            b30.block.getTransactions().get(0).getInputs().get(0).setScriptBytes(coinbase);
+            b30.block.getTransactions().get(0).getInput(0).setScriptBytes(coinbase);
         }
         b30.block.setMerkleRoot(null);
         b30.solve();
@@ -1193,7 +1193,7 @@ public class FullBlockTestGenerator {
         NewBlock b63 = createNextBlock(b60, chainHeadHeight + 19, null, null);
         {
             b63.block.getTransactions().get(0).setLockTime(0xffffffffL);
-            b63.block.getTransactions().get(0).getInputs().get(0).setSequenceNumber(0xdeadbeefL);
+            b63.block.getTransactions().get(0).getInput(0).setSequenceNumber(0xdeadbeefL);
             checkState(!b63.block.getTransactions().get(0).isFinal(chainHeadHeight + 17, b63.block.getTimeSeconds()));
         }
         b63.solve();
