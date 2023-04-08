@@ -258,11 +258,11 @@ public class TransactionOutPoint {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TransactionOutPoint other = (TransactionOutPoint) o;
-        return index() == other.index() && hash().equals(other.hash());
+        return index == other.index && hash.equals(other.hash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(index(), hash());
+        return Objects.hash(index, hash);
     }
 }
