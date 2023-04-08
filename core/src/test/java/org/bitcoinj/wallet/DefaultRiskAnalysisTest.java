@@ -237,7 +237,7 @@ public class DefaultRiskAnalysisTest {
 
     @Test
     public void optInFullRBF() {
-        Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(MAINNET.network());
         tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
@@ -246,7 +246,7 @@ public class DefaultRiskAnalysisTest {
 
     @Test
     public void relativeLockTime() {
-        Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(MAINNET.network());
         tx.setVersion(2);
         checkState(!tx.hasRelativeLockTime());
 
@@ -262,7 +262,7 @@ public class DefaultRiskAnalysisTest {
 
     @Test
     public void transactionVersions() {
-        Transaction tx = FakeTxBuilder.createFakeTx(MAINNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(MAINNET.network());
         tx.setVersion(1);
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.OK, analysis.analyze());

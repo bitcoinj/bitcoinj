@@ -18,6 +18,7 @@
 package org.bitcoinj.testing;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -59,8 +60,15 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 @VisibleForTesting
 public class FakeTxBuilder {
     /** Create a fake transaction, without change. */
+    public static Transaction createFakeTx(Network network) {
+        return createFakeTxWithoutChangeAddress(Coin.COIN, randomAddress(network));
+    }
+
+    /** Create a fake transaction, without change.
+     * @deprecated use {@link FakeTxBuilder#createFakeTx(Network)} */
+    @Deprecated
     public static Transaction createFakeTx(final NetworkParameters params) {
-        return createFakeTxWithoutChangeAddress(Coin.COIN, randomAddress(params));
+        return createFakeTxWithoutChangeAddress(Coin.COIN, randomAddress(params.network()));
     }
 
     /** Create a fake transaction, without change. */
@@ -143,8 +151,18 @@ public class FakeTxBuilder {
      * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
      * else to simulate change. There is one random input.
      */
+    public static Transaction createFakeTx(Network network, Coin value, Address to) {
+        return createFakeTxWithChangeAddress(value, to, randomAddress(network));
+    }
+
+    /**
+     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
+     * else to simulate change. There is one random input.
+     * @deprecated use {@link #createFakeTx(Network, Coin, Address)}
+     */
+    @Deprecated
     public static Transaction createFakeTx(NetworkParameters params, Coin value, Address to) {
-        return createFakeTxWithChangeAddress(value, to, randomAddress(params));
+        return createFakeTx(params.network(), value, to);
     }
 
     /**
@@ -340,8 +358,8 @@ public class FakeTxBuilder {
         return b;
     }
 
-    private static Address randomAddress(NetworkParameters params) {
-        return randomKey().toAddress(ScriptType.P2PKH, params.network());
+    private static Address randomAddress(Network network) {
+        return randomKey().toAddress(ScriptType.P2PKH, network);
     }
 
     private static ECKey randomKey() {

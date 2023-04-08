@@ -77,7 +77,7 @@ public class ParseByteCacheTest {
 
         resetBlockStore();
         
-        Transaction tx1 = createFakeTx(TESTNET,
+        Transaction tx1 = createFakeTx(TESTNET.network(),
                 valueOf(2, 0),
                 wallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         
@@ -88,7 +88,7 @@ public class ParseByteCacheTest {
         // Connect it.
         tx1.addInput(prevOut);
         
-        Transaction tx2 = createFakeTx(TESTNET, COIN,
+        Transaction tx2 = createFakeTx(TESTNET.network(), COIN,
                 new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;

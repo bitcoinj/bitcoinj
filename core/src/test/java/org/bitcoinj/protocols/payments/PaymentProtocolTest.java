@@ -130,7 +130,7 @@ public class PaymentProtocolTest {
     public void testPaymentMessage() throws Exception {
         // Create
         List<Transaction> transactions = new LinkedList<>();
-        transactions.add(FakeTxBuilder.createFakeTx(TESTNET, AMOUNT, TO_ADDRESS));
+        transactions.add(FakeTxBuilder.createFakeTx(TESTNET.network(), AMOUNT, TO_ADDRESS));
         Coin refundAmount = Coin.SATOSHI;
         Address refundAddress = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Payment payment = PaymentProtocol.createPaymentMessage(transactions, refundAmount, refundAddress, MEMO,

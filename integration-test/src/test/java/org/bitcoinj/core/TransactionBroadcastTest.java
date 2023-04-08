@@ -86,7 +86,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Test
     public void fourPeers() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         final AtomicDouble lastProgress = new AtomicDouble();
@@ -124,7 +124,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // immediately with the latest state. This avoids API users writing accidentally racy code when they use
         // a convenience method like peerGroup.broadcastTransaction.
         InboundMessageQueuer[] channels = { connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET, CENT, address);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network(), CENT, address);
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
         inbound(channels[1], InventoryMessage.with(tx));
@@ -137,7 +137,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Test
     public void rejectHandling() throws Exception {
         InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
         CompletableFuture<TransactionBroadcast> future = broadcast.broadcastAndAwaitRelay();
         // 0 and 3 are randomly selected to receive the broadcast.

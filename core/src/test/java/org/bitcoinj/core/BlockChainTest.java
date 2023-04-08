@@ -115,7 +115,7 @@ public class BlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
         int height = 1;
         // Quick check that we can actually receive coins.
-        Transaction tx1 = createFakeTx(TESTNET,
+        Transaction tx1 = createFakeTx(TESTNET.network(),
                                        COIN,
                                        testNetWallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Block b1 = createFakeBlock(testNetStore, height, tx1).block;
@@ -315,7 +315,7 @@ public class BlockChainTest {
         ECKey key = testNetWallet.freshReceiveKey();
         Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
-        Transaction t1 = FakeTxBuilder.createFakeTx(TESTNET, COIN, addr);
+        Transaction t1 = FakeTxBuilder.createFakeTx(TESTNET.network(), COIN, addr);
         Transaction t2 = new Transaction();
         t2.addInput(t1.getOutput(0));
         t2.addOutput(valueOf(2, 0), somebodyElse);
@@ -362,7 +362,7 @@ public class BlockChainTest {
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
         for (int i = 0; i < TESTNET.getSpendableCoinbaseDepth() - 2; i++) {
             // Non relevant tx - just for fake block creation.
-            Transaction tx2 = createFakeTx(TESTNET, COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
+            Transaction tx2 = createFakeTx(TESTNET.network(), COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
 
             Block b2 = createFakeBlock(testNetStore, height++, tx2).block;
             testNetChain.add(b2);
@@ -383,7 +383,7 @@ public class BlockChainTest {
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
-        Transaction tx3 = createFakeTx(TESTNET, COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
+        Transaction tx3 = createFakeTx(TESTNET.network(), COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
         Block b3 = createFakeBlock(testNetStore, height++, tx3).block;
         testNetChain.add(b3);
 
