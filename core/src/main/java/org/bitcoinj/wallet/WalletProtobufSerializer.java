@@ -732,7 +732,7 @@ public class WalletProtobufSerializer {
                 throw new UnreadableWalletException("Unknown transaction pool: " + txProto.getPool());
         }
         for (int i = 0 ; i < tx.getOutputs().size() ; i++) {
-            TransactionOutput output = tx.getOutputs().get(i);
+            TransactionOutput output = tx.getOutput(i);
             final Protos.TransactionOutput transactionOutput = txProto.getTransactionOutput(i);
             if (transactionOutput.hasSpentByTransactionHash()) {
                 final ByteString spentByTransactionHash = transactionOutput.getSpentByTransactionHash();

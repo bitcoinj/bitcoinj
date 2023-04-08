@@ -482,8 +482,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals("Wrong number of tx inputs", 1, t.getInputs().size());
         assertEquals("Wrong number of tx outputs",2, t.getOutputs().size());
         assertEquals(destination, t.getOutput(0).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
-        assertEquals(wallet.currentChangeAddress(), t.getOutputs().get(1).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
-        assertEquals(valueOf(0, 50), t.getOutputs().get(1).getValue());
+        assertEquals(wallet.currentChangeAddress(), t.getOutput(1).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
+        assertEquals(valueOf(0, 50), t.getOutput(1).getValue());
         // Check the script runs and signatures verify.
         t.getInputs().get(0).verify();
     }
@@ -818,7 +818,7 @@ public class WalletTest extends TestWithWallet {
         Transaction inbound2 = new Transaction();
         inbound2.addOutput(new TransactionOutput(inbound2, coinHalf, myAddress));
         assertTrue(outbound1.getWalletOutputs(wallet).size() >= 1);
-        inbound2.addInput(outbound1.getOutputs().get(0));
+        inbound2.addInput(outbound1.getOutput(0));
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, inbound2);
         assertEquals(coin1, wallet.getBalance());
     }
@@ -2250,13 +2250,13 @@ public class WalletTest extends TestWithWallet {
         ECKey key = new ECKey();
         SendRequest req = SendRequest.to(key, SATOSHI.multiply(12));
         assertArrayEquals(key.getPubKey(),
-                ScriptPattern.extractKeyFromP2PK(req.tx.getOutputs().get(0).getScriptPubKey()));
+                ScriptPattern.extractKeyFromP2PK(req.tx.getOutput(0).getScriptPubKey()));
     }
 
     @Test
     public void sendRequestP2PKHTest() {
         SendRequest req = SendRequest.to(OTHER_ADDRESS, SATOSHI.multiply(12));
-        assertEquals(OTHER_ADDRESS, req.tx.getOutputs().get(0).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
+        assertEquals(OTHER_ADDRESS, req.tx.getOutput(0).getScriptPubKey().getToAddress(BitcoinNetwork.TESTNET));
     }
 
     @Test

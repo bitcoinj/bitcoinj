@@ -91,7 +91,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         // Check we selected just the oldest one.
         CoinSelector selector = wallet.getCoinSelector();
         CoinSelection selection = selector.select(COIN, wallet.calculateAllSpendCandidates());
-        assertTrue(selection.outputs().contains(t1.getOutputs().get(0)));
+        assertTrue(selection.outputs().contains(t1.getOutput(0)));
         assertEquals(COIN, selection.totalValue());
 
         // Check we ordered them correctly (by depth).

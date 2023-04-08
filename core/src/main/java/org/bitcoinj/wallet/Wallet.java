@@ -5281,7 +5281,7 @@ public class Wallet extends BaseTaggableObject
             }
             for (int i = 0; i < req.tx.getOutputs().size(); i++) {
                 TransactionOutput output = TransactionOutput.read(
-                        ByteBuffer.wrap(req.tx.getOutputs().get(i).bitcoinSerialize()), tx);
+                        ByteBuffer.wrap(req.tx.getOutput(i).bitcoinSerialize()), tx);
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
                     output.setValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));
@@ -5321,7 +5321,7 @@ public class Wallet extends BaseTaggableObject
                     // So instead we raise the change and deduct from the first recipient.
                     Coin missingToNotBeDust = changeOutput.getMinNonDustValue().subtract(changeOutput.getValue());
                     changeOutput.setValue(changeOutput.getValue().add(missingToNotBeDust));
-                    TransactionOutput firstOutput = tx.getOutputs().get(0);
+                    TransactionOutput firstOutput = tx.getOutput(0);
                     firstOutput.setValue(firstOutput.getValue().subtract(missingToNotBeDust));
                     result.updatedOutputValues.set(0, firstOutput.getValue());
                     if (firstOutput.isDust()) {

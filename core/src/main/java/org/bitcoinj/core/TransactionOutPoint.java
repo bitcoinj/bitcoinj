@@ -137,7 +137,7 @@ public class TransactionOutPoint {
     @Nullable
     public TransactionOutput getConnectedOutput() {
         if (fromTx != null) {
-            return fromTx.getOutputs().get((int) index);
+            return fromTx.getOutput(index);
         } else if (connectedOutput != null) {
             return connectedOutput;
         }

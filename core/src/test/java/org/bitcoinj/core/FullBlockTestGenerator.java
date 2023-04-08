@@ -215,14 +215,14 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
-                FIFTY_COINS, chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+                FIFTY_COINS, chainHead.getTransactions().get(0).getOutput(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
             chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
             chainHeadHeight++;
             blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
                     new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
-                    FIFTY_COINS, chainHead.getTransactions().get(0).getOutputs().get(0).getScriptPubKey()));
+                    FIFTY_COINS, chainHead.getTransactions().get(0).getOutput(0).getScriptPubKey()));
         }
 
         // Start by building a couple of blocks on top of the genesis block.
@@ -1086,21 +1086,21 @@ public class FullBlockTestGenerator {
             tx2.addOutput(new TransactionOutput(tx2, SATOSHI, new byte[] {OP_TRUE}));
             addOnlyInputToTransaction(tx2, new TransactionOutPointWithValue(
                     new TransactionOutPoint(0, tx1.getTxId()),
-                    SATOSHI, tx1.getOutputs().get(0).getScriptPubKey()));
+                    SATOSHI, tx1.getOutput(0).getScriptPubKey()));
             b57p2.addTransaction(tx2);
 
             b56p2txToDuplicate1 = new Transaction();
             b56p2txToDuplicate1.addOutput(new TransactionOutput(b56p2txToDuplicate1, SATOSHI, new byte[]{OP_TRUE}));
             addOnlyInputToTransaction(b56p2txToDuplicate1, new TransactionOutPointWithValue(
                     new TransactionOutPoint(0, tx2.getTxId()),
-                    SATOSHI, tx2.getOutputs().get(0).getScriptPubKey()));
+                    SATOSHI, tx2.getOutput(0).getScriptPubKey()));
             b57p2.addTransaction(b56p2txToDuplicate1);
 
             b56p2txToDuplicate2 = new Transaction();
             b56p2txToDuplicate2.addOutput(new TransactionOutput(b56p2txToDuplicate2, SATOSHI, new byte[]{}));
             addOnlyInputToTransaction(b56p2txToDuplicate2, new TransactionOutPointWithValue(
                     new TransactionOutPoint(0, b56p2txToDuplicate1.getTxId()),
-                    SATOSHI, b56p2txToDuplicate1.getOutputs().get(0).getScriptPubKey()));
+                    SATOSHI, b56p2txToDuplicate1.getOutput(0).getScriptPubKey()));
             b57p2.addTransaction(b56p2txToDuplicate2);
         }
         b57p2.solve();
