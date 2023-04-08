@@ -55,7 +55,7 @@ public class TransactionOutPoint {
     private final long index;
 
     // This is not part of bitcoin serialization. It points to the connected transaction.
-    Transaction fromTx;
+    final Transaction fromTx;
 
     // The connected output.
     final TransactionOutput connectedOutput;
@@ -216,6 +216,23 @@ public class TransactionOutPoint {
      */
     public TransactionOutPoint disconnectOutput() {
         return new TransactionOutPoint(hash, index, fromTx, null);
+    }
+
+    /**
+     * Returns a copy of this outpoint, but with the provided transaction as fromTx.
+     * @param transaction transaction to set as fromTx
+     * @return outpoint with fromTx set
+     */
+    public TransactionOutPoint connectTransaction(Transaction transaction) {
+        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), connectedOutput);
+    }
+
+    /**
+     * Returns a copy of this outpoint, but with fromTx removed.
+     * @return outpoint with removed fromTx
+     */
+    public TransactionOutPoint disconnectTransaction() {
+        return new TransactionOutPoint(hash, index, null, connectedOutput);
     }
 
     @Override

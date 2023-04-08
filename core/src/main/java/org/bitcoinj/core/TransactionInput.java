@@ -409,7 +409,7 @@ public class TransactionInput {
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
                 out.markAsUnspent();
             } else if (mode == ConnectMode.ABORT_ON_CONFLICT) {
-                outpoint.fromTx = out.getParentTransaction();
+                outpoint = outpoint.connectTransaction(out.getParentTransaction());
                 return TransactionInput.ConnectionResult.ALREADY_SPENT;
             }
         }
@@ -419,7 +419,7 @@ public class TransactionInput {
 
     /** Internal use only: connects this TransactionInput to the given output (updates pointers and spent flags) */
     public void connect(TransactionOutput out) {
-        outpoint.fromTx = out.getParentTransaction();
+        outpoint = outpoint.connectTransaction(out.getParentTransaction());
         out.markAsSpent(this);
         value = out.getValue();
     }
@@ -435,7 +435,7 @@ public class TransactionInput {
         if (outpoint.fromTx != null) {
             // The outpoint is connected using a "standard" wallet, disconnect it.
             connectedOutput = outpoint.fromTx.getOutput((int) outpoint.index());
-            outpoint.fromTx = null;
+            outpoint = outpoint.disconnectTransaction();
         } else if (outpoint.connectedOutput != null) {
             // The outpoint is connected using a UTXO based wallet, disconnect it.
             connectedOutput = outpoint.connectedOutput;
