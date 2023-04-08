@@ -125,9 +125,9 @@ class TransactionOutPointWithValue {
         this.scriptPubKey = scriptPubKey;
     }
 
-    public TransactionOutPointWithValue(Transaction tx, int output) {
-        this(new TransactionOutPoint(output, tx.getTxId()),
-                tx.getOutput(output).getValue(), tx.getOutput(output).getScriptPubKey());
+    public TransactionOutPointWithValue(Transaction tx, int outputIndex) {
+        this(new TransactionOutPoint(outputIndex, tx.getTxId()),
+                tx.getOutput(outputIndex).getValue(), tx.getOutput(outputIndex).getScriptPubKey());
     }
 }
 
