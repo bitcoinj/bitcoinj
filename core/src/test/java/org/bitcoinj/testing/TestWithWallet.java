@@ -101,7 +101,7 @@ public class TestWithWallet {
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
-        return sendMoneyToWallet(wallet, type, createFakeTx(TESTNET, value, toAddress));
+        return sendMoneyToWallet(wallet, type, createFakeTx(TESTNET.network(), value, toAddress));
     }
 
     @Nullable

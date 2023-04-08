@@ -253,7 +253,7 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.setDownloadData(true);
         // Make a transaction and tell the peer we have it.
         Coin value = COIN;
-        Transaction tx = createFakeTx(TESTNET, value, address);
+        Transaction tx = createFakeTx(TESTNET.network(), value, address);
         InventoryMessage inv = new InventoryMessage();
         InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId());
         inv.addItem(item);
@@ -286,7 +286,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         // Make a tx and advertise it to one of the peers.
         Coin value = COIN;
-        Transaction tx = createFakeTx(TESTNET, value, this.address);
+        Transaction tx = createFakeTx(TESTNET.network(), value, this.address);
         InventoryMessage inv = new InventoryMessage();
         InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId());
         inv.addItem(item);
@@ -538,7 +538,7 @@ public class PeerTest extends TestWithNetworkConnections {
         peer.setDownloadTxDependencies(false);
         connect();
         // Check that if we request dependency download to be disabled and receive a relevant tx, things work correctly.
-        Transaction tx = createFakeTx(TESTNET, COIN, address);
+        Transaction tx = createFakeTx(TESTNET.network(), COIN, address);
         final Transaction[] result = new Transaction[1];
         wallet.addCoinsReceivedEventListener((wallet, tx1, prevBalance, newBalance) -> result[0] = tx1);
         inbound(writeTarget, tx);

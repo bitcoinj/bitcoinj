@@ -513,7 +513,7 @@ public class ChainSplitTest {
         // This covers issue 468.
 
         // Receive some money to the wallet.
-        Transaction t1 = FakeTxBuilder.createFakeTx(TESTNET, COIN, coinsTo);
+        Transaction t1 = FakeTxBuilder.createFakeTx(TESTNET.network(), COIN, coinsTo);
         final Block b1 = FakeTxBuilder.makeSolvedTestBlock(TESTNET.getGenesisBlock(), t1);
         chain.add(b1);
 

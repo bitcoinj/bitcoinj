@@ -246,7 +246,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(tmp, expectedPeers);
 
         Coin value = COIN;
-        Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, value, address);
+        Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST.network(), value, address);
         InventoryMessage inv = new InventoryMessage();
         inv.addTransaction(t1);
 
@@ -286,7 +286,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertEquals(MemoryPoolMessage.class, waitForOutbound(p1).getClass());
 
         Coin value = COIN;
-        Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST, value, address2);
+        Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST.network(), value, address2);
         InventoryMessage inv = new InventoryMessage();
         inv.addTransaction(t1);
 
@@ -387,7 +387,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
         InboundMessageQueuer p3 = connectPeer(3);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST, valueOf(20, 0), address);
+        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST.network(), valueOf(20, 0), address);
         InventoryMessage inv = new InventoryMessage();
         inv.addTransaction(tx);
 
@@ -819,7 +819,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Block prev = blockStore.getChainHead().getHeader();
         for (ECKey key1 : keys) {
             Address addr = key1.toAddress(ScriptType.P2PKH, UNITTEST.network());
-            Block next = FakeTxBuilder.makeSolvedTestBlock(prev, FakeTxBuilder.createFakeTx(UNITTEST, Coin.FIFTY_COINS, addr));
+            Block next = FakeTxBuilder.makeSolvedTestBlock(prev, FakeTxBuilder.createFakeTx(UNITTEST.network(), Coin.FIFTY_COINS, addr));
             expectedBalance = expectedBalance.add(next.getTransactions().get(1).getOutput(0).getValue());
             blocks.add(next);
             prev = next;

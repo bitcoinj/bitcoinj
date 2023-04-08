@@ -85,28 +85,28 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
     public void emptyOutputs() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.clearOutputs();
         Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
     public void emptyInputs() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.clearInputs();
         Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
     public void tooHuge() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.getInput(0).setScriptBytes(new byte[Block.MAX_BLOCK_SIZE]);
         Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.DuplicatedOutPoint.class)
     public void duplicateOutPoint() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         TransactionInput input = tx.getInput(0);
         input.setScriptBytes(new byte[1]);
         tx.addInput(input);
@@ -115,14 +115,14 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.NegativeValueOutput.class)
     public void negativeOutput() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
         Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.ExcessiveValue.class)
     public void exceedsMaxMoney2() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         Coin half = BitcoinNetwork.MAX_MONEY.divide(2).add(Coin.SATOSHI);
         tx.getOutput(0).setValue(half);
         tx.addOutput(half, ADDRESS);
@@ -131,14 +131,14 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
     public void coinbaseInputInNonCoinbaseTX() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
         Transaction.verify(TESTNET.network(), tx);
     }
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
     public void coinbaseScriptSigTooSmall() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.clearInputs();
         tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
         Transaction.verify(TESTNET.network(), tx);
@@ -146,7 +146,7 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
     public void coinbaseScriptSigTooLarge() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.clearInputs();
         TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[99]).build());
         assertEquals(101, input.getScriptBytes().length);
@@ -161,7 +161,7 @@ public class TransactionTest {
         BlockChain mockBlockChain = createMock(BlockChain.class);
         EasyMock.expect(mockBlockChain.estimateBlockTimeInstant(TEST_LOCK_TIME)).andReturn(now);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million
 
         replay(mockBlockChain);
@@ -472,7 +472,7 @@ public class TransactionTest {
 
     @Test
     public void testToString() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         int lengthWithAddresses = tx.toString(null, BitcoinNetwork.TESTNET).length();
         int lengthWithoutAddresses = tx.toString(null, null).length();
         assertTrue(lengthWithAddresses > lengthWithoutAddresses);
@@ -480,7 +480,7 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         TransactionInput input = tx.getInput(0);
         input.setSequenceNumber(42);
 
@@ -504,7 +504,7 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         TransactionInput ti = new TransactionInput(tx, new byte[0], TransactionOutPoint.UNCONNECTED) {
             @Override
             public Script getScriptSig() throws ScriptException {
@@ -524,13 +524,13 @@ public class TransactionTest {
 
     @Test
     public void testTheTXByHeightComparator() {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx1.getConfidence().setAppearedAtChainHeight(1);
 
-        Transaction tx2 = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx2 = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx2.getConfidence().setAppearedAtChainHeight(2);
 
-        Transaction tx3 = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx3 = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx3.getConfidence().setAppearedAtChainHeight(3);
 
         SortedSet<Transaction> set = new TreeSet<>(Transaction.SORT_TX_BY_HEIGHT);
@@ -554,7 +554,7 @@ public class TransactionTest {
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();
         Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        TransactionOutput fakeOutput = FakeTxBuilder.createFakeTx(TESTNET, Coin.COIN, addr).getOutput(0);
+        TransactionOutput fakeOutput = FakeTxBuilder.createFakeTx(TESTNET.network(), Coin.COIN, addr).getOutput(0);
 
         Transaction tx = new Transaction();
         tx.addOutput(fakeOutput);
@@ -566,7 +566,7 @@ public class TransactionTest {
 
     @Test
     public void testPrioSizeCalc() {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET, Coin.COIN, ADDRESS);
+        Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET.network(), Coin.COIN, ADDRESS);
         int size1 = tx1.getMessageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
@@ -605,7 +605,7 @@ public class TransactionTest {
     @Test
     public void optInFullRBF() {
         // a standard transaction as wallets would create
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET);
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         assertFalse(tx.isOptInFullRBF());
 
         tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);

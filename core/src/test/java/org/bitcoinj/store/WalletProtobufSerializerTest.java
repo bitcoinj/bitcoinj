@@ -138,7 +138,7 @@ public class WalletProtobufSerializerTest {
     public void oneTx() throws Exception {
         // Check basic tx serialization.
         Coin v1 = COIN;
-        Transaction t1 = createFakeTx(TESTNET, v1, myAddress);
+        Transaction t1 = createFakeTx(TESTNET.network(), v1, myAddress);
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4"), TESTNET.getPort()));
         t1.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8"), TESTNET.getPort()));
         t1.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
@@ -174,7 +174,7 @@ public class WalletProtobufSerializerTest {
     public void raiseFeeTx() throws Exception {
         // Check basic tx serialization.
         Coin v1 = COIN;
-        Transaction t1 = createFakeTx(TESTNET, v1, myAddress);
+        Transaction t1 = createFakeTx(TESTNET.network(), v1, myAddress);
         t1.setPurpose(Purpose.RAISE_FEE);
         myWallet.receivePending(t1, null);
         Wallet wallet1 = roundTrip(myWallet);
@@ -246,10 +246,10 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testSequenceNumber() throws Exception {
         Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
-        Transaction tx1 = createFakeTx(TESTNET, Coin.COIN, wallet.currentReceiveAddress());
+        Transaction tx1 = createFakeTx(TESTNET.network(), Coin.COIN, wallet.currentReceiveAddress());
         tx1.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE);
         wallet.receivePending(tx1, null);
-        Transaction tx2 = createFakeTx(TESTNET, Coin.COIN, wallet.currentReceiveAddress());
+        Transaction tx2 = createFakeTx(TESTNET.network(), Coin.COIN, wallet.currentReceiveAddress());
         tx2.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
         wallet.receivePending(tx2, null);
         Wallet walletCopy = roundTrip(wallet);
