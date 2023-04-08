@@ -101,20 +101,7 @@ public abstract class MessageSerializer {
      * serializer (i.e. for messages with no network parameters), or because
      * it does not support deserializing transactions.
      */
-    public abstract Transaction makeTransaction(ByteBuffer payload, byte[] hash) throws ProtocolException, UnsupportedOperationException;
-
-    /**
-     * Make a transaction from the payload. Extension point for alternative
-     * serialization format support.
-     * 
-     * @throws UnsupportedOperationException if this serializer/deserializer
-     * does not support deserialization. This can occur either because it's a dummy
-     * serializer (i.e. for messages with no network parameters), or because
-     * it does not support deserializing transactions.
-     */
-    public final Transaction makeTransaction(ByteBuffer payload) throws ProtocolException {
-        return makeTransaction(payload, null);
-    }
+    public abstract Transaction makeTransaction(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     public abstract void seekPastMagicBytes(ByteBuffer in) throws BufferUnderflowException;
 

@@ -96,7 +96,7 @@ class DummySerializer extends MessageSerializer {
     }
 
     @Override
-    public Transaction makeTransaction(ByteBuffer payload, byte[] hash) throws UnsupportedOperationException {
+    public Transaction makeTransaction(ByteBuffer payload) throws UnsupportedOperationException {
         throw new UnsupportedOperationException(DEFAULT_EXCEPTION_MESSAGE);
     }
 

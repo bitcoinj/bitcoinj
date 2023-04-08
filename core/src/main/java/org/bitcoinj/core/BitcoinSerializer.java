@@ -231,7 +231,7 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("getheaders")) {
             return new GetHeadersMessage(payload);
         } else if (command.equals("tx")) {
-            return makeTransaction(payload, hash);
+            return makeTransaction(payload);
         } else if (command.equals("sendaddrv2")) {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new SendAddrV2Message();
@@ -333,7 +333,7 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public Transaction makeTransaction(ByteBuffer payload, byte[] hashFromHeader)
+    public Transaction makeTransaction(ByteBuffer payload)
             throws ProtocolException {
         return new Transaction(payload, this);
     }
