@@ -79,7 +79,7 @@ public class VersionMessageTest {
         assertEquals(1234, ver2.bestHeight);
         assertEquals(Instant.ofEpochSecond(23456), ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);
-        assertEquals(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), ver2.clientVersion);
+        assertEquals(ProtocolVersion.CURRENT.intValue(), ver2.clientVersion);
         assertEquals(1, ver2.localServices.bits());
         assertEquals("1.2.3.4", ver2.fromAddr.getAddr().getHostAddress());
         assertEquals(3888, ver2.fromAddr.getPort());
@@ -100,7 +100,7 @@ public class VersionMessageTest {
         assertEquals(1234, ver2.bestHeight);
         assertEquals(Instant.ofEpochSecond(23456), ver2.time);
         assertEquals("/bitcoinj/", ver2.subVer);
-        assertEquals(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion(), ver2.clientVersion);
+        assertEquals(ProtocolVersion.CURRENT.intValue(), ver2.clientVersion);
         assertEquals(1, ver2.localServices.bits());
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", ver2.fromAddr.getAddr().getHostAddress());
         assertEquals(3888, ver2.fromAddr.getPort());

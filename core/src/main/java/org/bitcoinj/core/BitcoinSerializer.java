@@ -86,7 +86,7 @@ public class BitcoinSerializer extends MessageSerializer {
      * @param params networkParams used to create Messages instances and determining packetMagic
      */
     public BitcoinSerializer(NetworkParameters params) {
-        this(params, params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT));
+        this(params, ProtocolVersion.CURRENT.intValue());
     }
 
     /**

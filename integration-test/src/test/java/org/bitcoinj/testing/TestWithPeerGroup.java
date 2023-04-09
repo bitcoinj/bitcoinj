@@ -21,9 +21,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.MemoryPoolMessage;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.ProtocolVersion;
 import org.bitcoinj.core.SendAddrV2Message;
 import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionAck;
@@ -82,7 +82,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         remoteVersionMessage.localServices =
                 Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
         remoteVersionMessage.clientVersion =
-                NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
+                ProtocolVersion.WITNESS_VERSION.intValue();
         blockJobs = false;
         initPeerGroup();
     }

@@ -100,7 +100,7 @@ public class VersionMessage extends Message {
      * @param bestHeight our best height to announce
      */
     public VersionMessage(NetworkParameters params, int bestHeight) {
-        this.clientVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.CURRENT);
+        this.clientVersion = ProtocolVersion.CURRENT.intValue();
         this.localServices = Services.none();
         this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
@@ -147,7 +147,7 @@ public class VersionMessage extends Message {
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         clientVersion = (int) ByteUtils.readUint32(payload);
-        check(clientVersion >= NetworkParameters.ProtocolVersion.MINIMUM.getBitcoinProtocolVersion(),
+        check(clientVersion >= ProtocolVersion.MINIMUM.intValue(),
                 ProtocolException::new);
         localServices = Services.read(payload);
         time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
@@ -163,7 +163,7 @@ public class VersionMessage extends Message {
         // int bestHeight (size of known block chain).
         bestHeight = ByteUtils.readUint32(payload);
         relayTxesBeforeFilter =
-                clientVersion >= NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion() ?
+                clientVersion >= ProtocolVersion.BLOOM_FILTER.intValue() ?
                 payload.get() != 0 :
                 true;
     }

@@ -457,7 +457,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.start();
         peerGroup.setPingIntervalMsec(0);
         VersionMessage versionMessage = new VersionMessage(UNITTEST, 2);
-        versionMessage.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
+        versionMessage.clientVersion = ProtocolVersion.BLOOM_FILTER.intValue();
         versionMessage.localServices = Services.of(Services.NODE_NETWORK);
         connectPeer(1, versionMessage);
         peerGroup.waitForPeers(1).get();
@@ -469,7 +469,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.start();
         peerGroup.setPingIntervalMsec(100);
         VersionMessage versionMessage = new VersionMessage(UNITTEST, 2);
-        versionMessage.clientVersion = NetworkParameters.ProtocolVersion.BLOOM_FILTER.getBitcoinProtocolVersion();
+        versionMessage.clientVersion = ProtocolVersion.BLOOM_FILTER.intValue();
         versionMessage.localServices = Services.of(Services.NODE_NETWORK);
         InboundMessageQueuer p1 = connectPeer(1, versionMessage);
         Ping ping = (Ping) waitForOutbound(p1);
@@ -486,10 +486,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void downloadPeerSelection() throws Exception {
         peerGroup.start();
         VersionMessage v1 = new VersionMessage(UNITTEST, 2);
-        v1.clientVersion = NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
+        v1.clientVersion = ProtocolVersion.WITNESS_VERSION.intValue();
         v1.localServices = Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
         VersionMessage v2 = new VersionMessage(UNITTEST, 4);
-        v2.clientVersion = NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
+        v2.clientVersion = ProtocolVersion.WITNESS_VERSION.intValue();
         v2.localServices = Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
         assertNull(peerGroup.getDownloadPeer());
 
@@ -705,8 +705,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Test
     public void waitForPeersOfVersion() throws Exception {
-        final int bip37ver = UNITTEST.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
-        final int bip111ver = UNITTEST.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111);
+        final int bip37ver = ProtocolVersion.BLOOM_FILTER.intValue();
+        final int bip111ver = ProtocolVersion.BLOOM_FILTER_BIP111.intValue();
 
         CompletableFuture<List<Peer>> future = peerGroup.waitForPeersOfVersion(2, bip111ver);
 

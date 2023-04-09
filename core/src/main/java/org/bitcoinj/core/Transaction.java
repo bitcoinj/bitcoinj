@@ -71,7 +71,7 @@ import java.util.TreeMap;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
-import static org.bitcoinj.core.NetworkParameters.ProtocolVersion.WITNESS_VERSION;
+import static org.bitcoinj.core.ProtocolVersion.WITNESS_VERSION;
 import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
 import static org.bitcoinj.base.internal.ByteUtils.writeInt64LE;
 
@@ -243,7 +243,7 @@ public class Transaction extends Message {
     }
 
     public Transaction() {
-        super(new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
+        super(new DummySerializer(ProtocolVersion.CURRENT.intValue()));
         version = 1;
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
@@ -255,7 +255,7 @@ public class Transaction extends Message {
      * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
      */
     public Transaction(ByteBuffer payload) throws ProtocolException {
-        super(payload, new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
+        super(payload, new DummySerializer(ProtocolVersion.CURRENT.intValue()));
         // inputs/outputs will be created in parse()
     }
 
@@ -295,7 +295,7 @@ public class Transaction extends Message {
      */
     private static boolean allowWitness(int protocolVersion) {
         return (protocolVersion & SERIALIZE_TRANSACTION_NO_WITNESS) == 0
-                && protocolVersion >= WITNESS_VERSION.getBitcoinProtocolVersion();
+                && protocolVersion >= WITNESS_VERSION.intValue();
     }
 
     /**

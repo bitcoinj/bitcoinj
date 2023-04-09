@@ -77,9 +77,4 @@ public class MockAltNetworkParams extends NetworkParameters {
     public BitcoinSerializer getSerializer() {
         return null;
     }
-
-    @Override
-    public int getProtocolVersionNum(ProtocolVersion version) {
-        return 0;
-    }
 }

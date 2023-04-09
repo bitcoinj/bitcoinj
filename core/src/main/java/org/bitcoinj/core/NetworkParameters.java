@@ -550,26 +550,11 @@ public abstract class NetworkParameters {
         return verifyFlags;
     }
 
-    public abstract int getProtocolVersionNum(final ProtocolVersion version);
-
-    public static enum ProtocolVersion {
-        MINIMUM(70000),
-        @Deprecated
-        PONG(60001),
-        BLOOM_FILTER(70001), // BIP37
-        BLOOM_FILTER_BIP111(70011), // BIP111
-        WITNESS_VERSION(70012),
-        FEEFILTER(70013), // BIP133
-        CURRENT(70013);
-
-        private final int bitcoinProtocol;
-
-        ProtocolVersion(final int bitcoinProtocol) {
-            this.bitcoinProtocol = bitcoinProtocol;
-        }
-
-        public int getBitcoinProtocolVersion() {
-            return bitcoinProtocol;
-        }
+    /**
+     * @deprecated  use {@link ProtocolVersion#intValue()}
+     */
+    @Deprecated
+    public int getProtocolVersionNum(final ProtocolVersion version) {
+        return version.intValue();
     }
 }

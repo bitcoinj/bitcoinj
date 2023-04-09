@@ -135,7 +135,7 @@ public class Block extends Message {
 
     /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
     Block(long setVersion) {
-        super(new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
+        super(new DummySerializer(ProtocolVersion.CURRENT.intValue()));
         // Set up a few basic things. We are not complete after this though.
         version = setVersion;
         difficultyTarget = 0x1d07fff8L;
@@ -149,7 +149,7 @@ public class Block extends Message {
      * @throws ProtocolException
      */
     public Block(ByteBuffer payload) throws ProtocolException {
-        super(payload, new DummySerializer(NetworkParameters.ProtocolVersion.CURRENT.getBitcoinProtocolVersion()));
+        super(payload, new DummySerializer(ProtocolVersion.CURRENT.intValue()));
     }
 
     /**
