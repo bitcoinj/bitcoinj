@@ -246,6 +246,7 @@ public class Wallet extends BaseTaggableObject
     // A list of scripts watched by this wallet.
     @GuardedBy("keyChainGroupLock") private final Set<Script> watchedScripts;
 
+    protected final Network network;
     protected final NetworkParameters params;
 
     @Nullable private Sha256Hash lastBlockSeenHash;
@@ -334,7 +335,7 @@ public class Wallet extends BaseTaggableObject
      * @return A new empty wallet
      */
     public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
-        return new Wallet(params, KeyChainGroup.builder(params, keyChainGroupStructure).fromRandom(outputScriptType).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params, keyChainGroupStructure).fromRandom(outputScriptType).build());
     }
 
     /**
@@ -343,7 +344,7 @@ public class Wallet extends BaseTaggableObject
      * @param params network parameters
      */
     public static Wallet createBasic(NetworkParameters params) {
-        return new Wallet(params, KeyChainGroup.createBasic(params));
+        return new Wallet(params.network(), KeyChainGroup.createBasic(params));
     }
 
     /**
@@ -366,7 +367,7 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ScriptType outputScriptType,
             KeyChainGroupStructure structure) {
-        return new Wallet(params, KeyChainGroup.builder(params, structure).fromSeed(seed, outputScriptType).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params, structure).fromSeed(seed, outputScriptType).build());
     }
 
     /**
@@ -380,7 +381,7 @@ public class Wallet extends BaseTaggableObject
             List<ChildNumber> accountPath) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).outputScriptType(outputScriptType)
                 .accountPath(accountPath).build();
-        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     /**
@@ -391,7 +392,7 @@ public class Wallet extends BaseTaggableObject
             ScriptType outputScriptType) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).outputScriptType(outputScriptType)
                 .build();
-        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params).addChain(chain).build());
     }
 
      /**
@@ -437,7 +438,7 @@ public class Wallet extends BaseTaggableObject
             ScriptType outputScriptType) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).outputScriptType(outputScriptType)
                 .build();
-        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     /**
@@ -489,7 +490,7 @@ public class Wallet extends BaseTaggableObject
             accountKey.clearCreationTime();
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(outputScriptType).build();
-        return new Wallet(params, KeyChainGroup.builder(params).addChain(chain).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params).addChain(chain).build());
     }
 
     private static ScriptType outputScriptTypeFromB58(NetworkParameters params, String base58) {
@@ -506,12 +507,13 @@ public class Wallet extends BaseTaggableObject
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
-     * @param params network parameters
+     * @param network network to operate on
      * @param keyChainGroup keychain group to manage keychains
      */
-    public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
-        this.params = Objects.requireNonNull(params);
-        this.coinSelector = DefaultCoinSelector.get(params.network());
+    public Wallet(Network network, KeyChainGroup keyChainGroup) {
+        this.network = Objects.requireNonNull(network);
+        this.params = NetworkParameters.of(network);
+        this.coinSelector = DefaultCoinSelector.get(network);
         this.keyChainGroup = Objects.requireNonNull(keyChainGroup);
         watchedScripts = new HashSet<>();
         unspent = new HashMap<>();
@@ -525,6 +527,14 @@ public class Wallet extends BaseTaggableObject
         signers = new ArrayList<>();
         addTransactionSigner(new LocalTransactionSigner());
         createTransientState();
+    }
+
+    /**
+     * @deprecated  use {@link Wallet(NetworkParameters, KeyChainGroup)}
+     */
+    @Deprecated
+    public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
+        this(params.network(), keyChainGroup);
     }
 
     private void createTransientState() {
@@ -552,7 +562,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     public Network network() {
-        return params.network();
+        return network;
     }
 
     public NetworkParameters getNetworkParameters() {
@@ -567,7 +577,7 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     public Address parseAddress(String addressString) throws AddressFormatException {
-        return addressParser.parseAddress(addressString, (BitcoinNetwork) params.network());
+        return addressParser.parseAddress(addressString, network);
     }
 
     /**
@@ -1195,7 +1205,7 @@ public class Wallet extends BaseTaggableObject
             List<Address> addresses = new LinkedList<>();
             for (Script script : watchedScripts)
                 if (ScriptPattern.isP2PKH(script))
-                    addresses.add(script.getToAddress(params.network()));
+                    addresses.add(script.getToAddress(network));
             return addresses;
         } finally {
             keyChainGroupLock.unlock();
@@ -2001,7 +2011,7 @@ public class Wallet extends BaseTaggableObject
         // spend against one of our other pending transactions.
         lock.lock();
         try {
-            Transaction.verify(params.network(), tx);
+            Transaction.verify(network, tx);
             // Ignore it if we already know about this transaction. Receiving a pending transaction never moves it
             // between pools.
             EnumSet<Pool> containingPools = getContainingPools(tx);
@@ -2780,7 +2790,7 @@ public class Wallet extends BaseTaggableObject
      * @throws VerificationException If transaction fails to verify
      */
     public boolean maybeCommitTx(Transaction tx) throws VerificationException {
-        Transaction.verify(params.network(), tx);
+        Transaction.verify(network, tx);
         lock.lock();
         try {
             if (pending.containsKey(tx.getTxId()))
@@ -3871,7 +3881,7 @@ public class Wallet extends BaseTaggableObject
         try {
             Objects.requireNonNull(selector);
             List<TransactionOutput> candidates = calculateAllSpendCandidates(true, false);
-            CoinSelection selection = selector.select((Coin) params.network().maxMoney(), candidates);
+            CoinSelection selection = selector.select((Coin) network.maxMoney(), candidates);
             return selection.totalValue();
         } finally {
             lock.unlock();
@@ -4468,7 +4478,7 @@ public class Wallet extends BaseTaggableObject
                 checkState(req.tx.getOutputs().size() == 1, () ->
                         "empty wallet TX must have a single output only");
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
-                bestCoinSelection = selector.select((Coin) params.network().maxMoney(), candidates);
+                bestCoinSelection = selector.select((Coin) network.maxMoney(), candidates);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
                 req.tx.getOutput(0).setValue(bestCoinSelection.totalValue());
                 log.info("  emptying {}", bestCoinSelection.totalValue().toFriendlyString());
@@ -4756,7 +4766,7 @@ public class Wallet extends BaseTaggableObject
     public void setUTXOProvider(@Nullable UTXOProvider provider) {
         lock.lock();
         try {
-            checkArgument(provider == null || provider.network() == params.network());
+            checkArgument(provider == null || provider.network() == network);
             this.vUTXOProvider = provider;
         } finally {
             lock.unlock();
