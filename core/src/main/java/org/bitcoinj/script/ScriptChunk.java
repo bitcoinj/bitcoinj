@@ -120,7 +120,7 @@ public class ScriptChunk {
                 buf.put((byte) OP_PUSHDATA2);
                 ByteUtils.writeInt16LE(data.length, buf);
             } else if (opcode == OP_PUSHDATA4) {
-                checkState(data.length <= Script.MAX_SCRIPT_ELEMENT_SIZE);
+                checkState(data.length <= ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE);
                 buf.put((byte) OP_PUSHDATA4);
                 ByteUtils.writeInt32LE(data.length, buf);
             } else {

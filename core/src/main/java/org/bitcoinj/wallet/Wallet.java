@@ -80,6 +80,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.MissingSigResolutionSigner;
@@ -4519,8 +4520,8 @@ public class Wallet extends BaseTaggableObject
                     // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                     // we sign missing pieces (to check this would require either assuming any signatures are signing
                     // standard output types or a way to get processed signatures out of script execution)
-                    txIn.getScriptSig().correctlySpends(tx, i, txIn.getWitness(), connectedOutput.getValue(),
-                            connectedOutput.getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+                    ScriptExecution.correctlySpends(txIn.getScriptSig(), tx, i, txIn.getWitness(), connectedOutput.getValue(),
+                            connectedOutput.getScriptPubKey(), ScriptExecution.ALL_VERIFY_FLAGS);
                     log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                     continue;
                 } catch (ScriptException e) {

@@ -58,6 +58,7 @@ import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
@@ -2717,8 +2718,8 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request2.tx.getOutputs().size());
         assertEquals(CENT, request2.tx.getOutput(0).getValue());
         // Make sure it was properly signed
-        request2.tx.getInput(0).getScriptSig().correctlySpends(
-                request2.tx, 0, null, null, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+        ScriptExecution.correctlySpends(request2.tx.getInput(0).getScriptSig(),
+                request2.tx, 0, null, null, tx3.getOutput(0).getScriptPubKey(), ScriptExecution.ALL_VERIFY_FLAGS);
 
         // However, if there is no connected output, we connect it
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
@@ -3087,8 +3088,8 @@ public class WalletTest extends TestWithWallet {
             } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
                 assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).pushData());
             } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
-                input.getScriptSig().correctlySpends(
-                        req.tx, i, null, null, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+                ScriptExecution.correctlySpends(input.getScriptSig(),
+                        req.tx, i, null, null, t3.getOutput(0).getScriptPubKey(), ScriptExecution.ALL_VERIFY_FLAGS);
             }
         }
         assertTrue(TransactionSignature.isEncodingCanonical(dummySig));

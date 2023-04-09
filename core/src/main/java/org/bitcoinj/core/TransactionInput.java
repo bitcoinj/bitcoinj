@@ -25,6 +25,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
@@ -542,8 +543,8 @@ public class TransactionInput {
                 throw new VerificationException("This input refers to a different output on the given tx.");
         }
         Script pubKey = output.getScriptPubKey();
-        getScriptSig().correctlySpends(getParentTransaction(), getIndex(), getWitness(), getValue(), pubKey,
-                Script.ALL_VERIFY_FLAGS);
+        ScriptExecution.correctlySpends(getScriptSig(), getParentTransaction(), getIndex(), getWitness(), getValue(), pubKey,
+                ScriptExecution.ALL_VERIFY_FLAGS);
     }
 
     /**

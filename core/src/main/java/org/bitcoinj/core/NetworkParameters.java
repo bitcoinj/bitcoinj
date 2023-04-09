@@ -24,7 +24,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.Networks;
-import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.utils.VersionTally;
 
@@ -389,17 +389,17 @@ public abstract class NetworkParameters {
      * tests should be a safe subset if block height is unknown.
      * @return the flags
      */
-    public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block,
-            final Transaction transaction, final VersionTally tally, final Integer height) {
-        final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
+    public EnumSet<ScriptExecution.VerifyFlag> getTransactionVerificationFlags(final Block block,
+                                                                               final Transaction transaction, final VersionTally tally, final Integer height) {
+        final EnumSet<ScriptExecution.VerifyFlag> verifyFlags = EnumSet.noneOf(ScriptExecution.VerifyFlag.class);
         if (!block.time().isBefore(NetworkParameters.BIP16_ENFORCE_TIME))
-            verifyFlags.add(Script.VerifyFlag.P2SH);
+            verifyFlags.add(ScriptExecution.VerifyFlag.P2SH);
 
         // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
         // blocks, when 75% of the network has upgraded:
         if (block.version() >= Block.BLOCK_VERSION_BIP65 &&
             tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP65) > this.getMajorityEnforceBlockUpgrade()) {
-            verifyFlags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
+            verifyFlags.add(ScriptExecution.VerifyFlag.CHECKLOCKTIMEVERIFY);
         }
 
         return verifyFlags;
