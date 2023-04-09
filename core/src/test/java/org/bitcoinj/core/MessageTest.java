@@ -36,7 +36,7 @@ public class MessageTest {
         new VarStrMessage(payload);
     }
 
-    static class VarStrMessage extends Message {
+    static class VarStrMessage extends BaseMessage {
         public VarStrMessage(ByteBuffer payload) {
             super(payload);
         }
@@ -55,7 +55,7 @@ public class MessageTest {
         new VarBytesMessage(payload);
     }
 
-    static class VarBytesMessage extends Message {
+    static class VarBytesMessage extends BaseMessage {
         public VarBytesMessage(ByteBuffer payload) {
             super(payload);
         }

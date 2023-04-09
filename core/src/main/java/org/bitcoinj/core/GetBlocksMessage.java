@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class GetBlocksMessage extends Message {
+public class GetBlocksMessage extends BaseMessage {
 
     protected long version;
     protected BlockLocator locator;

@@ -66,7 +66,7 @@ import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
  *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class PartialMerkleTree extends Message {
+public class PartialMerkleTree extends BaseMessage {
     // the total number of transactions in the block
     private int transactionCount;
 

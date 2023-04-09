@@ -30,7 +30,7 @@ import java.util.Random;
  *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Ping extends Message {
+public class Ping extends BaseMessage {
     private long nonce;
 
     public Ping(ByteBuffer payload) throws ProtocolException {

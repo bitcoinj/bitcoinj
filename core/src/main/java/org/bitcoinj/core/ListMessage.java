@@ -35,7 +35,7 @@ import java.util.List;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public abstract class ListMessage extends Message {
+public abstract class ListMessage extends BaseMessage {
 
     // For some reason the compiler complains if this is inside InventoryItem
     protected List<InventoryItem> items;
