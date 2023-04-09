@@ -516,7 +516,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         else
             kcg.fromRandom(preferredOutputScriptType);
 
-        return walletFactory.create(params, kcg.build());
+        return walletFactory.create(network, kcg.build());
     }
 
     private void maybeMoveOldWalletOutOfTheWay() {

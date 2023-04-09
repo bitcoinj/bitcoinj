@@ -113,7 +113,7 @@ public class TestWithNetworkConnections {
             // Reduce the number of keys we need to work with to speed up these tests.
             KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST).lookaheadSize(4).lookaheadThreshold(2)
                     .fromRandom(ScriptType.P2PKH).build();
-            wallet = new Wallet(UNITTEST, kcg);
+            wallet = new Wallet(UNITTEST.network(), kcg);
             address = wallet.freshReceiveAddress(ScriptType.P2PKH);
         }
         blockChain = new BlockChain(UNITTEST, wallet, blockStore);

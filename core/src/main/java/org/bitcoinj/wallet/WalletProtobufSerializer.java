@@ -22,6 +22,7 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.WireFormat;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.LockTime;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
@@ -100,7 +101,11 @@ public class WalletProtobufSerializer {
 
     @FunctionalInterface
     public interface WalletFactory {
-        Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup);
+        Wallet create(Network network, KeyChainGroup keyChainGroup);
+        @Deprecated
+        default Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup) {
+            return create(params.network(), keyChainGroup);
+        }
         WalletFactory DEFAULT = Wallet::new;
     }
 
@@ -498,7 +503,7 @@ public class WalletProtobufSerializer {
         } else {
             keyChainGroup = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), keyChainFactory);
         }
-        Wallet wallet = factory.create(params, keyChainGroup);
+        Wallet wallet = factory.create(params.network(), keyChainGroup);
 
         List<Script> scripts = new ArrayList<>();
         for (Protos.Script protoScript : walletProto.getWatchedScriptList()) {

@@ -224,7 +224,7 @@ public class WalletTest extends TestWithWallet {
                         .outputScriptType(ScriptType.P2WPKH)
                         .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).build())
                 .build();
-        Wallet encryptedWallet = new Wallet(TESTNET, keyChainGroup);
+        Wallet encryptedWallet = new Wallet(BitcoinNetwork.TESTNET, keyChainGroup);
         encryptedWallet = roundTrip(encryptedWallet);
         encryptedWallet.encrypt(PASSWORD1);
         encryptedWallet = roundTrip(encryptedWallet);
@@ -3219,7 +3219,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyEvents() {
         // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
-        wallet = new Wallet(TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build());
+        wallet = new Wallet(BitcoinNetwork.TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build());
         final List<ECKey> keys = new LinkedList<>();
         wallet.addKeyChainEventListener(Threading.SAME_THREAD, keys::addAll);
         wallet.freshReceiveKey();
@@ -3504,7 +3504,7 @@ public class WalletTest extends TestWithWallet {
         DeterministicKeyChain p2wpkhChain = DeterministicKeyChain.builder().random(new SecureRandom())
                 .outputScriptType(ScriptType.P2WPKH).build();
         KeyChainGroup kcg = KeyChainGroup.builder(TESTNET).addChain(p2pkhChain).addChain(p2wpkhChain).build();
-        Wallet wallet = new Wallet(TESTNET, kcg);
+        Wallet wallet = new Wallet(BitcoinNetwork.TESTNET, kcg);
 
         // Set up one key from each chain.
         ECKey importedKey = new ECKey();
