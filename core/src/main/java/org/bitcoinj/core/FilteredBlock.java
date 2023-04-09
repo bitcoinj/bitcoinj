@@ -37,7 +37,7 @@ import java.util.Objects;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class FilteredBlock extends Message {
+public class FilteredBlock extends BaseMessage {
     private Block header;
 
     private PartialMerkleTree merkleTree;

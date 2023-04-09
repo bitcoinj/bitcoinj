@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
  *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Pong extends Message {
+public class Pong extends BaseMessage {
     private long nonce;
 
     public Pong(ByteBuffer payload) throws ProtocolException {

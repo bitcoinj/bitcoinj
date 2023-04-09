@@ -38,7 +38,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class HeadersMessage extends Message {
+public class HeadersMessage extends BaseMessage {
     private static final Logger log = LoggerFactory.getLogger(HeadersMessage.class);
 
     // The main client will never send us more than this number of headers.

@@ -55,7 +55,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class BloomFilter extends Message {
+public class BloomFilter extends BaseMessage {
     /** The BLOOM_UPDATE_* constants control when the bloom filter is auto-updated by the peer using
         it as a filter, either never, for all outputs or only for P2PK outputs (default) */
     public enum BloomUpdate {

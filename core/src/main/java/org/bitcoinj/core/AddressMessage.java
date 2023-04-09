@@ -26,7 +26,7 @@ import java.util.List;
  * Abstract superclass for address messages on the P2P network, which contain network addresses of other peers. This is
  * one of the ways peers can find each other without using the {@link PeerDiscovery} mechanism.
  */
-public abstract class AddressMessage extends Message {
+public abstract class AddressMessage extends BaseMessage {
 
     protected static final long MAX_ADDRESSES = 1000;
     protected List<PeerAddress> addresses;

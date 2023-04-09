@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public abstract class EmptyMessage extends Message {
+public abstract class EmptyMessage extends BaseMessage {
 
     public EmptyMessage() {
         super();

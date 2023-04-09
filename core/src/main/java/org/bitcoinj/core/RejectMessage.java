@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class RejectMessage extends Message {
+public class RejectMessage extends BaseMessage {
 
     private String message, reason;
     public enum RejectCode {

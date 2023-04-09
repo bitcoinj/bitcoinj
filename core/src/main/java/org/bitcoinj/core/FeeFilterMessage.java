@@ -34,7 +34,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class FeeFilterMessage extends Message {
+public class FeeFilterMessage extends BaseMessage {
     private Coin feeRate;
 
     public FeeFilterMessage(ByteBuffer payload) {
