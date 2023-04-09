@@ -475,7 +475,7 @@ public class PeerGroup implements TransactionBroadcaster {
         peerDiscoverers = new CopyOnWriteArraySet<>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
         bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
-        vMinRequiredProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER);
+        vMinRequiredProtocolVersion = ProtocolVersion.BLOOM_FILTER.intValue();
     }
 
     private CountDownLatch executorStartupLatch = new CountDownLatch(1);
@@ -2379,7 +2379,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // Only select peers that announce the minimum protocol and services and that we think is fully synchronized.
         List<Peer> candidates = new LinkedList<>();
         int highestPriority = Integer.MIN_VALUE;
-        final int MINIMUM_VERSION = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.WITNESS_VERSION);
+        final int MINIMUM_VERSION = ProtocolVersion.WITNESS_VERSION.intValue();
         for (Peer peer : peers) {
             final VersionMessage versionMessage = peer.getPeerVersionMessage();
             if (versionMessage.clientVersion < MINIMUM_VERSION)

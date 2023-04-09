@@ -245,7 +245,7 @@ public class Peer extends PeerSocketHandler {
         this.getAddrFutures = new LinkedList<>();
         this.fastCatchupTime = params.getGenesisBlock().time();
         this.pendingPings = new CopyOnWriteArrayList<>();
-        this.vMinProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.MINIMUM);
+        this.vMinProtocolVersion = ProtocolVersion.MINIMUM.intValue();
         this.wallets = new CopyOnWriteArrayList<>();
         this.context = Context.get();
 
@@ -1817,8 +1817,8 @@ public class Peer extends PeerSocketHandler {
      */
     private boolean isBloomFilteringSupported(VersionMessage version) {
         int clientVersion = version.clientVersion();
-        if (clientVersion >= params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER)
-                && clientVersion < params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.BLOOM_FILTER_BIP111))
+        if (clientVersion >= ProtocolVersion.BLOOM_FILTER.intValue()
+                && clientVersion < ProtocolVersion.BLOOM_FILTER_BIP111.intValue())
             return true;
         if (version.services().has(Services.NODE_BLOOM))
             return true;

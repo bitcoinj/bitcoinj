@@ -21,6 +21,7 @@ import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.ProtocolVersion;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
