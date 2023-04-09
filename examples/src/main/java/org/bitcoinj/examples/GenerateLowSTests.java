@@ -30,7 +30,6 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.SignatureDecodeException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
@@ -60,7 +59,6 @@ public class GenerateLowSTests {
     public static void main(final String[] argv)
             throws NoSuchAlgorithmException, IOException, VerificationException, SignatureDecodeException {
         final Network network = BitcoinNetwork.MAINNET;
-        final NetworkParameters params = NetworkParameters.of(network);
         final LocalTransactionSigner signer = new LocalTransactionSigner();
         final SecureRandom secureRandom = SecureRandom.getInstanceStrong();
         final ECKey key = new ECKey(secureRandom);
