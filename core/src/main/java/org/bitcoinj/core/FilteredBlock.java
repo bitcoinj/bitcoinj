@@ -63,14 +63,14 @@ public class FilteredBlock extends Message {
             header.bitcoinSerializeToStream(stream);
         else
             header.cloneAsHeader().bitcoinSerializeToStream(stream);
-        merkleTree.bitcoinSerializeToStream(stream);
+        stream.write(merkleTree.serialize());
     }
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         byte[] headerBytes = Buffers.readBytes(payload, Block.HEADER_SIZE);
         header = new Block(ByteBuffer.wrap(headerBytes));
-        merkleTree = new PartialMerkleTree(payload);
+        merkleTree = PartialMerkleTree.read(payload);
     }
     
     /**

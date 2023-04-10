@@ -17,13 +17,13 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
@@ -38,9 +38,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -235,23 +235,26 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000002"));
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000003"));
         PartialMerkleTree pmt = new PartialMerkleTree(bits, hashes, 3) {
-            public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-                writeInt32LE(getTransactionCount(), stream);
+            public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+                writeInt32LE(getTransactionCount(), buf);
                 // Add Integer.MAX_VALUE instead of hashes.size()
-                stream.write(VarInt.of(Integer.MAX_VALUE).serialize());
-                //stream.write(VarInt.of(hashes.size()).encode());
+                VarInt.of(Integer.MAX_VALUE).write(buf);
                 for (Sha256Hash hash : hashes)
-                    stream.write(hash.serialize());
+                    hash.write(buf);
+                Buffers.writeLengthPrefixedBytes(buf, bits);
+                return buf;
+            }
 
-                stream.write(VarInt.of(bits.length).serialize());
-                stream.write(bits);
+            @Override
+            public int getMessageSize() {
+                return super.getMessageSize() + 4; // adjust for the longer VarInt
             }
         };
-        byte[] serializedPmt = pmt.bitcoinSerialize();
+        byte[] serializedPmt = pmt.serialize();
         try {
-            new PartialMerkleTree(ByteBuffer.wrap(serializedPmt));
-            fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
-        } catch (ProtocolException e) {
+            PartialMerkleTree.read(ByteBuffer.wrap(serializedPmt));
+            fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
+        } catch (BufferUnderflowException e) {
             //Expected, do nothing
         }
     }
