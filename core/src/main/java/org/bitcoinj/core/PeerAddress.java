@@ -41,12 +41,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+
 /**
  * <p>A PeerAddress holds an IP address and port number representing the network location of
  * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.</p>
  *
- * <p>This class abuses the protocol version contained in its serializer. It can only contain 0 (format within
- * {@link VersionMessage}), 1 ({@link AddressV1Message}) or 2 ({@link AddressV2Message}).</p>
+ * <p>This class abuses the protocol version contained in its serializer. It can only contain
+ * 1 ({@link AddressV1Message}) or 2 ({@link AddressV2Message}).</p>
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
@@ -55,7 +57,7 @@ public class PeerAddress extends Message {
     private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise or if not-yet-parsed
     private int port;
     private Services services;
-    private Optional<Instant> time;
+    private Instant time;
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = ByteUtils.parseHex("fd87d87eeb43");
@@ -100,7 +102,7 @@ public class PeerAddress extends Message {
         this.addr = Objects.requireNonNull(addr);
         this.port = port;
         this.services = services;
-        this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+        this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
     /**
@@ -133,7 +135,7 @@ public class PeerAddress extends Message {
         this.hostname = hostname;
         this.port = port;
         this.services = Services.none();
-        this.time = Optional.of(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+        this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
@@ -143,12 +145,10 @@ public class PeerAddress extends Message {
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         int protocolVersion = serializer.getProtocolVersion();
-        if (protocolVersion < 0 || protocolVersion > 2)
+        if (protocolVersion < 1 || protocolVersion > 2)
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
-        if (protocolVersion >= 1) {
-            ByteUtils.writeInt32LE(time.get().getEpochSecond(), stream);
-        }
+        ByteUtils.writeInt32LE(time.getEpochSecond(), stream);
         if (protocolVersion == 2) {
             stream.write(VarInt.of(services.bits()).serialize());
             if (addr != null) {
@@ -194,14 +194,7 @@ public class PeerAddress extends Message {
                 // Java does not provide any utility to map an IPv4 address into IPv6 space, so we have to do it by
                 // hand.
                 byte[] ipBytes = addr.getAddress();
-                if (ipBytes.length == 4) {
-                    byte[] v6addr = new byte[16];
-                    System.arraycopy(ipBytes, 0, v6addr, 12, 4);
-                    v6addr[10] = (byte) 0xFF;
-                    v6addr[11] = (byte) 0xFF;
-                    ipBytes = v6addr;
-                }
-                stream.write(ipBytes);
+                stream.write(mapIntoIPv6(ipBytes));
             } else if (hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
                 byte[] onionAddress = BASE32.decode(hostname.substring(0, hostname.length() - 6));
                 if (onionAddress.length == 10) {
@@ -222,14 +215,10 @@ public class PeerAddress extends Message {
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         int protocolVersion = serializer.getProtocolVersion();
-        if (protocolVersion < 0 || protocolVersion > 2)
+        if (protocolVersion < 1 || protocolVersion > 2)
             throw new IllegalStateException("invalid protocolVersion: " + protocolVersion);
 
-        if (protocolVersion >= 1) {
-            time = Optional.of(Instant.ofEpochSecond(ByteUtils.readUint32(payload)));
-        } else {
-            time = Optional.empty();
-        }
+        time = Instant.ofEpochSecond(ByteUtils.readUint32(payload));
         if (protocolVersion == 2) {
             services = Services.of(VarInt.read(payload).longValue());
             int networkId = payload.get();
@@ -293,12 +282,29 @@ public class PeerAddress extends Message {
         port = ByteUtils.readUint16BE(payload);
     }
 
-    private static InetAddress getByAddress(byte[] addrBytes) {
+    public static InetAddress getByAddress(byte[] addrBytes) {
         try {
             return InetAddress.getByAddress(addrBytes);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
+    }
+
+    /**
+     * Map given IPv4 address into IPv6 space.
+     *
+     * @param ip IPv4 to map into IPv6 space
+     * @return mapped IP
+     */
+    public static byte[] mapIntoIPv6(byte[] ip) {
+        checkArgument(ip.length == 4 || ip.length == 16, () -> "need IPv4 or IPv6");
+        if (ip.length == 16)
+            return ip; // nothing to do
+        byte[] ipv6 = new byte[16];
+        System.arraycopy(ip, 0, ipv6, 12, 4);
+        ipv6[10] = (byte) 0xFF;
+        ipv6[11] = (byte) 0xFF;
+        return ipv6;
     }
 
     public String getHostname() {
@@ -322,18 +328,17 @@ public class PeerAddress extends Message {
     }
 
     /**
-     * Gets the time that the node was last seen as connected to the network, or empty if that time isn't known (for
-     * old `addr` messages).
-     * @return time that the node was last seen, or empty if unknown
+     * Gets the time that the node was last seen as connected to the network.
+     * @return time that the node was last seen
      */
-    public Optional<Instant> time() {
+    public Instant time() {
         return time;
     }
 
     /** @deprecated use {@link #time()} */
     @Deprecated
     public long getTime() {
-        return time.isPresent() ? time.get().getEpochSecond() : -1;
+        return time.getEpochSecond();
     }
 
     @Override

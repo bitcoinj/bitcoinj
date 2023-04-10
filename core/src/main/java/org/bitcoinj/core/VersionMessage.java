@@ -26,11 +26,13 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -67,9 +69,13 @@ public class VersionMessage extends Message {
      */
     public Instant time;
     /**
-     * The network address of the node receiving this message.
+     * The network address of the receiving node as perceived by the transmitting node
      */
-    public PeerAddress receivingAddr;
+    public InetSocketAddress receivingAddr;
+    /**
+     * The services supported by the receiving node as perceived by the transmitting node.
+     */
+    public Services receivingServices;
     /**
      * User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
      * Bitcoin Core sets it to something like "/Satoshi:0.9.1/".
@@ -99,22 +105,21 @@ public class VersionMessage extends Message {
         this.clientVersion = ProtocolVersion.CURRENT.intValue();
         this.localServices = Services.none();
         this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        // Note that the Bitcoin Core doesn't do anything with these, and finding out your own external IP address
-        // is kind of tricky anyway, so we just put nonsense here for now.
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
-        MessageSerializer serializer = new DummySerializer(0);
-        this.receivingAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
+        this.receivingAddr = new InetSocketAddress(localhost, params.getPort());
+        this.receivingServices = Services.none();
         this.subVer = LIBRARY_SUBVER;
         this.bestHeight = bestHeight;
         this.relayTxesBeforeFilter = true;
     }
 
-    private VersionMessage(int clientVersion, Services localServices, Instant time, PeerAddress receivingAddr,
-                           String subVer, long bestHeight, boolean relayTxesBeforeFilter) {
+    private VersionMessage(int clientVersion, Services localServices, Instant time, InetSocketAddress receivingAddr,
+                           Services receivingServices, String subVer, long bestHeight, boolean relayTxesBeforeFilter) {
         this.clientVersion = clientVersion;
         this.localServices = localServices;
         this.time = time;
         this.receivingAddr = receivingAddr;
+        this.receivingServices = receivingServices;
         this.subVer = subVer;
         this.bestHeight = bestHeight;
         this.relayTxesBeforeFilter = relayTxesBeforeFilter;
@@ -145,7 +150,9 @@ public class VersionMessage extends Message {
                 ProtocolException::new);
         localServices = Services.read(payload);
         time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
-        receivingAddr = new PeerAddress(payload, new DummySerializer(0));
+        InetAddress receivingInetAddress = PeerAddress.getByAddress(Buffers.readBytes(payload, 16));
+        int receivingPort = ByteUtils.readUint16BE(payload);
+        receivingAddr = new InetSocketAddress(receivingInetAddress, receivingPort);
         Buffers.skipBytes(payload, 26); // addr_from
         // uint64 localHostNonce (random data)
         // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
@@ -167,7 +174,8 @@ public class VersionMessage extends Message {
         ByteUtils.writeInt32LE(clientVersion, buf);
         buf.write(localServices.serialize());
         ByteUtils.writeInt64LE(time.getEpochSecond(), buf);
-        receivingAddr.bitcoinSerializeToStream(buf);
+        buf.write(PeerAddress.mapIntoIPv6(receivingAddr.getAddress().getAddress()));
+        ByteUtils.writeInt16BE(receivingAddr.getPort(), buf);
         buf.write(new byte[26]); // addr_from
         // Next up is the "local host nonce", this is to detect the case of connecting
         // back to yourself. We don't care about this as we won't be accepting inbound
@@ -194,13 +202,14 @@ public class VersionMessage extends Message {
                 other.time.equals(time) &&
                 other.subVer.equals(subVer) &&
                 other.receivingAddr.equals(receivingAddr) &&
+                other.receivingServices.equals(receivingServices) &&
                 other.relayTxesBeforeFilter == relayTxesBeforeFilter;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(bestHeight, clientVersion, localServices,
-            time, subVer, receivingAddr, relayTxesBeforeFilter);
+            time, subVer, receivingAddr, receivingServices, relayTxesBeforeFilter);
     }
 
     @Override
@@ -212,6 +221,7 @@ public class VersionMessage extends Message {
         builder.append("\n");
         builder.append("time:           ").append(TimeUtils.dateTimeFormat(time)).append("\n");
         builder.append("receiving addr: ").append(receivingAddr).append("\n");
+        builder.append("receiving svc:  ").append(receivingServices).append("\n");
         builder.append("sub version:    ").append(subVer).append("\n");
         builder.append("best height:    ").append(bestHeight).append("\n");
         builder.append("delay tx relay: ").append(!relayTxesBeforeFilter).append("\n");
@@ -219,8 +229,8 @@ public class VersionMessage extends Message {
     }
 
     public VersionMessage duplicate() {
-        return new VersionMessage(clientVersion, localServices, time, receivingAddr, subVer, bestHeight,
-                relayTxesBeforeFilter);
+        return new VersionMessage(clientVersion, localServices, time, receivingAddr, receivingServices, subVer,
+                bestHeight, relayTxesBeforeFilter);
     }
 
     /**
