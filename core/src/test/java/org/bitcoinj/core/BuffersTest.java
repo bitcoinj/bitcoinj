@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.nio.Buffer;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Random;
@@ -54,5 +55,21 @@ public class BuffersTest {
             random.nextBytes(bytes);
             return bytes;
         }).limit(10).iterator();
+    }
+
+    // If readStr() is vulnerable this causes OutOfMemory
+    @Test(expected = BufferUnderflowException.class)
+    public void readStrOfExtremeLength() {
+        VarInt length = VarInt.of(Integer.MAX_VALUE);
+        ByteBuffer payload = ByteBuffer.wrap(length.serialize());
+        Buffers.readLengthPrefixedString(payload);
+    }
+
+    // If readBytes() is vulnerable this causes OutOfMemory
+    @Test(expected = BufferUnderflowException.class)
+    public void readByteArrayOfExtremeLength() {
+        VarInt length = VarInt.of(Integer.MAX_VALUE);
+        ByteBuffer payload = ByteBuffer.wrap(length.serialize());
+        Buffers.readLengthPrefixedBytes(payload);
     }
 }
