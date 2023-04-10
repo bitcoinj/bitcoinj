@@ -16,11 +16,8 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.base.VarInt;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -36,16 +33,6 @@ public abstract class AddressMessage extends Message {
 
     AddressMessage(ByteBuffer payload) throws ProtocolException {
         super(payload);
-    }
-
-    @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (addresses == null)
-            return;
-        stream.write(VarInt.of(addresses.size()).serialize());
-        for (PeerAddress addr : addresses) {
-            addr.bitcoinSerializeToStream(stream);
-        }
     }
 
     public abstract void addAddress(PeerAddress address);
