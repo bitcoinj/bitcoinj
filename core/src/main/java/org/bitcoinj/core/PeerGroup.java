@@ -1500,7 +1500,7 @@ public class PeerGroup implements TransactionBroadcaster {
         VersionMessage ver = getVersionMessage().duplicate();
         ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
         ver.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        ver.receivingAddr = address;
+        ver.receivingAddr = new InetSocketAddress(address.getAddr(), address.getPort());
 
         Peer peer = createPeer(address, ver);
         peer.addConnectedEventListener(Threading.SAME_THREAD, startupListener);

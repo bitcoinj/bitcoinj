@@ -34,7 +34,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnitParamsRunner.class)
@@ -51,24 +50,6 @@ public class PeerAddressTest {
     }
 
     @Test
-    public void parse_versionVariant() {
-        // copied from https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
-        String hex = "010000000000000000000000000000000000ffff0a000001208d";
-        MessageSerializer serializer = new DummySerializer(0);
-        PeerAddress pa = new PeerAddress(ByteBuffer.wrap(ByteUtils.parseHex(hex)), serializer);
-        assertEquals(Services.NODE_NETWORK, pa.getServices().bits());
-        assertEquals("10.0.0.1", pa.getAddr().getHostAddress());
-        assertEquals(8333, pa.getPort());
-    }
-
-    @Test
-    public void bitcoinSerialize_versionVariant() throws Exception {
-        MessageSerializer serializer = new DummySerializer(0);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName(null), 8333, Services.none(), serializer);
-        assertEquals("000000000000000000000000000000000000ffff7f000001208d", ByteUtils.formatHex(pa.bitcoinSerialize()));
-    }
-
-    @Test
     public void roundtrip_ipv4_addressV2Variant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         MessageSerializer serializer = new DummySerializer(2);
@@ -78,7 +59,7 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
-        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5)));// potentially racy
+        assertTrue(pa2.time().compareTo(time) >= 0 && pa2.time().isBefore(time.plusSeconds(5)));// potentially racy
     }
 
     @Test
@@ -91,19 +72,7 @@ public class PeerAddressTest {
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
-        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5))); // potentially racy
-    }
-
-    @Test
-    public void roundtrip_ipv4_versionVariant() throws Exception {
-        MessageSerializer serializer = new DummySerializer(0);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), serializer);
-        byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
-        assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
-        assertEquals(1234, pa2.getPort());
-        assertEquals(Services.none(), pa2.getServices());
-        assertFalse(pa2.time().isPresent());
+        assertTrue(pa2.time().compareTo(time) >= 0 && pa2.time().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -117,7 +86,7 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
-        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5))); // potentially racy
+        assertTrue(pa2.time().compareTo(time) >= 0 && pa2.time().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -131,20 +100,7 @@ public class PeerAddressTest {
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
-        assertTrue(pa2.time().get().compareTo(time) >= 0 && pa2.time().get().isBefore(time.plusSeconds(5))); // potentially racy
-    }
-
-    @Test
-    public void roundtrip_ipv6_versionVariant() throws Exception {
-        MessageSerializer serializer = new DummySerializer(0);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
-                Services.none(), serializer);
-        byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
-        assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
-        assertEquals(1234, pa2.getPort());
-        assertEquals(Services.none(), pa2.getServices());
-        assertFalse(pa2.time().isPresent());
+        assertTrue(pa2.time().compareTo(time) >= 0 && pa2.time().isBefore(time.plusSeconds(5))); // potentially racy
     }
 
     @Test
@@ -158,8 +114,8 @@ public class PeerAddressTest {
 
     private Object[] deserializeToStringValues() {
         return new Object[]{
-                new Object[]{0, "[10.0.0.1]:8333", "010000000000000000000000000000000000ffff0a000001208d"},
-                new Object[]{0, "[127.0.0.1]:8333", "000000000000000000000000000000000000ffff7f000001208d"},
+                new Object[]{1, "[10.0.0.1]:8333", "00000000010000000000000000000000000000000000ffff0a000001208d"},
+                new Object[]{1, "[127.0.0.1]:8333", "00000000000000000000000000000000000000000000ffff7f000001208d"},
                 new Object[]{2, "[etj2w3zby7hfaldy34dsuttvjtimywhvqjitk3w75ufprsqe47vr6vyd.onion]:8333", "2b71fd62fd0d04042024d3ab6f21c7ce502c78df072a4e754cd0cc58f58251356edfed0af8ca04e7eb208d"},
                 new Object[]{2, "[ PeerAddress of unsupported type ]:8333", "2f29fa62fd0d040610fca6763db6183c48d0d58d902c80e1f2208d"}
         };

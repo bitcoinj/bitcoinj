@@ -21,6 +21,7 @@ import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
@@ -72,7 +73,7 @@ public class VersionMessageTest {
         ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.localServices = Services.of(1);
-        ver.receivingAddr = new PeerAddress(InetAddress.getByName("4.3.2.1"), 8333);
+        ver.receivingAddr = new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 8333);
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(ByteBuffer.wrap(serialized));
         assertEquals(1234, ver2.bestHeight);
@@ -80,7 +81,7 @@ public class VersionMessageTest {
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(ProtocolVersion.CURRENT.intValue(), ver2.clientVersion);
         assertEquals(1, ver2.localServices.bits());
-        assertEquals("4.3.2.1", ver2.receivingAddr.getAddr().getHostAddress());
+        assertEquals("4.3.2.1", ver2.receivingAddr.getHostName());
         assertEquals(8333, ver2.receivingAddr.getPort());
     }
 
@@ -90,7 +91,7 @@ public class VersionMessageTest {
         ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.localServices = Services.of(1);
-        ver.receivingAddr = new PeerAddress(InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
+        ver.receivingAddr = new InetSocketAddress(InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(ByteBuffer.wrap(serialized));
         assertEquals(1234, ver2.bestHeight);
@@ -98,7 +99,7 @@ public class VersionMessageTest {
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(ProtocolVersion.CURRENT.intValue(), ver2.clientVersion);
         assertEquals(1, ver2.localServices.bits());
-        assertEquals("2002:db8:85a3:0:0:8a2e:370:7335", ver2.receivingAddr.getAddr().getHostAddress());
+        assertEquals("2002:db8:85a3:0:0:8a2e:370:7335", ver2.receivingAddr.getHostName());
         assertEquals(8333, ver2.receivingAddr.getPort());
     }
 }
