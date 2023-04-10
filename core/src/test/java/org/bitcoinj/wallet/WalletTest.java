@@ -492,8 +492,8 @@ public class WalletTest extends TestWithWallet {
         final LinkedList<Transaction> txns = new LinkedList<>();
         wallet.addCoinsSentEventListener((wallet1, tx, prevBalance, newBalance) -> txns.add(tx));
 
-        t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{1,2,3,4}), TESTNET.getPort()));
-        t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByAddress(new byte[]{10,2,3,4}), TESTNET.getPort()));
+        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByAddress(new byte[]{1,2,3,4}), TESTNET.getPort()));
+        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByAddress(new byte[]{10,2,3,4}), TESTNET.getPort()));
         wallet.commitTx(t);
         Threading.waitForUserCode();
         assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));

@@ -244,7 +244,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     }
 
     private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress) {
-        final PeerAddress peerAddress = new PeerAddress(ipAddress, params.getPort());
+        final PeerAddress peerAddress = PeerAddress.simple(ipAddress, params.getPort());
         System.out.println("Connecting to " + peerAddress + "...");
         peerGroup.addAddress(peerAddress);
         peerGroup.start();
