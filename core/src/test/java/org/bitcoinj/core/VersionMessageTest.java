@@ -72,7 +72,6 @@ public class VersionMessageTest {
         ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.localServices = Services.of(1);
-        ver.fromAddr = new PeerAddress(InetAddress.getByName("1.2.3.4"), 3888);
         ver.receivingAddr = new PeerAddress(InetAddress.getByName("4.3.2.1"), 8333);
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(ByteBuffer.wrap(serialized));
@@ -81,8 +80,6 @@ public class VersionMessageTest {
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(ProtocolVersion.CURRENT.intValue(), ver2.clientVersion);
         assertEquals(1, ver2.localServices.bits());
-        assertEquals("1.2.3.4", ver2.fromAddr.getAddr().getHostAddress());
-        assertEquals(3888, ver2.fromAddr.getPort());
         assertEquals("4.3.2.1", ver2.receivingAddr.getAddr().getHostAddress());
         assertEquals(8333, ver2.receivingAddr.getPort());
     }
@@ -93,7 +90,6 @@ public class VersionMessageTest {
         ver.time = Instant.ofEpochSecond(23456);
         ver.subVer = "/bitcoinj/";
         ver.localServices = Services.of(1);
-        ver.fromAddr = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 3888);
         ver.receivingAddr = new PeerAddress(InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
         byte[] serialized = ver.bitcoinSerialize();
         VersionMessage ver2 = new VersionMessage(ByteBuffer.wrap(serialized));
@@ -102,8 +98,6 @@ public class VersionMessageTest {
         assertEquals("/bitcoinj/", ver2.subVer);
         assertEquals(ProtocolVersion.CURRENT.intValue(), ver2.clientVersion);
         assertEquals(1, ver2.localServices.bits());
-        assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", ver2.fromAddr.getAddr().getHostAddress());
-        assertEquals(3888, ver2.fromAddr.getPort());
         assertEquals("2002:db8:85a3:0:0:8a2e:370:7335", ver2.receivingAddr.getAddr().getHostAddress());
         assertEquals(8333, ver2.receivingAddr.getPort());
     }
