@@ -44,7 +44,7 @@ public class PeerAddressTest {
     public void equalsContract() {
         EqualsVerifier.forClass(PeerAddress.class)
                 .suppress(Warning.NONFINAL_FIELDS)
-                .withIgnoredFields("time", "serializer")
+                .withIgnoredFields("time")
                 .usingGetClass()
                 .verify();
     }
@@ -52,10 +52,9 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv4_addressV2Variant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = new DummySerializer(2);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), serializer);
-        byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
+        PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), time);
+        byte[] serialized = pa.serialize(2);
+        PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 2);
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
@@ -65,10 +64,9 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv4_addressVariant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = new DummySerializer(1);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), serializer);
-        byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
+        PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), time);
+        byte[] serialized = pa.serialize(1);
+        PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 1);
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
@@ -78,11 +76,10 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv6_addressV2Variant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = new DummySerializer(2);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
-                Services.none(), serializer);
-        byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
+                Services.none(), time);
+        byte[] serialized = pa.serialize(2);
+        PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 2);
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
@@ -92,11 +89,10 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv6_addressVariant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        MessageSerializer serializer = new DummySerializer(1);
         PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
-                Services.none(), serializer);
-        byte[] serialized = pa.bitcoinSerialize();
-        PeerAddress pa2 = new PeerAddress(ByteBuffer.wrap(serialized), serializer);
+                Services.none(), time);
+        byte[] serialized = pa.serialize(1);
+        PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 1);
         assertEquals("2001:db8:85a3:0:0:8a2e:370:7334", pa2.getAddr().getHostAddress());
         assertEquals(1234, pa2.getPort());
         assertEquals(Services.none(), pa2.getServices());
@@ -106,8 +102,7 @@ public class PeerAddressTest {
     @Test
     @Parameters(method = "deserializeToStringValues")
     public void deserializeToString(int version, String expectedToString, String hex) {
-        MessageSerializer serializer = new DummySerializer(version);
-        PeerAddress pa = new PeerAddress(ByteBuffer.wrap(ByteUtils.parseHex(hex)), serializer);
+        PeerAddress pa = PeerAddress.read(ByteBuffer.wrap(ByteUtils.parseHex(hex)), version);
 
         assertEquals(expectedToString, pa.toString());
     }

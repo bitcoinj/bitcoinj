@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -76,7 +78,7 @@ public class BitcoinSerializerTest {
         assertEquals(31, addressMessage.getMessageSize());
 
         addressMessage.addAddress(new PeerAddress(InetAddress.getLocalHost(), MAINNET.getPort(),
-                Services.none(), new DummySerializer(1)));
+                Services.none(), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS)));
         bos = new ByteArrayOutputStream(61);
         serializer.serialize(addressMessage, bos);
         assertEquals(61, addressMessage.getMessageSize());

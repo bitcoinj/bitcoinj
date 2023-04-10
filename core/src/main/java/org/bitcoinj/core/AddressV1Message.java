@@ -21,9 +21,14 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Objects;
+
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
  * Represents an "addr" message on the P2P network, which contains broadcast IP addresses of other peers. This is
@@ -49,15 +54,23 @@ public class AddressV1Message extends AddressMessage {
         if (numAddresses > MAX_ADDRESSES)
             throw new ProtocolException("Address message too large.");
         addresses = new ArrayList<>(numAddresses);
-        MessageSerializer serializer = new DummySerializer(1);
         for (int i = 0; i < numAddresses; i++) {
-            PeerAddress addr = new PeerAddress(payload, serializer);
-            addresses.add(addr);
+            addresses.add(PeerAddress.read(payload, 1));
         }
     }
 
     public void addAddress(PeerAddress address) {
         addresses.add(address);
+    }
+
+    @Override
+    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+        if (addresses == null)
+            return;
+        stream.write(VarInt.of(addresses.size()).serialize());
+        for (PeerAddress addr : addresses) {
+            stream.write(addr.serialize(1));
+        }
     }
 
     @Override
