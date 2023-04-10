@@ -46,6 +46,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -795,23 +796,22 @@ public class Block extends Message {
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
         transactions = new ArrayList<>();
-        Transaction coinbase = new Transaction();
-        final ScriptBuilder inputBuilder = new ScriptBuilder();
-
-        if (height >= Block.BLOCK_HEIGHT_GENESIS) {
-            inputBuilder.number(height);
-        }
-        inputBuilder.data(new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)});
 
         // A real coinbase transaction has some stuff in the scriptSig like the extraNonce and difficulty. The
         // transactions are distinguished by every TX output going to a different key.
         //
         // Here we will do things a bit differently so a new address isn't needed every time. We'll put a simple
         // counter in the scriptSig so every transaction has a different hash.
-        coinbase.addInput(TransactionInput.coinbaseInput(coinbase,
-                inputBuilder.build().program()));
-        coinbase.addOutput(new TransactionOutput(coinbase, value,
-                ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).program()));
+        final ScriptBuilder inputBuilder = new ScriptBuilder();
+        if (height >= Block.BLOCK_HEIGHT_GENESIS) {
+            inputBuilder.number(height);
+        }
+        inputBuilder.data(new byte[]{(byte) txCounter, (byte) (txCounter++ >> 8)});
+        
+        Transaction coinbase = Transaction.coinbase(inputBuilder.build().program(),
+                value,
+                ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)));
+
         transactions.add(coinbase);
     }
 
