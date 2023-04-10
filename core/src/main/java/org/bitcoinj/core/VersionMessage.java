@@ -71,10 +71,6 @@ public class VersionMessage extends Message {
      */
     public PeerAddress receivingAddr;
     /**
-     * The network address of the node emitting this message. Not used.
-     */
-    public PeerAddress fromAddr;
-    /**
      * User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
      * Bitcoin Core sets it to something like "/Satoshi:0.9.1/".
      */
@@ -108,19 +104,17 @@ public class VersionMessage extends Message {
         InetAddress localhost = InetAddresses.forString("127.0.0.1");
         MessageSerializer serializer = new DummySerializer(0);
         this.receivingAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
-        this.fromAddr = new PeerAddress(localhost, params.getPort(), Services.none(), serializer);
         this.subVer = LIBRARY_SUBVER;
         this.bestHeight = bestHeight;
         this.relayTxesBeforeFilter = true;
     }
 
     private VersionMessage(int clientVersion, Services localServices, Instant time, PeerAddress receivingAddr,
-                           PeerAddress fromAddr, String subVer, long bestHeight, boolean relayTxesBeforeFilter) {
+                           String subVer, long bestHeight, boolean relayTxesBeforeFilter) {
         this.clientVersion = clientVersion;
         this.localServices = localServices;
         this.time = time;
         this.receivingAddr = receivingAddr;
-        this.fromAddr = fromAddr;
         this.subVer = subVer;
         this.bestHeight = bestHeight;
         this.relayTxesBeforeFilter = relayTxesBeforeFilter;
@@ -152,7 +146,7 @@ public class VersionMessage extends Message {
         localServices = Services.read(payload);
         time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
         receivingAddr = new PeerAddress(payload, new DummySerializer(0));
-        fromAddr = new PeerAddress(payload, new DummySerializer(0));
+        Buffers.skipBytes(payload, 26); // addr_from
         // uint64 localHostNonce (random data)
         // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
         // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
@@ -174,7 +168,7 @@ public class VersionMessage extends Message {
         buf.write(localServices.serialize());
         ByteUtils.writeInt64LE(time.getEpochSecond(), buf);
         receivingAddr.bitcoinSerializeToStream(buf);
-        fromAddr.bitcoinSerializeToStream(buf);
+        buf.write(new byte[26]); // addr_from
         // Next up is the "local host nonce", this is to detect the case of connecting
         // back to yourself. We don't care about this as we won't be accepting inbound
         // connections.
@@ -200,14 +194,13 @@ public class VersionMessage extends Message {
                 other.time.equals(time) &&
                 other.subVer.equals(subVer) &&
                 other.receivingAddr.equals(receivingAddr) &&
-                other.fromAddr.equals(fromAddr) &&
                 other.relayTxesBeforeFilter == relayTxesBeforeFilter;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(bestHeight, clientVersion, localServices,
-            time, subVer, receivingAddr, fromAddr, relayTxesBeforeFilter);
+            time, subVer, receivingAddr, relayTxesBeforeFilter);
     }
 
     @Override
@@ -219,7 +212,6 @@ public class VersionMessage extends Message {
         builder.append("\n");
         builder.append("time:           ").append(TimeUtils.dateTimeFormat(time)).append("\n");
         builder.append("receiving addr: ").append(receivingAddr).append("\n");
-        builder.append("from addr:      ").append(fromAddr).append("\n");
         builder.append("sub version:    ").append(subVer).append("\n");
         builder.append("best height:    ").append(bestHeight).append("\n");
         builder.append("delay tx relay: ").append(!relayTxesBeforeFilter).append("\n");
@@ -227,7 +219,7 @@ public class VersionMessage extends Message {
     }
 
     public VersionMessage duplicate() {
-        return new VersionMessage(clientVersion, localServices, time, receivingAddr, fromAddr, subVer, bestHeight,
+        return new VersionMessage(clientVersion, localServices, time, receivingAddr, subVer, bestHeight,
                 relayTxesBeforeFilter);
     }
 
