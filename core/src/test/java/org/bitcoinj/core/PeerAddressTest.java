@@ -52,7 +52,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv4_addressV2Variant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), time);
+        PeerAddress pa = PeerAddress.inet(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), time);
         byte[] serialized = pa.serialize(2);
         PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 2);
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
@@ -64,7 +64,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv4_addressVariant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), time);
+        PeerAddress pa = PeerAddress.inet(InetAddress.getByName("1.2.3.4"), 1234, Services.none(), time);
         byte[] serialized = pa.serialize(1);
         PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 1);
         assertEquals("1.2.3.4", pa2.getAddr().getHostAddress());
@@ -76,7 +76,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv6_addressV2Variant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
+        PeerAddress pa = PeerAddress.inet(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 Services.none(), time);
         byte[] serialized = pa.serialize(2);
         PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 2);
@@ -89,7 +89,7 @@ public class PeerAddressTest {
     @Test
     public void roundtrip_ipv6_addressVariant() throws Exception {
         Instant time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        PeerAddress pa = new PeerAddress(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
+        PeerAddress pa = PeerAddress.inet(InetAddress.getByName("2001:db8:85a3:0:0:8a2e:370:7334"), 1234,
                 Services.none(), time);
         byte[] serialized = pa.serialize(1);
         PeerAddress pa2 = PeerAddress.read(ByteBuffer.wrap(serialized), 1);

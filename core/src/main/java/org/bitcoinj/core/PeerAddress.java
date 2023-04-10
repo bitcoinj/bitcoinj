@@ -20,9 +20,11 @@ package org.bitcoinj.core;
 import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
+import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 
+import javax.annotation.Nullable;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -32,6 +34,7 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Objects;
@@ -47,11 +50,13 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * Instances of this class are not safe for use by multiple threads.
  */
 public class PeerAddress {
-    private InetAddress addr;   // Used for IPV4, IPV6, null otherwise
-    private String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise
-    private int port;
-    private Services services;
-    private Instant time;
+    @Nullable
+    private final InetAddress addr;   // Used for IPV4, IPV6, null otherwise
+    @Nullable
+    private final String hostname;    // Used for (.onion addresses) TORV2, TORV3, null otherwise
+    private final int port;
+    private final Services services;
+    private final Instant time;
 
     private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = ByteUtils.parseHex("fd87d87eeb43");
@@ -76,6 +81,74 @@ public class PeerAddress {
                 .filter(id -> id.value == value)
                 .findFirst();
         }
+    }
+
+    /**
+     * Constructs a simple peer address from the given IP address and port, but without services. The time is set to
+     * current time.
+     *
+     * @param addr ip address of peer
+     * @param port port the peer is listening on
+     * @return simple peer address
+     */
+    public static PeerAddress simple(InetAddress addr, int port) {
+        return new PeerAddress(
+                Objects.requireNonNull(addr),
+                null,
+                port,
+                Services.none(),
+                TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    /**
+     * Constructs a simple peer address from the given socket address, but without services. The time is set to
+     * current time.
+     *
+     * @param addr ip address and port of peer
+     * @return simple peer address
+     */
+    public static PeerAddress simple(InetSocketAddress addr) {
+        return new PeerAddress(
+                addr.getAddress(),
+                null,
+                addr.getPort(),
+                Services.none(),
+                TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    /**
+     * Constructs a peer address from the given IP address, port, services and time. Such addresses are used for
+     * `addr` and `addrv2` messages of types IPv4 and IPv6.
+     *
+     * @param addr     ip address of the peer
+     * @param port     port the peer is listening on
+     * @param services node services the peer is providing
+     * @param time     last-seen time of the peer
+     */
+    public static PeerAddress inet(InetAddress addr, int port, Services services, Instant time) {
+        return new PeerAddress(
+                Objects.requireNonNull(addr),
+                null,
+                port,
+                Objects.requireNonNull(services),
+                Objects.requireNonNull(time));
+    }
+
+    /**
+     * Constructs a peer address from the given IP address, port, services and time. Such addresses are used for
+     * `addr` and `addrv2` messages of types IPv4 and IPv6.
+     *
+     * @param addr     ip address and port of the peer
+     * @param services node services the peer is providing
+     * @param time     last-seen time of the peer
+     */
+    public static PeerAddress inet(InetSocketAddress addr, Services services, Instant time) {
+        return new PeerAddress(
+                addr.getAddress(),
+                null,
+                addr.getPort(),
+                Objects.requireNonNull(services),
+                Objects.requireNonNull(time));
     }
 
     /**
@@ -159,35 +232,6 @@ public class PeerAddress {
         return new PeerAddress(addr, hostname, port, services, time);
     }
 
-    /**
-     * Constructs a peer address from the given IP address, port and services.
-     */
-    public PeerAddress(InetAddress addr, int port, Services services, Instant time) {
-        this(addr, null, port, services, Objects.requireNonNull(time));
-    }
-
-    /**
-     * Constructs a peer address from the given IP address, port and services.
-     */
-    public PeerAddress(InetAddress addr, int port, Services services) {
-        this(addr, null, port, services, null);
-    }
-
-    /**
-     * Constructs a peer address from the given IP address and port.
-     */
-    public PeerAddress(InetAddress addr, int port) {
-        this(addr, null, port, Services.none(), null);
-    }
-
-    /**
-     * Constructs a peer address from an {@link InetSocketAddress}. An InetSocketAddress can take in as parameters an
-     * InetAddress or a String hostname. If you want to connect to a .onion, set the hostname to the .onion address.
-     */
-    public PeerAddress(InetSocketAddress addr) {
-        this(addr.getAddress(), null, addr.getPort(), Services.none(), null);
-    }
-
     private PeerAddress(InetAddress addr, String hostname, int port, Services services, Instant time) {
         this.addr = addr;
         this.hostname = hostname;
@@ -197,7 +241,7 @@ public class PeerAddress {
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
-        return new PeerAddress(InetAddress.getLoopbackAddress(), params.getPort());
+        return PeerAddress.simple(InetAddress.getLoopbackAddress(), params.getPort());
     }
 
     /**

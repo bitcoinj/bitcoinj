@@ -1041,12 +1041,12 @@ public class PeerGroup implements TransactionBroadcaster {
 
     /** Convenience method for {@link #addAddress(PeerAddress)}. */
     public void addAddress(InetAddress address) {
-        addAddress(new PeerAddress(address, params.getPort()));
+        addAddress(PeerAddress.simple(address, params.getPort()));
     }
 
     /** Convenience method for {@link #addAddress(PeerAddress, int)}. */
     public void addAddress(InetAddress address, int priority) {
-        addAddress(new PeerAddress(address, params.getPort()), priority);
+        addAddress(PeerAddress.simple(address, params.getPort()), priority);
     }
 
     /**
@@ -1092,7 +1092,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 log.warn(e.getMessage());
                 continue;
             }
-            for (InetSocketAddress address : addresses) addressList.add(new PeerAddress(address));
+            for (InetSocketAddress address : addresses) addressList.add(PeerAddress.simple(address));
             if (addressList.size() >= maxPeersToDiscoverCount) break;
         }
         if (!addressList.isEmpty()) {
@@ -1462,7 +1462,7 @@ public class PeerGroup implements TransactionBroadcaster {
     public Peer connectTo(InetSocketAddress address) {
         lock.lock();
         try {
-            PeerAddress peerAddress = new PeerAddress(address);
+            PeerAddress peerAddress = PeerAddress.simple(address);
             backoffMap.put(peerAddress, new ExponentialBackoff(peerBackoffParams));
             return connectTo(peerAddress, true, vConnectTimeout);
         } finally {

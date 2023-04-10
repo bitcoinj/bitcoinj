@@ -69,9 +69,9 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         assertFalse(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
         assertFalse(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
-        t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("1.2.3.4"), TESTNET.getPort()));
+        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByName("1.2.3.4"), TESTNET.getPort()));
         assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
-        t.getConfidence().markBroadcastBy(new PeerAddress(InetAddress.getByName("5.6.7.8"), TESTNET.getPort()));
+        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByName("5.6.7.8"), TESTNET.getPort()));
         assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
         t = new Transaction();
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
