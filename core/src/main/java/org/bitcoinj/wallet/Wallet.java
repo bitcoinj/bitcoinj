@@ -4569,7 +4569,6 @@ public class Wallet extends BaseTaggableObject
                 Objects.requireNonNull(redeemData, () ->
                         "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().hash());
                 txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
-                txIn.setWitness(scriptPubKey.createEmptyWitness(redeemData.keys.get(0)));
             }
 
             TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);

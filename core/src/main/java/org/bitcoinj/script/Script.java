@@ -566,19 +566,6 @@ public class Script {
         }
     }
 
-    public TransactionWitness createEmptyWitness(ECKey key) {
-        if (ScriptPattern.isP2WPKH(this)) {
-            checkArgument(key != null, () ->
-                    "key required to create P2WPKH witness");
-            return TransactionWitness.EMPTY;
-        } else if (ScriptPattern.isP2PK(this) || ScriptPattern.isP2PKH(this)
-                || ScriptPattern.isP2SH(this)) {
-            return null; // no witness
-        } else {
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Do not understand script type: " + this);
-        }
-    }
-
     /**
      * Returns a copy of the given scriptSig with the signature inserted in the given position.
      */
