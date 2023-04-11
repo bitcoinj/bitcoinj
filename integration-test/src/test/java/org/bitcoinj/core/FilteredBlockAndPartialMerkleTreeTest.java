@@ -234,7 +234,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000001"));
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000002"));
         hashes.add(Sha256Hash.wrap("0000000000000000000000000000000000000000000000000000000000000003"));
-        PartialMerkleTree pmt = new PartialMerkleTree(bits, hashes, 3) {
+        PartialMerkleTree pmt = new PartialMerkleTree(3, hashes, bits) {
             public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
                 writeInt32LE(getTransactionCount(), buf);
                 // Add Integer.MAX_VALUE instead of hashes.size()
