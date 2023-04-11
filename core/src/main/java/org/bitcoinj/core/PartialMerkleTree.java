@@ -62,18 +62,16 @@ import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
  *  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (&lt;= 2*N-1 bits)
  * </pre>
  * <p>The size constraints follow from this.</p>
- *
- * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PartialMerkleTree {
     // the total number of transactions in the block
-    private int transactionCount;
-
-    // node-is-parent-of-matched-txid bits
-    private byte[] matchedChildBits;
+    private final int transactionCount;
 
     // txids and internal hashes
-    private List<Sha256Hash> hashes;
+    private final List<Sha256Hash> hashes;
+
+    // node-is-parent-of-matched-txid bits
+    private final byte[] matchedChildBits;
 
     /**
      * Deserialize a partial merkle tree from a given payload.
@@ -89,18 +87,17 @@ public class PartialMerkleTree {
         for (int i = 0; i < nHashes; i++)
             hashes.add(Sha256Hash.read(payload));
         byte[] matchedChildBits = Buffers.readLengthPrefixedBytes(payload);
-        return new PartialMerkleTree(matchedChildBits, hashes, transactionCount);
+        return new PartialMerkleTree(transactionCount, hashes, matchedChildBits);
     }
 
     /**
      * Constructs a new PMT with the given bit set (little endian) and the raw list of hashes including internal hashes,
      * taking ownership of the list.
      */
-    public PartialMerkleTree(byte[] bits, List<Sha256Hash> hashes, int origTxCount) {
-        super();
-        this.matchedChildBits = bits;
-        this.hashes = hashes;
+    public PartialMerkleTree(int origTxCount, List<Sha256Hash> hashes, byte[] bits) {
         this.transactionCount = origTxCount;
+        this.hashes = Objects.requireNonNull(hashes);
+        this.matchedChildBits = Objects.requireNonNull(bits);
     }
 
     /**
@@ -119,7 +116,7 @@ public class PartialMerkleTree {
         for (int i = 0; i < bitList.size(); i++)
             if (bitList.get(i))
                 ByteUtils.setBitLE(bits, i);
-        return new PartialMerkleTree(bits, hashes, allLeafHashes.size());
+        return new PartialMerkleTree(allLeafHashes.size(), hashes, bits);
     }
 
     /**

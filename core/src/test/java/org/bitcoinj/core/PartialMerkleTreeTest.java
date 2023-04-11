@@ -56,7 +56,7 @@ public class PartialMerkleTreeTest {
                 byte[] randomHash = new byte[Sha256Hash.LENGTH];
                 return Sha256Hash.wrap(randomHash);
             }).limit(random.nextInt(10)).collect(Collectors.toList());
-            return new PartialMerkleTree(randomBits, hashes, random.nextInt(20));
+            return new PartialMerkleTree(random.nextInt(20), hashes, randomBits);
         }).limit(10).iterator();
     }
 }
