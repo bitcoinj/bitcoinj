@@ -67,12 +67,10 @@ public class LocalTransactionSigner implements TransactionSigner {
     @Override
     public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
         Transaction tx = propTx.partialTx;
-        int numInputs = tx.getInputs().size();
-        for (int i = 0; i < numInputs; i++) {
-            TransactionInput txIn = tx.getInput(i);
+        for (TransactionInput txIn : tx.getInputs()) {
             final TransactionOutput connectedOutput = txIn.getConnectedOutput();
             if (connectedOutput == null) {
-                log.warn("Missing connected output, assuming input {} is already signed.", i);
+                log.warn("Missing connected output, assuming input {} is already signed.", txIn.getIndex());
                 continue;
             }
             Script scriptPubKey = connectedOutput.getScriptPubKey();
@@ -81,9 +79,9 @@ public class LocalTransactionSigner implements TransactionSigner {
                 // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                 // we sign missing pieces (to check this would require either assuming any signatures are signing
                 // standard output types or a way to get processed signatures out of script execution)
-                txIn.getScriptSig().correctlySpends(tx, i, txIn.getWitness(), connectedOutput.getValue(),
+                txIn.getScriptSig().correctlySpends(tx, txIn.getIndex(), txIn.getWitness(), connectedOutput.getValue(),
                         connectedOutput.getScriptPubKey(), MINIMUM_VERIFY_FLAGS);
-                log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
+                log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", txIn.getIndex());
                 continue;
             } catch (ScriptException e) {
                 // Expected.
@@ -103,7 +101,7 @@ public class LocalTransactionSigner implements TransactionSigner {
             // only one key (with private bytes). For P2SH inputs RedeemData will contain multiple keys, one of which MAY
             // have private bytes
             if ((key = redeemData.getFullKey()) == null) {
-                log.warn("No local key found for input {}", i);
+                log.warn("No local key found for input {}", txIn.getIndex());
                 continue;
             }
 
@@ -114,7 +112,7 @@ public class LocalTransactionSigner implements TransactionSigner {
             try {
                 if (ScriptPattern.isP2PK(scriptPubKey) || ScriptPattern.isP2PKH(scriptPubKey)
                         || ScriptPattern.isP2SH(scriptPubKey)) {
-                    TransactionSignature signature = tx.calculateSignature(i, key, script, Transaction.SigHash.ALL,
+                    TransactionSignature signature = tx.calculateSignature(txIn.getIndex(), key, script, Transaction.SigHash.ALL,
                             false);
 
                     // at this point we have incomplete inputScript with OP_0 in place of one or more signatures. We
@@ -132,7 +130,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                 } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
                     Script scriptCode = ScriptBuilder.createP2PKHOutputScript(key);
                     Coin value = txIn.getValue();
-                    TransactionSignature signature = tx.calculateWitnessSignature(i, key, scriptCode, value,
+                    TransactionSignature signature = tx.calculateWitnessSignature(txIn.getIndex(), key, scriptCode, value,
                             Transaction.SigHash.ALL, false);
                     txIn.setScriptSig(ScriptBuilder.createEmpty());
                     txIn.setWitness(TransactionWitness.redeemP2WPKH(signature, key));
@@ -142,7 +140,7 @@ public class LocalTransactionSigner implements TransactionSigner {
             } catch (ECKey.KeyIsEncryptedException e) {
                 throw e;
             } catch (ECKey.MissingPrivateKeyException e) {
-                log.warn("No private key in keypair for input {}", i);
+                log.warn("No private key in keypair for input {}", txIn.getIndex());
             }
 
         }
