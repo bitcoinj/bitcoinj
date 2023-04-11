@@ -98,11 +98,11 @@ public class LocalTransactionSigner implements TransactionSigner {
             if (pubKey instanceof DeterministicKey)
                 propTx.keyPaths.put(scriptPubKey, (((DeterministicKey) pubKey).getPath()));
 
-            ECKey key;
             // locate private key in redeem data. For P2PKH and P2PK inputs RedeemData will always contain
             // only one key (with private bytes). For P2SH inputs RedeemData will contain multiple keys, one of which MAY
             // have private bytes
-            if ((key = redeemData.getFullKey()) == null) {
+            ECKey key = redeemData.getFullKey();
+            if (key == null) {
                 log.warn("No local key found for input {}", i);
                 continue;
             }
