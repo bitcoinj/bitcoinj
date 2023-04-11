@@ -17,6 +17,8 @@
 package org.bitcoinj.base.internal;
 
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.ProtocolException;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -54,10 +56,12 @@ public class Buffers {
      * @param buf buffer to read from
      * @return read bytes
      * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
+     * @throws ProtocolException if the length prefix is greater than the maximum allowed message size
      */
-    public static byte[] readLengthPrefixedBytes(ByteBuffer buf) throws BufferUnderflowException {
-        int length = VarInt.read(buf).intValue();
-        return readBytes(buf, length);
+    public static byte[] readLengthPrefixedBytes(ByteBuffer buf) throws BufferUnderflowException, ProtocolException {
+        long length = VarInt.read(buf).longValue();
+        check(length < Message.MAX_SIZE, () -> new ProtocolException("length prefix too long"));
+        return readBytes(buf, (int) length);
     }
 
     /**

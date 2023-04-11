@@ -55,4 +55,15 @@ public class BuffersTest {
             return bytes;
         }).limit(10).iterator();
     }
+
+    @Test(expected = ProtocolException.class)
+    public void readLengthPrefixedBytesPrefixTooBig() {
+        // Construct a pathological buffer with a prefix equal to max message size and no subsequent data
+        VarInt tooBig = VarInt.of(Message.MAX_SIZE);
+        ByteBuffer buf = ByteBuffer.allocate(tooBig.getSizeInBytes());
+        tooBig.write(buf);
+        assertFalse(buf.hasRemaining());
+        ((Buffer) buf).rewind();
+        Buffers.readLengthPrefixedBytes(buf);
+    }
 }
