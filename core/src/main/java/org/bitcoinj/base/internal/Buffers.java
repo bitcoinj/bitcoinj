@@ -56,8 +56,9 @@ public class Buffers {
      * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
      */
     public static byte[] readLengthPrefixedBytes(ByteBuffer buf) throws BufferUnderflowException {
-        int length = VarInt.read(buf).intValue();
-        return readBytes(buf, length);
+        VarInt length = VarInt.read(buf);
+        check(length.fitsInt(), BufferUnderflowException::new);
+        return readBytes(buf, length.intValue());
     }
 
     /**

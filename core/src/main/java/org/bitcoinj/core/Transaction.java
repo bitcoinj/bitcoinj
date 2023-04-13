@@ -69,6 +69,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.core.ProtocolVersion.WITNESS_VERSION;
@@ -637,6 +638,7 @@ public class Transaction extends Message {
 
     private void parseInputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numInputsVarInt = VarInt.read(payload);
+        check(numInputsVarInt.fitsInt(), BufferUnderflowException::new);
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
@@ -652,6 +654,7 @@ public class Transaction extends Message {
 
     private void parseOutputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numOutputsVarInt = VarInt.read(payload);
+        check(numOutputsVarInt.fitsInt(), BufferUnderflowException::new);
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {

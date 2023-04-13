@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
+
 /**
  * <p>A protocol message that contains a repeated series of block headers, sent in response to the "getheaders" command.
  * This is useful when you want to traverse the chain but know you don't care about the block contents, for example,
@@ -69,7 +71,9 @@ public class HeadersMessage extends Message {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        int numHeaders = VarInt.read(payload).intValue();
+        VarInt numHeadersVarInt = VarInt.read(payload);
+        check(numHeadersVarInt.fitsInt(), BufferUnderflowException::new);
+        int numHeaders = numHeadersVarInt.intValue();
         if (numHeaders > MAX_HEADERS)
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
                                          MAX_HEADERS);

@@ -55,6 +55,7 @@ import java.util.Locale;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Sha256Hash.hashTwice;
+import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
@@ -196,8 +197,9 @@ public class Block extends Message {
     /**
      * Parse transactions from the block.
      */
-    protected void parseTransactions(ByteBuffer payload) throws ProtocolException {
+    protected void parseTransactions(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numTransactionsVarInt = VarInt.read(payload);
+        check(numTransactionsVarInt.fitsInt(), BufferUnderflowException::new);
         int numTransactions = numTransactionsVarInt.intValue();
         transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < numTransactions; i++) {

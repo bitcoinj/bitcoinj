@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
+
 /**
  * <p>Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.</p>
  * 
@@ -65,7 +67,9 @@ public abstract class ListMessage extends Message {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        int arrayLen = VarInt.read(payload).intValue();
+        VarInt arrayLenVarInt = VarInt.read(payload);
+        check(arrayLenVarInt.fitsInt(), BufferUnderflowException::new);
+        int arrayLen = arrayLenVarInt.intValue();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);
 

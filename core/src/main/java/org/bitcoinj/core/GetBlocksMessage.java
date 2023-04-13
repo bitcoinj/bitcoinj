@@ -26,6 +26,8 @@ import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
+
 /**
  * <p>Represents the "getblocks" P2P network message, which requests the hashes of the parts of the block chain we're
  * missing. Those blocks can then be downloaded with a {@link GetDataMessage}.</p>
@@ -51,7 +53,9 @@ public class GetBlocksMessage extends Message {
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         version = ByteUtils.readUint32(payload);
-        int startCount = VarInt.read(payload).intValue();
+        VarInt startCountVarInt = VarInt.read(payload);
+        check(startCountVarInt.fitsInt(), BufferUnderflowException::new);
+        int startCount = startCountVarInt.intValue();
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
         locator = new BlockLocator();
