@@ -571,9 +571,13 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         }
     }
 
+    /**
+     * Close and release resources. Implements {@link Closeable}. This should be idempotent.
+     */
     @Override
     public void close() {
         stopAsync();
+        awaitTerminated();
     }
 
     public BitcoinNetwork network() {
