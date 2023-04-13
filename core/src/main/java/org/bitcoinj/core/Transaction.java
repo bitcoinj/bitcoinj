@@ -642,13 +642,7 @@ public class Transaction extends BaseMessage {
         int numInputs = numInputsVarInt.intValue();
         inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            TransactionInput input = TransactionInput.read(payload.slice(), this);
-            inputs.add(input);
-            // intentionally read again, due to the slice above
-            Buffers.skipBytes(payload, TransactionOutPoint.BYTES);
-            VarInt scriptLenVarInt = VarInt.read(payload);
-            int scriptLen = scriptLenVarInt.intValue();
-            Buffers.skipBytes(payload, scriptLen + 4);
+            inputs.add(TransactionInput.read(payload, this));
         }
     }
 
@@ -658,13 +652,7 @@ public class Transaction extends BaseMessage {
         int numOutputs = numOutputsVarInt.intValue();
         outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            TransactionOutput output = TransactionOutput.read(payload.slice(), this);
-            outputs.add(output);
-            // intentionally read again, due to the slice above
-            Buffers.skipBytes(payload, 8); // value
-            VarInt scriptLenVarInt = VarInt.read(payload);
-            int scriptLen = scriptLenVarInt.intValue();
-            Buffers.skipBytes(payload, scriptLen);
+            outputs.add(TransactionOutput.read(payload, this));
         }
     }
 
