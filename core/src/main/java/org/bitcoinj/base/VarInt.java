@@ -107,12 +107,35 @@ public class VarInt {
         originallyEncodedSize = copy.originallyEncodedSize;
     }
 
+    /**
+     * Gets the value as a long. For values greater than {@link Long#MAX_VALUE} the returned long
+     * will be negative. It is still to be interpreted as an unsigned value.
+     *
+     * @return value as a long
+     */
     public long longValue() {
         return value;
     }
 
-    public int intValue() {
-        return Math.toIntExact(value);
+    /**
+     * Determine if the value would fit an int, i.e. it is in the range of {@code 0} to {@link Integer#MAX_VALUE}.
+     * If this is true, it's safe to call {@link #intValue()}.
+     *
+     * @return true if the value fits an int, false otherwise
+     */
+    public boolean fitsInt() {
+        return value >= 0 && value <= Integer.MAX_VALUE;
+    }
+
+    /**
+     * Gets the value as an unsigned int in the range of {@code 0} to {@link Integer#MAX_VALUE}.
+     *
+     * @return value as an unsigned int
+     * @throws ArithmeticException if the value doesn't fit an int
+     */
+    public int intValue() throws ArithmeticException {
+        check(fitsInt(), () -> new ArithmeticException("value too large for an int: " + value));
+        return (int) value;
     }
 
     /**
