@@ -70,8 +70,6 @@ public enum BitcoinNetwork implements Network {
     public static final String ID_SIGNET = SIGNET.id();
     /** The ID string for regtest mode. */
     public static final String ID_REGTEST = REGTEST.id();
-    /** The ID string for the Unit test network -- there is no corresponding {@code enum}. */
-    public static final String ID_UNITTESTNET = "org.bitcoinj.unittest";
 
     private final String id;
 
@@ -195,8 +193,6 @@ public enum BitcoinNetwork implements Network {
 
     /**
      * Find the {@code BitcoinNetwork} from an ID String
-     * <p>
-     * Note: {@link #ID_UNITTESTNET} is not supported as an enum
      * @param idString specifies the network
      * @return An {@code Optional} containing the matching enum or empty
      */

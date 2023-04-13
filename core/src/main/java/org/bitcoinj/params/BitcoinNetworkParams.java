@@ -90,8 +90,6 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
             return TestNet3Params.get();
         } else if (id.equals(BitcoinNetwork.ID_SIGNET)) {
             return SigNetParams.get();
-        } else if (id.equals(BitcoinNetwork.ID_UNITTESTNET)) {
-            return UnitTestParams.get();
         } else if (id.equals(BitcoinNetwork.ID_REGTEST)) {
             return RegTestParams.get();
         } else {
