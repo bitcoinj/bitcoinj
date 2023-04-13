@@ -26,6 +26,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
@@ -47,7 +48,8 @@ public class AddressV2Message extends AddressMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        final VarInt numAddressesVarInt = VarInt.read(payload);
+        VarInt numAddressesVarInt = VarInt.read(payload);
+        check(numAddressesVarInt.fitsInt(), BufferUnderflowException::new);
         int numAddresses = numAddressesVarInt.intValue();
         // Guard against ultra large messages that will crash us.
         if (numAddresses > MAX_ADDRESSES)

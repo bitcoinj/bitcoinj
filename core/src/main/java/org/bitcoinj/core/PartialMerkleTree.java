@@ -34,6 +34,7 @@ import java.util.Objects;
 import static org.bitcoinj.base.internal.ByteUtils.checkBitLE;
 import static org.bitcoinj.base.internal.ByteUtils.reverseBytes;
 import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
+import static org.bitcoinj.base.internal.Preconditions.check;
 
 /**
  * <p>A data structure that contains proofs of block inclusion for one or more transactions, in an efficient manner.</p>
@@ -82,7 +83,9 @@ public class PartialMerkleTree {
      */
     public static PartialMerkleTree read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         int transactionCount = (int) ByteUtils.readUint32(payload);
-        int nHashes = VarInt.read(payload).intValue();
+        VarInt nHashesVarInt = VarInt.read(payload);
+        check(nHashesVarInt.fitsInt(), BufferUnderflowException::new);
+        int nHashes = nHashesVarInt.intValue();
         List<Sha256Hash> hashes = new ArrayList<>(Math.min(nHashes, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < nHashes; i++)
             hashes.add(Sha256Hash.read(payload));

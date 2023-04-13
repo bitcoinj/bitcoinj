@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 public class TransactionWitness {
@@ -92,7 +93,9 @@ public class TransactionWitness {
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
     public static TransactionWitness read(ByteBuffer payload) throws BufferUnderflowException {
-        int pushCount = VarInt.read(payload).intValue();
+        VarInt pushCountVarInt = VarInt.read(payload);
+        check(pushCountVarInt.fitsInt(), BufferUnderflowException::new);
+        int pushCount = pushCountVarInt.intValue();
         List<byte[]> pushes = new ArrayList<>(Math.min(pushCount, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int y = 0; y < pushCount; y++)
             pushes.add(Buffers.readLengthPrefixedBytes(payload));
