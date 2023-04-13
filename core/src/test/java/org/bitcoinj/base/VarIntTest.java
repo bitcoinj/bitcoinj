@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnitParamsRunner.class)
 public class VarIntTest {
@@ -34,6 +35,7 @@ public class VarIntTest {
     @Parameters(method = "integerTestVectors")
     public void testIntCreation(int value, int size) {
         VarInt a = VarInt.of(value);
+        assertTrue(a.fitsInt());
         assertEquals(value, a.intValue());
         assertEquals(size, a.getSizeInBytes());
         assertEquals(size, a.getOriginalSizeInBytes());
@@ -45,6 +47,7 @@ public class VarIntTest {
     @Parameters(method = "longTestVectors")
     public void testIntGetErr(int value, int size) {
         VarInt a = VarInt.of(value);
+        assertFalse(a.fitsInt());
         a.intValue();
     }
 
@@ -52,6 +55,7 @@ public class VarIntTest {
     @Parameters(method = "longTestVectors")
     public void testIntGetErr2(int value, int size) {
         VarInt a = VarInt.of(value);
+        assertFalse(a.fitsInt());
         VarInt.ofBytes(a.serialize(), 0).intValue();
     }
 
@@ -89,10 +93,7 @@ public class VarIntTest {
                 new Object[]{ 0x7FFF, 3},
                 new Object[]{ 0x8000, 3},
                 new Object[]{ 0x10000, 5},
-                new Object[]{ Integer.MIN_VALUE, 9},
                 new Object[]{ Integer.MAX_VALUE, 5},
-                // -1 shouldn't normally be passed, but at least stay consistent (bug regression test)
-                new Object[]{ -1, 9}
         };
     }
 
@@ -105,9 +106,9 @@ public class VarIntTest {
                 new Object[]{ 0xAABBCCDDL, 5},
                 new Object[]{ 0xFFFFFFFFL, 5},
                 new Object[]{ 0xCAFEBABEDEADBEEFL, 9},
+                new Object[]{ Integer.MIN_VALUE, 9},
                 new Object[]{ Long.MIN_VALUE, 9},
                 new Object[]{ Long.MAX_VALUE, 9},
-                // -1 shouldn't normally be passed, but at least stay consistent (bug regression test)
                 new Object[]{ -1L, 9}
         };
     }
