@@ -40,7 +40,7 @@ public abstract class ListMessage extends Message {
     // For some reason the compiler complains if this is inside InventoryItem
     protected List<InventoryItem> items;
 
-    public static final long MAX_INVENTORY_ITEMS = 50000;
+    public static final int MAX_INVENTORY_ITEMS = 50000;
 
     public ListMessage(ByteBuffer payload) throws ProtocolException {
         super(payload);
@@ -65,12 +65,12 @@ public abstract class ListMessage extends Message {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        long arrayLen = VarInt.read(payload).longValue();
+        int arrayLen = VarInt.read(payload).intValue();
         if (arrayLen > MAX_INVENTORY_ITEMS)
             throw new ProtocolException("Too many items in INV message: " + arrayLen);
 
         // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
-        items = new ArrayList<>((int) arrayLen);
+        items = new ArrayList<>(arrayLen);
         for (int i = 0; i < arrayLen; i++) {
             if (payload.remaining() < InventoryItem.MESSAGE_LENGTH) {
                 throw new ProtocolException("Ran off the end of the INV");
