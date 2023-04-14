@@ -62,7 +62,7 @@ public class HeadersMessage extends BaseMessage {
 
         List<Block> blockHeaders = new ArrayList<>();
         for (int i = 0; i < numHeaders; ++i) {
-            final Block newBlockHeader = new Block(payload);
+            final Block newBlockHeader = Block.read(payload);
             if (newBlockHeader.hasTransactions()) {
                 throw new ProtocolException("Block header does not end with a null byte");
             }
