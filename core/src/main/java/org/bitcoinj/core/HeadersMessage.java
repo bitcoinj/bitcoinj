@@ -46,8 +46,35 @@ public class HeadersMessage extends BaseMessage {
 
     private List<Block> blockHeaders;
 
-    public HeadersMessage(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    /**
+     * Deserialize this message from a given payload.
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static HeadersMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        VarInt numHeadersVarInt = VarInt.read(payload);
+        check(numHeadersVarInt.fitsInt(), BufferUnderflowException::new);
+        int numHeaders = numHeadersVarInt.intValue();
+        if (numHeaders > MAX_HEADERS)
+            throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
+                    MAX_HEADERS);
+
+        List<Block> blockHeaders = new ArrayList<>();
+        for (int i = 0; i < numHeaders; ++i) {
+            final Block newBlockHeader = new Block(payload);
+            if (newBlockHeader.hasTransactions()) {
+                throw new ProtocolException("Block header does not end with a null byte");
+            }
+            blockHeaders.add(newBlockHeader);
+        }
+
+        if (log.isDebugEnabled()) {
+            for (int i = 0; i < numHeaders; ++i) {
+                log.debug(blockHeaders.get(i).toString());
+            }
+        }
+        return new HeadersMessage(blockHeaders);
     }
 
     public HeadersMessage(Block... headers) throws ProtocolException {
@@ -71,27 +98,7 @@ public class HeadersMessage extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        VarInt numHeadersVarInt = VarInt.read(payload);
-        check(numHeadersVarInt.fitsInt(), BufferUnderflowException::new);
-        int numHeaders = numHeadersVarInt.intValue();
-        if (numHeaders > MAX_HEADERS)
-            throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
-                                         MAX_HEADERS);
-
-        blockHeaders = new ArrayList<>();
-        for (int i = 0; i < numHeaders; ++i) {
-            final Block newBlockHeader = new Block(payload);
-            if (newBlockHeader.hasTransactions()) {
-                throw new ProtocolException("Block header does not end with a null byte");
-            }
-            blockHeaders.add(newBlockHeader);
-        }
-
-        if (log.isDebugEnabled()) {
-            for (int i = 0; i < numHeaders; ++i) {
-                log.debug(this.blockHeaders.get(i).toString());
-            }
-        }
+        throw new UnsupportedOperationException();
     }
 
     public List<Block> getBlockHeaders() {
