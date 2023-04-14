@@ -77,12 +77,23 @@ public class BloomFilter extends BaseMessage {
     private static final int MAX_HASH_FUNCS = 50;
 
     /**
-     * Construct a BloomFilter by deserializing payload
+     * Deserialize this message from a given payload.
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    public BloomFilter(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    public static BloomFilter read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        byte[] data = Buffers.readLengthPrefixedBytes(payload);
+        if (data.length > MAX_FILTER_SIZE)
+            throw new ProtocolException ("Bloom filter out of size range.");
+        long hashFuncs = ByteUtils.readUint32(payload);
+        if (hashFuncs > MAX_HASH_FUNCS)
+            throw new ProtocolException("Bloom filter hash function count out of range");
+        int nTweak = ByteUtils.readInt32(payload);
+        byte nFlags = payload.get();
+        return new BloomFilter(data, hashFuncs, nTweak, nFlags);
     }
-    
+
     /**
      * Constructs a filter with the given parameters which is updated on P2PK outputs only.
      */
@@ -131,7 +142,14 @@ public class BloomFilter extends BaseMessage {
         this.nTweak = randomNonce;
         this.nFlags = (byte)(0xff & updateFlag.ordinal());
     }
-    
+
+    private BloomFilter(byte[] data, long hashFuncs, int nTweak, byte nFlags) {
+        this.data = data;
+        this.hashFuncs = hashFuncs;
+        this.nTweak = nTweak;
+        this.nFlags = nFlags;
+    }
+
     /**
      * Returns the theoretical false positive rate of this filter if were to contain the given number of elements.
      */
@@ -150,16 +168,9 @@ public class BloomFilter extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        data = Buffers.readLengthPrefixedBytes(payload);
-        if (data.length > MAX_FILTER_SIZE)
-            throw new ProtocolException ("Bloom filter out of size range.");
-        hashFuncs = ByteUtils.readUint32(payload);
-        if (hashFuncs > MAX_HASH_FUNCS)
-            throw new ProtocolException("Bloom filter hash function count out of range");
-        nTweak = ByteUtils.readInt32(payload);
-        nFlags = payload.get();
+        throw new UnsupportedOperationException();
     }
-    
+
     /**
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
