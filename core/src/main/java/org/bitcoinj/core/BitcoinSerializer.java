@@ -260,7 +260,7 @@ public class BitcoinSerializer extends MessageSerializer {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new SendHeadersMessage();
         } else if (command.equals("feefilter")) {
-            return new FeeFilterMessage(payload);
+            return FeeFilterMessage.read(payload);
         } else {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new UnknownMessage(command);

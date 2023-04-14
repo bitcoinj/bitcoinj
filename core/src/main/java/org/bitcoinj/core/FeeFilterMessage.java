@@ -37,8 +37,21 @@ import static org.bitcoinj.base.internal.Preconditions.check;
 public class FeeFilterMessage extends BaseMessage {
     private Coin feeRate;
 
-    public FeeFilterMessage(ByteBuffer payload) {
-        super(payload);
+    /**
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static FeeFilterMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        Coin feeRate = Coin.ofSat(ByteUtils.readInt64(payload));
+        check(feeRate.signum() >= 0, () -> new ProtocolException("fee rate out of range: " + feeRate));
+        return new FeeFilterMessage(feeRate);
+    }
+
+    private FeeFilterMessage(Coin feeRate) {
+        this.feeRate = feeRate;
     }
 
     @Override
@@ -49,8 +62,7 @@ public class FeeFilterMessage extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        feeRate = Coin.ofSat(ByteUtils.readInt64(payload));
-        check(feeRate.signum() >= 0, () -> new ProtocolException("fee rate out of range: " + feeRate));
+        throw new UnsupportedOperationException();
     }
 
     public Coin getFeeRate() {
