@@ -16,7 +16,9 @@
 
 package org.bitcoinj.core;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
@@ -34,17 +36,22 @@ public class InventoryMessage extends ListMessage {
     public static final int MAX_INV_SIZE = 50000;
 
     /**
-     * Deserializes an 'inv' message.
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @throws ProtocolException
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    public InventoryMessage(ByteBuffer payload)
-            throws ProtocolException {
-        super(payload);
+    public static InventoryMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return new InventoryMessage(readItems(payload));
     }
 
     public InventoryMessage() {
         super();
+    }
+
+    protected InventoryMessage(List<InventoryItem> items) {
+        super(items);
     }
 
     public void addBlock(Block block) {

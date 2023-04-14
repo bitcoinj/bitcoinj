@@ -44,13 +44,37 @@ public abstract class ListMessage extends BaseMessage {
 
     public static final int MAX_INVENTORY_ITEMS = 50000;
 
-    public ListMessage(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    protected static List<InventoryItem> readItems(ByteBuffer payload) throws BufferUnderflowException,
+            ProtocolException {
+        VarInt arrayLenVarInt = VarInt.read(payload);
+        check(arrayLenVarInt.fitsInt(), BufferUnderflowException::new);
+        int arrayLen = arrayLenVarInt.intValue();
+        if (arrayLen > MAX_INVENTORY_ITEMS)
+            throw new ProtocolException("Too many items in INV message: " + arrayLen);
+
+        // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
+        List<InventoryItem> items = new ArrayList<>(arrayLen);
+        for (int i = 0; i < arrayLen; i++) {
+            if (payload.remaining() < InventoryItem.MESSAGE_LENGTH) {
+                throw new ProtocolException("Ran off the end of the INV");
+            }
+            int typeCode = (int) ByteUtils.readUint32(payload);
+            InventoryItem.Type type = InventoryItem.Type.ofCode(typeCode);
+            if (type == null)
+                throw new ProtocolException("Unknown CInv type: " + typeCode);
+            InventoryItem item = new InventoryItem(type, Sha256Hash.read(payload));
+            items.add(item);
+        }
+        return items;
     }
 
     public ListMessage() {
         super();
         items = new ArrayList<>();
+    }
+
+    protected ListMessage(List<InventoryItem> items) {
+        this.items = items;
     }
 
     public List<InventoryItem> getItems() {
@@ -67,25 +91,7 @@ public abstract class ListMessage extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        VarInt arrayLenVarInt = VarInt.read(payload);
-        check(arrayLenVarInt.fitsInt(), BufferUnderflowException::new);
-        int arrayLen = arrayLenVarInt.intValue();
-        if (arrayLen > MAX_INVENTORY_ITEMS)
-            throw new ProtocolException("Too many items in INV message: " + arrayLen);
-
-        // An inv is vector<CInv> where CInv is int+hash. The int is either 1 or 2 for tx or block.
-        items = new ArrayList<>(arrayLen);
-        for (int i = 0; i < arrayLen; i++) {
-            if (payload.remaining() < InventoryItem.MESSAGE_LENGTH) {
-                throw new ProtocolException("Ran off the end of the INV");
-            }
-            int typeCode = (int) ByteUtils.readUint32(payload);
-            InventoryItem.Type type = InventoryItem.Type.ofCode(typeCode);
-            if (type == null)
-                throw new ProtocolException("Unknown CInv type: " + typeCode);
-            InventoryItem item = new InventoryItem(type, Sha256Hash.read(payload));
-            items.add(item);
-        }
+        throw new UnsupportedOperationException();
     }
 
     @Override

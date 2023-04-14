@@ -225,7 +225,7 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("merkleblock")) {
             return makeFilteredBlock(payload);
         } else if (command.equals("getdata")) {
-            return new GetDataMessage(payload);
+            return GetDataMessage.read(payload);
         } else if (command.equals("getblocks")) {
             return new GetBlocksMessage(payload);
         } else if (command.equals("getheaders")) {
@@ -251,7 +251,7 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("filterload")) {
             return makeBloomFilter(payload);
         } else if (command.equals("notfound")) {
-            return new NotFoundMessage(payload);
+            return NotFoundMessage.read(payload);
         } else if (command.equals("mempool")) {
             return new MemoryPoolMessage();
         } else if (command.equals("reject")) {
@@ -325,7 +325,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public InventoryMessage makeInventoryMessage(ByteBuffer payload) throws ProtocolException {
-        return new InventoryMessage(payload);
+        return InventoryMessage.read(payload);
     }
 
     /**
