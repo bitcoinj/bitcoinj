@@ -92,8 +92,38 @@ public class VersionMessage extends BaseMessage {
 
     private static int NETADDR_BYTES = Services.BYTES + /* IPv6 */  16 + /* port */ Short.BYTES;
 
-    public VersionMessage(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    /**
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static VersionMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        int clientVersion = (int) ByteUtils.readUint32(payload);
+        check(clientVersion >= ProtocolVersion.MINIMUM.intValue(),
+                ProtocolException::new);
+        Services localServices = Services.read(payload);
+        Instant time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
+        Services receivingServices = Services.read(payload);
+        InetAddress receivingInetAddress = PeerAddress.getByAddress(Buffers.readBytes(payload, 16));
+        int receivingPort = ByteUtils.readUint16BE(payload);
+        InetSocketAddress receivingAddr = new InetSocketAddress(receivingInetAddress, receivingPort);
+        Buffers.skipBytes(payload, NETADDR_BYTES); // addr_from
+        // uint64 localHostNonce (random data)
+        // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
+        // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
+        // irrelevant.
+        Buffers.skipBytes(payload, 8);
+        // string subVer (currently "")
+        String subVer = Buffers.readLengthPrefixedString(payload);
+        // int bestHeight (size of known block chain).
+        long bestHeight = ByteUtils.readUint32(payload);
+        boolean relayTxesBeforeFilter = clientVersion >= ProtocolVersion.BLOOM_FILTER.intValue() ?
+                payload.get() != 0 :
+                true;
+        return new VersionMessage(clientVersion, localServices, time, receivingServices, receivingAddr, subVer,
+                bestHeight, relayTxesBeforeFilter);
     }
 
     /**
@@ -147,29 +177,7 @@ public class VersionMessage extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        clientVersion = (int) ByteUtils.readUint32(payload);
-        check(clientVersion >= ProtocolVersion.MINIMUM.intValue(),
-                ProtocolException::new);
-        localServices = Services.read(payload);
-        time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
-        receivingServices = Services.read(payload);
-        InetAddress receivingInetAddress = PeerAddress.getByAddress(Buffers.readBytes(payload, 16));
-        int receivingPort = ByteUtils.readUint16BE(payload);
-        receivingAddr = new InetSocketAddress(receivingInetAddress, receivingPort);
-        Buffers.skipBytes(payload, NETADDR_BYTES); // addr_from
-        // uint64 localHostNonce (random data)
-        // We don't care about the localhost nonce. It's used to detect connecting back to yourself in cases where
-        // there are NATs and proxies in the way. However we don't listen for inbound connections so it's
-        // irrelevant.
-        Buffers.skipBytes(payload, 8);
-        // string subVer (currently "")
-        subVer = Buffers.readLengthPrefixedString(payload);
-        // int bestHeight (size of known block chain).
-        bestHeight = ByteUtils.readUint32(payload);
-        relayTxesBeforeFilter =
-                clientVersion >= ProtocolVersion.BLOOM_FILTER.intValue() ?
-                payload.get() != 0 :
-                true;
+        throw new UnsupportedOperationException();
     }
 
     @Override
