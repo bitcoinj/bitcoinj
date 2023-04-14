@@ -36,33 +36,19 @@ import java.nio.ByteBuffer;
 public abstract class BaseMessage implements Message {
     private static final Logger log = LoggerFactory.getLogger(BaseMessage.class);
 
-    protected final MessageSerializer serializer;
-
     protected BaseMessage() {
-        this.serializer = DummySerializer.DEFAULT;
-    }
-
-    protected BaseMessage(MessageSerializer serializer) {
-        this.serializer = serializer;
     }
 
     /**
      * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param serializer the serializer to use for this message.
      * @throws ProtocolException
      */
-    protected BaseMessage(ByteBuffer payload, MessageSerializer serializer) throws ProtocolException {
-        this.serializer = serializer;
-
+    protected BaseMessage(ByteBuffer payload) throws ProtocolException {
         try {
             parse(payload);
         } catch(BufferUnderflowException e) {
             throw new ProtocolException(e);
         }
-    }
-
-    protected BaseMessage(ByteBuffer payload) throws ProtocolException {
-        this(payload, DummySerializer.DEFAULT);
     }
 
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.

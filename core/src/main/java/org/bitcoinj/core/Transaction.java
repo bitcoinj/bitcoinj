@@ -156,6 +156,8 @@ public class Transaction extends BaseMessage {
      */
     public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 1 mBTC
 
+    private final int protocolVersion;
+
     // These are bitcoin serialized.
     private long version;
     private ArrayList<TransactionInput> inputs;
@@ -309,11 +311,11 @@ public class Transaction extends BaseMessage {
     }
 
     private Transaction(int protocolVersion) {
-        super(new DummySerializer(protocolVersion));
+        this.protocolVersion = protocolVersion;
     }
 
     public Transaction() {
-        super(new DummySerializer(ProtocolVersion.CURRENT.intValue()));
+        this.protocolVersion = ProtocolVersion.CURRENT.intValue();
         version = 1;
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
@@ -1427,7 +1429,7 @@ public class Transaction extends BaseMessage {
 
     @Override
     public int getMessageSize() {
-        boolean useSegwit = hasWitnesses() && allowWitness(serializer.getProtocolVersion());
+        boolean useSegwit = hasWitnesses() && allowWitness(protocolVersion);
         int size = 4; // version
         if (useSegwit)
             size += 2; // marker, flag
@@ -1446,7 +1448,7 @@ public class Transaction extends BaseMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        boolean useSegwit = hasWitnesses() && allowWitness(serializer.getProtocolVersion());
+        boolean useSegwit = hasWitnesses() && allowWitness(protocolVersion);
         bitcoinSerializeToStream(stream, useSegwit);
     }
 
