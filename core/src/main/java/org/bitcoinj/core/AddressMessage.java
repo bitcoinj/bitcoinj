@@ -16,11 +16,16 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.VarInt;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.bitcoinj.base.internal.Preconditions.check;
 
 /**
  * Abstract superclass for address messages on the P2P network, which contain network addresses of other peers. This is
@@ -31,8 +36,22 @@ public abstract class AddressMessage extends BaseMessage {
     protected static final long MAX_ADDRESSES = 1000;
     protected List<PeerAddress> addresses;
 
-    AddressMessage(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    protected static List<PeerAddress> readAddresses(ByteBuffer payload, int protocolVariant) throws BufferUnderflowException, ProtocolException {
+        VarInt numAddressesVarInt = VarInt.read(payload);
+        check(numAddressesVarInt.fitsInt(), BufferUnderflowException::new);
+        int numAddresses = numAddressesVarInt.intValue();
+        // Guard against ultra large messages that will crash us.
+        if (numAddresses > MAX_ADDRESSES)
+            throw new ProtocolException("Address message too large.");
+        List<PeerAddress> addresses = new ArrayList<>(numAddresses);
+        for (int i = 0; i < numAddresses; i++) {
+            addresses.add(PeerAddress.read(payload, protocolVariant));
+        }
+        return addresses;
+    }
+
+    protected AddressMessage(List<PeerAddress> addresses) {
+        this.addresses = addresses;
     }
 
     public abstract void addAddress(PeerAddress address);

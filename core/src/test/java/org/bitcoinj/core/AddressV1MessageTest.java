@@ -60,7 +60,7 @@ public class AddressV1MessageTest {
 
     @Test
     public void roundtrip() {
-        AddressMessage message = new AddressV1Message(ByteBuffer.wrap(ByteUtils.parseHex(MESSAGE_HEX)));
+        AddressMessage message = AddressV1Message.read(ByteBuffer.wrap(ByteUtils.parseHex(MESSAGE_HEX)));
 
         List<PeerAddress> addresses = message.getAddresses();
         assertEquals(4, addresses.size());

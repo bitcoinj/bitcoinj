@@ -25,11 +25,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Objects;
-
-import static org.bitcoinj.base.internal.Preconditions.check;
-import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import java.util.List;
 
 /**
  * Represents an "addr" message on the P2P network, which contains broadcast IP addresses of other peers. This is
@@ -38,27 +34,24 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * Instances of this class are not safe for use by multiple threads.
  */
 public class AddressV1Message extends AddressMessage {
-
     /**
-     * Construct a new 'addr' message.
-     * @throws ProtocolException
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    AddressV1Message(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    public static AddressV1Message read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return new AddressV1Message(readAddresses(payload, 1));
+    }
+
+    private AddressV1Message(List<PeerAddress> addresses) {
+        super(addresses);
     }
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        VarInt numAddressesVarInt = VarInt.read(payload);
-        check(numAddressesVarInt.fitsInt(), BufferUnderflowException::new);
-        int numAddresses = numAddressesVarInt.intValue();
-        // Guard against ultra large messages that will crash us.
-        if (numAddresses > MAX_ADDRESSES)
-            throw new ProtocolException("Address message too large.");
-        addresses = new ArrayList<>(numAddresses);
-        for (int i = 0; i < numAddresses; i++) {
-            addresses.add(PeerAddress.read(payload, 1));
-        }
+        throw new UnsupportedOperationException();
     }
 
     public void addAddress(PeerAddress address) {
