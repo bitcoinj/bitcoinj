@@ -316,7 +316,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     @Override
     public FilteredBlock makeFilteredBlock(ByteBuffer payload) throws ProtocolException {
-        return new FilteredBlock(payload);
+        return FilteredBlock.read(payload);
     }
 
     /**
