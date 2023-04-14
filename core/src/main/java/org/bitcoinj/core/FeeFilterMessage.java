@@ -60,11 +60,6 @@ public class FeeFilterMessage extends BaseMessage {
         ByteUtils.writeInt64LE(feeRate.value, stream);
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
     public Coin getFeeRate() {
         return feeRate;
     }

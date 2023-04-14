@@ -231,11 +231,6 @@ public class Block extends BaseMessage {
                 transactions);
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
     public static Block createGenesis() {
         Block genesisBlock = new Block(BLOCK_VERSION_GENESIS);
         Transaction tx = Transaction.coinbase(genesisTxInputScriptBytes);

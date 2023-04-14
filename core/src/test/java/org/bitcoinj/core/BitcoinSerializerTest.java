@@ -234,9 +234,6 @@ public class BitcoinSerializerTest {
         MessageSerializer serializer = MAINNET.getDefaultSerializer();
 
         Message unknownMessage = new BaseMessage() {
-            @Override
-            protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-            }
         };
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);
         serializer.serialize(unknownMessage, bos);

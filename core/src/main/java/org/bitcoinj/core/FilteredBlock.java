@@ -76,11 +76,6 @@ public class FilteredBlock extends BaseMessage {
         stream.write(merkleTree.serialize());
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-    
     /**
      * Gets a list of leaf hashes which are contained in the partial merkle tree in this filtered block
      *

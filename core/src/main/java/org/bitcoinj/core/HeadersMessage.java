@@ -97,11 +97,6 @@ public class HeadersMessage extends BaseMessage {
         }
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
     public List<Block> getBlockHeaders() {
         return blockHeaders;
     }

@@ -176,11 +176,6 @@ public class VersionMessage extends BaseMessage {
     }
 
     @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
         ByteUtils.writeInt32LE(clientVersion, buf);
         buf.write(localServices.serialize());

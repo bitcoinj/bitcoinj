@@ -108,11 +108,6 @@ public class RejectMessage extends BaseMessage {
     }
 
     @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
         stream.write(VarInt.of(messageBytes.length).serialize());

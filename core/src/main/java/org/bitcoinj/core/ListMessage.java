@@ -90,11 +90,6 @@ public abstract class ListMessage extends BaseMessage {
     }
 
     @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(VarInt.of(items.size()).serialize());
         for (InventoryItem i : items) {
