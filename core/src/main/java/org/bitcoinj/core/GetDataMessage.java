@@ -19,7 +19,9 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * <p>Represents the "getdata" P2P network message, which requests the contents of blocks or transactions given their
@@ -28,18 +30,22 @@ import java.nio.ByteBuffer;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class GetDataMessage extends ListMessage {
-
     /**
-     * Deserializes a 'getdata' message.
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @throws ProtocolException
+     * Deserialize this message from a given payload.
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    public GetDataMessage(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    public static GetDataMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return new GetDataMessage(readItems(payload));
     }
 
     public GetDataMessage() {
         super();
+    }
+
+    private GetDataMessage(List<InventoryItem> items) {
+        super(items);
     }
 
     public void addTransaction(Sha256Hash hash, boolean includeWitness) {
