@@ -40,29 +40,37 @@ public class GetBlocksMessage extends BaseMessage {
     protected BlockLocator locator;
     protected Sha256Hash stopHash;
 
+    /**
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static GetBlocksMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        long version = ByteUtils.readUint32(payload);
+        VarInt startCountVarInt = VarInt.read(payload);
+        check(startCountVarInt.fitsInt(), BufferUnderflowException::new);
+        int startCount = startCountVarInt.intValue();
+        if (startCount > 500)
+            throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
+        BlockLocator locator = new BlockLocator();
+        for (int i = 0; i < startCount; i++) {
+            locator = locator.add(Sha256Hash.read(payload));
+        }
+        Sha256Hash stopHash = Sha256Hash.read(payload);
+        return new GetBlocksMessage(version, locator, stopHash);
+    }
+
     public GetBlocksMessage(long protocolVersion, BlockLocator locator, Sha256Hash stopHash) {
         this.version = protocolVersion;
         this.locator = locator;
         this.stopHash = stopHash;
     }
 
-    public GetBlocksMessage(ByteBuffer payload) throws ProtocolException {
-        super(payload);
-    }
-
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        version = ByteUtils.readUint32(payload);
-        VarInt startCountVarInt = VarInt.read(payload);
-        check(startCountVarInt.fitsInt(), BufferUnderflowException::new);
-        int startCount = startCountVarInt.intValue();
-        if (startCount > 500)
-            throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
-        locator = new BlockLocator();
-        for (int i = 0; i < startCount; i++) {
-            locator = locator.add(Sha256Hash.read(payload));
-        }
-        stopHash = Sha256Hash.read(payload);
+        throw new UnsupportedOperationException();
     }
 
     public BlockLocator getLocator() {
