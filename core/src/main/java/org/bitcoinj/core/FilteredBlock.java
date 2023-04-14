@@ -56,7 +56,7 @@ public class FilteredBlock extends BaseMessage {
      */
     public static FilteredBlock read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         byte[] headerBytes = Buffers.readBytes(payload, Block.HEADER_SIZE);
-        Block header = new Block(ByteBuffer.wrap(headerBytes));
+        Block header = Block.read(ByteBuffer.wrap(headerBytes));
         PartialMerkleTree merkleTree = PartialMerkleTree.read(payload);
         return new FilteredBlock(header, merkleTree);
     }
