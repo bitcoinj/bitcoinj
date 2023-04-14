@@ -24,10 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
-import static org.bitcoinj.base.internal.Preconditions.check;
-import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import java.util.List;
 
 /**
  * Represents an "addrv2" message on the P2P network, which contains broadcast addresses of other peers. This is
@@ -39,25 +36,22 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  */
 public class AddressV2Message extends AddressMessage {
     /**
-     * Construct a new 'addrv2' message.
-     * @throws ProtocolException
+     * Deserialize this message from a given payload.
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    AddressV2Message(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    public static AddressV2Message read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return new AddressV2Message(readAddresses(payload, 2));
+    }
+
+    private AddressV2Message(List<PeerAddress> addresses) {
+        super(addresses);
     }
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        VarInt numAddressesVarInt = VarInt.read(payload);
-        check(numAddressesVarInt.fitsInt(), BufferUnderflowException::new);
-        int numAddresses = numAddressesVarInt.intValue();
-        // Guard against ultra large messages that will crash us.
-        if (numAddresses > MAX_ADDRESSES)
-            throw new ProtocolException("Address message too large.");
-        addresses = new ArrayList<>(numAddresses);
-        for (int i = 0; i < numAddresses; i++) {
-            addresses.add(PeerAddress.read(payload, 2));
-        }
+        throw new UnsupportedOperationException();
     }
 
     public void addAddress(PeerAddress address) {
