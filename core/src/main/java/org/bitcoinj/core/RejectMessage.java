@@ -82,8 +82,20 @@ public class RejectMessage extends BaseMessage {
     private RejectCode code;
     private Sha256Hash messageHash;
 
-    public RejectMessage(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+    /**
+     * Deserialize this message from a given payload.
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static RejectMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        String message = Buffers.readLengthPrefixedString(payload);
+        RejectCode code = RejectCode.fromCode(payload.get());
+        String reason = Buffers.readLengthPrefixedString(payload);
+        Sha256Hash messageHash = message.equals("block") || message.equals("tx") ?
+                        Sha256Hash.read(payload) :
+                        null;
+        return new RejectMessage(code, messageHash, message, reason);
     }
 
     /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */
@@ -96,11 +108,7 @@ public class RejectMessage extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        message = Buffers.readLengthPrefixedString(payload);
-        code = RejectCode.fromCode(payload.get());
-        reason = Buffers.readLengthPrefixedString(payload);
-        if (message.equals("block") || message.equals("tx"))
-            messageHash = Sha256Hash.read(payload);
+        throw new UnsupportedOperationException();
     }
 
     @Override
