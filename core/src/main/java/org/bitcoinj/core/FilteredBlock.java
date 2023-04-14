@@ -46,9 +46,19 @@ public class FilteredBlock extends BaseMessage {
     // A set of transactions whose hashes are a subset of getTransactionHashes()
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions
     private Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<>();
-    
-    public FilteredBlock(ByteBuffer payload) throws ProtocolException {
-        super(payload);
+
+    /**
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static FilteredBlock read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        byte[] headerBytes = Buffers.readBytes(payload, Block.HEADER_SIZE);
+        Block header = new Block(ByteBuffer.wrap(headerBytes));
+        PartialMerkleTree merkleTree = PartialMerkleTree.read(payload);
+        return new FilteredBlock(header, merkleTree);
     }
 
     public FilteredBlock(Block header, PartialMerkleTree pmt) {
@@ -68,9 +78,7 @@ public class FilteredBlock extends BaseMessage {
 
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        byte[] headerBytes = Buffers.readBytes(payload, Block.HEADER_SIZE);
-        header = new Block(ByteBuffer.wrap(headerBytes));
-        merkleTree = PartialMerkleTree.read(payload);
+        throw new UnsupportedOperationException();
     }
     
     /**
