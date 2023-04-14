@@ -222,7 +222,7 @@ public class FakeTxBuilder {
      * Roundtrip a transaction so that it appears as if it has just come from the wire
      */
     public static Transaction roundTripTransaction(Transaction tx) {
-        return new Transaction(ByteBuffer.wrap(tx.bitcoinSerialize()));
+        return Transaction.read(ByteBuffer.wrap(tx.bitcoinSerialize()));
     }
 
     public static class DoubleSpends {

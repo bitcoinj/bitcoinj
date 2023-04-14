@@ -172,7 +172,7 @@ public class Block extends BaseMessage {
         List<Transaction> transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
         MessageSerializer serializer = new DummySerializer(ProtocolVersion.CURRENT.intValue());
         for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = new Transaction(payload, serializer);
+            Transaction tx = Transaction.read(payload);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
             tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
