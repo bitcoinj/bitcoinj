@@ -247,7 +247,7 @@ public class BitcoinSerializer extends MessageSerializer {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new VersionAck();
         } else if (command.equals("headers")) {
-            return new HeadersMessage(payload);
+            return HeadersMessage.read(payload);
         } else if (command.equals("filterload")) {
             return makeBloomFilter(payload);
         } else if (command.equals("notfound")) {
