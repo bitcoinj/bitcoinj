@@ -67,11 +67,6 @@ public class GetBlocksMessage extends BaseMessage {
         this.stopHash = stopHash;
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
     public BlockLocator getLocator() {
         return locator;
     }

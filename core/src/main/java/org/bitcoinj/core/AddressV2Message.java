@@ -49,11 +49,6 @@ public class AddressV2Message extends AddressMessage {
         super(addresses);
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
     public void addAddress(PeerAddress address) {
         addresses.add(address);
     }

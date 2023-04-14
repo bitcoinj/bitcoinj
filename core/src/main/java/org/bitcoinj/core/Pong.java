@@ -49,12 +49,7 @@ public class Pong extends BaseMessage {
     public Pong(long nonce) {
         this.nonce = nonce;
     }
-    
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-    
+
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         ByteUtils.writeInt64LE(nonce, stream);

@@ -62,11 +62,6 @@ public class Ping extends BaseMessage {
         ByteUtils.writeInt64LE(nonce, stream);
     }
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
     /** @deprecated returns true */
     @Deprecated
     public boolean hasNonce() {

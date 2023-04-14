@@ -19,8 +19,6 @@ package org.bitcoinj.core;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
 
 /**
  * <p>Parent class for header only messages that don't have a payload.
@@ -41,9 +39,5 @@ public abstract class EmptyMessage extends BaseMessage {
 
     @Override
     protected final void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-    }
-
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
     }
 }

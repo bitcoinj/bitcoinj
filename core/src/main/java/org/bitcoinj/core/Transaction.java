@@ -634,11 +634,6 @@ public class Transaction extends BaseMessage {
      */
     public static final byte SIGHASH_ANYONECANPAY_VALUE = (byte) 0x80;
 
-    @Override
-    protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        throw new UnsupportedOperationException();
-    }
-
     private void readInputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numInputsVarInt = VarInt.read(payload);
         check(numInputsVarInt.fitsInt(), BufferUnderflowException::new);

@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
 
 /**
  * A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -36,24 +34,7 @@ import java.nio.ByteBuffer;
 public abstract class BaseMessage implements Message {
     private static final Logger log = LoggerFactory.getLogger(BaseMessage.class);
 
-    protected BaseMessage() {
-    }
-
-    /**
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @throws ProtocolException
-     */
-    protected BaseMessage(ByteBuffer payload) throws ProtocolException {
-        try {
-            parse(payload);
-        } catch(BufferUnderflowException e) {
-            throw new ProtocolException(e);
-        }
-    }
-
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
-
-    protected abstract void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException;
 
     /**
      * <p>Serialize this message to a byte array that conforms to the bitcoin wire protocol.</p>
