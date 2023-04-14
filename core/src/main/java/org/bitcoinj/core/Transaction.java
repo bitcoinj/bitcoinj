@@ -243,6 +243,75 @@ public class Transaction extends BaseMessage {
         return tx;
     }
 
+    /**
+     * Deserialize this message from a given payload.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static Transaction read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return Transaction.read(payload, ProtocolVersion.CURRENT.intValue());
+    }
+
+    /**
+     * Deserialize this message from a given payload, according to
+     * <a href="https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki">BIP144</a> or the
+     * <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if the
+     * transaction is segwit or not.
+     *
+     * @param payload         payload to deserialize from
+     * @param protocolVersion protocol version to use for deserialization
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static Transaction read(ByteBuffer payload, int protocolVersion) throws BufferUnderflowException, ProtocolException {
+        Transaction tx = new Transaction(protocolVersion);
+        boolean allowWitness = allowWitness(protocolVersion);
+
+        // version
+        tx.version = ByteUtils.readUint32(payload);
+        byte flags = 0;
+        // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
+        tx.readInputs(payload);
+        if (tx.inputs.size() == 0 && allowWitness) {
+            // We read a dummy or an empty input
+            flags = payload.get();
+
+            if (flags != 0) {
+                tx.readInputs(payload);
+                tx.readOutputs(payload);
+            } else {
+                tx.outputs = new ArrayList<>(0);
+            }
+        } else {
+            // We read non-empty inputs. Assume normal outputs follows.
+            tx.readOutputs(payload);
+        }
+
+        if (((flags & 1) != 0) && allowWitness) {
+            // The witness flag is present, and we support witnesses.
+            flags ^= 1;
+            // script_witnesses
+            tx.readWitnesses(payload);
+            if (!tx.hasWitnesses()) {
+                // It's illegal to encode witnesses when all witness stacks are empty.
+                throw new ProtocolException("Superfluous witness record");
+            }
+        }
+        if (flags != 0) {
+            // Unknown flag in the serialization
+            throw new ProtocolException("Unknown transaction optional data");
+        }
+        // lock_time
+        tx.vLockTime = LockTime.of(ByteUtils.readUint32(payload));
+        return tx;
+    }
+
+    private Transaction(int protocolVersion) {
+        super(new DummySerializer(protocolVersion));
+    }
+
     public Transaction() {
         super(new DummySerializer(ProtocolVersion.CURRENT.intValue()));
         version = 1;
@@ -250,31 +319,6 @@ public class Transaction extends BaseMessage {
         outputs = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         vLockTime = LockTime.unset();
-    }
-
-    /**
-     * Creates a transaction from the given serialized bytes, eg, from a block or a tx network message.
-     */
-    public Transaction(ByteBuffer payload) throws ProtocolException {
-        super(payload, new DummySerializer(ProtocolVersion.CURRENT.intValue()));
-        // inputs/outputs will be created in parse()
-    }
-
-    /** @deprecated use {@link #Transaction(ByteBuffer)} or {@link MessageSerializer#makeTransaction(ByteBuffer)} */
-    @Deprecated
-    public Transaction(NetworkParameters params, byte[] payload) throws ProtocolException {
-        this(ByteBuffer.wrap(payload));
-    }
-
-    /**
-     * Creates a transaction by reading payload starting from offset bytes in. Length of a transaction is fixed.
-     * @param payload Bitcoin protocol formatted byte array containing message content.
-     * @param setSerializer The serializer to use for this transaction.
-     * @throws ProtocolException
-     */
-    public Transaction(ByteBuffer payload,
-            MessageSerializer setSerializer) throws ProtocolException {
-        super(payload, setSerializer);
     }
 
     /**
@@ -588,55 +632,12 @@ public class Transaction extends BaseMessage {
      */
     public static final byte SIGHASH_ANYONECANPAY_VALUE = (byte) 0x80;
 
-    /**
-     * Deserialize according to <a href="https://github.com/bitcoin/bips/blob/master/bip-0144.mediawiki">BIP144</a> or
-     * the <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if the
-     * transaction is segwit or not.
-     */
     @Override
     protected void parse(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        boolean allowWitness = allowWitness(serializer.getProtocolVersion());
-
-
-        // version
-        version = ByteUtils.readUint32(payload);
-        byte flags = 0;
-        // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
-        parseInputs(payload);
-        if (inputs.size() == 0 && allowWitness) {
-            // We read a dummy or an empty input
-            flags = payload.get();
-
-            if (flags != 0) {
-                parseInputs(payload);
-                parseOutputs(payload);
-            } else {
-                outputs = new ArrayList<>(0);
-            }
-        } else {
-            // We read non-empty inputs. Assume normal outputs follows.
-            parseOutputs(payload);
-        }
-
-        if (((flags & 1) != 0) && allowWitness) {
-            // The witness flag is present, and we support witnesses.
-            flags ^= 1;
-            // script_witnesses
-            parseWitnesses(payload);
-            if (!hasWitnesses()) {
-                // It's illegal to encode witnesses when all witness stacks are empty.
-                throw new ProtocolException("Superfluous witness record");
-            }
-        }
-        if (flags != 0) {
-            // Unknown flag in the serialization
-            throw new ProtocolException("Unknown transaction optional data");
-        }
-        // lock_time
-        vLockTime = LockTime.of(ByteUtils.readUint32(payload));
+        throw new UnsupportedOperationException();
     }
 
-    private void parseInputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+    private void readInputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numInputsVarInt = VarInt.read(payload);
         check(numInputsVarInt.fitsInt(), BufferUnderflowException::new);
         int numInputs = numInputsVarInt.intValue();
@@ -646,7 +647,7 @@ public class Transaction extends BaseMessage {
         }
     }
 
-    private void parseOutputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+    private void readOutputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numOutputsVarInt = VarInt.read(payload);
         check(numOutputsVarInt.fitsInt(), BufferUnderflowException::new);
         int numOutputs = numOutputsVarInt.intValue();
@@ -656,7 +657,7 @@ public class Transaction extends BaseMessage {
         }
     }
 
-    private void parseWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+    private void readWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         int numWitnesses = inputs.size();
         for (int i = 0; i < numWitnesses; i++)
             getInput(i).setWitness(TransactionWitness.read(payload));
@@ -1196,7 +1197,7 @@ public class Transaction extends BaseMessage {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = new Transaction(ByteBuffer.wrap(bitcoinSerialize()));
+            Transaction tx = Transaction.read(ByteBuffer.wrap(bitcoinSerialize()));
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual

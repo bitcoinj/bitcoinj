@@ -335,7 +335,7 @@ public class BitcoinSerializer extends MessageSerializer {
     @Override
     public Transaction makeTransaction(ByteBuffer payload)
             throws ProtocolException {
-        return new Transaction(payload, this);
+        return Transaction.read(payload, protocolVersion);
     }
 
     @Override

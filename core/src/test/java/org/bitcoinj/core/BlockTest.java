@@ -40,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -327,8 +328,8 @@ public class BlockTest {
         byte[] serializedBlock = block.bitcoinSerialize();
         try {
             TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(serializedBlock));
-            fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
-        } catch (ProtocolException e) {
+            fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
+        } catch (BufferUnderflowException e) {
             //Expected, do nothing
         }
     }
