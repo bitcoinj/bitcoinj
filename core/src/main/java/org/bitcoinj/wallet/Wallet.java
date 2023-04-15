@@ -4353,6 +4353,38 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
+     * Initiate sending of a signed (should-be-immutable) transaction in a {@link Transaction}. It is expected that
+     * this is a transaction signed (perhaps externally) with keys from this wallet. (TODO: Is this verified?)
+     * Performs the following significant operations internally:
+     * <ol>
+     *     <li>{@link Wallet#commitTx(Transaction)} -- puts the transaction in the {@code Wallet}'s pending pool</li>
+     *     <li>{@link org.bitcoinj.core.TransactionBroadcaster#broadcastTransaction(Transaction)} typically implemented by {@link org.bitcoinj.core.PeerGroup#broadcastTransaction(Transaction)} -- queues requests to send the transaction to a single remote {@code Peer}</li>
+     * </ol>
+     * This method will <i>complete</i> and return a {@link TransactionBroadcast} when the send to the remote peer occurs (is buffered.)
+     * The broadcast process includes the following steps:
+     * <ol>
+     *     <li>Wait until enough {@link org.bitcoinj.core.Peer}s are connected.</li>
+     *     <li>Broadcast (buffer for send) the transaction to a single remote {@link org.bitcoinj.core.Peer}</li>
+     *     <li>Mark {@link TransactionBroadcast#awaitSent()} as complete</li>
+     *     <li>Wait for a number of remote peers to confirm they have received the broadcast</li>
+     *     <li>Mark {@link TransactionBroadcast#future()} as complete</li>
+     * </ol>
+     * @param tx transaction to send
+     * @return A future for the transaction broadcast
+     */
+    public CompletableFuture<TransactionBroadcast> sendTransaction(Transaction tx) {
+        TransactionBroadcaster broadcaster = vTransactionBroadcaster;
+        checkState(broadcaster != null, () ->
+                "no transaction broadcaster is configured");
+        try {
+            commitTx(tx);
+            return broadcaster.broadcastTransaction(tx).awaitSent();
+        } catch (VerificationException ve) {
+            return FutureUtils.failedFuture(ve);
+        }
+    }
+
+    /**
      * Wait for at least 1 confirmation on a transaction.
      * @param tx the transaction we are waiting for
      * @return a future for an object that contains transaction confidence information
