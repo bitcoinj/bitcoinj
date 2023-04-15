@@ -62,9 +62,7 @@ public abstract class BaseMessage implements Message {
     /**
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        log.error("Error: {} class has not implemented bitcoinSerializeToStream method.  Generating message with no payload", getClass());
-    }
+    protected abstract void bitcoinSerializeToStream(OutputStream stream) throws IOException;
 
     /** @deprecated use {@link Transaction#getTxId()}, {@link Block#getHash()}, {@link FilteredBlock#getHash()} or {@link TransactionOutPoint#hash()} */
     @Deprecated
