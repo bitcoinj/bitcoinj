@@ -26,9 +26,9 @@ import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
@@ -56,8 +56,8 @@ public class LocalTransactionSigner implements TransactionSigner {
      * Verify flags that are safe to use when testing if an input is already
      * signed.
      */
-    private static final EnumSet<VerifyFlag> MINIMUM_VERIFY_FLAGS = EnumSet.of(VerifyFlag.P2SH,
-        VerifyFlag.NULLDUMMY);
+    private static final EnumSet<ScriptExecution.VerifyFlag> MINIMUM_VERIFY_FLAGS = EnumSet.of(ScriptExecution.VerifyFlag.P2SH,
+        ScriptExecution.VerifyFlag.NULLDUMMY);
 
     @Override
     public boolean isReady() {
@@ -81,7 +81,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                 // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                 // we sign missing pieces (to check this would require either assuming any signatures are signing
                 // standard output types or a way to get processed signatures out of script execution)
-                txIn.getScriptSig().correctlySpends(tx, i, txIn.getWitness(), connectedOutput.getValue(),
+                ScriptExecution.correctlySpends(txIn.getScriptSig(), tx, i, txIn.getWitness(), connectedOutput.getValue(),
                         connectedOutput.getScriptPubKey(), MINIMUM_VERIFY_FLAGS);
                 log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                 continue;

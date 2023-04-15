@@ -28,6 +28,7 @@ import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 
 import javax.annotation.Nullable;
@@ -1376,11 +1377,11 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction();
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5 + 1];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5 + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is too large, the CHECKSIGs after that push are still counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
-            ByteUtils.writeInt32LE(Script.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
+            ByteUtils.writeInt32LE(ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE + 1, outputScript, Block.MAX_BLOCK_SIGOPS - sigOps + 1);
             tx.addOutput(new TransactionOutput(tx, SATOSHI, outputScript));
             addOnlyInputToTransaction(tx, b73);
             b73.addTransaction(tx);
@@ -1395,7 +1396,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction();
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE + 42];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an invalid element, all previous CHECKSIGs are counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps + 1] = OP_PUSHDATA4;
@@ -1417,7 +1418,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction();
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE + 42];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an invalid element, all subsequent CHECKSIGs are not counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;
@@ -1442,7 +1443,7 @@ public class FullBlockTestGenerator {
                 sigOps += tx.getSigOpCount();
             }
             Transaction tx = new Transaction();
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
             // If we push an element that is filled with CHECKSIGs, they (obviously) arent counted
             outputScript[Block.MAX_BLOCK_SIGOPS - sigOps] = OP_PUSHDATA4;

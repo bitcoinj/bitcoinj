@@ -21,7 +21,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.Script.VerifyFlag;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
@@ -143,9 +143,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     private static class Verifier implements Callable<VerificationException> {
         final Transaction tx;
         final List<Script> prevOutScripts;
-        final Set<VerifyFlag> verifyFlags;
+        final Set<ScriptExecution.VerifyFlag> verifyFlags;
 
-        public Verifier(final Transaction tx, final List<Script> prevOutScripts, final Set<VerifyFlag> verifyFlags) {
+        public Verifier(final Transaction tx, final List<Script> prevOutScripts, final Set<ScriptExecution.VerifyFlag> verifyFlags) {
             this.tx = tx;
             this.prevOutScripts = prevOutScripts;
             this.verifyFlags = verifyFlags;
@@ -157,7 +157,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             try {
                 ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
                 for (int index = 0; index < tx.getInputs().size(); index++) {
-                    tx.getInput(index).getScriptSig().correctlySpends(tx, index, null, null, prevOutIt.next(),
+                    ScriptExecution.correctlySpends(tx.getInput(index).getScriptSig(), tx, index, null, null, prevOutIt.next(),
                             verifyFlags);
                 }
             } catch (VerificationException e) {
@@ -220,13 +220,13 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 // checkpoints list and we therefore only check non-checkpoints for duplicated transactions here. See the
                 // BIP30 document for more details on this: https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
                 for (Transaction tx : block.getTransactions()) {
-                    final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
+                    final Set<ScriptExecution.VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
                     Sha256Hash hash = tx.getTxId();
                     // If we already have unspent outputs for this hash, we saw the tx already. Either the block is
                     // being added twice (bug) or the block is a BIP30 violator.
                     if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
                         throw new VerificationException("Block failed BIP30 test!");
-                    if (verifyFlags.contains(VerifyFlag.P2SH)) // We already check non-BIP16 sigops in Block.verifyTransactions(true)
+                    if (verifyFlags.contains(ScriptExecution.VerifyFlag.P2SH)) // We already check non-BIP16 sigops in Block.verifyTransactions(true)
                         sigOps += tx.getSigOpCount();
                 }
             }
@@ -237,7 +237,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 Coin valueIn = Coin.ZERO;
                 Coin valueOut = Coin.ZERO;
                 final List<Script> prevOutScripts = new LinkedList<>();
-                final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
+                final Set<ScriptExecution.VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
                 if (!isCoinBase) {
                     // For each input of the transaction remove the corresponding output from the set of unspent
                     // outputs.
@@ -257,7 +257,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         }
                         // TODO: Check we're not spending the genesis transaction here. Bitcoin Core won't allow it.
                         valueIn = valueIn.add(prevOut.getValue());
-                        if (verifyFlags.contains(VerifyFlag.P2SH)) {
+                        if (verifyFlags.contains(ScriptExecution.VerifyFlag.P2SH)) {
                             if (ScriptPattern.isP2SH(prevOut.getScript()))
                                 sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
                             if (sigOps > Block.MAX_BLOCK_SIGOPS)
@@ -364,7 +364,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
                 List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<>(transactions.size());
                 for (final Transaction tx : transactions) {
-                    final Set<VerifyFlag> verifyFlags =
+                    final Set<ScriptExecution.VerifyFlag> verifyFlags =
                         params.getTransactionVerificationFlags(newBlock.getHeader(), tx, getVersionTally(), Integer.SIZE);
                     boolean isCoinBase = tx.isCoinBase();
                     Coin valueIn = Coin.ZERO;
@@ -381,7 +381,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             if (prevOut.isCoinbase() && newBlock.getHeight() - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
                                 throw new VerificationException("Tried to spend coinbase at depth " + (newBlock.getHeight() - prevOut.getHeight()));
                             valueIn = valueIn.add(prevOut.getValue());
-                            if (verifyFlags.contains(VerifyFlag.P2SH)) {
+                            if (verifyFlags.contains(ScriptExecution.VerifyFlag.P2SH)) {
                                 if (ScriptPattern.isP2SH(prevOut.getScript()))
                                     sigOps += Script.getP2SHSigOpCount(in.getScriptBytes());
                                 if (sigOps > Block.MAX_BLOCK_SIGOPS)

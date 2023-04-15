@@ -122,7 +122,7 @@ public class ScriptChunk {
                 stream.write(OP_PUSHDATA2);
                 ByteUtils.writeInt16LE(data.length, stream);
             } else if (opcode == OP_PUSHDATA4) {
-                checkState(data.length <= Script.MAX_SCRIPT_ELEMENT_SIZE);
+                checkState(data.length <= ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE);
                 stream.write(OP_PUSHDATA4);
                 ByteUtils.writeInt32LE(data.length, stream);
             } else {
