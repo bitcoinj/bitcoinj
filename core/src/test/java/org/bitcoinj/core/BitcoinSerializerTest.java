@@ -25,6 +25,8 @@ import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.BufferUnderflowException;
@@ -234,6 +236,8 @@ public class BitcoinSerializerTest {
         MessageSerializer serializer = MAINNET.getDefaultSerializer();
 
         Message unknownMessage = new BaseMessage() {
+            @Override
+            protected void bitcoinSerializeToStream(OutputStream stream) {}
         };
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);
         serializer.serialize(unknownMessage, bos);
