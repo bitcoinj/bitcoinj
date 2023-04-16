@@ -81,8 +81,8 @@ public class RejectMessage extends BaseMessage {
     }
 
     private final String rejectedMessage;
-    private final RejectCode rejectCode;
-    private final String rejectReason;
+    private final RejectCode code;
+    private final String reason;
     @Nullable
     private final Sha256Hash rejectedObjectHash;
 
@@ -104,11 +104,11 @@ public class RejectMessage extends BaseMessage {
     }
 
     /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */
-    public RejectMessage(RejectCode code, Sha256Hash hash, String message, String reason) {
-        this.rejectCode = code;
-        this.rejectedObjectHash = hash;
-        this.rejectedMessage = message;
-        this.rejectReason = reason;
+    public RejectMessage(RejectCode code, Sha256Hash rejectedObjectHash, String rejectedMessage, String reason) {
+        this.rejectedMessage = rejectedMessage;
+        this.code = code;
+        this.reason = reason;
+        this.rejectedObjectHash = rejectedObjectHash;
     }
 
     @Override
@@ -116,8 +116,8 @@ public class RejectMessage extends BaseMessage {
         byte[] messageBytes = rejectedMessage.getBytes(StandardCharsets.UTF_8);
         stream.write(VarInt.of(messageBytes.length).serialize());
         stream.write(messageBytes);
-        stream.write(rejectCode.code);
-        byte[] reasonBytes = rejectReason.getBytes(StandardCharsets.UTF_8);
+        stream.write(code.code);
+        byte[] reasonBytes = reason.getBytes(StandardCharsets.UTF_8);
         stream.write(VarInt.of(reasonBytes.length).serialize());
         stream.write(reasonBytes);
         if ("block".equals(rejectedMessage) || "tx".equals(rejectedMessage))
@@ -160,14 +160,14 @@ public class RejectMessage extends BaseMessage {
      *
      * @return reject reason code
      */
-    public RejectCode rejectCode() {
-        return rejectCode;
+    public RejectCode code() {
+        return code;
     }
 
-    /** @deprecated use {@link #rejectCode()} */
+    /** @deprecated use {@link #code()} */
     @Deprecated
     public RejectCode getReasonCode() {
-        return rejectCode();
+        return code();
     }
 
     /**
@@ -176,14 +176,14 @@ public class RejectMessage extends BaseMessage {
      *
      * @return reject reason
      */
-    public String rejectReason() {
-        return rejectReason;
+    public String reason() {
+        return reason;
     }
 
-    /** @deprecated use {@link #rejectReason()} */
+    /** @deprecated use {@link #reason()} */
     @Deprecated
     public String getReasonString() {
-        return rejectReason();
+        return reason();
     }
 
     /**
@@ -195,7 +195,7 @@ public class RejectMessage extends BaseMessage {
     @Override
     public String toString() {
         return String.format(Locale.US, "Reject: %s %s for reason '%s' (%d)", rejectedMessage,
-            rejectedObjectHash != null ? rejectedObjectHash : "", rejectReason, rejectCode.code);
+            rejectedObjectHash != null ? rejectedObjectHash : "", reason, code.code);
     }
 
     @Override
@@ -203,12 +203,12 @@ public class RejectMessage extends BaseMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RejectMessage other = (RejectMessage) o;
-        return rejectedMessage.equals(other.rejectedMessage) && rejectCode.equals(other.rejectCode)
-            && rejectReason.equals(other.rejectReason) && rejectedObjectHash.equals(other.rejectedObjectHash);
+        return rejectedMessage.equals(other.rejectedMessage) && code.equals(other.code)
+            && reason.equals(other.reason) && rejectedObjectHash.equals(other.rejectedObjectHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rejectedMessage, rejectCode, rejectReason, rejectedObjectHash);
+        return Objects.hash(rejectedMessage, code, reason, rejectedObjectHash);
     }
 }
