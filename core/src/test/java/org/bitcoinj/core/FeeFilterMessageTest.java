@@ -37,11 +37,11 @@ public class FeeFilterMessageTest {
     public void roundTripValid(Coin feeRate) {
         byte[] buf = ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(feeRate.getValue()).array();
         FeeFilterMessage ffm = FeeFilterMessage.read(ByteBuffer.wrap(buf));
-        assertEquals(feeRate, ffm.getFeeRate());
+        assertEquals(feeRate, ffm.feeRate());
 
         byte[] serialized = ffm.bitcoinSerialize();
         FeeFilterMessage ffm2 = FeeFilterMessage.read(ByteBuffer.wrap(serialized));
-        assertEquals(feeRate, ffm2.getFeeRate());
+        assertEquals(feeRate, ffm2.feeRate());
     }
 
     @Test(expected = ProtocolException.class)

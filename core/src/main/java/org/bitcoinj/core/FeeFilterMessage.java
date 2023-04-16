@@ -26,15 +26,25 @@ import java.nio.ByteBuffer;
 import static org.bitcoinj.base.internal.Preconditions.check;
 
 /**
- * <p>Represents an "feefilter" message on the P2P network, which instructs a peer to filter transaction invs for
- * transactions that fall below the feerate provided.</p>
- *
- * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0133.mediawiki">BIP133</a> for details.</p>
- *
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ * Represents a "feefilter" message on the P2P network, which instructs a peer to filter transaction invs for
+ * transactions that fall below the feerate provided.
+ * <p>
+ * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0133.mediawiki">BIP133</a> for details.
+ * <p>
+ * Instances of this class are immutable.
  */
 public class FeeFilterMessage extends BaseMessage {
-    private Coin feeRate;
+    private final Coin feeRate;
+
+    /**
+     * Create a fee filter message with a given fee rate.
+     *
+     * @param feeRate fee rate
+     * @return fee filter message
+     */
+    public static FeeFilterMessage of(Coin feeRate) {
+        return new FeeFilterMessage(feeRate);
+    }
 
     /**
      * Deserialize this message from a given payload.
@@ -58,8 +68,21 @@ public class FeeFilterMessage extends BaseMessage {
         stream.write(feeRate.serialize());
     }
 
-    public Coin getFeeRate() {
+    /**
+     * Gets the fee rate.
+     *
+     * @return fee rate
+     */
+    public Coin feeRate() {
         return feeRate;
+    }
+
+    /**
+     * @deprecated use {@link #feeRate()}
+     */
+    @Deprecated
+    public Coin getFeeRate() {
+        return feeRate();
     }
 
     @Override
