@@ -21,6 +21,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
@@ -31,13 +32,12 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * <p>A message sent by nodes when a message we sent was rejected (ie a transaction had too little fee/was invalid/etc).</p>
- * 
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ * A message sent by nodes when a message we sent was rejected (ie a transaction had too little fee/was invalid/etc).
+ * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0061.mediawiki">BIP61</a> for details.
+ * <p>
+ * Instances of this class are immutable.
  */
 public class RejectMessage extends BaseMessage {
-
-    private String message, reason;
     public enum RejectCode {
         /** The message was not able to be parsed */
         MALFORMED((byte) 0x01),
@@ -79,8 +79,12 @@ public class RejectMessage extends BaseMessage {
                     .orElse(OTHER);
         }
     }
-    private RejectCode code;
-    private Sha256Hash messageHash;
+
+    private final String rejectedMessage;
+    private final RejectCode code;
+    private final String reason;
+    @Nullable
+    private final Sha256Hash rejectedMessageHash;
 
     /**
      * Deserialize this message from a given payload.
@@ -100,56 +104,88 @@ public class RejectMessage extends BaseMessage {
     }
 
     /** Constructs a reject message that fingers the object with the given hash as rejected for the given reason. */
-    public RejectMessage(RejectCode code, Sha256Hash hash, String message, String reason) {
-        this.code = code;
-        this.messageHash = hash;
-        this.message = message;
-        this.reason = reason;
+    public RejectMessage(RejectCode code, @Nullable Sha256Hash rejectedMessageHash, String rejectedMessage,
+                         String reason) {
+        this.rejectedMessage = Objects.requireNonNull(rejectedMessage);
+        this.code = Objects.requireNonNull(code);
+        this.reason = Objects.requireNonNull(reason);
+        this.rejectedMessageHash = rejectedMessageHash;
     }
 
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
+        byte[] messageBytes = rejectedMessage.getBytes(StandardCharsets.UTF_8);
         stream.write(VarInt.of(messageBytes.length).serialize());
         stream.write(messageBytes);
         stream.write(code.code);
         byte[] reasonBytes = reason.getBytes(StandardCharsets.UTF_8);
         stream.write(VarInt.of(reasonBytes.length).serialize());
         stream.write(reasonBytes);
-        if ("block".equals(message) || "tx".equals(message))
-            stream.write(messageHash.serialize());
+        if ("block".equals(rejectedMessage) || "tx".equals(rejectedMessage))
+            stream.write(rejectedMessageHash.serialize());
     }
 
     /**
      * Provides the type of message which was rejected by the peer.
      * Note that this is ENTIRELY UNTRUSTED and should be sanity-checked before it is printed or processed.
+     *
+     * @return rejected message type
      */
+    public String rejectedMessage() {
+        return rejectedMessage;
+    }
+
+    /** @deprecated use {@link #rejectedMessage()} */
+    @Deprecated
     public String getRejectedMessage() {
-        return message;
+        return rejectedMessage();
     }
 
     /**
      * Provides the hash of the rejected object (if getRejectedMessage() is either "tx" or "block"), otherwise null.
+     *
+     * @return hash of rejected object
      */
+    public Sha256Hash rejectedMessageHash() {
+        return rejectedMessageHash;
+    }
+
+    /** @deprecated use {@link #rejectedMessageHash()} */
+    @Deprecated
     public Sha256Hash getRejectedObjectHash() {
-        return messageHash;
+        return rejectedMessageHash();
     }
 
     /**
      * The reason code given for why the peer rejected the message.
+     *
+     * @return reject reason code
      */
-    public RejectCode getReasonCode() {
+    public RejectCode code() {
         return code;
+    }
+
+    /** @deprecated use {@link #code()} */
+    @Deprecated
+    public RejectCode getReasonCode() {
+        return code();
     }
 
     /**
      * The reason message given for rejection.
      * Note that this is ENTIRELY UNTRUSTED and should be sanity-checked before it is printed or processed.
+     *
+     * @return reject reason
      */
-    public String getReasonString() {
+    public String reason() {
         return reason;
     }
 
+    /** @deprecated use {@link #reason()} */
+    @Deprecated
+    public String getReasonString() {
+        return reason();
+    }
 
     /**
      * A String representation of the relevant details of this reject message.
@@ -159,9 +195,8 @@ public class RejectMessage extends BaseMessage {
      */
     @Override
     public String toString() {
-        Sha256Hash hash = getRejectedObjectHash();
-        return String.format(Locale.US, "Reject: %s %s for reason '%s' (%d)", getRejectedMessage(),
-            hash != null ? hash : "", getReasonString(), getReasonCode().code);
+        return String.format(Locale.US, "Reject: %s %s for reason '%s' (%d)", rejectedMessage,
+            rejectedMessageHash != null ? rejectedMessageHash : "", reason, code.code);
     }
 
     @Override
@@ -169,12 +204,12 @@ public class RejectMessage extends BaseMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RejectMessage other = (RejectMessage) o;
-        return message.equals(other.message) && code.equals(other.code)
-            && reason.equals(other.reason) && messageHash.equals(other.messageHash);
+        return rejectedMessage.equals(other.rejectedMessage) && code.equals(other.code)
+            && reason.equals(other.reason) && rejectedMessageHash.equals(other.rejectedMessageHash);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(message, code, reason, messageHash);
+        return Objects.hash(rejectedMessage, code, reason, rejectedMessageHash);
     }
 }
