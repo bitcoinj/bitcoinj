@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.base.Sha256Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,12 +62,6 @@ public abstract class BaseMessage implements Message {
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */
     protected abstract void bitcoinSerializeToStream(OutputStream stream) throws IOException;
-
-    /** @deprecated use {@link Transaction#getTxId()}, {@link Block#getHash()}, {@link FilteredBlock#getHash()} or {@link TransactionOutPoint#hash()} */
-    @Deprecated
-    public Sha256Hash getHash() {
-        throw new UnsupportedOperationException();
-    }
 
     /**
      * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
