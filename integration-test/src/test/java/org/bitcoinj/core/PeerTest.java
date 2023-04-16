@@ -865,7 +865,7 @@ public class PeerTest extends TestWithNetworkConnections {
                 bits = Arrays.copyOf(bits, bits.length / 2);
                 stream.write(bits);
             }
-        }.bitcoinSerialize(), out);
+        }.serialize(), out);
         writeTarget.writeTarget.writeBytes(out.toByteArray());
         try {
             result.get();

@@ -114,6 +114,6 @@ public class AddressV2MessageTest {
         assertEquals("kpgvmscirrdqpekbqjsvw5teanhatztpp2gl6eee4zkowvwfxwenqaid.onion", a4.getHostname());
         assertEquals(0, a4.getPort());
 
-        assertEquals(MESSAGE_HEX, ByteUtils.formatHex(message.bitcoinSerialize()));
+        assertEquals(MESSAGE_HEX, ByteUtils.formatHex(message.serialize()));
     }
 }

@@ -106,7 +106,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         assertTrue(txesMatched.contains(Sha256Hash.wrap("63194f18be0af63f2c6bc9dc0f777cbefed3d9415c4af83f3ee3a3d669c00cb5")));
 
         // Check round tripping.
-        assertEquals(block, FilteredBlock.read(ByteBuffer.wrap(block.bitcoinSerialize())));
+        assertEquals(block, FilteredBlock.read(ByteBuffer.wrap(block.serialize())));
     }
 
     @Test
@@ -181,7 +181,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
 
         BloomFilter filter = wallet.getBloomFilter(wallet.getKeyChainGroupSize()*2, 0.001, 0xDEADBEEF);
         // Compare the serialized bloom filter to a known-good value
-        assertArrayEquals(ByteUtils.parseHex("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"), filter.bitcoinSerialize());
+        assertArrayEquals(ByteUtils.parseHex("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"), filter.serialize());
 
         // Create a peer.
         peerGroup.start();

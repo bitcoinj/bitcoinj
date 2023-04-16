@@ -145,7 +145,7 @@ public class BitcoinSerializer extends MessageSerializer {
         if (name == null) {
             throw new Error("BitcoinSerializer doesn't currently know how to serialize " + message.getClass());
         }
-        serialize(name, message.bitcoinSerialize(), out);
+        serialize(name, message.serialize(), out);
     }
 
     /**

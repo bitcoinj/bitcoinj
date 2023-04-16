@@ -74,7 +74,7 @@ public class VersionMessageTest {
         ver.subVer = "/bitcoinj/";
         ver.localServices = Services.of(1);
         ver.receivingAddr = new InetSocketAddress(InetAddress.getByName("4.3.2.1"), 8333);
-        byte[] serialized = ver.bitcoinSerialize();
+        byte[] serialized = ver.serialize();
         VersionMessage ver2 = VersionMessage.read(ByteBuffer.wrap(serialized));
         assertEquals(1234, ver2.bestHeight);
         assertEquals(Instant.ofEpochSecond(23456), ver2.time);
@@ -92,7 +92,7 @@ public class VersionMessageTest {
         ver.subVer = "/bitcoinj/";
         ver.localServices = Services.of(1);
         ver.receivingAddr = new InetSocketAddress(InetAddress.getByName("2002:db8:85a3:0:0:8a2e:370:7335"), 8333);
-        byte[] serialized = ver.bitcoinSerialize();
+        byte[] serialized = ver.serialize();
         VersionMessage ver2 = VersionMessage.read(ByteBuffer.wrap(serialized));
         assertEquals(1234, ver2.bestHeight);
         assertEquals(Instant.ofEpochSecond(23456), ver2.time);

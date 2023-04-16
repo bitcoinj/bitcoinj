@@ -33,7 +33,7 @@ public abstract class EmptyMessage extends BaseMessage {
     }
 
     @Override
-    public final int getMessageSize() {
+    public final int messageSize() {
         return 0;
     }
 

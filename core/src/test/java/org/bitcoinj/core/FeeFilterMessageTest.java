@@ -39,7 +39,7 @@ public class FeeFilterMessageTest {
         FeeFilterMessage ffm = FeeFilterMessage.read(ByteBuffer.wrap(buf));
         assertEquals(feeRate, ffm.feeRate());
 
-        byte[] serialized = ffm.bitcoinSerialize();
+        byte[] serialized = ffm.serialize();
         FeeFilterMessage ffm2 = FeeFilterMessage.read(ByteBuffer.wrap(serialized));
         assertEquals(feeRate, ffm2.feeRate());
     }

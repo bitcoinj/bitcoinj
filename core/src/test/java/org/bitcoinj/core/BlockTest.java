@@ -145,7 +145,7 @@ public class BlockTest {
     @Test
     public void testHeaderParse() {
         Block header = block700000.cloneAsHeader();
-        Block reparsed = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(header.bitcoinSerialize()));
+        Block reparsed = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(header.serialize()));
         assertEquals(reparsed, header);
     }
 
@@ -155,7 +155,7 @@ public class BlockTest {
         // proves that transaction serialization works, along with all its subobjects like scripts and in/outpoints.
         //
         // NB: This tests the bitcoin serialization protocol.
-        assertArrayEquals(block700000Bytes, block700000.bitcoinSerialize());
+        assertArrayEquals(block700000Bytes, block700000.serialize());
     }
 
     @Test
@@ -325,7 +325,7 @@ public class BlockTest {
                 stream.write(VarInt.of(Integer.MAX_VALUE).serialize());
             }
         };
-        byte[] serializedBlock = block.bitcoinSerialize();
+        byte[] serializedBlock = block.serialize();
         try {
             TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(serializedBlock));
             fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
