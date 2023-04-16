@@ -56,4 +56,10 @@ public interface Message {
     default byte[] bitcoinSerialize()  {
         return serialize();
     }
+
+    /** @deprecated use {@link #serialize()} */
+    @Deprecated
+    default byte[] unsafeBitcoinSerialize() {
+        return serialize();
+    }
 }

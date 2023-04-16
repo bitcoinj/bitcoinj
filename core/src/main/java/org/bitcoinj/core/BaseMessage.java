@@ -52,12 +52,6 @@ public abstract class BaseMessage implements Message {
         return stream.toByteArray();
     }
 
-    /** @deprecated use {@link #serialize()} */
-    @Deprecated
-    public byte[] unsafeBitcoinSerialize() {
-        return serialize();
-    }
-
     /**
      * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
      */

@@ -16,5 +16,14 @@
 
 package org.bitcoinj.core;
 
+import org.junit.Test;
+
 public class MessageTest {
+    @Test
+    public void deprecatedMembers() {
+        Message message = new UnknownMessage("dummy");
+        message.bitcoinSerialize();
+        message.unsafeBitcoinSerialize();
+        message.getMessageSize();
+    }
 }
