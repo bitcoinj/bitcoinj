@@ -37,7 +37,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -193,7 +192,7 @@ public class FullBlockTestGenerator {
                 if (outStream != null && element instanceof BlockAndValidity) {
                     try {
                         ByteUtils.writeInt32BE(params.getPacketMagic(), outStream);
-                        byte[] block = ((BlockAndValidity) element).block.bitcoinSerialize();
+                        byte[] block = ((BlockAndValidity) element).block.serialize();
                         byte[] length = new byte[4];
                         ByteUtils.writeInt32LE(block.length, length, 0);
                         outStream.write(length);
@@ -447,28 +446,28 @@ public class FullBlockTestGenerator {
         NewBlock b23 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         {
             Transaction tx = new Transaction();
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b23.block.getMessageSize() - 65];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b23.block.messageSize() - 65];
             Arrays.fill(outputScript, (byte) OP_FALSE);
             tx.addOutput(new TransactionOutput(tx, ZERO, outputScript));
             addOnlyInputToTransaction(tx, b23);
             b23.addTransaction(tx);
         }
         b23.solve();
-        checkState(b23.block.getMessageSize() == Block.MAX_BLOCK_SIZE);
+        checkState(b23.block.messageSize() == Block.MAX_BLOCK_SIZE);
         blocks.add(new BlockAndValidity(b23, true, false, b23.getHash(), chainHeadHeight + 7, "b23"));
         spendableOutputs.offer(b23.getCoinbaseOutput());
 
         NewBlock b24 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         {
             Transaction tx = new Transaction();
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b24.block.getMessageSize() - 64];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b24.block.messageSize() - 64];
             Arrays.fill(outputScript, (byte) OP_FALSE);
             tx.addOutput(new TransactionOutput(tx, ZERO, outputScript));
             addOnlyInputToTransaction(tx, b24);
             b24.addTransaction(tx);
         }
         b24.solve();
-        checkState(b24.block.getMessageSize() == Block.MAX_BLOCK_SIZE + 1);
+        checkState(b24.block.messageSize() == Block.MAX_BLOCK_SIZE + 1);
         blocks.add(new BlockAndValidity(b24, false, true, b23.getHash(), chainHeadHeight + 7, "b24"));
 
         // Extend the b24 chain to make sure bitcoind isn't accepting b24
@@ -717,7 +716,7 @@ public class FullBlockTestGenerator {
             }
             b39numP2SHOutputs++;
 
-            while (b39.block.getMessageSize() < Block.MAX_BLOCK_SIZE)
+            while (b39.block.messageSize() < Block.MAX_BLOCK_SIZE)
             {
                 Transaction tx = new Transaction();
 
@@ -727,7 +726,7 @@ public class FullBlockTestGenerator {
                 tx.addInput(new TransactionInput(tx, new byte[]{OP_1}, lastOutPoint));
                 lastOutPoint = new TransactionOutPoint(1, tx.getTxId());
 
-                if (b39.block.getMessageSize() + tx.getMessageSize() < Block.MAX_BLOCK_SIZE) {
+                if (b39.block.messageSize() + tx.messageSize() < Block.MAX_BLOCK_SIZE) {
                     b39.addTransaction(tx);
                     b39numP2SHOutputs++;
                 } else
@@ -1066,7 +1065,7 @@ public class FullBlockTestGenerator {
 
         Block b56;
         try {
-            b56 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57.block.bitcoinSerialize()));
+            b56 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57.block.serialize()));
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1107,7 +1106,7 @@ public class FullBlockTestGenerator {
 
         Block b56p2;
         try {
-            b56p2 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57p2.block.bitcoinSerialize()));
+            b56p2 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57p2.block.serialize()));
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1207,15 +1206,15 @@ public class FullBlockTestGenerator {
         {
             b64Original = createNextBlock(b60, chainHeadHeight + 19, out18, null);
             Transaction tx = new Transaction();
-            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b64Original.block.getMessageSize() - 65];
+            byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - b64Original.block.messageSize() - 65];
             Arrays.fill(outputScript, (byte) OP_FALSE);
             tx.addOutput(new TransactionOutput(tx, ZERO, outputScript));
             addOnlyInputToTransaction(tx, b64Original);
             b64Original.addTransaction(tx);
             b64Original.solve();
-            checkState(b64Original.block.getMessageSize() == Block.MAX_BLOCK_SIZE);
+            checkState(b64Original.block.messageSize() == Block.MAX_BLOCK_SIZE);
 
-            ByteArrayOutputStream stream = new ByteArrayOutputStream(b64Original.block.getMessageSize() + 8);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream(b64Original.block.messageSize() + 8);
             b64Original.block.writeHeader(stream);
 
             byte[] varIntBytes = new byte[9];
@@ -1230,7 +1229,7 @@ public class FullBlockTestGenerator {
 
             // The following checks are checking to ensure block serialization functions in the way needed for this test
             // If they fail, it is likely not an indication of error, but an indication that this test needs rewritten
-            checkState(stream.size() == b64Original.block.getMessageSize() + 8);
+            checkState(stream.size() == b64Original.block.messageSize() + 8);
             // This check fails because it was created for "retain mode" and the likely encoding is not "optimal".
             // We since removed this capability retain the original encoding, but could not rewrite this test data.
             // checkState(stream.size() == b64.getMessageSize());
@@ -1356,7 +1355,7 @@ public class FullBlockTestGenerator {
         }
         b72.solve();
 
-        Block b71 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b72.block.bitcoinSerialize()));
+        Block b71 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b72.block.serialize()));
         b71.addTransaction(b72.block.getTransactions().get(2));
         checkState(b71.getHash().equals(b72.getHash()));
         blocks.add(new BlockAndValidity(b71, false, true, b69.getHash(), chainHeadHeight + 21, "b71"));
@@ -1631,7 +1630,7 @@ public class FullBlockTestGenerator {
             for (int i = 0; i < LARGE_REORG_SIZE; i++) {
                 nextBlock = createNextBlock(nextBlock, nextHeight, largeReorgOutput, null);
                 Transaction tx = new Transaction();
-                byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - nextBlock.block.getMessageSize() - 65];
+                byte[] outputScript = new byte[Block.MAX_BLOCK_SIZE - nextBlock.block.messageSize() - 65];
                 Arrays.fill(outputScript, (byte) OP_FALSE);
                 tx.addOutput(new TransactionOutput(tx, ZERO, outputScript));
                 addOnlyInputToTransaction(tx, nextBlock);
@@ -1682,7 +1681,7 @@ public class FullBlockTestGenerator {
             final int TRANSACTION_CREATION_BLOCKS = 100;
             for (blockCountAfter1001 = 0; blockCountAfter1001 < TRANSACTION_CREATION_BLOCKS; blockCountAfter1001++) {
                 NewBlock block = createNextBlock(lastBlock, nextHeight++, null, null);
-                while (block.block.getMessageSize() < Block.MAX_BLOCK_SIZE - 500) {
+                while (block.block.messageSize() < Block.MAX_BLOCK_SIZE - 500) {
                     Transaction tx = new Transaction();
                     tx.addInput(lastOutput.hash(), lastOutput.index(), OP_NOP_SCRIPT);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
@@ -1700,7 +1699,7 @@ public class FullBlockTestGenerator {
             Iterator<Sha256Hash> hashes = hashesToSpend.iterator();
             for (int i = 0; hashes.hasNext(); i++) {
                 NewBlock block = createNextBlock(lastBlock, nextHeight++, null, null);
-                while (block.block.getMessageSize() < Block.MAX_BLOCK_SIZE - 500 && hashes.hasNext()) {
+                while (block.block.messageSize() < Block.MAX_BLOCK_SIZE - 500 && hashes.hasNext()) {
                     Transaction tx = new Transaction();
                     tx.addInput(hashes.next(), 0, OP_NOP_SCRIPT);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);

@@ -693,7 +693,7 @@ public class WalletTest extends TestWithWallet {
         // Send 0.10 to somebody else.
         Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 10));
         // Reserialize.
-        Transaction send2 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send1.bitcoinSerialize()));
+        Transaction send2 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send1.serialize()));
         assertEquals(nanos, send2.getValueSentFromMe(wallet));
         assertEquals(ZERO.subtract(valueOf(0, 10)), send2.getValue(wallet));
     }
@@ -709,7 +709,7 @@ public class WalletTest extends TestWithWallet {
 
         assertTrue(wallet.isConsistent());
 
-        Transaction txClone = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx.bitcoinSerialize()));
+        Transaction txClone = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx.serialize()));
         try {
             wallet.receiveFromBlock(txClone, null, BlockChain.NewBlockType.BEST_CHAIN, 0);
             fail("Illegal argument not thrown when it should have been.");
@@ -837,7 +837,7 @@ public class WalletTest extends TestWithWallet {
         // Create a double spend of just the first one.
         Address BAD_GUY = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction send2 = wallet.createSend(BAD_GUY, COIN);
-        send2 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send2.bitcoinSerialize()));
+        send2 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send2.serialize()));
         // Broadcast send1, it's now pending.
         wallet.commitTx(send1);
         assertEquals(ZERO, wallet.getBalance()); // change of 10 cents is not yet mined so not included in the balance.
@@ -862,7 +862,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, value.add(value2));
         Transaction send1 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, value2));
         Transaction send2 = Objects.requireNonNull(wallet.createSend(OTHER_ADDRESS, value2));
-        byte[] buf = send1.bitcoinSerialize();
+        byte[] buf = send1.serialize();
         buf[43] = 0;  // Break the signature: bitcoinj won't check in SPV mode and this is easier than other mutations.
         send1 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(buf));
         wallet.commitTx(send2);
@@ -919,7 +919,7 @@ public class WalletTest extends TestWithWallet {
         // Create a double spend.
         Address BAD_GUY = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction send2 = wallet.createSend(BAD_GUY, valueOf(0, 50));
-        send2 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send2.bitcoinSerialize()));
+        send2 = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send2.serialize()));
         // Broadcast send1.
         wallet.commitTx(send1);
         assertEquals(send1, received.getOutput(0).getSpentBy().getParentTransaction());
@@ -1347,7 +1347,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN);
         Threading.waitForUserCode();
         assertNull(reasons[0]);
-        final Transaction t1Copy = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(t1.bitcoinSerialize()));
+        final Transaction t1Copy = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(t1.serialize()));
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, t1Copy);
         Threading.waitForUserCode();
         assertFalse(flags[0]);
@@ -2345,7 +2345,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request15 = SendRequest.to(OTHER_ADDRESS, CENT);
         for (int i = 0; i < 29; i++)
             request15.tx.addOutput(CENT, OTHER_ADDRESS);
-        assertTrue(request15.tx.bitcoinSerialize().length > 1000);
+        assertTrue(request15.tx.serialize().length > 1000);
         request15.feePerKb = Transaction.DEFAULT_TX_FEE;
         request15.ensureMinRequiredFee = true;
         wallet.completeTx(request15);
@@ -2362,7 +2362,7 @@ public class WalletTest extends TestWithWallet {
         request16.ensureMinRequiredFee = true;
         for (int i = 0; i < 29; i++)
             request16.tx.addOutput(CENT, OTHER_ADDRESS);
-        assertTrue(request16.tx.bitcoinSerialize().length > 1000);
+        assertTrue(request16.tx.serialize().length > 1000);
         wallet.completeTx(request16);
         // Just the reference fee should be added if feePerKb == 0
         // Hardcoded tx length because actual length may vary depending on actual signature length
@@ -2384,14 +2384,14 @@ public class WalletTest extends TestWithWallet {
         assertEquals(Coin.valueOf(99900), request17.tx.getFee());
         assertEquals(1, request17.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 999
-        int theoreticalMaxLength17 = request17.tx.bitcoinSerialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength17 = request17.tx.serialize().length + myKey.getPubKey().length + 75;
         for (TransactionInput in : request17.tx.getInputs())
             theoreticalMaxLength17 -= in.getScriptBytes().length;
         assertEquals(999, theoreticalMaxLength17);
         Transaction spend17 = request17.tx;
         {
             // Its actual size must be between 996 and 999 (inclusive) as signatures have a 3-byte size range (almost always)
-            final int length = spend17.bitcoinSerialize().length;
+            final int length = spend17.serialize().length;
             assertTrue(Integer.toString(length), length >= 996 && length <= 999);
         }
         // Now check that it got a fee of 1 since its max size is 999 (1kb).
@@ -2412,13 +2412,13 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request18.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 1001
         Transaction spend18 = request18.tx;
-        int theoreticalMaxLength18 = spend18.bitcoinSerialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength18 = spend18.serialize().length + myKey.getPubKey().length + 75;
         for (TransactionInput in : spend18.getInputs())
             theoreticalMaxLength18 -= in.getScriptBytes().length;
         assertEquals(1001, theoreticalMaxLength18);
         // Its actual size must be between 998 and 1000 (inclusive) as signatures have a 3-byte size range (almost always)
-        assertTrue(spend18.bitcoinSerialize().length >= 998);
-        assertTrue(spend18.bitcoinSerialize().length <= 1001);
+        assertTrue(spend18.serialize().length >= 998);
+        assertTrue(spend18.serialize().length <= 1001);
         // Now check that it did get a fee since its max size is 1000
         assertEquals(25, spend18.getOutputs().size());
         // We optimize for priority, so the output selected should be the largest one
@@ -2524,7 +2524,7 @@ public class WalletTest extends TestWithWallet {
         Coin dustThresholdMinusOne = new TransactionOutput(null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue().subtract(SATOSHI);
         request26.tx.addOutput(CENT.subtract(fee.add(dustThresholdMinusOne)),
                 OTHER_ADDRESS);
-        assertTrue(request26.tx.bitcoinSerialize().length > 1000);
+        assertTrue(request26.tx.serialize().length > 1000);
         request26.feePerKb = SATOSHI;
         request26.ensureMinRequiredFee = true;
         wallet.completeTx(request26);

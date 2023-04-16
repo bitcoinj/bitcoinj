@@ -922,7 +922,7 @@ public abstract class AbstractBlockChain {
             try {
                 falsePositives.remove(tx.getTxId());
                 if (clone)
-                    tx = Transaction.read(ByteBuffer.wrap(tx.bitcoinSerialize()));
+                    tx = Transaction.read(ByteBuffer.wrap(tx.serialize()));
                 listener.receiveFromBlock(tx, block, blockType, relativityOffset++);
             } catch (ScriptException e) {
                 // We don't want scripts we don't understand to break the block chain so just note that this tx was

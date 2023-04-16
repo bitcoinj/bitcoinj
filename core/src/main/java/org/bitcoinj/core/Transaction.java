@@ -362,7 +362,7 @@ public class Transaction extends BaseMessage {
     /** Gets the transaction weight as defined in BIP141. */
     public int getWeight() {
         if (!hasWitnesses())
-            return getMessageSize() * 4;
+            return this.messageSize() * 4;
         try (final ByteArrayOutputStream stream = new ByteArrayOutputStream(255)) { // just a guess at an average tx length
             bitcoinSerializeToStream(stream, false);
             final int baseSize = stream.size();
@@ -378,7 +378,7 @@ public class Transaction extends BaseMessage {
     /** Gets the virtual transaction size as defined in BIP141. */
     public int getVsize() {
         if (!hasWitnesses())
-            return getMessageSize();
+            return this.messageSize();
         return IntMath.divide(getWeight(), 4, RoundingMode.CEILING); // round up
     }
 
@@ -674,7 +674,7 @@ public class Transaction extends BaseMessage {
      * can do so.
      */
     public int getMessageSizeForPriorityCalc() {
-        int size = getMessageSize();
+        int size = this.messageSize();
         for (TransactionInput input : inputs) {
             // 41: min size of an input
             // 110: enough to cover a compressed pubkey p2sh redemption (somewhat arbitrary).
@@ -726,7 +726,7 @@ public class Transaction extends BaseMessage {
             s.append(", wtxid ").append(wTxId);
         s.append('\n');
         int weight = getWeight();
-        int size = getMessageSize();
+        int size = this.messageSize();
         int vsize = getVsize();
         s.append(indent).append("weight: ").append(weight).append(" wu, ");
         if (size != vsize)
@@ -1194,7 +1194,7 @@ public class Transaction extends BaseMessage {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = Transaction.read(ByteBuffer.wrap(bitcoinSerialize()));
+            Transaction tx = Transaction.read(ByteBuffer.wrap(serialize()));
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
@@ -1423,7 +1423,7 @@ public class Transaction extends BaseMessage {
     }
 
     @Override
-    public int getMessageSize() {
+    public int messageSize() {
         boolean useSegwit = hasWitnesses() && allowWitness(protocolVersion);
         int size = 4; // version
         if (useSegwit)
@@ -1813,7 +1813,7 @@ public class Transaction extends BaseMessage {
     public static void verify(Network network, Transaction tx) throws VerificationException {
         if (tx.inputs.size() == 0 || tx.outputs.size() == 0)
             throw new VerificationException.EmptyInputsOrOutputs();
-        if (tx.getMessageSize() > Block.MAX_BLOCK_SIZE)
+        if (tx.messageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
         HashSet<TransactionOutPoint> outpoints = new HashSet<>();

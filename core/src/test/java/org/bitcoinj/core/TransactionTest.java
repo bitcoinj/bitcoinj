@@ -173,7 +173,7 @@ public class TransactionTest {
     @Test
     public void testMessageSize() {
         Transaction tx = new Transaction();
-        int length = tx.getMessageSize();
+        int length = tx.messageSize();
 
         // add fake transaction input
         TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().program(),
@@ -187,7 +187,7 @@ public class TransactionTest {
         length += output.getMessageSize();
 
         // message size has now grown
-        assertEquals(length, tx.getMessageSize());
+        assertEquals(length, tx.messageSize());
     }
 
     @Test
@@ -223,7 +223,7 @@ public class TransactionTest {
         // verify signature
         input.getScriptSig().correctlySpends(tx, 0, null, null, ScriptBuilder.createOutputScript(fromAddress), null);
 
-        byte[] rawTx = tx.bitcoinSerialize();
+        byte[] rawTx = tx.serialize();
 
         assertNotNull(rawTx);
     }
@@ -246,7 +246,7 @@ public class TransactionTest {
         input.getScriptSig().correctlySpends(tx, 0, input.getWitness(), input.getValue(),
                 ScriptBuilder.createOutputScript(fromAddress), null);
 
-        byte[] rawTx = tx.bitcoinSerialize();
+        byte[] rawTx = tx.serialize();
 
         assertNotNull(rawTx);
     }
@@ -264,11 +264,11 @@ public class TransactionTest {
         for (TransactionInput in : tx.getInputs())
             assertFalse(in.hasWitness());
         assertEquals(3, tx.getOutputs().size());
-        assertEquals(hex, ByteUtils.formatHex(tx.bitcoinSerialize()));
+        assertEquals(hex, ByteUtils.formatHex(tx.serialize()));
         assertEquals("Uncorrect hash", "38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a",
                 tx.getTxId().toString());
         assertEquals(tx.getWTxId(), tx.getTxId());
-        assertEquals(hex.length() / 2, tx.getMessageSize());
+        assertEquals(hex.length() / 2, tx.messageSize());
 
         // Roundtrip with witness
         hex = "0100000000010213206299feb17742091c3cb2ab45faa3aa87922d3c030cafb3f798850a2722bf0000000000feffffffa12f2424b9599898a1d30f06e1ce55eba7fabfeee82ae9356f07375806632ff3010000006b483045022100fcc8cf3014248e1a0d6dcddf03e80f7e591605ad0dbace27d2c0d87274f8cd66022053fcfff64f35f22a14deb657ac57f110084fb07bb917c3b42e7d033c54c7717b012102b9e4dcc33c9cc9cb5f42b96dddb3b475b067f3e21125f79e10c853e5ca8fba31feffffff02206f9800000000001976a9144841b9874d913c430048c78a7b18baebdbea440588ac8096980000000000160014e4873ef43eac347471dd94bc899c51b395a509a502483045022100dd8250f8b5c2035d8feefae530b10862a63030590a851183cb61b3672eb4f26e022057fe7bc8593f05416c185d829b574290fb8706423451ebd0a0ae50c276b87b43012102179862f40b85fa43487500f1d6b13c864b5eb0a83999738db0f7a6b91b2ec64f00db080000";
@@ -278,11 +278,11 @@ public class TransactionTest {
         assertTrue(tx.getInput(0).hasWitness());
         assertFalse(tx.getInput(1).hasWitness());
         assertEquals(2, tx.getOutputs().size());
-        assertEquals(hex, ByteUtils.formatHex(tx.bitcoinSerialize()));
+        assertEquals(hex, ByteUtils.formatHex(tx.serialize()));
         assertEquals("Uncorrect hash", "99e7484eafb6e01622c395c8cae7cb9f8822aab6ba993696b39df8b60b0f4b11",
                 tx.getTxId().toString());
         assertNotEquals(tx.getWTxId(), tx.getTxId());
-        assertEquals(hex.length() / 2, tx.getMessageSize());
+        assertEquals(hex.length() / 2, tx.messageSize());
     }
 
     @Test
@@ -298,8 +298,8 @@ public class TransactionTest {
                 + "9093510d00000000" + "1976a914" + "3bde42dbee7e4dbe6a21b2d50ce2f0167faa8159" + "88ac" // txOut
                 + "11000000"; // nLockTime
         Transaction tx = Transaction.read(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
-        assertEquals(txHex, ByteUtils.formatHex(tx.bitcoinSerialize()));
-        assertEquals(txHex.length() / 2, tx.getMessageSize());
+        assertEquals(txHex, ByteUtils.formatHex(tx.serialize()));
+        assertEquals(txHex.length() / 2, tx.messageSize());
         assertEquals(2, tx.getInputs().size());
         assertEquals(2, tx.getOutputs().size());
         TransactionInput txIn0 = tx.getInput(0);
@@ -363,8 +363,8 @@ public class TransactionTest {
                 + "21" // push length
                 + "025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357" // push
                 + "11000000"; // nLockTime
-        assertEquals(signedTxHex, ByteUtils.formatHex(tx.bitcoinSerialize()));
-        assertEquals(signedTxHex.length() / 2, tx.getMessageSize());
+        assertEquals(signedTxHex, ByteUtils.formatHex(tx.serialize()));
+        assertEquals(signedTxHex.length() / 2, tx.messageSize());
     }
 
     @Test
@@ -379,8 +379,8 @@ public class TransactionTest {
                 + "0008af2f00000000" + "1976a914" + "fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c" + "88ac" // txOut
                 + "92040000"; // nLockTime
         Transaction tx = Transaction.read(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
-        assertEquals(txHex, ByteUtils.formatHex(tx.bitcoinSerialize()));
-        assertEquals(txHex.length() / 2, tx.getMessageSize());
+        assertEquals(txHex, ByteUtils.formatHex(tx.serialize()));
+        assertEquals(txHex.length() / 2, tx.messageSize());
         assertEquals(1, tx.getInputs().size());
         assertEquals(2, tx.getOutputs().size());
         TransactionInput txIn = tx.getInput(0);
@@ -433,8 +433,8 @@ public class TransactionTest {
                 + "21" // push length
                 + "03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873" // push
                 + "92040000"; // nLockTime
-        assertEquals(signedTxHex, ByteUtils.formatHex(tx.bitcoinSerialize()));
-        assertEquals(signedTxHex.length() / 2, tx.getMessageSize());
+        assertEquals(signedTxHex, ByteUtils.formatHex(tx.serialize()));
+        assertEquals(signedTxHex.length() / 2, tx.messageSize());
     }
 
     @Test
@@ -568,7 +568,7 @@ public class TransactionTest {
     @Test
     public void testPrioSizeCalc() {
         Transaction tx1 = FakeTxBuilder.createFakeTx(TESTNET.network(), Coin.COIN, ADDRESS);
-        int size1 = tx1.getMessageSize();
+        int size1 = tx1.messageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
         tx1.getInput(0).setScriptSig(Script.parse(new byte[109]));
@@ -669,7 +669,7 @@ public class TransactionTest {
     @Test
     public void parseTransactionWithHugeDeclaredInputsSize() {
         Transaction tx = new HugeDeclaredSizeTransaction(true, false, false);
-        byte[] serializedTx = tx.bitcoinSerialize();
+        byte[] serializedTx = tx.serialize();
         try {
             Transaction.read(ByteBuffer.wrap(serializedTx));
             fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
@@ -681,7 +681,7 @@ public class TransactionTest {
     @Test
     public void parseTransactionWithHugeDeclaredOutputsSize() {
         Transaction tx = new HugeDeclaredSizeTransaction(false, true, false);
-        byte[] serializedTx = tx.bitcoinSerialize();
+        byte[] serializedTx = tx.serialize();
         try {
             Transaction.read(ByteBuffer.wrap(serializedTx));
             fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
@@ -693,7 +693,7 @@ public class TransactionTest {
     @Test
     public void parseTransactionWithHugeDeclaredWitnessPushCountSize() {
         Transaction tx = new HugeDeclaredSizeTransaction(false, false, true);
-        byte[] serializedTx = tx.bitcoinSerialize();
+        byte[] serializedTx = tx.serialize();
         try {
             Transaction.read(ByteBuffer.wrap(serializedTx));
             fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
@@ -767,7 +767,7 @@ public class TransactionTest {
         // example from https://en.bitcoin.it/wiki/Weight_units
         String txHex = "0100000000010115e180dc28a2327e687facc33f10f2a20da717e5548406f7ae8b4c811072f85603000000171600141d7cd6c75c2e86f4cbf98eaed221b30bd9a0b928ffffffff019caef505000000001976a9141d7cd6c75c2e86f4cbf98eaed221b30bd9a0b92888ac02483045022100f764287d3e99b1474da9bec7f7ed236d6c81e793b20c4b5aa1f3051b9a7daa63022016a198031d5554dbb855bdbe8534776a4be6958bd8d530dc001c32b828f6f0ab0121038262a6c6cec93c2d3ecd6c6072efea86d02ff8e3328bbd0242b20af3425990ac00000000";
         Transaction tx = Transaction.read(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
-        assertEquals(218, tx.getMessageSize());
+        assertEquals(218, tx.messageSize());
         assertEquals(542, tx.getWeight());
         assertEquals(136, tx.getVsize());
     }
@@ -777,7 +777,7 @@ public class TransactionTest {
         // Non segwit tx with zero input and outputs
         String txHex = "010000000000f1f2f3f4";
         Transaction tx = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
-        assertEquals(txHex, ByteUtils.formatHex(tx.bitcoinSerialize()));
+        assertEquals(txHex, ByteUtils.formatHex(tx.serialize()));
     }
 
     @Test
@@ -788,6 +788,6 @@ public class TransactionTest {
         String txHex = "0100000000010100000000000000016af1f2f3f4";
         int protoVersionNoWitness = serializer.getProtocolVersion() | Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
         Transaction tx = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
-        assertEquals(txHex, ByteUtils.formatHex(tx.bitcoinSerialize()));
+        assertEquals(txHex, ByteUtils.formatHex(tx.serialize()));
     }
 }

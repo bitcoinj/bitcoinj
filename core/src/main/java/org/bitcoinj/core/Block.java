@@ -259,13 +259,13 @@ public class Block extends BaseMessage {
     }
 
     @Override
-    public int getMessageSize() {
+    public int messageSize() {
         int size = HEADER_SIZE;
         List<Transaction> transactions = getTransactions();
         if (transactions != null) {
             size += VarInt.sizeOf(transactions.size());
             for (Transaction tx : transactions) {
-                size += tx.getMessageSize();
+                size += tx.messageSize();
             }
         }
         return size;
@@ -1056,7 +1056,7 @@ public class Block extends BaseMessage {
         // transactions that reference spent or non-existent inputs.
         if (block.transactions.isEmpty())
             throw new VerificationException("Block had no transactions");
-        if (block.getMessageSize() > MAX_BLOCK_SIZE)
+        if (block.messageSize() > MAX_BLOCK_SIZE)
             throw new VerificationException("Block larger than MAX_BLOCK_SIZE");
         block.checkTransactions(height, flags);
         block.checkMerkleRoot();

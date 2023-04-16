@@ -42,7 +42,7 @@ public abstract class BaseMessage implements Message {
      * @return serialized data in Bitcoin protocol format
      */
     @Override
-    public final byte[] bitcoinSerialize() {
+    public final byte[] serialize() {
         // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new ByteArrayOutputStream(100); // initial size just a guess
         try {
@@ -53,10 +53,10 @@ public abstract class BaseMessage implements Message {
         return stream.toByteArray();
     }
 
-    /** @deprecated use {@link #bitcoinSerialize()} */
+    /** @deprecated use {@link #serialize()} */
     @Deprecated
     public byte[] unsafeBitcoinSerialize() {
-        return bitcoinSerialize();
+        return serialize();
     }
 
     /**
@@ -76,7 +76,7 @@ public abstract class BaseMessage implements Message {
      * @return size of this object when serialized (in bytes)
      */
     @Override
-    public int getMessageSize() {
-        return bitcoinSerialize().length;
+    public int messageSize() {
+        return serialize().length;
     }
 }

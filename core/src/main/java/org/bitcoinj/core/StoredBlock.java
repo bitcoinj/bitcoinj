@@ -136,7 +136,7 @@ public class StoredBlock {
         buffer.putInt(getHeight());
         // Using unsafeBitcoinSerialize here can give us direct access to the same bytes we read off the wire,
         // avoiding serialization round-trips.
-        byte[] bytes = getHeader().bitcoinSerialize();
+        byte[] bytes = getHeader().serialize();
         buffer.put(bytes, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
     }
 

@@ -1917,7 +1917,7 @@ public class PeerGroup implements TransactionBroadcaster {
 
         private int countAndMeasureSize(Collection<Transaction> transactions) {
             for (Transaction transaction : transactions)
-                bytesInLastSecond += transaction.getMessageSize();
+                bytesInLastSecond += transaction.messageSize();
             return transactions.size();
         }
 

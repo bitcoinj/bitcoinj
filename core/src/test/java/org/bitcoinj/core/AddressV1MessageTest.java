@@ -93,6 +93,6 @@ public class AddressV1MessageTest {
         assertEquals("6hzph5hv6337r6p2.onion", a3.getHostname());
         assertEquals(0, a3.getPort());
 
-        assertEquals(MESSAGE_HEX, ByteUtils.formatHex(message.bitcoinSerialize()));
+        assertEquals(MESSAGE_HEX, ByteUtils.formatHex(message.serialize()));
     }
 }

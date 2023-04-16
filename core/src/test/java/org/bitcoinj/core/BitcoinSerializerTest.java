@@ -77,18 +77,18 @@ public class BitcoinSerializerTest {
         assertEquals("10.0.0.1", peerAddress.getAddr().getHostAddress());
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);
         serializer.serialize(addressMessage, bos);
-        assertEquals(31, addressMessage.getMessageSize());
+        assertEquals(31, addressMessage.messageSize());
 
         addressMessage.addAddress(PeerAddress.inet(InetAddress.getLocalHost(), MAINNET.getPort(),
                 Services.none(), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS)));
         bos = new ByteArrayOutputStream(61);
         serializer.serialize(addressMessage, bos);
-        assertEquals(61, addressMessage.getMessageSize());
+        assertEquals(61, addressMessage.messageSize());
 
         addressMessage.removeAddress(0);
         bos = new ByteArrayOutputStream(31);
         serializer.serialize(addressMessage, bos);
-        assertEquals(31, addressMessage.getMessageSize());
+        assertEquals(31, addressMessage.messageSize());
 
         //this wont be true due to dynamic timestamps.
         //assertTrue(LazyParseByteCacheTest.arrayContains(bos.toByteArray(), addrMessage));

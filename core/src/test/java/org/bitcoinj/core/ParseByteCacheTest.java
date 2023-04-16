@@ -98,17 +98,17 @@ public class ParseByteCacheTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         serializer.serialize(tx1, bos);
         tx1BytesWithHeader = bos.toByteArray();
-        tx1Bytes = tx1.bitcoinSerialize();
+        tx1Bytes = tx1.serialize();
         
         bos.reset();
         serializer.serialize(tx2, bos);
         tx2BytesWithHeader = bos.toByteArray();
-        tx2Bytes = tx2.bitcoinSerialize();
+        tx2Bytes = tx2.serialize();
         
         bos.reset();
         serializer.serialize(b1, bos);
         b1BytesWithHeader = bos.toByteArray();
-        b1Bytes = b1.bitcoinSerialize();
+        b1Bytes = b1.serialize();
     }
     
     @Test

@@ -68,7 +68,7 @@ public class TxConfidenceTableTest {
 
     @Test
     public void pinHandlers() {
-        Transaction tx = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx1.bitcoinSerialize()));
+        Transaction tx = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(tx1.serialize()));
         Sha256Hash hash = tx.getTxId();
         table.seen(hash, address1);
         assertEquals(1, tx.getConfidence().numBroadcastPeers());
