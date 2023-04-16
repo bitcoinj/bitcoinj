@@ -90,7 +90,7 @@ public class VersionMessage extends BaseMessage {
      */
     public boolean relayTxesBeforeFilter;
 
-    private static int NETADDR_BYTES = Services.BYTES + /* IPv6 */  16 + /* port */ Short.BYTES;
+    private static final int NETADDR_BYTES = Services.BYTES + /* IPv6 */  16 + /* port */ Short.BYTES;
 
     /**
      * Deserialize this message from a given payload.
