@@ -160,8 +160,8 @@ public class Transaction extends BaseMessage {
 
     // These are bitcoin serialized.
     private long version;
-    private ArrayList<TransactionInput> inputs;
-    private ArrayList<TransactionOutput> outputs;
+    private List<TransactionInput> inputs;
+    private List<TransactionOutput> outputs;
 
     private volatile LockTime vLockTime;
 
