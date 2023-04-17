@@ -111,7 +111,7 @@ public class TransactionInput {
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
     public static TransactionInput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
-        Objects.requireNonNull(parentTransaction);
+        //Objects.requireNonNull(parentTransaction);
         TransactionOutPoint outpoint = TransactionOutPoint.read(payload);
         byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         long sequence = ByteUtils.readUint32(payload);

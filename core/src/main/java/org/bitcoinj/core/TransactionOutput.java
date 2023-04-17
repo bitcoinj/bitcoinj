@@ -82,7 +82,7 @@ public class TransactionOutput {
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
     public static TransactionOutput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
-        Objects.requireNonNull(parentTransaction);
+        //Objects.requireNonNull(parentTransaction);
         Coin value = Coin.read(payload);
         byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         return new TransactionOutput(parentTransaction, value, scriptBytes);

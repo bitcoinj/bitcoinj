@@ -26,6 +26,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.LockTime;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
@@ -349,35 +350,35 @@ public class ScriptTest {
     }
 
     private Transaction buildCreditingTransaction(Script scriptPubKey) {
-        Transaction tx = new Transaction();
-        tx.setVersion(1);
-        tx.setLockTime(0);
-
         TransactionInput txInput = new TransactionInput(null,
                 new ScriptBuilder().number(0).number(0).build().program(), TransactionOutPoint.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
-        tx.addInput(txInput);
+        List<TransactionInput> inputs = new ArrayList<>();
+        inputs.add(txInput);
 
-        TransactionOutput txOutput = new TransactionOutput(tx, Coin.ZERO, scriptPubKey.program());
-        tx.addOutput(txOutput);
+        TransactionOutput txOutput = new TransactionOutput(null, Coin.ZERO, scriptPubKey.program());
+        List<TransactionOutput> outputs = new ArrayList<>();
+        outputs.add(txOutput);
 
+        Transaction tx = new Transaction(inputs, outputs, LockTime.unset());
+        tx.claimChildren();
         return tx;
     }
 
     private Transaction buildSpendingTransaction(Transaction creditingTransaction, Script scriptSig) {
-        Transaction tx = new Transaction();
-        tx.setVersion(1);
-        tx.setLockTime(0);
-
         TransactionInput txInput = new TransactionInput(creditingTransaction, scriptSig.program(),
                 TransactionOutPoint.UNCONNECTED);
         txInput.setSequenceNumber(TransactionInput.NO_SEQUENCE);
-        tx.addInput(txInput);
+        List<TransactionInput> inputs = new ArrayList<>();
+        inputs.add(txInput);
 
-        TransactionOutput txOutput = new TransactionOutput(tx, creditingTransaction.getOutput(0).getValue(),
+        TransactionOutput txOutput = new TransactionOutput(null, creditingTransaction.getOutput(0).getValue(),
                 Script.parse(new byte[] {}).program());
-        tx.addOutput(txOutput);
+        List<TransactionOutput> outputs = new ArrayList<>();
+        outputs.add(txOutput);
 
+        Transaction tx = new Transaction(inputs, outputs, LockTime.unset());
+        tx.claimChildren();
         return tx;
     }
 
