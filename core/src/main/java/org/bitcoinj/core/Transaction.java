@@ -160,8 +160,8 @@ public class Transaction extends BaseMessage {
 
     // These are bitcoin serialized.
     private long version;
-    private ArrayList<TransactionInput> inputs;
-    private ArrayList<TransactionOutput> outputs;
+    private List<TransactionInput> inputs;
+    private List<TransactionOutput> outputs;
 
     private volatile LockTime vLockTime;
 
@@ -268,35 +268,37 @@ public class Transaction extends BaseMessage {
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
     public static Transaction read(ByteBuffer payload, int protocolVersion) throws BufferUnderflowException, ProtocolException {
-        Transaction tx = new Transaction(protocolVersion);
+        //Transaction tx = new Transaction(protocolVersion);
         boolean allowWitness = allowWitness(protocolVersion);
 
         // version
-        tx.version = ByteUtils.readUint32(payload);
+        long version = ByteUtils.readUint32(payload);
         byte flags = 0;
         // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
-        tx.readInputs(payload);
-        if (tx.inputs.size() == 0 && allowWitness) {
+        List<TransactionInput> inputs = readInputs(payload);
+        List<TransactionOutput> outputs;
+        if (inputs.size() == 0 && allowWitness) {
             // We read a dummy or an empty input
             flags = payload.get();
 
             if (flags != 0) {
-                tx.readInputs(payload);
-                tx.readOutputs(payload);
+                inputs = readInputs(payload);
+                outputs = readOutputs(payload);
             } else {
-                tx.outputs = new ArrayList<>(0);
+                outputs = new ArrayList<>(0);
             }
         } else {
             // We read non-empty inputs. Assume normal outputs follows.
-            tx.readOutputs(payload);
+            outputs = readOutputs(payload);
         }
 
         if (((flags & 1) != 0) && allowWitness) {
             // The witness flag is present, and we support witnesses.
             flags ^= 1;
             // script_witnesses
-            tx.readWitnesses(payload);
-            if (!tx.hasWitnesses()) {
+            readWitnesses(inputs, payload);
+            if (inputs.stream()
+                    .noneMatch(TransactionInput::hasWitness)) {
                 // It's illegal to encode witnesses when all witness stacks are empty.
                 throw new ProtocolException("Superfluous witness record");
             }
@@ -306,13 +308,24 @@ public class Transaction extends BaseMessage {
             throw new ProtocolException("Unknown transaction optional data");
         }
         // lock_time
-        tx.vLockTime = LockTime.of(ByteUtils.readUint32(payload));
+        LockTime lockTime = LockTime.of(ByteUtils.readUint32(payload));
+        Transaction tx = new Transaction(protocolVersion, version, inputs, outputs, lockTime);
+        tx.claimChildren();
         return tx;
     }
 
-    private Transaction(int protocolVersion) {
-        this.protocolVersion = protocolVersion;
+    /**
+     * Claim parentage of all our children.
+     * This is a temporary hack on our journey to immutability
+     */
+    public void claimChildren() {
+        inputs.forEach(i -> i.setParent(this));
+        outputs.forEach(o -> o.setParent(this));
     }
+
+//    private Transaction(int protocolVersion) {
+//        this.protocolVersion = protocolVersion;
+//    }
 
     public Transaction() {
         this.protocolVersion = ProtocolVersion.CURRENT.intValue();
@@ -321,6 +334,26 @@ public class Transaction extends BaseMessage {
         outputs = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         vLockTime = LockTime.unset();
+    }
+
+    public Transaction(int protocolVersion, long version,
+                       List<TransactionInput> inputs,
+                       List<TransactionOutput> outputs,
+                        LockTime lockTime) {
+        this.protocolVersion = protocolVersion;
+        this.version = version;
+        this.inputs = inputs;
+        this.outputs = outputs;
+        // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
+        this.vLockTime = lockTime;
+    }
+
+    public Transaction(List<TransactionInput> inputs,
+                       List<TransactionOutput> outputs,
+                       LockTime lockTime) {
+        this(ProtocolVersion.CURRENT.intValue(), 1, inputs, outputs, lockTime);
+        inputs.forEach(i -> i.setParent(this));
+        outputs.forEach(o -> o.setParent(this));
     }
 
     /**
@@ -634,30 +667,32 @@ public class Transaction extends BaseMessage {
      */
     public static final byte SIGHASH_ANYONECANPAY_VALUE = (byte) 0x80;
 
-    private void readInputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+    private static List<TransactionInput> readInputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numInputsVarInt = VarInt.read(payload);
         check(numInputsVarInt.fitsInt(), BufferUnderflowException::new);
         int numInputs = numInputsVarInt.intValue();
-        inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
+        List<TransactionInput> inputs = new ArrayList<>(Math.min((int) numInputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numInputs; i++) {
-            inputs.add(TransactionInput.read(payload, this));
+            inputs.add(TransactionInput.read(payload, null));
         }
+        return inputs;
     }
 
-    private void readOutputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+    private static List<TransactionOutput>  readOutputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         VarInt numOutputsVarInt = VarInt.read(payload);
         check(numOutputsVarInt.fitsInt(), BufferUnderflowException::new);
         int numOutputs = numOutputsVarInt.intValue();
-        outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
+        List<TransactionOutput> outputs = new ArrayList<>(Math.min((int) numOutputs, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (long i = 0; i < numOutputs; i++) {
-            outputs.add(TransactionOutput.read(payload, this));
+            outputs.add(TransactionOutput.read(payload, null));
         }
+        return outputs;
     }
 
-    private void readWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        int numWitnesses = inputs.size();
-        for (int i = 0; i < numWitnesses; i++)
-            getInput(i).setWitness(TransactionWitness.read(payload));
+    private static void readWitnesses(List<TransactionInput> inputs, ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        for (TransactionInput input : inputs) {
+            input.setWitness(TransactionWitness.read(payload));
+        }
     }
 
     /** @return true of the transaction has any witnesses in any of its inputs */

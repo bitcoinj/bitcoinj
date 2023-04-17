@@ -27,6 +27,7 @@ import org.bitcoinj.core.LockTime;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.ProtocolVersion;
 import org.bitcoinj.core.Services;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
@@ -65,6 +66,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * Serialize and de-serialize a wallet to a byte stream containing a
@@ -629,23 +631,25 @@ public class WalletProtobufSerializer {
     }
 
     private void readTransaction(Protos.Transaction txProto, NetworkParameters params) throws UnreadableWalletException {
-        Transaction tx = new Transaction();
+        //Transaction tx = new Transaction();
 
-        tx.setVersion(txProto.getVersion());
+        long version = txProto.getVersion();
+        List<TransactionInput> inputs = new ArrayList<TransactionInput>();
+        List<TransactionOutput> outputs = new ArrayList<>();
 
+        Instant updateTime = null;
         if (txProto.hasUpdatedAt()) {
             long updatedAt = txProto.getUpdatedAt();
-            if (updatedAt > 0)
-                tx.setUpdateTime(Instant.ofEpochMilli(updatedAt));
-            else
-                tx.clearUpdateTime();
+            if (updatedAt > 0) {
+                updateTime = Instant.ofEpochMilli(updatedAt);
+            }
         }
 
         for (Protos.TransactionOutput outputProto : txProto.getTransactionOutputList()) {
             Coin value = Coin.valueOf(outputProto.getValue());
             byte[] scriptBytes = outputProto.getScriptBytes().toByteArray();
-            TransactionOutput output = new TransactionOutput(tx, value, scriptBytes);
-            tx.addOutput(output);
+            TransactionOutput output = new TransactionOutput(null, value, scriptBytes);
+            outputs.add(output);
         }
 
         for (Protos.TransactionInput inputProto : txProto.getTransactionInputList()) {
@@ -655,7 +659,7 @@ public class WalletProtobufSerializer {
                     byteStringToHash(inputProto.getTransactionOutPointHash())
             );
             Coin value = inputProto.hasValue() ? Coin.valueOf(inputProto.getValue()) : null;
-            TransactionInput input = new TransactionInput(tx, scriptBytes, outpoint, value);
+            TransactionInput input = new TransactionInput(null, scriptBytes, outpoint, value);
             if (inputProto.hasSequence())
                 input.setSequenceNumber(0xffffffffL & inputProto.getSequence());
             if (inputProto.hasWitness()) {
@@ -667,45 +671,63 @@ public class WalletProtobufSerializer {
                     input.setWitness(TransactionWitness.of(pushes));
                 }
             }
-            tx.addInput(input);
+            inputs.add(input);
         }
 
+        Map<Sha256Hash, Integer> appearsInHashes = new TreeMap<>();
         for (int i = 0; i < txProto.getBlockHashCount(); i++) {
             ByteString blockHash = txProto.getBlockHash(i);
             int relativityOffset = 0;
             if (txProto.getBlockRelativityOffsetsCount() > 0)
                 relativityOffset = txProto.getBlockRelativityOffsets(i);
-            tx.addBlockAppearance(byteStringToHash(blockHash), relativityOffset);
+            appearsInHashes.put(byteStringToHash(blockHash), relativityOffset);
         }
 
+        long lockTime = 0;
         if (txProto.hasLockTime()) {
-            tx.setLockTime(0xffffffffL & txProto.getLockTime());
+            lockTime = 0xffffffffL & txProto.getLockTime();
         }
 
+        Transaction.Purpose purpose;
         if (txProto.hasPurpose()) {
             switch (txProto.getPurpose()) {
-                case UNKNOWN: tx.setPurpose(Transaction.Purpose.UNKNOWN); break;
-                case USER_PAYMENT: tx.setPurpose(Transaction.Purpose.USER_PAYMENT); break;
-                case KEY_ROTATION: tx.setPurpose(Transaction.Purpose.KEY_ROTATION); break;
-                case ASSURANCE_CONTRACT_CLAIM: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM); break;
-                case ASSURANCE_CONTRACT_PLEDGE: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE); break;
-                case ASSURANCE_CONTRACT_STUB: tx.setPurpose(Transaction.Purpose.ASSURANCE_CONTRACT_STUB); break;
-                case RAISE_FEE: tx.setPurpose(Transaction.Purpose.RAISE_FEE); break;
+                case UNKNOWN: purpose = Transaction.Purpose.UNKNOWN; break;
+                case USER_PAYMENT: purpose = Transaction.Purpose.USER_PAYMENT; break;
+                case KEY_ROTATION: purpose = Transaction.Purpose.KEY_ROTATION; break;
+                case ASSURANCE_CONTRACT_CLAIM: purpose = Transaction.Purpose.ASSURANCE_CONTRACT_CLAIM; break;
+                case ASSURANCE_CONTRACT_PLEDGE: purpose = Transaction.Purpose.ASSURANCE_CONTRACT_PLEDGE; break;
+                case ASSURANCE_CONTRACT_STUB: purpose = Transaction.Purpose.ASSURANCE_CONTRACT_STUB; break;
+                case RAISE_FEE: purpose = Transaction.Purpose.RAISE_FEE; break;
                 default: throw new RuntimeException("New purpose serialization not implemented");
             }
         } else {
             // Old wallet: assume a user payment as that's the only reason a new tx would have been created back then.
-            tx.setPurpose(Transaction.Purpose.USER_PAYMENT);
+            purpose = Transaction.Purpose.USER_PAYMENT;
         }
 
+        ExchangeRate exchangeRate = null;
         if (txProto.hasExchangeRate()) {
             Protos.ExchangeRate exchangeRateProto = txProto.getExchangeRate();
-            tx.setExchangeRate(new ExchangeRate(Coin.valueOf(exchangeRateProto.getCoinValue()), Fiat.valueOf(
-                    exchangeRateProto.getFiatCurrencyCode(), exchangeRateProto.getFiatValue())));
+            exchangeRate = new ExchangeRate(Coin.valueOf(exchangeRateProto.getCoinValue()), Fiat.valueOf(
+                    exchangeRateProto.getFiatCurrencyCode(), exchangeRateProto.getFiatValue()));
         }
 
+        String memo = null;
         if (txProto.hasMemo())
-            tx.setMemo(txProto.getMemo());
+            memo = txProto.getMemo();
+
+        Transaction tx = new Transaction(ProtocolVersion.CURRENT.intValue(), version, inputs, outputs, LockTime.of(lockTime));
+        tx.claimChildren();
+        tx.setPurpose(purpose);
+        if (updateTime != null) {
+            tx.setUpdateTime(updateTime);
+        }
+        if (exchangeRate != null) {
+            tx.setExchangeRate(exchangeRate);
+        }
+        if (memo != null) {
+            tx.setMemo(memo);
+        }
 
         // Transaction should now be complete.
         Sha256Hash protoHash = byteStringToHash(txProto.getHash());
