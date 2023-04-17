@@ -22,6 +22,7 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.DefaultAddressParser;
+import org.bitcoinj.base.internal.Preconditions;
 import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nonnull;
@@ -107,8 +108,7 @@ public class BitcoinURI {
      * @throws BitcoinURIParseException if the URI is not syntactically or semantically valid.
      */
     public BitcoinURI(String uri) throws BitcoinURIParseException {
-        // TODO: Discover (via Service Loader mechanism) the correct Network from the URI string
-        this(uri, BitcoinNetwork.MAINNET);
+        this(uri, true, null);
     }
 
     /**
@@ -123,7 +123,7 @@ public class BitcoinURI {
      */
     @Deprecated
     public BitcoinURI(@Nullable NetworkParameters params, String input) throws BitcoinURIParseException {
-        this(input, params != null ? params.network() : BitcoinNetwork.MAINNET);
+        this(input, params == null, params != null ? params.network() : null);
     }
 
     /**
@@ -134,10 +134,12 @@ public class BitcoinURI {
      * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
      */
     public BitcoinURI(String input, @Nonnull Network network) throws BitcoinURIParseException {
-        Objects.requireNonNull(network);
-        Objects.requireNonNull(input);
+        this(input, false, Objects.requireNonNull(network));
+    }
 
-        String scheme = network.uriScheme();
+    private BitcoinURI(String input, boolean autoNetwork, @Nullable Network nullableNetwork) throws BitcoinURIParseException {
+        Objects.requireNonNull(input);
+        Preconditions.checkArgument(autoNetwork == (nullableNetwork == null));
 
         // Attempt to form the URI (fail fast syntax checking to official standards).
         URI uri;
@@ -146,6 +148,11 @@ public class BitcoinURI {
         } catch (URISyntaxException e) {
             throw new BitcoinURIParseException("Bad URI syntax", e);
         }
+
+        // TODO: Determine actual network by parsing the address field of the input URI
+        // TODO: Discover (via Service Loader mechanism) alt-Networks from the scheme/prefix in the uri string
+        Network network = autoNetwork ? BitcoinNetwork.MAINNET : nullableNetwork;
+        String scheme = network.uriScheme();
 
         // URI is formed as  bitcoin:<address>?<query parameters>
         // blockchain.info generates URIs of non-BIP compliant form bitcoin://address?....
