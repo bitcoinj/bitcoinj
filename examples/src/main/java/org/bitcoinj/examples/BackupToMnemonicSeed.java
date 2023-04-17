@@ -17,9 +17,7 @@
 package org.bitcoinj.examples;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.Wallet;
@@ -36,8 +34,7 @@ public class BackupToMnemonicSeed {
 
     public static void main(String[] args) {
 
-        Network network = BitcoinNetwork.TESTNET;
-        Wallet wallet = Wallet.createDeterministic(NetworkParameters.of(network), ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
 
         DeterministicSeed seed = wallet.getKeyChainSeed();
         System.out.println("seed: " + seed.toString());

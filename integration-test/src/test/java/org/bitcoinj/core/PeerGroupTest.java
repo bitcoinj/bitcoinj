@@ -275,7 +275,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Create a peer.
         InboundMessageQueuer p1 = connectPeer(1);
         
-        Wallet wallet2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
+        Wallet wallet2 = Wallet.createDeterministic(UNITTEST.network(), ScriptType.P2PKH);
         ECKey key2 = wallet2.freshReceiveKey();
         Address address2 = key2.toAddress(ScriptType.P2PKH, UNITTEST.network());
         
@@ -436,7 +436,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         peerGroup.start();
         assertTrue(peerGroup.fastCatchupTime().isAfter(now.minusSeconds(WEEK).minusSeconds(10000)));
-        Wallet w2 = Wallet.createDeterministic(UNITTEST, ScriptType.P2PKH);
+        Wallet w2 = Wallet.createDeterministic(UNITTEST.network(), ScriptType.P2PKH);
         ECKey key1 = new ECKey();
         key1.setCreationTime(now.minus(1, ChronoUnit.DAYS));  // One day ago.
         w2.importKey(key1);
@@ -798,7 +798,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         final int NUM_KEYS = 9;
 
         // First, grab a load of keys from the wallet, and then recreate it so it forgets that those keys were issued.
-        Wallet shadow = Wallet.fromSeed(wallet.getParams(), wallet.getKeyChainSeed(), ScriptType.P2PKH);
+        Wallet shadow = Wallet.fromSeed(wallet.network(), wallet.getKeyChainSeed(), ScriptType.P2PKH);
         List<ECKey> keys = new ArrayList<>(NUM_KEYS);
         for (int i = 0; i < NUM_KEYS; i++) {
             keys.add(shadow.freshReceiveKey());

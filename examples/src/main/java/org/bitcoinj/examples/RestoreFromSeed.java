@@ -51,7 +51,7 @@ public class RestoreFromSeed {
         DeterministicSeed seed = DeterministicSeed.ofMnemonic(seedCode, passphrase, creationtime);
 
         // The wallet class provides a easy fromSeed() function that loads a new wallet from a given seed.
-        Wallet wallet = Wallet.fromSeed(params, seed, ScriptType.P2PKH);
+        Wallet wallet = Wallet.fromSeed(network, seed, ScriptType.P2PKH);
 
         // Because we are importing an existing wallet which might already have transactions we must re-download the blockchain to make the wallet picks up these transactions
         // You can find some information about this in the guides: https://bitcoinj.github.io/working-with-the-wallet#setup

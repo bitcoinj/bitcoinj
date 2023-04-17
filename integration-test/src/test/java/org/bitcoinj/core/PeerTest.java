@@ -694,7 +694,7 @@ public class PeerTest extends TestWithNetworkConnections {
         connectWithVersion(70001, Services.NODE_NETWORK);
         // Test that if we receive a relevant transaction that has a lock time, it doesn't result in a notification
         // until we explicitly opt in to seeing those.
-        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         ECKey key = wallet.freshReceiveKey();
         peer.addWallet(wallet);
         final Transaction[] vtx = new Transaction[1];
@@ -740,7 +740,7 @@ public class PeerTest extends TestWithNetworkConnections {
     private void checkTimeLockedDependency(boolean shouldAccept) throws Exception {
         // Initial setup.
         connectWithVersion(70001, Services.NODE_NETWORK);
-        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         ECKey key = wallet.freshReceiveKey();
         wallet.setAcceptRiskyTransactions(shouldAccept);
         peer.addWallet(wallet);

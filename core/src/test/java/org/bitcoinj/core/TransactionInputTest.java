@@ -58,7 +58,7 @@ public class TransactionInputTest {
 
     @Test
     public void testStandardWalletDisconnect() throws Exception {
-        Wallet w = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet w = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         Address a = w.currentReceiveAddress();
         Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(Coin.COIN, a);
         w.receivePending(tx1, null);
@@ -81,7 +81,7 @@ public class TransactionInputTest {
 
     @Test
     public void testUTXOWalletDisconnect() throws Exception {
-        Wallet w = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet w = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         Address a = w.currentReceiveAddress();
         final UTXO utxo = new UTXO(Sha256Hash.of(new byte[] { 1, 2, 3 }), 1, Coin.COIN, 0, false,
                 ScriptBuilder.createOutputScript(a));

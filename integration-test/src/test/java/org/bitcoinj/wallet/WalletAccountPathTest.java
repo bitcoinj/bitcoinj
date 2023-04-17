@@ -16,6 +16,7 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
@@ -59,7 +60,7 @@ public class WalletAccountPathTest {
     void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath expectedPath, ScriptType scriptType,
                                   BitcoinNetwork network) throws IOException, UnreadableWalletException {
         // When we create a wallet with parameterized structure, network, and scriptType
-        Wallet wallet = createWallet(walletFile, NetworkParameters.of(network), structure, scriptType);
+        Wallet wallet = createWallet(walletFile, network, structure, scriptType);
 
         // Then the account path is as expected
         assertEquals(expectedPath, wallet.getActiveKeyChain().getAccountPath());
@@ -80,10 +81,10 @@ public class WalletAccountPathTest {
     }
 
     // Create a wallet, save it to a file, then reload from a file
-    private static Wallet createWallet(File walletFile, NetworkParameters params, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
+    private static Wallet createWallet(File walletFile, Network network, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
         Context.propagate(new Context());
         DeterministicSeed seed = new DeterministicSeed(testWalletMnemonic, null, "", Instant.now());
-        Wallet wallet = Wallet.fromSeed(params, seed, outputScriptType, structure);
+        Wallet wallet = Wallet.fromSeed(network, seed, outputScriptType, structure);
         wallet.saveToFile(walletFile);
         return Wallet.loadFromFile(walletFile);
     }

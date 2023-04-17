@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.*;
 import org.bitcoinj.core.NetworkParameters;
@@ -31,7 +33,6 @@ import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.net.discovery.DnsDiscovery;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.RiskAnalysis.Result;
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
 
 public class WatchMempool {
     private static final Logger log = LoggerFactory.getLogger(WatchMempool.class);
-    private static final NetworkParameters PARAMS = MainNetParams.get();
+    private static final Network NETWORK = BitcoinNetwork.MAINNET;
     private static final List<Transaction> NO_DEPS = Collections.emptyList();
     private static final Map<String, Integer> counters = new HashMap<>();
     private static final String TOTAL_KEY = "TOTAL";
@@ -49,9 +50,9 @@ public class WatchMempool {
 
     public static void main(String[] args) throws InterruptedException {
         BriefLogFormatter.init();
-        PeerGroup peerGroup = new PeerGroup(PARAMS.network());
+        PeerGroup peerGroup = new PeerGroup(NETWORK);
         peerGroup.setMaxConnections(32);
-        peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS));
+        peerGroup.addPeerDiscovery(new DnsDiscovery(NetworkParameters.of(NETWORK)));
         peerGroup.addOnTransactionBroadcastListener((peer, tx) -> {
             Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
             incrementCounter(TOTAL_KEY);

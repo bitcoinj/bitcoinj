@@ -192,7 +192,7 @@ public class TransactionTest {
 
     @Test
     public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
-        Wallet wallet = Wallet.createBasic(TESTNET);
+        Wallet wallet = Wallet.createBasic(BitcoinNetwork.TESTNET);
         Transaction tx = FakeTxBuilder.createFakeCoinbaseTx();
 
         tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
