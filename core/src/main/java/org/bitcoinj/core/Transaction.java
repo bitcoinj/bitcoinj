@@ -662,10 +662,7 @@ public class Transaction extends BaseMessage {
 
     /** @return true of the transaction has any witnesses in any of its inputs */
     public boolean hasWitnesses() {
-        for (TransactionInput in : inputs)
-            if (in.hasWitness())
-                return true;
-        return false;
+        return inputs.stream().anyMatch(TransactionInput::hasWitness);
     }
 
     /**
