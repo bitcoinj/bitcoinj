@@ -655,17 +655,14 @@ public class Transaction extends BaseMessage {
     }
 
     private void readWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        int numWitnesses = inputs.size();
-        for (int i = 0; i < numWitnesses; i++)
-            getInput(i).setWitness(TransactionWitness.read(payload));
+        for (TransactionInput input : inputs) {
+            input.setWitness(TransactionWitness.read(payload));
+        }
     }
 
     /** @return true of the transaction has any witnesses in any of its inputs */
     public boolean hasWitnesses() {
-        for (TransactionInput in : inputs)
-            if (in.hasWitness())
-                return true;
-        return false;
+        return inputs.stream().anyMatch(TransactionInput::hasWitness);
     }
 
     /**
