@@ -63,7 +63,7 @@ public class PrivateKeys {
             System.out.println("Address from private key is: " + key.toAddress(ScriptType.P2WPKH, network).toString());
 
             // Import the private key to a fresh wallet.
-            Wallet wallet = Wallet.createDeterministic(params, ScriptType.P2PKH);
+            Wallet wallet = Wallet.createDeterministic(network, ScriptType.P2PKH);
             wallet.importKey(key);
 
             // And the address ...

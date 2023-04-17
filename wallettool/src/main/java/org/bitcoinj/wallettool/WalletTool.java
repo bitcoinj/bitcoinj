@@ -18,6 +18,7 @@
 package org.bitcoinj.wallettool;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.AesKey;
@@ -378,7 +379,7 @@ public class WalletTool implements Callable<Integer> {
         }
 
         if (action == ActionEnum.CREATE) {
-            createWallet(params, walletFile);
+            createWallet(net, walletFile);
             return 0;  // We're done.
         }
         if (!walletFile.exists()) {
@@ -1069,7 +1070,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void createWallet(NetworkParameters params, File walletFile) throws IOException {
+    private void createWallet(Network network, File walletFile) throws IOException {
         KeyChainGroupStructure keyChainGroupStructure = KeyChainGroupStructure.BIP32;
 
         if (walletFile.exists() && !force) {
@@ -1098,11 +1099,11 @@ public class WalletTool implements Callable<Integer> {
                 // not reached - all subclasses handled above
                 throw new RuntimeException(e);
             }
-            wallet = Wallet.fromSeed(params, seed, outputScriptType, keyChainGroupStructure);
+            wallet = Wallet.fromSeed(network, seed, outputScriptType, keyChainGroupStructure);
         } else if (watchKeyStr != null) {
-            wallet = Wallet.fromWatchingKeyB58(params, watchKeyStr, creationTime);
+            wallet = Wallet.fromWatchingKeyB58(network, watchKeyStr, creationTime);
         } else {
-            wallet = Wallet.createDeterministic(params, outputScriptType, keyChainGroupStructure);
+            wallet = Wallet.createDeterministic(network, outputScriptType, keyChainGroupStructure);
         }
         if (password != null)
             wallet.encrypt(password);

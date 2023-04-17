@@ -48,6 +48,7 @@ import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
+import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
@@ -152,7 +153,7 @@ public class WalletTest extends TestWithWallet {
     }
 
     private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
         chain = new BlockChain(TESTNET, wallet, blockStore);
 
@@ -174,7 +175,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void createBasic() {
-        Wallet wallet = Wallet.createBasic(TESTNET);
+        Wallet wallet = Wallet.createBasic(BitcoinNetwork.TESTNET);
         assertEquals(0, wallet.getKeyChainGroupSize());
         wallet.importKey(new ECKey());
         assertEquals(1, wallet.getKeyChainGroupSize());
@@ -182,7 +183,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = IllegalStateException.class)
     public void createBasic_noDerivation() {
-        Wallet wallet = Wallet.createBasic(TESTNET);
+        Wallet wallet = Wallet.createBasic(BitcoinNetwork.TESTNET);
         wallet.currentReceiveAddress();
     }
 
@@ -210,7 +211,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void basicSpendingWithEncryptedWallet() throws Exception {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         Address myEncryptedAddress = encryptedWallet.freshReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         basicSpendingCommon(encryptedWallet, myEncryptedAddress, OTHER_ADDRESS, encryptedWallet);
@@ -747,7 +748,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void isTxConsistentReturnsFalseAsExpected() {
-        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         TransactionOutput to = createMock(TransactionOutput.class);
         EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
         EasyMock.expect(to.isMineOrWatched(wallet)).andReturn(true);
@@ -764,7 +765,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void isTxConsistentReturnsFalseAsExpected_WhenAvailableForSpendingEqualsFalse() {
-        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         TransactionOutput to = createMock(TransactionOutput.class);
         EasyMock.expect(to.isAvailableForSpending()).andReturn(false);
         EasyMock.expect(to.getSpentBy()).andReturn(null);
@@ -1482,7 +1483,7 @@ public class WalletTest extends TestWithWallet {
     public void keyCreationTime() {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         assertEquals(now, wallet.earliestKeyCreationTime());
         TimeUtils.rollMockClock(Duration.ofMinutes(1));
         wallet.freshReceiveKey();
@@ -1493,7 +1494,7 @@ public class WalletTest extends TestWithWallet {
     public void scriptCreationTime() {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         assertEquals(now, wallet.earliestKeyCreationTime());
         TimeUtils.rollMockClock(Duration.ofMinutes(-2));
         wallet.addWatchedAddress(OTHER_ADDRESS);
@@ -1578,7 +1579,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void isWatching() {
         assertFalse(wallet.isWatching());
-        Wallet watchingWallet = Wallet.fromWatchingKey(TESTNET,
+        Wallet watchingWallet = Wallet.fromWatchingKey(TESTNET.network(),
                 wallet.getWatchingKey().dropPrivateBytes().dropParent(), ScriptType.P2PKH);
         assertTrue(watchingWallet.isWatching());
         wallet.encrypt(PASSWORD1);
@@ -1591,7 +1592,7 @@ public class WalletTest extends TestWithWallet {
         String serialized = watchKey.serializePubB58(TESTNET.network());
 
         // Construct watching wallet.
-        Wallet watchingWallet = Wallet.fromWatchingKey(TESTNET,
+        Wallet watchingWallet = Wallet.fromWatchingKey(TESTNET.network(),
                 DeterministicKey.deserializeB58(null, serialized, TESTNET.network()), ScriptType.P2PKH);
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
@@ -1617,7 +1618,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingWalletWithCreationTime() {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(TESTNET.network());
-        Wallet watchingWallet = Wallet.fromWatchingKeyB58(TESTNET, serialized, Instant.ofEpochSecond(1415282801));
+        Wallet watchingWallet = Wallet.fromWatchingKeyB58(TESTNET.network(), serialized, Instant.ofEpochSecond(1415282801));
         DeterministicKey key2 = watchingWallet.freshReceiveKey();
         assertEquals(myKey, key2);
 
@@ -1922,7 +1923,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionAESBasic() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
@@ -1945,7 +1946,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionPasswordBasic() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         assertTrue(encryptedWallet.isEncrypted());
@@ -1963,7 +1964,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionBadPassword() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         AesKey wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
@@ -1983,7 +1984,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void changePasswordTest() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         CharSequence newPassword = "My name is Tom";
         encryptedWallet.changeEncryptionPassword(PASSWORD1, newPassword);
@@ -1993,7 +1994,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void changeAesKeyTest() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
@@ -2010,7 +2011,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void encryptionDecryptionCheckExceptions() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
@@ -2049,7 +2050,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void addUnencryptedKeyToEncryptedWallet() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         ECKey key1 = new ECKey();
@@ -2058,7 +2059,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void addEncryptedKeyToUnencryptedWallet() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
 
@@ -2069,7 +2070,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = KeyCrypterException.class)
     public void mismatchedCrypter() {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
@@ -2084,7 +2085,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void importAndEncrypt() throws InsufficientMoneyException {
-        Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet encryptedWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
         final ECKey key = new ECKey();
@@ -2674,7 +2675,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void witnessTransactionGetFeeTest() throws Exception {
-        Wallet mySegwitWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
+        Wallet mySegwitWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2WPKH);
         Address mySegwitAddress = mySegwitWallet.freshReceiveAddress(ScriptType.P2WPKH);
 
         // Prepare wallet to spend
@@ -2902,7 +2903,7 @@ public class WalletTest extends TestWithWallet {
     public void keyRotationRandom() throws Exception {
         TimeUtils.setMockClock();
         // Start with an empty wallet (no HD chain).
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         // Watch out for wallet-initiated broadcasts.
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
         // Send three cents to two different random keys, then add a key and mark the initial keys as compromised.
@@ -3006,7 +3007,7 @@ public class WalletTest extends TestWithWallet {
     public void keyRotationHD() throws Exception {
         // Test that if we rotate an HD chain, a new one is created and all arrivals on the old keys are moved.
         TimeUtils.setMockClock();
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
         sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, CENT, key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
@@ -3080,7 +3081,7 @@ public class WalletTest extends TestWithWallet {
         // Delete the sigs
         for (TransactionInput input : req.tx.getInputs())
             input.clearScriptBytes();
-        Wallet watching = Wallet.fromWatchingKey(TESTNET, wallet.getWatchingKey().dropParent().dropPrivateBytes(),
+        Wallet watching = Wallet.fromWatchingKey(TESTNET.network(), wallet.getWatchingKey().dropParent().dropPrivateBytes(),
                 ScriptType.P2PKH);
         watching.freshReceiveKey();
         watching.completeTx(SendRequest.forTx(req.tx));
@@ -3228,7 +3229,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void upgradeToDeterministic_P2PKH_to_P2WPKH_unencrypted() {
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         assertFalse(wallet.isEncrypted());
         assertFalse(wallet.isDeterministicUpgradeRequired(ScriptType.P2PKH));
         assertTrue(wallet.isDeterministicUpgradeRequired(ScriptType.P2WPKH));
@@ -3245,7 +3246,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void upgradeToDeterministic_P2PKH_to_P2WPKH_encrypted() {
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         assertFalse(wallet.isEncrypted());
         assertFalse(wallet.isDeterministicUpgradeRequired(ScriptType.P2PKH));
         assertTrue(wallet.isDeterministicUpgradeRequired(ScriptType.P2WPKH));
@@ -3272,7 +3273,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void upgradeToDeterministic_noDowngrade_unencrypted() {
-        wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
+        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2WPKH);
         assertFalse(wallet.isEncrypted());
         assertFalse(wallet.isDeterministicUpgradeRequired(ScriptType.P2PKH));
         assertFalse(wallet.isDeterministicUpgradeRequired(ScriptType.P2WPKH));
@@ -3296,7 +3297,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingMarriedWallet() throws Exception {
         DeterministicKey watchKey = wallet.getWatchingKey();
         String serialized = watchKey.serializePubB58(TESTNET.network());
-        Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET, serialized);
+        Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET.network(), serialized);
         blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
         chain = new BlockChain(TESTNET, wallet, blockStore);
 
@@ -3376,7 +3377,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void createBasicWithKeys() {
         ECKey key = ECKey.fromPrivate(ByteUtils.parseHex("00905b93f990267f4104f316261fc10f9f983551f9ef160854f40102eb71cffdcc"));
-        Wallet wallet = Wallet.createBasic(TESTNET);
+        Wallet wallet = Wallet.createBasic(BitcoinNetwork.TESTNET);
         wallet.importKey(key);
         assertEquals(1, wallet.getImportedKeys().size());
         assertEquals(key, wallet.getImportedKeys().get(0));
@@ -3533,11 +3534,11 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void roundtripViaMnemonicCode() {
-        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2WPKH);
         List<String> mnemonicCode = wallet.getKeyChainSeed().getMnemonicCode();
         final DeterministicSeed clonedSeed = DeterministicSeed.ofMnemonic(mnemonicCode, "",
                 wallet.earliestKeyCreationTime());
-        Wallet clone = Wallet.fromSeed(TESTNET, clonedSeed, ScriptType.P2WPKH);
+        Wallet clone = Wallet.fromSeed(BitcoinNetwork.TESTNET, clonedSeed, ScriptType.P2WPKH);
         assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());
         assertEquals(wallet.freshReceiveAddress(ScriptType.P2PKH),
                 clone.freshReceiveAddress(ScriptType.P2PKH));
@@ -3545,8 +3546,8 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void oneTxTwoWallets() {
-        Wallet wallet1 = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
-        Wallet wallet2 = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
+        Wallet wallet1 = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2WPKH);
+        Wallet wallet2 = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2WPKH);
         Address address1 = wallet1.freshReceiveAddress(ScriptType.P2PKH);
         Address address2 = wallet2.freshReceiveAddress(ScriptType.P2PKH);
 
@@ -3608,5 +3609,47 @@ public class WalletTest extends TestWithWallet {
         assertNotSame(txW2, tx1);
         assertEquals(txW1, txW2);
         assertNotSame(txW1, txW2);
+    }
+
+    @Test
+    public void deprecatedMembers() {
+        Wallet wallet1 = Wallet.createBasic(TESTNET);
+        assertEquals(BitcoinNetwork.TESTNET, wallet1.network());
+
+        Wallet wallet2 = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH, KeyChainGroupStructure.BIP43);
+        assertEquals(BitcoinNetwork.TESTNET, wallet2.network());
+
+        Wallet wallet3 = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
+        assertEquals(BitcoinNetwork.TESTNET, wallet3.network());
+
+        Wallet wallet4 = Wallet.fromSeed(TESTNET, DeterministicSeed.ofEntropy(new byte[20], ""), ScriptType.P2WPKH);
+        assertEquals(BitcoinNetwork.TESTNET, wallet4.network());
+
+        Wallet wallet5 = Wallet.fromSeed(TESTNET, DeterministicSeed.ofEntropy(new byte[20], ""), ScriptType.P2WPKH, KeyChainGroupStructure.BIP43);
+        assertEquals(BitcoinNetwork.TESTNET, wallet5.network());
+
+        Wallet wallet6 = Wallet.fromSeed(TESTNET, DeterministicSeed.ofEntropy(new byte[20], ""), ScriptType.P2WPKH, HDPath.BIP44_PARENT);
+        assertEquals(BitcoinNetwork.TESTNET, wallet6.network());
+
+        HDPath accountPath = KeyChainGroupStructure.BIP43.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
+        DeterministicKeyChain keyChain = DeterministicKeyChain.builder()
+                .random(new SecureRandom())
+                .accountPath(accountPath)
+                .build();
+        DeterministicKey watchingKey = keyChain.getWatchingKey().dropPrivateBytes().dropParent();
+
+        Wallet wallet7 = Wallet.fromWatchingKey(TESTNET, watchingKey, ScriptType.P2WPKH);
+        assertEquals(BitcoinNetwork.TESTNET, wallet7.network());
+
+        String watchingKeyb58 = watchingKey.serializePubB58(TESTNET.network());
+
+        Wallet wallet8 = Wallet.fromWatchingKeyB58(TESTNET, watchingKeyb58, Instant.ofEpochSecond(1415282801));
+        assertEquals(BitcoinNetwork.TESTNET, wallet8.network());
+
+        Wallet wallet9 = Wallet.fromWatchingKeyB58(TESTNET, watchingKeyb58);
+        assertEquals(BitcoinNetwork.TESTNET, wallet9.network());
+
+        Wallet wallet10 = Wallet.fromWatchingKeyB58(TESTNET, watchingKeyb58, 1415282801);
+        assertEquals(BitcoinNetwork.TESTNET, wallet10.network());
     }
 }

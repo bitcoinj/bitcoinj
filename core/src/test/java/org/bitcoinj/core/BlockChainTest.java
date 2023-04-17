@@ -77,7 +77,7 @@ public class BlockChainTest {
         BriefLogFormatter.initVerbose();
         TimeUtils.setMockClock(); // Use mock clock
         Context.propagate(new Context(100, Coin.ZERO, false, false));
-        testNetWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        testNetWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         testNetStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
         testNetChain = new BlockChain(TESTNET, testNetWallet, testNetStore);
         coinbaseTo = testNetWallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
@@ -332,7 +332,7 @@ public class BlockChainTest {
         // Check that a coinbase transaction is only available to spend after NetworkParameters.getSpendableCoinbaseDepth() blocks.
 
         // Create a second wallet to receive the coinbase spend.
-        Wallet wallet2 = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet wallet2 = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         ECKey receiveKey = wallet2.freshReceiveKey();
         int height = 1;
         testNetChain.addWallet(wallet2);

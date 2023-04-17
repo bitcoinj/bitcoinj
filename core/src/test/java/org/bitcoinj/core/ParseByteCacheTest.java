@@ -72,7 +72,7 @@ public class ParseByteCacheTest {
     public void setUp() throws Exception {
         TimeUtils.setMockClock(); // Use mock clock
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         wallet.freshReceiveKey();
 
         resetBlockStore();
