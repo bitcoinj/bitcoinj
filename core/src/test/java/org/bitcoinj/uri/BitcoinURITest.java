@@ -25,6 +25,7 @@ import org.bitcoinj.params.Networks;
 import org.bitcoinj.testing.MockAltNetworkParams;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
@@ -216,6 +217,11 @@ public class BitcoinURITest {
         testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210", MAINNET);
         assertEquals("654321000000000", testObject.getAmount().toString());
+
+        // the maximum amount
+        testObject = new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
+                + "?amount=" + new BigDecimal(Long.MAX_VALUE).movePointLeft(8), MAINNET);
+        assertEquals(Long.MAX_VALUE, testObject.getAmount().longValue());
     }
 
     /**
@@ -403,8 +409,9 @@ public class BitcoinURITest {
 
     @Test(expected = BitcoinURIParseException.class)
     public void testBad_TooLargeAmount() throws BitcoinURIParseException {
+        BigDecimal tooLargeByOne = new BigDecimal(Long.MAX_VALUE).add(BigDecimal.ONE);
         new BitcoinURI(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
-                + "?amount=100000000", MAINNET);
+                + "?amount=" + tooLargeByOne.movePointLeft(8), MAINNET);
     }
 
     @Test
