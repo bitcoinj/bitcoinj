@@ -224,15 +224,11 @@ public class BitcoinURI {
                 // Decode the amount (contains an optional decimal component to 8dp).
                 try {
                     Coin amount = Coin.parseCoin(valueToken);
-                    if (network.exceedsMaxMoney(amount))
-                        throw new BitcoinURIParseException("Max number of coins exceeded");
                     if (amount.signum() < 0)
-                        throw new ArithmeticException("Negative coins specified");
+                        throw new OptionalFieldValidationException("negative amount not allowed: " + valueToken);
                     putWithValidation(FIELD_AMOUNT, amount);
                 } catch (IllegalArgumentException e) {
-                    throw new OptionalFieldValidationException(String.format(Locale.US, "'%s' is not a valid amount", valueToken), e);
-                } catch (ArithmeticException e) {
-                    throw new OptionalFieldValidationException(String.format(Locale.US, "'%s' has too many decimal places", valueToken), e);
+                    throw new OptionalFieldValidationException("not a valid amount: " + valueToken, e);
                 }
             } else {
                 if (nameToken.startsWith("req-")) {
