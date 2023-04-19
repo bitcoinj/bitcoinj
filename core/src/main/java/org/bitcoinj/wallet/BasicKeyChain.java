@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
@@ -678,12 +679,18 @@ public class BasicKeyChain implements EncryptableKeyChain {
         return findKeysBefore(Instant.ofEpochSecond(timeSecs));
     }
 
-    public String toString(boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
+    public String toString(boolean includePrivateKeys, @Nullable AesKey aesKey, Network network) {
         final StringBuilder builder = new StringBuilder();
         List<ECKey> keys = getKeys();
         Collections.sort(keys, ECKey.AGE_COMPARATOR);
         for (ECKey key : keys)
-            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), null, "imported");
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, network, null, "imported");
         return builder.toString();
+    }
+
+    /** @deprecated use {@link #toString(boolean, AesKey, Network)} */
+    @Deprecated
+    public String toString(boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
+        return toString(includePrivateKeys, aesKey, params.network());
     }
 }
