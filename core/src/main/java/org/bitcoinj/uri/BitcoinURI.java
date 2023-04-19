@@ -106,9 +106,20 @@ public class BitcoinURI {
      * @param uri The raw URI data to be parsed (see class comments for accepted formats)
      * @throws BitcoinURIParseException if the URI is not syntactically or semantically valid.
      */
-    public BitcoinURI(String uri) throws BitcoinURIParseException {
+    public static BitcoinURI of(String uri) throws BitcoinURIParseException {
         // TODO: Discover (via Service Loader mechanism) the correct Network from the URI string
-        this(uri, BitcoinNetwork.MAINNET);
+        return new BitcoinURI(uri, BitcoinNetwork.MAINNET);
+    }
+
+    /**
+     * Constructs a new object by trying to parse the input as a valid Bitcoin URI.
+     *
+     * @param uri     The raw URI data to be parsed (see class comments for accepted formats)
+     * @param network The network the URI is from
+     * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
+     */
+    public static BitcoinURI of(String uri, @Nonnull Network network) throws BitcoinURIParseException {
+        return new BitcoinURI(uri, network);
     }
 
     /**
@@ -119,21 +130,14 @@ public class BitcoinURI {
      * @param input The raw URI data to be parsed (see class comments for accepted formats)
      *
      * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
-     * @deprecated Use {@link BitcoinURI#BitcoinURI(String, Network)} or {@link BitcoinURI#BitcoinURI(String)}
+     * @deprecated Use {@link BitcoinURI#of(String, Network)} or {@link BitcoinURI#of(String)}
      */
     @Deprecated
     public BitcoinURI(@Nullable NetworkParameters params, String input) throws BitcoinURIParseException {
         this(input, params != null ? params.network() : BitcoinNetwork.MAINNET);
     }
 
-    /**
-     * Constructs a new object by trying to parse the input as a valid Bitcoin URI.
-     *
-     * @param input   The raw URI data to be parsed (see class comments for accepted formats)
-     * @param network The network the URI is from
-     * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
-     */
-    public BitcoinURI(String input, @Nonnull Network network) throws BitcoinURIParseException {
+    private BitcoinURI(String input, @Nonnull Network network) throws BitcoinURIParseException {
         Objects.requireNonNull(network);
         Objects.requireNonNull(input);
 
