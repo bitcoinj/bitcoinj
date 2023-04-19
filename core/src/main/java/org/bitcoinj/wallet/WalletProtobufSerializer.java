@@ -540,7 +540,7 @@ public class WalletProtobufSerializer {
 
             // Update transaction outputs to point to inputs that spend them
             for (Protos.Transaction txProto : walletProto.getTransactionList()) {
-                WalletTransaction wtx = connectTransactionOutputs(params, txProto);
+                WalletTransaction wtx = connectTransactionOutputs(txProto);
                 wallet.addWalletTransaction(wtx);
             }
 
@@ -716,8 +716,7 @@ public class WalletProtobufSerializer {
         txMap.put(txProto.getHash(), tx);
     }
 
-    private WalletTransaction connectTransactionOutputs(final NetworkParameters params,
-                                                        final org.bitcoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
+    private WalletTransaction connectTransactionOutputs(final org.bitcoinj.wallet.Protos.Transaction txProto) throws UnreadableWalletException {
         Transaction tx = txMap.get(txProto.getHash());
         final WalletTransaction.Pool pool;
         switch (txProto.getPool()) {
@@ -755,13 +754,13 @@ public class WalletProtobufSerializer {
         if (txProto.hasConfidence()) {
             Protos.TransactionConfidence confidenceProto = txProto.getConfidence();
             TransactionConfidence confidence = tx.getConfidence();
-            readConfidence(params, tx, confidenceProto, confidence);
+            readConfidence(tx, confidenceProto, confidence);
         }
 
         return new WalletTransaction(pool, tx);
     }
 
-    private void readConfidence(final NetworkParameters params, final Transaction tx,
+    private void readConfidence(final Transaction tx,
                                 final Protos.TransactionConfidence confidenceProto,
                                 final TransactionConfidence confidence) throws UnreadableWalletException {
         // We are lenient here because tx confidence is not an essential part of the wallet.
