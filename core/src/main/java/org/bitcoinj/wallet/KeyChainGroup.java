@@ -1137,7 +1137,7 @@ public class KeyChainGroup implements KeyBag {
             builder.append(basic.toString(includePrivateKeys, aesKey, params.network()));
         if (chains != null)
             for (DeterministicKeyChain chain : chains)
-                builder.append(chain.toString(includeLookahead, includePrivateKeys, aesKey, params)).append('\n');
+                builder.append(chain.toString(includeLookahead, includePrivateKeys, aesKey, params.network())).append('\n');
         return builder.toString();
     }
 

@@ -17,12 +17,12 @@
 package org.bitcoinj.wallet;
 
 import com.google.protobuf.ByteString;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -254,18 +254,18 @@ public class MarriedKeyChain extends DeterministicKeyChain {
 
     @Override
     protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey,
-            NetworkParameters params, StringBuilder builder) {
+            Network network, StringBuilder builder) {
         for (DeterministicKeyChain followingChain : followingKeyChains)
-            builder.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params.network()))
+            builder.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(network))
                     .append('\n');
         builder.append('\n');
         for (RedeemData redeemData : marriedKeysRedeemData.values())
-            formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder, params);
+            formatScript(ScriptBuilder.createP2SHOutputScript(redeemData.redeemScript), builder, network);
     }
 
-    private void formatScript(Script script, StringBuilder builder, NetworkParameters params) {
+    private void formatScript(Script script, StringBuilder builder, Network network) {
         builder.append("  addr:");
-        builder.append(script.getToAddress(params.network()));
+        builder.append(script.getToAddress(network));
         builder.append("  hash160:");
         builder.append(ByteUtils.formatHex(script.getPubKeyHash()));
         script.creationTime().ifPresent(creationTime -> builder.append("  creationTimeSeconds:").append(creationTime));
