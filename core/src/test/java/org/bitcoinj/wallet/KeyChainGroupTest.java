@@ -97,23 +97,6 @@ public class KeyChainGroupTest {
         assertEquals(ScriptType.P2PKH, address.getOutputScriptType());
     }
 
-    private KeyChainGroup createMarriedKeyChainGroup() {
-        DeterministicKeyChain chain = createMarriedKeyChain();
-        KeyChainGroup group = KeyChainGroup.builder(BitcoinNetwork.MAINNET).lookaheadSize(LOOKAHEAD_SIZE).addChain(chain).build();
-        group.getActiveKeyChain();
-        return group;
-    }
-
-    private MarriedKeyChain createMarriedKeyChain() {
-        byte[] entropy = Sha256Hash.hash("don't use a seed like this in real life".getBytes());
-        DeterministicSeed seed = DeterministicSeed.ofEntropy(entropy, "", Instant.ofEpochSecond(MnemonicCode.BIP39_STANDARDISATION_TIME_SECS));
-        MarriedKeyChain chain = MarriedKeyChain.builder()
-                .seed(seed)
-                .followingKey(watchingAccountKey)
-                .threshold(2).build();
-        return chain;
-    }
-
     @Test
     public void freshCurrentKeys() {
         int numKeys = ((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
@@ -148,23 +131,6 @@ public class KeyChainGroupTest {
         group.markPubKeyAsUsed(r4.getPubKey());
         ECKey r5 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertNotEquals(r4, r5);
-    }
-
-    @Test
-    public void freshCurrentKeysForMarriedKeychain() {
-        group = createMarriedKeyChainGroup();
-
-        try {
-            group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-            fail();
-        } catch (UnsupportedOperationException e) {
-        }
-
-        try {
-            group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-            fail();
-        } catch (UnsupportedOperationException e) {
-        }
     }
 
     @Test
@@ -203,48 +169,6 @@ public class KeyChainGroupTest {
         assertEquals(c, result);
         assertNull(group.findKeyFromPubKey(d.getPubKey()));
         assertNull(group.findKeyFromPubKeyHash(d.getPubKeyHash(), null));
-    }
-
-    @Test
-    public void currentP2SHAddress() {
-        group = createMarriedKeyChainGroup();
-        Address a1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(ScriptType.P2SH, a1.getOutputScriptType());
-        Address a2 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(a1, a2);
-        Address a3 = group.currentAddress(KeyChain.KeyPurpose.CHANGE);
-        assertNotEquals(a2, a3);
-    }
-
-    @Test
-    public void freshAddress() {
-        group = createMarriedKeyChainGroup();
-        Address a1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        Address a2 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(ScriptType.P2SH, a1.getOutputScriptType());
-        assertNotEquals(a1, a2);
-        group.getBloomFilterElementCount();
-        assertEquals(((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
-                + (2 - group.getLookaheadThreshold())  // keys issued
-                + group.getActiveKeyChain().getAccountPath().size() + 3  /* master, account, int, ext */, group.numKeys());
-
-        Address a3 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(a2, a3);
-    }
-
-    @Test
-    public void findRedeemData() {
-        group = createMarriedKeyChainGroup();
-
-        // test script hash that we don't have
-        assertNull(group.findRedeemDataFromScriptHash(new ECKey().getPubKey()));
-
-        // test our script hash
-        Address address = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        RedeemData redeemData = group.findRedeemDataFromScriptHash(address.getHash());
-        assertNotNull(redeemData);
-        assertNotNull(redeemData.redeemScript);
-        assertEquals(2, redeemData.keys.size());
     }
 
     // Check encryption with and without a basic keychain.
@@ -363,49 +287,6 @@ public class KeyChainGroupTest {
     }
 
     @Test
-    public void findRedeemScriptFromPubHash() {
-        group = createMarriedKeyChainGroup();
-        Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertTrue(group.findRedeemDataFromScriptHash(address.getHash()) != null);
-        group.getBloomFilterElementCount();
-        KeyChainGroup group2 = createMarriedKeyChainGroup();
-        group2.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        group2.getBloomFilterElementCount();  // Force lookahead.
-        // test address from lookahead zone and lookahead threshold zone
-        for (int i = 0; i < group.getLookaheadSize() + group.getLookaheadThreshold(); i++) {
-            address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-            assertTrue(group2.findRedeemDataFromScriptHash(address.getHash()) != null);
-        }
-        assertFalse(group2.findRedeemDataFromScriptHash(group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS).getHash()) != null);
-    }
-
-    @Test
-    public void bloomFilterForMarriedChains() {
-        group = createMarriedKeyChainGroup();
-        int bufferSize = group.getLookaheadSize() + group.getLookaheadThreshold();
-        int expected = bufferSize * 2 /* chains */ * 2 /* elements */;
-        assertEquals(expected, group.getBloomFilterElementCount());
-        Address address1 = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(expected, group.getBloomFilterElementCount());
-        BloomFilter filter = group.getBloomFilter(expected + 2, LOW_FALSE_POSITIVE_RATE, new Random().nextInt());
-        assertTrue(filter.contains(address1.getHash()));
-
-        Address address2 = group.freshAddress(KeyChain.KeyPurpose.CHANGE);
-        assertTrue(filter.contains(address2.getHash()));
-
-        // Check that the filter contains the lookahead buffer.
-        for (int i = 0; i < bufferSize - 1 /* issued address */; i++) {
-            Address address = group.freshAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-            assertTrue("key " + i, filter.contains(address.getHash()));
-        }
-        // We ran ahead of the lookahead buffer.
-        // We try two fresh addresses because of expected false positives. Note that the test could still fail.
-        Address fresh1 = group.freshAddress(KeyPurpose.RECEIVE_FUNDS);
-        Address fresh2 = group.freshAddress(KeyPurpose.RECEIVE_FUNDS);
-        assertFalse(filter.contains(fresh1.getHash()) && filter.contains(fresh2.getHash()));
-    }
-
-    @Test
     public void earliestKeyTime() {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
@@ -488,28 +369,6 @@ public class KeyChainGroupTest {
         assertEquals(3 + (group.getLookaheadSize() + group.getLookaheadThreshold() + 1) * 2, protoKeys1.size());
         group = KeyChainGroup.fromProtobufUnencrypted(BitcoinNetwork.MAINNET, protoKeys1);
         assertEquals(3 + (group.getLookaheadSize() + group.getLookaheadThreshold() + 1) * 2, group.serializeToProtobuf().size());
-    }
-
-    @Test
-    public void serializeMarried() throws Exception {
-        group = createMarriedKeyChainGroup();
-        Address address1 = group.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertTrue(group.isMarried());
-        assertEquals(2, group.getActiveKeyChain().getSigsRequiredToSpend());
-
-        List<Protos.Key> protoKeys = group.serializeToProtobuf();
-        KeyChainGroup group2 = KeyChainGroup.fromProtobufUnencrypted(BitcoinNetwork.MAINNET, protoKeys);
-        assertTrue(group2.isMarried());
-        assertEquals(2, group.getActiveKeyChain().getSigsRequiredToSpend());
-        Address address2 = group2.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        assertEquals(address1, address2);
-    }
-
-    @Test
-    public void addFollowingAccounts() {
-        assertFalse(group.isMarried());
-        group.addAndActivateHDChain(createMarriedKeyChain());
-        assertTrue(group.isMarried());
     }
 
     @Test

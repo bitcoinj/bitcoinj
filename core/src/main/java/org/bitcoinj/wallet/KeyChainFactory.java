@@ -24,6 +24,8 @@ import org.bitcoinj.crypto.KeyCrypter;
 
 import java.util.List;
 
+import static org.bitcoinj.base.internal.Preconditions.check;
+
 /**
  * Factory interface for creation keychains while de-serializing a wallet.
  */
@@ -31,37 +33,57 @@ public interface KeyChainFactory {
     /**
      * Make a keychain (but not a watching one) with the specified account path
      *
-     * @param seed the seed
-     * @param crypter the encrypted/decrypter
-     * @param isMarried whether the keychain is leading in a marriage
+     * @param seed             the seed
+     * @param crypter          the encrypted/decrypter
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
-     * @param accountPath account path to generate receiving addresses on
+     * @param accountPath      account path to generate receiving addresses on
      */
-    DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter, boolean isMarried,
+    DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter,
                                        ScriptType outputScriptType, List<ChildNumber> accountPath);
+
+    /** @deprecated use {@link #makeKeyChain(DeterministicSeed, KeyCrypter, ScriptType, List)} */
+    @Deprecated
+    default DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter, boolean isMarried,
+                                               ScriptType outputScriptType, List<ChildNumber> accountPath) {
+        check(!isMarried, () -> { throw new UnsupportedOperationException("married wallets not supported"); });
+        return makeKeyChain(seed, crypter, outputScriptType, accountPath);
+    }
 
     /**
      * Make a watching keychain.
      *
      * <p>isMarried and isFollowingKey must not be true at the same time.
      *
-     * @param accountKey the account extended public key
-     * @param isFollowingKey whether the keychain is following in a marriage
-     * @param isMarried whether the keychain is leading in a marriage
+     * @param accountKey       the account extended public key
      * @param outputScriptType type of addresses (aka output scripts) to generate for watching
      */
-    DeterministicKeyChain makeWatchingKeyChain(DeterministicKey accountKey, boolean isFollowingKey, boolean isMarried,
-            ScriptType outputScriptType) throws UnreadableWalletException;
+    DeterministicKeyChain makeWatchingKeyChain(DeterministicKey accountKey,
+                                               ScriptType outputScriptType) throws UnreadableWalletException;
+
+    /** @deprecated use {@link #makeWatchingKeyChain(DeterministicKey, ScriptType)} */
+    @Deprecated
+    default DeterministicKeyChain makeWatchingKeyChain(DeterministicKey accountKey, boolean isFollowingKey, boolean isMarried,
+            ScriptType outputScriptType) throws UnreadableWalletException {
+        check(!isMarried && !isFollowingKey, () -> { throw new UnsupportedOperationException("married wallets not supported"); });
+        return makeWatchingKeyChain(accountKey, outputScriptType);
+    }
 
     /**
      * Make a spending keychain.
      *
      * <p>isMarried and isFollowingKey must not be true at the same time.
      *
-     * @param accountKey the account extended public key
-     * @param isMarried whether the keychain is leading in a marriage
+     * @param accountKey       the account extended public key
      * @param outputScriptType type of addresses (aka output scripts) to generate for spending
      */
-    DeterministicKeyChain makeSpendingKeyChain(DeterministicKey accountKey, boolean isMarried,
-            ScriptType outputScriptType) throws UnreadableWalletException;
+    DeterministicKeyChain makeSpendingKeyChain(DeterministicKey accountKey,
+                                               ScriptType outputScriptType) throws UnreadableWalletException;
+
+    /** @deprecated use {@link #makeSpendingKeyChain(DeterministicKey, ScriptType)} */
+    @Deprecated
+    default DeterministicKeyChain makeSpendingKeyChain(DeterministicKey accountKey, boolean isMarried,
+                                                       ScriptType outputScriptType) throws UnreadableWalletException {
+        check(!isMarried, () -> { throw new UnsupportedOperationException("married wallets not supported"); });
+        return makeSpendingKeyChain(accountKey, outputScriptType);
+    }
 }
