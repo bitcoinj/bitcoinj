@@ -65,7 +65,6 @@ import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
-import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.UnreadableWalletException;
@@ -123,8 +122,6 @@ public class WalletTool implements Callable<Integer> {
             "                       If --watchkey is present, it creates a watching wallet using the specified base58 xpub.%n" +
             "                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for the wallet. See the set-creation-time action for the meaning of these flags.%n" +
             "                       If --output-script-type is present, use that for deriving addresses.%n" +
-            "  marry                Makes the wallet married with other parties, requiring multisig to spend funds.%n" +
-            "                       External public keys for other signing parties must be specified with --xpubkeys (comma separated).%n" +
             "  add-key              Adds a new key to the wallet.%n" +
             "                       If --date is specified, that's the creation date.%n" +
             "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
@@ -321,7 +318,6 @@ public class WalletTool implements Callable<Integer> {
         SEND,
         ENCRYPT,
         DECRYPT,
-        MARRY,
         UPGRADE,
         ROTATE,
         SET_CREATION_TIME,
@@ -489,7 +485,6 @@ public class WalletTool implements Callable<Integer> {
                 break;
             case ENCRYPT: encrypt(); break;
             case DECRYPT: decrypt(); break;
-            case MARRY: marry(); break;
             case UPGRADE: upgrade(); break;
             case ROTATE: rotate(); break;
             case SET_CREATION_TIME: setCreationTime(); break;
@@ -545,23 +540,6 @@ public class WalletTool implements Callable<Integer> {
 
     private static ByteString bytesToHex(ByteString bytes) {
         return ByteString.copyFrom(ByteUtils.formatHex(bytes.toByteArray()).getBytes());
-    }
-
-    private void marry() {
-        if (xpubKeysStr != null) {
-            throw new IllegalStateException();
-        }
-
-        String[] xpubkeys = xpubKeysStr.split(",");
-        List<DeterministicKey> keys = new ArrayList<>();
-        for (String xpubkey : xpubkeys) {
-            keys.add(DeterministicKey.deserializeB58(null, xpubkey.trim(), net));
-        }
-        MarriedKeyChain chain = MarriedKeyChain.builder()
-                .random(new SecureRandom())
-                .followingKeys(Collections.unmodifiableList(keys))
-                .build();
-        wallet.addAndActivateHDChain(chain);
     }
 
     private void upgrade() {

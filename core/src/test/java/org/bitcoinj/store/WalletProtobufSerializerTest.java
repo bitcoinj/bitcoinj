@@ -49,7 +49,6 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.KeyChain;
 import org.bitcoinj.wallet.KeyChainGroup;
-import org.bitcoinj.wallet.MarriedKeyChain;
 import org.bitcoinj.wallet.Protos;
 import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
@@ -360,27 +359,6 @@ public class WalletProtobufSerializerTest {
         assertEquals(creationTime, wallet.earliestKeyCreationTime());
         assertEquals(creationTime, wallet2.earliestKeyCreationTime());
         assertEquals(creationTime, wallet3.earliestKeyCreationTime());
-    }
-
-    @Test
-    public void testRoundTripMarriedWallet() throws Exception {
-        // create 2-of-2 married wallet
-        myWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
-        final DeterministicKeyChain partnerChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, partnerChain.getWatchingKey().serializePubB58(TESTNET.network()), TESTNET.network());
-        MarriedKeyChain chain = MarriedKeyChain.builder()
-                .random(new SecureRandom())
-                .followingKey(partnerKey)
-                .threshold(2).build();
-        myWallet.addAndActivateHDChain(chain);
-
-        myAddress = myWallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-
-        Wallet wallet1 = roundTrip(myWallet);
-        assertEquals(0, wallet1.getTransactions(true).size());
-        assertEquals(Coin.ZERO, wallet1.getBalance());
-        assertEquals(2, wallet1.getActiveKeyChain().getSigsRequiredToSpend());
-        assertEquals(myAddress, wallet1.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS));
     }
 
     @Test

@@ -31,13 +31,12 @@ public interface KeyChainFactory {
     /**
      * Make a keychain (but not a watching one) with the specified account path
      *
-     * @param seed the seed
-     * @param crypter the encrypted/decrypter
-     * @param isMarried whether the keychain is leading in a marriage
+     * @param seed             the seed
+     * @param crypter          the encrypted/decrypter
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
-     * @param accountPath account path to generate receiving addresses on
+     * @param accountPath      account path to generate receiving addresses on
      */
-    DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter, boolean isMarried,
+    DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter,
                                        ScriptType outputScriptType, List<ChildNumber> accountPath);
 
     /**
@@ -45,23 +44,21 @@ public interface KeyChainFactory {
      *
      * <p>isMarried and isFollowingKey must not be true at the same time.
      *
-     * @param accountKey the account extended public key
-     * @param isFollowingKey whether the keychain is following in a marriage
-     * @param isMarried whether the keychain is leading in a marriage
+     * @param accountKey       the account extended public key
+     * @param isFollowingKey   whether the keychain is following in a marriage
      * @param outputScriptType type of addresses (aka output scripts) to generate for watching
      */
-    DeterministicKeyChain makeWatchingKeyChain(DeterministicKey accountKey, boolean isFollowingKey, boolean isMarried,
-            ScriptType outputScriptType) throws UnreadableWalletException;
+    DeterministicKeyChain makeWatchingKeyChain(DeterministicKey accountKey, boolean isFollowingKey,
+                                               ScriptType outputScriptType) throws UnreadableWalletException;
 
     /**
      * Make a spending keychain.
      *
      * <p>isMarried and isFollowingKey must not be true at the same time.
      *
-     * @param accountKey the account extended public key
-     * @param isMarried whether the keychain is leading in a marriage
+     * @param accountKey       the account extended public key
      * @param outputScriptType type of addresses (aka output scripts) to generate for spending
      */
-    DeterministicKeyChain makeSpendingKeyChain(DeterministicKey accountKey, boolean isMarried,
-            ScriptType outputScriptType) throws UnreadableWalletException;
+    DeterministicKeyChain makeSpendingKeyChain(DeterministicKey accountKey,
+                                               ScriptType outputScriptType) throws UnreadableWalletException;
 }

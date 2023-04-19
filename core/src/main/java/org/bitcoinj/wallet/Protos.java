@@ -977,8 +977,8 @@ public final class Protos {
      * <pre>
      **
      * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-     * a single P2SH multisignature address
+     * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
@@ -989,8 +989,8 @@ public final class Protos {
      * <pre>
      **
      * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-     * a single P2SH multisignature address
+     * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
@@ -1000,8 +1000,9 @@ public final class Protos {
 
     /**
      * <pre>
-     * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+     * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+     * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+     * For regular single keychains it will always be 1.
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1010,8 +1011,9 @@ public final class Protos {
     boolean hasSigsRequiredToSpend();
     /**
      * <pre>
-     * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+     * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+     * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+     * For regular single keychains it will always be 1.
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1304,8 +1306,8 @@ public final class Protos {
      * <pre>
      **
      * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-     * a single P2SH multisignature address
+     * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
@@ -1319,8 +1321,8 @@ public final class Protos {
      * <pre>
      **
      * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-     * a single P2SH multisignature address
+     * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
@@ -1334,8 +1336,8 @@ public final class Protos {
      * <pre>
      **
      * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-     * a single P2SH multisignature address
+     * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
@@ -1349,8 +1351,8 @@ public final class Protos {
      * <pre>
      **
      * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-     * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-     * a single P2SH multisignature address
+     * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+     * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
      * </pre>
      *
      * <code>optional bool isFollowing = 5;</code>
@@ -1364,8 +1366,9 @@ public final class Protos {
     private int sigsRequiredToSpend_;
     /**
      * <pre>
-     * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+     * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+     * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+     * For regular single keychains it will always be 1.
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1377,8 +1380,9 @@ public final class Protos {
     }
     /**
      * <pre>
-     * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+     * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+     * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+     * For regular single keychains it will always be 1.
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1390,8 +1394,9 @@ public final class Protos {
     }
     /**
      * <pre>
-     * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+     * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+     * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+     * For regular single keychains it will always be 1.
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1403,8 +1408,9 @@ public final class Protos {
     }
     /**
      * <pre>
-     * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-     * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+     * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+     * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+     * For regular single keychains it will always be 1.
      * </pre>
      *
      * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1782,8 +1788,8 @@ public final class Protos {
        * <pre>
        **
        * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-       * a single P2SH multisignature address
+       * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
@@ -1797,8 +1803,8 @@ public final class Protos {
        * <pre>
        **
        * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-       * a single P2SH multisignature address
+       * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
@@ -1812,8 +1818,8 @@ public final class Protos {
        * <pre>
        **
        * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-       * a single P2SH multisignature address
+       * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
@@ -1829,8 +1835,8 @@ public final class Protos {
        * <pre>
        **
        * Flag indicating that this key is a root of a following chain. This chain is following the next non-following chain.
-       * Following/followed chains concept is used for married keychains, where the set of keys combined together to produce
-       * a single P2SH multisignature address
+       * Following/followed chains concept was used for married keychains, where the set of keys combined together to produce
+       * a single P2SH multisignature address. It is currently unused, but this flag is preserved.
        * </pre>
        *
        * <code>optional bool isFollowing = 5;</code>
@@ -1844,8 +1850,9 @@ public final class Protos {
 
       /**
        * <pre>
-       * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+       * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+       * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+       * For regular single keychains it will always be 1.
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1857,8 +1864,9 @@ public final class Protos {
       }
       /**
        * <pre>
-       * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+       * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+       * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+       * For regular single keychains it will always be 1.
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1870,8 +1878,9 @@ public final class Protos {
       }
       /**
        * <pre>
-       * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+       * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+       * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+       * For regular single keychains it will always be 1.
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
@@ -1885,8 +1894,9 @@ public final class Protos {
       }
       /**
        * <pre>
-       * Number of signatures required to spend. This field is needed only for married keychains to reconstruct KeyChain
-       * and represents the N value from N-of-M CHECKMULTISIG script. For regular single keychains it will always be 1.
+       * Number of signatures required to spend. This field was needed only for married keychains to reconstruct KeyChain
+       * and represents the N value from N-of-M CHECKMULTISIG script. It is currently unused, but this number is preserved.
+       * For regular single keychains it will always be 1.
        * </pre>
        *
        * <code>optional uint32 sigsRequiredToSpend = 6 [default = 1];</code>
