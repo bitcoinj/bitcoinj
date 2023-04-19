@@ -62,7 +62,9 @@ public interface KeyChainGroupStructure {
      * @param outputScriptType output script type (purpose)
      * @param networkParameters network/coin type
      * @return The HD Path: purpose / coinType / accountIndex
+     * @deprecated use {@link #accountPathFor(ScriptType, Network)}
      */
+    @Deprecated
     default HDPath accountPathFor(ScriptType outputScriptType, NetworkParameters networkParameters) {
         return accountPathFor(outputScriptType, networkParameters.network());
     }
