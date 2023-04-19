@@ -1,25 +1,22 @@
 before_script:
-  - apt-get update
-
+- apt-get update
 after_script:
-  - gradle --version
-
+- gradle --version
 bullseye-jdk11:
   image: debian:bullseye-slim
   script:
-    - apt-get -y install openjdk-11-jdk-headless gradle
-    - gradle build --stacktrace
+  - apt-get -y install openjdk-11-jdk-headless gradle
+  - gradle build --stacktrace
   artifacts:
     name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
     paths:
-      - core/build/libs/*.jar
-
+    - core/build/libs/*.jar
 bookworm-jdk17:
   image: debian:bookworm-slim
   script:
-    - apt-get -y install openjdk-17-jdk-headless gradle
-    - gradle build --stacktrace
+  - apt-get -y install openjdk-17-jdk-headless gradle
+  - gradle build --stacktrace
   artifacts:
     name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
     paths:
-      - core/build/libs/*.jar
+    - core/build/libs/*.jar
