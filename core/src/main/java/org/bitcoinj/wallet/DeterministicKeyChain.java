@@ -1453,7 +1453,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return helper.toString();
     }
 
-    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
+    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey, Network network) {
         final DeterministicKey watchingKey = getWatchingKey();
         final StringBuilder builder = new StringBuilder();
         if (seed != null) {
@@ -1487,15 +1487,21 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             builder.append("\n");
         }
         builder.append("Ouput script type: ").append(outputScriptType).append('\n');
-        builder.append("Key to watch:      ").append(watchingKey.serializePubB58(params.network(), outputScriptType))
+        builder.append("Key to watch:      ").append(watchingKey.serializePubB58(network, outputScriptType))
                 .append('\n');
         builder.append("Lookahead siz/thr: ").append(lookaheadSize).append('/').append(lookaheadThreshold).append('\n');
-        formatAddresses(includeLookahead, includePrivateKeys, aesKey, params, builder);
+        formatAddresses(includeLookahead, includePrivateKeys, aesKey, network, builder);
         return builder.toString();
     }
 
+    /** @deprecated use {@link #toString(boolean, boolean, AesKey, Network)} */
+    @Deprecated
+    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
+        return toString(includeLookahead, includePrivateKeys, aesKey, params.network());
+    }
+
     protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey,
-            NetworkParameters params, StringBuilder builder) {
+            Network network, StringBuilder builder) {
         for (DeterministicKey key : getKeys(includeLookahead, true)) {
             String comment = null;
             if (key.equals(getRootKey()))
@@ -1510,7 +1516,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 comment = "*";
             else if (externalParentKey.equals(key.getParent()) && key.getChildNumber().i() >= issuedExternalKeys)
                 comment = "*";
-            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), outputScriptType, comment);
+            key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, network, outputScriptType, comment);
         }
     }
 
