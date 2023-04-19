@@ -300,16 +300,6 @@ public class KeyChainGroup implements KeyBag {
                 ? new EnumMap<KeyChain.KeyPurpose, DeterministicKey>(KeyChain.KeyPurpose.class)
                 : currentKeys;
         this.currentAddresses = new EnumMap<>(KeyChain.KeyPurpose.class);
-
-        if (isMarried()) {
-            maybeLookaheadScripts();
-            for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
-                Address address = ScriptBuilder
-                        .createP2SHOutputScript(getActiveKeyChain().getRedeemData(entry.getValue()).redeemScript)
-                        .getToAddress(network);
-                currentAddresses.put(entry.getKey(), address);
-            }
-        }
     }
 
     /**
@@ -362,17 +352,9 @@ public class KeyChainGroup implements KeyBag {
      * {@link KeyChain.KeyPurpose#RECEIVE_FUNDS}. The returned key is stable until
      * it's actually seen in a pending or confirmed transaction, at which point this method will start returning
      * a different key (for each purpose independently).
-     * <p>This method is not supposed to be used for married keychains and will throw UnsupportedOperationException if
-     * the active chain is married.
-     * For married keychains use {@link #currentAddress(KeyChain.KeyPurpose)}
-     * to get a proper P2SH address</p>
      */
     public DeterministicKey currentKey(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        if (chain.isMarried()) {
-            throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
-                                                    " Use freshAddress to get P2SH address instead");
-        }
         DeterministicKey current = currentKeys.get(purpose);
         if (current == null) {
             current = freshKey(purpose);
@@ -387,14 +369,7 @@ public class KeyChainGroup implements KeyBag {
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
         ScriptType outputScriptType = chain.getOutputScriptType();
-        if (chain.isMarried()) {
-            Address current = currentAddresses.get(purpose);
-            if (current == null) {
-                current = freshAddress(purpose);
-                currentAddresses.put(purpose, current);
-            }
-            return current;
-        } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
+        if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
             return currentKey(purpose).toAddress(outputScriptType, network);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
@@ -424,17 +399,9 @@ public class KeyChainGroup implements KeyBag {
      * {@link KeyChain.KeyPurpose#RECEIVE_FUNDS} the returned key is suitable for being put
      * into a receive coins wizard type UI. You should use this when the user is definitely going to hand this key out
      * to someone who wishes to send money.
-     * <p>This method is not supposed to be used for married keychains and will throw UnsupportedOperationException if
-     * the active chain is married.
-     * For married keychains use {@link #freshAddress(KeyChain.KeyPurpose)}
-     * to get a proper P2SH address</p>
      */
     public List<DeterministicKey> freshKeys(KeyChain.KeyPurpose purpose, int numberOfKeys) {
         DeterministicKeyChain chain = getActiveKeyChain();
-        if (chain.isMarried()) {
-            throw new UnsupportedOperationException("Key is not suitable to receive coins for married keychains." +
-                    " Use freshAddress to get P2SH address instead");
-        }
         return chain.getKeys(purpose, numberOfKeys);   // Always returns the next key along the key chain.
     }
 
@@ -463,15 +430,7 @@ public class KeyChainGroup implements KeyBag {
     public Address freshAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
         ScriptType outputScriptType = chain.getOutputScriptType();
-        if (chain.isMarried()) {
-            Script outputScript = chain.freshOutputScript(purpose);
-            checkState(ScriptPattern.isP2SH(outputScript)); // Only handle P2SH for now
-            Address freshAddress = LegacyAddress.fromScriptHash(network,
-                    ScriptPattern.extractHashFromP2SH(outputScript));
-            maybeLookaheadScripts();
-            currentAddresses.put(purpose, freshAddress);
-            return freshAddress;
-        } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
+        if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
             return freshKey(purpose).toAddress(outputScriptType, network);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
@@ -770,15 +729,6 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /**
-     * Whether the active keychain is married.  A keychain is married when it vends P2SH addresses
-     * from multiple keychains in a multisig relationship.
-     * @see org.bitcoinj.wallet.MarriedKeyChain
-     */
-    public final boolean isMarried() {
-        return chains != null && !chains.isEmpty() && getActiveKeyChain().isMarried();
-    }
-
-    /**
      * Encrypt the keys in the group using the KeyCrypter and the AES key. A good default KeyCrypter to use is
      * {@link KeyCrypterScrypt}.
      *
@@ -1002,7 +952,6 @@ public class KeyChainGroup implements KeyBag {
             lookaheadThreshold = activeChain.getLookaheadThreshold();
             currentKeys = createCurrentKeysMap(chains);
         }
-        extractFollowingKeychains(chains);
         return new KeyChainGroup(network, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, null);
     }
 
@@ -1022,7 +971,6 @@ public class KeyChainGroup implements KeyBag {
             lookaheadThreshold = activeChain.getLookaheadThreshold();
             currentKeys = createCurrentKeysMap(chains);
         }
-        extractFollowingKeychains(chains);
         return new KeyChainGroup(network, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, crypter);
     }
 
@@ -1131,23 +1079,6 @@ public class KeyChainGroup implements KeyBag {
             currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
         }
         return currentKeys;
-    }
-
-    private static void extractFollowingKeychains(List<DeterministicKeyChain> chains) {
-        // look for following key chains and map them to the watch keys of followed keychains
-        List<DeterministicKeyChain> followingChains = new ArrayList<>();
-        for (Iterator<DeterministicKeyChain> it = chains.iterator(); it.hasNext(); ) {
-            DeterministicKeyChain chain = it.next();
-            if (chain.isFollowing()) {
-                followingChains.add(chain);
-                it.remove();
-            } else if (!followingChains.isEmpty()) {
-                if (!(chain instanceof MarriedKeyChain))
-                    throw new IllegalStateException();
-                ((MarriedKeyChain)chain).setFollowingKeyChains(followingChains);
-                followingChains = new ArrayList<>();
-            }
-        }
     }
 
     public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey) {

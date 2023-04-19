@@ -177,12 +177,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // money.
     private final BasicKeyChain basicKeyChain;
 
-    // If set this chain is following another chain in a married KeyChainGroup
+    // If set this chain is following another chain. Was used in a married KeyChainGroup.
     private boolean isFollowing;
 
     // holds a number of signatures required to spend. It's the N from N-of-M CHECKMULTISIG script for P2SH transactions
-    // and always 1 for other transaction types
-    protected int sigsRequiredToSpend = 1;
+    // and always 1 for other transaction types. Was used in a married KeyChainGroup.
+    private int sigsRequiredToSpend = 1;
 
 
     public static class Builder<T extends Builder<T>> {
@@ -194,7 +194,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected DeterministicSeed seed;
         protected ScriptType outputScriptType = ScriptType.P2PKH;
         protected DeterministicKey watchingKey = null;
-        protected boolean isFollowing = false;
         protected DeterministicKey spendingKey = null;
         protected HDPath accountPath = null;
 
@@ -266,19 +265,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             checkState(accountPath == null, () ->
                     "either watch or accountPath");
             this.watchingKey = accountKey;
-            this.isFollowing = false;
-            return self();
-        }
-
-        /**
-         * Creates a deterministic key chain with the given watch key and that follows some other keychain. In a married
-         * wallet following keychain represents "spouse". Watch key has to be an account key.
-         */
-        public T watchAndFollow(DeterministicKey accountKey) {
-            checkState(accountPath == null, () ->
-                    "either watchAndFollow or accountPath");
-            this.watchingKey = accountKey;
-            this.isFollowing = true;
             return self();
         }
 
@@ -289,7 +275,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             checkState(accountPath == null, () ->
                     "either spend or accountPath");
             this.spendingKey = accountKey;
-            this.isFollowing = false;
             return self();
         }
 
@@ -332,7 +317,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             else if (seed != null)
                 return new DeterministicKeyChain(seed, null, outputScriptType, accountPath);
             else if (watchingKey != null)
-                return new DeterministicKeyChain(watchingKey, isFollowing, true, outputScriptType);
+                return new DeterministicKeyChain(watchingKey, false, true, outputScriptType);
             else if (spendingKey != null)
                 return new DeterministicKeyChain(spendingKey, false, false, outputScriptType);
             else
@@ -927,22 +912,20 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     isFollowingKey = true;
                 }
                 if (chain == null) {
-                    // If this is not a following chain and previous was, this must be married
-                    boolean isMarried = !isFollowingKey && !chains.isEmpty() && chains.get(chains.size() - 1).isFollowing();
                     // If this has a private key but no seed, then all we know is the spending key H
                     if (seed == null && key.hasSecretBytes()) {
                         DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, ByteUtils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
                         accountKey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
-                        chain = factory.makeSpendingKeyChain(accountKey, isMarried, outputScriptType);
+                        chain = factory.makeSpendingKeyChain(accountKey, outputScriptType);
                         isSpendingKey = true;
                     } else if (seed == null) {
                         DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, null, null);
                         accountKey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
-                        chain = factory.makeWatchingKeyChain(accountKey, isFollowingKey, isMarried,
+                        chain = factory.makeWatchingKeyChain(accountKey,
                                 outputScriptType);
                         isWatchingAccountKey = true;
                     } else {
-                        chain = factory.makeKeyChain(seed, crypter, isMarried,
+                        chain = factory.makeKeyChain(seed, crypter,
                                 outputScriptType, accountPath);
                         chain.lookaheadSize = LAZY_CALCULATE_LOOKAHEAD;
                         // If the seed is encrypted, then the chain is incomplete at this point. However, we will load
@@ -1420,15 +1403,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         } finally {
             lock.unlock();
         }
-    }
-
-    /**
-     * Whether the keychain is married.  A keychain is married when it vends P2SH addresses
-     * from multiple keychains in a multisig relationship.
-     * @see org.bitcoinj.wallet.MarriedKeyChain
-     */
-    public boolean isMarried() {
-        return false;
     }
 
     /** Get redeem data for a key.  Only applicable to married keychains. */

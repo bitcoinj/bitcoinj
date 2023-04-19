@@ -148,31 +148,6 @@ public class WalletTest extends TestWithWallet {
         super.tearDown();
     }
 
-    private void createMarriedWallet(int threshold, int numKeys) throws BlockStoreException {
-        createMarriedWallet(threshold, numKeys, true);
-    }
-
-    private void createMarriedWallet(int threshold, int numKeys, boolean addSigners) throws BlockStoreException {
-        wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
-        blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
-        chain = new BlockChain(TESTNET, wallet, blockStore);
-
-        List<DeterministicKey> followingKeys = new ArrayList<>();
-        for (int i = 0; i < numKeys - 1; i++) {
-            final DeterministicKeyChain keyChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
-            DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58(TESTNET.network()), TESTNET.network());
-            followingKeys.add(partnerKey);
-            if (addSigners && i < threshold - 1)
-                wallet.addTransactionSigner(new KeyChainTransactionSigner(keyChain));
-        }
-
-        MarriedKeyChain chain = MarriedKeyChain.builder()
-                .random(new SecureRandom())
-                .followingKeys(followingKeys)
-                .threshold(threshold).build();
-        wallet.addAndActivateHDChain(chain);
-    }
-
     @Test
     public void createBasic() {
         Wallet wallet = Wallet.createBasic(BitcoinNetwork.TESTNET);
@@ -231,26 +206,6 @@ public class WalletTest extends TestWithWallet {
         encryptedWallet = roundTrip(encryptedWallet);
         encryptedWallet.decrypt(PASSWORD1);
         encryptedWallet = roundTrip(encryptedWallet);
-    }
-
-    @Test
-    public void basicSpendingFromP2SH() throws Exception {
-        createMarriedWallet(2, 2);
-        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        basicSpendingCommon(wallet, myAddress, OTHER_ADDRESS, null);
-
-        createMarriedWallet(2, 3);
-        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        basicSpendingCommon(wallet, myAddress, OTHER_ADDRESS, null);
-
-        createMarriedWallet(3, 3);
-        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        basicSpendingCommon(wallet, myAddress, OTHER_ADDRESS, null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void thresholdShouldNotExceedNumberOfKeys() throws Exception {
-        createMarriedWallet(3, 2);
     }
 
     @Test
@@ -1742,23 +1697,6 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void marriedKeychainBloomFilter() throws Exception {
-        createMarriedWallet(2, 2);
-        Address address = wallet.currentReceiveAddress();
-
-        double falsePositiveRate = 0.00001;
-        assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(address.getHash()));
-
-        Transaction t1 = createFakeTx(TESTNET.network(), CENT, address);
-        TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
-
-        assertFalse(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.serialize()));
-
-        sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, t1);
-        assertTrue(wallet.getBloomFilter(falsePositiveRate).contains(outPoint.serialize()));
-    }
-
-    @Test
     public void autosaveImmediate() throws Exception {
         // Test that the wallet will save itself automatically when it changes.
         File f = File.createTempFile("bitcoinj-unit-test", null);
@@ -3087,53 +3025,6 @@ public class WalletTest extends TestWithWallet {
         watching.completeTx(SendRequest.forTx(req.tx));
     }
 
-    @Test
-    public void completeTxPartiallySignedMarriedWithDummySigs() throws Exception {
-        byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_DUMMY_SIG, dummySig);
-    }
-
-    @Test
-    public void completeTxPartiallySignedMarriedWithEmptySig() throws Exception {
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.USE_OP_ZERO, EMPTY_SIG);
-    }
-
-    @Test (expected = TransactionSigner.MissingSignatureException.class)
-    public void completeTxPartiallySignedMarriedThrows() throws Exception {
-        completeTxPartiallySignedMarried(Wallet.MissingSigsMode.THROW, EMPTY_SIG);
-    }
-
-    @Test (expected = TransactionSigner.MissingSignatureException.class)
-    public void completeTxPartiallySignedMarriedThrowsByDefault() throws Exception {
-        createMarriedWallet(2, 2, false);
-        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
-
-        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
-        wallet.completeTx(req);
-    }
-
-    public void completeTxPartiallySignedMarried(Wallet.MissingSigsMode missSigMode, byte[] expectedSig) throws Exception {
-        // create married wallet without signer
-        createMarriedWallet(2, 2, false);
-        myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
-
-        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
-        req.missingSigsMode = missSigMode;
-        wallet.completeTx(req);
-        TransactionInput input = req.tx.getInput(0);
-
-        boolean firstSigIsMissing = Arrays.equals(expectedSig, input.getScriptSig().chunks().get(1).data);
-        boolean secondSigIsMissing = Arrays.equals(expectedSig, input.getScriptSig().chunks().get(2).data);
-
-        assertTrue("Only one of the signatures should be missing/dummy", firstSigIsMissing ^ secondSigIsMissing);
-        int localSigIndex = firstSigIsMissing ? 2 : 1;
-        int length = input.getScriptSig().chunks().get(localSigIndex).data.length;
-        assertTrue("Local sig should be present: " + length, length >= 70);
-    }
-
-
     @SuppressWarnings("ConstantConditions")
     public void completeTxPartiallySigned(Wallet.MissingSigsMode missSigMode, byte[] expectedSig) throws Exception {
         // Check the wallet will write dummy scriptSigs for inputs that we have only pubkeys for without the privkey.
@@ -3291,52 +3182,6 @@ public class WalletTest extends TestWithWallet {
     @Test(expected = IllegalStateException.class)
     public void shouldNotAddTransactionSignerThatIsNotReady() {
         wallet.addTransactionSigner(new NopTransactionSigner(false));
-    }
-
-    @Test
-    public void watchingMarriedWallet() throws Exception {
-        DeterministicKey watchKey = wallet.getWatchingKey();
-        String serialized = watchKey.serializePubB58(TESTNET.network());
-        Wallet wallet = Wallet.fromWatchingKeyB58(TESTNET.network(), serialized);
-        blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
-        chain = new BlockChain(TESTNET, wallet, blockStore);
-
-        final DeterministicKeyChain keyChain = DeterministicKeyChain.builder().random(new SecureRandom()).build();
-        DeterministicKey partnerKey = DeterministicKey.deserializeB58(null, keyChain.getWatchingKey().serializePubB58(TESTNET.network()), TESTNET.network());
-
-        TransactionSigner signer = new TransactionSigner() {
-            @Override
-            public boolean isReady() {
-                return true;
-            }
-
-            @Override
-            public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
-                assertEquals(propTx.partialTx.getInputs().size(), propTx.keyPaths.size());
-                HDPath externalZeroLeaf = DeterministicKeyChain.ACCOUNT_ZERO_PATH
-                        .extend(DeterministicKeyChain.EXTERNAL_SUBPATH)
-                        .extend(ChildNumber.ZERO);
-                for (TransactionInput input : propTx.partialTx.getInputs()) {
-                    HDPath keypath = HDPath.M(propTx.keyPaths.get(input.getConnectedOutput().getScriptPubKey()));
-                    assertNotNull(keypath);
-                    assertEquals(externalZeroLeaf.list(), keypath.list());
-                }
-                return true;
-            }
-        };
-        wallet.addTransactionSigner(signer);
-        MarriedKeyChain chain = MarriedKeyChain.builder()
-                .random(new SecureRandom())
-                .followingKey(partnerKey)
-                .build();
-        wallet.addAndActivateHDChain(chain);
-
-        Address myAddress = wallet.currentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        sendMoneyToWallet(wallet, AbstractBlockChain.NewBlockType.BEST_CHAIN, COIN, myAddress);
-
-        SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
-        req.missingSigsMode = Wallet.MissingSigsMode.USE_DUMMY_SIG;
-        wallet.completeTx(req);
     }
 
     @Test
