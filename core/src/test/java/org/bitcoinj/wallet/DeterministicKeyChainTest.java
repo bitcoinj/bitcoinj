@@ -657,7 +657,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(coinLevelKey, new ChildNumber(0, true));
         accountKey = accountKey.dropParent();
         accountKey.setCreationTime(watchingKey.creationTime().get());
-        KeyChainGroup group = KeyChainGroup.builder(NetworkParameters.of(network)).addChain(DeterministicKeyChain.builder().spend(accountKey)
+        KeyChainGroup group = KeyChainGroup.builder(network).addChain(DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(bip44chain.getOutputScriptType()).build()).build();
         DeterministicKeyChain fromMasterKeyChain = group.getActiveKeyChain();
         assertEquals(BIP44_COIN_1_ACCOUNT_ZERO_PATH, fromMasterKeyChain.getAccountPath());

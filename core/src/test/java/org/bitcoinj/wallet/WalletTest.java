@@ -220,7 +220,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void encryptDecryptWalletWithArbitraryPathAndScriptType() throws Exception {
         final byte[] ENTROPY = Sha256Hash.hash("don't use a string seed like this in real life".getBytes());
-        KeyChainGroup keyChainGroup = KeyChainGroup.builder(TESTNET)
+        KeyChainGroup keyChainGroup = KeyChainGroup.builder(BitcoinNetwork.TESTNET)
                 .addChain(DeterministicKeyChain.builder().seed(DeterministicSeed.ofEntropy(ENTROPY, "", Instant.ofEpochSecond(1389353062L)))
                         .outputScriptType(ScriptType.P2WPKH)
                         .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).build())
@@ -3220,7 +3220,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void keyEvents() {
         // Check that we can register an event listener, generate some keys and the callbacks are invoked properly.
-        wallet = new Wallet(BitcoinNetwork.TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build());
+        wallet = new Wallet(BitcoinNetwork.TESTNET, KeyChainGroup.builder(BitcoinNetwork.TESTNET).fromRandom(ScriptType.P2PKH).build());
         final List<ECKey> keys = new LinkedList<>();
         wallet.addKeyChainEventListener(Threading.SAME_THREAD, keys::addAll);
         wallet.freshReceiveKey();
@@ -3504,7 +3504,7 @@ public class WalletTest extends TestWithWallet {
                 .outputScriptType(ScriptType.P2PKH).build();
         DeterministicKeyChain p2wpkhChain = DeterministicKeyChain.builder().random(new SecureRandom())
                 .outputScriptType(ScriptType.P2WPKH).build();
-        KeyChainGroup kcg = KeyChainGroup.builder(TESTNET).addChain(p2pkhChain).addChain(p2wpkhChain).build();
+        KeyChainGroup kcg = KeyChainGroup.builder(BitcoinNetwork.TESTNET).addChain(p2pkhChain).addChain(p2wpkhChain).build();
         Wallet wallet = new Wallet(BitcoinNetwork.TESTNET, kcg);
 
         // Set up one key from each chain.
