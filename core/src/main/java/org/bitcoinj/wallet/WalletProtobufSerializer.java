@@ -535,7 +535,7 @@ public class WalletProtobufSerializer {
         } else {
             // Read all transactions and insert into the txMap.
             for (Protos.Transaction txProto : walletProto.getTransactionList()) {
-                readTransaction(txProto, wallet.getParams());
+                readTransaction(txProto);
             }
 
             // Update transaction outputs to point to inputs that spend them
@@ -628,7 +628,7 @@ public class WalletProtobufSerializer {
         return Protos.Wallet.parseFrom(codedInput);
     }
 
-    private void readTransaction(Protos.Transaction txProto, NetworkParameters params) throws UnreadableWalletException {
+    private void readTransaction(Protos.Transaction txProto) throws UnreadableWalletException {
         Transaction tx = new Transaction();
 
         tx.setVersion(txProto.getVersion());
