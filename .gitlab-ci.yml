@@ -1,25 +1,29 @@
-before_script:
-  - apt-get update
+.debian-job-configuration: &debian-job-configuration
+  before_script:
+    - apt-get update
+  after_script:
+    - gradle --version
+  script:
+    - apt-get -y install $JDK_PKG gradle
+    - gradle build --stacktrace
 
-after_script:
-  - gradle --version
+.debian-test:
+  stage: test
+  variables:
+    JDK_PKG: openjdk-11-jdk-headless
+  artifacts:
+    name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+    paths:
+      - core/build/libs/*.jar
 
 bullseye-jdk11:
+  <<: *debian-job-configuration
+  extends: .debian-test
   image: debian:bullseye-slim
-  script:
-    - apt-get -y install openjdk-11-jdk-headless gradle
-    - gradle build --stacktrace
-  artifacts:
-    name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
-    paths:
-      - core/build/libs/*.jar
 
 bookworm-jdk17:
+  <<: *debian-job-configuration
+  extends: .debian-test
   image: debian:bookworm-slim
-  script:
-    - apt-get -y install openjdk-17-jdk-headless gradle
-    - gradle build --stacktrace
-  artifacts:
-    name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
-    paths:
-      - core/build/libs/*.jar
+  variables:
+    JDK_PKG: openjdk-17-jdk-headless
