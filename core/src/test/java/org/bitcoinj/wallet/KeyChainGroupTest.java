@@ -18,6 +18,7 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
@@ -76,7 +77,7 @@ public class KeyChainGroupTest {
                 .build();
         group.getActiveKeyChain();  // Force create a chain.
 
-        watchingAccountKey = DeterministicKey.deserializeB58(null, XPUB, MAINNET);
+        watchingAccountKey = DeterministicKey.deserializeB58(null, XPUB, BitcoinNetwork.MAINNET);
     }
 
     @Test
@@ -615,7 +616,7 @@ public class KeyChainGroupTest {
         group = KeyChainGroup.builder(MAINNET)
                 .addChain(DeterministicKeyChain.builder().watch(DeterministicKey.deserializeB58(
                         "xpub69bjfJ91ikC5ghsqsVDHNq2dRGaV2HHVx7Y9LXi27LN9BWWAXPTQr4u8U3wAtap8bLdHdkqPpAcZmhMS5SnrMQC4ccaoBccFhh315P4UYzo",
-                        MAINNET)).outputScriptType(ScriptType.P2PKH).build())
+                        BitcoinNetwork.MAINNET)).outputScriptType(ScriptType.P2PKH).build())
                 .build();
         final ECKey watchingKey = ECKey.fromPublicOnly(new ECKey());
         group.importKeys(watchingKey);
@@ -633,7 +634,7 @@ public class KeyChainGroupTest {
         group = KeyChainGroup.builder(MAINNET)
                 .addChain(DeterministicKeyChain.builder().watch(DeterministicKey.deserializeB58(
                         "xpub69bjfJ91ikC5ghsqsVDHNq2dRGaV2HHVx7Y9LXi27LN9BWWAXPTQr4u8U3wAtap8bLdHdkqPpAcZmhMS5SnrMQC4ccaoBccFhh315P4UYzo",
-                        MAINNET)).outputScriptType(ScriptType.P2PKH).build())
+                        BitcoinNetwork.MAINNET)).outputScriptType(ScriptType.P2PKH).build())
                 .build();
         final ECKey key = ECKey.fromPrivate(BigInteger.TEN);
         group.importKeys(key);
