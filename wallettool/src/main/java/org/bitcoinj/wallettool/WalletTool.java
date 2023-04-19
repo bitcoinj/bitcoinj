@@ -796,7 +796,7 @@ public class WalletTool implements Callable<Integer> {
                 if (location.startsWith("http")) {
                     future = PaymentSession.createFromUrl(location, verifyPki);
                 } else {
-                    BitcoinURI paymentRequestURI = new BitcoinURI(location);
+                    BitcoinURI paymentRequestURI = BitcoinURI.of(location);
                     future = PaymentSession.createFromBitcoinUri(paymentRequestURI, verifyPki);
                 }
                 PaymentSession session = future.get();

@@ -60,7 +60,7 @@ public class PaymentProtocolTool {
             } else if ("http".equals(uri.getScheme())) {
                 session = PaymentSession.createFromUrl(arg).get();
             } else if ("bitcoin".equals(uri.getScheme())) {
-                BitcoinURI bcuri = new BitcoinURI(arg);
+                BitcoinURI bcuri = BitcoinURI.of(arg);
                 final String paymentRequestUrl = bcuri.getPaymentRequestUrl();
                 if (paymentRequestUrl == null) {
                     System.err.println("No r= param in bitcoin URI");
