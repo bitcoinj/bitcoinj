@@ -508,7 +508,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     }
 
     protected Wallet createWallet() {
-        KeyChainGroup.Builder kcg = KeyChainGroup.builder(params, structure);
+        KeyChainGroup.Builder kcg = KeyChainGroup.builder(network, structure);
         if (restoreFromSeed != null)
             kcg.fromSeed(restoreFromSeed, preferredOutputScriptType);
         else if (restoreFromKey != null)

@@ -109,7 +109,7 @@ public class WalletProtobufSerializerTest {
         myKey = new ECKey();
         myKey.setCreationTime(Instant.ofEpochSecond(123456789L));
         myAddress = myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        myWallet = new Wallet(BitcoinNetwork.TESTNET, KeyChainGroup.builder(TESTNET).fromRandom(ScriptType.P2PKH).build());
+        myWallet = new Wallet(BitcoinNetwork.TESTNET, KeyChainGroup.builder(BitcoinNetwork.TESTNET).fromRandom(ScriptType.P2PKH).build());
         myWallet.importKey(myKey);
         mScriptCreationTime = TimeUtils.currentTime().minusSeconds(1234);
         myWallet.addWatchedAddress(myWatchedKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), mScriptCreationTime);

@@ -20,6 +20,7 @@ package org.bitcoinj.wallet;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
@@ -90,16 +91,16 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 public class KeyChainGroup implements KeyBag {
 
     /**
-     * Builder for {@link KeyChainGroup}. Use {@link KeyChainGroup#builder(NetworkParameters)} to acquire an instance.
+     * Builder for {@link KeyChainGroup}. Use {@link KeyChainGroup#builder(Network)} to acquire an instance.
      */
     public static class Builder {
-        private final NetworkParameters params;
+        private final Network network;
         private final KeyChainGroupStructure structure;
         private final List<DeterministicKeyChain> chains = new LinkedList<>();
         private int lookaheadSize = -1, lookaheadThreshold = -1;
 
-        private Builder(NetworkParameters params, KeyChainGroupStructure structure) {
-            this.params = params;
+        private Builder(Network network, KeyChainGroupStructure structure) {
+            this.network = network;
             this.structure = structure;
         }
 
@@ -133,16 +134,16 @@ public class KeyChainGroup implements KeyBag {
             if (outputScriptType == ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
                 this.chains.clear();
                 this.chains.add(chain);
             } else if (outputScriptType == ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, params)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, network)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -166,16 +167,16 @@ public class KeyChainGroup implements KeyBag {
             if (outputScriptType == ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
                 this.chains.clear();
                 this.chains.add(chain);
             } else if (outputScriptType == ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, params)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, params)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, network)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -223,14 +224,14 @@ public class KeyChainGroup implements KeyBag {
         }
 
         public KeyChainGroup build() {
-            return new KeyChainGroup(params, null, chains, lookaheadSize, lookaheadThreshold, null, null);
+            return new KeyChainGroup(network, null, chains, lookaheadSize, lookaheadThreshold, null, null);
         }
     }
 
     private static final Logger log = LoggerFactory.getLogger(KeyChainGroup.class);
 
     private BasicKeyChain basic;
-    private final NetworkParameters params;
+    private final Network network;
     // Keychains for deterministically derived keys.
     protected final @Nullable LinkedList<DeterministicKeyChain> chains;
     // currentKeys is used for normal, non-multisig/married wallets. currentAddresses is used when we're handing out
@@ -244,22 +245,40 @@ public class KeyChainGroup implements KeyBag {
     private final CopyOnWriteArrayList<ListenerRegistration<CurrentKeyChangeEventListener>> currentKeyChangeListeners = new CopyOnWriteArrayList<>();
 
     /** Creates a keychain group with just a basic chain. No deterministic chains will be created automatically. */
+    public static KeyChainGroup createBasic(Network network) {
+        return new KeyChainGroup(network, new BasicKeyChain(), null, -1, -1, null, null);
+    }
+
+    /** @deprecated use {@link #createBasic(Network)} */
+    @Deprecated
     public static KeyChainGroup createBasic(NetworkParameters params) {
-        return new KeyChainGroup(params, new BasicKeyChain(), null, -1, -1, null, null);
+        return createBasic(params.network());
     }
 
+    public static KeyChainGroup.Builder builder(Network network) {
+        return new Builder(network, KeyChainGroupStructure.BIP32);
+    }
+
+    /** @deprecated use {@link #builder(Network)} */
+    @Deprecated
     public static KeyChainGroup.Builder builder(NetworkParameters params) {
-        return new Builder(params, KeyChainGroupStructure.BIP32);
+        return builder(params.network());
     }
 
+    public static KeyChainGroup.Builder builder(Network network, KeyChainGroupStructure structure) {
+        return new Builder(network, structure);
+    }
+
+    /** @deprecated use {@link #builder(Network, KeyChainGroupStructure)} */
+    @Deprecated
     public static KeyChainGroup.Builder builder(NetworkParameters params, KeyChainGroupStructure structure) {
-        return new Builder(params, structure);
+        return builder(params.network(), structure);
     }
 
-    private KeyChainGroup(NetworkParameters params, @Nullable BasicKeyChain basicKeyChain,
+    private KeyChainGroup(Network network, @Nullable BasicKeyChain basicKeyChain,
             @Nullable List<DeterministicKeyChain> chains, int lookaheadSize, int lookaheadThreshold,
             @Nullable EnumMap<KeyChain.KeyPurpose, DeterministicKey> currentKeys, @Nullable KeyCrypter crypter) {
-        this.params = params;
+        this.network = network;
         this.basic = basicKeyChain == null ? new BasicKeyChain() : basicKeyChain;
         if (chains != null) {
             if (lookaheadSize > -1)
@@ -287,7 +306,7 @@ public class KeyChainGroup implements KeyBag {
             for (Map.Entry<KeyChain.KeyPurpose, DeterministicKey> entry : this.currentKeys.entrySet()) {
                 Address address = ScriptBuilder
                         .createP2SHOutputScript(getActiveKeyChain().getRedeemData(entry.getValue()).redeemScript)
-                        .getToAddress(params.network());
+                        .getToAddress(network);
                 currentAddresses.put(entry.getKey(), address);
             }
         }
@@ -376,7 +395,7 @@ public class KeyChainGroup implements KeyBag {
             }
             return current;
         } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
-            return currentKey(purpose).toAddress(outputScriptType, params.network());
+            return currentKey(purpose).toAddress(outputScriptType, network);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
         }
@@ -428,7 +447,7 @@ public class KeyChainGroup implements KeyBag {
      */
     public Address freshAddress(KeyChain.KeyPurpose purpose, ScriptType outputScriptType, @Nullable Instant keyRotationTime) {
         DeterministicKeyChain chain = getActiveKeyChain(outputScriptType, keyRotationTime);
-        return chain.getKey(purpose).toAddress(outputScriptType, params.network());
+        return chain.getKey(purpose).toAddress(outputScriptType, network);
     }
 
     /** @deprecated use {@link #freshAddress(KeyChain.KeyPurpose, ScriptType, Instant)} */
@@ -447,13 +466,13 @@ public class KeyChainGroup implements KeyBag {
         if (chain.isMarried()) {
             Script outputScript = chain.freshOutputScript(purpose);
             checkState(ScriptPattern.isP2SH(outputScript)); // Only handle P2SH for now
-            Address freshAddress = LegacyAddress.fromScriptHash(params.network(),
+            Address freshAddress = LegacyAddress.fromScriptHash(network,
                     ScriptPattern.extractHashFromP2SH(outputScript));
             maybeLookaheadScripts();
             currentAddresses.put(purpose, freshAddress);
             return freshAddress;
         } else if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
-            return freshKey(purpose).toAddress(outputScriptType, params.network());
+            return freshKey(purpose).toAddress(outputScriptType, network);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
         }
@@ -968,11 +987,11 @@ public class KeyChainGroup implements KeyBag {
                 .collect(Collectors.toList());
     }
 
-    static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys) throws UnreadableWalletException {
-        return fromProtobufUnencrypted(params, keys, new DefaultKeyChainFactory());
+    static KeyChainGroup fromProtobufUnencrypted(Network network, List<Protos.Key> keys) throws UnreadableWalletException {
+        return fromProtobufUnencrypted(network, keys, new DefaultKeyChainFactory());
     }
 
-    public static KeyChainGroup fromProtobufUnencrypted(NetworkParameters params, List<Protos.Key> keys, KeyChainFactory factory) throws UnreadableWalletException {
+    public static KeyChainGroup fromProtobufUnencrypted(Network network, List<Protos.Key> keys, KeyChainFactory factory) throws UnreadableWalletException {
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufUnencrypted(keys);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, null, factory);
         int lookaheadSize = -1, lookaheadThreshold = -1;
@@ -984,14 +1003,14 @@ public class KeyChainGroup implements KeyBag {
             currentKeys = createCurrentKeysMap(chains);
         }
         extractFollowingKeychains(chains);
-        return new KeyChainGroup(params, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, null);
+        return new KeyChainGroup(network, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, null);
     }
 
-    static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
-        return fromProtobufEncrypted(params, keys, crypter, new DefaultKeyChainFactory());
+    static KeyChainGroup fromProtobufEncrypted(Network network, List<Protos.Key> keys, KeyCrypter crypter) throws UnreadableWalletException {
+        return fromProtobufEncrypted(network, keys, crypter, new DefaultKeyChainFactory());
     }
 
-    public static KeyChainGroup fromProtobufEncrypted(NetworkParameters params, List<Protos.Key> keys, KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
+    public static KeyChainGroup fromProtobufEncrypted(Network network, List<Protos.Key> keys, KeyCrypter crypter, KeyChainFactory factory) throws UnreadableWalletException {
         Objects.requireNonNull(crypter);
         BasicKeyChain basicKeyChain = BasicKeyChain.fromProtobufEncrypted(keys, crypter);
         List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(keys, crypter, factory);
@@ -1004,7 +1023,7 @@ public class KeyChainGroup implements KeyBag {
             currentKeys = createCurrentKeysMap(chains);
         }
         extractFollowingKeychains(chains);
-        return new KeyChainGroup(params, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, crypter);
+        return new KeyChainGroup(network, basicKeyChain, chains, lookaheadSize, lookaheadThreshold, currentKeys, crypter);
     }
 
     /**
@@ -1134,10 +1153,10 @@ public class KeyChainGroup implements KeyBag {
     public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey) {
         final StringBuilder builder = new StringBuilder();
         if (basic != null)
-            builder.append(basic.toString(includePrivateKeys, aesKey, params.network()));
+            builder.append(basic.toString(includePrivateKeys, aesKey, network));
         if (chains != null)
             for (DeterministicKeyChain chain : chains)
-                builder.append(chain.toString(includeLookahead, includePrivateKeys, aesKey, params.network())).append('\n');
+                builder.append(chain.toString(includeLookahead, includePrivateKeys, aesKey, network)).append('\n');
         return builder.toString();
     }
 

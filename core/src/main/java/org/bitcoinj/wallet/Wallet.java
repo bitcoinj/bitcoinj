@@ -343,7 +343,7 @@ public class Wallet extends BaseTaggableObject
      * @return A new empty wallet
      */
     public static Wallet createDeterministic(Network network, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
-        return new Wallet(network, KeyChainGroup.builder(NetworkParameters.of(network), keyChainGroupStructure).fromRandom(outputScriptType).build());
+        return new Wallet(network, KeyChainGroup.builder(network, keyChainGroupStructure).fromRandom(outputScriptType).build());
     }
 
     /**
@@ -351,7 +351,7 @@ public class Wallet extends BaseTaggableObject
      */
     @Deprecated
     public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
-        return new Wallet(params.network(), KeyChainGroup.builder(params, keyChainGroupStructure).fromRandom(outputScriptType).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params.network(), keyChainGroupStructure).fromRandom(outputScriptType).build());
     }
 
     /**
@@ -360,7 +360,7 @@ public class Wallet extends BaseTaggableObject
      * @param network network wallet will operate on
      */
     public static Wallet createBasic(Network network) {
-        return new Wallet(network, KeyChainGroup.createBasic(NetworkParameters.of(network)));
+        return new Wallet(network, KeyChainGroup.createBasic(network));
     }
 
     /**
@@ -400,7 +400,7 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet fromSeed(Network network, DeterministicSeed seed, ScriptType outputScriptType,
             KeyChainGroupStructure structure) {
-        return new Wallet(network, KeyChainGroup.builder(NetworkParameters.of(network), structure).fromSeed(seed, outputScriptType).build());
+        return new Wallet(network, KeyChainGroup.builder(network, structure).fromSeed(seed, outputScriptType).build());
     }
 
     /**
@@ -423,7 +423,7 @@ public class Wallet extends BaseTaggableObject
             List<ChildNumber> accountPath) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).outputScriptType(outputScriptType)
                 .accountPath(accountPath).build();
-        return new Wallet(network, KeyChainGroup.builder(NetworkParameters.of(network)).addChain(chain).build());
+        return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
     }
 
     /**
@@ -443,7 +443,7 @@ public class Wallet extends BaseTaggableObject
             ScriptType outputScriptType) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).outputScriptType(outputScriptType)
                 .build();
-        return new Wallet(network, KeyChainGroup.builder(NetworkParameters.of(network)).addChain(chain).build());
+        return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
     }
 
     /**
@@ -515,7 +515,7 @@ public class Wallet extends BaseTaggableObject
             ScriptType outputScriptType) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).outputScriptType(outputScriptType)
                 .build();
-        return new Wallet(network, KeyChainGroup.builder(NetworkParameters.of(network)).addChain(chain).build());
+        return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
     }
 
     /**
@@ -526,7 +526,7 @@ public class Wallet extends BaseTaggableObject
                                          ScriptType outputScriptType) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).outputScriptType(outputScriptType)
                 .build();
-        return new Wallet(params.network(), KeyChainGroup.builder(params).addChain(chain).build());
+        return new Wallet(params.network(), KeyChainGroup.builder(params.network()).addChain(chain).build());
     }
 
     /**
@@ -595,7 +595,7 @@ public class Wallet extends BaseTaggableObject
             accountKey.clearCreationTime();
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(outputScriptType).build();
-        return new Wallet(network, KeyChainGroup.builder(NetworkParameters.of(network)).addChain(chain).build());
+        return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
     }
 
     /**
@@ -5749,7 +5749,7 @@ public class Wallet extends BaseTaggableObject
                     log.info(
                             "All deterministic chains are currently rotating and we have no random keys, creating fresh {} chain: backup required after this.",
                             preferredScriptType);
-                    KeyChainGroup newChains = KeyChainGroup.builder(params, structure).fromRandom(preferredScriptType)
+                    KeyChainGroup newChains = KeyChainGroup.builder(network, structure).fromRandom(preferredScriptType)
                             .build();
                     if (keyChainGroup.isEncrypted()) {
                         if (aesKey == null)
@@ -5772,7 +5772,7 @@ public class Wallet extends BaseTaggableObject
                 log.info(
                         "No non-rotating random keys available, generating entirely new {} tree: backup required after this.",
                         preferredScriptType);
-                KeyChainGroup newChains = KeyChainGroup.builder(params, structure).fromRandom(preferredScriptType)
+                KeyChainGroup newChains = KeyChainGroup.builder(network, structure).fromRandom(preferredScriptType)
                         .build();
                 if (keyChainGroup.isEncrypted()) {
                     if (aesKey == null)
