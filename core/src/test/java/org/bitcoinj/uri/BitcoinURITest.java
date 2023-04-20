@@ -48,6 +48,20 @@ public class BitcoinURITest {
     private static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
 
     @Test
+    public void of_anyNetwork() throws Exception {
+        BitcoinURI uri1 = BitcoinURI.of("bitcoin:" + MAINNET_GOOD_ADDRESS);
+        assertEquals(BitcoinNetwork.MAINNET, uri1.getAddress().network());
+        BitcoinURI uri2 = BitcoinURI.of("bitcoin:" + MAINNET_GOOD_SEGWIT_ADDRESS);
+        assertEquals(BitcoinNetwork.MAINNET, uri2.getAddress().network());
+        BitcoinURI uri3 = BitcoinURI.of("bitcoin:mutDLVyes4YNWkL4j8g9oUsSUSTtnt13hP");
+        assertEquals(BitcoinNetwork.TESTNET, uri3.getAddress().network());
+        BitcoinURI uri4 = BitcoinURI.of("bitcoin:tb1qn96rzewt04q0vtnh8lh0kelekkj2lpjh29lg6x");
+        assertEquals(BitcoinNetwork.TESTNET, uri4.getAddress().network());
+        BitcoinURI uri5 = BitcoinURI.of("BITCOIN:TB1QN96RZEWT04Q0VTNH8LH0KELEKKJ2LPJH29LG6X");
+        assertEquals(BitcoinNetwork.TESTNET, uri5.getAddress().network());
+    }
+
+    @Test
     public void testConvertToBitcoinURI() {
         Address goodAddress = new DefaultAddressParser().parseAddress(MAINNET_GOOD_ADDRESS, MAINNET);
         
