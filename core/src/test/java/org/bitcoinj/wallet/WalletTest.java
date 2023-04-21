@@ -100,6 +100,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
@@ -2736,6 +2738,42 @@ public class WalletTest extends TestWithWallet {
         wallet.completeTx(emptyReq);
         assertEquals(Coin.valueOf(342000), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
+    }
+
+    @Test
+    public void GIVEN_sendrequest_with_input_THEN_dont_reuse_same_input() throws Exception {
+
+        /** ARRANGE */
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        Transaction tx1 = createFakeTx(TESTNET.network(), COIN, myAddress);
+        wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        Transaction tx2 = createFakeTx(TESTNET.network(), COIN, myAddress);
+        wallet.receiveFromBlock(tx2, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+
+        // SendRequest using tx1 as input
+        SendRequest request1 = SendRequest.to(OTHER_ADDRESS, COIN.multiply(1));
+        request1.tx.addInput(new TransactionInput(request1.tx, new byte[] {}, new TransactionOutPoint(0, tx1.getTxId())));
+
+        // SendRequest using tx2 as input
+        SendRequest request2 = SendRequest.to(OTHER_ADDRESS, COIN.multiply(1));
+        request2.tx.addInput(new TransactionInput(request2.tx, new byte[] {}, new TransactionOutPoint(0, tx2.getTxId())));
+
+        /** ACT */
+        wallet.completeTx(request1);
+        wallet.completeTx(request2);
+
+        /** ASSERT */
+        Function<List<TransactionInput>, Set<String>> uniqueInputs = txInputs -> txInputs.stream().map(txInput ->{
+            TransactionOutPoint outpoint = txInput.getOutpoint();
+            String result = outpoint.hash().toString() + outpoint.index();
+            return result;
+        }).collect(Collectors.toSet());
+
+        // Check request1
+        assertEquals(uniqueInputs.apply(request1.tx.getInputs()).size(), request1.tx.getInputs().size());
+
+        // Check request2
+        assertEquals(uniqueInputs.apply(request2.tx.getInputs()).size(), request2.tx.getInputs().size());
     }
 
     @Test
