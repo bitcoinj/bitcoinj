@@ -2816,6 +2816,8 @@ public class WalletTest extends TestWithWallet {
         wallet.receiveFromBlock(tx2, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         Transaction tx3 = createFakeTx(TESTNET.network(), CENT, myAddress);
         wallet.receiveFromBlock(tx3, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 2);
+        Transaction txOutsideWallet = createFakeTx(TESTNET.network(), CENT, OTHER_ADDRESS);
+        wallet.receiveFromBlock(txOutsideWallet, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 2);
 
         SendRequest request1 = SendRequest.to(OTHER_ADDRESS, CENT);
         // If we just complete as-is, we will use one of the COIN outputs to get higher priority,
@@ -2841,7 +2843,7 @@ public class WalletTest extends TestWithWallet {
 
         // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, tx3.getTxId())));
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, txOutsideWallet.getTxId())));
         // Now completeTx will result in two inputs, two outputs and a fee of a CENT
         // Note that it is simply assumed that the inputs are correctly signed, though in fact the first is not
         request3.shuffleOutputs = false;
