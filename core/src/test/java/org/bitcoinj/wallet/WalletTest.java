@@ -52,10 +52,7 @@ import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptChunk;
-import org.bitcoinj.script.ScriptPattern;
+import org.bitcoinj.script.*;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -100,6 +97,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
@@ -523,6 +521,73 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, t2, t3);
         assertTrue(wallet.isConsistent());
         return wallet;
+    }
+
+    static boolean isValidSignedTx(Transaction tx, Function<Sha256Hash, Transaction> transactionProvider) {
+        int numInputs = tx.getInputs().size();
+        for (int i = 0; i < numInputs; i++) {
+            TransactionInput txIn = tx.getInputs().get(i);
+            TransactionOutput connectedOutput = txIn.getConnectedOutput();
+            if (connectedOutput == null) {
+                TransactionOutPoint outpoint = txIn.getOutpoint();
+                connectedOutput = transactionProvider.apply(outpoint.getHash()).getOutput(outpoint.getIndex());
+            }
+            Coin value = connectedOutput.getValue();
+            TransactionWitness witness = txIn.getWitness();
+            Script scriptPubKey = connectedOutput.getScriptPubKey();
+            try {
+                txIn.getScriptSig().correctlySpends(tx, i, witness, value, scriptPubKey, Script.ALL_VERIFY_FLAGS);
+            } catch (ScriptException e) {
+                log.debug("Input contained an incorrect signature", e);
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    @Test
+    public void signedDeserialisedTxIsStillValid() throws InsufficientMoneyException {
+
+        /** ARRANGE */
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(3, 0));
+        Transaction origTxn = new Transaction();
+        origTxn.addOutput(valueOf(0, 50), OTHER_ADDRESS);
+        SendRequest firstSendRequest = SendRequest.forTx(origTxn);
+        wallet.completeTx(firstSendRequest);
+        byte[] txBytes = firstSendRequest.tx.bitcoinSerialize();
+
+        /** ACT */
+        Transaction deserialisedTx = Transaction.read(ByteBuffer.wrap(txBytes));
+
+        /** ASSERT */
+        isValidSignedTx(deserialisedTx, hash -> wallet.getTransaction(hash));
+    }
+
+    @Test
+    public void whenValidDeserialisedTx_Then_OutputsShouldBeUnchanged() throws InsufficientMoneyException {
+
+        /** ARRANGE */
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(3, 0));
+        Transaction origTxn = new Transaction();
+        origTxn.addOutput(valueOf(0, 50), OTHER_ADDRESS);
+        SendRequest firstSendRequest = SendRequest.forTx(origTxn);
+        wallet.completeTx(firstSendRequest);
+        byte[] txBytes = firstSendRequest.tx.bitcoinSerialize();
+        Transaction deserialisedTx = Transaction.read(ByteBuffer.wrap(txBytes));
+        SendRequest deserialisedSendRequest = SendRequest.forTx(deserialisedTx);
+
+        /** ACT */
+        wallet.completeTx(deserialisedSendRequest);
+
+        /** ASSERT */
+        List<TransactionInput> inputs = deserialisedSendRequest.tx.getInputs();
+        assertEquals(1, inputs.size());
+        TransactionInput originalInput = firstSendRequest.tx.getInput(0);
+        TransactionInput actualInput = inputs.get(0);
+        assertEquals(originalInput.getOutpoint().hash(), actualInput.getOutpoint().hash());
+        assertEquals(originalInput.getOutpoint().index(), actualInput.getOutpoint().index());
+        isValidSignedTx(deserialisedSendRequest.tx, hash -> wallet.getTransaction(hash));
     }
 
     @Test
