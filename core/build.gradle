@@ -12,7 +12,7 @@ version = '0.17-SNAPSHOT'
 dependencies {
     api 'org.bouncycastle:bcprov-jdk15to18:1.72'
     api 'com.google.guava:guava:31.1-android'
-    api 'com.google.protobuf:protobuf-javalite:3.21.12'
+    api 'com.google.protobuf:protobuf-javalite:3.22.3'
     implementation 'org.slf4j:slf4j-api:2.0.7'
     implementation 'net.jcip:jcip-annotations:1.0'
     testImplementation 'junit:junit:4.13.2'
@@ -39,7 +39,7 @@ compileJava {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.21.12'
+        artifact = 'com.google.protobuf:protoc:3.22.3'
     }
     generateProtoTasks {
         all().each { task ->

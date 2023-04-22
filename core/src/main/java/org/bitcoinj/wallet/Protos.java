@@ -941,6 +941,7 @@ public final class Protos {
      * For the parents of keys being handed out, this is always less than the true number of children: the difference is
      * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
      * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
      * If this field is missing it means we're not issuing subkeys of this key to users.
      * </pre>
      *
@@ -954,6 +955,7 @@ public final class Protos {
      * For the parents of keys being handed out, this is always less than the true number of children: the difference is
      * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
      * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
      * If this field is missing it means we're not issuing subkeys of this key to users.
      * </pre>
      *
@@ -1206,6 +1208,7 @@ public final class Protos {
      * For the parents of keys being handed out, this is always less than the true number of children: the difference is
      * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
      * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
      * If this field is missing it means we're not issuing subkeys of this key to users.
      * </pre>
      *
@@ -1222,6 +1225,7 @@ public final class Protos {
      * For the parents of keys being handed out, this is always less than the true number of children: the difference is
      * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
      * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
      * If this field is missing it means we're not issuing subkeys of this key to users.
      * </pre>
      *
@@ -1238,6 +1242,7 @@ public final class Protos {
      * For the parents of keys being handed out, this is always less than the true number of children: the difference is
      * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
      * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
      * If this field is missing it means we're not issuing subkeys of this key to users.
      * </pre>
      *
@@ -1254,6 +1259,7 @@ public final class Protos {
      * For the parents of keys being handed out, this is always less than the true number of children: the difference is
      * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
      * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+     *
      * If this field is missing it means we're not issuing subkeys of this key to users.
      * </pre>
      *
@@ -1680,6 +1686,7 @@ public final class Protos {
        * For the parents of keys being handed out, this is always less than the true number of children: the difference is
        * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
        * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
        * If this field is missing it means we're not issuing subkeys of this key to users.
        * </pre>
        *
@@ -1696,6 +1703,7 @@ public final class Protos {
        * For the parents of keys being handed out, this is always less than the true number of children: the difference is
        * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
        * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
        * If this field is missing it means we're not issuing subkeys of this key to users.
        * </pre>
        *
@@ -1712,6 +1720,7 @@ public final class Protos {
        * For the parents of keys being handed out, this is always less than the true number of children: the difference is
        * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
        * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
        * If this field is missing it means we're not issuing subkeys of this key to users.
        * </pre>
        *
@@ -1730,6 +1739,7 @@ public final class Protos {
        * For the parents of keys being handed out, this is always less than the true number of children: the difference is
        * called the lookahead zone. These keys are put into Bloom filters so we can spot transactions made by clones of
        * this wallet - for instance when restoring from backup or if the seed was shared between devices.
+       *
        * If this field is missing it means we're not issuing subkeys of this key to users.
        * </pre>
        *
@@ -2210,8 +2220,10 @@ public final class Protos {
    * <pre>
    **
    * A key used to control Bitcoin spending.
+   *
    * Either the private key, the public key or both may be present.  It is recommended that
    * if the private key is provided that the public key is provided too because deriving it is slow.
+   *
    * If only the public key is provided, the key can only be used to watch the blockchain and verify
    * transactions, and not for spending.
    * </pre>
@@ -3210,8 +3222,10 @@ public final class Protos {
      * <pre>
      **
      * A key used to control Bitcoin spending.
+     *
      * Either the private key, the public key or both may be present.  It is recommended that
      * if the private key is provided that the public key is provided too because deriving it is slow.
+     *
      * If only the public key is provided, the key can only be used to watch the blockchain and verify
      * transactions, and not for spending.
      * </pre>
@@ -6476,6 +6490,7 @@ public final class Protos {
    * <pre>
    **
    * A description of the confidence we have that a transaction cannot be reversed in the future.
+   *
    * Parsing should be lenient, since this could change for different applications yet we should
    * maintain backward compatibility.
    * </pre>
@@ -7259,6 +7274,7 @@ public final class Protos {
      * <pre>
      **
      * A description of the confidence we have that a transaction cannot be reversed in the future.
+     *
      * Parsing should be lenient, since this could change for different applications yet we should
      * maintain backward compatibility.
      * </pre>
@@ -12352,6 +12368,7 @@ public final class Protos {
      * <pre>
      **
      * The encryption type of the wallet.
+     *
      * The encryption type is UNENCRYPTED for wallets where the wallet does not support encryption - wallets prior to
      * encryption support are grandfathered in as this wallet type.
      * When a wallet is ENCRYPTED_SCRYPT_AES the keys are either encrypted with the wallet password or are unencrypted.
