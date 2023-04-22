@@ -2927,7 +2927,7 @@ public class WalletTest extends TestWithWallet {
         ScriptType outputScriptType = activeKeyChain.getOutputScriptType();
 
         Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
-        Wallet roundTrippedWallet = new WalletProtobufSerializer().readWallet(TESTNET, null, protos);
+        Wallet roundTrippedWallet = new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET, null, protos);
 
         assertEquals(numActiveKeyChains, roundTrippedWallet.getActiveKeyChains().size());
         DeterministicKeyChain roundTrippedActiveKeyChain = roundTrippedWallet.getActiveKeyChain();
