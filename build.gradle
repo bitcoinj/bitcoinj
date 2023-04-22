@@ -6,7 +6,7 @@ buildscript {
     }
     // If using Gradle 7, use the compatible protobuf plugin, else use the one that works with oldest supported Gradle
     boolean isGradle7 = GradleVersion.current().compareTo(GradleVersion.version("7.0")) >= 0
-    def gradleProtobufVersion = isGradle7 ? "0.8.18" : "0.8.10"
+    def gradleProtobufVersion = isGradle7 ? "0.9.2" : "0.8.10"
     if (isGradle7) {
         System.err.println "Warning: Using com.google.protobuf:protobuf-gradle-plugin:${gradleProtobufVersion} because ${GradleVersion.current()}"
     }

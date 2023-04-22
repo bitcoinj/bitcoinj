@@ -50,7 +50,6 @@ protobuf {
             }
         }
     }
-    generatedFilesBaseDir = new File(projectDir, '/src') // workaround for '$projectDir/src'
 }
 
 tasks.withType(Test) {
