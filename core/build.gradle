@@ -97,19 +97,29 @@ jar {
     }
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
+def minGradleSourcesJavadocVersion = GradleVersion.version("6.0")
+if (GradleVersion.current().compareTo(minGradleSourcesJavadocVersion) > 0) {
+    java {
+        withSourcesJar()
+        withJavadocJar()
+    }
+} else {
+    // This is not compatible with building with Gradle 8/Java 20
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
 
-artifacts {
-    archives sourcesJar
-    archives javadocJar
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
 }
 
 publishing {
@@ -117,9 +127,10 @@ publishing {
         mavenJava(MavenPublication) {
             artifactId = 'bitcoinj-core'
             from components.java
-            artifact sourcesJar
-            artifact javadocJar
-
+            if (GradleVersion.current().compareTo(minGradleSourcesJavadocVersion) > 0) {
+                artifact sourcesJar
+                artifact javadocJar
+            }
             pom {
                 description = 'A Java Bitcoin library'
             }
