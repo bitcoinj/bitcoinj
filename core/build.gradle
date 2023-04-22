@@ -97,13 +97,23 @@ jar {
     }
 }
 
+def minGradleArchiveClassifierVersion = GradleVersion.version("5.0")
+
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    if (GradleVersion.current().compareTo(minGradleArchiveClassifierVersion) > 0) {
+        archiveClassifier.set('javadoc')
+    } else {
+        classifier = 'javadoc'
+    }
     from javadoc.destinationDir
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    if (GradleVersion.current().compareTo(minGradleArchiveClassifierVersion) > 0) {
+        archiveClassifier.set('sources')
+    } else {
+        classifier = 'sources'
+    }
     from sourceSets.main.allSource
 }
 
