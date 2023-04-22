@@ -404,12 +404,12 @@ public class WalletProtobufSerializerTest {
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
         // Initial extension is mandatory: try to read it back into a wallet that doesn't know about it.
         try {
-            new WalletProtobufSerializer().readWallet(TESTNET, null, proto);
+            new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET, null, proto);
             fail();
         } catch (UnreadableWalletException e) {
             assertTrue(e.getMessage().contains("mandatory"));
         }
-        Wallet wallet = new WalletProtobufSerializer().readWallet(TESTNET,
+        Wallet wallet = new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET,
                 new WalletExtension[]{ new FooWalletExtension("com.whatever.required", true) },
                 proto);
         assertTrue(wallet.getExtensions().containsKey("com.whatever.required"));
@@ -418,7 +418,7 @@ public class WalletProtobufSerializerTest {
         Wallet wallet2 = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         wallet2.addExtension(new FooWalletExtension("com.whatever.optional", false));
         Protos.Wallet proto2 = new WalletProtobufSerializer().walletToProto(wallet2);
-        Wallet wallet5 = new WalletProtobufSerializer().readWallet(TESTNET, null, proto2);
+        Wallet wallet5 = new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET, null, proto2);
         assertEquals(0, wallet5.getExtensions().size());
     }
 
@@ -447,7 +447,7 @@ public class WalletProtobufSerializerTest {
         };
         myWallet.addExtension(extension);
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
-        Wallet wallet = new WalletProtobufSerializer().readWallet(TESTNET, new WalletExtension[]{extension}, proto);
+        Wallet wallet = new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET, new WalletExtension[]{extension}, proto);
         assertEquals(0, wallet.getExtensions().size());
     }
 
@@ -455,7 +455,7 @@ public class WalletProtobufSerializerTest {
     public void versions() throws Exception {
         Protos.Wallet.Builder proto = Protos.Wallet.newBuilder(new WalletProtobufSerializer().walletToProto(myWallet));
         proto.setVersion(2);
-        new WalletProtobufSerializer().readWallet(TESTNET, null, proto.build());
+        new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET, null, proto.build());
     }
 
     @Test
