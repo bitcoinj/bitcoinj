@@ -139,6 +139,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -4577,6 +4578,9 @@ public class Wallet extends BaseTaggableObject
             // we don't have the keys for.
             List<TransactionOutput> candidates = calculateAllSpendCandidates(true, req.missingSigsMode == MissingSigsMode.THROW);
 
+            // Remove candidates already used in the SendRequest
+            candidates = removeExistingInputs(candidates, req);
+
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
             List<Coin> updatedOutputValues = null;
@@ -4646,6 +4650,24 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Removes candidates that are already included as inputs
+     * in the SendRequest. This is to avoid using the same
+     * input twice in a Transaction.
+     */
+    private static List<TransactionOutput> removeExistingInputs(List<TransactionOutput> candidates, SendRequest sendRequest) {
+        List<TransactionInput> txInputs = sendRequest.tx.getInputs();
+        return candidates.stream().filter(candidate -> {
+
+            boolean candidateNotExistingInput = !txInputs.stream().anyMatch(txInput -> {
+                TransactionOutPoint outpoint = txInput.getOutpoint();
+                return Objects.equals(candidate.getParentTransactionHash(), outpoint.hash()) &&
+                        candidate.getIndex() == outpoint.index();
+            });
+            return candidateNotExistingInput;
+        }).collect(Collectors.toList());
     }
 
     /**
