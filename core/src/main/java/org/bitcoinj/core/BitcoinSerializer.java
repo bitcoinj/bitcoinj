@@ -421,18 +421,4 @@ public class BitcoinSerializer extends MessageSerializer {
             System.arraycopy(header, cursor, checksum, 0, 4);
         }
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof BitcoinSerializer)) return false;
-        BitcoinSerializer other = (BitcoinSerializer) o;
-        return Objects.equals(packetMagic, other.packetMagic) &&
-                protocolVersion == other.protocolVersion;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(network, protocolVersion);
-    }
 }
