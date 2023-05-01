@@ -29,7 +29,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import static org.bitcoinj.base.internal.ByteUtils.readUint32;
 import static org.bitcoinj.base.internal.Preconditions.check;
@@ -394,19 +393,5 @@ public class BitcoinSerializer extends MessageSerializer {
             // Note that the size read above includes the checksum bytes.
             System.arraycopy(header, cursor, checksum, 0, 4);
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof BitcoinSerializer)) return false;
-        BitcoinSerializer other = (BitcoinSerializer) o;
-        return Objects.equals(params, other.params) &&
-                protocolVersion == other.protocolVersion;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(params, protocolVersion);
     }
 }
