@@ -76,7 +76,6 @@ public class UnitTestParams extends BitcoinNetworkParams {
                 genesisBlock = Block.createGenesis();
                 genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
                 genesisBlock.setTime(TimeUtils.currentTime());
-                genesisBlock.solve();
             }
         }
         return genesisBlock;
