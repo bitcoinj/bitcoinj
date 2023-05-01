@@ -248,7 +248,7 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
 
     @Override
     public BitcoinSerializer getSerializer() {
-        return new BitcoinSerializer(this);
+        return new BitcoinSerializer(network);
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
 import org.junit.Test;
@@ -57,7 +58,7 @@ public class CheckpointManagerTest {
     public void canReadTextualStream() throws IOException {
         expect(params.getId()).andReturn("org/bitcoinj/core/checkpointmanagertest/validTextualFormat");
         expect(params.getSerializer()).andReturn(
-                new BitcoinSerializer(params, ProtocolVersion.CURRENT.intValue()));
+                new BitcoinSerializer(BitcoinNetwork.MAINNET, ProtocolVersion.CURRENT.intValue()));
         replay(params);
         new CheckpointManager(params, null);
     }

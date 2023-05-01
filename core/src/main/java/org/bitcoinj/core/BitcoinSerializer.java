@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.slf4j.Logger;
@@ -50,7 +51,8 @@ public class BitcoinSerializer extends MessageSerializer {
     private static final Logger log = LoggerFactory.getLogger(BitcoinSerializer.class);
     private static final int COMMAND_LEN = 12;
 
-    private final NetworkParameters params;
+    private final Network network;
+    private final int packetMagic;
     private final int protocolVersion;
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();
@@ -83,27 +85,50 @@ public class BitcoinSerializer extends MessageSerializer {
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
-     * @param params networkParams used to create Messages instances and determining packetMagic
+     * @param params networkParams used to determine packetMagic
      */
+    @Deprecated
     public BitcoinSerializer(NetworkParameters params) {
-        this(params, ProtocolVersion.CURRENT.intValue());
+        this(params.network());
     }
 
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
-     * @param params          networkParams used to create Messages instances and determining packetMagic
+     * @param network used to determine packetMagic
+     */
+    public BitcoinSerializer(Network network) {
+        this(network, ProtocolVersion.CURRENT.intValue());
+    }
+
+    /**
+     * Constructs a BitcoinSerializer with the given behavior.
+     *
+     * @param params networkParams used to determine packetMagic
      * @param protocolVersion the protocol version to use
      */
+    @Deprecated
     public BitcoinSerializer(NetworkParameters params, int protocolVersion) {
-        this.params = params;
+        this(params.network, protocolVersion);
+    }
+
+    /**
+     * Constructs a BitcoinSerializer with the given behavior.
+     *
+     * @param network used to determine packetMagic
+     * @param protocolVersion the protocol version to use
+     */
+    public BitcoinSerializer(Network network, int protocolVersion) {
+        this.network = network;
+        this.packetMagic = NetworkParameters.of(network).getPacketMagic();
         this.protocolVersion = protocolVersion;
     }
+
 
     @Override
     public BitcoinSerializer withProtocolVersion(int protocolVersion) {
         return protocolVersion == this.protocolVersion ?
-                this : new BitcoinSerializer(params, protocolVersion);
+                this : new BitcoinSerializer(network, protocolVersion);
     }
 
     @Override
@@ -117,7 +142,7 @@ public class BitcoinSerializer extends MessageSerializer {
     @Override
     public void serialize(String name, byte[] message, OutputStream out) throws IOException {
         byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */];
-        ByteUtils.writeInt32BE(params.getPacketMagic(), header, 0);
+        ByteUtils.writeInt32BE(packetMagic, header, 0);
 
         // The header array is initialized to zero by Java so we don't have to worry about
         // NULL terminating the string here.
@@ -218,7 +243,7 @@ public class BitcoinSerializer extends MessageSerializer {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
             return VersionMessage.read(payload);
-        } else if (command.equals("inv")) { 
+        } else if (command.equals("inv")) {
             return makeInventoryMessage(payload);
         } else if (command.equals("block")) {
             return makeBlock(payload);
@@ -270,8 +295,9 @@ public class BitcoinSerializer extends MessageSerializer {
     /**
      * Get the network parameters for this serializer.
      */
+    @Deprecated
     public NetworkParameters getParameters() {
-        return params;
+        return NetworkParameters.of(network);
     }
 
     /**
@@ -345,7 +371,7 @@ public class BitcoinSerializer extends MessageSerializer {
             byte b = in.get();
             // We're looking for a run of bytes that is the same as the packet magic but we want to ignore partial
             // magics that aren't complete. So we keep track of where we're up to with magicCursor.
-            byte expectedByte = (byte)(0xFF & params.getPacketMagic() >>> (magicCursor * 8));
+            byte expectedByte = (byte)(0xFF & packetMagic >>> (magicCursor * 8));
             if (b == expectedByte) {
                 magicCursor--;
                 if (magicCursor < 0) {
@@ -401,12 +427,12 @@ public class BitcoinSerializer extends MessageSerializer {
         if (this == o) return true;
         if (o == null || !(o instanceof BitcoinSerializer)) return false;
         BitcoinSerializer other = (BitcoinSerializer) o;
-        return Objects.equals(params, other.params) &&
+        return Objects.equals(packetMagic, other.packetMagic) &&
                 protocolVersion == other.protocolVersion;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, protocolVersion);
+        return Objects.hash(network, protocolVersion);
     }
 }

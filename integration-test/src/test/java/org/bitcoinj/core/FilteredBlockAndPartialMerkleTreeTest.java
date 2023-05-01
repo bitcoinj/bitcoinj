@@ -56,7 +56,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(value = Parameterized.class)
 public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
-    private static final BitcoinSerializer SERIALIZER = new BitcoinSerializer(TESTNET);
+    private static final BitcoinSerializer SERIALIZER = new BitcoinSerializer(BitcoinNetwork.TESTNET);
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
