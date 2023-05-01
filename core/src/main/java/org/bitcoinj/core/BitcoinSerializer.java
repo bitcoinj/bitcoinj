@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ public class BitcoinSerializer extends MessageSerializer {
     private static final Logger log = LoggerFactory.getLogger(BitcoinSerializer.class);
     private static final int COMMAND_LEN = 12;
 
-    private final NetworkParameters params;
+    private final Network network;
     private final int packetMagic;
     private final int protocolVersion;
 
@@ -83,28 +84,49 @@ public class BitcoinSerializer extends MessageSerializer {
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
-     * @param params networkParams used to create Messages instances and determining packetMagic
+     * @param params networkParams used to determine packetMagic
      */
+    @Deprecated
     public BitcoinSerializer(NetworkParameters params) {
-        this(params, ProtocolVersion.CURRENT.intValue());
+        this(params.network());
     }
 
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
-     * @param params          networkParams used to create Messages instances and determining packetMagic
+     * @param network used to determine packetMagic
+     */
+    public BitcoinSerializer(Network network) {
+        this(network, ProtocolVersion.CURRENT.intValue());
+    }
+
+    /**
+     * Constructs a BitcoinSerializer with the given behavior.
+     *
+     * @param params networkParams used to determine packetMagic
      * @param protocolVersion the protocol version to use
      */
+    @Deprecated
     public BitcoinSerializer(NetworkParameters params, int protocolVersion) {
-        this.params = params;
-        this.packetMagic = params.getPacketMagic();
+        this(params.network, protocolVersion);
+    }
+
+    /**
+     * Constructs a BitcoinSerializer with the given behavior.
+     *
+     * @param network used to determine packetMagic
+     * @param protocolVersion the protocol version to use
+     */
+    public BitcoinSerializer(Network network, int protocolVersion) {
+        this.network = network;
+        this.packetMagic = NetworkParameters.of(network).getPacketMagic();
         this.protocolVersion = protocolVersion;
     }
 
     @Override
     public BitcoinSerializer withProtocolVersion(int protocolVersion) {
         return protocolVersion == this.protocolVersion ?
-                this : new BitcoinSerializer(params, protocolVersion);
+                this : new BitcoinSerializer(network, protocolVersion);
     }
 
     @Override
@@ -219,7 +241,7 @@ public class BitcoinSerializer extends MessageSerializer {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
             return VersionMessage.read(payload);
-        } else if (command.equals("inv")) { 
+        } else if (command.equals("inv")) {
             return makeInventoryMessage(payload);
         } else if (command.equals("block")) {
             return makeBlock(payload);
@@ -271,8 +293,9 @@ public class BitcoinSerializer extends MessageSerializer {
     /**
      * Get the network parameters for this serializer.
      */
+    @Deprecated
     public NetworkParameters getParameters() {
-        return params;
+        return NetworkParameters.of(network);
     }
 
     /**
