@@ -28,7 +28,7 @@ jobs:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.4.2
         with:
           gradle-version: ${{ matrix.gradle }}
           arguments: -PtestJdk8=true build --info --stacktrace
