@@ -285,8 +285,12 @@ public abstract class NetworkParameters {
      * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
      * bailout for banks"</i>.</p>
      * @return genesis block
+     * @deprecated use {@link Block#createGenesis(Network)}
      */
-    public abstract Block getGenesisBlock();
+    @Deprecated
+    public final Block getGenesisBlock() {
+        return Block.createGenesis(network);
+    }
 
     /**
      * Default TCP port on which to connect to nodes

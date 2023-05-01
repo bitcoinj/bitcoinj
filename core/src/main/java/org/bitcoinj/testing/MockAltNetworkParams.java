@@ -49,11 +49,6 @@ public class MockAltNetworkParams extends NetworkParameters {
     }
 
     @Override
-    public Block getGenesisBlock() {
-        return null;
-    }
-
-    @Override
     public Coin getMaxMoney() {
         return (Coin) this.network.maxMoney();
     }

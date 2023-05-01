@@ -1,6 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
- * Copyright 2018 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +29,6 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
  */
 public class RegTestParams extends BitcoinNetworkParams {
-    private static final long GENESIS_TIME = 1296688602;
-    private static final long GENESIS_NONCE = 2;
-    private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
-
     public RegTestParams() {
         super(BitcoinNetwork.REGTEST);
 
@@ -76,20 +71,5 @@ public class RegTestParams extends BitcoinNetworkParams {
             instance = new RegTestParams();
         }
         return instance;
-    }
-
-    @Override
-    public Block getGenesisBlock() {
-        synchronized (GENESIS_HASH) {
-            if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis();
-                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
-                genesisBlock.setNonce(GENESIS_NONCE);
-                checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
-                        "invalid genesis hash");
-            }
-        }
-        return genesisBlock;
     }
 }

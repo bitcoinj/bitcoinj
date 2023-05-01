@@ -1,6 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
- * Copyright 2019 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,17 +66,5 @@ public class UnitTestParams extends BitcoinNetworkParams {
             instance = new UnitTestParams();
         }
         return instance;
-    }
-
-    @Override
-    public Block getGenesisBlock() {
-        synchronized (this) {
-            if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis();
-                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(TimeUtils.currentTime());
-            }
-        }
-        return genesisBlock;
     }
 }

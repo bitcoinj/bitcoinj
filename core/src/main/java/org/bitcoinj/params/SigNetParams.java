@@ -34,10 +34,6 @@ public class SigNetParams extends BitcoinNetworkParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
-    private static final long GENESIS_DIFFICULTY = 0x1e0377ae;
-    private static final long GENESIS_TIME = 1598918400;
-    private static final long GENESIS_NONCE = 52613770;
-    private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6");
 
     public SigNetParams() {
         super(BitcoinNetwork.SIGNET);
@@ -73,20 +69,5 @@ public class SigNetParams extends BitcoinNetworkParams {
             instance = new SigNetParams();
         }
         return instance;
-    }
-
-    @Override
-    public Block getGenesisBlock() {
-        synchronized (GENESIS_HASH) {
-            if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis();
-                genesisBlock.setDifficultyTarget(GENESIS_DIFFICULTY);
-                genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
-                genesisBlock.setNonce(GENESIS_NONCE);
-                checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
-                        "invalid genesis hash");
-            }
-        }
-        return genesisBlock;
     }
 }

@@ -335,11 +335,30 @@ public class BlockTest {
     }
 
     @Test
-    public void testGenesisBlock() {
-        Block genesisBlock = Block.createGenesis();
-        genesisBlock.setDifficultyTarget(0x1d00ffffL);
-        genesisBlock.setTime(Instant.ofEpochSecond(1231006505L));
-        genesisBlock.setNonce(2083236893);
-        assertEquals(Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"), genesisBlock.getHash());
+    public void createGenesis_mainnet() {
+        Block genesisBlock = Block.createGenesis(BitcoinNetwork.MAINNET);
+        assertEquals(Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"),
+                genesisBlock.getHash());
+    }
+
+    @Test
+    public void createGenesis_testnet() {
+        Block genesisBlock = Block.createGenesis(BitcoinNetwork.TESTNET);
+        assertEquals(Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"),
+                genesisBlock.getHash());
+    }
+
+    @Test
+    public void createGenesis_signet() {
+        Block genesisBlock = Block.createGenesis(BitcoinNetwork.SIGNET);
+        assertEquals(Sha256Hash.wrap("00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"),
+                genesisBlock.getHash());
+    }
+
+    @Test
+    public void createGenesis_regtest() {
+        Block genesisBlock = Block.createGenesis(BitcoinNetwork.REGTEST);
+        assertEquals(Sha256Hash.wrap("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"),
+                genesisBlock.getHash());
     }
 }

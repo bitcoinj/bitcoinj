@@ -1,6 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
- * Copyright 2014 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +39,6 @@ public class TestNet3Params extends BitcoinNetworkParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
-    private static final long GENESIS_TIME = 1296688602;
-    private static final long GENESIS_NONCE = 414098458;
-    private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
 
     public TestNet3Params() {
         super(BitcoinNetwork.TESTNET);
@@ -82,21 +78,6 @@ public class TestNet3Params extends BitcoinNetworkParams {
             instance = new TestNet3Params();
         }
         return instance;
-    }
-
-    @Override
-    public Block getGenesisBlock() {
-        synchronized (GENESIS_HASH) {
-            if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis();
-                genesisBlock.setDifficultyTarget(Block.STANDARD_MAX_DIFFICULTY_TARGET);
-                genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
-                genesisBlock.setNonce(GENESIS_NONCE);
-                checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
-                        "invalid genesis hash");
-            }
-        }
-        return genesisBlock;
     }
 
     // February 16th 2012

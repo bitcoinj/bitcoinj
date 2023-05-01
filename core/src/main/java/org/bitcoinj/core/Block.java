@@ -19,7 +19,9 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
@@ -230,12 +232,61 @@ public class Block extends BaseMessage {
                 transactions);
     }
 
-    public static Block createGenesis() {
+    private static final long MAINNET_GENESIS_TIME = 1231006505;
+    private static final long MAINNET_GENESIS_NONCE = 2083236893;
+    private static final long TESTNET_GENESIS_TIME = 1296688602;
+    private static final long TESTNET_GENESIS_NONCE = 414098458;
+    private static final long SIGNET_GENESIS_DIFFICULTY = 0x1e0377ae;
+    private static final long SIGNET_GENESIS_TIME = 1598918400;
+    private static final long SIGNET_GENESIS_NONCE = 52613770;
+    private static final long REGTEST_GENESIS_TIME = 1296688602;
+    private static final long REGTEST_GENESIS_NONCE = 2;
+
+    /**
+     * Genesis block for this chain.
+     * <p>
+     * The first block in every chain is a well known constant shared between all Bitcoin implementations. For a
+     * block to be valid, it must be eventually possible to work backwards to the genesis block by following the
+     * prevBlockHash pointers in the block headers.
+     * <p>
+     * The genesis blocks for both test and main networks contain the timestamp of when they were created,
+     * and a message in the coinbase transaction. It says, <i>"The Times 03/Jan/2009 Chancellor on brink of second
+     * bailout for banks"</i>.
+     *
+     * @param network network to create the genesis block for
+     * @return genesis block
+     */
+    public static Block createGenesis(Network network) {
         Block genesisBlock = new Block(BLOCK_VERSION_GENESIS);
+        if (network == BitcoinNetwork.MAINNET) {
+            genesisBlock.setDifficultyTarget(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+            genesisBlock.setTime(Instant.ofEpochSecond(MAINNET_GENESIS_TIME));
+            genesisBlock.setNonce(MAINNET_GENESIS_NONCE);
+        } else if (network == BitcoinNetwork.TESTNET) {
+            genesisBlock.setDifficultyTarget(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+            genesisBlock.setTime(Instant.ofEpochSecond(TESTNET_GENESIS_TIME));
+            genesisBlock.setNonce(TESTNET_GENESIS_NONCE);
+        } else if (network == BitcoinNetwork.SIGNET) {
+            genesisBlock.setDifficultyTarget(SIGNET_GENESIS_DIFFICULTY);
+            genesisBlock.setTime(Instant.ofEpochSecond(SIGNET_GENESIS_TIME));
+            genesisBlock.setNonce(SIGNET_GENESIS_NONCE);
+        } else if (network == BitcoinNetwork.REGTEST) {
+            genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+            genesisBlock.setTime(Instant.ofEpochSecond(REGTEST_GENESIS_TIME));
+            genesisBlock.setNonce(REGTEST_GENESIS_NONCE);
+        } else {
+            throw new IllegalArgumentException("cannot handle: " + network);
+        }
         Transaction tx = Transaction.coinbase(genesisTxInputScriptBytes);
         tx.addOutput(new TransactionOutput(tx, FIFTY_COINS, genesisTxScriptPubKeyBytes));
         genesisBlock.addTransaction(tx);
         return genesisBlock;
+    }
+
+    /** @deprecated use {@link #createGenesis(Network)} */
+    @Deprecated
+    public static Block createGenesis() {
+        return createGenesis(BitcoinNetwork.MAINNET);
     }
 
     // A script containing the difficulty bits and the following message:

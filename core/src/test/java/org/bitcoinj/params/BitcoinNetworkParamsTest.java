@@ -26,12 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class BitcoinNetworkParamsTest {
-    private final BitcoinNetworkParams BITCOIN_PARAMS = new BitcoinNetworkParams(BitcoinNetwork.TESTNET) {
-        @Override
-        public Block getGenesisBlock() {
-            return null;
-        }
-    };
+    private final BitcoinNetworkParams BITCOIN_PARAMS = TestNet3Params.get();
 
     @Test
     public void isDifficultyTransitionPoint() {
