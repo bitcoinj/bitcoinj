@@ -51,6 +51,7 @@ public class BitcoinSerializer extends MessageSerializer {
     private static final int COMMAND_LEN = 12;
 
     private final NetworkParameters params;
+    private final int packetMagic;
     private final int protocolVersion;
 
     private static final Map<Class<? extends Message>, String> names = new HashMap<>();
@@ -97,6 +98,7 @@ public class BitcoinSerializer extends MessageSerializer {
      */
     public BitcoinSerializer(NetworkParameters params, int protocolVersion) {
         this.params = params;
+        this.packetMagic = params.getPacketMagic();
         this.protocolVersion = protocolVersion;
     }
 
@@ -117,7 +119,7 @@ public class BitcoinSerializer extends MessageSerializer {
     @Override
     public void serialize(String name, byte[] message, OutputStream out) throws IOException {
         byte[] header = new byte[4 + COMMAND_LEN + 4 + 4 /* checksum */];
-        ByteUtils.writeInt32BE(params.getPacketMagic(), header, 0);
+        ByteUtils.writeInt32BE(packetMagic, header, 0);
 
         // The header array is initialized to zero by Java so we don't have to worry about
         // NULL terminating the string here.
@@ -345,7 +347,7 @@ public class BitcoinSerializer extends MessageSerializer {
             byte b = in.get();
             // We're looking for a run of bytes that is the same as the packet magic but we want to ignore partial
             // magics that aren't complete. So we keep track of where we're up to with magicCursor.
-            byte expectedByte = (byte)(0xFF & params.getPacketMagic() >>> (magicCursor * 8));
+            byte expectedByte = (byte)(0xFF & packetMagic >>> (magicCursor * 8));
             if (b == expectedByte) {
                 magicCursor--;
                 if (magicCursor < 0) {
@@ -402,11 +404,12 @@ public class BitcoinSerializer extends MessageSerializer {
         if (o == null || !(o instanceof BitcoinSerializer)) return false;
         BitcoinSerializer other = (BitcoinSerializer) o;
         return Objects.equals(params, other.params) &&
+                Objects.equals(packetMagic, other.packetMagic) &&
                 protocolVersion == other.protocolVersion;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(params, protocolVersion);
+        return Objects.hash(params, packetMagic, protocolVersion);
     }
 }
