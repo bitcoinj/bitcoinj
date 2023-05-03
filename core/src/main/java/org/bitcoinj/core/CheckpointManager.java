@@ -145,7 +145,7 @@ public class CheckpointManager {
             for (int i = 0; i < numCheckpoints; i++) {
                 if (dis.read(buffer.array(), 0, size) < size)
                     throw new IOException("Incomplete read whilst loading checkpoints.");
-                StoredBlock block = StoredBlock.deserializeCompact(params.getDefaultSerializer(), buffer);
+                StoredBlock block = StoredBlock.deserializeCompact(buffer);
                 ((Buffer) buffer).position(0);
                 checkpoints.put(block.getHeader().time(), block);
             }
@@ -183,7 +183,7 @@ public class CheckpointManager {
                 ((Buffer) buffer).position(0);
                 buffer.put(bytes);
                 ((Buffer) buffer).position(0);
-                StoredBlock block = StoredBlock.deserializeCompact(params.getDefaultSerializer(), buffer);
+                StoredBlock block = StoredBlock.deserializeCompact(buffer);
                 checkpoints.put(block.getHeader().time(), block);
             }
             HashCode hash = hasher.hash();
