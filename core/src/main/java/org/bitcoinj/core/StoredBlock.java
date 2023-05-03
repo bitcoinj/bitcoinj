@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.SPVBlockStore;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -140,15 +141,27 @@ public class StoredBlock {
         buffer.put(bytes, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
     }
 
-    /** De-serializes the stored block from a custom packed format. Used by {@link CheckpointManager}. */
-    public static StoredBlock deserializeCompact(MessageSerializer serializer, ByteBuffer buffer) throws ProtocolException {
+    /**
+     * Deserializes the stored block from a custom packed format. Used by {@link CheckpointManager} and
+     * {@link SPVBlockStore}.
+     *
+     * @param buffer data to deserialize
+     * @return deserialized stored block
+     */
+    public static StoredBlock deserializeCompact(ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = ByteUtils.bytesToBigInteger(chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes
         byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
         buffer.get(header, 0, Block.HEADER_SIZE);
-        return new StoredBlock(serializer.makeBlock(ByteBuffer.wrap(header)), chainWork, height);
+        return new StoredBlock(Block.read(ByteBuffer.wrap(header)), chainWork, height);
+    }
+
+    /** @deprecated use {@link #deserializeCompact(ByteBuffer)} */
+    @Deprecated
+    public static StoredBlock deserializeCompact(MessageSerializer serializer, ByteBuffer buffer) throws ProtocolException {
+        return deserializeCompact(buffer);
     }
 
     @Override
