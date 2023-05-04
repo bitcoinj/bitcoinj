@@ -100,6 +100,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
@@ -2675,6 +2677,108 @@ public class WalletTest extends TestWithWallet {
         assertEquals(Coin.valueOf(342000), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
+    static boolean isValidSignedTx(Transaction tx, Function<Sha256Hash, Transaction> transactionProvider) {
+        int numInputs = tx.getInputs().size();
+        for (int i = 0; i < numInputs; i++) {
+            TransactionInput txIn = tx.getInputs().get(i);
+            TransactionOutput connectedOutput = txIn.getConnectedOutput();
+            if (connectedOutput == null) {
+                TransactionOutPoint outpoint = txIn.getOutpoint();
+                connectedOutput = transactionProvider.apply(outpoint.getHash()).getOutput(outpoint.getIndex());
+            }
+            Coin value = connectedOutput.getValue();
+            TransactionWitness witness = txIn.getWitness();
+            Script scriptPubKey = connectedOutput.getScriptPubKey();
+            try {
+                txIn.getScriptSig().correctlySpends(tx, i, witness, value, scriptPubKey, Script.ALL_VERIFY_FLAGS);
+            } catch (Exception e) {
+                log.debug("Input contained an incorrect signature", e);
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    @Test
+    public void signedDeserialisedTxIsStillValid() throws InsufficientMoneyException {
+
+        /** ARRANGE */
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(3, 0));
+        Transaction origTxn = new Transaction();
+        origTxn.addOutput(valueOf(0, 50), OTHER_ADDRESS);
+        SendRequest firstSendRequest = SendRequest.forTx(origTxn);
+        wallet.completeTx(firstSendRequest);
+        byte[] txBytes = firstSendRequest.tx.bitcoinSerialize();
+
+        /** ACT */
+        Transaction deserialisedTx = Transaction.read(ByteBuffer.wrap(txBytes));
+
+        /** ASSERT */
+        isValidSignedTx(deserialisedTx, hash -> wallet.getTransaction(hash));
+    }
+
+    @Test
+    public void whenValidDeserialisedTx_Then_OutputsShouldBeUnchanged() throws InsufficientMoneyException {
+
+        /** ARRANGE */
+        sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, valueOf(3, 0));
+        Transaction origTxn = new Transaction();
+        origTxn.addOutput(valueOf(0, 50), OTHER_ADDRESS);
+        SendRequest firstSendRequest = SendRequest.forTx(origTxn);
+        wallet.completeTx(firstSendRequest);
+        byte[] txBytes = firstSendRequest.tx.bitcoinSerialize();
+        Transaction deserialisedTx = Transaction.read(ByteBuffer.wrap(txBytes));
+        SendRequest deserialisedSendRequest = SendRequest.forTx(deserialisedTx);
+
+        /** ACT */
+        wallet.completeTx(deserialisedSendRequest);
+
+        /** ASSERT */
+        List<TransactionInput> inputs = deserialisedSendRequest.tx.getInputs();
+        assertEquals(1, inputs.size());
+        TransactionInput originalInput = firstSendRequest.tx.getInput(0);
+        TransactionInput actualInput = inputs.get(0);
+        assertEquals(originalInput.getOutpoint().hash(), actualInput.getOutpoint().hash());
+        assertEquals(originalInput.getOutpoint().index(), actualInput.getOutpoint().index());
+        isValidSignedTx(deserialisedSendRequest.tx, hash -> wallet.getTransaction(hash));
+    }
+
+    @Test
+    public void GIVEN_sendrequest_with_input_THEN_dont_reuse_same_input() throws Exception {
+
+        /** ARRANGE */
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        Transaction tx1 = createFakeTx(TESTNET.network(), COIN, myAddress);
+        wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        Transaction tx2 = createFakeTx(TESTNET.network(), COIN, myAddress);
+        wallet.receiveFromBlock(tx2, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+
+        // SendRequest using tx1 as input
+        SendRequest request1 = SendRequest.to(OTHER_ADDRESS, COIN.multiply(1));
+        request1.tx.addInput(new TransactionInput(request1.tx, new byte[] {}, new TransactionOutPoint(0, tx1.getTxId())));
+
+        // SendRequest using tx2 as input
+        SendRequest request2 = SendRequest.to(OTHER_ADDRESS, COIN.multiply(1));
+        request2.tx.addInput(new TransactionInput(request2.tx, new byte[] {}, new TransactionOutPoint(0, tx2.getTxId())));
+
+        /** ACT */
+        wallet.completeTx(request1);
+        wallet.completeTx(request2);
+
+        /** ASSERT */
+        Function<List<TransactionInput>, Set<String>> uniqueInputs = txInputs -> txInputs.stream().map(txInput ->{
+            TransactionOutPoint outpoint = txInput.getOutpoint();
+            String result = outpoint.hash().toString() + outpoint.index();
+            return result;
+        }).collect(Collectors.toSet());
+
+        // Check request1
+        assertEquals(uniqueInputs.apply(request1.tx.getInputs()).size(), request1.tx.getInputs().size());
+
+        // Check request2
+        assertEquals(uniqueInputs.apply(request2.tx.getInputs()).size(), request2.tx.getInputs().size());
+    }
 
     @Test
     public void testCompleteTxWithExistingInputs() throws Exception {
@@ -2689,6 +2793,8 @@ public class WalletTest extends TestWithWallet {
         wallet.receiveFromBlock(tx2, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 1);
         Transaction tx3 = createFakeTx(TESTNET.network(), CENT, myAddress);
         wallet.receiveFromBlock(tx3, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 2);
+        Transaction txOutsideWallet = createFakeTx(TESTNET.network(), CENT, OTHER_ADDRESS);
+        wallet.receiveFromBlock(txOutsideWallet, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 2);
 
         SendRequest request1 = SendRequest.to(OTHER_ADDRESS, CENT);
         // If we just complete as-is, we will use one of the COIN outputs to get higher priority,
@@ -2714,7 +2820,7 @@ public class WalletTest extends TestWithWallet {
 
         // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, tx3.getTxId())));
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, txOutsideWallet.getTxId())));
         // Now completeTx will result in two inputs, two outputs and a fee of a CENT
         // Note that it is simply assumed that the inputs are correctly signed, though in fact the first is not
         request3.shuffleOutputs = false;

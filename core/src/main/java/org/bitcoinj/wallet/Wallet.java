@@ -139,6 +139,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -4542,13 +4543,42 @@ public class Wallet extends BaseTaggableObject
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/vkB", req.tx.getOutputs().size(),
                     value.toFriendlyString(), req.feePerKb.toFriendlyString());
 
+            // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
+            // with the actual outputs that'll be used to gather the required amount of value. In this way, users
+            // can customize coin selection policies. The call below will ignore immature coinbases and outputs
+            // we don't have the keys for.
+            List<TransactionOutput> candidates = calculateAllSpendCandidates(true, req.missingSigsMode == MissingSigsMode.THROW);
+
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = Coin.ZERO;
-            for (TransactionInput input : req.tx.getInputs())
-                if (input.getConnectedOutput() != null)
-                    totalInput = totalInput.add(input.getConnectedOutput().getValue());
-                else
+            for (TransactionInput input : req.tx.getInputs()){
+
+                Coin inputValue = null;
+                if (input.getConnectedOutput() == null){
+                    // Check to see if the input can be matched with
+                    // a candidate from the wallet
+                    for(TransactionOutput candidate: candidates){
+                        TransactionOutPoint outpoint = input.getOutpoint();
+                        Sha256Hash parentTransactionHash = candidate.getParentTransactionHash();
+                        if(Objects.equals(parentTransactionHash, outpoint.getHash()) &&
+                                candidate.getIndex() == outpoint.index()){
+
+                            // Found a the matching candidate and can use its value
+                            inputValue = candidate.getValue();
+                            break;
+                        }
+                    }
+                } else {
+                    inputValue = input.getConnectedOutput().getValue();
+                }
+
+                if (inputValue != null){
+                    totalInput = totalInput.add(inputValue);
+                } else {
+                    // TODO: 2023-04-06 is this even a good idea just throwing away coins like this?
                     log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
+                }
+            }
             value = value.subtract(totalInput);
 
             // Check for dusty sends and the OP_RETURN limit.
@@ -4564,11 +4594,8 @@ public class Wallet extends BaseTaggableObject
                     throw new MultipleOpReturnRequested();
             }
 
-            // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
-            // with the actual outputs that'll be used to gather the required amount of value. In this way, users
-            // can customize coin selection policies. The call below will ignore immature coinbases and outputs
-            // we don't have the keys for.
-            List<TransactionOutput> candidates = calculateAllSpendCandidates(true, req.missingSigsMode == MissingSigsMode.THROW);
+            // Remove candidates already used in the SendRequest
+            candidates = removeExistingInputs(candidates, req);
 
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
@@ -4639,6 +4666,24 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Removes candidates that are already included as inputs
+     * in the SendRequest. This is to avoid using the same
+     * input twice in a Transaction.
+     */
+    private static List<TransactionOutput> removeExistingInputs(List<TransactionOutput> candidates, SendRequest sendRequest) {
+        List<TransactionInput> txInputs = sendRequest.tx.getInputs();
+        return candidates.stream().filter(candidate -> {
+
+            boolean candidateNotExistingInput = !txInputs.stream().anyMatch(txInput -> {
+                TransactionOutPoint outpoint = txInput.getOutpoint();
+                return Objects.equals(candidate.getParentTransactionHash(), outpoint.hash()) &&
+                        candidate.getIndex() == outpoint.index();
+            });
+            return candidateNotExistingInput;
+        }).collect(Collectors.toList());
     }
 
     /**
