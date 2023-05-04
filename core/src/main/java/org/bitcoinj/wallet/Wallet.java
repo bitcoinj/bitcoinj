@@ -4362,11 +4362,13 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Given a spend request containing an incomplete transaction, makes it valid by adding outputs and signed inputs
-     * according to the instructions in the request. The transaction in the request is modified by this method.
+     * according to the instructions in the request. The transaction in the request is modified by this method. All inputs
+     * in the incomplete transaction must contain connected unspent outputs.
      *
      * @param req a SendRequest that contains the incomplete transaction and details for how to make it valid.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
-     * @throws IllegalArgumentException if you try and complete the same SendRequest twice
+     * @throws IllegalArgumentException if you provide a transaction with inputs containing unconnected outputs
+     *         or try to complete the same SendRequest twice
      * @throws DustySendRequested if the resultant transaction would violate the dust rules.
      * @throws CouldNotAdjustDownwards if emptying the wallet was requested and the output can't be shrunk for fees without violating a protocol rule.
      * @throws ExceededMaxTransactionSize if the resultant transaction is too big for Bitcoin to process.
@@ -4393,12 +4395,11 @@ public class Wallet extends BaseTaggableObject
             req.tx.clearInputs();
             inputs.forEach(req.tx::addInput);
 
-            // Warn if there are remaining unconnected inputs whose value we do not know
-            // TODO: Consider throwing if there are inputs that we don't have a value for
+            // Throw an exception if there are remaining unconnected inputs whose value we do not know
             if (req.tx.getInputs().stream()
                     .map(TransactionInput::getValue)
                     .anyMatch(Objects::isNull))
-                log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
+                throw new IllegalArgumentException("SendRequest transaction has inputs and we don't know how much they are worth.");
 
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = req.tx.getInputSum();
