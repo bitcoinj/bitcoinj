@@ -500,13 +500,9 @@ public class Transaction extends BaseMessage {
      * @return the sum of the outputs regardless of who owns them.
      */
     public Coin getOutputSum() {
-        Coin totalOut = Coin.ZERO;
-
-        for (TransactionOutput output: outputs) {
-            totalOut = totalOut.add(output.getValue());
-        }
-
-        return totalOut;
+        return outputs.stream()
+                .map(TransactionOutput::getValue)
+                .reduce(Coin.ZERO, Coin::add);
     }
 
     /**
