@@ -2712,18 +2712,6 @@ public class WalletTest extends TestWithWallet {
         request2.tx.getInput(0).getScriptSig().correctlySpends(
                 request2.tx, 0, null, null, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
 
-        // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
-        SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, tx3.getTxId())));
-        // Now completeTx will result in two inputs, two outputs and a fee of a CENT
-        // Note that it is simply assumed that the inputs are correctly signed, though in fact the first is not
-        request3.shuffleOutputs = false;
-        wallet.completeTx(request3);
-        assertEquals(2, request3.tx.getInputs().size());
-        assertEquals(2, request3.tx.getOutputs().size());
-        assertEquals(CENT, request3.tx.getOutput(0).getValue());
-        assertEquals(COIN.subtract(CENT), request3.tx.getOutput(1).getValue());
-
         SendRequest request4 = SendRequest.to(OTHER_ADDRESS, CENT);
         request4.tx.addInput(tx3.getOutput(0));
         // Now if we manually sign it, completeTx will not replace our signature
@@ -2734,6 +2722,16 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request4.tx.getOutputs().size());
         assertEquals(CENT, request4.tx.getOutput(0).getValue());
         assertArrayEquals(scriptSig, request4.tx.getInput(0).getScriptBytes());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCompleteTxWithInputsWithUnconnectedOutput() throws Exception {
+        // If there is an input with no connected output, we should throw an IllegalArgumentException
+        SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, Sha256Hash.ZERO_HASH)));
+        // Now completeTx will throw rather than add an unconnected output to the fee.
+        request3.shuffleOutputs = false;
+        wallet.completeTx(request3);
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
