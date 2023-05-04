@@ -5388,10 +5388,7 @@ public class Wallet extends BaseTaggableObject
             Transaction tx = new Transaction();
             addSuppliedInputs(tx, req.tx.getInputs());
 
-            Coin valueNeeded = value;
-            if (!req.recipientsPayFees) {
-                valueNeeded = valueNeeded.add(fee);
-            }
+            Coin valueNeeded = req.recipientsPayFees ? value : value.add(fee);
             if (req.recipientsPayFees) {
                 result.updatedOutputValues = new ArrayList<>();
             }
@@ -5427,9 +5424,7 @@ public class Wallet extends BaseTaggableObject
                 // The value of the inputs is greater than what we want to send. Just like in real life then,
                 // we need to take back some coins ... this is called "change". Add another output that sends the change
                 // back to us. The address comes either from the request or currentChangeAddress() as a default.
-                Address changeAddress = req.changeAddress;
-                if (changeAddress == null)
-                    changeAddress = currentChangeAddress();
+                Address changeAddress = (req.changeAddress != null) ? req.changeAddress : currentChangeAddress();
                 TransactionOutput changeOutput = new TransactionOutput(tx, change, changeAddress);
                 if (req.recipientsPayFees && changeOutput.isDust()) {
                     // We do not move dust-change to fees, because the sender would end up paying more than requested.
@@ -5465,9 +5460,9 @@ public class Wallet extends BaseTaggableObject
                 checkState(!input.hasWitness());
             }
 
-            Coin feePerKb = req.feePerKb;
-            if (needAtLeastReferenceFee && feePerKb.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
-                feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+            Coin feePerKb = (needAtLeastReferenceFee && req.feePerKb.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
+                    ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
+                    : req.feePerKb;
 
             final int vsize = tx.getVsize() + estimateVirtualBytesForSigning(selection);
             Coin feeNeeded = feePerKb.multiply(vsize).divide(1000);
