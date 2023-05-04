@@ -4536,11 +4536,9 @@ public class Wallet extends BaseTaggableObject
         try {
             checkArgument(!req.completed, () ->
                     "given SendRequest has already been completed");
-            // Calculate the amount of value we need to import.
-            Coin value = req.tx.getOutputSum();
 
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/vkB", req.tx.getOutputs().size(),
-                    value.toFriendlyString(), req.feePerKb.toFriendlyString());
+                    req.tx.getOutputSum().toFriendlyString(), req.feePerKb.toFriendlyString());
 
             // If any inputs have already been added, we don't need to get their value from wallet
             Coin totalInput = Coin.ZERO;
@@ -4549,7 +4547,8 @@ public class Wallet extends BaseTaggableObject
                     totalInput = totalInput.add(input.getConnectedOutput().getValue());
                 else
                     log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
-            value = value.subtract(totalInput);
+            // Calculate the amount of value we need to import.
+            Coin valueNeeded = req.tx.getOutputSum().subtract(totalInput);
 
             // Check for dusty sends and the OP_RETURN limit.
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
@@ -4575,7 +4574,7 @@ public class Wallet extends BaseTaggableObject
             List<Coin> updatedOutputValues = null;
             if (!req.emptyWallet) {
                 // This can throw InsufficientMoneyException.
-                FeeCalculation feeCalculation = calculateFee(req, value, req.ensureMinRequiredFee, candidates);
+                FeeCalculation feeCalculation = calculateFee(req, valueNeeded, req.ensureMinRequiredFee, candidates);
                 bestCoinSelection = feeCalculation.bestCoinSelection;
                 bestChangeOutput = feeCalculation.bestChangeOutput;
                 updatedOutputValues = feeCalculation.updatedOutputValues;
