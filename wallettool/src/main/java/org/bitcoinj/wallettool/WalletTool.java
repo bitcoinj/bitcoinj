@@ -656,25 +656,21 @@ public class WalletTool implements Callable<Integer> {
                 return;
             }
         }
-        SendRequest req = SendRequest.forTx(tx);
-        if (coinSelector != null) {
-            req.coinSelector = coinSelector;
-            req.recipientsPayFees = true;
-        }
-        if (tx.getOutputs().size() == 1 && tx.getOutput(0).getValue().equals(balance)) {
+        boolean emptyWallet = tx.getOutputs().size() == 1 && tx.getOutput(0).getValue().equals(balance);
+        if (emptyWallet) {
             log.info("Emptying out wallet, recipient may get less than what you expect");
-            req.emptyWallet = true;
         }
-        if (feePerVkb != null)
-            req.setFeePerVkb(feePerVkb);
-        if (allowUnconfirmed) {
-            req.allowUnconfirmed();
-        }
+
+        AesKey aesKey;
         if (password != null) {
-            req.aesKey = passwordToKey(true);
-            if (req.aesKey == null)
+            aesKey = passwordToKey(true);
+            if (aesKey == null)
                 return;  // Error message already printed.
+        } else {
+            aesKey = null;
         }
+
+        SendRequest req = buildSendReq(tx, emptyWallet, allowUnconfirmed, coinSelector, feePerVkb, aesKey);
 
         try {
             wallet.completeTx(req);
@@ -721,6 +717,24 @@ public class WalletTool implements Callable<Integer> {
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    // "Atomically" create a SendRequest. In the future SendRequest may be immutable and this method will be updated
+    private SendRequest buildSendReq(Transaction tx, boolean emptyWallet, boolean allowUnconfirmed, @Nullable CoinSelector coinSelector, @Nullable Coin feePerVkb, @Nullable AesKey aesKey) {
+        SendRequest req = SendRequest.forTx(tx);
+        req.emptyWallet = emptyWallet;
+        if (coinSelector != null) {
+            req.coinSelector = coinSelector;
+            req.recipientsPayFees = true;
+        }
+        if (allowUnconfirmed) {
+            // Note that this will overwrite the CoinSelector set above
+            req.allowUnconfirmed();
+        }
+        if (feePerVkb != null)
+            req.setFeePerVkb(feePerVkb);
+        req.aesKey = aesKey;
+        return req;
     }
 
     static class OutputSpec {
