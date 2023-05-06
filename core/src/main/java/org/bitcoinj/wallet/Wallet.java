@@ -4550,17 +4550,16 @@ public class Wallet extends BaseTaggableObject
             // Calculate the amount of value we need to import.
             Coin valueNeeded = req.tx.getOutputSum().subtract(totalInput);
 
-            // Check for dusty sends and the OP_RETURN limit.
+            // Enforce the OP_RETURN limit
+            if (req.tx.getOutputs().stream()
+                    .filter(o -> ScriptPattern.isOpReturn(o.getScriptPubKey()))
+                    .count() > 1) // Only 1 OP_RETURN per transaction allowed.
+                throw new MultipleOpReturnRequested();
+
+            // Check for dusty sends
             if (req.ensureMinRequiredFee && !req.emptyWallet) { // Min fee checking is handled later for emptyWallet.
-                int opReturnCount = 0;
-                for (TransactionOutput output : req.tx.getOutputs()) {
-                    if (output.isDust())
-                        throw new DustySendRequested();
-                    if (ScriptPattern.isOpReturn(output.getScriptPubKey()))
-                        ++opReturnCount;
-                }
-                if (opReturnCount > 1) // Only 1 OP_RETURN per transaction allowed.
-                    throw new MultipleOpReturnRequested();
+                if (req.tx.getOutputs().stream().anyMatch(TransactionOutput::isDust))
+                    throw new DustySendRequested();
             }
 
             // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us

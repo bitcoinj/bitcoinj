@@ -18,6 +18,8 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.collect.Lists;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -75,6 +77,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,6 +129,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@RunWith(JUnitParamsRunner.class)
 public class WalletTest extends TestWithWallet {
     private static final Logger log = LoggerFactory.getLogger(WalletTest.class);
 
@@ -2121,7 +2125,8 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test(expected = Wallet.MultipleOpReturnRequested.class)
-    public void twoOpReturnsPerTransactionTest() throws Exception {
+    @Parameters({"false, false", "false, true", "true, false", "true, true"})
+    public void twoOpReturnsPerTransactionTest(boolean ensureMinRequiredFee, boolean emptyWallet) throws Exception {
         // Tests sending transaction where there are 2 attempts to write OP_RETURN scripts - this should fail and throw MultipleOpReturnRequested.
         receiveATransaction(wallet, myAddress);
         Transaction tx = new Transaction();
@@ -2131,7 +2136,8 @@ public class WalletTest extends TestWithWallet {
         tx.addOutput(messagePrice, script1);
         tx.addOutput(messagePrice, script2);
         SendRequest request = SendRequest.forTx(tx);
-        request.ensureMinRequiredFee = true;
+        request.ensureMinRequiredFee = ensureMinRequiredFee;
+        request.emptyWallet = emptyWallet;
         wallet.completeTx(request);
     }
 
