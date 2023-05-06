@@ -2529,7 +2529,7 @@ public class Wallet extends BaseTaggableObject
      * as there is no guarantee on the order of the returned txns besides what was already stated.
      */
     List<Transaction> sortTxnsByDependency(Set<Transaction> inputSet) {
-        ArrayList<Transaction> result = new ArrayList<>(inputSet);
+        List<Transaction> result = new ArrayList<>(inputSet);
         for (int i = 0; i < result.size()-1; i++) {
             boolean txAtISpendsOtherTxInTheList;
             do {
@@ -3374,7 +3374,7 @@ public class Wallet extends BaseTaggableObject
             if (numTransactions > size || numTransactions == 0) {
                 numTransactions = size;
             }
-            ArrayList<Transaction> all = new ArrayList<>(getTransactions(includeDead));
+            List<Transaction> all = new ArrayList<>(getTransactions(includeDead));
             // Order by update time.
             Collections.sort(all, Transaction.SORT_TX_BY_UPDATE_TIME);
             if (numTransactions == all.size()) {
@@ -3478,7 +3478,7 @@ public class Wallet extends BaseTaggableObject
         lock.lock();
         keyChainGroupLock.lock();
         try {
-            LinkedList<TransactionOutput> candidates = new LinkedList<>();
+            List<TransactionOutput> candidates = new LinkedList<>();
             for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
                 if (excludeImmatureCoinbases && !isTransactionMature(tx)) continue;
                 for (TransactionOutput output : tx.getOutputs()) {
@@ -4785,10 +4785,10 @@ public class Wallet extends BaseTaggableObject
      * Returns the spendable candidates from the {@link UTXOProvider} based on keys that the wallet contains.
      * @return The list of candidates.
      */
-    protected LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
+    protected List<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
         checkState(lock.isHeldByCurrentThread());
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
-        LinkedList<TransactionOutput> candidates = new LinkedList<>();
+        List<TransactionOutput> candidates = new LinkedList<>();
         try {
             int chainHeight = utxoProvider.getChainHeadHeight();
             for (UTXO output : getStoredOutputsFromUTXOProvider()) {
@@ -4802,6 +4802,7 @@ public class Wallet extends BaseTaggableObject
         } catch (UTXOProviderException e) {
             throw new RuntimeException("UTXO provider error", e);
         }
+
         // We need to handle the pending transactions that we know about.
         for (Transaction tx : pending.values()) {
             // Remove the spent outputs.
@@ -5007,7 +5008,7 @@ public class Wallet extends BaseTaggableObject
             Collections.reverse(newBlocks);  // Need bottom-to-top but we get top-to-bottom.
 
             // For each block in the old chain, disconnect the transactions in reverse order.
-            LinkedList<Transaction> oldChainTxns = new LinkedList<>();
+            List<Transaction> oldChainTxns = new LinkedList<>();
             for (Sha256Hash blockHash : oldBlockHashes) {
                 for (TxOffsetPair pair : mapBlockTx.get(blockHash)) {
                     Transaction tx = pair.tx;
@@ -5122,7 +5123,7 @@ public class Wallet extends BaseTaggableObject
 
     //region Bloom filtering
 
-    private final ArrayList<TransactionOutPoint> bloomOutPoints = new ArrayList<>();
+    private final List<TransactionOutPoint> bloomOutPoints = new ArrayList<>();
     // Used to track whether we must automatically begin/end a filter calculation and calc outpoints/take the locks.
     private final AtomicInteger bloomFilterGuard = new AtomicInteger(0);
 
@@ -5686,7 +5687,7 @@ public class Wallet extends BaseTaggableObject
             lock.unlock();
         }
         checkState(!lock.isHeldByCurrentThread());
-        ArrayList<CompletableFuture<Transaction>> futures = new ArrayList<>(txns.size());
+        List<CompletableFuture<Transaction>> futures = new ArrayList<>(txns.size());
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
         for (Transaction tx : txns) {
             try {
