@@ -382,20 +382,19 @@ public class Transaction extends BaseMessage {
         return IntMath.divide(getWeight(), 4, RoundingMode.CEILING); // round up
     }
 
+
     /**
-     * Gets the sum of the inputs, regardless of who owns them.
+     * Gets the sum of all transaction inputs, regardless of who owns them.
+     * <p>
+     * <b>Warning:</b> Inputs with {@code null} {@link TransactionInput#getValue()} are silently skipped. Before completing
+     * or signing a transaction you should verify that there are no inputs with {@code null} values.
+     * @return The sum of all inputs with non-null values.
      */
     public Coin getInputSum() {
-        Coin inputTotal = Coin.ZERO;
-
-        for (TransactionInput input: inputs) {
-            Coin inputValue = input.getValue();
-            if (inputValue != null) {
-                inputTotal = inputTotal.add(inputValue);
-            }
-        }
-
-        return inputTotal;
+        return inputs.stream()
+                .map(TransactionInput::getValue)
+                .filter(Objects::nonNull)
+                .reduce(Coin.ZERO, Coin::add);
     }
 
     /**
