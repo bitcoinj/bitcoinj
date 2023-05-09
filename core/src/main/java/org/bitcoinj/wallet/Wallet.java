@@ -4540,13 +4540,15 @@ public class Wallet extends BaseTaggableObject
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/vkB", req.tx.getOutputs().size(),
                     req.tx.getOutputSum().toFriendlyString(), req.feePerKb.toFriendlyString());
 
+            // Warn if there are unconnected inputs whose value we do not know
+            // TODO: Consider throwing if there are inputs that we don't have a value for
+            if (req.tx.getInputs().stream()
+                    .map(TransactionInput::getValue)
+                    .anyMatch(Objects::isNull))
+                log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
+
             // If any inputs have already been added, we don't need to get their value from wallet
-            Coin totalInput = Coin.ZERO;
-            for (TransactionInput input : req.tx.getInputs())
-                if (input.getConnectedOutput() != null)
-                    totalInput = totalInput.add(input.getConnectedOutput().getValue());
-                else
-                    log.warn("SendRequest transaction already has inputs but we don't know how much they are worth - they will be added to fee.");
+            Coin totalInput = req.tx.getInputSum();
             // Calculate the amount of value we need to import.
             Coin valueNeeded = req.tx.getOutputSum().subtract(totalInput);
 
