@@ -4589,8 +4589,8 @@ public class Wallet extends BaseTaggableObject
                 log.info("  emptying {}", bestCoinSelection.totalValue().toFriendlyString());
             }
 
-            for (TransactionOutput output : bestCoinSelection.outputs())
-                req.tx.addInput(output);
+            bestCoinSelection.outputs()
+                    .forEach(req.tx::addInput);
 
             if (req.emptyWallet) {
                 if (!adjustOutputDownwardsForFee(req.tx, bestCoinSelection, req.feePerKb, req.ensureMinRequiredFee))
