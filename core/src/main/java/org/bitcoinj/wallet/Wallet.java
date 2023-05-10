@@ -4540,7 +4540,18 @@ public class Wallet extends BaseTaggableObject
             log.info("Completing send tx with {} outputs totalling {} and a fee of {}/vkB", req.tx.getOutputs().size(),
                     req.tx.getOutputSum().toFriendlyString(), req.feePerKb.toFriendlyString());
 
-            // Warn if there are unconnected inputs whose value we do not know
+            // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
+            // with the actual outputs that'll be used to gather the required amount of value. In this way, users
+            // can customize coin selection policies. The call below will ignore immature coinbases and outputs
+            // we don't have the keys for.
+            List<TransactionOutput> prelimCandidates = calculateAllSpendCandidates(true, req.missingSigsMode == MissingSigsMode.THROW);
+
+            // Connect (add a value amount) unconnected inputs
+            List<TransactionInput> inputs = connectInputs(prelimCandidates, req.tx.getInputs());
+            req.tx.clearInputs();
+            inputs.forEach(req.tx::addInput);
+
+            // Warn if there are remaining unconnected inputs whose value we do not know
             // TODO: Consider throwing if there are inputs that we don't have a value for
             if (req.tx.getInputs().stream()
                     .map(TransactionInput::getValue)
@@ -4564,11 +4575,10 @@ public class Wallet extends BaseTaggableObject
                     throw new DustySendRequested();
             }
 
-            // Calculate a list of ALL potential candidates for spending and then ask a coin selector to provide us
-            // with the actual outputs that'll be used to gather the required amount of value. In this way, users
-            // can customize coin selection policies. The call below will ignore immature coinbases and outputs
-            // we don't have the keys for.
-            List<TransactionOutput> candidates = calculateAllSpendCandidates(true, req.missingSigsMode == MissingSigsMode.THROW);
+            // Filter out candidates that are already included in the transaction inputs
+            List<TransactionOutput> candidates = prelimCandidates.stream()
+                    .filter(output -> alreadyIncluded(req.tx.getInputs(), output))
+                    .collect(StreamUtils.toUnmodifiableList());
 
             CoinSelection bestCoinSelection;
             TransactionOutput bestChangeOutput = null;
@@ -4639,6 +4649,33 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Connect unconnected inputs with outputs from the wallet
+     * @param candidates A list of spend candidates from a Wallet
+     * @param inputs a list of possibly unconnected/unvalued inputs (e.g. from a spend request)
+     * @return a list of the same inputs, but connected/valued if not previously valued and found in wallet
+     */
+    @VisibleForTesting
+    static List<TransactionInput> connectInputs(List<TransactionOutput> candidates, List<TransactionInput> inputs) {
+        return inputs.stream()
+                .map(in -> candidates.stream()
+                        .filter(utxo -> utxo.getOutPointFor().equals(in.getOutpoint()))
+                        .findFirst()
+                        .map(o -> new TransactionInput(o.getParentTransaction(), o.getScriptPubKey().program(), o.getOutPointFor(), o.getValue()))
+                        .orElse(in))
+                .collect(StreamUtils.toUnmodifiableList());
+    }
+
+    /**
+     * Is a UTXO already included (to be spent) in a list of transaction inputs?
+     * @param inputs the list of inputs to check
+     * @param output the transaction output
+     * @return true if it is already included, false otherwise
+     */
+    private boolean alreadyIncluded(List<TransactionInput> inputs, TransactionOutput output) {
+        return inputs.stream().noneMatch(i -> i.getOutpoint().equals(output.getOutPointFor()));
     }
 
     /**

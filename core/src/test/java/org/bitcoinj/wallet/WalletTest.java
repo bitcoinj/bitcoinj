@@ -2718,17 +2718,15 @@ public class WalletTest extends TestWithWallet {
         request2.tx.getInput(0).getScriptSig().correctlySpends(
                 request2.tx, 0, null, null, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
 
-        // However, if there is no connected output, we will grab a COIN output anyway and add the CENT to fee
+        // However, if there is no connected output, we connect it
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
         request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, tx3.getTxId())));
-        // Now completeTx will result in two inputs, two outputs and a fee of a CENT
-        // Note that it is simply assumed that the inputs are correctly signed, though in fact the first is not
+        // Now completeTx will find the matching UTXO from the wallet and add its value to the unconnected input
         request3.shuffleOutputs = false;
         wallet.completeTx(request3);
-        assertEquals(2, request3.tx.getInputs().size());
-        assertEquals(2, request3.tx.getOutputs().size());
+        assertEquals(1, request3.tx.getInputs().size());
+        assertEquals(1, request3.tx.getOutputs().size());
         assertEquals(CENT, request3.tx.getOutput(0).getValue());
-        assertEquals(COIN.subtract(CENT), request3.tx.getOutput(1).getValue());
 
         SendRequest request4 = SendRequest.to(OTHER_ADDRESS, CENT);
         request4.tx.addInput(tx3.getOutput(0));
@@ -2740,6 +2738,34 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request4.tx.getOutputs().size());
         assertEquals(CENT, request4.tx.getOutput(0).getValue());
         assertArrayEquals(scriptSig, request4.tx.getInput(0).getScriptBytes());
+    }
+
+    @Test
+    public void testCompleteTxWithUnconnectedExistingInput() throws Exception {
+        // Test calling completeTx with a SendRequest that has an unconnected input (i.e. an input with an unconnected outpoint)
+
+        // Generate an output to us
+        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        Transaction tx = createFakeTx(TESTNET.network(), COIN, myAddress);
+        wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+
+        // SendRequest using that output as an unconnected input
+        SendRequest request = SendRequest.to(OTHER_ADDRESS, COIN);
+        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, new TransactionOutPoint(0, tx.getTxId())));
+
+        // Complete the transaction
+        wallet.completeTx(request);
+
+        // Make sure it has no duplicate inputs
+        assertEquals(uniqueOutPoints(request.tx.getInputs()), request.tx.getInputs().size());
+    }
+
+    // Count unique TransactionOutPoints in a list of TransactionInputs
+    private long uniqueOutPoints(List<TransactionInput> inputs) {
+        return inputs.stream()
+                .map(TransactionInput::getOutpoint)
+                .distinct()
+                .count();
     }
 
     // There is a test for spending a coinbase transaction as it matures in BlockChainTest#coinbaseTransactionAvailability
