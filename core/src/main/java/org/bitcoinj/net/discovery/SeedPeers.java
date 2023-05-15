@@ -55,34 +55,14 @@ public class SeedPeers implements PeerDiscovery {
     /**
      * Supports finding peers by IP addresses
      *
-     * @param params Network parameters to be used for port information.
+     * @param params network parameters to be used
      * @deprecated use {@link SeedPeers#SeedPeers(InetSocketAddress[])}
      */
     @Deprecated
     public SeedPeers(NetworkParameters params) {
-        this(params.getAddrSeeds(), params);
-    }
-
-    /**
-     * Supports finding peers by IP addresses
-     *
-     * @param seedAddrInts IP addresses for seed addresses.
-     * @param params    Network parameters to be used for port information.
-     * @deprecated use {@link SeedPeers#SeedPeers(InetSocketAddress[])}
-     */
-    @Deprecated
-    public SeedPeers(int[] seedAddrInts, NetworkParameters params) {
         this.seedAddrs = new LinkedList<>();
-        if (seedAddrInts == null)
-            return;
-        for (int seedAddrInt : seedAddrInts) {
-            try {
-                InetSocketAddress seedAddr = new InetSocketAddress(convertAddress(seedAddrInt), params.getPort());
-                this.seedAddrs.add(seedAddr);
-            } catch (UnknownHostException x) {
-                // swallow
-            }
-        }
+        if (params.getAddrSeeds() != null)
+            this.seedAddrs.addAll(params.getAddrSeeds());
     }
 
     /**
@@ -119,10 +99,5 @@ public class SeedPeers implements PeerDiscovery {
 
     @Override
     public void shutdown() {
-    }
-
-    private static InetAddress convertAddress(int seed) throws UnknownHostException {
-        byte[] v4addr = ByteBuffer.allocate(4).putInt(seed).array(); // Big-Endian
-        return InetAddress.getByAddress(v4addr);
     }
 }

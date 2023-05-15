@@ -41,8 +41,9 @@ public class SeedPeersTest {
     @Test
     public void getPeer_all() throws Exception{
         SeedPeers seedPeers = new SeedPeers(MAINNET);
-        for (int i = 0; i < MAINNET.getAddrSeeds().length; ++i) {
-            assertThat("Failed on index: "+i, seedPeers.getPeer(), notNullValue());
+        int numPeers = MAINNET.getAddrSeeds().size();
+        for (int i = 0; i < numPeers; i++) {
+            assertThat("Failed on index: " + i, seedPeers.getPeer(), notNullValue());
         }
         assertThat(seedPeers.getPeer(), equalTo(null));
     }
@@ -51,6 +52,6 @@ public class SeedPeersTest {
     public void getPeers_length() throws Exception{
         SeedPeers seedPeers = new SeedPeers(MAINNET);
         List<InetSocketAddress> addresses = seedPeers.getPeers(0, Duration.ZERO);
-        assertThat(addresses.size(), equalTo(MAINNET.getAddrSeeds().length));
+        assertThat(addresses.size(), equalTo(MAINNET.getAddrSeeds().size()));
     }
 }
