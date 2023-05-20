@@ -16,6 +16,7 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.internal.ByteArray;
 import org.bouncycastle.crypto.params.KeyParameter;
 
 /**
@@ -27,24 +28,13 @@ import org.bouncycastle.crypto.params.KeyParameter;
  *  If for some reason you have code that uses the Bouncy Castle {@link KeyParameter} type and need to convert
  *  to or from {@code AesKey}, you can temporarily use {@link #ofKeyParameter(KeyParameter)} or {@link #toKeyParameter()}
  */
-public class AesKey {
-    private final byte[] bytes;
-
+public class AesKey extends ByteArray {
     /**
      * Wrapper for a {@code byte[]} containing an AES Key
      * @param keyBytes implementation-dependent AES Key bytes
      */
     public AesKey(byte[] keyBytes) {
-        // Make defensive copy, so AesKey is effectively immutable
-        this.bytes = new byte[keyBytes.length];
-        System.arraycopy(keyBytes, 0, this.bytes, 0, keyBytes.length);
-    }
-
-    /**
-     * @return The key bytes
-     */
-    public byte[] bytes() {
-        return bytes;
+        super(keyBytes);
     }
 
     /**
