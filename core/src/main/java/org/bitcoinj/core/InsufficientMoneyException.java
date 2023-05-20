@@ -34,7 +34,7 @@ public class InsufficientMoneyException extends Exception {
     }
 
     public InsufficientMoneyException(Coin missing) {
-        this(missing, "Insufficient money,  missing " + missing.toFriendlyString());
+        this(missing, "Insufficient money, missing " + missing.toFriendlyString());
     }
 
     public InsufficientMoneyException(Coin missing, String message) {
