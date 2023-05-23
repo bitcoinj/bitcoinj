@@ -96,8 +96,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.stream.Collectors;
@@ -495,7 +495,11 @@ public class WalletTool implements Callable<Integer> {
         saveWallet(walletFile);
 
         if (waitFor != null) {
-            wait(waitFor);
+            setup();
+            CompletableFuture<String> futureMessage = wait(waitFor, condition);
+            if (!peerGroup.isRunning())
+                peerGroup.startAsync();
+            System.out.println(futureMessage.join());
             if (!wallet.isConsistent()) {
                 System.err.println("************** WALLET IS INCONSISTENT *****************");
                 return 10;
@@ -912,48 +916,46 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void wait(WaitForEnum waitFor) throws BlockStoreException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        setup();
+    /**
+     * Wait for a condition to be satisfied
+     * @param waitFor condition type to wait for
+     * @param condition balance condition to wait for
+     * @return A (future) human-readable message (txId, block hash, or balance) to display when wait is complete
+     */
+    private CompletableFuture<String> wait(WaitForEnum waitFor, Condition condition) {
+        CompletableFuture<String> future = new CompletableFuture<>();
         switch (waitFor) {
             case EVER:
-                break;
+                break;  // Future will never complete
 
             case WALLET_TX:
-                wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> {
-                    // Runs in a peer thread.
-                    System.out.println(tx.getTxId());
-                    latch.countDown();  // Wake up main thread.
-                });
-                wallet.addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> {
-                    // Runs in a peer thread.
-                    System.out.println(tx.getTxId());
-                    latch.countDown();  // Wake up main thread.
-                });
+                // Future will complete with a transaction ID string
+                Consumer<Transaction> txListener = tx ->  future.complete(tx.getTxId().toString());
+                // Both listeners run in a peer thread
+                wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
+                wallet.addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
                 break;
 
             case BLOCK:
-                peerGroup.addBlocksDownloadedEventListener((peer, block, filteredBlock, blocksLeft) -> {
-                    // Check if we already ran. This can happen if a block being received triggers download of more
-                    // blocks, or if we receive another block whilst the peer group is shutting down.
-                    if (latch.getCount() == 0) return;
-                    System.out.println(block.getHashAsString());
-                    latch.countDown();
-                });
+                // Future will complete with a Block hash string
+                peerGroup.addBlocksDownloadedEventListener((peer, block, filteredBlock, blocksLeft) ->
+                    future.complete(block.getHashAsString())
+                );
                 break;
 
             case BALANCE:
+                // Future will complete with a balance amount string
                 // Check if the balance already meets the given condition.
-                if (condition.matchBitcoins(wallet.getBalance(Wallet.BalanceType.ESTIMATED))) {
-                    latch.countDown();
+                Coin existingBalance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
+                if (condition.matchBitcoins(existingBalance)) {
+                    future.complete(existingBalance.toFriendlyString());
                 } else {
                     Runnable onChange = () -> {
                         synchronized (this) {
                             saveWallet(walletFile);
                             Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
                             if (condition.matchBitcoins(balance)) {
-                                System.out.println(balance.toFriendlyString());
-                                latch.countDown();
+                                future.complete(balance.toFriendlyString());
                             }
                         }
                     };
@@ -963,15 +965,8 @@ public class WalletTool implements Callable<Integer> {
                     wallet.addReorganizeEventListener(w -> onChange.run());
                 }
                 break;
-
         }
-        if (!peerGroup.isRunning())
-            peerGroup.startAsync();
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            // Ignore.
-        }
+        return future;
     }
 
     private void reset() {
