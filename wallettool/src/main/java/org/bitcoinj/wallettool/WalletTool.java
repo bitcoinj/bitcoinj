@@ -947,10 +947,20 @@ public class WalletTool implements Callable<Integer> {
                     latch.countDown();
                     break;
                 }
-                wallet.addCoinsReceivedEventListener((w, t, p, n) -> onChange(latch));
-                wallet.addCoinsSentEventListener((w, t, p, n) -> onChange(latch));
-                wallet.addChangeEventListener(w -> onChange(latch));
-                wallet.addReorganizeEventListener(w -> onChange(latch));
+                Runnable onChange = () -> {
+                    synchronized (this) {
+                        saveWallet(walletFile);
+                        Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
+                        if (condition.matchBitcoins(balance)) {
+                            System.out.println(balance.toFriendlyString());
+                            latch.countDown();
+                        }
+                    }
+                };
+                wallet.addCoinsReceivedEventListener((w, t, p, n) -> onChange.run());
+                wallet.addCoinsSentEventListener((w, t, p, n) -> onChange.run());
+                wallet.addChangeEventListener(w -> onChange.run());
+                wallet.addReorganizeEventListener(w -> onChange.run());
                 break;
 
         }
@@ -1279,14 +1289,5 @@ public class WalletTool implements Callable<Integer> {
         System.out.println(creationTime
                 .map(time -> "Setting creation time to: " + TimeUtils.dateTimeFormat(time))
                 .orElse("Clearing creation time."));
-    }
-
-    private synchronized void onChange(final CountDownLatch latch) {
-        saveWallet(walletFile);
-        Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
-        if (condition.matchBitcoins(balance)) {
-            System.out.println(balance.toFriendlyString());
-            latch.countDown();
-        }
     }
 }
