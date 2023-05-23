@@ -71,10 +71,6 @@ import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletProtobufSerializer;
 import org.bitcoinj.wallet.Wallet.BalanceType;
-import org.bitcoinj.wallet.listeners.WalletChangeEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
-import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -951,11 +947,10 @@ public class WalletTool implements Callable<Integer> {
                     latch.countDown();
                     break;
                 }
-                final WalletEventListener listener = new WalletEventListener(latch);
-                wallet.addCoinsReceivedEventListener(listener);
-                wallet.addCoinsSentEventListener(listener);
-                wallet.addChangeEventListener(listener);
-                wallet.addReorganizeEventListener(listener);
+                wallet.addCoinsReceivedEventListener((w,t,p,n) -> onChange(latch));
+                wallet.addCoinsSentEventListener((w,t,p,n) -> onChange(latch));
+                wallet.addChangeEventListener(w -> onChange(latch));
+                wallet.addReorganizeEventListener(w -> onChange(latch));
                 break;
 
         }
@@ -1292,35 +1287,6 @@ public class WalletTool implements Callable<Integer> {
         if (condition.matchBitcoins(balance)) {
             System.out.println(balance.toFriendlyString());
             latch.countDown();
-        }
-    }
-
-    private class WalletEventListener implements WalletChangeEventListener, WalletCoinsReceivedEventListener,
-            WalletCoinsSentEventListener, WalletReorganizeEventListener {
-        private final CountDownLatch latch;
-
-        private  WalletEventListener(final CountDownLatch latch) {
-            this.latch = latch;
-        }
-
-        @Override
-        public void onWalletChanged(Wallet wallet) {
-            onChange(latch);
-        }
-
-        @Override
-        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-            onChange(latch);
-        }
-
-        @Override
-        public void onCoinsSent(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-            onChange(latch);
-        }
-
-        @Override
-        public void onReorganize(Wallet wallet) {
-            onChange(latch);
         }
     }
 }
