@@ -1,5 +1,5 @@
 image:https://github.com/bitcoinj/bitcoinj/workflows/Java%20CI/badge.svg[GitHub Build Status,link=https://github.com/bitcoinj/bitcoinj/actions]
-image:https://gitlab.com/bitcoinj/bitcoinj/badges/master/pipeline.svg[GitLab Build Status,link=https://gitlab.com/bitcoinj/bitcoinj/pipelines]
+image:https://gitlab.com/bitcoinj/bitcoinj/badges/master/pipeline.svg[GitLab Build Status,link=https://gitlab.com/bitcoinj/bitcoinj/-/pipelines]
 image:https://coveralls.io/repos/bitcoinj/bitcoinj/badge.png?branch=master[Coverage Status,link=https://coveralls.io/r/bitcoinj/bitcoinj?branch=master]
 
 image::https://img.shields.io/badge/chat-Join%20bitcoinj%20users%20on%20Matrix-blue[Join the bitcoinj-users Matrix room, link=https://matrix.to/#/#bitcoinj-users:matrix.org]
