@@ -86,6 +86,7 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1213,7 +1214,7 @@ public class WalletTool implements Callable<Integer> {
         if (unixtime != null)
             return Optional.of(Instant.ofEpochSecond(unixtime));
         else if (date != null)
-            return Optional.of(Instant.from(date));
+            return Optional.of(date.atStartOfDay(ZoneId.systemDefault()).toInstant());
         else
             return Optional.empty();
     }
