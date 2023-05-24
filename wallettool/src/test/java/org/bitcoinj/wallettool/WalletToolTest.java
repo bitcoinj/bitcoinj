@@ -17,7 +17,10 @@
 package org.bitcoinj.wallettool;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
+
+import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Basic functional/integration tests of {@code wallet-tool}
  */
 public class WalletToolTest {
+    @TempDir
+    File tempDir;
 
     @Test
     void canConstruct() {
@@ -51,6 +56,30 @@ public class WalletToolTest {
     @Test
     void helpSucceeds() {
         int exitCode = execute("--help");
+
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void createNoFileSpecified() {
+        int exitCode = execute("create");
+        // TODO: currently a stacktrace, give user-friendly error
+        assertEquals(1, exitCode);
+    }
+
+    @Test
+    void createMinimal(@TempDir File tempDir) {
+        String walletFile = tempDir.getPath() + "/wallet";
+        int exitCode = execute("create", "--wallet", walletFile);
+
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void createWithDate(@TempDir File tempDir) {
+        String walletFile = tempDir.getPath() + "/wallet";
+        String date = "2023-05-01";
+        int exitCode = execute("create", "--wallet", walletFile, "--date", date);
 
         assertEquals(0, exitCode);
     }
