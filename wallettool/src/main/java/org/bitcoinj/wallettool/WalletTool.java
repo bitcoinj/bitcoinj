@@ -945,22 +945,22 @@ public class WalletTool implements Callable<Integer> {
                 // Check if the balance already meets the given condition.
                 if (condition.matchBitcoins(wallet.getBalance(Wallet.BalanceType.ESTIMATED))) {
                     latch.countDown();
-                    break;
-                }
-                Runnable onChange = () -> {
-                    synchronized (this) {
-                        saveWallet(walletFile);
-                        Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
-                        if (condition.matchBitcoins(balance)) {
-                            System.out.println(balance.toFriendlyString());
-                            latch.countDown();
+                } else {
+                    Runnable onChange = () -> {
+                        synchronized (this) {
+                            saveWallet(walletFile);
+                            Coin balance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
+                            if (condition.matchBitcoins(balance)) {
+                                System.out.println(balance.toFriendlyString());
+                                latch.countDown();
+                            }
                         }
-                    }
-                };
-                wallet.addCoinsReceivedEventListener((w, t, p, n) -> onChange.run());
-                wallet.addCoinsSentEventListener((w, t, p, n) -> onChange.run());
-                wallet.addChangeEventListener(w -> onChange.run());
-                wallet.addReorganizeEventListener(w -> onChange.run());
+                    };
+                    wallet.addCoinsReceivedEventListener((w, t, p, n) -> onChange.run());
+                    wallet.addCoinsSentEventListener((w, t, p, n) -> onChange.run());
+                    wallet.addChangeEventListener(w -> onChange.run());
+                    wallet.addReorganizeEventListener(w -> onChange.run());
+                }
                 break;
 
         }
