@@ -38,6 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
@@ -89,7 +90,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
 
     private MultiplexingDiscovery(NetworkParameters params, List<PeerDiscovery> seeds, boolean parallelQueries,
                                   boolean shufflePeers) {
-        checkArgument(!seeds.isEmpty());
+        checkArgument(!seeds.isEmpty() || params.network() == REGTEST);
         this.netParams = params;
         this.seeds = seeds;
         this.parallelQueries = parallelQueries;

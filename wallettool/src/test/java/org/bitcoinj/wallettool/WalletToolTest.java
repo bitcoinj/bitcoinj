@@ -16,6 +16,8 @@
 
 package org.bitcoinj.wallettool;
 
+import org.checkerframework.framework.qual.IgnoreInWholeProgramInference;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
@@ -82,6 +84,20 @@ public class WalletToolTest {
         int exitCode = execute("create", "--wallet", walletFile, "--date", date);
 
         assertEquals(0, exitCode);
+    }
+
+    @Disabled("Requires a RegTest Bitcoin Core instance that is manually advanced by 1 block")
+    @Test
+    void waitForBlock(@TempDir File tempDir) {
+        String walletFile = tempDir.getPath() + "/wallet";
+        String date = "2023-05-01";
+        int createExitCode = execute("create", "--net", "regtest", "--wallet", walletFile, "--date", date);
+        assertEquals(0, createExitCode);
+
+        // TODO: Add a JSON-RPC client that can tell the server to generate 1 block
+
+        int syncExitCode = execute("sync", "--wallet", walletFile, "--net", "regtest", "--waitfor", "BLOCK");
+        assertEquals(0, syncExitCode);
     }
 
     /**
