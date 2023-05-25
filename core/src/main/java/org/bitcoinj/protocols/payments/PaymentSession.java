@@ -17,7 +17,6 @@
 package org.bitcoinj.protocols.payments;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.bitcoin.protocols.payments.Protos;
 import org.bitcoinj.base.Address;
@@ -50,6 +49,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 /**
  * <p>Provides a standard implementation of the Payment Protocol (BIP 0070)</p>
@@ -79,7 +79,7 @@ import java.util.concurrent.CompletableFuture;
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
  */
 public class PaymentSession {
-    private final static ListeningExecutorService executor = Threading.THREAD_POOL;
+    private final static ExecutorService executor = Threading.THREAD_POOL;
     private NetworkParameters params;
     private Protos.PaymentRequest paymentRequest;
     private Protos.PaymentDetails paymentDetails;
