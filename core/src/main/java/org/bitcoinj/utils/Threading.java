@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -89,7 +90,7 @@ public class Threading {
         // 10,000 pending tasks is entirely arbitrary and may or may not be appropriate for the device we're
         // running on.
         public static int WARNING_THRESHOLD = 10000;
-        private final LinkedBlockingQueue<Runnable> tasks;
+        private final BlockingQueue<Runnable> tasks;
 
         public UserThread() {
             super("bitcoinj user thread");
