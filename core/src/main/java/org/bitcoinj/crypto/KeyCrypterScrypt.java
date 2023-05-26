@@ -19,10 +19,9 @@ package org.bitcoinj.crypto;
 
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.internal.Stopwatch;
-import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.wallet.Protos;
-import org.bitcoinj.wallet.Protos.ScryptParameters;
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.bitcoinj.protobuf.wallet.Protos;
+import org.bitcoinj.protobuf.wallet.Protos.ScryptParameters;
+import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -35,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 

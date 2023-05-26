@@ -27,13 +27,12 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.crypto.MnemonicCode;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.bitcoinj.protobuf.wallet.Protos;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -31,6 +31,7 @@ import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.bitcoinj.protobuf.wallet.Protos;
 
 import javax.annotation.Nullable;
 import java.time.Instant;

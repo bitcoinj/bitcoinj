@@ -19,7 +19,7 @@ package org.bitcoinj.protocols.payments;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.protobuf.payments.Protos;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.internal.TimeUtils;

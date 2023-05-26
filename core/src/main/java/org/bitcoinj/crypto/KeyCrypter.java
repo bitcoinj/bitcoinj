@@ -16,7 +16,7 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.wallet.Protos.Wallet.EncryptionType;
+import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
 
 /**
  * <p>A KeyCrypter can be used to encrypt and decrypt a message. The sequence of events to encrypt and then decrypt

@@ -20,7 +20,7 @@ package org.bitcoinj.protocols.payments;
 import com.google.common.base.MoreObjects;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.protobuf.payments.Protos;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.internal.TimeUtils;

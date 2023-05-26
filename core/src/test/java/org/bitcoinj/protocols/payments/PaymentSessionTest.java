@@ -18,7 +18,7 @@
 package org.bitcoinj.protocols.payments;
 
 import com.google.protobuf.ByteString;
-import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.protobuf.payments.Protos;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
@@ -44,7 +44,6 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 

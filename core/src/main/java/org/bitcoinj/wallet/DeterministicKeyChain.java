@@ -44,6 +44,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
+import org.bitcoinj.protobuf.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
