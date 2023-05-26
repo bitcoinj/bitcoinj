@@ -25,10 +25,9 @@ import java.util.Locale;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
- * <p>Implementation of the Bech32 encoding.</p>
- *
+ * Implementation of the Bech32 encoding.
  * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki">BIP350</a> and
- * <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.</p>
+ * <a href="https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki">BIP173</a> for details.
  */
 public class Bech32 {
     /** The Bech32 character set for encoding. */
@@ -49,8 +48,14 @@ public class Bech32 {
     private static final int BECH32_CONST = 1;
     private static final int BECH32M_CONST = 0x2bc830a3;
 
+    /**
+     * Enumeration of known Bech32 encoding format types: Bech32 and Bech32m.
+     */
     public enum Encoding { BECH32, BECH32M }
 
+    /**
+     * Bech32 decoded data in 5-bit byte format. Typically, the result of {@link #decode(String)}.
+     */
     public static class Bech32Data {
         public final Encoding encoding;
         public final String hrp;
