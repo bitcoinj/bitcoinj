@@ -1009,8 +1009,11 @@ public class WalletTool implements Callable<Integer> {
             peerGroup = new PeerGroup(net, chain);
         }
         peerGroup.setUserAgent("WalletTool", "1.0");
-        if (net == BitcoinNetwork.REGTEST)
+        if (net == BitcoinNetwork.REGTEST) {
+            peerGroup.addAddress(PeerAddress.localhost(params));
             peerGroup.setMinBroadcastConnections(1);
+            peerGroup.setMaxConnections(1);
+        }
         peerGroup.addWallet(wallet);
         if (peersStr != null) {
             String[] peerAddrs = peersStr.split(",");
