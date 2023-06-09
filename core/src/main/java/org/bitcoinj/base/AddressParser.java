@@ -39,6 +39,12 @@ public interface AddressParser {
      */
     Address parseAddress(String addressString, Network network) throws AddressFormatException;
 
+    /**
+     * Functional interface for strict parsing. It takes a single parameter, like {@link AddressParser#parseAddressAnyNetwork(String)}
+     * but is used in a context where a specific {@link Network} has been specified. This interface may be
+     * implemented by creating a partial application of ({@link AddressParser#parseAddress(String, Network)} providing
+     * a fixed value for {@link Network}.
+     */
     @FunctionalInterface
     interface Strict {
         /**
