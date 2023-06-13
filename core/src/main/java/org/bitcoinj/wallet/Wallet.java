@@ -1683,9 +1683,9 @@ public class Wallet extends BaseTaggableObject
     }
 
     /** Saves the wallet first to the given temp file, then renames to the dest file. */
-    public void saveToFile(File temp, File destFile) throws IOException {
-        if (!temp.getParentFile().exists()) {
-            throw new FileNotFoundException(temp.getParentFile().getPath() + " (wallet directory not found)");
+    public void saveToFile(File tempFile, File destFile) throws IOException {
+        if (!tempFile.getParentFile().exists()) {
+            throw new FileNotFoundException(tempFile.getParentFile().getPath() + " (wallet directory not found)");
         }
         if (!destFile.getParentFile().exists()) {
             throw new FileNotFoundException(destFile.getParentFile().getPath() + " (wallet directory not found)");
@@ -1693,7 +1693,7 @@ public class Wallet extends BaseTaggableObject
         FileOutputStream stream = null;
         lock.lock();
         try {
-            stream = new FileOutputStream(temp);
+            stream = new FileOutputStream(tempFile);
             saveToFileStream(stream);
             // Attempt to force the bits to hit the disk. In reality the OS or hard disk itself may still decide
             // to not write through to physical media for at least a few seconds, but this is the best we can do.
@@ -1706,11 +1706,11 @@ public class Wallet extends BaseTaggableObject
                 File canonical = destFile.getCanonicalFile();
                 if (canonical.exists() && !canonical.delete())
                     throw new IOException("Failed to delete canonical wallet file for replacement with autosave");
-                if (temp.renameTo(canonical))
+                if (tempFile.renameTo(canonical))
                     return;  // else fall through.
-                throw new IOException("Failed to rename " + temp + " to " + canonical);
-            } else if (!temp.renameTo(destFile)) {
-                throw new IOException("Failed to rename " + temp + " to " + destFile);
+                throw new IOException("Failed to rename " + tempFile + " to " + canonical);
+            } else if (!tempFile.renameTo(destFile)) {
+                throw new IOException("Failed to rename " + tempFile + " to " + destFile);
             }
         } catch (RuntimeException e) {
             log.error("Failed whilst saving wallet", e);
@@ -1720,7 +1720,7 @@ public class Wallet extends BaseTaggableObject
             if (stream != null) {
                 stream.close();
             }
-            if (temp.exists()) {
+            if (tempFile.exists()) {
                 log.warn("Temp file still exists after failed save.");
             }
         }
