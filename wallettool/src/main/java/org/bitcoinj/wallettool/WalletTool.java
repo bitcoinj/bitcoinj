@@ -693,7 +693,8 @@ public class WalletTool implements Callable<Integer> {
         } catch (ScriptException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(tx.getTxId());
+        System.out.println("id: " + tx.getTxId());
+        System.out.println("tx: " + ByteUtils.formatHex(tx.serialize()));
         if (offline) {
             wallet.commitTx(tx);
             return;
