@@ -1692,11 +1692,13 @@ public class Wallet extends BaseTaggableObject
      * @throws IOException           if an error occurs while saving
      */
     public void saveToFile(File tempFile, File destFile) throws IOException {
-        if (!tempFile.getParentFile().exists()) {
-            throw new FileNotFoundException(tempFile.getParentFile().getPath() + " (wallet directory not found)");
+        File tempParentFile = tempFile.getParentFile();
+        if (!tempParentFile.exists()) {
+            throw new FileNotFoundException(tempParentFile.getPath() + " (wallet directory not found)");
         }
-        if (!destFile.getParentFile().exists()) {
-            throw new FileNotFoundException(destFile.getParentFile().getPath() + " (wallet directory not found)");
+        File destParentFile = destFile.getParentFile();
+        if (!destParentFile.exists()) {
+            throw new FileNotFoundException(destParentFile.getPath() + " (wallet directory not found)");
         }
         FileOutputStream stream = null;
         lock.lock();
