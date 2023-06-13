@@ -1682,7 +1682,15 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** Saves the wallet first to the given temp file, then renames to the dest file. */
+    /**
+     * Saves the wallet first to the given temporary file, then renames to the destination file. This is done to make
+     * the save an atomic operation.
+     *
+     * @param tempFile temporary file to use for saving the wallet
+     * @param destFile file to save the wallet to
+     * @throws FileNotFoundException if directory doesn't exist
+     * @throws IOException           if an error occurs while saving
+     */
     public void saveToFile(File tempFile, File destFile) throws IOException {
         if (!tempFile.getParentFile().exists()) {
             throw new FileNotFoundException(tempFile.getParentFile().getPath() + " (wallet directory not found)");
