@@ -114,6 +114,7 @@ public class WalletTool implements Callable<Integer> {
             "  dump                 Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified. If the wallet is encrypted, also specify the --password option to dump the private keys and seed.%n" +
             "                       If --dump-lookahead is present, also show pregenerated but not yet issued keys.%n" +
             "  raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.%n" +
+            "  listunspent          Prints unspent outputs in a simple format%n" +
             "  create               Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.%n" +
             "                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.%n" +
             "                       If --watchkey is present, it creates a watching wallet using the specified base58 xpub.%n" +
@@ -305,6 +306,7 @@ public class WalletTool implements Callable<Integer> {
     public enum ActionEnum {
         DUMP,
         RAW_DUMP,
+        LISTUNSPENT,
         CREATE,
         ADD_KEY,
         ADD_ADDR,
@@ -410,6 +412,7 @@ public class WalletTool implements Callable<Integer> {
         // What should we do?
         switch (action) {
             case DUMP: dumpWallet(); break;
+            case LISTUNSPENT: listUnspent(); break;
             case ADD_KEY: addKey(); break;
             case ADD_ADDR: addAddr(); break;
             case DELETE_KEY: deleteKey(); break;
@@ -1269,6 +1272,23 @@ public class WalletTool implements Callable<Integer> {
         } else {
             printWallet( null);
         }
+    }
+
+    private void listUnspent() throws BlockStoreException {
+        // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
+        // there just for the listUnspent case.
+        if (chainFile.exists())
+            setup();
+
+        List<TransactionOutput> unspent = wallet.getUnspents();
+        Coin total = unspent.stream()
+                .map(TransactionOutput::getValue)
+                .reduce(Coin.ZERO, Coin::add);
+        unspent.forEach(output -> {
+            String addressInfo = output.getAddress(net).map(Object::toString).orElse("address unavailable");
+            System.out.printf("%s: %s\n", addressInfo , output.getValue().toPlainString());
+        });
+        System.out.printf("\nTotal: %s\n", total.toPlainString());
     }
 
     private void printWallet(@Nullable AesKey aesKey) {
