@@ -9,19 +9,19 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest]
-        java: [ '17' ]
-        graalvm: [ '22.3.1' ]
+        java-version: [ '17' ]
+        distribution: [ 'graalvm-community' ]
         gradle: ['7.6.1']
       fail-fast: false
-    name: ${{ matrix.os }} JDK ${{ matrix.graalvm }}.${{ matrix.java }}
+    name: ${{ matrix.os }} JDK ${{ matrix.java-version }}.${{ matrix.distribution }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v1
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ matrix.graalvm }}
-          java-version: ${{ matrix.java }}
+          java-version: ${{ matrix.java-version }}
+          distribution: ${{ matrix.distribution }}
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Gradle
