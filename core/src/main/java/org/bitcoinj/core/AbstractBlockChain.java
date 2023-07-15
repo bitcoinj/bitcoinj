@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
 import org.bitcoinj.core.listeners.ReorganizeListener;
@@ -162,11 +164,24 @@ public abstract class AbstractBlockChain {
 
     /**
      * Constructs a BlockChain connected to the given list of listeners (wallets) and a store.
+     * @param network network for this chain
+     * @param wallets list of listeners (wallets)
+     * @param blockStore where to store blocks
+     * @throws BlockStoreException if a failure occurs while storing a block
+     */
+    public AbstractBlockChain(Network network, List<? extends Wallet> wallets,
+                              BlockStore blockStore) throws BlockStoreException {
+        this( NetworkParameters.of(network), wallets, blockStore);
+    }
+
+    /**
+     * Constructs a BlockChain connected to the given list of listeners (wallets) and a store.
      * @param params network parameters for this chain
      * @param wallets list of listeners (wallets)
      * @param blockStore where to store blocks
      * @throws BlockStoreException if a failure occurs while storing a block
      */
+    @VisibleForTesting
     public AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;

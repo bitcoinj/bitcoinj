@@ -73,7 +73,7 @@ public class TestWithWallet {
         myKey = wallet.freshReceiveKey();
         myAddress = wallet.freshReceiveAddress(ScriptType.P2PKH);
         blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
-        chain = new BlockChain(TESTNET, wallet, blockStore);
+        chain = new BlockChain(BitcoinNetwork.TESTNET, wallet, blockStore);
     }
 
     public void tearDown() throws Exception {

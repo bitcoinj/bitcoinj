@@ -433,7 +433,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
                 vStore.clear();
             }
         }
-        vChain = new BlockChain(params, vStore);
+        vChain = new BlockChain(network, vStore);
         vPeerGroup = createPeerGroup();
         if (this.userAgent != null)
             vPeerGroup.setUserAgent(userAgent, version);

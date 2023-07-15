@@ -16,6 +16,7 @@
 
 package org.bitcoinj.utils;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Context;
@@ -108,7 +109,7 @@ public class VersionTallyTest {
     public void testInitialize() throws BlockStoreException {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         final BlockStore blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
-        final BlockChain chain = new BlockChain(TESTNET, blockStore);
+        final BlockChain chain = new BlockChain(BitcoinNetwork.TESTNET, blockStore);
 
         // Build a historical chain of version 2 blocks
         Instant time = Instant.ofEpochSecond(1231006505);

@@ -40,7 +40,7 @@ public class FetchTransactions {
         final NetworkParameters params = NetworkParameters.of(network);
 
         BlockStore blockStore = new MemoryBlockStore(params.getGenesisBlock());
-        BlockChain chain = new BlockChain(params, blockStore);
+        BlockChain chain = new BlockChain(network, blockStore);
         PeerGroup peerGroup = new PeerGroup(network, chain);
         peerGroup.start();
         peerGroup.addAddress(PeerAddress.localhost(params));
