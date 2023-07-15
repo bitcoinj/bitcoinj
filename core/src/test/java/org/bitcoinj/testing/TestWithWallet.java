@@ -29,7 +29,6 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -52,8 +51,7 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
  * fee per kilobyte to zero in setUp.
  */
 public class TestWithWallet {
-    protected static final NetworkParameters TESTNET = TestNet3Params.get();
-    protected static final NetworkParameters MAINNET = MainNetParams.get();
+    protected static final NetworkParameters TESTNET_PARAMS = TestNet3Params.get();
 
     protected ECKey myKey;
     protected Address myAddress;
@@ -72,7 +70,7 @@ public class TestWithWallet {
         wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH, KeyChainGroupStructure.BIP32);
         myKey = wallet.freshReceiveKey();
         myAddress = wallet.freshReceiveAddress(ScriptType.P2PKH);
-        blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
+        blockStore = new MemoryBlockStore(TESTNET_PARAMS.getGenesisBlock());
         chain = new BlockChain(BitcoinNetwork.TESTNET, wallet, blockStore);
     }
 
@@ -102,7 +100,7 @@ public class TestWithWallet {
 
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Coin value, Address toAddress) throws VerificationException {
-        return sendMoneyToWallet(wallet, type, createFakeTx(TESTNET.network(), value, toAddress));
+        return sendMoneyToWallet(wallet, type, createFakeTx(BitcoinNetwork.TESTNET, value, toAddress));
     }
 
     @Nullable
