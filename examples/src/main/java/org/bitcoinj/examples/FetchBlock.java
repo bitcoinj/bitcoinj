@@ -59,7 +59,7 @@ public class FetchBlock implements Callable<Integer> {
         final Network network = BitcoinNetwork.TESTNET;
         final NetworkParameters params = NetworkParameters.of(network);
         BlockStore blockStore = new MemoryBlockStore(params.getGenesisBlock());
-        BlockChain chain = new BlockChain(params, blockStore);
+        BlockChain chain = new BlockChain(network, blockStore);
         PeerGroup peerGroup = new PeerGroup(network, chain);
         if (localhost) {
             peerGroup.addPeerDiscovery(new DnsDiscovery(params));

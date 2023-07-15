@@ -16,9 +16,9 @@
 
 package org.bitcoinj.tools;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.*;
-import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.*;
 import org.bitcoinj.utils.BlockFileLoader;
 
@@ -34,11 +34,12 @@ public class BlockImporter {
         System.out.println("       Does full verification if the store supports it");
         checkArgument(args.length == 2 || args.length == 3);
         
-        NetworkParameters params;
+        Network network;
         if (args[0].equals("test"))
-            params = TestNet3Params.get();
+            network = BitcoinNetwork.TESTNET;
         else
-            params = MainNetParams.get();
+            network = BitcoinNetwork.MAINNET;
+        NetworkParameters params = NetworkParameters.of(network);
 
         BlockStore store;
         switch (args[1]) {
@@ -63,9 +64,9 @@ public class BlockImporter {
         if (store instanceof FullPrunedBlockStore)
             chain = new FullPrunedBlockChain(params, (FullPrunedBlockStore) store);
         else
-            chain = new BlockChain(params, store);
+            chain = new BlockChain(network, store);
         
-        BlockFileLoader loader = new BlockFileLoader(params.network(), BlockFileLoader.getReferenceClientBlockFileList());
+        BlockFileLoader loader = new BlockFileLoader(network, BlockFileLoader.getReferenceClientBlockFileList());
         
         for (Block block : loader)
             chain.add(block);

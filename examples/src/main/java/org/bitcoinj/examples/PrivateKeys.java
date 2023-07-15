@@ -71,7 +71,7 @@ public class PrivateKeys {
 
             // Find the transactions that involve those coins.
             final MemoryBlockStore blockStore = new MemoryBlockStore(params.getGenesisBlock());
-            BlockChain chain = new BlockChain(params, wallet, blockStore);
+            BlockChain chain = new BlockChain(network, wallet, blockStore);
 
             final PeerGroup peerGroup = new PeerGroup(network, chain);
             peerGroup.addAddress(PeerAddress.localhost(params));

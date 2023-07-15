@@ -999,7 +999,7 @@ public class WalletTool implements Callable<Integer> {
                     System.out.println("Could not load checkpoints: " + x.getMessage());
                 }
             }
-            chain = new BlockChain(params, wallet, store);
+            chain = new BlockChain(net, wallet, store);
         } else if (mode == ValidationMode.FULL) {
             store = new MemoryFullPrunedBlockStore(params, 5000);
             chain = new FullPrunedBlockChain(params, wallet, (FullPrunedBlockStore) store);

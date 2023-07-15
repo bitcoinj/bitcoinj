@@ -75,7 +75,7 @@ public class ChainSplitTest {
         wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
-        chain = new BlockChain(TESTNET, wallet, blockStore);
+        chain = new BlockChain(BitcoinNetwork.TESTNET, wallet, blockStore);
         coinsTo = key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         coinsTo2 = key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         someOtherGuy = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);

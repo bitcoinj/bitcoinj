@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -27,6 +29,7 @@ import org.bitcoinj.wallet.WalletExtension;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
@@ -51,24 +54,29 @@ public class BlockChain extends AbstractBlockChain {
      * {@link MemoryBlockStore} if you want to hold all headers in RAM and don't care about
      * disk serialization (this is rare).</p>
      */
-    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
-        addWallet(wallet);
+    public BlockChain(Network network, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+        this(network, Collections.singletonList(wallet), blockStore);
     }
 
     /**
      * Constructs a BlockChain that has no wallet at all. This is helpful when you don't actually care about sending
      * and receiving coins but rather, just want to explore the network data structures.
      */
-    public BlockChain(NetworkParameters params, BlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
+    public BlockChain(Network network, BlockStore blockStore) throws BlockStoreException {
+        this(network, Collections.emptyList(), blockStore);
     }
 
     /**
      * Constructs a BlockChain connected to the given list of listeners and a store.
      */
-    public BlockChain(NetworkParameters params, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
-        super(params, wallets, blockStore);
+    public BlockChain(Network network, List<? extends Wallet> wallets, BlockStore blockStore) throws BlockStoreException {
+        super(network, wallets, blockStore);
+        this.blockStore = blockStore;
+    }
+
+    @VisibleForTesting
+    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+        super(params, Collections.singletonList(wallet), blockStore);
         this.blockStore = blockStore;
     }
 

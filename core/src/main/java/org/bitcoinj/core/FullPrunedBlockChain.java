@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -72,15 +73,14 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * {@link Wallet#loadFromFile(File, WalletExtension...)}
      */
     public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
-        addWallet(wallet);
+        this(params, Collections.singletonList(wallet), blockStore);
     }
 
     /**
      * Constructs a block chain connected to the given store.
      */
     public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(params, new ArrayList<Wallet>(), blockStore);
+        this(params, Collections.emptyList(), blockStore);
     }
 
     /**
