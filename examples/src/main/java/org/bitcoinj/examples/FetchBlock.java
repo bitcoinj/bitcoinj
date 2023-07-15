@@ -62,7 +62,7 @@ public class FetchBlock implements Callable<Integer> {
         BlockChain chain = new BlockChain(network, blockStore);
         PeerGroup peerGroup = new PeerGroup(network, chain);
         if (localhost) {
-            peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+            peerGroup.addPeerDiscovery(new DnsDiscovery(network));
         } else {
             PeerAddress addr = PeerAddress.localhost(params);
             peerGroup.addAddress(addr);

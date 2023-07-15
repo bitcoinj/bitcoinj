@@ -57,7 +57,7 @@ public class PrintPeers {
 
     private static void printDNS(Network network) throws PeerDiscoveryException {
         long start = System.currentTimeMillis();
-        DnsDiscovery dns = new DnsDiscovery(NetworkParameters.of(network));
+        DnsDiscovery dns = new DnsDiscovery(network);
         dnsPeers = dns.getPeers(0, Duration.ofSeconds(10));
         printPeers(dnsPeers);
         printElapsed(start);

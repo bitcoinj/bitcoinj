@@ -1033,7 +1033,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             this.requiredServices = requiredServices;
             peerDiscoverers.clear();
-            addPeerDiscovery(MultiplexingDiscovery.forServices(params, requiredServices));
+            addPeerDiscovery(MultiplexingDiscovery.forServices(params.network(), requiredServices));
         } finally {
             lock.unlock();
         }

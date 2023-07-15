@@ -445,7 +445,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
             vPeerGroup.setMaxConnections(peerAddresses.length);
             peerAddresses = null;
         } else if (params.network() != BitcoinNetwork.REGTEST) {
-            vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(params));
+            vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(network));
         }
         vChain.addWallet(vWallet);
         vPeerGroup.addWallet(vWallet);

@@ -16,7 +16,7 @@
 
 package org.bitcoinj.net.discovery;
 
-import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -32,7 +32,7 @@ public class DnsDiscoveryTest {
     @Test
     public void testBuildDiscoveries() throws PeerDiscoveryException {
         String[] seeds = new String[] { "seed.bitcoin.sipa.be", "dnsseed.bluematt.me" };
-        DnsDiscovery dnsDiscovery = new DnsDiscovery(seeds, MainNetParams.get());
+        DnsDiscovery dnsDiscovery = new DnsDiscovery(seeds, BitcoinNetwork.MAINNET);
         assertTrue(dnsDiscovery.seeds.size() == 2);
         for (PeerDiscovery peerDiscovery : dnsDiscovery.seeds) {
             assertTrue(peerDiscovery.getPeers(0, Duration.ofMillis(100)).size() > 0);
@@ -41,13 +41,13 @@ public class DnsDiscoveryTest {
 
     @Test(expected = PeerDiscoveryException.class)
     public void testGetPeersThrowsPeerDiscoveryExceptionWithServicesGreaterThanZero() throws PeerDiscoveryException {
-        DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(MainNetParams.get(), "");
+        DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(BitcoinNetwork.MAINNET, "");
         dnsSeedDiscovery.getPeers(1, Duration.ofMillis(100));
     }
 
     @Test
     public void testGetPeersReturnsNotEmptyListOfSocketAddresses() throws PeerDiscoveryException {
-        DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(MainNetParams.get(),
+        DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(BitcoinNetwork.MAINNET,
                 "localhost");
         List<InetSocketAddress> inetSocketAddresses = dnsSeedDiscovery.getPeers(0, Duration.ofMillis(100));
         assertNotEquals(0, inetSocketAddresses.size());
@@ -55,7 +55,7 @@ public class DnsDiscoveryTest {
 
     @Test(expected = PeerDiscoveryException.class)
     public void testGetPeersThrowsPeerDiscoveryExceptionForUnknownHost() throws PeerDiscoveryException {
-        DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(MainNetParams.get(),
+        DnsDiscovery.DnsSeedDiscovery dnsSeedDiscovery = new DnsDiscovery.DnsSeedDiscovery(BitcoinNetwork.MAINNET,
                 "unknown host");
         dnsSeedDiscovery.getPeers(0, Duration.ofMillis(100));
     }

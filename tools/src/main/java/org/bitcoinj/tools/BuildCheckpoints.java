@@ -121,7 +121,7 @@ public class BuildCheckpoints implements Callable<Integer> {
             // use a peer group discovered with dns
             peerGroup.setUserAgent("PeerMonitor", "1.0");
             peerGroup.setMaxConnections(20);
-            peerGroup.addPeerDiscovery(new DnsDiscovery(params));
+            peerGroup.addPeerDiscovery(new DnsDiscovery(net));
             peerGroup.start();
 
             // Connect to at least 4 peers because some may not support download
