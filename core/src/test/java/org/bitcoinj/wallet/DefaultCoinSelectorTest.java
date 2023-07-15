@@ -21,12 +21,10 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
@@ -39,6 +37,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
+import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.junit.Assert.assertEquals;
@@ -46,8 +46,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class DefaultCoinSelectorTest extends TestWithWallet {
-    private static final NetworkParameters REGTEST = RegTestParams.get();
-
     @Before
     @Override
     public void setUp() throws Exception {
@@ -66,20 +64,20 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         Transaction t;
         t = new Transaction();
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
-        assertFalse(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
+        assertFalse(DefaultCoinSelector.isSelectable(t, TESTNET));
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
-        assertFalse(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
-        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByName("1.2.3.4"), TESTNET.getPort()));
-        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
-        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByName("5.6.7.8"), TESTNET.getPort()));
-        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
+        assertFalse(DefaultCoinSelector.isSelectable(t, TESTNET));
+        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByName("1.2.3.4"), TESTNET_PARAMS.getPort()));
+        assertTrue(DefaultCoinSelector.isSelectable(t, TESTNET));
+        t.getConfidence().markBroadcastBy(PeerAddress.simple(InetAddress.getByName("5.6.7.8"), TESTNET_PARAMS.getPort()));
+        assertTrue(DefaultCoinSelector.isSelectable(t, TESTNET));
         t = new Transaction();
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
-        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.TESTNET));
+        assertTrue(DefaultCoinSelector.isSelectable(t, TESTNET));
         t = new Transaction();
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.PENDING);
         t.getConfidence().setSource(TransactionConfidence.Source.SELF);
-        assertTrue(DefaultCoinSelector.isSelectable(t, BitcoinNetwork.REGTEST));
+        assertTrue(DefaultCoinSelector.isSelectable(t, REGTEST));
     }
 
     @Test
@@ -137,7 +135,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         );
         t.getConfidence().setConfidenceType(TransactionConfidence.ConfidenceType.BUILDING);
 
-        CoinSelector selector = DefaultCoinSelector.get(BitcoinNetwork.TESTNET);
+        CoinSelector selector = DefaultCoinSelector.get(TESTNET);
         CoinSelection selection = selector.select(COIN.multiply(2), outputs);
 
         assertTrue(selection.outputs().size() == 4);
