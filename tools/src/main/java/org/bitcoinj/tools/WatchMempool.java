@@ -28,7 +28,6 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Transaction;
@@ -52,7 +51,7 @@ public class WatchMempool {
         BriefLogFormatter.init();
         PeerGroup peerGroup = new PeerGroup(NETWORK);
         peerGroup.setMaxConnections(32);
-        peerGroup.addPeerDiscovery(new DnsDiscovery(NetworkParameters.of(NETWORK)));
+        peerGroup.addPeerDiscovery(new DnsDiscovery(NETWORK));
         peerGroup.addOnTransactionBroadcastListener((peer, tx) -> {
             Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
             incrementCounter(TOTAL_KEY);

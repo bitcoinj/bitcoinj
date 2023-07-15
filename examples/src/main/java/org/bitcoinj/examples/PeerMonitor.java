@@ -21,7 +21,6 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.core.AddressMessage;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
@@ -72,7 +71,7 @@ public class PeerMonitor {
         peerGroup = new PeerGroup(network, null /* no chain */);
         peerGroup.setUserAgent("PeerMonitor", "1.0");
         peerGroup.setMaxConnections(4);
-        peerGroup.addPeerDiscovery(new DnsDiscovery(NetworkParameters.of(network)));
+        peerGroup.addPeerDiscovery(new DnsDiscovery(network));
         peerGroup.addConnectedEventListener((peer, peerCount) -> {
             refreshUI();
             lookupReverseDNS(peer);
