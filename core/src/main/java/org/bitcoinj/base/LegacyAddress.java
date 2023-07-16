@@ -177,7 +177,7 @@ public class LegacyAddress implements Address {
         AddressParser parser = DefaultAddressParser.fromNetworks();
         return (LegacyAddress) ((params != null)
                 ? parser.parseAddress(base58, params.network())
-                : parser.parseAddressAnyNetwork(base58));
+                : parser.parseAddress(base58));
     }
 
     /**
@@ -255,7 +255,7 @@ public class LegacyAddress implements Address {
      */
     @Deprecated
     public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        return NetworkParameters.fromAddress(DefaultAddressParser.fromNetworks().parseAddressAnyNetwork(address));
+        return NetworkParameters.fromAddress(DefaultAddressParser.fromNetworks().parseAddress(address));
     }
 
     @Override

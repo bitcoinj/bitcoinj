@@ -183,7 +183,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  */
 public class Wallet extends BaseTaggableObject
     implements NewBestBlockListener, TransactionReceivedInBlockListener, PeerFilterProvider,
-        KeyBag, TransactionBag, ReorganizeListener, AddressParser.Strict {
+        KeyBag, TransactionBag, ReorganizeListener, AddressParser.Simple {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
     private static final AddressParser addressParser = new DefaultAddressParser();
 

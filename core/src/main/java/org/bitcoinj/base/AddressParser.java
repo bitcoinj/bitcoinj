@@ -23,12 +23,12 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
  */
 public interface AddressParser {
     /**
-     * Parse an address that could be for any network
+     * Parse an address for any known/configured network
      * @param addressString string representation of address
      * @return A validated address object
      * @throws AddressFormatException invalid address string
      */
-    Address parseAddressAnyNetwork(String addressString) throws AddressFormatException;
+    Address parseAddress(String addressString) throws AddressFormatException;
 
     /**
      * Parse an address and validate for specified network
@@ -40,11 +40,43 @@ public interface AddressParser {
     Address parseAddress(String addressString, Network network) throws AddressFormatException;
 
     /**
+     * Parse an address for any known/configured network
+     * @param addressString string representation of address
+     * @return A validated address object
+     * @throws AddressFormatException invalid address string
+     * @deprecated Use {@link #parseAddress(String)}
+     */
+    @Deprecated /* Added in 0.17-alpha1, Deprecated after 0.17-alpha1, to be removed before 0.17 final */
+    default Address parseAddressAnyNetwork(String addressString) throws AddressFormatException {
+        return parseAddress(addressString);
+    }
+
+    /**
+     * Functional interface for address parsing. It takes a single parameter, like {@link AddressParser#parseAddress(String)}
+     * but its behavior is context-specific. This interface may be
+     * implemented by creating a partial application of ({@link AddressParser#parseAddress(String, Network)} providing
+     * a fixed value for {@link Network}. Or it may behave more like {@link #parseAddress(String)} with a context-specific
+     * list of networks.
+     */
+    @FunctionalInterface
+    interface Simple {
+        /**
+         * Parse an address in a context-specific way (i.e. with a configured list of valid networks)
+         * @param addressString string representation of address
+         * @return A validated address object
+         * @throws AddressFormatException invalid address string or not valid for network (provided by context)
+         */
+        Address parseAddress(String addressString) throws AddressFormatException;
+    }
+
+    /**
      * Functional interface for strict parsing. It takes a single parameter, like {@link AddressParser#parseAddressAnyNetwork(String)}
      * but is used in a context where a specific {@link Network} has been specified. This interface may be
      * implemented by creating a partial application of ({@link AddressParser#parseAddress(String, Network)} providing
      * a fixed value for {@link Network}.
+     * @deprecated You probably want to use {@link AddressParser.Simple}, though the semantics of <q>strict</q> no longer apply.
      */
+    @Deprecated  /* Added in 0.17-alpha1, Deprecated after 0.17-alpha1, to be removed before 0.17 final */
     @FunctionalInterface
     interface Strict {
         /**

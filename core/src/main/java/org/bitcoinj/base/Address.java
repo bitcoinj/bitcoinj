@@ -50,7 +50,7 @@ public interface Address extends Comparable<Address> {
         AddressParser addressParser = DefaultAddressParser.fromNetworks();
         return (params != null)
                     ? addressParser.parseAddress(str, params.network())
-                    : addressParser.parseAddressAnyNetwork(str);
+                    : addressParser.parseAddress(str);
     }
 
     /**

@@ -50,7 +50,7 @@ public class AddressComparatorSortTest {
                     // Test net, Segwit
                     "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
                     "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
-            ).map(addressParser::parseAddressAnyNetwork)
+            ).map(addressParser::parseAddress)
             .collect(StreamUtils.toUnmodifiableList());
 
     @Test

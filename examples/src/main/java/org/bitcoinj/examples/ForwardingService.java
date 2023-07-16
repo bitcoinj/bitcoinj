@@ -87,7 +87,7 @@ public class ForwardingService implements Closeable {
             forwardingAddress = addressParser.parseAddress(args[0], network);
         } else {
             // Else network not-specified, extract network from address
-            forwardingAddress = addressParser.parseAddressAnyNetwork(args[0]);
+            forwardingAddress = addressParser.parseAddress(args[0]);
             network = (BitcoinNetwork) forwardingAddress.network();
         }
     }

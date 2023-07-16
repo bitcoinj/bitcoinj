@@ -79,7 +79,7 @@ public class DefaultAddressParser implements AddressParser {
     }
 
     @Override
-    public Address parseAddressAnyNetwork(String addressString) throws AddressFormatException {
+    public Address parseAddress(String addressString) throws AddressFormatException {
         try {
             return parseBase58AnyNetwork(addressString);
         } catch (AddressFormatException.WrongNetwork x) {
