@@ -17,7 +17,7 @@ dependencies {
     implementation 'net.jcip:jcip-annotations:1.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.easymock:easymock:5.1.0'
-    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.7'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.11'
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
