@@ -19,7 +19,7 @@ dependencies {
     testImplementation 'org.easymock:easymock:5.1.0'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.7'
-    testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.11'
+    testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.15'
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
 }
