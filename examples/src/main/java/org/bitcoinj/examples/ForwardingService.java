@@ -22,7 +22,6 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -46,7 +45,6 @@ public class ForwardingService implements Closeable {
     static final String USAGE = "Usage: address-to-forward-to [mainnet|testnet|signet|regtest]";
     static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
-    private final AddressParser addressParser = new DefaultAddressParser();
     private final BitcoinNetwork network;
     private final Address forwardingAddress;
     private volatile WalletAppKit kit;
@@ -84,10 +82,10 @@ public class ForwardingService implements Closeable {
         if (args.length >= 2) {
             // If network was specified, validate address against network
             network = BitcoinNetwork.fromString(args[1]).orElseThrow();
-            forwardingAddress = addressParser.parseAddress(args[0], network);
+            forwardingAddress = AddressParser.getDefault(network).parseAddress(args[0]);
         } else {
             // Else network not-specified, extract network from address
-            forwardingAddress = addressParser.parseAddressAnyNetwork(args[0]);
+            forwardingAddress = AddressParser.getDefault().parseAddress(args[0]);
             network = (BitcoinNetwork) forwardingAddress.network();
         }
     }

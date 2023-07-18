@@ -1,7 +1,6 @@
 package org.bitcoinj.crypto.utils;
 
 import org.bitcoinj.base.AddressParser;
-import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
@@ -75,10 +74,10 @@ public class MessageVerifyUtilsTest {
 
     @Test
     public void testMessageSignatureVerification() {
-        final AddressParser addressParser = new DefaultAddressParser();
+        final AddressParser addressParser = AddressParser.getDefault(testVector.networkParameters.network());
         try {
             MessageVerifyUtils.verifyMessage(
-                    addressParser.parseAddress(testVector.address, testVector.networkParameters.network()),
+                    addressParser.parseAddress(testVector.address),
                     testVector.message,
                     testVector.signature
             );

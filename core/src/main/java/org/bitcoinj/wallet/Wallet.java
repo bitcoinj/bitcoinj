@@ -39,7 +39,6 @@ import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.InsufficientMoneyException;
@@ -183,9 +182,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  */
 public class Wallet extends BaseTaggableObject
     implements NewBestBlockListener, TransactionReceivedInBlockListener, PeerFilterProvider,
-        KeyBag, TransactionBag, ReorganizeListener, AddressParser.Strict {
+        KeyBag, TransactionBag, ReorganizeListener, AddressParser {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
-    private static final AddressParser addressParser = new DefaultAddressParser();
 
     // Ordering: lock > keyChainGroupLock. KeyChainGroup is protected separately to allow fast querying of current receive address
     // even if the wallet itself is busy e.g. saving or processing a big reorg. Useful for reducing UI latency.
@@ -248,6 +246,8 @@ public class Wallet extends BaseTaggableObject
 
     protected final Network network;
     protected final NetworkParameters params;
+    private final AddressParser addressParser;
+
 
     @Nullable private Sha256Hash lastBlockSeenHash;
     private int lastBlockSeenHeight;
@@ -627,6 +627,7 @@ public class Wallet extends BaseTaggableObject
     public Wallet(Network network, KeyChainGroup keyChainGroup) {
         this.network = Objects.requireNonNull(network);
         this.params = NetworkParameters.of(network);
+        this.addressParser = AddressParser.getDefault(network);
         this.coinSelector = DefaultCoinSelector.get(network);
         this.keyChainGroup = Objects.requireNonNull(keyChainGroup);
         watchedScripts = new HashSet<>();
@@ -691,7 +692,7 @@ public class Wallet extends BaseTaggableObject
      */
     @Override
     public Address parseAddress(String addressString) throws AddressFormatException {
-        return addressParser.parseAddress(addressString, network);
+        return addressParser.parseAddress(addressString);
     }
 
     /**

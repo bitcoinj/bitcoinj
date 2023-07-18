@@ -31,7 +31,6 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -133,10 +132,10 @@ public class LegacyAddressTest {
 
     @Test
     public void getNetwork() {
-        AddressParser parser = new DefaultAddressParser();
-        Network mainNet = parser.parseAddressAnyNetwork("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL").network();
+        AddressParser parser = AddressParser.getDefault();
+        Network mainNet = parser.parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL").network();
         assertEquals(MAINNET, mainNet);
-        Network testNet = parser.parseAddressAnyNetwork("n4eA2nbYqErp7H6jebchxAN59DmNpksexv").network();
+        Network testNet = parser.parseAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv").network();
         assertEquals(TESTNET, testNet);
     }
 
@@ -148,17 +147,17 @@ public class LegacyAddressTest {
         Networks.register(altNetParams);
         try {
             // Check if can parse address
-            Address altAddress = DefaultAddressParser.fromNetworks().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            Address altAddress = AddressParser.getLegacy().parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             assertEquals(altNetParams.getId(), altAddress.network().id());
             // Check if main network works as before
-            Address mainAddress = new DefaultAddressParser().parseAddressAnyNetwork("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            Address mainAddress = AddressParser.getLegacy(MAINNET).parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
             assertEquals(MAINNET.id(), mainAddress.network().id());
         } finally {
             // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
             Networks.unregister(altNetParams);
         }
         try {
-            DefaultAddressParser.fromNetworks().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            AddressParser.getLegacy().parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             fail();
         } catch (AddressFormatException e) { }
     }
@@ -169,20 +168,20 @@ public class LegacyAddressTest {
         NetworkParameters altNetParams = new MockAltNetworkParams();
 
         // Create a parser that knows about the new network (this does not modify global state)
-        List<Network> nets = new ArrayList<>(DefaultAddressParser.DEFAULT_NETWORKS_LEGACY);
+        List<Network> nets = new ArrayList<>(DefaultAddressParserProvider.DEFAULT_NETWORKS_LEGACY);
         nets.add(altNetParams.network());
-        AddressParser customParser = new DefaultAddressParser(DefaultAddressParser.DEFAULT_NETWORKS_SEGWIT, nets);
+        AddressParser customParser = new DefaultAddressParserProvider(DefaultAddressParserProvider.DEFAULT_NETWORKS_SEGWIT, nets).forKnownNetworks();
 
         // Unfortunately for NetworkParameters.of() to work properly we still have to modify gobal state
         Networks.register(altNetParams);
         try {
 
             // Check if can parse address
-            Address altAddress = customParser.parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            Address altAddress = customParser.parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             assertEquals(altNetParams.getId(), altAddress.network().id());
 
             // Check if main network works with custom parser
-            Address mainAddress = customParser.parseAddressAnyNetwork("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+            Address mainAddress = customParser.parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
             assertEquals(MAINNET.id(), mainAddress.network().id());
 
         } finally {
@@ -190,9 +189,8 @@ public class LegacyAddressTest {
             Networks.unregister(altNetParams);
         }
 
-
         try {
-            new DefaultAddressParser().parseAddressAnyNetwork("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+            AddressParser.getLegacy().parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
             fail();
         } catch (AddressFormatException e) { }
     }
@@ -207,11 +205,11 @@ public class LegacyAddressTest {
         assertEquals(testNetP2SHAddress.getVersion(), NetworkParameters.of(TESTNET).getP2SHHeader());
         assertEquals(ScriptType.P2SH, testNetP2SHAddress.getOutputScriptType());
 
-        AddressParser parser = new DefaultAddressParser();
+        AddressParser parser = AddressParser.getDefault();
         // Test that we can determine what network a P2SH address belongs to
-        Network mainNet = parser.parseAddressAnyNetwork("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU").network();
+        Network mainNet = parser.parseAddress("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU").network();
         assertEquals(MAINNET, mainNet);
-        Network testNet = parser.parseAddressAnyNetwork("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe").network();
+        Network testNet = parser.parseAddress("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe").network();
         assertEquals(TESTNET, testNet);
 
         // Test that we can convert them from hashes

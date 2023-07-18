@@ -26,8 +26,7 @@ import java.util.Comparator;
 /**
  * Interface for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
  * <p>
- * Use an implementation of {@link AddressParser#parseAddress(String, Network)} to conveniently construct any kind of address from its textual
- * form.
+ * Use {@link AddressParser} to construct any kind of address from its textual form.
  */
 public interface Address extends Comparable<Address> {
     /**
@@ -42,15 +41,12 @@ public interface Address extends Comparable<Address> {
      *             if the given string doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
      *             if the given string is valid but not for the expected network (eg testnet vs mainnet)
-     * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String, Network)}
+     * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String)}
      */
     @Deprecated
     static Address fromString(@Nullable NetworkParameters params, String str)
             throws AddressFormatException {
-        AddressParser addressParser = DefaultAddressParser.fromNetworks();
-        return (params != null)
-                    ? addressParser.parseAddress(str, params.network())
-                    : addressParser.parseAddressAnyNetwork(str);
+        return AddressParser.getLegacy(params).parseAddress(str);
     }
 
     /**

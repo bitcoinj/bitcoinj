@@ -16,12 +16,12 @@
 
 package org.bitcoinj.uri;
 
+import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nonnull;
@@ -194,10 +194,10 @@ public class BitcoinURI {
         if (!addressToken.isEmpty()) {
             // Attempt to parse the addressToken as a Bitcoin address for this network
             try {
-                DefaultAddressParser addressParser = new DefaultAddressParser();
-                Address address = network != null ?
-                        addressParser.parseAddress(addressToken, network) :
-                        addressParser.parseAddressAnyNetwork(addressToken);
+                AddressParser parser = network != null
+                        ? AddressParser.getDefault(network)
+                        : AddressParser.getDefault();
+                Address address = parser.parseAddress(addressToken);
                 putWithValidation(FIELD_ADDRESS, address);
             } catch (final AddressFormatException e) {
                 throw new BitcoinURIParseException("Bad address", e);
