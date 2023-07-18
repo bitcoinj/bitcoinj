@@ -28,11 +28,11 @@ import org.bitcoinj.walletfx.utils.TextFieldValidator;
  * if the address is invalid for those params, and enable/disable the nodes.
  */
 public class BitcoinAddressValidator {
-    private final AddressParser.Strict parser;
+    private final AddressParser parser;
     private Node[] nodes;
 
 
-    public BitcoinAddressValidator(AddressParser.Strict parser, TextField field, Node... nodes) {
+    public BitcoinAddressValidator(AddressParser parser, TextField field, Node... nodes) {
         this.parser = parser;
         this.nodes = nodes;
 

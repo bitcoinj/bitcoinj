@@ -16,9 +16,9 @@
 
 package org.bitcoinj.uri;
 
+import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.base.DefaultAddressParser;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
@@ -63,7 +63,7 @@ public class BitcoinURITest {
 
     @Test
     public void testConvertToBitcoinURI() {
-        Address goodAddress = new DefaultAddressParser().parseAddress(MAINNET_GOOD_ADDRESS, MAINNET);
+        Address goodAddress = AddressParser.getDefault(MAINNET).parseAddress(MAINNET_GOOD_ADDRESS);
         
         // simple example
         assertEquals("bitcoin:" + MAINNET_GOOD_ADDRESS + "?amount=12.34&label=Hello&message=AMessage", BitcoinURI.convertToBitcoinURI(goodAddress, parseCoin("12.34"), "Hello", "AMessage"));
@@ -112,7 +112,7 @@ public class BitcoinURITest {
 
     @Test
     public void testConvertToBitcoinURI_segwit() {
-        Address segwitAddress = new DefaultAddressParser().parseAddress(MAINNET_GOOD_SEGWIT_ADDRESS, MAINNET);
+        Address segwitAddress = AddressParser.getDefault(MAINNET).parseAddress(MAINNET_GOOD_SEGWIT_ADDRESS);
         assertEquals("bitcoin:" + MAINNET_GOOD_SEGWIT_ADDRESS + "?message=segwit%20rules", BitcoinURI.convertToBitcoinURI(
                 segwitAddress, null, null, "segwit rules"));
     }

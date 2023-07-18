@@ -252,16 +252,12 @@ public class SegwitAddress implements Address {
      * @return constructed address
      * @throws AddressFormatException
      *             if something about the given bech32 address isn't right
-     * @deprecated Use {@link AddressParser#parseAddress(String, Network)} or {@link AddressParser#parseAddressAnyNetwork(String)}
+     * @deprecated Use {@link AddressParser}
      */
     @Deprecated
     public static SegwitAddress fromBech32(@Nullable NetworkParameters params, String bech32)
             throws AddressFormatException {
-        AddressParser parser = DefaultAddressParser.fromNetworks();
-        return (SegwitAddress) (params != null
-                ? parser.parseAddress(bech32, params.network())
-                : parser.parseAddressAnyNetwork(bech32)
-        );
+        return (SegwitAddress) AddressParser.getLegacy(params).parseAddress(bech32);
     }
 
     /**

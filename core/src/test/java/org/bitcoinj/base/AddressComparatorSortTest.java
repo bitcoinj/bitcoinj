@@ -31,7 +31,7 @@ import static org.junit.Assert.assertEquals;
  * the default comparators.
  */
 public class AddressComparatorSortTest {
-    private static final AddressParser addressParser = new DefaultAddressParser();
+    private static final AddressParser addressParser = AddressParser.getDefault();
 
     /**
      * A manually sorted list of address for verifying sorting with our default comparator.
@@ -50,7 +50,7 @@ public class AddressComparatorSortTest {
                     // Test net, Segwit
                     "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
                     "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
-            ).map(addressParser::parseAddressAnyNetwork)
+            ).map(addressParser::parseAddress)
             .collect(StreamUtils.toUnmodifiableList());
 
     @Test

@@ -30,16 +30,16 @@ import java.util.List;
  * Address parser that knows about the address types supported by bitcoinj core and is configurable
  * with additional network types.
  */
-public class DefaultAddressParser implements AddressParser {
+class DefaultAddressParserProvider implements AddressParser.AddressParserProvider {
 
     // Networks to try when parsing segwit addresses
-    public static final List<Network> DEFAULT_NETWORKS_SEGWIT = unmodifiableList(
+    static final List<Network> DEFAULT_NETWORKS_SEGWIT = unmodifiableList(
                                                                     BitcoinNetwork.MAINNET,
                                                                     BitcoinNetwork.TESTNET,
                                                                     BitcoinNetwork.REGTEST);
 
     // Networks to try when parsing legacy (base58) addresses
-    public static final List<Network> DEFAULT_NETWORKS_LEGACY = unmodifiableList(
+    static final List<Network> DEFAULT_NETWORKS_LEGACY = unmodifiableList(
                                                                     BitcoinNetwork.MAINNET,
                                                                     BitcoinNetwork.TESTNET);
 
@@ -51,7 +51,7 @@ public class DefaultAddressParser implements AddressParser {
     /**
      * DefaultAddressParser with default network lists
      */
-    public DefaultAddressParser() {
+    DefaultAddressParserProvider() {
         this(DEFAULT_NETWORKS_SEGWIT, DEFAULT_NETWORKS_LEGACY);
     }
 
@@ -60,9 +60,19 @@ public class DefaultAddressParser implements AddressParser {
      * @param segwitNetworks Networks to search when parsing segwit addresses
      * @param base58Networks Networks to search when parsing base58 addresses
      */
-    public DefaultAddressParser(List<Network> segwitNetworks, List<Network> base58Networks) {
+    DefaultAddressParserProvider(List<Network> segwitNetworks, List<Network> base58Networks) {
         this.segwitNetworks = segwitNetworks;
         this.base58Networks = base58Networks;
+    }
+
+    @Override
+    public AddressParser forKnownNetworks() {
+        return this::parseAddress;
+    }
+
+    @Override
+    public AddressParser forNetwork(Network network) {
+        return address -> this.parseAddress(address, network);
     }
 
     /**
@@ -70,16 +80,14 @@ public class DefaultAddressParser implements AddressParser {
      * from Networks.get().
      * @return A backward-compatible parser
      */
-    @Deprecated
-    public static DefaultAddressParser fromNetworks() {
+    static DefaultAddressParserProvider fromNetworks() {
         List<Network> nets = Networks.get().stream()
                 .map(NetworkParameters::network)
                 .collect(StreamUtils.toUnmodifiableList());
-        return new DefaultAddressParser(nets, nets);
+        return new DefaultAddressParserProvider(nets, nets);
     }
 
-    @Override
-    public Address parseAddressAnyNetwork(String addressString) throws AddressFormatException {
+    private Address parseAddress(String addressString) throws AddressFormatException {
         try {
             return parseBase58AnyNetwork(addressString);
         } catch (AddressFormatException.WrongNetwork x) {
@@ -96,8 +104,7 @@ public class DefaultAddressParser implements AddressParser {
         }
     }
 
-    @Override
-    public Address parseAddress(String addressString, Network network) throws AddressFormatException {
+    private Address parseAddress(String addressString, Network network) throws AddressFormatException {
         try {
             return LegacyAddress.fromBase58(addressString, network);
         } catch (AddressFormatException.WrongNetwork x) {
