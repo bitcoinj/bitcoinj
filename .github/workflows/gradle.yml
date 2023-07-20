@@ -12,12 +12,6 @@ jobs:
         java: ['11', '17', '19']
         distribution: ['temurin']
         gradle: ['7.6.2']
-        include:
-          # Special case to test something close to Debian config with the oldest supported (standard) Gradle on Ubuntu
-          - os: ubuntu-latest
-            java: '11'
-            distribution: 'temurin'
-            gradle: '4.10.3'
       fail-fast: false
     name: JAVA ${{ matrix.distribution }} ${{ matrix.java }} OS ${{ matrix.os }} Gradle ${{ matrix.gradle }}
     steps:

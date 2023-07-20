@@ -4,7 +4,7 @@ bullseye-jdk11:
     - apt-get update
     - apt-get -y install openjdk-11-jdk-headless gradle
   script:
-    - gradle build --stacktrace
+    - gradle -c settings-gradle4.gradle build --stacktrace
   after_script:
     - gradle --version
   artifacts:
@@ -18,7 +18,7 @@ bookworm-jdk17:
     - apt-get update
     - apt-get -y install openjdk-17-jdk-headless gradle
   script:
-    - gradle build --stacktrace
+    - gradle -c settings-gradle4.gradle build --stacktrace
   after_script:
     - gradle --version
   artifacts:

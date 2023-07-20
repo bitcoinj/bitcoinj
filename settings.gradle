@@ -1,12 +1,23 @@
+plugins {
+    id 'com.gradle.enterprise' version "3.14"
+}
+
+gradleEnterprise {
+    buildScan {
+        if (System.getenv("CI")) {
+            System.err.println "Environment variable 'CI' is set, Gradle Build Scan will be published"
+            publishAlways()
+            tag "CI"
+        }
+        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+        termsOfServiceAgree = "yes"
+    }
+}
+
 import org.gradle.util.GradleVersion
-import org.gradle.api.GradleScriptException
 
 // Minimum Gradle version for build
-def minGradleVersion = GradleVersion.version("4.4")
-// Minimum Gradle version for JUnit5
-def minJunit5GradleVersion = GradleVersion.version("4.6")
-// Minimum Gradle version for builds of JavaFX 11 module
-def minFxGradleVersion = GradleVersion.version("4.10")
+def minGradleVersion = GradleVersion.version("6.0")
 
 rootProject.name = 'bitcoinj-parent'
 
@@ -30,18 +41,8 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
-if (GradleVersion.current().compareTo(minFxGradleVersion) > 0) {
-    System.err.println "Including wallettemplate because ${GradleVersion.current()}"
-    include 'wallettemplate'
-    project(':wallettemplate').name = 'bitcoinj-wallettemplate'
-} else {
-    System.err.println "Skipping wallettemplate, requires Gradle ${minFxGradleVersion}+, currently running: ${GradleVersion.current()}"
-}
+include 'wallettemplate'
+project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 
-if (GradleVersion.current().compareTo(minJunit5GradleVersion) >= 0) {
-    System.err.println "Including integration-test because ${GradleVersion.current()}"
-    include 'integration-test'
-    project(':integration-test').name = 'bitcoinj-integration-test'
-} else {
-    System.err.println "Skipping integration-test, requires Gradle ${minJunit5GradleVersion}+, currently running: ${GradleVersion.current()}"
-}
+include 'integration-test'
+project(':integration-test').name = 'bitcoinj-integration-test'
