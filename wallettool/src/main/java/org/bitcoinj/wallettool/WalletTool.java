@@ -17,6 +17,7 @@
 
 package org.bitcoinj.wallettool;
 
+import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
@@ -238,11 +239,11 @@ public class WalletTool implements Callable<Integer> {
 
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
 
-    private static NetworkParameters params;
-    private static BlockStore store;
-    private static AbstractBlockChain chain;
-    private static PeerGroup peerGroup;
-    private static Wallet wallet;
+    private NetworkParameters params;
+    private BlockStore store;
+    private AbstractBlockChain chain;
+    private PeerGroup peerGroup;
+    private Wallet wallet;
     private static org.bitcoin.protocols.payments.Protos.PaymentRequest paymentRequest;
 
     public static class Condition {
@@ -371,6 +372,8 @@ public class WalletTool implements Callable<Integer> {
             condition = new Condition(conditionStr);
         }
 
+        WalletToolService walletService = new WalletToolService(walletFile);
+
         if (action == ActionEnum.CREATE) {
             createWallet(net, walletFile);
             return 0;  // We're done.
@@ -391,9 +394,7 @@ public class WalletTool implements Callable<Integer> {
             }
         }
 
-        boolean forceReset = action == ActionEnum.RESET
-                || (action == ActionEnum.SYNC
-                && force);
+        boolean forceReset = (action == ActionEnum.RESET) || (action == ActionEnum.SYNC && force);
         try {
             wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, ignoreMandatoryExtensions);
         } catch (UnreadableWalletException e) {
@@ -637,7 +638,7 @@ public class WalletTool implements Callable<Integer> {
         Transaction tx = new Transaction();
         for (String spec : outputs) {
             try {
-                OutputSpec outputSpec = new OutputSpec(spec);
+                OutputSpec outputSpec = new OutputSpec(spec, wallet);
                 Coin value = outputSpec.value != null ? outputSpec.value : balance;
                 if (outputSpec.isAddress())
                     tx.addOutput(value, outputSpec.addr);
@@ -744,7 +745,7 @@ public class WalletTool implements Callable<Integer> {
         public final Address addr;
         public final ECKey key;
 
-        public OutputSpec(String spec) throws IllegalArgumentException {
+        public OutputSpec(String spec, AddressParser.Strict addressParser) throws IllegalArgumentException {
             String[] parts = spec.split(":");
             if (parts.length != 2) {
                 throw new IllegalArgumentException("Malformed output specification, must have two parts separated by :");
@@ -761,7 +762,7 @@ public class WalletTool implements Callable<Integer> {
                 addr = null;
             } else {
                 // Treat as an address.
-                addr = wallet.parseAddress(destination);
+                addr = addressParser.parseAddress(destination);
                 key = null;
             }
         }
