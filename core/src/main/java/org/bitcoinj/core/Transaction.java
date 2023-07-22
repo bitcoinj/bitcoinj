@@ -223,25 +223,18 @@ public class Transaction extends BaseMessage {
     private String memo;
 
     /**
-     * Constructs an incomplete coinbase transaction with a minimal input script and no outputs.
+     * Constructs a coinbase of specified amount sending to specified scriptPubKey.
      *
+     * @param inputScriptBytes  bytes for the coinbase input
+     * @param amount amount of transaction
+     * @param scriptPubKey output script
      * @return coinbase transaction
      */
-    public static Transaction coinbase() {
-        Transaction tx = new Transaction();
-        tx.addInput(TransactionInput.coinbaseInput(tx, new byte[2])); // 2 is minimum
-        return tx;
-    }
-
-    /**
-     * Constructs an incomplete coinbase transaction with given bytes for the input script and no outputs.
-     *
-     * @param inputScriptBytes  arbitrary bytes for the coinbase input
-     * @return coinbase transaction
-     */
-    public static Transaction coinbase(byte[] inputScriptBytes) {
+    public static Transaction coinbase(byte[] inputScriptBytes, Coin amount, Script scriptPubKey) {
         Transaction tx = new Transaction();
         tx.addInput(TransactionInput.coinbaseInput(tx, inputScriptBytes));
+        tx.addOutput(new TransactionOutput(tx, amount, scriptPubKey.program()));
+        checkState(tx.isCoinBase());
         return tx;
     }
 

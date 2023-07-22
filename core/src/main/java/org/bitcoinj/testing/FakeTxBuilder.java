@@ -84,11 +84,7 @@ public class FakeTxBuilder {
 
     /** Create a fake coinbase transaction. */
     public static Transaction createFakeCoinbaseTx() {
-        Transaction tx = Transaction.coinbase();
-        TransactionOutput outputToMe = new TransactionOutput(tx, Coin.FIFTY_COINS, randomKey());
-        checkState(tx.isCoinBase());
-        tx.addOutput(outputToMe);
-        return tx;
+        return Transaction.coinbase(new byte[2], Coin.FIFTY_COINS, ScriptBuilder.createP2PKOutputScript(randomKey()));
     }
 
     /**
