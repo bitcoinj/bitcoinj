@@ -232,8 +232,7 @@ public class Block extends BaseMessage {
 
     public static Block createGenesis() {
         Block genesisBlock = new Block(BLOCK_VERSION_GENESIS);
-        Transaction tx = Transaction.coinbase(genesisTxInputScriptBytes);
-        tx.addOutput(new TransactionOutput(tx, FIFTY_COINS, genesisTxScriptPubKeyBytes));
+        Transaction tx = Transaction.coinbase(genesisTxInputScriptBytes, FIFTY_COINS, Script.parse(genesisTxScriptPubKeyBytes));
         genesisBlock.addTransaction(tx);
         return genesisBlock;
     }
