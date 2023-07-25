@@ -9,14 +9,14 @@ dependencies {
     implementation project(':bitcoinj-examples')
 
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.7'
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.3"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.3"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.10.0"
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.easymock:easymock:5.1.0'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.15'
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.3"
-    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.9.3"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.0"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.10.0"
 }
 
 sourceCompatibility = 11
