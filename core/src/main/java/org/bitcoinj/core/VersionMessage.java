@@ -51,7 +51,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
 public class VersionMessage extends BaseMessage {
 
     /** The version of this library release, as a string. */
-    public static final String BITCOINJ_VERSION = "0.17-SNAPSHOT";
+    public static final String BITCOINJ_VERSION = "0.17-alpha2";
     /** The value that is prepended to the subVer field of this application. */
     public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
 
