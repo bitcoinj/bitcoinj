@@ -697,7 +697,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Gets the active keychains via {@link KeyChainGroup#getActiveKeyChains(long)}.
+     * Gets the active keychains via {@link KeyChainGroup#getActiveKeyChains(Instant)}.
      */
     public List<DeterministicKeyChain> getActiveKeyChains() {
         keyChainGroupLock.lock();
@@ -4456,7 +4456,7 @@ public class Wallet extends BaseTaggableObject
      *     <li>Broadcast (buffer for send) the transaction to a single remote {@link org.bitcoinj.core.Peer}</li>
      *     <li>Mark {@link TransactionBroadcast#awaitSent()} as complete</li>
      *     <li>Wait for a number of remote peers to confirm they have received the broadcast</li>
-     *     <li>Mark {@link TransactionBroadcast#future()} as complete</li>
+     *     <li>Mark {@link TransactionBroadcast#awaitRelayed()} as complete</li>
      * </ol>
      * @param sendRequest transaction to send
      * @return A future for the transaction broadcast
