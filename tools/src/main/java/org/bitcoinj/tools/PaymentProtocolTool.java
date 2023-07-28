@@ -23,7 +23,7 @@ import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
-import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.protobuf.payments.Protos;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.protobuf.wallet.Protos;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;

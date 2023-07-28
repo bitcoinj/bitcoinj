@@ -22,7 +22,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.*;
-import org.bitcoinj.wallet.*;
+import org.bitcoinj.protobuf.wallet.Protos;
 import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;

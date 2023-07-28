@@ -18,7 +18,7 @@
 package org.bitcoinj.protocols.payments;
 
 import com.google.protobuf.ByteString;
-import org.bitcoin.protocols.payments.Protos;
+import org.bitcoinj.protobuf.payments.Protos;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
