@@ -55,6 +55,22 @@ public class VersionMessage extends BaseMessage {
     /** The value that is prepended to the subVer field of this application. */
     public static final String LIBRARY_SUBVER = "/bitcoinj:" + BITCOINJ_VERSION + "/";
 
+    /** @deprecated use {@link Services#NODE_NETWORK} */
+    @Deprecated
+    public static final int NODE_NETWORK = 1 << 0;
+    /** @deprecated use {@link Services#NODE_BLOOM} */
+    @Deprecated
+    public static final int NODE_BLOOM = 1 << 2;
+    /** @deprecated use {@link Services#NODE_WITNESS} */
+    @Deprecated
+    public static final int NODE_WITNESS = 1 << 3;
+    /** @deprecated use {@link Services#NODE_NETWORK_LIMITED} */
+    @Deprecated
+    public static final int NODE_NETWORK_LIMITED = 1 << 10;
+    /** @deprecated use {@link Services#NODE_BITCOIN_CASH} */
+    @Deprecated
+    public static final int NODE_BITCOIN_CASH = 1 << 5;
+
     /**
      * The version number of the protocol spoken.
      */
