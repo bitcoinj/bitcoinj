@@ -33,7 +33,7 @@ public class MainNetParams extends BitcoinNetworkParams {
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
     public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
-    private static final long GENESIS_TIME = 1231006505;
+    private static final Instant GENESIS_TIME = Instant.ofEpochSecond(1231006505);
     private static final long GENESIS_NONCE = 2083236893;
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
 
@@ -134,10 +134,7 @@ public class MainNetParams extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis();
-                genesisBlock.setDifficultyTarget(Block.STANDARD_MAX_DIFFICULTY_TARGET);
-                genesisBlock.setTime(Instant.ofEpochSecond(GENESIS_TIME));
-                genesisBlock.setNonce(GENESIS_NONCE);
+                genesisBlock = Block.createGenesis(GENESIS_TIME, Block.STANDARD_MAX_DIFFICULTY_TARGET, GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () -> "invalid genesis hash");
             }
         }
