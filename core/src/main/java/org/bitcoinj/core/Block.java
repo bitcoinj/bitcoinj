@@ -244,18 +244,11 @@ public class Block extends BaseMessage {
     private static final byte[] genesisTxInputScriptBytes = ByteUtils.parseHex
                 ("04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73");
 
-    private static final byte[] genesisTxScriptPubKeyBytes;
-    static {
-        ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
-        try {
-            Script.writeBytes(scriptPubKeyBytes, ByteUtils.parseHex
-                    ("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
-        } catch (IOException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        }
-        scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
-        genesisTxScriptPubKeyBytes = scriptPubKeyBytes.toByteArray();
-    }
+    private static final byte[] genesisTxScriptPubKeyBytes = new ScriptBuilder()
+                .data(ByteUtils.parseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"))
+                .op(ScriptOpCodes.OP_CHECKSIG)
+                .build()
+                .program();
 
     @Override
     public int messageSize() {
