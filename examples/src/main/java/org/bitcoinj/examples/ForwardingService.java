@@ -193,7 +193,7 @@ public class ForwardingService implements Closeable {
      */
     static CoinSelector forwardingCoinSelector(Sha256Hash parentTxId) {
         return (target, candidates) -> candidates.stream()
-                .filter(output -> output.getParentTransactionHash().equals(parentTxId))
+                .filter(output -> output.getParentTransactionHash() != null && output.getParentTransactionHash().equals(parentTxId))
                 .collect(collectingAndThen(toList(), CoinSelection::new));
     }
 }
