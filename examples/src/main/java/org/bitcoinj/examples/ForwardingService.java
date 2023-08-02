@@ -23,6 +23,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.CoinSelection;
@@ -33,6 +34,7 @@ import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
@@ -142,17 +144,9 @@ public class ForwardingService implements Closeable {
         System.out.println("Waiting for confirmation...");
         wallet.waitForConfirmations(incomingTx, REQUIRED_CONFIRMATIONS)
             .thenCompose(confidence -> {
-                // Required confirmations received, now compose a call to broadcast the forwarding transaction
+                // Required confirmations received, now create and send forwarding transaction
                 System.out.printf("Incoming tx has received %d confirmations.\n", confidence.getDepthInBlocks());
-                // Now send the coins onwards by sending exactly the outputs that have been sent to us
-                SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
-                sendRequest.coinSelector = forwardingCoinSelector(incomingTx.getTxId());
-                System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
-                return wallet.sendTransaction(sendRequest);
-            })
-            .thenCompose(broadcast -> {
-                System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
-                return broadcast.awaitRelayed(); // Wait until peers report they have seen the transaction
+                return forward(wallet, incomingTx, forwardingAddress);
             })
             .whenComplete((broadcast, throwable) -> {
                 if (broadcast != null) {
@@ -163,6 +157,26 @@ public class ForwardingService implements Closeable {
                     System.out.println("Exception occurred: "  + throwable);
                 }
             });
+
+    }
+
+    /**
+     * Forward an incoming transaction by creating a new transaction, signing, and sending to the specified address.
+     * @param wallet The active wallet
+     * @param incomingTx the received transaction
+     * @param forwardingAddress the address to send to
+     * @return A future for a TransactionBroadcast object that completes when relay is acknowledged by peers
+     */
+    private CompletableFuture<TransactionBroadcast> forward(Wallet wallet, Transaction incomingTx, Address forwardingAddress) {
+        // Send coins received in incomingTx onwards by sending exactly the outputs that have been sent to us
+        SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
+        sendRequest.coinSelector = forwardingCoinSelector(incomingTx.getTxId());
+        System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
+        return wallet.sendTransaction(sendRequest)
+                .thenCompose(broadcast -> {
+                    System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
+                    return broadcast.awaitRelayed(); // Wait until peers report they have seen the transaction
+                });
     }
 
     static String getPrefix(BitcoinNetwork network) {
