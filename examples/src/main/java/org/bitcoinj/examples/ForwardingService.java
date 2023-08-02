@@ -154,11 +154,15 @@ public class ForwardingService implements Closeable {
                 System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
                 return broadcast.awaitRelayed(); // Wait until peers report they have seen the transaction
             })
-            .thenAccept(broadcast ->
-                System.out.printf("Sent %s onwards and acknowledged by peers, via transaction %s\n",
-                        broadcast.transaction().getOutputSum().toFriendlyString(),
-                        broadcast.transaction().getTxId())
-            );
+            .whenComplete((broadcast, throwable) -> {
+                if (broadcast != null) {
+                    System.out.printf("Sent %s onwards and acknowledged by peers, via transaction %s\n",
+                            broadcast.transaction().getOutputSum().toFriendlyString(),
+                            broadcast.transaction().getTxId());
+                } else {
+                    System.out.println("Exception occurred: "  + throwable);
+                }
+            });
     }
 
     static String getPrefix(BitcoinNetwork network) {
