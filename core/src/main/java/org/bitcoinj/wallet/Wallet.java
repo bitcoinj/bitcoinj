@@ -5543,35 +5543,35 @@ public class Wallet extends BaseTaggableObject
     }
 
     private int estimateVirtualBytesForSigning(CoinSelection selection) {
-        int vsize = 0;
-        for (TransactionOutput output : selection.outputs()) {
-            try {
-                Script script = output.getScriptPubKey();
-                ECKey key = null;
-                Script redeemScript = null;
-                if (ScriptPattern.isP2PKH(script)) {
-                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), ScriptType.P2PKH);
-                    Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
-                    vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
-                } else if (ScriptPattern.isP2WPKH(script)) {
-                    key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), ScriptType.P2WPKH);
-                    Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
-                    vsize += IntMath.divide(script.getNumberOfBytesRequiredToSpend(key, redeemScript), 4,
-                            RoundingMode.CEILING); // round up
-                } else if (ScriptPattern.isP2SH(script)) {
-                    redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
-                    Objects.requireNonNull(redeemScript, "Coin selection includes unspendable outputs");
-                    vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
-                } else {
-                    vsize += script.getNumberOfBytesRequiredToSpend(key, redeemScript);
-                }
-            } catch (ScriptException e) {
-                // If this happens it means an output script in a wallet tx could not be understood. That should never
-                // happen, if it does it means the wallet has got into an inconsistent state.
-                throw new IllegalStateException(e);
-            }
-        }
-        return vsize;
+        return selection.outputs()
+                .stream()
+                .map(TransactionOutput::getScriptPubKey)
+                .map(script -> {
+                    try {
+                        if (ScriptPattern.isP2PKH(script)) {
+                            ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(script), ScriptType.P2PKH);
+                            Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
+                            return script.getNumberOfBytesRequiredToSpend(key, null);
+                        } else if (ScriptPattern.isP2WPKH(script)) {
+                            ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), ScriptType.P2WPKH);
+                            Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
+                            return IntMath.divide(script.getNumberOfBytesRequiredToSpend(key, null), 4,
+                                    RoundingMode.CEILING); // round up
+                        } else if (ScriptPattern.isP2SH(script)) {
+                            Script redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
+                            Objects.requireNonNull(redeemScript, "Coin selection includes unspendable outputs");
+                            return script.getNumberOfBytesRequiredToSpend(null, redeemScript);
+                        } else {
+                            return script.getNumberOfBytesRequiredToSpend(null, null);
+                        }
+                    } catch (ScriptException e) {
+                        // If this happens it means an output script in a wallet tx could not be understood. That should never
+                        // happen, if it does it means the wallet has got into an inconsistent state.
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .mapToInt(size -> size)
+                .sum();
     }
 
     //endregion
