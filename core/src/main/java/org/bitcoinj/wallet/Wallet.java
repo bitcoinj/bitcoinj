@@ -5538,13 +5538,12 @@ public class Wallet extends BaseTaggableObject
         Coin feePerKb = (ensureMinRequiredFee && requestedFeePerKb.isLessThan(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE))
                 ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
                 : requestedFeePerKb;
-        int vSize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection);
+        int vSize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection.outputs());
         return feePerKb.multiply(vSize).divide(1000);
     }
 
-    private int estimateVirtualBytesForSigning(CoinSelection selection) {
-        return selection.outputs()
-                .stream()
+    private int estimateVirtualBytesForSigning(List<TransactionOutput> outputs) {
+        return outputs.stream()
                 .map(TransactionOutput::getScriptPubKey)
                 .map(script -> {
                     try {
