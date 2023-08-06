@@ -4758,10 +4758,7 @@ public class Wallet extends BaseTaggableObject
      */
     private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
             boolean ensureMinRequiredFee) {
-        if (ensureMinRequiredFee && feePerKb.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
-            feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
-        final int vsize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection);
-        Coin fee = feePerKb.multiply(vsize).divide(1000);
+        Coin fee = estimateFees(tx, coinSelection, feePerKb, ensureMinRequiredFee);
         TransactionOutput output = tx.getOutput(0);
         output.setValue(output.getValue().subtract(fee));
         return !output.isDust();
@@ -5510,12 +5507,7 @@ public class Wallet extends BaseTaggableObject
                 checkState(!input.hasWitness());
             }
 
-            Coin feePerKb = (needAtLeastReferenceFee && req.feePerKb.compareTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE) < 0)
-                    ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
-                    : req.feePerKb;
-
-            final int vsize = tx.getVsize() + estimateVirtualBytesForSigning(selection);
-            Coin feeNeeded = feePerKb.multiply(vsize).divide(1000);
+            Coin feeNeeded = estimateFees(tx, selection, req.feePerKb, needAtLeastReferenceFee);
 
             if (!fee.isLessThan(feeNeeded)) {
                 // Done, enough fee included.
@@ -5532,6 +5524,14 @@ public class Wallet extends BaseTaggableObject
     private void addSuppliedInputs(Transaction tx, List<TransactionInput> originalInputs) {
         for (TransactionInput input : originalInputs)
             tx.addInput(TransactionInput.read(ByteBuffer.wrap(input.bitcoinSerialize()), tx));
+    }
+
+    private Coin estimateFees(Transaction tx, CoinSelection coinSelection, Coin requestedFeePerKb, boolean ensureMinRequiredFee) {
+        Coin feePerKb = (ensureMinRequiredFee && requestedFeePerKb.isLessThan(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE))
+                ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
+                : requestedFeePerKb;
+        int vSize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection);
+        return feePerKb.multiply(vSize).divide(1000);
     }
 
     private int estimateVirtualBytesForSigning(CoinSelection selection) {
