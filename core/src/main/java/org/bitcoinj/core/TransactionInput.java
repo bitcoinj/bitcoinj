@@ -131,25 +131,24 @@ public class TransactionInput {
     private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint, long sequence, @Nullable Coin value) {
         checkArgument(value == null || value.signum() >= 0, () -> "value out of range: " + value);
+        parent = parentTransaction;
         this.scriptBytes = scriptBytes;
         this.outpoint = outpoint;
         this.sequence = sequence;
         this.value = value;
-        setParent(parentTransaction);
     }
 
     /**
      * Creates an UNSIGNED input that links to the given output
      */
     TransactionInput(Transaction parentTransaction, TransactionOutput output) {
-        super();
-        outpoint = output.getParentTransaction() != null ?
-                new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
-                new TransactionOutPoint(output);
-        scriptBytes = EMPTY_ARRAY;
-        sequence = NO_SEQUENCE;
-        setParent(parentTransaction);
-        this.value = output.getValue();
+        this(parentTransaction,
+                EMPTY_ARRAY,
+                (output.getParentTransaction() != null )
+                    ? new TransactionOutPoint(output.getIndex(), output.getParentTransaction())
+                    : new TransactionOutPoint(output),
+                NO_SEQUENCE,
+                output.getValue());
     }
 
     /**
