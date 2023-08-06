@@ -142,13 +142,13 @@ public class TransactionInput {
      * Creates an UNSIGNED input that links to the given output
      */
     TransactionInput(Transaction parentTransaction, TransactionOutput output) {
-        outpoint = output.getParentTransaction() != null ?
-                new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
-                new TransactionOutPoint(output);
-        scriptBytes = EMPTY_ARRAY;
-        sequence = NO_SEQUENCE;
-        setParent(parentTransaction);
-        this.value = output.getValue();
+        this(parentTransaction,
+                EMPTY_ARRAY,
+                output.getParentTransaction() != null ?
+                        new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
+                        new TransactionOutPoint(output),
+                NO_SEQUENCE,
+                output.getValue());
     }
 
     /**
