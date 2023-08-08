@@ -199,7 +199,8 @@ public class TransactionOutput {
     }
 
     /**
-     * Will this transaction be relayable and mined by default miners?
+     * Will this transaction be considered dust and not be relayable and mined by default miners?
+     * @return true if this output is dust
      */
     public boolean isDust() {
         // Transactions that are OP_RETURN can't be dust regardless of their value.

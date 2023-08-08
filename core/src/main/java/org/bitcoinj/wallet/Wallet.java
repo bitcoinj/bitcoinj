@@ -4286,7 +4286,7 @@ public class Wallet extends BaseTaggableObject
      *
      * @param address The Bitcoin address to send the money to.
      * @param value How much currency to send.
-     * @param allowUnconfirmed Wether to allow spending unconfirmed outputs.
+     * @param allowUnconfirmed Whether to allow spending unconfirmed outputs.
      * @return either the created Transaction or null if there are insufficient coins.
      * @throws InsufficientMoneyException if the request could not be completed due to not enough balance.
      * @throws DustySendRequested if the resultant transaction would violate the dust rules.
