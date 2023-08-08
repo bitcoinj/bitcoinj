@@ -70,7 +70,7 @@ public class TransactionInput {
     // Magic outpoint index that indicates the input is in fact unconnected.
     private static final long UNCONNECTED = 0xFFFFFFFFL;
 
-    @Nullable protected Transaction parent;
+    @Nullable private Transaction parent;
 
     // Allows for altering transactions after they were broadcast. Values below NO_SEQUENCE-1 mean it can be altered.
     private long sequence;
