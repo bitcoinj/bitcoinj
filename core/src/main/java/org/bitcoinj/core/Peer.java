@@ -1422,9 +1422,7 @@ public class Peer extends PeerSocketHandler {
         // This is because it requires scanning all the block chain headers, which is very slow. Instead we add the top
         // 100 block headers. If there is a re-org deeper than that, we'll end up downloading the entire chain. We
         // must always put the genesis block as the first entry.
-        BlockStore store = Objects.requireNonNull(blockChain).getBlockStore();
-        StoredBlock chainHead = blockChain.getChainHead();
-        Sha256Hash chainHeadHash = chainHead.getHeader().getHash();
+        Sha256Hash chainHeadHash = blockChain.getChainHead().getHeader().getHash();
         // Did we already make this request? If so, don't do it again.
         if (Objects.equals(lastGetBlocksBegin, chainHeadHash) && Objects.equals(lastGetBlocksEnd, toHash)) {
             log.info("blockChainDownloadLocked({}): ignoring duplicated request: {}", toHash, chainHeadHash);
@@ -1435,11 +1433,32 @@ public class Peer extends PeerSocketHandler {
         }
         if (log.isDebugEnabled())
             log.debug("{}: blockChainDownloadLocked({}) current head = {}",
-                    this, toHash, chainHead.getHeader().getHashAsString());
-        List<Sha256Hash> hashes = new ArrayList<>(100);
+                    this, toHash, chainHeadHash.toString());
+
+        // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a
+        // block being solved during chain download.
+        lastGetBlocksBegin = chainHeadHash;
+        lastGetBlocksEnd = toHash;
+
+        long protocolVersion = params.getSerializer().getProtocolVersion();
+        BlockLocator blockLocator = buildBlockLocator(blockChain);
+        if (downloadBlockBodies) {
+            GetBlocksMessage message = new GetBlocksMessage(protocolVersion, blockLocator, toHash);
+            sendMessage(message);
+        } else {
+            // Downloading headers for a while instead of full blocks.
+            GetHeadersMessage message = new GetHeadersMessage(protocolVersion, blockLocator, toHash);
+            sendMessage(message);
+        }
+    }
+
+    private static BlockLocator buildBlockLocator(AbstractBlockChain blockChain) {
+        BlockStore store = Objects.requireNonNull(blockChain).getBlockStore();
+        StoredBlock chainHead = blockChain.getChainHead();
+        List<Sha256Hash> hashList = new ArrayList<>(100);
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
-            hashes.add(cursor.getHeader().getHash());
+            hashList.add(cursor.getHeader().getHash());
             try {
                 cursor = cursor.getPrev(store);
             } catch (BlockStoreException e) {
@@ -1449,23 +1468,8 @@ public class Peer extends PeerSocketHandler {
         }
         // Only add the genesis hash to the locator if we didn't already do so. If the chain is < 100 blocks we already reached it.
         if (cursor != null)
-            hashes.add(params.getGenesisBlock().getHash());
-        BlockLocator blockLocator = new BlockLocator(hashes);
-
-        // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a
-        // block being solved during chain download.
-        lastGetBlocksBegin = chainHeadHash;
-        lastGetBlocksEnd = toHash;
-
-        long protocolVersion = params.getSerializer().getProtocolVersion();
-        if (downloadBlockBodies) {
-            GetBlocksMessage message = new GetBlocksMessage(protocolVersion, blockLocator, toHash);
-            sendMessage(message);
-        } else {
-            // Downloading headers for a while instead of full blocks.
-            GetHeadersMessage message = new GetHeadersMessage(protocolVersion, blockLocator, toHash);
-            sendMessage(message);
-        }
+            hashList.add(blockChain.params.getGenesisBlock().getHash());
+        return new BlockLocator(hashList);
     }
 
     /**
