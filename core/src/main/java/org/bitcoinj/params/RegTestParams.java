@@ -82,10 +82,7 @@ public class RegTestParams extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis();
-                genesisBlock.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
-                genesisBlock.setTime(GENESIS_TIME);
-                genesisBlock.setNonce(GENESIS_NONCE);
+                genesisBlock = Block.createGenesis(GENESIS_TIME, Block.EASIEST_DIFFICULTY_TARGET, GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
                         "invalid genesis hash");
             }

@@ -414,24 +414,26 @@ public class BlockChainTest {
 
     // Some blocks from the test net.
     private static Block getBlock2() throws Exception {
-        Block b2 = new Block(Block.BLOCK_VERSION_GENESIS);
-        b2.setMerkleRoot(Sha256Hash.wrap("20222eb90f5895556926c112bb5aa0df4ab5abc3107e21a6950aec3b2e3541e2"));
-        b2.setNonce(875942400L);
-        b2.setTime(Instant.ofEpochSecond(1296688946L));
-        b2.setDifficultyTarget(0x1d00ffff);
-        b2.setPrevBlockHash(Sha256Hash.wrap("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"));
+        Block b2 = new Block(Block.BLOCK_VERSION_GENESIS,
+                Sha256Hash.wrap("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"), // prev
+                Sha256Hash.wrap("20222eb90f5895556926c112bb5aa0df4ab5abc3107e21a6950aec3b2e3541e2"), // merkle
+                Instant.ofEpochSecond(1296688946L),
+                0x1d00ffff,
+                875942400L,
+                null);
         assertEquals("000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820", b2.getHashAsString());
         Block.verifyHeader(b2);
         return b2;
     }
 
     private static Block getBlock1() throws Exception {
-        Block b1 = new Block(Block.BLOCK_VERSION_GENESIS);
-        b1.setMerkleRoot(Sha256Hash.wrap("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"));
-        b1.setNonce(1924588547);
-        b1.setTime(Instant.ofEpochSecond(1296688928));
-        b1.setDifficultyTarget(0x1d00ffff);
-        b1.setPrevBlockHash(Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
+        Block b1 = new Block(Block.BLOCK_VERSION_GENESIS,
+                Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"), // prev
+                Sha256Hash.wrap("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"), // merkle
+                Instant.ofEpochSecond(1296688928),
+                0x1d00ffff,
+                1924588547,
+                null);
         assertEquals("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206", b1.getHashAsString());
         Block.verifyHeader(b1);
         return b1;
