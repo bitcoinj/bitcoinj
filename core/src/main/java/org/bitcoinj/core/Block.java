@@ -195,10 +195,10 @@ public class Block extends BaseMessage {
      * @param time time when the block was mined.
      * @param difficultyTarget Number which this block hashes lower than.
      * @param nonce Arbitrary number to make the block hash lower than the target.
-     * @param transactions List of transactions including the coinbase.
+     * @param transactions List of transactions including the coinbase, or {@code null} for header-only blocks
      */
     public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
-                 long difficultyTarget, long nonce, List<Transaction> transactions) {
+                 long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
         super();
         this.version = version;
         this.prevBlockHash = prevBlockHash;
@@ -219,12 +219,12 @@ public class Block extends BaseMessage {
      * @param time UNIX time seconds when the block was mined.
      * @param difficultyTarget Number which this block hashes lower than.
      * @param nonce Arbitrary number to make the block hash lower than the target.
-     * @param transactions List of transactions including the coinbase.
+     * @param transactions List of transactions including the coinbase, or {@code null} for header-only blocks
      * @deprecated use {@link #Block(long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
      */
     @Deprecated
     public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
-                 long difficultyTarget, long nonce, List<Transaction> transactions) {
+                 long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
         this(version, prevBlockHash, merkleRoot, Instant.ofEpochSecond(time), difficultyTarget, nonce,
                 transactions);
     }
