@@ -22,6 +22,8 @@ import org.bitcoinj.base.internal.ByteUtils;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.bitcoinj.base.internal.Preconditions.check;
 
@@ -48,12 +50,12 @@ public class GetHeadersMessage extends GetBlocksMessage {
         int startCount = startCountVarInt.intValue();
         if (startCount > 500)
             throw new ProtocolException("Number of locators cannot be > 500, received: " + startCount);
-        BlockLocator locator = new BlockLocator();
+        List<Sha256Hash> hashList = new ArrayList<>();
         for (int i = 0; i < startCount; i++) {
-            locator = locator.add(Sha256Hash.read(payload));
+            hashList.add(Sha256Hash.read(payload));
         }
         Sha256Hash stopHash = Sha256Hash.read(payload);
-        return new GetHeadersMessage(version, locator, stopHash);
+        return new GetHeadersMessage(version, new BlockLocator(hashList), stopHash);
     }
 
     public GetHeadersMessage(long protocolVersion, BlockLocator locator, Sha256Hash stopHash) {
