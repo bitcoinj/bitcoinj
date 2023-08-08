@@ -51,6 +51,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Sha256Hash.hashTwice;
@@ -178,13 +179,32 @@ public class Block extends BaseMessage {
         return transactions;
     }
 
-    /** Special case constructor, used for the genesis node, cloneAsHeader and unit tests. */
+    /** Special case constructor, used for unit tests. */
+    @VisibleForTesting
     Block(long setVersion) {
         // Set up a few basic things. We are not complete after this though.
-        version = setVersion;
-        difficultyTarget = 0x1d07fff8L;
-        time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
-        prevBlockHash = Sha256Hash.ZERO_HASH;
+        this(setVersion,
+                TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS), // convert to Bitcoin time)
+                0x1d07fff8L,
+                0,
+                Collections.emptyList());
+    }
+
+    // For unit-test genesis blocks
+    @VisibleForTesting
+    Block(long setVersion, Instant time, long difficultyTarget, List<Transaction> transactions) {
+        this(setVersion, time, difficultyTarget, 0, transactions);
+        // Solve for nonce?
+    }
+
+    // For genesis blocks (and also unit tests)
+    Block(long setVersion, Instant time, long difficultyTarget, long nonce, List<Transaction> transactions) {
+        this.version = setVersion;
+        this.time = time;
+        this.difficultyTarget = difficultyTarget;
+        this.nonce = nonce;
+        this.prevBlockHash = Sha256Hash.ZERO_HASH;
+        this.transactions = new ArrayList<>(Objects.requireNonNull(transactions));
     }
 
     /**
@@ -229,12 +249,18 @@ public class Block extends BaseMessage {
                 transactions);
     }
 
-    public static Block createGenesis() {
-        Block genesisBlock = new Block(BLOCK_VERSION_GENESIS);
+    public static Block createGenesis(Instant time, long difficultyTarget) {
+        return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, genesisTransactions());
+    }
+
+    public static Block createGenesis(Instant time, long difficultyTarget, long nonce) {
+        return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, nonce, genesisTransactions());
+    }
+
+    private static List<Transaction> genesisTransactions() {
         Transaction tx = Transaction.coinbase(genesisTxInputScriptBytes);
         tx.addOutput(new TransactionOutput(tx, FIFTY_COINS, genesisTxScriptPubKeyBytes));
-        genesisBlock.addTransaction(tx);
-        return genesisBlock;
+        return Collections.singletonList(tx);
     }
 
     // A script containing the difficulty bits and the following message:
@@ -367,14 +393,8 @@ public class Block extends BaseMessage {
      * @return new, header-only {@code Block}
      */
     public Block cloneAsHeader() {
-        Block block = new Block(version);
-        block.difficultyTarget = difficultyTarget;
-        block.time = time;
-        block.nonce = nonce;
-        block.prevBlockHash = prevBlockHash;
-        block.merkleRoot = getMerkleRoot();
+        Block block = new Block(version, prevBlockHash, getMerkleRoot(), time, difficultyTarget, nonce, null);
         block.hash = getHash();
-        block.transactions = null;
         return block;
     }
 
@@ -729,7 +749,7 @@ public class Block extends BaseMessage {
     }
 
     @VisibleForTesting
-    public void setTime(Instant time) {
+    void setTime(Instant time) {
         unCacheHeader();
         this.time = time.truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
         this.hash = null;
@@ -750,7 +770,7 @@ public class Block extends BaseMessage {
 
     /** Sets the difficulty target in compact form. */
     @VisibleForTesting
-    public void setDifficultyTarget(long compactForm) {
+    void setDifficultyTarget(long compactForm) {
         unCacheHeader();
         this.difficultyTarget = compactForm;
         this.hash = null;
@@ -766,7 +786,7 @@ public class Block extends BaseMessage {
 
     /** Sets the nonce and clears any cached data. */
     @VisibleForTesting
-    public void setNonce(long nonce) {
+    void setNonce(long nonce) {
         unCacheHeader();
         this.nonce = nonce;
         this.hash = null;
