@@ -142,7 +142,6 @@ public class TransactionInput {
      * Creates an UNSIGNED input that links to the given output
      */
     TransactionInput(Transaction parentTransaction, TransactionOutput output) {
-        super();
         outpoint = output.getParentTransaction() != null ?
                 new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
                 new TransactionOutPoint(output);
