@@ -98,11 +98,9 @@ public final class BlockLocator {
 
     @Override
     public int hashCode() {
-        int hashCode = 0;
-        for (Sha256Hash i : hashes) {
-            hashCode ^= i.hashCode();
-        }
-        return hashCode;
+        return hashes.stream()
+                .mapToInt(Sha256Hash::hashCode)
+                .reduce(0, (a, b) -> a ^ b);
     }
 
     @Override
