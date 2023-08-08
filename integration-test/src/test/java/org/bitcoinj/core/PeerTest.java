@@ -214,10 +214,10 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, inv);
 
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound(writeTarget);
-        BlockLocator expectedLocator = new BlockLocator();
-        expectedLocator = expectedLocator.add(b1.getHash());
-        expectedLocator = expectedLocator.add(TESTNET.getGenesisBlock().getHash());
-        
+        BlockLocator expectedLocator = BlockLocator.ofBlocks(
+                b1,
+                TESTNET.getGenesisBlock());
+
         assertEquals(getblocks.getLocator(), expectedLocator);
         assertEquals(getblocks.getStopHash(), b3.getHash());
         assertNull(outbound(writeTarget));
@@ -384,10 +384,10 @@ public class PeerTest extends TestWithNetworkConnections {
         });
         peer.startBlockChainDownload();
 
-        BlockLocator expectedLocator = new BlockLocator();
-        expectedLocator = expectedLocator.add(b2.getHash());
-        expectedLocator = expectedLocator.add(b1.getHash());
-        expectedLocator = expectedLocator.add(TESTNET.getGenesisBlock().getHash());
+        BlockLocator expectedLocator = BlockLocator.ofBlocks(
+            b2,
+            b1,
+            TESTNET.getGenesisBlock());
 
         GetBlocksMessage message = (GetBlocksMessage) outbound(writeTarget);
         assertEquals(message.getLocator(), expectedLocator);
@@ -471,19 +471,19 @@ public class PeerTest extends TestWithNetworkConnections {
         );
         peer.startBlockChainDownload();
         GetHeadersMessage getheaders = (GetHeadersMessage) outbound(writeTarget);
-        BlockLocator expectedLocator = new BlockLocator();
-        expectedLocator = expectedLocator.add(b1.getHash());
-        expectedLocator = expectedLocator.add(TESTNET.getGenesisBlock().getHash());
+        BlockLocator expectedLocator = BlockLocator.ofBlocks(
+                b1,
+                TESTNET.getGenesisBlock());
         assertEquals(getheaders.getLocator(), expectedLocator);
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
         // Now send all the headers.
         HeadersMessage headers = new HeadersMessage(b2.cloneAsHeader(),
                 b3.cloneAsHeader(), b4.cloneAsHeader());
         // We expect to be asked for b3 and b4 again, but this time, with a body.
-        expectedLocator = new BlockLocator();
-        expectedLocator = expectedLocator.add(b2.getHash());
-        expectedLocator = expectedLocator.add(b1.getHash());
-        expectedLocator = expectedLocator.add(TESTNET.getGenesisBlock().getHash());
+        expectedLocator = BlockLocator.ofBlocks(
+                b2,
+                b1,
+                TESTNET.getGenesisBlock());
         inbound(writeTarget, headers);
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(writeTarget);
         assertEquals(expectedLocator, getblocks.getLocator());

@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.InternalUtils;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +31,10 @@ import java.util.stream.Stream;
 public final class BlockLocator {
     private final List<Sha256Hash> hashes;  // unmodifiable list
 
+    /**
+     * @deprecated Use {@link BlockLocator#BlockLocator(List)}
+     */
+    @Deprecated
     public BlockLocator() {
         hashes = Collections.emptyList();
     }
@@ -41,7 +46,15 @@ public final class BlockLocator {
         this.hashes = Collections.unmodifiableList(hashes);
     }
 
+    // Used by tests
+    static BlockLocator ofBlocks(Block... blocks) {
+        return new BlockLocator(Arrays.stream(blocks)
+                .map(Block::getHash)
+                .collect(Collectors.toList()));
+    }
+
     // Create a new BlockLocator by copying an instance and appending an element
+    @Deprecated
     private BlockLocator(BlockLocator old, Sha256Hash hashToAdd) {
         this(Stream.concat(old.hashes.stream(), Stream.of(hashToAdd))
                 .collect(Collectors.toList())
@@ -50,7 +63,9 @@ public final class BlockLocator {
 
     /**
      * Add a {@link Sha256Hash} to a newly created block locator.
+     * @deprecated Use {@link BlockLocator#BlockLocator(List)}
      */
+    @Deprecated
     public BlockLocator add(Sha256Hash hash) {
         return new BlockLocator(this, hash);
     }

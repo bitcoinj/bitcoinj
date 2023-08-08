@@ -1415,7 +1415,6 @@ public class Peer extends PeerSocketHandler {
         // headers and then request the blocks from that point onwards. "getheaders" does not send us an inv, it just
         // sends us the data we requested in a "headers" message.
 
-        BlockLocator blockLocator = new BlockLocator();
         // For now we don't do the exponential thinning as suggested here:
         //
         //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks
@@ -1437,9 +1436,10 @@ public class Peer extends PeerSocketHandler {
         if (log.isDebugEnabled())
             log.debug("{}: blockChainDownloadLocked({}) current head = {}",
                     this, toHash, chainHead.getHeader().getHashAsString());
+        List<Sha256Hash> hashes = new ArrayList<>(100);
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
-            blockLocator = blockLocator.add(cursor.getHeader().getHash());
+            hashes.add(cursor.getHeader().getHash());
             try {
                 cursor = cursor.getPrev(store);
             } catch (BlockStoreException e) {
@@ -1449,7 +1449,8 @@ public class Peer extends PeerSocketHandler {
         }
         // Only add the genesis hash to the locator if we didn't already do so. If the chain is < 100 blocks we already reached it.
         if (cursor != null)
-            blockLocator = blockLocator.add(params.getGenesisBlock().getHash());
+            hashes.add(params.getGenesisBlock().getHash());
+        BlockLocator blockLocator = new BlockLocator(hashes);
 
         // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a
         // block being solved during chain download.
