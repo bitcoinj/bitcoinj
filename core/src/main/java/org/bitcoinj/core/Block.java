@@ -120,7 +120,7 @@ public class Block extends BaseMessage {
     public static final long BLOCK_VERSION_BIP65 = 4;
 
     // Fields defined as part of the protocol format.
-    private long version;
+    private final long version;
     private Sha256Hash prevBlockHash;
     private Sha256Hash merkleRoot, witnessRoot;
     private Instant time;
