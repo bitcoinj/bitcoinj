@@ -203,9 +203,8 @@ public class TransactionOutput {
      */
     public boolean isDust() {
         // Transactions that are OP_RETURN can't be dust regardless of their value.
-        if (ScriptPattern.isOpReturn(getScriptPubKey()))
-            return false;
-        return getValue().isLessThan(getMinNonDustValue());
+        // If output is not OP_RETURN and value is below getMinNonDustValue() it is dust.
+        return !ScriptPattern.isOpReturn(getScriptPubKey()) && getValue().isLessThan(getMinNonDustValue());
     }
 
     /**
