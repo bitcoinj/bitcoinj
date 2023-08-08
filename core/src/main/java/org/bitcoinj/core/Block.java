@@ -206,9 +206,9 @@ public class Block extends BaseMessage {
         this.time = time;
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
-        if (transactions != null)
-            transactions = new ArrayList<>(transactions);
-        this.transactions = transactions;
+        this.transactions = transactions != null ?
+                new ArrayList<>(transactions) :
+                null;
     }
 
     /**
