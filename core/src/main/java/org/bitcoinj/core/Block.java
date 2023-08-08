@@ -49,7 +49,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -208,7 +207,7 @@ public class Block extends BaseMessage {
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
         if (transactions != null)
-            transactions = new LinkedList<>(transactions);
+            transactions = new ArrayList<>(transactions);
         this.transactions = transactions;
     }
 
