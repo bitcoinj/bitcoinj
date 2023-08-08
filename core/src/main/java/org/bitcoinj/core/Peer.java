@@ -1442,14 +1442,10 @@ public class Peer extends PeerSocketHandler {
 
         long protocolVersion = params.getSerializer().getProtocolVersion();
         BlockLocator blockLocator = buildBlockLocator(blockChain);
-        if (downloadBlockBodies) {
-            GetBlocksMessage message = new GetBlocksMessage(protocolVersion, blockLocator, toHash);
-            sendMessage(message);
-        } else {
-            // Downloading headers for a while instead of full blocks.
-            GetHeadersMessage message = new GetHeadersMessage(protocolVersion, blockLocator, toHash);
-            sendMessage(message);
-        }
+        GetBlocksMessage message = (downloadBlockBodies)
+            ? new GetBlocksMessage(protocolVersion, blockLocator, toHash)
+            : new GetHeadersMessage(protocolVersion, blockLocator, toHash);   // Downloading headers for a while instead of full blocks.
+        sendMessage(message);
     }
 
     private static BlockLocator buildBlockLocator(AbstractBlockChain blockChain) {
