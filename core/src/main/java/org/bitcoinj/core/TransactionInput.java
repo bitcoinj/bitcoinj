@@ -143,12 +143,9 @@ public class TransactionInput {
      */
     TransactionInput(Transaction parentTransaction, TransactionOutput output) {
         super();
-        long outputIndex = output.getIndex();
-        if(output.getParentTransaction() != null ) {
-            outpoint = new TransactionOutPoint(outputIndex, output.getParentTransaction());
-        } else {
-            outpoint = new TransactionOutPoint(output);
-        }
+        outpoint = output.getParentTransaction() != null ?
+                new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
+                new TransactionOutPoint(output);
         scriptBytes = EMPTY_ARRAY;
         sequence = NO_SEQUENCE;
         setParent(parentTransaction);
