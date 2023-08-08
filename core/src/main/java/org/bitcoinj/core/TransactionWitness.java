@@ -61,7 +61,7 @@ public class TransactionWitness {
         pushes.add(new byte[] {});
         for (TransactionSignature signature : signatures)
             pushes.add(signature.encodeToBitcoin());
-        pushes.add(witnessScript.getProgram());
+        pushes.add(witnessScript.program());
         return TransactionWitness.of(pushes);
     }
 
