@@ -54,6 +54,7 @@ import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.FileLock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -499,7 +500,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     }
 
     protected void setupAutoSave(Wallet wallet) {
-        wallet.autosaveToFile(vWalletFile, 5, TimeUnit.SECONDS, null);
+        wallet.autosaveToFile(vWalletFile, Duration.ofSeconds(5), null);
     }
 
     private Wallet loadWallet(boolean shouldReplayWallet) throws Exception {
