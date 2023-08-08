@@ -681,6 +681,10 @@ public class Wallet extends BaseTaggableObject
         return network;
     }
 
+    /**
+     * @deprecated Use {@link #network()}
+     */
+    @Deprecated
     public NetworkParameters getNetworkParameters() {
         return params;
     }
@@ -1909,7 +1913,11 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** Returns the parameters this wallet was created with. */
+    /**
+     * Returns the parameters this wallet was created with.
+     * @deprecated Use {@link #network()}
+     */
+    @Deprecated
     public NetworkParameters getParams() {
         return params;
     }
