@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package org.bitcoinj.core;
+
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bitcoinj.core.Services;
