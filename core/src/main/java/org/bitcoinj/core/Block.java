@@ -49,7 +49,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -204,7 +203,7 @@ public class Block extends BaseMessage {
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
         this.prevBlockHash = Sha256Hash.ZERO_HASH;
-        this.transactions = new LinkedList<>(Objects.requireNonNull(transactions));
+        this.transactions = new ArrayList<>(Objects.requireNonNull(transactions));
     }
 
     /**
@@ -227,7 +226,7 @@ public class Block extends BaseMessage {
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
         this.transactions = (transactions != null)
-                ? new LinkedList<>(transactions)
+                ? new ArrayList<>(transactions)
                 : null;
     }
 
@@ -691,7 +690,6 @@ public class Block extends BaseMessage {
     void addTransaction(Transaction t, boolean runSanityChecks) {
         unCacheTransactions();
         if (transactions == null) {
-            // TODO: This creates ArrayList, elsewhere in Block we use LinkedList, which should it be?
             transactions = new ArrayList<>();
         }
         if (runSanityChecks && transactions.size() == 0 && !t.isCoinBase())
