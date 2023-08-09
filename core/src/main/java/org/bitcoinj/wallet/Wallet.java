@@ -4773,6 +4773,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size.
      * If ensureMinRequiredFee is true, feePerKb is set to at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.
+     * @return true if output is not dust
      */
     private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
             boolean ensureMinRequiredFee) {
