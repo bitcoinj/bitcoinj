@@ -21,7 +21,7 @@ However unlike many APIs, we have never had a more general notion of context and
 ended up with an often confusing mishmash of duplicate settings and odd dependencies between objects. For example
 several parts of the library want to throw away data once a transaction is confirmed enough that we don't expect it
 to ever be re-orgd out of the chain, but there's no agreement on how deep that should be. The Wallet stores files, as
-does the block store, as does Orchid (Tor support), but each component must be told where to put this data individually.
+does the block store, but each component must be told where to put this data individually.
 The problem gets worse on Android, where there are no JAR files and data must be shipped as external files. On this
 platform components that want to load data files must be configured with a path to their files individually and
 there's no central list of what components need this.
