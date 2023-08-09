@@ -48,17 +48,4 @@ public class CryptoUtils {
         digest.doFinal(ripmemdHash, 0);
         return ripmemdHash;
     }
-
-    /**
-     * Calculate TOR Onion Checksum (used by PeerAddress)
-     */
-    public static byte[] onionChecksum(byte[] pubkey, byte version) {
-        if (pubkey.length != 32)
-            throw new IllegalArgumentException();
-        SHA3.Digest256 digest256 = new SHA3.Digest256();
-        digest256.update(".onion checksum".getBytes(StandardCharsets.US_ASCII));
-        digest256.update(pubkey);
-        digest256.update(version);
-        return Arrays.copyOf(digest256.digest(), 2);
-    }
 }

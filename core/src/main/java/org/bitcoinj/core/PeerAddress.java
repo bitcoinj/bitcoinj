@@ -17,12 +17,11 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.crypto.internal.TorUtils;
 
 import javax.annotation.Nullable;
 import java.net.Inet4Address;
@@ -58,7 +57,6 @@ public class PeerAddress {
     private final Services services;
     private final Instant time;
 
-    private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
     private static final byte[] ONIONCAT_PREFIX = ByteUtils.parseHex("fd87d87eeb43");
 
     // BIP-155 reserved network IDs, see: https://github.com/bitcoin/bips/blob/master/bip-0155.mediawiki
@@ -191,18 +189,13 @@ public class PeerAddress {
                     case TORV2:
                         if (addrLen != 10)
                             throw new ProtocolException("invalid length of TORv2 address: " + addrLen);
-                        hostname = BASE32.encode(addrBytes) + ".onion";
+                        hostname = TorUtils.encodeOnionUrlV2(addrBytes);
                         addr = null;
                         break;
                     case TORV3:
                         if (addrLen != 32)
                             throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
-                        byte torVersion = 0x03;
-                        byte[] onionAddress = new byte[35];
-                        System.arraycopy(addrBytes, 0, onionAddress, 0, 32);
-                        System.arraycopy(CryptoUtils.onionChecksum(addrBytes, torVersion), 0, onionAddress, 32, 2);
-                        onionAddress[34] = torVersion;
-                        hostname = BASE32.encode(onionAddress) + ".onion";
+                        hostname = TorUtils.encodeOnionUrlV3(addrBytes);
                         addr = null;
                         break;
                     case I2P:
@@ -222,7 +215,7 @@ public class PeerAddress {
             byte[] addrBytes = Buffers.readBytes(payload, 16);
             if (Arrays.equals(ONIONCAT_PREFIX, Arrays.copyOf(addrBytes, 6))) {
                 byte[] onionAddress = Arrays.copyOfRange(addrBytes, 6, 16);
-                hostname = BASE32.encode(onionAddress) + ".onion";
+                hostname = TorUtils.encodeOnionUrlV2(onionAddress);
             } else {
                 addr = getByAddress(addrBytes);
                 hostname = null;
@@ -273,24 +266,17 @@ public class PeerAddress {
                     throw new IllegalStateException();
                 }
             } else if (addr == null && hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
-                byte[] onionAddress = BASE32.decode(hostname.substring(0, hostname.length() - 6));
+                byte[] onionAddress = TorUtils.decodeOnionUrl(hostname);
                 if (onionAddress.length == 10) {
                     // TORv2
                     buf.put((byte) 0x03);
                     VarInt.of(10).write(buf);
                     buf.put(onionAddress);
-                } else if (onionAddress.length == 32 + 2 + 1) {
+                } else if (onionAddress.length == 32) {
                     // TORv3
                     buf.put((byte) 0x04);
                     VarInt.of(32).write(buf);
-                    byte[] pubkey = Arrays.copyOfRange(onionAddress, 0, 32);
-                    byte[] checksum = Arrays.copyOfRange(onionAddress, 32, 34);
-                    byte torVersion = onionAddress[34];
-                    if (torVersion != 0x03)
-                        throw new IllegalStateException("version");
-                    if (!Arrays.equals(checksum, CryptoUtils.onionChecksum(pubkey, torVersion)))
-                        throw new IllegalStateException("checksum");
-                    buf.put(pubkey);
+                    buf.put(onionAddress);
                 } else {
                     throw new IllegalStateException();
                 }
@@ -305,7 +291,7 @@ public class PeerAddress {
                 byte[] ipBytes = addr.getAddress();
                 buf.put(mapIntoIPv6(ipBytes));
             } else if (hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
-                byte[] onionAddress = BASE32.decode(hostname.substring(0, hostname.length() - 6));
+                byte[] onionAddress = TorUtils.decodeOnionUrl(hostname);
                 if (onionAddress.length == 10) {
                     // TORv2
                     buf.put(ONIONCAT_PREFIX);
@@ -358,13 +344,9 @@ public class PeerAddress {
                     throw new IllegalStateException();
                 }
             } else if (addr == null && hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
-                byte[] onionAddress = BASE32.decode(hostname.substring(0, hostname.length() - 6));
-                if (onionAddress.length == 10) {
-                    // TORv2
-                    size += VarInt.sizeOf(10) + 10;
-                } else if (onionAddress.length == 32 + 2 + 1) {
-                    // TORv3
-                    size += VarInt.sizeOf(32) + 32;
+                byte[] onionAddress = TorUtils.decodeOnionUrl(hostname);
+                if (onionAddress.length == 10 || onionAddress.length == 32) {
+                    size += VarInt.sizeOf(onionAddress.length) + onionAddress.length;
                 } else {
                     throw new IllegalStateException();
                 }
