@@ -41,4 +41,19 @@ public class InsufficientMoneyException extends Exception {
         super(message);
         this.missing = Objects.requireNonNull(missing);
     }
+
+    public InsufficientMoneyException(Coin missing, Coin available, Coin outputs, Coin fee) {
+        this(missing, format(missing, available, outputs, fee));
+    }
+
+    /**
+     * @param missing Amount missing
+     * @param available Amount available (e.g. found by CoinSelector)
+     * @param outputs total amount of output requested
+     * @param fee calculated fee required for transaction
+     * @return An exception message
+     */
+    static String format(Coin missing, Coin available, Coin outputs, Coin fee) {
+        return String.format("Insufficient money, missing %s (available: %s, total outputs: %s, fee: %s)", missing.toFriendlyString(), available.toFriendlyString(), outputs.toFriendlyString(), fee.toFriendlyString());
+    }
 }
