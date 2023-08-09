@@ -5472,7 +5472,7 @@ public class Wallet extends BaseTaggableObject
             // Can we afford this?
             if (selection.totalValue().compareTo(valueNeeded) < 0) {
                 Coin valueMissing = valueNeeded.subtract(selection.totalValue());
-                throw new InsufficientMoneyException(valueMissing);
+                throw new InsufficientMoneyException(valueMissing, selection.totalValue(), value, fee);
             }
             Coin change = selection.totalValue().subtract(valueNeeded);
             if (change.isGreaterThan(Coin.ZERO)) {
