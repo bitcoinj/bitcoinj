@@ -36,8 +36,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  *
  * <p>By default, neither currency codes nor symbols are included in formatted values as
  * output, nor recognized in parsed values as input.  The can be overridden by applying a
- * custom pattern using either the {@link BtcFormat.Builder#localizedPattern} or
- * {@link BtcFormat.Builder#localizedPattern} methods, as described in the documentation for
+ * custom pattern using either the {@link BtcFormat.Builder#localizedPattern(String)} or
+ * {@link BtcFormat.Builder#localizedPattern(String)} methods, as described in the documentation for
  * the {@link BtcFormat.Builder} class.</p>
  *
  * <p>A more detailed explanation, including examples, is in the documentation for the
