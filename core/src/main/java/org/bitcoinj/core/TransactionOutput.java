@@ -145,7 +145,7 @@ public class TransactionOutput {
      * @return byte array containing the transaction output
      */
     public byte[] serialize() {
-        return write(ByteBuffer.allocate(getMessageSize())).array();
+        return write(ByteBuffer.allocate(messageSize())).array();
     }
 
     /** @deprecated use {@link #serialize()} */
@@ -160,10 +160,18 @@ public class TransactionOutput {
      *
      * @return size of the serialized message in bytes
      */
-    public int getMessageSize() {
+    public int messageSize() {
         int size = Coin.BYTES; // value
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         return size;
+    }
+
+    /**
+     * @deprecated Use {@link #messageSize()}
+     */
+    @Deprecated
+    public int getMessageSize() {
+        return messageSize();
     }
 
     /**

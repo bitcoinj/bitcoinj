@@ -184,7 +184,7 @@ public class TransactionTest {
         // add fake transaction output
         TransactionOutput output = new TransactionOutput(null, Coin.COIN, ADDRESS);
         tx.addOutput(output);
-        length += output.getMessageSize();
+        length += output.messageSize();
 
         // message size has now grown
         assertEquals(length, tx.messageSize());

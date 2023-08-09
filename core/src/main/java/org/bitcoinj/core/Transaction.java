@@ -1425,7 +1425,7 @@ public class Transaction extends BaseMessage {
             size += in.getMessageSize();
         size += VarInt.sizeOf(outputs.size());
         for (TransactionOutput out : outputs)
-            size += out.getMessageSize();
+            size += out.messageSize();
         if (useSegwit)
             for (TransactionInput in : inputs)
                 size += in.getWitness().getMessageSize();

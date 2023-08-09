@@ -129,7 +129,7 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     @Parameters(method = "randomOutputs")
     public void write(TransactionOutput output) {
-        ByteBuffer buf = ByteBuffer.allocate(output.getMessageSize());
+        ByteBuffer buf = ByteBuffer.allocate(output.messageSize());
         output.write(buf);
         assertFalse(buf.hasRemaining());
     }
