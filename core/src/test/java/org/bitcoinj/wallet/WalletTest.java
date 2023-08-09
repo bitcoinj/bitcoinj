@@ -2331,14 +2331,14 @@ public class WalletTest extends TestWithWallet {
         assertEquals(Coin.valueOf(99900), request17.tx.getFee());
         assertEquals(1, request17.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 999
-        int theoreticalMaxLength17 = request17.tx.serialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength17 = request17.tx.messageSize() + myKey.getPubKey().length + 75;
         for (TransactionInput in : request17.tx.getInputs())
             theoreticalMaxLength17 -= in.getScriptBytes().length;
         assertEquals(999, theoreticalMaxLength17);
         Transaction spend17 = request17.tx;
         {
             // Its actual size must be between 996 and 999 (inclusive) as signatures have a 3-byte size range (almost always)
-            final int length = spend17.serialize().length;
+            final int length = spend17.messageSize();
             assertTrue(Integer.toString(length), length >= 996 && length <= 999);
         }
         // Now check that it got a fee of 1 since its max size is 999 (1kb).
@@ -2359,7 +2359,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request18.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 1001
         Transaction spend18 = request18.tx;
-        int theoreticalMaxLength18 = spend18.serialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength18 = spend18.messageSize() + myKey.getPubKey().length + 75;
         for (TransactionInput in : spend18.getInputs())
             theoreticalMaxLength18 -= in.getScriptBytes().length;
         assertEquals(1001, theoreticalMaxLength18);
