@@ -139,6 +139,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -5205,21 +5207,15 @@ public class Wallet extends BaseTaggableObject
     private void calcBloomOutPointsLocked() {
         // TODO: This could be done once and then kept up to date.
         bloomOutPoints.clear();
-        Set<Transaction> all = new HashSet<>();
-        all.addAll(unspent.values());
-        all.addAll(spent.values());
-        all.addAll(pending.values());
-        for (Transaction tx : all) {
-            for (TransactionOutput out : tx.getOutputs()) {
-                try {
-                    if (isTxOutputBloomFilterable(out))
-                        bloomOutPoints.add(out.getOutPointFor());
-                } catch (ScriptException e) {
-                    // If it is ours, we parsed the script correctly, so this shouldn't happen.
-                    throw new RuntimeException(e);
-                }
-            }
-        }
+        // Search unspent, spent, and pending for all TransactionOutputs that are bloom filterable and
+        // then collect a list of the corresponding TransactionOutPoints.
+        List<TransactionOutPoint> outPoints = Stream.of(unspent.values(), spent.values(), pending.values())
+                .flatMap(Collection::stream)
+                .flatMap(tx -> tx.getOutputs().stream())
+                .filter(this::isTxOutputBloomFilterable)
+                .map(TransactionOutput::getOutPointFor)
+                .collect(Collectors.toList());
+        bloomOutPoints.addAll(outPoints);
     }
 
     @Override @GuardedBy("keyChainGroupLock")
