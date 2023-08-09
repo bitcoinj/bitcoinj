@@ -4509,6 +4509,9 @@ public class Wallet extends BaseTaggableObject
         public CompletionException(Throwable throwable) {
             super(throwable);
         }
+        public CompletionException(String message) {
+            super(message);
+        }
     }
     /**
      * Thrown if the resultant transaction would violate the dust rules (an output that's too small to be worthwhile).
@@ -4523,7 +4526,14 @@ public class Wallet extends BaseTaggableObject
      * being reduced for the fee was smaller than the min payment. Note that the missing field will be null in this
      * case.
      */
-    public static class CouldNotAdjustDownwards extends CompletionException {}
+    public static class CouldNotAdjustDownwards extends CompletionException {
+        CouldNotAdjustDownwards() {
+            super();
+        }
+        CouldNotAdjustDownwards(Coin value, Coin nonDustAmout) {
+            super(String.format("Value %s is below non-dust threshold of %s", value.toFriendlyString(), nonDustAmout.toFriendlyString()));
+        }
+    }
     /**
      * Thrown if the resultant transaction is too big for Bitcoin to process. Try breaking up the amounts of value.
      */
@@ -5459,8 +5469,9 @@ public class Wallet extends BaseTaggableObject
                                 output.getValue().subtract(fee.divideAndRemainder(req.tx.getOutputs().size())[1])); // Subtract fee equally from each selected recipient
                     }
                     result.updatedOutputValues.add(output.getValue());
-                    if (output.getMinNonDustValue().isGreaterThan(output.getValue())) {
-                        throw new CouldNotAdjustDownwards();
+                    Coin nonDustValue = output.getMinNonDustValue();
+                    if (output.getValue().isLessThan(nonDustValue)) {
+                        throw new CouldNotAdjustDownwards(output.getValue(), nonDustValue);
                     }
                 }
                 tx.addOutput(output);
