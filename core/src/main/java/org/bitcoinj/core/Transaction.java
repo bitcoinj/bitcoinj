@@ -143,18 +143,18 @@ public class Transaction extends BaseMessage {
     public static final int LOCKTIME_THRESHOLD = (int) LockTime.THRESHOLD;
 
     /** How many bytes a transaction can be before it won't be relayed anymore. Currently 100kb. */
-    public static final int MAX_STANDARD_TX_SIZE = 100000;
+    public static final int MAX_STANDARD_TX_SIZE = 100_000;
 
     /**
      * If feePerKb is lower than this, Bitcoin Core will treat it as if there were no fee.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1000); // 0.01 mBTC
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1_000); // 0.01 mBTC
 
     /**
      * If using this feePerKb, transactions will get confirmed within the next couple of blocks.
      * This should be adjusted from time to time. Last adjustment: February 2017.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 1 mBTC
+    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100_000); // 1 mBTC
 
     private final int protocolVersion;
 
