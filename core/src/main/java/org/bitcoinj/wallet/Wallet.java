@@ -4260,7 +4260,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
     public Transaction createSend(Address address, Coin value)
-            throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+            throws InsufficientMoneyException, CompletionException {
         return createSend(address, value, false);
     }
 
@@ -4298,7 +4298,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
     public Transaction createSend(Address address, Coin value, boolean allowUnconfirmed)
-            throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+            throws InsufficientMoneyException, CompletionException {
         SendRequest req = SendRequest.to(address, value);
         if (allowUnconfirmed)
             req.allowUnconfirmed();
@@ -4322,7 +4322,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
     public Transaction sendCoinsOffline(SendRequest request)
-            throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+            throws InsufficientMoneyException, CompletionException {
         lock.lock();
         try {
             completeTx(request);
@@ -4361,7 +4361,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
     public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value)
-            throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+            throws InsufficientMoneyException, CompletionException {
         SendRequest request = SendRequest.to(to, value);
         return sendCoins(broadcaster, request);
     }
@@ -4389,7 +4389,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
     public SendResult sendCoins(TransactionBroadcaster broadcaster, SendRequest request)
-            throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+            throws InsufficientMoneyException, CompletionException {
         // Should not be locked here, as we're going to call into the broadcaster and that might want to hold its
         // own lock. sendCoinsOffline handles everything that needs to be locked.
         checkState(!lock.isHeldByCurrentThread());
@@ -4422,7 +4422,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
     public SendResult sendCoins(SendRequest request)
-            throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+            throws InsufficientMoneyException, CompletionException {
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
         checkState(broadcaster != null, () ->
                 "no transaction broadcaster is configured");
@@ -4445,7 +4445,7 @@ public class Wallet extends BaseTaggableObject
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
     public Transaction sendCoins(Peer peer, SendRequest request)
-            throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+            throws InsufficientMoneyException, CompletionException {
         Transaction tx = sendCoinsOffline(request);
         peer.sendMessage(tx);
         return tx;
@@ -4563,7 +4563,7 @@ public class Wallet extends BaseTaggableObject
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
-    public void completeTx(SendRequest req) throws InsufficientMoneyException, BadWalletEncryptionKeyException {
+    public void completeTx(SendRequest req) throws InsufficientMoneyException, CompletionException {
         lock.lock();
         try {
             checkArgument(!req.completed, () ->
