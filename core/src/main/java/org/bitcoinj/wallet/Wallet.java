@@ -2626,7 +2626,7 @@ public class Wallet extends BaseTaggableObject
                         // included once again. We could have a separate was-in-chain-and-now-isn't confidence type
                         // but this way is backwards compatible with existing software, and the new state probably
                         // wouldn't mean anything different to just remembering peers anyway.
-                        if (confidence.incrementDepthInBlocks() > Context.getOrCreate().getEventHorizon())
+                        if (confidence.getDepthInBlocks() > Context.getOrCreate().getEventHorizon())
                             confidence.clearBroadcastBy();
                         confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
                     }
@@ -5125,15 +5125,9 @@ public class Wallet extends BaseTaggableObject
             // doesn't matter - the miners deleted T1 from their mempool, will resurrect T2 and put that into the
             // mempool and so T1 is still seen as a losing double spend.
 
-            // The old blocks have contributed to the depth for all the transactions in the
-            // wallet that are in blocks up to and including the chain split block.
-            // The total depth is calculated here and then subtracted from the appropriate transactions.
-            int depthToSubtract = oldBlocks.size();
-            log.info("depthToSubtract = " + depthToSubtract);
-            // Remove depthToSubtract from all transactions in the wallet except for pending.
-            subtractDepth(depthToSubtract, spent.values());
-            subtractDepth(depthToSubtract, unspent.values());
-            subtractDepth(depthToSubtract, dead.values());
+            notifyBuildingConfidenceListeners(spent.values());
+            notifyBuildingConfidenceListeners(unspent.values());
+            notifyBuildingConfidenceListeners(dead.values());
 
             // The effective last seen block is now the split point so set the lastSeenBlockHash.
             setLastBlockSeenHash(splitPoint.getHeader().getHash());
@@ -5170,13 +5164,9 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /**
-     * Subtract the supplied depth from the given transactions.
-     */
-    private void subtractDepth(int depthToSubtract, Collection<Transaction> transactions) {
+    private void notifyBuildingConfidenceListeners(Collection<Transaction> transactions) {
         for (Transaction tx : transactions) {
             if (tx.getConfidence().getConfidenceType() == ConfidenceType.BUILDING) {
-                tx.getConfidence().setDepthInBlocks(tx.getConfidence().getDepthInBlocks() - depthToSubtract);
                 confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.DEPTH);
             }
         }

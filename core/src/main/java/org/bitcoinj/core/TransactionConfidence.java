@@ -66,14 +66,19 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * <p>Alternatively, you may know that the transaction is "dead", that is, one or more of its inputs have
  * been double spent and will never confirm unless there is another re-org.</p>
  *
- * <p>TransactionConfidence is updated via the {@link TransactionConfidence#incrementDepthInBlocks()}
- * method to ensure the block depth is up to date.</p>
  * To make a copy that won't be changed, use {@link TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence {
     public static class Factory {
+
+        final ChainHeightSupplier chainHeightSupplier;
+
+        public Factory(ChainHeightSupplier chainHeightSupplier) {
+            this.chainHeightSupplier = chainHeightSupplier;
+        }
+
         public TransactionConfidence createConfidence(Sha256Hash hash) {
-            return new TransactionConfidence(hash);
+            return new TransactionConfidence(hash, chainHeightSupplier);
         }
     }
 
@@ -88,11 +93,11 @@ public class TransactionConfidence {
     private Instant lastBroadcastTime = null;
     /** The Transaction that this confidence object is associated with. */
     private final Sha256Hash hash;
+
+    private final ChainHeightSupplier chainHeightSupplier;
+
     // Lazily created listeners array.
     private CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
-
-    // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
-    private int depth;
 
     /** Describes the state of the transaction in general terms. Properties can be read to learn specifics. */
     public enum ConfidenceType {
@@ -162,11 +167,12 @@ public class TransactionConfidence {
     }
     private Source source = Source.UNKNOWN;
 
-    public TransactionConfidence(Sha256Hash hash) {
+    public TransactionConfidence(Sha256Hash hash, ChainHeightSupplier chainHeightSupplier) {
         // Assume a default number of peers for our set.
         broadcastBy = new CopyOnWriteArrayList<>();
         listeners = new CopyOnWriteArrayList<>();
         this.hash = hash;
+        this.chainHeightSupplier = chainHeightSupplier;
     }
 
     /**
@@ -269,7 +275,6 @@ public class TransactionConfidence {
         if (appearedAtChainHeight < 0)
             throw new IllegalArgumentException("appearedAtChainHeight out of range");
         this.appearedAtChainHeight = appearedAtChainHeight;
-        this.depth = 1;
         setConfidenceType(ConfidenceType.BUILDING);
     }
 
@@ -292,7 +297,6 @@ public class TransactionConfidence {
             overridingTransaction = null;
         }
         if (confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT) {
-            depth = 0;
             appearedAtChainHeight = -1;
         }
     }
@@ -401,14 +405,17 @@ public class TransactionConfidence {
         return builder.toString();
     }
 
+    @Deprecated
     /**
      * Called by the wallet when the tx appears on the best chain and a new block is added to the top. Updates the
      * internal counter that tracks how deeply buried the block is.
      *
      * @return the new depth
+     *
+     * @deprecated Use {@link TransactionConfidence#getDepthInBlocks()} directly.
      */
     public synchronized int incrementDepthInBlocks() {
-        return ++this.depth;
+        return getDepthInBlocks();
     }
 
     /**
@@ -422,14 +429,17 @@ public class TransactionConfidence {
      * the depth is zero.</p>
      */
     public synchronized int getDepthInBlocks() {
-        return depth;
+        if (appearedAtChainHeight == -1){
+            return 0;
+        }
+        return chainHeightSupplier.get() - appearedAtChainHeight + 1;
     }
 
-    /*
+    @Deprecated
+    /**
      * Set the depth in blocks. Having one block confirmation is a depth of one.
      */
     public synchronized void setDepthInBlocks(int depth) {
-        this.depth = depth;
     }
 
     /**
@@ -470,7 +480,7 @@ public class TransactionConfidence {
 
     /** Returns a copy of this object. Event listeners are not duplicated. */
     public TransactionConfidence duplicate() {
-        TransactionConfidence c = new TransactionConfidence(hash);
+        TransactionConfidence c = new TransactionConfidence(hash, chainHeightSupplier);
         c.broadcastBy.addAll(broadcastBy);
         c.lastBroadcastTime = lastBroadcastTime;
         synchronized (this) {
