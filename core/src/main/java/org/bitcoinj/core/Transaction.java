@@ -1422,7 +1422,7 @@ public class Transaction extends BaseMessage {
             size += 2; // marker, flag
         size += VarInt.sizeOf(inputs.size());
         for (TransactionInput in : inputs)
-            size += in.getMessageSize();
+            size += in.messageSize();
         size += VarInt.sizeOf(outputs.size());
         for (TransactionOutput out : outputs)
             size += out.messageSize();

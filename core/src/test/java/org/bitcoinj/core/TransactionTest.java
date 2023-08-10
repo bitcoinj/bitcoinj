@@ -179,7 +179,7 @@ public class TransactionTest {
         TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().program(),
                 new TransactionOutPoint(0, Sha256Hash.ZERO_HASH));
         tx.addInput(input);
-        length += input.getMessageSize();
+        length += input.messageSize();
 
         // add fake transaction output
         TransactionOutput output = new TransactionOutput(null, Coin.COIN, ADDRESS);

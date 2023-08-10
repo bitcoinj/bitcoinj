@@ -126,7 +126,7 @@ public class TransactionInputTest {
     @Test
     @Parameters(method = "randomInputs")
     public void readAndWrite(TransactionInput input) {
-        ByteBuffer buf = ByteBuffer.allocate(input.getMessageSize());
+        ByteBuffer buf = ByteBuffer.allocate(input.messageSize());
         input.write(buf);
         assertFalse(buf.hasRemaining());
         ((Buffer) buf).rewind();
