@@ -2292,7 +2292,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request15 = SendRequest.to(OTHER_ADDRESS, CENT);
         for (int i = 0; i < 29; i++)
             request15.tx.addOutput(CENT, OTHER_ADDRESS);
-        assertTrue(request15.tx.serialize().length > 1000);
+        assertTrue(request15.tx.messageSize() > 1000);
         request15.feePerKb = Transaction.DEFAULT_TX_FEE;
         request15.ensureMinRequiredFee = true;
         wallet.completeTx(request15);
@@ -2309,7 +2309,7 @@ public class WalletTest extends TestWithWallet {
         request16.ensureMinRequiredFee = true;
         for (int i = 0; i < 29; i++)
             request16.tx.addOutput(CENT, OTHER_ADDRESS);
-        assertTrue(request16.tx.serialize().length > 1000);
+        assertTrue(request16.tx.messageSize() > 1000);
         wallet.completeTx(request16);
         // Just the reference fee should be added if feePerKb == 0
         // Hardcoded tx length because actual length may vary depending on actual signature length
@@ -2331,14 +2331,14 @@ public class WalletTest extends TestWithWallet {
         assertEquals(Coin.valueOf(99900), request17.tx.getFee());
         assertEquals(1, request17.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 999
-        int theoreticalMaxLength17 = request17.tx.serialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength17 = request17.tx.messageSize() + myKey.getPubKey().length + 75;
         for (TransactionInput in : request17.tx.getInputs())
             theoreticalMaxLength17 -= in.getScriptBytes().length;
         assertEquals(999, theoreticalMaxLength17);
         Transaction spend17 = request17.tx;
         {
             // Its actual size must be between 996 and 999 (inclusive) as signatures have a 3-byte size range (almost always)
-            final int length = spend17.serialize().length;
+            final int length = spend17.messageSize();
             assertTrue(Integer.toString(length), length >= 996 && length <= 999);
         }
         // Now check that it got a fee of 1 since its max size is 999 (1kb).
@@ -2359,13 +2359,13 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request18.tx.getInputs().size());
         // Calculate its max length to make sure it is indeed 1001
         Transaction spend18 = request18.tx;
-        int theoreticalMaxLength18 = spend18.serialize().length + myKey.getPubKey().length + 75;
+        int theoreticalMaxLength18 = spend18.messageSize() + myKey.getPubKey().length + 75;
         for (TransactionInput in : spend18.getInputs())
             theoreticalMaxLength18 -= in.getScriptBytes().length;
         assertEquals(1001, theoreticalMaxLength18);
         // Its actual size must be between 998 and 1000 (inclusive) as signatures have a 3-byte size range (almost always)
-        assertTrue(spend18.serialize().length >= 998);
-        assertTrue(spend18.serialize().length <= 1001);
+        assertTrue(spend18.messageSize() >= 998);
+        assertTrue(spend18.messageSize() <= 1001);
         // Now check that it did get a fee since its max size is 1000
         assertEquals(25, spend18.getOutputs().size());
         // We optimize for priority, so the output selected should be the largest one
@@ -2471,7 +2471,7 @@ public class WalletTest extends TestWithWallet {
         Coin dustThresholdMinusOne = new TransactionOutput(null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue().subtract(SATOSHI);
         request26.tx.addOutput(CENT.subtract(fee.add(dustThresholdMinusOne)),
                 OTHER_ADDRESS);
-        assertTrue(request26.tx.serialize().length > 1000);
+        assertTrue(request26.tx.messageSize() > 1000);
         request26.feePerKb = SATOSHI;
         request26.ensureMinRequiredFee = true;
         wallet.completeTx(request26);
