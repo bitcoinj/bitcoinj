@@ -34,6 +34,7 @@ import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -41,6 +42,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -164,6 +166,25 @@ public class TransactionOutput {
         int size = Coin.BYTES; // value
         size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
         return size;
+    }
+
+    /**
+     * Can this output be converted to an address (for a given network.)
+     * @return true if this output has an address, false otherwise
+     */
+    public boolean hasAddress() {
+        Script script = getScriptPubKey();
+        return ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2TR(script) || ScriptPattern.isP2SH(script);
+    }
+
+    /**
+     * Get the address for this output.
+     * @param network the network this output exists on
+     * @return The address for this output or empty if an address can't be extracted
+     */
+    public Optional<Address> getAddress(@Nonnull Network network) {
+        Objects.requireNonNull(network);
+        return Optional.ofNullable(hasAddress() ? getScriptPubKey().getToAddress(network) : null);
     }
 
     /**
@@ -363,11 +384,10 @@ public class TransactionOutput {
         buf.append(Coin.valueOf(value).toFriendlyString());
         try {
             Script script = getScriptPubKey();
-            if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2TR(script)
-                    || ScriptPattern.isP2SH(script)) {
+            if (hasAddress()) {
                 buf.append(" to ").append(script.getScriptType().name());
                 if (network != null)
-                    buf.append(" ").append(script.getToAddress(network));
+                    buf.append(" ").append(getAddress(network).get());
             } else if (ScriptPattern.isP2PK(script)) {
                 buf.append(" to pubkey ").append(ByteUtils.formatHex(ScriptPattern.extractKeyFromP2PK(script)));
             } else if (ScriptPattern.isSentToMultisig(script)) {
