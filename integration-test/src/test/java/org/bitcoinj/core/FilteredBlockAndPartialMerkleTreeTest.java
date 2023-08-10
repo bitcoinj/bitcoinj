@@ -246,8 +246,8 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
             }
 
             @Override
-            public int getMessageSize() {
-                return super.getMessageSize() + 4; // adjust for the longer VarInt
+            public int messageSize() {
+                return super.messageSize() + 4; // adjust for the longer VarInt
             }
         };
         byte[] serializedPmt = pmt.serialize();

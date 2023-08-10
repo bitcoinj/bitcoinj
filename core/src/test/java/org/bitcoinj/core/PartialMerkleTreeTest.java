@@ -38,7 +38,7 @@ public class PartialMerkleTreeTest {
     @Test
     @Parameters(method = "randomPartialMerkleTrees")
     public void readAndWrite(PartialMerkleTree pmt) {
-        ByteBuffer buf = ByteBuffer.allocate(pmt.getMessageSize());
+        ByteBuffer buf = ByteBuffer.allocate(pmt.messageSize());
         pmt.write(buf);
         assertFalse(buf.hasRemaining());
         ((Buffer) buf).rewind();

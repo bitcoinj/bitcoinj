@@ -144,7 +144,7 @@ public class PartialMerkleTree {
      * @return byte array containing the partial merkle tree
      */
     public byte[] serialize() {
-        return write(ByteBuffer.allocate(getMessageSize())).array();
+        return write(ByteBuffer.allocate(messageSize())).array();
     }
 
     /**
@@ -153,12 +153,20 @@ public class PartialMerkleTree {
      *
      * @return size of the serialized message in bytes
      */
-    public int getMessageSize() {
+    public int messageSize() {
         int size = Integer.BYTES; // transactionCount
         size += VarInt.sizeOf(hashes.size());
         size += hashes.size() * Sha256Hash.LENGTH;
         size += VarInt.sizeOf(matchedChildBits.length) + matchedChildBits.length;
         return size;
+    }
+
+    /**
+     * @deprecated Use {@link #messageSize()}
+     */
+    @Deprecated
+    public int getMessageSize() {
+        return messageSize();
     }
 
     // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.
