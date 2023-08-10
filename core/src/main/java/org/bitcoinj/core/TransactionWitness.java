@@ -138,7 +138,7 @@ public class TransactionWitness {
      * @return byte array containing the transaction witness
      */
     public byte[] serialize() {
-        return write(ByteBuffer.allocate(getMessageSize())).array();
+        return write(ByteBuffer.allocate(messageSize())).array();
     }
 
     /**
@@ -147,11 +147,19 @@ public class TransactionWitness {
      *
      * @return size of the serialized message in bytes
      */
-    public int getMessageSize() {
+    public int messageSize() {
         int size = VarInt.sizeOf(pushes.size());
         for (byte[] push : pushes)
             size += VarInt.sizeOf(push.length) + push.length;
         return size;
+    }
+
+    /**
+     * @deprecated Use {@link #messageSize()}
+     */
+    @Deprecated
+    public int getMessageSize() {
+        return messageSize();
     }
 
     @Override

@@ -73,7 +73,7 @@ public class TransactionWitnessTest {
     @Test
     @Parameters(method = "randomWitness")
     public void readAndWrite(TransactionWitness witness) {
-        ByteBuffer buf = ByteBuffer.allocate(witness.getMessageSize());
+        ByteBuffer buf = ByteBuffer.allocate(witness.messageSize());
         witness.write(buf);
         assertFalse(buf.hasRemaining());
         ((Buffer) buf).rewind();

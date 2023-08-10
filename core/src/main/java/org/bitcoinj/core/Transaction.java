@@ -1428,7 +1428,7 @@ public class Transaction extends BaseMessage {
             size += out.messageSize();
         if (useSegwit)
             for (TransactionInput in : inputs)
-                size += in.getWitness().getMessageSize();
+                size += in.getWitness().messageSize();
         size += 4; // locktime
         return size;
     }
