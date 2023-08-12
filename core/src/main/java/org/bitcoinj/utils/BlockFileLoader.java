@@ -173,13 +173,13 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                     if (nextChar == (packetMagic & 0xff))
                         break;
                 }
-                byte[] bytes = new byte[4];
-                currentFileStream.read(bytes, 0, 4);
-                long size = ByteUtils.readUint32(bytes, 0);
-                bytes = new byte[(int) size];
-                currentFileStream.read(bytes, 0, (int) size);
+                byte[] sizeBytes = new byte[4];
+                currentFileStream.read(sizeBytes, 0, 4);
+                long size = ByteUtils.readUint32(sizeBytes, 0);
+                byte[] dataBytes = new byte[(int) size];
+                currentFileStream.read(dataBytes, 0, (int) size);
                 try {
-                    nextBlock = serializer.makeBlock(ByteBuffer.wrap(bytes));
+                    nextBlock = serializer.makeBlock(ByteBuffer.wrap(dataBytes));
                 } catch (ProtocolException e) {
                     nextBlock = null;
                     continue;
