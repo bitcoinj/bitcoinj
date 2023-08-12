@@ -69,10 +69,8 @@ public class SocketTimeoutTask implements TimeoutHandler {
 
     /**
      * Resets the current progress towards timeout to 0.
-     * @deprecated This will be made private once {@link AbstractTimeoutHandler} is removed.
      */
-    @Deprecated
-    synchronized void resetTimeout() {
+    private synchronized void resetTimeout() {
         if (timeoutTask != null)
             timeoutTask.cancel();
         if (timeout.isZero() || !timeoutEnabled)
