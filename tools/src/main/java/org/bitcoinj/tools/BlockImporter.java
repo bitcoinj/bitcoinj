@@ -29,16 +29,13 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 /** Very thin wrapper around {@link BlockFileLoader} */
 public class BlockImporter {
     public static void main(String[] args) throws BlockStoreException, VerificationException, PrunedException {
-        System.out.println("USAGE: BlockImporter (prod|test) (Disk|MemFull|Mem|SPV) [blockStore]");
+        System.out.println("USAGE: BlockImporter (mainnet|testnet|signet|regtest) (Disk|MemFull|Mem|SPV) [blockStore]");
         System.out.println("       blockStore is required unless type is Mem or MemFull");
         System.out.println("       Does full verification if the store supports it");
         checkArgument(args.length == 2 || args.length == 3);
-        
-        Network network;
-        if (args[0].equals("test"))
-            network = BitcoinNetwork.TESTNET;
-        else
-            network = BitcoinNetwork.MAINNET;
+
+        Network network = BitcoinNetwork.fromString(args[1])
+                .orElseThrow(() -> new IllegalArgumentException("Unknown network: " + args[1]));
         NetworkParameters params = NetworkParameters.of(network);
 
         BlockStore store;
