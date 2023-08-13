@@ -41,7 +41,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * blocks together. Importing block data with this tool can be a lot faster than syncing over the network, if you
  * have the files available.</p>
  * 
- * <p>In order to comply with {@link Iterator}, this class swallows a lot of {@link IOException}s, which may result in a few
+ * <p>In order to comply with {@link Iterable}, {@link BlockIterator} swallows a lot of {@link IOException}s, which may result in a few
  * blocks being missed followed by a huge set of orphan blocks.</p>
  * 
  * <p>To blindly import all files which can be found in Bitcoin Core (version 0.8 or higher) datadir automatically,
@@ -53,7 +53,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * }
  * }</p>
  */
-public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
+public class BlockFileLoader implements Iterable<Block> {
     /**
      * Gets the list of files which contain blocks from Bitcoin Core.
      */
@@ -81,10 +81,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
         return defaultBlocksDir;
     }
 
-    private final Iterator<File> fileIt;
-    private File file = null;
-    private FileInputStream currentFileStream = null;
-    private Block nextBlock = null;
+    private final List<File> files;
     private final long packetMagic;
     private final MessageSerializer serializer;
 
@@ -93,7 +90,7 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     }
 
     public BlockFileLoader(Network network, List<File> files) {
-        fileIt = files.iterator();
+        this.files = files;
         NetworkParameters params = NetworkParameters.of(network);
         packetMagic = params.getPacketMagic();
         serializer = params.getDefaultSerializer();
@@ -106,101 +103,113 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
 
     @Deprecated
     public BlockFileLoader(NetworkParameters params, List<File> files) {
-        fileIt = files.iterator();
+        this.files = files;
         packetMagic = params.getPacketMagic();
         serializer = params.getDefaultSerializer();
     }
 
-    @Override
-    public boolean hasNext() {
-        if (nextBlock == null)
-            loadNextBlock();
-        return nextBlock != null;
-    }
 
-    @Override
-    public Block next() throws NoSuchElementException {
-        if (!hasNext())
-            throw new NoSuchElementException();
-        Block next = nextBlock;
-        nextBlock = null;
-        return next;
-    }
-    
-    private void loadNextBlock() {
-        while (true) {
-            try {
-                if (!fileIt.hasNext() && (currentFileStream == null || currentFileStream.available() < 1))
-                    break;
-            } catch (IOException e) {
-                currentFileStream = null;
-                if (!fileIt.hasNext())
-                    break;
-            }
+    public class BlockIterator implements Iterator<Block>  {
+        private final Iterator<File> fileIt;
+        private File file = null;
+        private FileInputStream currentFileStream = null;
+        private Block nextBlock = null;
+
+        public BlockIterator(List<File> fileList) {
+            this.fileIt = fileList.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (nextBlock == null)
+                loadNextBlock();
+            return nextBlock != null;
+        }
+
+        @Override
+        public Block next() throws NoSuchElementException {
+            if (!hasNext())
+                throw new NoSuchElementException();
+            Block next = nextBlock;
+            nextBlock = null;
+            return next;
+        }
+
+        private void loadNextBlock() {
             while (true) {
                 try {
-                    if (currentFileStream != null && currentFileStream.available() > 0)
+                    if (!fileIt.hasNext() && (currentFileStream == null || currentFileStream.available() < 1))
                         break;
-                } catch (IOException e1) {
+                } catch (IOException e) {
                     currentFileStream = null;
+                    if (!fileIt.hasNext())
+                        break;
                 }
-                if (!fileIt.hasNext()) {
-                    nextBlock = null;
-                    currentFileStream = null;
-                    return;
-                }
-                file = fileIt.next();
-                try {
-                    currentFileStream = new FileInputStream(file);
-                } catch (FileNotFoundException e) {
-                    currentFileStream = null;
-                }
-            }
-            try {
-                int nextChar = currentFileStream.read();
-                while (nextChar != -1) {
-                    if (nextChar != ((packetMagic >>> 24) & 0xff)) {
-                        nextChar = currentFileStream.read();
-                        continue;
+                while (true) {
+                    try {
+                        if (currentFileStream != null && currentFileStream.available() > 0)
+                            break;
+                    } catch (IOException e1) {
+                        currentFileStream = null;
                     }
-                    nextChar = currentFileStream.read();
-                    if (nextChar != ((packetMagic >>> 16) & 0xff))
-                        continue;
-                    nextChar = currentFileStream.read();
-                    if (nextChar != ((packetMagic >>> 8) & 0xff))
-                        continue;
-                    nextChar = currentFileStream.read();
-                    if (nextChar == (packetMagic & 0xff))
-                        break;
+                    if (!fileIt.hasNext()) {
+                        nextBlock = null;
+                        currentFileStream = null;
+                        return;
+                    }
+                    file = fileIt.next();
+                    try {
+                        currentFileStream = new FileInputStream(file);
+                    } catch (FileNotFoundException e) {
+                        currentFileStream = null;
+                    }
                 }
-                byte[] bytes = new byte[4];
-                currentFileStream.read(bytes, 0, 4);
-                long size = ByteUtils.readUint32(bytes, 0);
-                bytes = new byte[(int) size];
-                currentFileStream.read(bytes, 0, (int) size);
                 try {
-                    nextBlock = serializer.makeBlock(ByteBuffer.wrap(bytes));
-                } catch (ProtocolException e) {
-                    nextBlock = null;
+                    int nextChar = currentFileStream.read();
+                    while (nextChar != -1) {
+                        if (nextChar != ((packetMagic >>> 24) & 0xff)) {
+                            nextChar = currentFileStream.read();
+                            continue;
+                        }
+                        nextChar = currentFileStream.read();
+                        if (nextChar != ((packetMagic >>> 16) & 0xff))
+                            continue;
+                        nextChar = currentFileStream.read();
+                        if (nextChar != ((packetMagic >>> 8) & 0xff))
+                            continue;
+                        nextChar = currentFileStream.read();
+                        if (nextChar == (packetMagic & 0xff))
+                            break;
+                    }
+                    byte[] bytes = new byte[4];
+                    currentFileStream.read(bytes, 0, 4);
+                    long size = ByteUtils.readUint32(bytes, 0);
+                    bytes = new byte[(int) size];
+                    currentFileStream.read(bytes, 0, (int) size);
+                    try {
+                        nextBlock = serializer.makeBlock(ByteBuffer.wrap(bytes));
+                    } catch (ProtocolException e) {
+                        nextBlock = null;
+                        continue;
+                    } catch (Exception e) {
+                        throw new RuntimeException("unexpected problem with block in " + file, e);
+                    }
+                    break;
+                } catch (IOException e) {
+                    currentFileStream = null;
                     continue;
-                } catch (Exception e) {
-                    throw new RuntimeException("unexpected problem with block in " + file, e);
                 }
-                break;
-            } catch (IOException e) {
-                currentFileStream = null;
-                continue;
             }
+        }
+
+        @Override
+        public void remove() throws UnsupportedOperationException {
+            throw new UnsupportedOperationException();
         }
     }
 
     @Override
-    public void remove() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Iterator<Block> iterator() {
-        return this;
+        return new BlockIterator(files);
     }
 }

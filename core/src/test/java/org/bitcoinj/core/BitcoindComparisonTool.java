@@ -78,7 +78,7 @@ public class BitcoindComparisonTool {
         FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
         final RuleList blockList = generator.getBlocksToTest(false, runExpensiveTests, blockFile);
         final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<>();
-        final Iterator<Block> blocks = new BlockFileLoader(PARAMS.network(), Arrays.asList(blockFile));
+        final Iterator<Block> blocks = new BlockFileLoader(PARAMS.network(), Arrays.asList(blockFile)).iterator();
 
         try {
             FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
