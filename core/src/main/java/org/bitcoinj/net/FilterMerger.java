@@ -46,6 +46,7 @@ public class FilterMerger {
     // We use a constant tweak to avoid giving up privacy when we regenerate our filter with new keys
     private final int bloomFilterTweak = new Random().nextInt();
 
+    // TODO: Make final after deprecated setBloomFilterFPRate() method is removed
     private volatile double vBloomFilterFPRate;
     private int lastBloomFilterElementCount;
     private BloomFilter lastFilter;
@@ -108,6 +109,7 @@ public class FilterMerger {
         }
     }
 
+    @Deprecated
     public void setBloomFilterFPRate(double bloomFilterFPRate) {
         this.vBloomFilterFPRate = bloomFilterFPRate;
     }

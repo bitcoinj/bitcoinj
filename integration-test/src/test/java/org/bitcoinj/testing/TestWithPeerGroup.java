@@ -113,7 +113,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     protected final Semaphore jobBlocks = new Semaphore(0);
 
     private PeerGroup createPeerGroup(final ClientConnectionManager manager) {
-        return new PeerGroup(UNITTEST, blockChain, manager) {
+        return new PeerGroup(UNITTEST, blockChain, manager, PeerGroup.DEFAULT_BLOOM_FILTER_FP_RATE) {
             @Override
             protected ListeningScheduledExecutorService createPrivateExecutor() {
                 return MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup test thread")) {
