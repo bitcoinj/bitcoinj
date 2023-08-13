@@ -55,9 +55,15 @@ public class FilterMerger {
     }
 
     public static class Result {
-        public BloomFilter filter;
-        public Instant earliestKeyTime;
-        public boolean changed;
+        public final BloomFilter filter;
+        public final Instant earliestKeyTime;
+        public final boolean changed;
+
+        public Result(BloomFilter filter, Instant earliestKeyTime, boolean changed) {
+            this.filter = filter;
+            this.earliestKeyTime = earliestKeyTime;
+            this.changed = changed;
+        }
     }
 
     public Result calculate(List<PeerFilterProvider> providerList) {
@@ -72,13 +78,20 @@ public class FilterMerger {
                 provider.beginBloomFilterCalculation();
                 begunProviders.add(provider);
             }
-            Result result = new Result();
-            result.earliestKeyTime = Instant.MAX;
-            int elements = 0;
-            for (PeerFilterProvider p : providers) {
-                result.earliestKeyTime = TimeUtils.earlier(result.earliestKeyTime, p.earliestKeyCreationTime());
-                elements += p.getBloomFilterElementCount();
-            }
+            BloomFilter filter;
+            boolean changed;
+            // We adjust the earliest key time backwards by a week to handle the case of clock drift. This can occur
+            // both in block header timestamps and if the users clock was out of sync when the key was first created
+            // (to within a small amount of tolerance).
+            Instant earliestKeyTime = providers.stream()
+                    .map(PeerFilterProvider::earliestKeyCreationTime)
+                    .min(Instant::compareTo)
+                    .map(t -> t.minus(7, ChronoUnit.DAYS))
+                    .orElse(Instant.MAX);
+
+            int elements = providers.stream()
+                    .mapToInt(PeerFilterProvider::getBloomFilterElementCount)
+                    .sum();
 
             if (elements > 0) {
                 // We stair-step our element count so that we avoid creating a filter with different parameters
@@ -88,19 +101,18 @@ public class FilterMerger {
                 lastBloomFilterElementCount = elements > lastBloomFilterElementCount ? elements + 100 : lastBloomFilterElementCount;
                 double fpRate = vBloomFilterFPRate;
                 // We now always use UPDATE_ALL because with segwit there is hardly any wallet that can do without.
-                BloomFilter filter = new BloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak,
+                filter = new BloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak,
                         BloomFilter.BloomUpdate.UPDATE_ALL);
                 for (PeerFilterProvider p : providers)
                     filter.merge(p.getBloomFilter(lastBloomFilterElementCount, fpRate, bloomFilterTweak));
 
-                result.changed = !filter.equals(lastFilter);
-                result.filter = lastFilter = filter;
+                changed = !filter.equals(lastFilter);
+                lastFilter = filter;
+            } else {
+                changed = false;
+                filter = null;
             }
-            // Now adjust the earliest key time backwards by a week to handle the case of clock drift. This can occur
-            // both in block header timestamps and if the users clock was out of sync when the key was first created
-            // (to within a small amount of tolerance).
-            result.earliestKeyTime = result.earliestKeyTime.minus(7, ChronoUnit.DAYS);
-            return result;
+            return new Result(filter, earliestKeyTime, changed);
         } finally {
             for (PeerFilterProvider provider : begunProviders) {
                 provider.endBloomFilterCalculation();
