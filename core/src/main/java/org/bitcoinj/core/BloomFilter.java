@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static java.lang.Math.E;
 import static java.lang.Math.log;
@@ -254,6 +255,8 @@ public class BloomFilter extends BaseMessage {
     public synchronized void insert(byte[] object) {
         for (int i = 0; i < hashFuncs; i++)
             ByteUtils.setBitLE(data, murmurHash3(data, nTweak, i, object));
+        IntStream.range(0, (int) hashFuncs)
+                .forEach(i -> ByteUtils.setBitLE(data, murmurHash3(data, nTweak, i, object)));
     }
 
     /** Inserts the given key and equivalent hashed form (for the address). */
@@ -299,10 +302,8 @@ public class BloomFilter extends BaseMessage {
      * for when this can be a useful thing to do.
      */
     public synchronized boolean matchesAll() {
-        for (byte b : data)
-            if (b != (byte) 0xff)
-                return false;
-        return true;
+        return IntStream.range(0, data.length)
+                .allMatch(i -> data[i] == (byte) 0xff);
     }
 
     /**
@@ -327,7 +328,7 @@ public class BloomFilter extends BaseMessage {
      * filtered block already has the matched transactions associated with it.
      */
     public synchronized FilteredBlock applyAndUpdate(Block block) {
-        List<Transaction> txns = block.getTransactions();
+        List<Transaction> txns = Objects.requireNonNull(block.getTransactions());
         List<Sha256Hash> txHashes = new ArrayList<>(txns.size());
         List<Transaction> matched = new ArrayList<>();
         byte[] bits = new byte[(int) Math.ceil(txns.size() / 8.0)];
@@ -365,16 +366,17 @@ public class BloomFilter extends BaseMessage {
             }
         }
         if (found) return true;
-        for (TransactionInput input : tx.getInputs()) {
-            if (contains(input.getOutpoint().serialize())) {
-                return true;
-            }
-            for (ScriptChunk chunk : input.getScriptSig().chunks()) {
-                if (chunk.isPushData() && contains(chunk.data))
-                    return true;
-            }
-        }
-        return false;
+        return anyInputMatches(tx);
+    }
+
+    private boolean anyInputMatches(Transaction tx) {
+        return tx.getInputs().stream().anyMatch(this::inputMatches);
+    }
+
+    private boolean inputMatches(TransactionInput input) {
+        return contains(input.getOutpoint().serialize()) ||
+                input.getScriptSig().chunks().stream()
+                        .anyMatch(c -> c.isPushData() && contains(c.data));
     }
     
     @Override
