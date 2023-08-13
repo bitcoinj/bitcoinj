@@ -33,6 +33,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
@@ -211,5 +213,9 @@ public class BlockFileLoader implements Iterable<Block> {
     @Override
     public Iterator<Block> iterator() {
         return new BlockIterator(files);
+    }
+
+    public Stream<Block> stream() {
+        return StreamSupport.stream(spliterator(), false);
     }
 }
