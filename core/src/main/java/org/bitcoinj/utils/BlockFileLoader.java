@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Matt Corallo.
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -43,7 +45,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * blocks together. Importing block data with this tool can be a lot faster than syncing over the network, if you
  * have the files available.</p>
  * 
- * <p>In order to comply with {@link Iterable}, {@link BlockIterator} swallows a lot of {@link IOException}s, which may result in a few
+ * <p>In order to comply with {@link Iterable}, {@link BlockFileIterator} swallows a lot of {@link IOException}s, which may result in a few
  * blocks being missed followed by a huge set of orphan blocks.</p>
  * 
  * <p>To blindly import all files which can be found in Bitcoin Core (version 0.8 or higher) datadir automatically,
@@ -111,14 +113,17 @@ public class BlockFileLoader implements Iterable<Block> {
     }
 
 
-    public class BlockIterator implements Iterator<Block>  {
-        private final Iterator<File> fileIt;
-        private File file = null;
-        private FileInputStream currentFileStream = null;
-        private Block nextBlock = null;
+    /**
+     * Iterates all the blocks in a single block file.
+     */
+    public class BlockFileIterator implements Iterator<Block> {
+        private final File file;
+        private final FileInputStream currentFileStream;
+        private org.bitcoinj.core.Block nextBlock = null;
 
-        public BlockIterator(List<File> fileList) {
-            this.fileIt = fileList.iterator();
+        public BlockFileIterator(File blockFile) throws FileNotFoundException {
+            this.file = blockFile;
+            currentFileStream = new FileInputStream(blockFile);
         }
 
         @Override
@@ -138,69 +143,41 @@ public class BlockFileLoader implements Iterable<Block> {
         }
 
         private void loadNextBlock() {
-            while (true) {
-                try {
-                    if (!fileIt.hasNext() && (currentFileStream == null || currentFileStream.available() < 1))
-                        break;
-                } catch (IOException e) {
-                    currentFileStream = null;
-                    if (!fileIt.hasNext())
-                        break;
+            try {
+                if (currentFileStream.available() < 1) {
+                    nextBlock = null;
+                    return;
                 }
-                while (true) {
-                    try {
-                        if (currentFileStream != null && currentFileStream.available() > 0)
-                            break;
-                    } catch (IOException e1) {
-                        currentFileStream = null;
-                    }
-                    if (!fileIt.hasNext()) {
-                        nextBlock = null;
-                        currentFileStream = null;
-                        return;
-                    }
-                    file = fileIt.next();
-                    try {
-                        currentFileStream = new FileInputStream(file);
-                    } catch (FileNotFoundException e) {
-                        currentFileStream = null;
-                    }
-                }
-                try {
-                    int nextChar = currentFileStream.read();
-                    while (nextChar != -1) {
-                        if (nextChar != ((packetMagic >>> 24) & 0xff)) {
-                            nextChar = currentFileStream.read();
-                            continue;
-                        }
+                int nextChar = currentFileStream.read();
+                while (nextChar != -1) {
+                    if (nextChar != ((packetMagic >>> 24) & 0xff)) {
                         nextChar = currentFileStream.read();
-                        if (nextChar != ((packetMagic >>> 16) & 0xff))
-                            continue;
-                        nextChar = currentFileStream.read();
-                        if (nextChar != ((packetMagic >>> 8) & 0xff))
-                            continue;
-                        nextChar = currentFileStream.read();
-                        if (nextChar == (packetMagic & 0xff))
-                            break;
-                    }
-                    byte[] bytes = new byte[4];
-                    currentFileStream.read(bytes, 0, 4);
-                    long size = ByteUtils.readUint32(bytes, 0);
-                    bytes = new byte[(int) size];
-                    currentFileStream.read(bytes, 0, (int) size);
-                    try {
-                        nextBlock = serializer.makeBlock(ByteBuffer.wrap(bytes));
-                    } catch (ProtocolException e) {
-                        nextBlock = null;
                         continue;
-                    } catch (Exception e) {
-                        throw new RuntimeException("unexpected problem with block in " + file, e);
                     }
-                    break;
-                } catch (IOException e) {
-                    currentFileStream = null;
-                    continue;
+                    nextChar = currentFileStream.read();
+                    if (nextChar != ((packetMagic >>> 16) & 0xff))
+                        continue;
+                    nextChar = currentFileStream.read();
+                    if (nextChar != ((packetMagic >>> 8) & 0xff))
+                        continue;
+                    nextChar = currentFileStream.read();
+                    if (nextChar == (packetMagic & 0xff))
+                        break;
                 }
+                byte[] bytes = new byte[4];
+                currentFileStream.read(bytes, 0, 4);
+                long size = ByteUtils.readUint32(bytes, 0);
+                bytes = new byte[(int) size];
+                currentFileStream.read(bytes, 0, (int) size);
+                try {
+                    nextBlock = serializer.makeBlock(ByteBuffer.wrap(bytes));
+                } catch (ProtocolException e) {
+                    nextBlock = null;
+                } catch (Exception e) {
+                    throw new RuntimeException("unexpected problem with block in " + file, e);
+                }
+            } catch (IOException e) {
+                nextBlock = null;
             }
         }
 
@@ -212,10 +189,25 @@ public class BlockFileLoader implements Iterable<Block> {
 
     @Override
     public Iterator<Block> iterator() {
-        return new BlockIterator(files);
+        return stream().iterator();
     }
 
     public Stream<Block> stream() {
-        return StreamSupport.stream(spliterator(), false);
+        return files.stream()
+                .flatMap(this::fileBlockStream);
+    }
+
+    protected Stream<Block> fileBlockStream(File file) {
+        return StreamSupport.stream(fileBlockSpliterator(file), false);
+    }
+
+    protected Spliterator<Block> fileBlockSpliterator(File file) {
+        try {
+            Iterator<Block> iterator = new BlockFileIterator(file);
+            int characteristics = Spliterator.DISTINCT | Spliterator.ORDERED;
+            return Spliterators.spliteratorUnknownSize(iterator, characteristics);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
