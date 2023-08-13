@@ -66,9 +66,9 @@ public class BloomFilter extends BaseMessage {
     }
     
     private byte[] data;
-    private long hashFuncs;
-    private int nTweak;
-    private byte nFlags;
+    private final long hashFuncs;
+    private final int nTweak;
+    private final byte nFlags;
 
     // Same value as Bitcoin Core
     // A filter of 20,000 items and a false positive rate of 0.1% or one of 10,000 items and 0.0001% is just under 36,000 bytes
@@ -138,8 +138,8 @@ public class BloomFilter extends BaseMessage {
         size = max(1, min(size, (int) MAX_FILTER_SIZE * 8) / 8);
         data = new byte[size];
         // Optimal number of hash functions for a given filter size and element count.
-        hashFuncs = (int)(data.length * 8 / (double)elements * log(2));
-        hashFuncs = max(1, min(hashFuncs, MAX_HASH_FUNCS));
+        long numHashFuncs = (int)(data.length * 8 / (double)elements * log(2));
+        this.hashFuncs = max(1, min(numHashFuncs, MAX_HASH_FUNCS));
         this.nTweak = randomNonce;
         this.nFlags = (byte)(0xff & updateFlag.ordinal());
     }
