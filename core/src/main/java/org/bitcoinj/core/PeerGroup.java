@@ -417,7 +417,19 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param connectionManager used to create new connections and keep track of existing ones.
      */
     protected PeerGroup(Network network, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
-        this(NetworkParameters.of(Objects.requireNonNull(network)), chain, connectionManager);
+        this(NetworkParameters.of(Objects.requireNonNull(network)), chain, connectionManager, DEFAULT_BLOOM_FILTER_FP_RATE);
+    }
+
+
+    /**
+     * Create a PeerGroup for the given network, chain and connection manager.
+     * @param network the P2P network to connect to
+     * @param chain used to process blocks
+     * @param connectionManager used to create new connections and keep track of existing ones.
+     * @param bloomFilterFpRate false positive rate for bloom filters
+     */
+    protected PeerGroup(Network network, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, double bloomFilterFpRate) {
+        this(NetworkParameters.of(Objects.requireNonNull(network)), chain, connectionManager, bloomFilterFpRate);
     }
 
     /**
@@ -425,9 +437,10 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param params the P2P network to connect to
      * @param chain used to process blocks
      * @param connectionManager used to create new connections and keep track of existing ones.
+     * @param bloomFilterFpRate false positive rate for bloom filters
      */
     // For testing only
-    protected PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
+    protected PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager, double bloomFilterFpRate) {
         Objects.requireNonNull(params);
         Context.getOrCreate(); // create a context for convenience
         this.params = params;
@@ -473,7 +486,7 @@ public class PeerGroup implements TransactionBroadcaster {
         channels = connectionManager;
         peerDiscoverers = new CopyOnWriteArraySet<>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
-        bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
+        bloomFilterMerger = new FilterMerger(bloomFilterFpRate);
         vMinRequiredProtocolVersion = ProtocolVersion.BLOOM_FILTER.intValue();
     }
 
@@ -1430,6 +1443,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * <p>See the docs for {@link BloomFilter#BloomFilter(int, double, int, BloomFilter.BloomUpdate)} for a brief
      * explanation of anonymity when using bloom filters.</p>
      */
+    @Deprecated
     public void setBloomFilterFalsePositiveRate(double bloomFilterFPRate) {
         lock.lock();
         try {
