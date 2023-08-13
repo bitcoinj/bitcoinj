@@ -67,4 +67,42 @@ public class BlockFileLoaderTest {
 
         assertEquals(439, blockCount2);
     }
+
+    @Test
+    public void streamFirst100kCount() {
+        File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+
+        long blockCount = loader.stream().count();
+
+        assertEquals(439, blockCount);
+    }
+
+    @Test
+    public void streamFirst100kTwice() {
+        File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+
+        long blockCount = loader.stream().count();
+
+        assertEquals(439, blockCount);
+
+        long blockCount2 = loader.stream().count();
+
+        assertEquals(439, blockCount2);
+    }
+
+    @Test
+    public void streamFirst100kCountTransactions() {
+        File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+
+        long transactionCount = loader.stream()
+                .map(Block::getTransactions)
+                .filter(Objects::nonNull)
+                .mapToLong(Collection::size)
+                .sum();
+
+        assertEquals(446, transactionCount);
+    }
 }
