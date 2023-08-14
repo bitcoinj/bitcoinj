@@ -23,6 +23,7 @@ import org.bitcoinj.core.MessageSerializer;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -58,6 +59,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * }</p>
  */
 public class BlockFileLoader implements Iterable<Block> {
+    private static final int BLOCKFILE_BUFFER_SIZE = 16*1024*1024;
     /**
      * Gets the list of files which contain blocks from Bitcoin Core.
      */
@@ -118,12 +120,12 @@ public class BlockFileLoader implements Iterable<Block> {
      */
     public class BlockFileIterator implements Iterator<Block> {
         private final File file;
-        private final FileInputStream currentFileStream;
+        private final BufferedInputStream currentFileStream;
         private org.bitcoinj.core.Block nextBlock = null;
 
         public BlockFileIterator(File blockFile) throws FileNotFoundException {
             this.file = blockFile;
-            currentFileStream = new FileInputStream(blockFile);
+            currentFileStream = new BufferedInputStream(new FileInputStream(blockFile), BLOCKFILE_BUFFER_SIZE);
         }
 
         @Override
