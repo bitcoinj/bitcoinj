@@ -17,8 +17,16 @@
 package org.bitcoinj.util;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
+import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PrunedException;
+import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -43,10 +51,37 @@ public class BlockFileLoaderBitcoindTest {
         BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, BlockFileLoader.getReferenceClientBlockFileList());
 
         long blockCount = 0;
+        long lastLog = 0;
         for (Block b : loader) {
+            if (blockCount >= lastLog + 10_000) {
+                lastLog = blockCount;
+                System.out.println("At block: " + blockCount);
+            }
             blockCount++;
-            System.out.println("Block count: " + blockCount);
         }
+        System.out.println("Final block height: " + (blockCount - 1));
+        assertTrue(blockCount > 1);
+    }
+
+    @Test
+    public void iterateEntireBitcoindBlockchainIntoBlockStore() throws BlockStoreException, PrunedException {
+        Network network = BitcoinNetwork.MAINNET;
+        NetworkParameters params = NetworkParameters.of(network);
+        BlockFileLoader loader = new BlockFileLoader(network, BlockFileLoader.getReferenceClientBlockFileList());
+        BlockStore store = new MemoryBlockStore(params.getGenesisBlock());
+        AbstractBlockChain chain = new BlockChain(network, store);
+
+        long blockCount = 0;
+        long lastLog = 0;
+        for (Block b : loader) {
+            chain.add(b);
+            if (blockCount >= lastLog + 100) {
+                lastLog = blockCount;
+                System.out.println("At block: " + blockCount);
+            }
+            blockCount++;
+        }
+        System.out.println("Final block height: " + (blockCount - 1));
         assertTrue(blockCount > 1);
     }
 }
