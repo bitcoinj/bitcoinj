@@ -38,7 +38,9 @@ public class ByteArray implements Comparable<ByteArray> {
      * @return the key bytes
      */
     public byte[] bytes() {
-        return bytes;
+        byte[] copy = new byte[bytes.length];
+        System.arraycopy(bytes, 0, copy, 0, bytes.length);
+        return copy;
     }
 
     /**
