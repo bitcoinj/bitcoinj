@@ -165,10 +165,18 @@ public class BlockFileLoader implements Iterable<Block> {
                         break;
                 }
                 byte[] sizeBytes = new byte[4];
-                currentFileStream.read(sizeBytes, 0, 4);
+                int sizeBytesRead = currentFileStream.read(sizeBytes, 0, 4);
+                if (sizeBytesRead != 4) {
+                    nextBlock = null;
+                    return;
+                }
                 long size = ByteUtils.readUint32(sizeBytes, 0);
                 byte[] dataBytes = new byte[(int) size];
-                currentFileStream.read(dataBytes, 0, (int) size);
+                int dataBytesRead = currentFileStream.read(dataBytes, 0, (int) size);
+                if (dataBytesRead != size) {
+                    nextBlock = null;
+                    return;
+                }
                 try {
                     nextBlock = serializer.makeBlock(ByteBuffer.wrap(dataBytes));
                 } catch (ProtocolException e) {
