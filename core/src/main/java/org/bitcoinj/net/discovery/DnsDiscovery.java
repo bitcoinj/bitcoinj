@@ -18,11 +18,9 @@
 package org.bitcoinj.net.discovery;
 
 import org.bitcoinj.base.Network;
-import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionMessage;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.utils.DaemonThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,12 +94,7 @@ public class DnsDiscovery extends MultiplexingDiscovery {
 
     @Override
     protected ExecutorService createExecutor() {
-        // Attempted workaround for reported bugs on Linux in which gethostbyname does not appear to be properly
-        // thread safe and can cause segfaults on some libc versions.
-        if (PlatformUtils.isLinux())
-            return Executors.newSingleThreadExecutor(new ContextPropagatingThreadFactory("DNS seed lookups"));
-        else
-            return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory("DNS seed lookups"));
+        return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory("DNS seed lookups"));
     }
 
     /** Implements discovery from a single DNS host. */
