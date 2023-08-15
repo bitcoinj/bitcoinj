@@ -84,4 +84,14 @@ public class BlockFileLoaderBitcoindTest {
         System.out.println("Final block height: " + (blockCount - 1));
         assertTrue(blockCount > 1);
     }
+
+    @Test
+    public void streamEntireBitcoindBlockchainAsBuffers() {
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, BlockFileLoader.getReferenceClientBlockFileList());
+
+        long blockCount = loader.streamBuffers().count();
+        System.out.println("Final block height: " + (blockCount - 1));
+        assertTrue(blockCount > 1);
+    }
+
 }
