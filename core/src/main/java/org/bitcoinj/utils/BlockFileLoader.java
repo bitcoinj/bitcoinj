@@ -119,10 +119,10 @@ public class BlockFileLoader implements Iterable<Block> {
     /**
      * Iterates all the blocks in a single block file.
      */
-    public class BlockFileIterator implements Iterator<Block> {
+    public class BlockFileIterator implements Iterator<ByteBuffer> {
         private final File file;
         private final BufferedInputStream currentFileStream;
-        private org.bitcoinj.core.Block nextBlock = null;
+        private ByteBuffer nextBlock = null;
 
         public BlockFileIterator(File blockFile) throws FileNotFoundException {
             this.file = blockFile;
@@ -137,10 +137,10 @@ public class BlockFileLoader implements Iterable<Block> {
         }
 
         @Override
-        public Block next() throws NoSuchElementException {
+        public ByteBuffer next() throws NoSuchElementException {
             if (!hasNext())
                 throw new NoSuchElementException();
-            Block next = nextBlock;
+            ByteBuffer next = nextBlock;
             nextBlock = null;
             return next;
         }
@@ -181,7 +181,7 @@ public class BlockFileLoader implements Iterable<Block> {
                     return;
                 }
                 try {
-                    nextBlock = serializer.makeBlock(ByteBuffer.wrap(dataBytes));
+                    nextBlock = ByteBuffer.wrap(dataBytes);
                 } catch (ProtocolException e) {
                     nextBlock = null;
                 } catch (Exception e) {
@@ -205,16 +205,22 @@ public class BlockFileLoader implements Iterable<Block> {
 
     public Stream<Block> stream() {
         return files.stream()
+                .flatMap(this::fileBlockStream)
+                .map(serializer::makeBlock);
+    }
+
+    public Stream<ByteBuffer> streamBuffers() {
+        return files.stream()
                 .flatMap(this::fileBlockStream);
     }
 
-    protected Stream<Block> fileBlockStream(File file) {
+    protected Stream<ByteBuffer> fileBlockStream(File file) {
         return StreamSupport.stream(fileBlockSpliterator(file), false);
     }
 
-    protected Spliterator<Block> fileBlockSpliterator(File file) {
+    protected Spliterator<ByteBuffer> fileBlockSpliterator(File file) {
         try {
-            Iterator<Block> iterator = new BlockFileIterator(file);
+            Iterator<ByteBuffer> iterator = new BlockFileIterator(file);
             int characteristics = Spliterator.DISTINCT | Spliterator.ORDERED;
             return Spliterators.spliteratorUnknownSize(iterator, characteristics);
         } catch (FileNotFoundException e) {
