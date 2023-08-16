@@ -173,7 +173,9 @@ public class Block extends BaseMessage {
         for (int i = 0; i < numTransactions; i++) {
             Transaction tx = Transaction.read(payload);
             // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
-            tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
+            // TODO: Either remove this or add equivalent functionality in a way that doesn't
+            // require a dependency on TxConfidenceTable or slow multi-threaded apps
+            // tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
             transactions.add(tx);
         }
         return transactions;
