@@ -168,15 +168,10 @@ public class TxConfidenceTable {
         Objects.requireNonNull(hash);
         lock.lock();
         try {
-            WeakConfidenceReference reference = table.get(hash);
-            if (reference != null) {
-                TransactionConfidence confidence = reference.get();
-                if (confidence != null)
-                    return confidence;
-            }
-            TransactionConfidence newConfidence = confidenceFactory.createConfidence(hash);
-            table.put(hash, new WeakConfidenceReference(newConfidence, referenceQueue));
-            return newConfidence;
+            TransactionConfidence confidence = getConfidence(hash);
+            return (confidence != null)
+                    ? confidence
+                    : newConfidence(hash);
         } finally {
             lock.unlock();
         }
@@ -190,16 +185,23 @@ public class TxConfidenceTable {
     public TransactionConfidence get(Sha256Hash hash) {
         lock.lock();
         try {
-            WeakConfidenceReference ref = table.get(hash);
-            if (ref == null)
-                return null;
-            TransactionConfidence confidence = ref.get();
-            if (confidence != null)
-                return confidence;
-            else
-                return null;
+            return getConfidence(hash);
         } finally {
             lock.unlock();
         }
+    }
+
+    // Internal: assumes lock is in place
+    @Nullable
+    private TransactionConfidence getConfidence(Sha256Hash hash) {
+        WeakConfidenceReference ref = table.get(hash);
+        return (ref != null) ? ref.get() : null;
+    }
+
+    // Internal: assumes lock is in place
+    private TransactionConfidence newConfidence(Sha256Hash hash) {
+        TransactionConfidence newConfidence = confidenceFactory.createConfidence(hash);
+        table.put(hash, new WeakConfidenceReference(newConfidence, referenceQueue));
+        return newConfidence;
     }
 }
