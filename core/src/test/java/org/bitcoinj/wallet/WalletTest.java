@@ -419,7 +419,7 @@ public class WalletTest extends TestWithWallet {
         // Send some pending coins to the wallet.
         Transaction t1 = sendMoneyToWallet(wallet, null, amount, toAddress);
         Threading.waitForUserCode();
-        final CompletableFuture<TransactionConfidence> depthFuture = t1.getConfidence().getDepthFuture(1);
+        final CompletableFuture<TransactionConfidence> depthFuture = wallet.waitForConfirmations(t1, 1);
         assertFalse(depthFuture.isDone());
         assertEquals(ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals(amount, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
