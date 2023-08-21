@@ -95,7 +95,7 @@ public class TestFeeLevel {
                 " peers connected"));
         kit.peerGroup().broadcastTransaction(request.tx).awaitRelayed().get();
         System.out.println("Send complete, waiting for confirmation");
-        request.tx.getConfidence().getDepthFuture(1).get();
+        kit.wallet().waitForConfirmations(request.tx, 1).get();
 
         int heightNow = kit.chain().getBestChainHeight();
         System.out.println("Height after confirmation is " + heightNow);
