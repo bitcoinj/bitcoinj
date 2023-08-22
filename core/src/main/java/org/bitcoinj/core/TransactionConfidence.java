@@ -518,7 +518,7 @@ public class TransactionConfidence {
      * depth to one will wait until it appears in a block on the best chain, and zero will wait until it has been seen
      * on the network.
      */
-    public synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(final int depth, Executor executor) {
+    private synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(final int depth, Executor executor) {
         final ListenableCompletableFuture<TransactionConfidence> result = new ListenableCompletableFuture<>();
         if (getDepthInBlocks() >= depth) {
             result.complete(this);
