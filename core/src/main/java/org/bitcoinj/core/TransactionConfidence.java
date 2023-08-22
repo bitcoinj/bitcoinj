@@ -82,14 +82,14 @@ public class TransactionConfidence {
      * IP address as an approximation. It's obviously vulnerable to being gamed if we allow arbitrary people to connect
      * to us, so only peers we explicitly connected to should go here.
      */
-    private CopyOnWriteArrayList<PeerAddress> broadcastBy;
+    private final CopyOnWriteArrayList<PeerAddress> broadcastBy;
     /** The time the transaction was last announced to us, or {@code null} if unknown. */
     @Nullable
     private Instant lastBroadcastTime = null;
     /** The Transaction that this confidence object is associated with. */
     private final Sha256Hash hash;
     // Lazily created listeners array.
-    private CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
+    private final CopyOnWriteArrayList<ListenerRegistration<Listener>> listeners;
 
     // The depth of the transaction on the best chain in blocks. An unconfirmed block has depth 0.
     private int depth;
