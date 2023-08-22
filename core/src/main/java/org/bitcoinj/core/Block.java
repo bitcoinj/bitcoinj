@@ -52,6 +52,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Sha256Hash.hashTwice;
@@ -169,16 +171,9 @@ public class Block extends BaseMessage {
         VarInt numTransactionsVarInt = VarInt.read(payload);
         check(numTransactionsVarInt.fitsInt(), BufferUnderflowException::new);
         int numTransactions = numTransactionsVarInt.intValue();
-        List<Transaction> transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
-        for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = Transaction.read(payload);
-            // Label the transaction as coming from the P2P network, so code that cares where we first saw it knows.
-            // TODO: Either remove this or add equivalent functionality in a way that doesn't
-            // require a dependency on TxConfidenceTable or slow multi-threaded apps
-            // tx.getConfidence().setSource(TransactionConfidence.Source.NETWORK);
-            transactions.add(tx);
-        }
-        return transactions;
+        return IntStream.range(0, numTransactions)
+                .mapToObj(i -> Transaction.read(payload))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /** Special case constructor, used for unit tests. */
