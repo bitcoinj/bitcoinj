@@ -73,10 +73,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  */
 public class TransactionConfidence {
     @VisibleForTesting
-    static class Factory {
-        public TransactionConfidence createConfidence(Sha256Hash hash) {
-            return new TransactionConfidence(hash);
-        }
+    interface Factory {
+        TransactionConfidence createConfidence(Sha256Hash hash);
     }
 
     /**
