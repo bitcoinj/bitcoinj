@@ -68,7 +68,7 @@ public class TxConfidenceTable {
      * @param size Max number of transactions to track. The table will fill up to this size then stop growing.
      */
     public TxConfidenceTable(final int size) {
-        this(size, new TransactionConfidence.Factory());
+        this(size, TransactionConfidence::new);
     }
 
     TxConfidenceTable(final int size, TransactionConfidence.Factory confidenceFactory){
