@@ -2848,7 +2848,7 @@ public class Wallet extends BaseTaggableObject
                 deadInput.disconnect();
                 maybeMovePool(connected, "kill");
             }
-            tx.getConfidence().setOverridingTransaction(overridingTx);
+            tx.getConfidence().setOverridingTxId(overridingTx != null ? overridingTx.getTxId() : null);
             confidenceChanged.put(tx, TransactionConfidence.Listener.ChangeReason.TYPE);
             // Now kill any transactions we have that depended on this one.
             for (TransactionOutput deadOutput : tx.getOutputs()) {

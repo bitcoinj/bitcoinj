@@ -375,8 +375,8 @@ public class WalletProtobufSerializer {
             if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
                 // Copy in the overriding transaction, if available.
                 // (A dead coinbase transaction has no overriding transaction).
-                if (confidence.getOverridingTransaction() != null) {
-                    Sha256Hash overridingHash = confidence.getOverridingTransaction().getTxId();
+                if (confidence.getOverridingTxId() != null) {
+                    Sha256Hash overridingHash = confidence.getOverridingTxId();
                     confidenceBuilder.setOverridingTransaction(hashToByteString(overridingHash));
                 }
             }
@@ -823,7 +823,7 @@ public class WalletProtobufSerializer {
                 log.warn("Have overridingTransaction that is not in wallet for tx {}", tx.getTxId());
                 return;
             }
-            confidence.setOverridingTransaction(overridingTransaction);
+            confidence.setOverridingTxId(overridingTransaction.getTxId());
         }
         for (Protos.PeerAddress proto : confidenceProto.getBroadcastByList()) {
             InetAddress ip;

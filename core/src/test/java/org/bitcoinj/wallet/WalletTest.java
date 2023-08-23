@@ -860,13 +860,13 @@ public class WalletTest extends TestWithWallet {
         // Test that we handle the attack correctly: a double spend on the chain moves transactions from pending to dead.
         // This needs to work both for transactions we create, and that we receive from others.
         final Transaction[] eventDead = new Transaction[1];
-        final Transaction[] eventReplacement = new Transaction[1];
+        final Sha256Hash[] eventReplacement = new Sha256Hash[1];
         final int[] eventWalletChanged = new int[1];
         wallet.addTransactionConfidenceEventListener((wallet, tx) -> {
             if (tx.getConfidence().getConfidenceType() ==
                     ConfidenceType.DEAD) {
                 eventDead[0] = tx;
-                eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
+                eventReplacement[0] = tx.getConfidence().getOverridingTxId();
             }
         });
 
@@ -889,7 +889,7 @@ public class WalletTest extends TestWithWallet {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, send2);
         Threading.waitForUserCode();
         assertEquals(send1, eventDead[0]);
-        assertEquals(send2, eventReplacement[0]);
+        assertEquals(send2.getTxId(), eventReplacement[0]);
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                 send1.getConfidence().getConfidenceType());
         assertEquals(send2, received.getOutput(0).getSpentBy().getParentTransaction());
@@ -903,7 +903,7 @@ public class WalletTest extends TestWithWallet {
         Threading.waitForUserCode();
         assertEquals(TransactionConfidence.ConfidenceType.DEAD,
                 doubleSpends.t1.getConfidence().getConfidenceType());
-        assertEquals(doubleSpends.t2, doubleSpends.t1.getConfidence().getOverridingTransaction());
+        assertEquals(doubleSpends.t2.getTxId(), doubleSpends.t1.getConfidence().getOverridingTxId());
         assertEquals(5, eventWalletChanged[0]);
     }
 
@@ -1376,14 +1376,14 @@ public class WalletTest extends TestWithWallet {
         t2.addOutput(o2);
         t2.addInput(doubleSpentOut);
 
-        final Transaction[] called = new Transaction[2];
-        wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> called[0] = tx);
+        final Sha256Hash[] called = new Sha256Hash[2];
+        wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> called[0] = tx.getTxId());
 
         wallet.addTransactionConfidenceEventListener((wallet, tx) -> {
             if (tx.getConfidence().getConfidenceType() ==
                     ConfidenceType.DEAD) {
-                called[0] = tx;
-                called[1] = tx.getConfidence().getOverridingTransaction();
+                called[0] = tx.getTxId();
+                called[1] = tx.getConfidence().getOverridingTxId();
             }
         });
 
@@ -1391,15 +1391,15 @@ public class WalletTest extends TestWithWallet {
         if (wallet.isPendingTransactionRelevant(t1))
             wallet.receivePending(t1, null);
         Threading.waitForUserCode();
-        assertEquals(t1, called[0]);
+        assertEquals(t1.getTxId(), called[0]);
         assertEquals(nanos, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
         // Now receive a double spend on the best chain.
         called[0] = called[1] = null;
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, t2);
         Threading.waitForUserCode();
         assertEquals(ZERO, wallet.getBalance());
-        assertEquals(t1, called[0]); // dead
-        assertEquals(t2, called[1]); // replacement
+        assertEquals(t1.getTxId(), called[0]); // dead
+        assertEquals(t2.getTxId(), called[1]); // replacement
     }
 
     @Test
