@@ -43,8 +43,8 @@ public class TxConfidenceTable {
     protected final ReentrantLock lock = Threading.lock(TxConfidenceTable.class);
 
     private static class WeakConfidenceReference extends WeakReference<TransactionConfidence> {
-        public Sha256Hash hash;
-        public WeakConfidenceReference(TransactionConfidence confidence, ReferenceQueue<TransactionConfidence> queue) {
+        final Sha256Hash hash;
+        WeakConfidenceReference(TransactionConfidence confidence, ReferenceQueue<TransactionConfidence> queue) {
             super(confidence, queue);
             hash = confidence.getTransactionHash();
         }
