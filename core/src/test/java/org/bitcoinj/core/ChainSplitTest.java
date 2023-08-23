@@ -335,11 +335,11 @@ public class ChainSplitTest {
         // Check what happens when a re-org happens and one of our unconfirmed transactions becomes invalidated by a
         // double spend on the new best chain.
         final Transaction[] eventDead = new Transaction[1];
-        final Transaction[] eventReplacement = new Transaction[1];
+        final Sha256Hash[] eventReplacement = new Sha256Hash[1];
         wallet.addTransactionConfidenceEventListener((wallet, tx) -> {
             if (tx.getConfidence().getConfidenceType() == ConfidenceType.DEAD) {
                 eventDead[0] = tx;
-                eventReplacement[0] = tx.getConfidence().getOverridingTransaction();
+                eventReplacement[0] = tx.getConfidence().getOverridingTxId();
             }
         });
 
@@ -371,7 +371,7 @@ public class ChainSplitTest {
         // genesis -> b1 -> b2 [t1 dead and exited the miners mempools]
         //              \-> b3 (t2) -> b4
         assertEquals(t1, eventDead[0]);
-        assertEquals(t2, eventReplacement[0]);
+        assertEquals(t2.getTxId(), eventReplacement[0]);
         assertEquals(valueOf(30, 0), wallet.getBalance());
 
         // ... and back to our own parallel universe.

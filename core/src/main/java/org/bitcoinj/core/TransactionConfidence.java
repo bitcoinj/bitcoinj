@@ -145,7 +145,7 @@ public class TransactionConfidence {
     private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
     private int appearedAtChainHeight = -1;
     // The transaction that double spent this one, if any.
-    private Transaction overridingTransaction;
+    private Sha256Hash overridingTxId;
 
     /**
      * Information about where the transaction was first seen (network, sent direct from peer, created by ourselves).
@@ -289,7 +289,7 @@ public class TransactionConfidence {
             return;
         this.confidenceType = confidenceType;
         if (confidenceType != ConfidenceType.DEAD) {
-            overridingTransaction = null;
+            overridingTxId = null;
         }
         if (confidenceType == ConfidenceType.PENDING || confidenceType == ConfidenceType.IN_CONFLICT) {
             depth = 0;
@@ -443,18 +443,33 @@ public class TransactionConfidence {
     }
 
     /**
-     * If this transaction has been overridden by a double spend (is dead), this call returns the overriding transaction.
+     * If this transaction has been overridden by a double spend (is dead), this call returns the overriding transaction ID.
      * Note that this call <b>can return null</b> if you have migrated an old wallet, as pre-Jan 2012 wallets did not
      * store this information.
      *
-     * @return the transaction that double spent this one
+     * @return the transaction id that double spent this one
      * @throws IllegalStateException if confidence type is not DEAD.
      */
-    public synchronized Transaction getOverridingTransaction() {
+    @Nullable
+    public synchronized Sha256Hash getOverridingTxId() {
         if (getConfidenceType() != ConfidenceType.DEAD)
             throw new IllegalStateException("Confidence type is " + getConfidenceType() +
-                                            ", not DEAD");
-        return overridingTransaction;
+                    ", not DEAD");
+        return overridingTxId;
+    }
+
+    /**
+     * Called when the transaction becomes newly dead, that is, we learn that one of its inputs has already been spent
+     * in such a way that the double-spending transaction takes precedence over this one. It will not become valid now
+     * unless there is a re-org. Automatically sets the confidence type to DEAD. The overriding transaction may not
+     * directly double spend this one, but could also have double spent a dependency of this tx.
+     * @deprecated Use {@link #getOverridingTxId()} (and {@code null} is no-longer allowed)
+     */
+    @Deprecated
+    public synchronized void setOverridingTransaction(Transaction overridingTransaction) {
+        Objects.requireNonNull(overridingTransaction);
+        this.overridingTxId = overridingTransaction.getTxId();
+        setConfidenceType(ConfidenceType.DEAD);
     }
 
     /**
@@ -463,8 +478,8 @@ public class TransactionConfidence {
      * unless there is a re-org. Automatically sets the confidence type to DEAD. The overriding transaction may not
      * directly double spend this one, but could also have double spent a dependency of this tx.
      */
-    public synchronized void setOverridingTransaction(@Nullable Transaction overridingTransaction) {
-        this.overridingTransaction = overridingTransaction;
+    public synchronized void setOverridingTxId(@Nullable Sha256Hash overridingTxId) {
+        this.overridingTxId = overridingTxId;
         setConfidenceType(ConfidenceType.DEAD);
     }
 
@@ -475,7 +490,7 @@ public class TransactionConfidence {
         c.lastBroadcastTime = lastBroadcastTime;
         synchronized (this) {
             c.confidenceType = confidenceType;
-            c.overridingTransaction = overridingTransaction;
+            c.overridingTxId = overridingTxId;
             c.appearedAtChainHeight = appearedAtChainHeight;
         }
         return c;
