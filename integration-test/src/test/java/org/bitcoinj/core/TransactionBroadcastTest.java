@@ -110,7 +110,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Threading.waitForUserCode();
         assertFalse(future.isDone());
         assertEquals(0.0, lastProgress.get(), 0.0);
-        inbound(channels[1], InventoryMessage.with(tx));
+        inbound(channels[1], InventoryMessage.ofTransactions(tx));
         future.get();
         Threading.waitForUserCode();
         assertEquals(1.0, lastProgress.get(), 0.0);
@@ -127,7 +127,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network(), CENT, address);
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
-        inbound(channels[1], InventoryMessage.with(tx));
+        inbound(channels[1], InventoryMessage.ofTransactions(tx));
         pingAndWait(channels[1]);
         final AtomicDouble p = new AtomicDouble();
         broadcast.setProgressCallback(p::set, Threading.SAME_THREAD);
@@ -234,8 +234,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         // 49 BTC in change.
         assertEquals(valueOf(49, 0), t1.getValueSentToMe(wallet));
         // The future won't complete until it's heard back from the network on p2.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addTransaction(t1);
+        InventoryMessage inv = InventoryMessage.ofTransactions(t1);
         inbound(p2, inv);
         pingAndWait(p2);
         Threading.waitForUserCode();

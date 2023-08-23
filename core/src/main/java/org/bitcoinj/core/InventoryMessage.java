@@ -18,7 +18,10 @@ package org.bitcoinj.core;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
@@ -27,8 +30,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * a bandwidth optimization - on receiving some data, a (fully validating) peer sends every connected peer an inv
  * containing the hash of what it saw. It'll only transmit the full thing if a peer asks for it with a
  * {@link GetDataMessage}.</p>
- * 
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ *
+ * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
  */
 public class InventoryMessage extends ListMessage {
 
@@ -46,7 +49,8 @@ public class InventoryMessage extends ListMessage {
         return new InventoryMessage(readItems(payload));
     }
 
-    public InventoryMessage() {
+    @Deprecated
+    protected InventoryMessage() {
         super();
     }
 
@@ -54,20 +58,50 @@ public class InventoryMessage extends ListMessage {
         super(items);
     }
 
+    public static InventoryMessage ofBlocks(List<Block> blocks) {
+        checkArgument(!blocks.isEmpty());
+        return new InventoryMessage(blocks.stream()
+                .map(InventoryItem::new)
+                .collect(Collectors.toList()));
+    }
+
+    public static InventoryMessage ofBlocks(Block ...blocks) {
+        return ofBlocks(Arrays.asList(blocks));
+    }
+
+    public static InventoryMessage ofTransactions(List<Transaction> transactions) {
+        checkArgument(!transactions.isEmpty());
+        return new InventoryMessage(transactions.stream()
+                .map(InventoryItem::new)
+                .collect(Collectors.toList()));
+    }
+
+    public static InventoryMessage ofTransactions(Transaction ...transactions) {
+        return ofTransactions(Arrays.asList(transactions));
+    }
+
+    /**
+     * @deprecated Use a constructor or factoring
+     */
+    @Deprecated
     public void addBlock(Block block) {
-        addItem(new InventoryItem(InventoryItem.Type.BLOCK, block.getHash()));
+        addItem(new InventoryItem(block));
     }
 
+    /**
+     * @deprecated Use a constructor or factoring
+     */
+    @Deprecated
     public void addTransaction(Transaction tx) {
-        addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId()));
+        addItem(new InventoryItem(tx));
     }
 
-    /** Creates a new inv message for the given transactions. */
+    /**
+     * Creates a new inv message for the given transactions.
+     * @deprecated Use {@link #ofTransactions(Transaction...)}
+     */
+    @Deprecated
     public static InventoryMessage with(Transaction... txns) {
-        checkArgument(txns.length > 0);
-        InventoryMessage result = new InventoryMessage();
-        for (Transaction tx : txns)
-            result.addTransaction(tx);
-        return result;
+        return ofTransactions(txns);
     }
 }

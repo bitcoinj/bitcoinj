@@ -35,12 +35,12 @@ import static org.bitcoinj.base.internal.Preconditions.check;
 /**
  * <p>Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.</p>
  * 
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
  */
 public abstract class ListMessage extends BaseMessage {
 
     // For some reason the compiler complains if this is inside InventoryItem
-    protected List<InventoryItem> items;
+    protected final List<InventoryItem> items;
 
     public static final int MAX_INVENTORY_ITEMS = 50000;
 
@@ -68,23 +68,26 @@ public abstract class ListMessage extends BaseMessage {
         return items;
     }
 
+    @Deprecated
     public ListMessage() {
         super();
-        items = new ArrayList<>();
+        items = new ArrayList<>(); // TODO: unmodifiable empty list
     }
 
     protected ListMessage(List<InventoryItem> items) {
-        this.items = items;
+        this.items = items;    // TODO: unmodifiable defensive copy
     }
 
     public List<InventoryItem> getItems() {
         return Collections.unmodifiableList(items);
     }
 
+    @Deprecated
     public void addItem(InventoryItem item) {
         items.add(item);
     }
 
+    @Deprecated
     public void removeItem(int index) {
         items.remove(index);
     }

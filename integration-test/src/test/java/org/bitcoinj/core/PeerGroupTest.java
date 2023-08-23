@@ -247,8 +247,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         Coin value = COIN;
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST.network(), value, address);
-        InventoryMessage inv = new InventoryMessage();
-        inv.addTransaction(t1);
+        InventoryMessage inv = InventoryMessage.ofTransactions(t1);
 
         // Note: we start with p2 here to verify that transactions are downloaded from whichever peer announces first
         // which does not have to be the same as the download peer (which is really the "block download peer").
@@ -287,8 +286,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         Coin value = COIN;
         Transaction t1 = FakeTxBuilder.createFakeTx(UNITTEST.network(), value, address2);
-        InventoryMessage inv = new InventoryMessage();
-        inv.addTransaction(t1);
+        InventoryMessage inv = InventoryMessage.ofTransactions(t1);
 
         inbound(p1, inv);
         assertTrue(outbound(p1) instanceof GetDataMessage);
@@ -319,8 +317,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
 
         // Peer 1 and 2 receives an inv advertising a newly solved block.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addBlock(b3);
+        InventoryMessage inv = InventoryMessage.ofBlocks(b3);
         // Only peer 1 tries to download it.
         inbound(p1, inv);
         pingAndWait(p1);
@@ -358,11 +355,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         GetBlocksMessage getblocks = (GetBlocksMessage) outbound(p1);
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We give back an inv with some blocks in it.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addBlock(b1);
-        inv.addBlock(b2);
-        inv.addBlock(b3);
-        
+        InventoryMessage inv = InventoryMessage.ofBlocks(b1, b2, b3);
+
         inbound(p1, inv);
         assertTrue(outbound(p1) instanceof GetDataMessage);
         // We hand back the first block.
@@ -388,8 +382,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p3 = connectPeer(3);
 
         Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST.network(), valueOf(20, 0), address);
-        InventoryMessage inv = new InventoryMessage();
-        inv.addTransaction(tx);
+        InventoryMessage inv = InventoryMessage.ofTransactions(tx);
 
         assertEquals(0, tx.getConfidence().numBroadcastPeers());
         assertFalse(tx.getConfidence().lastBroadcastTime().isPresent());

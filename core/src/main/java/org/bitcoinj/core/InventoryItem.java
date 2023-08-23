@@ -57,6 +57,16 @@ public class InventoryItem {
         this.hash = hash;
     }
 
+    public InventoryItem(Block block) {
+        this.type = Type.BLOCK;
+        this.hash = block.getHash();
+    }
+
+    public InventoryItem(Transaction tx) {
+        this.type = Type.TRANSACTION;
+        this.hash = tx.getTxId();
+    }
+
     @Override
     public String toString() {
         return type + ": " + hash;

@@ -910,10 +910,13 @@ public class Peer extends PeerSocketHandler {
      * @return A GetDataMessage that will query those IDs
      */
     private GetDataMessage buildMultiTransactionDataMessage(Set<Sha256Hash> txIds) {
-        GetDataMessage getdata = new GetDataMessage();
-        txIds.forEach(txId ->
-                getdata.addTransaction(txId, vPeerVersionMessage.services().has(Services.NODE_WITNESS)));
-        return getdata;
+        InventoryItem.Type itemType = vPeerVersionMessage.services().has(Services.NODE_WITNESS)
+                ? InventoryItem.Type.WITNESS_TRANSACTION
+                : InventoryItem.Type.TRANSACTION;
+        List<InventoryItem> items = txIds.stream()
+                .map(hash -> new InventoryItem(itemType, hash))
+                .collect(Collectors.toList());
+        return new GetDataMessage(items);
     }
 
     /**
@@ -1129,34 +1132,35 @@ public class Peer extends PeerSocketHandler {
         List<InventoryItem> items = inv.getItems();
 
         // Separate out the blocks and transactions, we'll handle them differently
-        List<InventoryItem> transactions = new LinkedList<>();
-        List<InventoryItem> blocks = new LinkedList<>();
+        List<Sha256Hash> transactions = new LinkedList<>();
+        List<Sha256Hash> blocks = new LinkedList<>();
 
         for (InventoryItem item : items) {
             switch (item.type) {
                 case TRANSACTION:
-                    transactions.add(item);
+                    transactions.add(item.hash);
                     break;
                 case BLOCK:
-                    blocks.add(item);
+                    blocks.add(item.hash);
                     break;
                 default:
                     throw new IllegalStateException("Not implemented: " + item.type);
             }
         }
+
         if (log.isDebugEnabled())
             log.debug("{}: processing 'inv' with {} items: {} blocks, {} txns", this, items.size(), blocks.size(),
                     transactions.size());
 
         final boolean downloadData = this.vDownloadData;
 
-        if (transactions.size() == 0 && blocks.size() == 1) {
+        if (transactions.isEmpty() && blocks.size() == 1) {
             // Single block announcement. If we're downloading the chain this is just a tickle to make us continue
             // (the block chain download protocol is very implicit and not well thought out). If we're not downloading
             // the chain then this probably means a new block was solved and the peer believes it connects to the best
             // chain, so count it. This way getBestChainHeight() can be accurate.
             if (downloadData && blockChain != null) {
-                if (!blockChain.isOrphan(blocks.get(0).hash)) {
+                if (!blockChain.isOrphan(blocks.get(0))) {
                     blocksAnnounced.incrementAndGet();
                 }
             } else {
@@ -1164,11 +1168,14 @@ public class Peer extends PeerSocketHandler {
             }
         }
 
-        GetDataMessage getdata = new GetDataMessage();
+        InventoryItem.Type txItemType = vPeerVersionMessage.services().has(Services.NODE_WITNESS)
+                ? InventoryItem.Type.WITNESS_TRANSACTION
+                : InventoryItem.Type.TRANSACTION;
+        List<InventoryItem> getDataItems = new ArrayList<>();
 
-        Iterator<InventoryItem> it = transactions.iterator();
+        Iterator<Sha256Hash> it = transactions.iterator();
         while (it.hasNext()) {
-            InventoryItem item = it.next();
+            Sha256Hash item = it.next();
             // Only download the transaction if we are the first peer that saw it be advertised. Other peers will also
             // see it be advertised in inv packets asynchronously, they co-ordinate via the memory pool. We could
             // potentially download transactions faster by always asking every peer for a tx when advertised, as remote
@@ -1177,7 +1184,7 @@ public class Peer extends PeerSocketHandler {
             // sending us the transaction: currently we'll never try to re-fetch after a timeout.
             //
             // The line below can trigger confidence listeners.
-            TransactionConfidence conf = context.getConfidenceTable().seen(item.hash, this.getAddress());
+            TransactionConfidence conf = context.getConfidenceTable().seen(item, this.getAddress());
             if (conf.numBroadcastPeers() > 1) {
                 // Some other peer already announced this so don't download.
                 it.remove();
@@ -1186,8 +1193,8 @@ public class Peer extends PeerSocketHandler {
                 it.remove();
             } else {
                 if (log.isDebugEnabled())
-                    log.debug("{}: getdata on tx {}", getAddress(), item.hash);
-                getdata.addTransaction(item.hash, vPeerVersionMessage.services().has(Services.NODE_WITNESS));
+                    log.debug("{}: getdata on tx {}", getAddress(), item);
+                getDataItems.add(new InventoryItem(txItemType, item));
                 if (pendingTxDownloads.size() > PENDING_TX_DOWNLOADS_LIMIT) {
                     log.info("{}: Too many pending transactions, disconnecting", this);
                     close();
@@ -1208,11 +1215,11 @@ public class Peer extends PeerSocketHandler {
                 // Ideally, we'd only ask for the data here if we actually needed it. However that can imply a lot of
                 // disk IO to figure out what we've got. Normally peers will not send us inv for things we already have
                 // so we just re-request it here, and if we get duplicates the block chain / wallet will filter them out.
-                for (InventoryItem item : blocks) {
-                    if (blockChain.isOrphan(item.hash) && downloadBlockBodies) {
+                for (Sha256Hash item : blocks) {
+                    if (blockChain.isOrphan(item) && downloadBlockBodies) {
                         // If an orphan was re-advertised, ask for more blocks unless we are not currently downloading
                         // full block data because we have a getheaders outstanding.
-                        final Block orphanRoot = Objects.requireNonNull(blockChain.getOrphanRoot(item.hash));
+                        final Block orphanRoot = Objects.requireNonNull(blockChain.getOrphanRoot(item));
                         blockChainDownloadLocked(orphanRoot.getHash());
                     } else {
                         // Don't re-request blocks we already requested. Normally this should not happen. However there is
@@ -1227,14 +1234,14 @@ public class Peer extends PeerSocketHandler {
                         // part of chain download with newly announced blocks, so it should always be taken care of by
                         // the duplicate check in blockChainDownloadLocked(). But Bitcoin Core may change in future so
                         // it's better to be safe here.
-                        if (!pendingBlockDownloads.contains(item.hash)) {
+                        if (!pendingBlockDownloads.contains(item)) {
                             if (isBloomFilteringSupported(vPeerVersionMessage) && useFilteredBlocks) {
-                                getdata.addFilteredBlock(item.hash);
+                                getDataItems.add(new InventoryItem(InventoryItem.Type.FILTERED_BLOCK, item));
                                 pingAfterGetData = true;
                             } else {
-                                getdata.addBlock(item.hash, vPeerVersionMessage.services().has(Services.NODE_WITNESS));
+                                getDataItems.add(new InventoryItem(InventoryItem.Type.BLOCK, item));
                             }
-                            pendingBlockDownloads.add(item.hash);
+                            pendingBlockDownloads.add(item);
                         }
                     }
                 }
@@ -1248,8 +1255,9 @@ public class Peer extends PeerSocketHandler {
             lock.unlock();
         }
 
-        if (!getdata.getItems().isEmpty()) {
+        if (!getDataItems.isEmpty()) {
             // This will cause us to receive a bunch of block or tx messages.
+            GetDataMessage getdata = new GetDataMessage(getDataItems);
             sendMessage(getdata);
         }
 
@@ -1269,8 +1277,7 @@ public class Peer extends PeerSocketHandler {
     public ListenableCompletableFuture<Block> getBlock(Sha256Hash blockHash) {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
-        GetDataMessage getdata = new GetDataMessage();
-        getdata.addBlock(blockHash, true);
+        GetDataMessage getdata = GetDataMessage.ofBlock(blockHash, true);
         return ListenableCompletableFuture.of(sendSingleGetData(getdata));
     }
 
@@ -1287,8 +1294,7 @@ public class Peer extends PeerSocketHandler {
         // This does not need to be locked.
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
-        GetDataMessage getdata = new GetDataMessage();
-        getdata.addTransaction(hash, vPeerVersionMessage.services().has(Services.NODE_WITNESS));
+        GetDataMessage getdata = GetDataMessage.ofTransaction(hash, vPeerVersionMessage.services().has(Services.NODE_WITNESS));
         return ListenableCompletableFuture.of(sendSingleGetData(getdata));
     }
 
@@ -1760,9 +1766,10 @@ public class Peer extends PeerSocketHandler {
             sendPing().thenRunAsync(() -> {
                 lock.lock();
                 Objects.requireNonNull(awaitingFreshFilter);
-                GetDataMessage getdata = new GetDataMessage();
-                for (Sha256Hash hash : awaitingFreshFilter)
-                    getdata.addFilteredBlock(hash);
+                List<InventoryItem> items = awaitingFreshFilter.stream()
+                        .map(hash -> new InventoryItem(InventoryItem.Type.FILTERED_BLOCK, hash))
+                        .collect(Collectors.toList());
+                GetDataMessage getdata = new GetDataMessage(items);
                 awaitingFreshFilter = null;
                 lock.unlock();
 
