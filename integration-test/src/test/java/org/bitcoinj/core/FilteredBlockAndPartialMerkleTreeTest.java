@@ -188,8 +188,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         InboundMessageQueuer p1 = connectPeer(1);
         assertEquals(1, peerGroup.numConnectedPeers());
         // Send an inv for block 100001
-        InventoryMessage inv = new InventoryMessage();
-        inv.addBlock(block);
+        InventoryMessage inv = InventoryMessage.ofBlocks(block);
         inbound(p1, inv);
         
         // Check that we properly requested the correct FilteredBlock

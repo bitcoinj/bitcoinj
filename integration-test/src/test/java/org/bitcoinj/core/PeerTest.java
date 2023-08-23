@@ -30,6 +30,7 @@ import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithNetworkConnections;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,8 +47,10 @@ import java.net.SocketException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -140,9 +143,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(blockStore.getChainHead().getHeader().getHash(), getblocks.getLocator().get(0));
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // Remote peer sends us an inv with some blocks.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addBlock(b2);
-        inv.addBlock(b3);
+        InventoryMessage inv = InventoryMessage.ofBlocks(b2, b3);
         // We do a getdata on them.
         inbound(writeTarget, inv);
         GetDataMessage getdata = (GetDataMessage)outbound(writeTarget);
@@ -154,8 +155,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, b2);
         inbound(writeTarget, b3);
 
-        inv = new InventoryMessage();
-        inv.addBlock(b5);
+        inv = InventoryMessage.ofBlocks(b5);
         // We request the head block.
         inbound(writeTarget, inv);
         getdata = (GetDataMessage)outbound(writeTarget);
@@ -173,8 +173,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // because we walk backwards down the orphan chain and then discover we already asked for those blocks, so
         // nothing is done.
         Block b6 = makeSolvedTestBlock(b5);
-        inv = new InventoryMessage();
-        inv.addBlock(b6);
+        inv = InventoryMessage.ofBlocks(b6);
         inbound(writeTarget, inv);
         getdata = (GetDataMessage)outbound(writeTarget);
         assertEquals(1, getdata.getItems().size());
@@ -182,9 +181,7 @@ public class PeerTest extends TestWithNetworkConnections {
         inbound(writeTarget, b6);
         assertNull(outbound(writeTarget));  // Nothing is sent at this point.
         // We're still waiting for the response to the getblocks (b3,b5) sent above.
-        inv = new InventoryMessage();
-        inv.addBlock(b4);
-        inv.addBlock(b5);
+        inv = InventoryMessage.ofBlocks(b4, b5);
         inbound(writeTarget, inv);
         getdata = (GetDataMessage)outbound(writeTarget);
         assertEquals(1, getdata.getItems().size());
@@ -208,9 +205,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b2 = makeSolvedTestBlock(b1);
         Block b3 = makeSolvedTestBlock(b2);
         inbound(writeTarget, b3);
-        InventoryMessage inv = new InventoryMessage();
-        InventoryItem item = new InventoryItem(InventoryItem.Type.BLOCK, b3.getHash());
-        inv.addItem(item);
+        InventoryMessage inv = InventoryMessage.ofBlocks(b3);
         inbound(writeTarget, inv);
 
         GetBlocksMessage getblocks = (GetBlocksMessage)outbound(writeTarget);
@@ -237,9 +232,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b2 = makeSolvedTestBlock(b1);
 
         // Receive an inv.
-        InventoryMessage inv = new InventoryMessage();
-        InventoryItem item = new InventoryItem(InventoryItem.Type.BLOCK, b2.getHash());
-        inv.addItem(item);
+        InventoryMessage inv = InventoryMessage.ofBlocks(b2);
         inbound(writeTarget, inv);
 
         // Peer does nothing with it.
@@ -254,9 +247,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Make a transaction and tell the peer we have it.
         Coin value = COIN;
         Transaction tx = createFakeTx(TESTNET.network(), value, address);
-        InventoryMessage inv = new InventoryMessage();
-        InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId());
-        inv.addItem(item);
+        InventoryMessage inv = InventoryMessage.ofTransactions(tx);
         inbound(writeTarget, inv);
         // Peer hasn't seen it before, so will ask for it.
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
@@ -287,9 +278,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Make a tx and advertise it to one of the peers.
         Coin value = COIN;
         Transaction tx = createFakeTx(TESTNET.network(), value, this.address);
-        InventoryMessage inv = new InventoryMessage();
-        InventoryItem item = new InventoryItem(InventoryItem.Type.TRANSACTION, tx.getTxId());
-        inv.addItem(item);
+        InventoryMessage inv = InventoryMessage.ofTransactions(tx);
 
         inbound(writeTarget, inv);
 
@@ -313,9 +302,7 @@ public class PeerTest extends TestWithNetworkConnections {
         blockChain.add(b1);
         final Block b2 = makeSolvedTestBlock(b1);
         // Receive notification of a new block.
-        final InventoryMessage inv = new InventoryMessage();
-        InventoryItem item = new InventoryItem(InventoryItem.Type.BLOCK, b2.getHash());
-        inv.addItem(item);
+        final InventoryMessage inv = InventoryMessage.ofBlocks(b2);
 
         final AtomicInteger newBlockMessagesReceived = new AtomicInteger(0);
 
@@ -489,8 +476,7 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(expectedLocator, getblocks.getLocator());
         assertEquals(Sha256Hash.ZERO_HASH, getblocks.getStopHash());
         // We're supposed to get an inv here.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addItem(new InventoryItem(InventoryItem.Type.BLOCK, b3.getHash()));
+        InventoryMessage inv = InventoryMessage.ofBlocks(b3);
         inbound(writeTarget, inv);
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(b3.getHash(), getdata.getItems().get(0).hash);
@@ -583,8 +569,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t4 = roundTripTransaction(t4);
 
         // Announce the first one. Wait for it to be downloaded.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addTransaction(t1);
+        InventoryMessage inv = InventoryMessage.ofTransactions(t1);
         inbound(writeTarget, inv);
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         Threading.waitForUserCode();
@@ -605,17 +590,17 @@ public class PeerTest extends TestWithNetworkConnections {
         // Deliver the requested transactions.
         inbound(writeTarget, t2);
         inbound(writeTarget, t3);
-        NotFoundMessage notFound = new NotFoundMessage();
-        notFound.addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, t7hash));
-        notFound.addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, t8hash));
+        List<InventoryItem> notFoundList = new ArrayList<>();
+        notFoundList.add(new InventoryItem(InventoryItem.Type.TRANSACTION, t7hash));
+        notFoundList.add(new InventoryItem(InventoryItem.Type.TRANSACTION, t8hash));
+        NotFoundMessage notFound = new NotFoundMessage(notFoundList);
         inbound(writeTarget, notFound);
         assertFalse(futures.isDone());
         // It will recursively ask for the dependencies of t2: t5 and t4, but not t3 because it already found t4.
         getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(getdata.getItems().get(0).hash, t2.getInput(0).getOutpoint().hash());
         // t5 isn't found and t4 is.
-        notFound = new NotFoundMessage();
-        notFound.addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, t5hash));
+        notFound = new NotFoundMessage(Collections.singletonList(new InventoryItem(InventoryItem.Type.TRANSACTION, t5hash)));
         inbound(writeTarget, notFound);
         assertFalse(futures.isDone());
         // Request t4 ...
@@ -625,8 +610,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Continue to explore the t4 branch and ask for t6, which is in the chain.
         getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(t6hash, getdata.getItems().get(0).hash);
-        notFound = new NotFoundMessage();
-        notFound.addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, t6hash));
+        notFound = new NotFoundMessage(Collections.singletonList(new InventoryItem(InventoryItem.Type.TRANSACTION, t6hash)));
         inbound(writeTarget, notFound);
         pingAndWait(writeTarget);
         // That's it, we explored the entire tree.
@@ -661,8 +645,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t1 = roundTripTransaction(t1);
 
         // Announce the first one. Wait for it to be downloaded.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addTransaction(t1);
+        InventoryMessage inv = InventoryMessage.ofTransactions(t1);
         inbound(writeTarget, inv);
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
         Threading.waitForUserCode();
@@ -758,8 +741,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t1.addInput(t2.getOutput(0));
         t1.addOutput(COIN, key);  // Make it relevant.
         // Announce t1.
-        InventoryMessage inv = new InventoryMessage();
-        inv.addTransaction(t1);
+        InventoryMessage inv = InventoryMessage.ofTransactions(t1);
         inbound(writeTarget, inv);
         // Send it.
         GetDataMessage getdata = (GetDataMessage) outbound(writeTarget);
@@ -775,8 +757,7 @@ public class PeerTest extends TestWithNetworkConnections {
         getdata = (GetDataMessage) outbound(writeTarget);
         assertEquals(t3, getdata.getItems().get(0).hash);
         // Can't find it: bottom of tree.
-        NotFoundMessage notFound = new NotFoundMessage();
-        notFound.addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, t3));
+        NotFoundMessage notFound = new NotFoundMessage(Collections.singletonList(new InventoryItem(InventoryItem.Type.TRANSACTION, t3)));
         inbound(writeTarget, notFound);
         pingAndWait(writeTarget);
         Threading.waitForUserCode();
@@ -850,13 +831,14 @@ public class PeerTest extends TestWithNetworkConnections {
         MessageSerializer serializer = TESTNET.getDefaultSerializer();
         // Now write some bogus truncated message.
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        serializer.serialize("inv", new InventoryMessage() {
+        List<InventoryItem> items = new ArrayList<>();
+        items.add(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 1 })));
+        items.add(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 2 })));
+        items.add(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 3 })));
+        serializer.serialize("inv", new InventoryMessage(items) {
             @Override
             public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 // Add some hashes.
-                addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 1 })));
-                addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 2 })));
-                addItem(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 3 })));
 
                 // Write out a copy that's truncated in the middle.
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
