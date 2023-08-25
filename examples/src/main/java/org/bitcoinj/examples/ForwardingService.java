@@ -34,6 +34,7 @@ import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.stream.Collectors.collectingAndThen;
@@ -193,7 +194,7 @@ public class ForwardingService implements Closeable {
      */
     static CoinSelector forwardingCoinSelector(Sha256Hash parentTxId) {
         return (target, candidates) -> candidates.stream()
-                .filter(output -> output.getParentTransactionHash() != null && output.getParentTransactionHash().equals(parentTxId))
+                .filter(output -> Objects.equals(output.getParentTransactionHash(), parentTxId))
                 .collect(collectingAndThen(toList(), CoinSelection::new));
     }
 }
