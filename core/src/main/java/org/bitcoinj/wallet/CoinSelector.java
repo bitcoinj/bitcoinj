@@ -17,9 +17,13 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.core.TransactionOutput;
 
 import java.util.List;
+import java.util.function.Predicate;
+
+import static java.util.stream.Collectors.collectingAndThen;
 
 /**
  * A CoinSelector is responsible for picking some outputs to spend, from the list of all possible outputs. It
@@ -34,4 +38,15 @@ public interface CoinSelector {
      * of {@link DefaultCoinSelector}.
      */
     CoinSelection select(Coin target, List<TransactionOutput> candidates);
+
+    /**
+    * Create a {@code CoinSelector} from a predicate function that filters a single {@link TransactionOutput}
+    * @param predicate Returns true if a "coin" ({@code TransactionOutput}) should be included.
+    * @return A CoinSelector that only returns coins matching the predicate
+    */
+    static CoinSelector fromPredicate(Predicate<TransactionOutput> predicate) {
+        return (target, candidates) -> candidates.stream()
+                        .filter(predicate)
+                        .collect(collectingAndThen(StreamUtils.toUnmodifiableList(), CoinSelection::new));
+    }
 }
