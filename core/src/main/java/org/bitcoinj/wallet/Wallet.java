@@ -4497,7 +4497,12 @@ public class Wallet extends BaseTaggableObject
      * @return a future for an object that contains transaction confidence information
      */
     public CompletableFuture<TransactionConfidence> waitForConfirmations(Transaction tx, int requiredConfirmations) {
-        return tx.getConfidence().getDepthFuture(requiredConfirmations);
+
+        return getConfidence(tx).getDepthFuture(requiredConfirmations);
+    }
+
+    private TransactionConfidence getConfidence(Transaction tx) {
+        return tx.getConfidence(Context.get().getConfidenceTable());
     }
 
     /**
