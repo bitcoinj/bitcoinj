@@ -1584,14 +1584,14 @@ public class Transaction extends BaseMessage {
      * Returns the confidence object for this transaction from the {@link TxConfidenceTable}
      * referenced by the given {@link Context}.
      */
-    public TransactionConfidence getConfidence(Context context) {
+    TransactionConfidence getConfidence(Context context) {
         return getConfidence(context.getConfidenceTable());
     }
 
     /**
      * Returns the confidence object for this transaction from the {@link TxConfidenceTable}
      */
-    public TransactionConfidence getConfidence(TxConfidenceTable table) {
+    TransactionConfidence getConfidence(TxConfidenceTable table) {
         if (confidence == null)
             confidence = table.getOrCreate(getTxId()) ;
         return confidence;
