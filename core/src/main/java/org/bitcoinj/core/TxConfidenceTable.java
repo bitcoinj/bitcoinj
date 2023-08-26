@@ -93,6 +93,15 @@ public class TxConfidenceTable {
     }
 
     /**
+     * Get the confidence object for a transaction
+     * @param tx the transaction
+     * @return the corresponding confidence object
+     */
+    public TransactionConfidence getConfidence(Transaction tx) {
+        return tx.getConfidence(this);
+    }
+
+    /**
      * If any transactions have expired due to being only weakly reachable through us, go ahead and delete their
      * table entries - it means we downloaded the transaction and sent it to various event listeners, none of
      * which bothered to keep a reference. Typically, this is because the transaction does not involve any keys that
