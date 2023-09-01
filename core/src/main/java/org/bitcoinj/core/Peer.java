@@ -158,14 +158,14 @@ public class Peer extends PeerSocketHandler {
     private volatile int vMinProtocolVersion;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Is not used for downloads Peer generates itself.
-    private static class GetDataRequest extends CompletableFuture {
+    private static class GetDataRequest<T> extends CompletableFuture<T> {
         final Sha256Hash hash;
         public GetDataRequest(Sha256Hash hash) {
             this.hash = hash;
         }
     }
     // TODO: The types/locking should be rationalised a bit.
-    private final Queue<GetDataRequest> getDataFutures;
+    private final Queue<GetDataRequest<?>> getDataFutures;
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
@@ -849,7 +849,7 @@ public class Peer extends PeerSocketHandler {
             // Build the request for the missing dependencies.
             GetDataMessage getdata = buildMultiTransactionDataMessage(txIdsToRequest);
             // Create futures for each TxId this request will produce
-            List<GetDataRequest> futures = txIdsToRequest.stream()
+            List<GetDataRequest<?>> futures = txIdsToRequest.stream()
                .map(GetDataRequest::new)
                .collect(Collectors.toList());
             // Add the futures to the queue of outstanding requests
@@ -1270,10 +1270,6 @@ public class Peer extends PeerSocketHandler {
      * If you want the block right away and don't mind waiting for it, just call .get() on the result. Your thread
      * will block until the peer answers.
      */
-    @SuppressWarnings("unchecked")
-    // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
-    // ListenableCompletableFuture instead of ListenableCompletableFuture<Block>. This is okay as sendSingleGetData() actually returns
-    // ListenableCompletableFuture<Block> in this context. Note that sendSingleGetData() is also used for Transactions.
     public ListenableCompletableFuture<Block> getBlock(Sha256Hash blockHash) {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
@@ -1286,10 +1282,6 @@ public class Peer extends PeerSocketHandler {
      * retrieved this way because peers don't have a transaction ID to transaction-pos-on-disk index, and besides,
      * in future many peers will delete old transaction data they don't need.
      */
-    @SuppressWarnings("unchecked")
-    // The 'unchecked conversion' warning being suppressed here comes from the sendSingleGetData() formally returning
-    // ListenableCompletableFuture instead of ListenableCompletableFuture<Transaction>. This is okay as sendSingleGetData() actually returns
-    // ListenableCompletableFuture<Transaction> in this context. Note that sendSingleGetData() is also used for Blocks.
     public ListenableCompletableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) {
         // This does not need to be locked.
         // TODO: Unit test this method.
@@ -1299,10 +1291,10 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Sends a getdata with a single item in it. */
-    private CompletableFuture sendSingleGetData(GetDataMessage getdata) {
+    private <T> CompletableFuture<T> sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
         checkArgument(getdata.getItems().size() == 1);
-        GetDataRequest req = new GetDataRequest(getdata.getItems().get(0).hash);
+        GetDataRequest<T> req = new GetDataRequest<>(getdata.getItems().get(0).hash);
         getDataFutures.add(req);
         sendMessage(getdata);
         return req;
