@@ -1,16 +1,12 @@
 import org.gradle.util.GradleVersion
 
 // Minimum Gradle version for build
-def minGradleVersion = GradleVersion.version("6.0")
+def minGradleVersion = GradleVersion.version("4.4")
 
 rootProject.name = 'bitcoinj-parent'
 
 if (GradleVersion.current().compareTo(minGradleVersion) < 0) {
     throw new GradleScriptException("bitcoinj build requires Gradle ${minGradleVersion} or later", null)
-}
-
-if (!JavaVersion.current().isJava11Compatible()) {
-    throw new GradleScriptException("bitcoinj build requires Java 11 or later", null)
 }
 
 include 'core'
@@ -24,9 +20,3 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
-
-include 'wallettemplate'
-project(':wallettemplate').name = 'bitcoinj-wallettemplate'
-
-include 'integration-test'
-project(':integration-test').name = 'bitcoinj-integration-test'

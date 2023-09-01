@@ -12,12 +12,14 @@ jobs:
         java: ['11', '17', '19']
         distribution: ['temurin']
         gradle: ['7.6.2']
+        gradle-settings: ['settings.gradle']
         include:
           # Special case to test something close to Debian config with the oldest supported (standard) Gradle on Ubuntu
           - os: ubuntu-latest
             java: '11'
             distribution: 'temurin'
             gradle: '4.10.3'
+            gradle-settings: 'settings-gradle4.gradle'
       fail-fast: false
     name: JAVA ${{ matrix.distribution }} ${{ matrix.java }} OS ${{ matrix.os }} Gradle ${{ matrix.gradle }}
     steps:
@@ -32,7 +34,7 @@ jobs:
         uses: gradle/gradle-build-action@v2.4.2
         with:
           gradle-version: ${{ matrix.gradle }}
-          arguments: -PtestJdk8=true build --info --stacktrace
+          arguments: -c ${{ matrix.gradle-settings }} -PtestJdk8=true build --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v3
         if: always()
