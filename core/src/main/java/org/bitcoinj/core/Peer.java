@@ -166,7 +166,7 @@ public class Peer extends PeerSocketHandler {
     }
     // TODO: The types/locking should be rationalised a bit.
     private final Queue<GetDataRequest> getDataFutures;
-    @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
+    private final ListenableCompletableFuture<AddressMessage> getAddrFuture;
 
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock pingIntervalsLock = new ReentrantLock();
@@ -242,7 +242,7 @@ public class Peer extends PeerSocketHandler {
         this.requiredServices = requiredServices;
         this.vDownloadData = chain != null;
         this.getDataFutures = new ConcurrentLinkedQueue<>();
-        this.getAddrFutures = new LinkedList<>();
+        this.getAddrFuture = new ListenableCompletableFuture<>();
         this.fastCatchupTime = params.getGenesisBlock().time();
         this.pendingPings = new CopyOnWriteArrayList<>();
         this.vMinProtocolVersion = ProtocolVersion.MINIMUM.intValue();
@@ -503,13 +503,7 @@ public class Peer extends PeerSocketHandler {
         for (final ListenerRegistration<AddressEventListener> registration : addressEventListeners) {
             registration.executor.execute(() -> registration.listener.onAddr(Peer.this, message));
         }
-        CompletableFuture<AddressMessage> future;
-        synchronized (getAddrFutures) {
-            future = getAddrFutures.poll();
-            if (future == null)  // Not an addr message we are waiting for.
-                return;
-        }
-        future.complete(message);
+        getAddrFuture.complete(message);
     }
 
     private void processVersionMessage(VersionMessage peerVersionMessage) throws ProtocolException {
@@ -1308,14 +1302,15 @@ public class Peer extends PeerSocketHandler {
         return req;
     }
 
-    /** Sends a getaddr request to the peer and returns a future that completes with the answer once the peer has replied. */
+    /**
+     * Return an {@code AddressMessage} from the peer, sending a getaddr request if necessary.
+     * @return A (possibly already completed) future with an  {@code AddressMessage} from the server
+     */
     public ListenableCompletableFuture<AddressMessage> getAddr() {
-        ListenableCompletableFuture<AddressMessage> future = new ListenableCompletableFuture<>();
-        synchronized (getAddrFutures) {
-            getAddrFutures.add(future);
+        if (!getAddrFuture.isDone()) {
+            sendMessage(new GetAddrMessage());
         }
-        sendMessage(new GetAddrMessage());
-        return future;
+        return getAddrFuture;
     }
 
     /**
