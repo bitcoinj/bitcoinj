@@ -13,4 +13,3 @@ bin/
 out/
 *.chain
 *.spvchain
-core/src/main/java/org/bitcoinj/protobuf/
