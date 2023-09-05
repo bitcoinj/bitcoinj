@@ -25,7 +25,7 @@ jobs:
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2.4.2
+        uses: gradle/gradle-build-action@v2.8.0
         with:
           gradle-version: ${{ matrix.gradle }}
           arguments: test nativeCompile --info --stacktrace
