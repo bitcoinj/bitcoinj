@@ -433,7 +433,7 @@ public class WalletTool implements Callable<Integer> {
                         System.err.println("--select-addr and --select-output cannot be used together.");
                         return 1;
                     }
-                    CoinSelector coinSelector = null;
+                    CoinSelector coinSelector;
                     if (selectAddrStr != null) {
                         Address selectAddr;
                         try {
@@ -450,14 +450,15 @@ public class WalletTool implements Callable<Integer> {
                                 return false;
                             }
                         });
-                    }
-                    if (selectOutputStr != null) {
+                    } else if (selectOutputStr != null) {
                         String[] parts = selectOutputStr.split(":", 2);
                         Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
                         int selectIndex = Integer.parseInt(parts[1]);
                         coinSelector = CoinSelector.fromPredicate(candidate ->
                              candidate.getIndex() == selectIndex && candidate.getParentTransactionHash().equals(selectTransactionHash)
                         );
+                    } else {
+                        coinSelector = null;
                     }
                     send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);
                 } else if (paymentRequestLocationStr != null) {
