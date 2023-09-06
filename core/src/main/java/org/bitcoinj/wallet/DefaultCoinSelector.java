@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
@@ -27,6 +26,7 @@ import org.bitcoinj.core.TransactionOutput;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -54,7 +54,7 @@ public class DefaultCoinSelector implements CoinSelector {
         // When calculating the wallet balance, we may be asked to select all possible coins, if so, avoid sorting
         // them in order to improve performance.
         if (!target.equals(BitcoinNetwork.MAX_MONEY)) {
-            sortOutputs(sortedOutputs);
+            sortedOutputs.sort(DefaultCoinSelector::compareByDepth);
         }
         // Now iterate over the sorted outputs until we have got as close to the target as possible or a little
         // bit over (excessive value will be change).
@@ -71,24 +71,37 @@ public class DefaultCoinSelector implements CoinSelector {
         return new CoinSelection(selected);
     }
 
-    @VisibleForTesting static void sortOutputs(ArrayList<TransactionOutput> outputs) {
-        Collections.sort(outputs, (a, b) -> {
-            int depth1 = a.getParentTransactionDepthInBlocks();
-            int depth2 = b.getParentTransactionDepthInBlocks();
-            Coin aValue = a.getValue();
-            Coin bValue = b.getValue();
-            BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));
-            BigInteger bCoinDepth = BigInteger.valueOf(bValue.value).multiply(BigInteger.valueOf(depth2));
-            int c1 = bCoinDepth.compareTo(aCoinDepth);
-            if (c1 != 0) return c1;
-            // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.
-            int c2 = bValue.compareTo(aValue);
-            if (c2 != 0) return c2;
-            // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
-            BigInteger aHash = a.getParentTransactionHash().toBigInteger();
-            BigInteger bHash = b.getParentTransactionHash().toBigInteger();
-            return aHash.compareTo(bHash);
-        });
+    /**
+     * Comparator for sorting {@link TransactionOutput} by coin depth, value, and then hash.
+     * @param a The first object to be compared
+     * @param b The second object to be compared
+     * @return a negative integer, zero, or a positive integer as the first argument is
+     *          less than, equal to, or greater than the second.
+     */
+    public static int compareByDepth(TransactionOutput a, TransactionOutput b) {
+        int depth1 = a.getParentTransactionDepthInBlocks();
+        int depth2 = b.getParentTransactionDepthInBlocks();
+        Coin aValue = a.getValue();
+        Coin bValue = b.getValue();
+        BigInteger aCoinDepth = BigInteger.valueOf(aValue.value).multiply(BigInteger.valueOf(depth1));
+        BigInteger bCoinDepth = BigInteger.valueOf(bValue.value).multiply(BigInteger.valueOf(depth2));
+        int c1 = bCoinDepth.compareTo(aCoinDepth);
+        if (c1 != 0) return c1;
+        // The "coin*days" destroyed are equal, sort by value alone to get the lowest transaction size.
+        int c2 = bValue.compareTo(aValue);
+        if (c2 != 0) return c2;
+        // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
+        BigInteger aHash = a.getParentTransactionHash().toBigInteger();
+        BigInteger bHash = b.getParentTransactionHash().toBigInteger();
+        return aHash.compareTo(bHash);
+    };
+
+    /**
+     * @deprecated Use {@link #compareByDepth(TransactionOutput, TransactionOutput)} with {@link List#sort(Comparator)}
+     */
+    @Deprecated
+    static void sortOutputs(ArrayList<TransactionOutput> outputs) {
+        Collections.sort(outputs, DefaultCoinSelector::compareByDepth);
     }
 
     /** Sub-classes can override this to just customize whether transactions are usable, but keep age sorting. */

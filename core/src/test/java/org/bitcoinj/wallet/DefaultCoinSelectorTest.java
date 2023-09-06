@@ -96,7 +96,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         ArrayList<TransactionOutput> candidates = new ArrayList<>();
         candidates.add(t2.getOutput(0));
         candidates.add(t1.getOutput(0));
-        DefaultCoinSelector.sortOutputs(candidates);
+        candidates.sort(DefaultCoinSelector::compareByDepth);
         assertEquals(t1.getOutput(0), candidates.get(0));
         assertEquals(t2.getOutput(0), candidates.get(1));
     }
@@ -117,7 +117,7 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
         candidates.add(t3.getOutput(0));
         candidates.add(t2.getOutput(0));
         candidates.add(t1.getOutput(0));
-        DefaultCoinSelector.sortOutputs(candidates);
+        candidates.sort(DefaultCoinSelector::compareByDepth);
         assertEquals(t2.getOutput(0), candidates.get(0));
         assertEquals(t1.getOutput(0), candidates.get(1));
         assertEquals(t3.getOutput(0), candidates.get(2));
