@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A coin selector that takes all coins assigned to keys created before the given timestamp.
@@ -67,23 +68,8 @@ public class KeyTimeCoinSelector implements CoinSelector {
             for (TransactionOutput output : candidates) {
                 if (ignorePending && !isConfirmed(output))
                     continue;
-                // Find the key that controls output, assuming it's a regular P2PK or P2PKH output.
-                // We ignore any other kind of exotic output on the assumption we can't spend it ourselves.
-                final Script scriptPubKey = output.getScriptPubKey();
-                ECKey controllingKey;
-                if (ScriptPattern.isP2PK(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromP2PK(scriptPubKey));
-                } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), ScriptType.P2PKH);
-                } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
-                    controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), ScriptType.P2WPKH);
-                } else {
-                    log.info("Skipping tx output {} because it's not of simple form.", output);
+                if (!isKeyBeforeCutoff(output))
                     continue;
-                }
-                Objects.requireNonNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
-                if (controllingKey.creationTime().orElse(Instant.EPOCH).compareTo(time) >= 0) continue;
-                // It's older than the cutoff time so select.
                 gathered.push(output);
                 if (gathered.size() >= MAX_SIMULTANEOUS_INPUTS) {
                     log.warn("Reached {} inputs, going further would yield a tx that is too large, stopping here.", gathered.size());
@@ -94,6 +80,36 @@ public class KeyTimeCoinSelector implements CoinSelector {
         } catch (ScriptException e) {
             throw new RuntimeException(e);  // We should never have problems understanding scripts in our wallet.
         }
+    }
+
+    private boolean isKeyBeforeCutoff(TransactionOutput output) {
+        Optional<ECKey> optKey = findKey(output);
+        // It's older than the cutoff time so select.
+        return optKey.isPresent() && optKey.get().creationTime().orElse(Instant.EPOCH).isBefore(time);
+    }
+
+    /**
+     * @param output output to find key for
+     * @return The key for this output, if available, otherwise {@code Optional.empty()}
+     * @throws NullPointerException if script is P2PK, P2PKH, or P2WPKH and findKeyFromPubKey* returned null
+     */
+    private Optional<ECKey> findKey(TransactionOutput output) {
+        // Find the key that controls output, assuming it's a regular P2PK or P2PKH output.
+        // We ignore any other kind of exotic output on the assumption we can't spend it ourselves.
+        final Script scriptPubKey = output.getScriptPubKey();
+        ECKey controllingKey;
+        if (ScriptPattern.isP2PK(scriptPubKey)) {
+            controllingKey = wallet.findKeyFromPubKey(ScriptPattern.extractKeyFromP2PK(scriptPubKey));
+        } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
+            controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2PKH(scriptPubKey), ScriptType.P2PKH);
+        } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
+            controllingKey = wallet.findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(scriptPubKey), ScriptType.P2WPKH);
+        } else {
+            log.info("Skipping tx output {} because it's not of simple form.", output);
+            return Optional.empty();
+        }
+        Objects.requireNonNull(controllingKey, "Coin selector given output as candidate for which we lack the key");
+        return Optional.of(controllingKey);
     }
 
     private boolean isConfirmed(TransactionOutput output) {
