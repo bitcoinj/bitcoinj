@@ -424,11 +424,13 @@ public class WalletTool implements Callable<Integer> {
                     System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
                     return 1;
                 } else if (outputsStr != null) {
-                    Coin feePerVkb = null;
+                    Coin feePerVkb;
                     if (feePerVkbStr != null)
                         feePerVkb = parseCoin(feePerVkbStr);
-                    if (feeSatPerVbyteStr != null)
+                    else if (feeSatPerVbyteStr != null)
                         feePerVkb = Coin.valueOf(Long.parseLong(feeSatPerVbyteStr) * 1000);
+                    else
+                        feePerVkb = null;
                     if (selectAddrStr != null && selectOutputStr != null) {
                         System.err.println("--select-addr and --select-output cannot be used together.");
                         return 1;
