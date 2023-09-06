@@ -188,17 +188,12 @@ public abstract class WalletApplication implements AppDelegate {
     }
 
     protected String suffixFromNetwork(BitcoinNetwork network) {
-        switch(network) {
-            case MAINNET:
-                return "main";
-            case TESTNET:
-                return "test";
-            case SIGNET:
-                return "signet";
-            case REGTEST:
-                return "regtest";
-            default:
-                throw new IllegalArgumentException("Unsupported network");
-        }
+        return switch (network) {
+            case MAINNET -> "main";
+            case TESTNET -> "test";
+            case SIGNET -> "signet";
+            case REGTEST -> "regtest";
+            default -> throw new IllegalArgumentException("Unsupported network");
+        };
     }
 }
