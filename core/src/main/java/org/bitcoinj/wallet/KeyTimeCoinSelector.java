@@ -98,6 +98,6 @@ public class KeyTimeCoinSelector implements CoinSelector {
 
     private boolean isConfirmed(TransactionOutput output) {
         Transaction parent = Objects.requireNonNull(output.getParentTransaction());
-        return parent.getConfidence().getConfidenceType().equals(TransactionConfidence.ConfidenceType.BUILDING);
+        return wallet.getConfidence(parent).getConfidenceType().equals(TransactionConfidence.ConfidenceType.BUILDING);
     }
 }
