@@ -4501,7 +4501,7 @@ public class Wallet extends BaseTaggableObject
         return getConfidence(tx).getDepthFuture(requiredConfirmations);
     }
 
-    private TransactionConfidence getConfidence(Transaction tx) {
+    TransactionConfidence getConfidence(Transaction tx) {
         return Context.get().getConfidenceTable().getConfidence(tx);
     }
 
