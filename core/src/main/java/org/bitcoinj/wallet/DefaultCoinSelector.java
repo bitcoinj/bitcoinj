@@ -101,7 +101,7 @@ public class DefaultCoinSelector implements CoinSelector {
      */
     @Deprecated
     static void sortOutputs(ArrayList<TransactionOutput> outputs) {
-        Collections.sort(outputs, DefaultCoinSelector::compareByDepth);
+        outputs.sort(DefaultCoinSelector::compareByDepth);
     }
 
     /** Sub-classes can override this to just customize whether transactions are usable, but keep age sorting. */
