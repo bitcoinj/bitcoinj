@@ -193,7 +193,6 @@ public abstract class WalletApplication implements AppDelegate {
             case TESTNET -> "test";
             case SIGNET -> "signet";
             case REGTEST -> "regtest";
-            default -> throw new IllegalArgumentException("Unsupported network");
         };
     }
 }
