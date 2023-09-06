@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
@@ -34,6 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * A coin selector that takes all coins assigned to keys created before the given timestamp.
@@ -64,19 +66,11 @@ public class KeyTimeCoinSelector implements CoinSelector {
     @Override
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         try {
-            LinkedList<TransactionOutput> gathered = new LinkedList<>();
-            for (TransactionOutput output : candidates) {
-                if (ignorePending && !isConfirmed(output))
-                    continue;
-                if (!isKeyBeforeCutoff(output))
-                    continue;
-                gathered.push(output);
-                if (gathered.size() >= MAX_SIMULTANEOUS_INPUTS) {
-                    log.warn("Reached {} inputs, going further would yield a tx that is too large, stopping here.", gathered.size());
-                    break;
-                }
-            }
-            return new CoinSelection(gathered);
+            return candidates.stream()
+                    .filter(output -> !ignorePending || isConfirmed(output))
+                    .filter(this::isKeyBeforeCutoff)
+                    .limit(MAX_SIMULTANEOUS_INPUTS) // TODO: log a warning if limit exceeded?
+                    .collect(Collectors.collectingAndThen(StreamUtils.toUnmodifiableList(), CoinSelection::new));
         } catch (ScriptException e) {
             throw new RuntimeException(e);  // We should never have problems understanding scripts in our wallet.
         }
