@@ -5870,10 +5870,12 @@ public class Wallet extends BaseTaggableObject
             // have already got stuck double spends in their wallet due to the Bloom-filtering block reordering
             // bug that was fixed in 0.10, thus, making a re-key transaction depend on those would cause it to
             // never confirm at all.
+            List<TransactionOutPoint> excluded = others.stream()
+                    .flatMap(tx -> tx.getInputs().stream())
+                    .map(TransactionInput::getOutpoint)
+                    .collect(StreamUtils.toUnmodifiableList());
             CoinSelector keyTimeSelector = new KeyTimeCoinSelector(this, time, true);
-            FilteringCoinSelector selector = new FilteringCoinSelector(keyTimeSelector);
-            for (Transaction other : others)
-                selector.excludeOutputsSpentBy(other);
+            FilteringCoinSelector selector = new FilteringCoinSelector(keyTimeSelector, excluded);
             // TODO: Make this use the standard SendRequest.
             CoinSelection toMove = selector.select(Coin.ZERO, calculateAllSpendCandidates());
             if (toMove.totalValue().equals(Coin.ZERO)) return null;  // Nothing to do.

@@ -17,30 +17,25 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A filtering coin selector delegates to another coin selector, but won't select outputs spent by the given transactions.
  */
 public class FilteringCoinSelector implements CoinSelector {
-    protected CoinSelector delegate;
-    protected HashSet<TransactionOutPoint> spent = new HashSet<>();
+    protected final CoinSelector delegate;
+    protected final Set<TransactionOutPoint> spent;
 
-    public FilteringCoinSelector(CoinSelector delegate) {
+    public FilteringCoinSelector(CoinSelector delegate, List<TransactionOutPoint> excludedOutPoints) {
         this.delegate = delegate;
-    }
-
-    public void excludeOutputsSpentBy(Transaction tx) {
-        for (TransactionInput input : tx.getInputs()) {
-            spent.add(input.getOutpoint());
-        }
+        this.spent = Collections.unmodifiableSet(new HashSet<>(excludedOutPoints));
     }
 
     @Override
