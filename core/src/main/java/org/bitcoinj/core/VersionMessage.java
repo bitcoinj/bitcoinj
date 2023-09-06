@@ -297,4 +297,10 @@ public class VersionMessage extends BaseMessage {
     public boolean isPingPongSupported() {
         return true;
     }
+
+    /** @deprecated use {@link Services#of(long)} and {@link Services#toString()} */
+    @Deprecated
+    public static String toStringServices(long services) {
+        return Services.of(services).toString();
+    }
 }
