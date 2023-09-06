@@ -323,6 +323,12 @@ public class Transaction extends BaseMessage {
         vLockTime = LockTime.unset();
     }
 
+    /** @deprecated use {@link #Transaction()} */
+    @Deprecated
+    public Transaction(NetworkParameters params) {
+        this();
+    }
+
     /**
      * Returns the transaction id as you see them in block explorers. It is used as a reference by transaction inputs
      * via outpoints.
