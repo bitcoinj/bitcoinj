@@ -445,8 +445,7 @@ public class WalletTool implements Callable<Integer> {
                         final Address validSelectAddr = selectAddr;
                         coinSelector = CoinSelector.fromPredicate(candidate -> {
                             try {
-                                Address candidateAddr = candidate.getScriptPubKey().getToAddress(net);
-                                return validSelectAddr.equals(candidateAddr);
+                                return candidate.getScriptPubKey().getToAddress(net).equals(validSelectAddr);
                             } catch (ScriptException x) {
                                 return false;
                             }
@@ -456,11 +455,9 @@ public class WalletTool implements Callable<Integer> {
                         String[] parts = selectOutputStr.split(":", 2);
                         Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
                         int selectIndex = Integer.parseInt(parts[1]);
-                        coinSelector = CoinSelector.fromPredicate(candidate -> {
-                            int candidateIndex = candidate.getIndex();
-                            Sha256Hash candidateTransactionHash = candidate.getParentTransactionHash();
-                            return selectIndex == candidateIndex && selectTransactionHash.equals(candidateTransactionHash);
-                        });
+                        coinSelector = CoinSelector.fromPredicate(candidate ->
+                             candidate.getIndex() == selectIndex && candidate.getParentTransactionHash().equals(selectTransactionHash)
+                        );
                     }
                     send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);
                 } else if (paymentRequestLocationStr != null) {
