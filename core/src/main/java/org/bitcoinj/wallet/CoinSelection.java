@@ -21,6 +21,7 @@ import org.bitcoinj.core.TransactionOutput;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,7 +43,7 @@ public class CoinSelection {
 
     public CoinSelection(List<TransactionOutput> gathered) {
         this.valueGathered = sumOutputValues(gathered);
-        this.gathered = gathered;
+        this.gathered = Collections.unmodifiableList(new ArrayList<>(gathered));
     }
 
     /**
