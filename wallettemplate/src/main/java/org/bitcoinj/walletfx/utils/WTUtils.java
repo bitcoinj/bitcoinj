@@ -66,7 +66,7 @@ public class WTUtils {
         }
     }
 
-    public static boolean didThrow(UncheckedRun run) {
+    public static boolean didThrow(UncheckedRun<?> run) {
         try {
             run.run();
             return false;
