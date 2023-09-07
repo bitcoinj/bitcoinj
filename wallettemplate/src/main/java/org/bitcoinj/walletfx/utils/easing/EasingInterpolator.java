@@ -104,7 +104,6 @@ public abstract class EasingInterpolator extends Interpolator {
             case EASE_BOTH -> (v <= 0.5)
                                 ? baseCurve(2 * v) / 2
                                 : (2 - baseCurve(2 * (1 - v))) / 2;
-            default -> baseCurve(v);
         };
     }
 }
