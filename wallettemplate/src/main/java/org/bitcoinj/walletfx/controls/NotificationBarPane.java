@@ -48,10 +48,10 @@ public class NotificationBarPane extends BorderPane {
     public static final Duration ANIM_IN_DURATION = GuiUtils.UI_ANIMATION_TIME.multiply(2);
     public static final Duration ANIM_OUT_DURATION = GuiUtils.UI_ANIMATION_TIME;
 
-    private HBox bar;
-    private Label label;
+    private final HBox bar;
+    private final Label label;
     private double barHeight;
-    private ProgressBar progressBar;
+    private final ProgressBar progressBar;
 
     public class Item {
         public final SimpleStringProperty label;

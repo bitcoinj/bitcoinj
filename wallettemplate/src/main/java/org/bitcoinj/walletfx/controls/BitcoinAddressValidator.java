@@ -29,7 +29,7 @@ import org.bitcoinj.walletfx.utils.TextFieldValidator;
  */
 public class BitcoinAddressValidator {
     private final AddressParser parser;
-    private Node[] nodes;
+    private final Node[] nodes;
 
 
     public BitcoinAddressValidator(AddressParser parser, TextField field, Node... nodes) {

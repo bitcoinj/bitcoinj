@@ -49,12 +49,12 @@ public class ElasticInterpolator extends EasingInterpolator {
     /**
      * The amplitude.
      */
-    private DoubleProperty amplitude = new SimpleDoubleProperty(this, "amplitude", 1);
+    private final DoubleProperty amplitude = new SimpleDoubleProperty(this, "amplitude", 1);
 
     /**
      * The number of oscillations.
      */
-    private DoubleProperty oscillations = new SimpleDoubleProperty(this, "oscillations", 3);
+    private final DoubleProperty oscillations = new SimpleDoubleProperty(this, "oscillations", 3);
 
     /**
      * Default constructor. Initializes the interpolator with ease out mode.
