@@ -38,7 +38,7 @@ public abstract class EasingInterpolator extends Interpolator {
     /**
      * The easing mode.
      */
-    private ObjectProperty<EasingMode> easingMode = new SimpleObjectProperty<>(EasingMode.EASE_OUT);
+    private final ObjectProperty<EasingMode> easingMode = new SimpleObjectProperty<>(EasingMode.EASE_OUT);
 
     /**
      * Constructs the interpolator with a specific easing mode.

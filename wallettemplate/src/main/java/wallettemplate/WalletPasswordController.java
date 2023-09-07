@@ -61,7 +61,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> overlayUI;
 
-    private SimpleObjectProperty<AesKey> aesKey = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<AesKey> aesKey = new SimpleObjectProperty<>();
 
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> ui) {
