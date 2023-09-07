@@ -98,19 +98,13 @@ public abstract class EasingInterpolator extends Interpolator {
      */
     @Override
     protected final double curve(final double v) {
-        switch (easingMode.get()) {
-            case EASE_IN:
-                return baseCurve(v);
-            case EASE_OUT:
-                return 1 - baseCurve(1 - v);
-            case EASE_BOTH:
-                if (v <= 0.5) {
-                    return baseCurve(2 * v) / 2;
-                } else {
-                    return (2 - baseCurve(2 * (1 - v))) / 2;
-                }
-
-        }
-        return baseCurve(v);
+        return switch (easingMode.get()) {
+            case EASE_IN   -> baseCurve(v);
+            case EASE_OUT  -> 1 - baseCurve(1 - v);
+            case EASE_BOTH -> (v <= 0.5)
+                                ? baseCurve(2 * v) / 2
+                                : (2 - baseCurve(2 * (1 - v))) / 2;
+            default -> baseCurve(v);
+        };
     }
 }
