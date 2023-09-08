@@ -31,14 +31,12 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * <p>This is a clean-room implementation of PBKDF2 using RFC 2898 as a reference.</p>
- *
- * <p>RFC 2898: http://tools.ietf.org/html/rfc2898#section-5.2</p>
- *
- * <p>This code passes all RFC 6070 test vectors: http://tools.ietf.org/html/rfc6070</p>
- *
- * <p>http://cryptofreek.org/2012/11/29/pbkdf2-pure-java-implementation/<br>
- * Modified to use SHA-512 - Ken Sedgwick ken@bonsai.com</p>
+ * This is a clean-room implementation of PBKDF2 using RFC 2898 as a reference.
+ * Modified to use SHA-512 by Ken Sedgwick (ken@bonsai.com)
+ * <p>
+ * This code passes all <a href="http://tools.ietf.org/html/rfc6070">RFC 6070 test vectors</a>
+ * @see <a href="http://tools.ietf.org/html/rfc2898#section-5.2">RFC 2898 (Section 5.2)</a>
+ * @see <a href="http://cryptofreek.org/2012/11/29/pbkdf2-pure-java-implementation/">PBKDF2 – Pure Java Implementation by Cryptofreek</a>
  */
 public class PBKDF2SHA512 {
     public static byte[] derive(String P, String S, int c, int dkLen) {
