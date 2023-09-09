@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.*;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
 
@@ -77,7 +76,7 @@ public class KeyDerivationTasks {
                         updateProgress(progress, 1.0);
 
                         // 60fps would require 16msec sleep here.
-                        Uninterruptibles.sleepUninterruptibly(20, TimeUnit.MILLISECONDS);
+                        Uninterruptibles.sleepUninterruptibly(Duration.ofMillis(20));
                     }
                     // Wait for the encryption thread before switching back to main UI.
                     updateProgress(1.0, 1.0);

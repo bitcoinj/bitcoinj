@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +38,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -272,7 +272,7 @@ public class TransactionBroadcast {
 
     private static Runnable dropPeerAfterBroadcastHandler(Peer peer) {
         return () ->  {
-            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+            Uninterruptibles.sleepUninterruptibly(Duration.ofSeconds(1));
             peer.close();
         };
     }
