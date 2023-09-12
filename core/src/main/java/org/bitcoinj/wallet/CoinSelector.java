@@ -31,6 +31,7 @@ import static java.util.stream.Collectors.collectingAndThen;
  * may return a {@link CoinSelection} that has a valueGathered lower than the requested target, if there's not
  * enough money in the wallet.
  */
+@FunctionalInterface
 public interface CoinSelector {
     /**
      * Creates a CoinSelection that tries to meet the target amount of value. The candidates list is given to
