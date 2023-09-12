@@ -41,7 +41,7 @@ public class PBKDF2SHA512 {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
-            int hLen = 20;
+            int hLen = 64;          // Length of HMAC result
 
             if (dkLen > ((Math.pow(2, 32)) - 1) * hLen) {
                 throw new IllegalArgumentException("derived key too long");
