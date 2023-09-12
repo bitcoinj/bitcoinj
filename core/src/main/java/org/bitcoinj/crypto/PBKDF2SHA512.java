@@ -39,12 +39,12 @@ import java.nio.charset.StandardCharsets;
  * @see <a href="https://cryptofreek.org/2012/11/29/pbkdf2-pure-java-implementation/">PBKDF2 – Pure Java Implementation by Cryptofreek</a>
  */
 public class PBKDF2SHA512 {
+    // Length of HMAC result
+    static private final int hLen = 64;
     public static byte[] derive(String P, String S, int c, int dkLen) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
-            int hLen = 64;          // Length of HMAC result
-
             if (dkLen > ((Math.pow(2, 32)) - 1) * hLen) {
                 throw new IllegalArgumentException("derived key too long");
             } else {
