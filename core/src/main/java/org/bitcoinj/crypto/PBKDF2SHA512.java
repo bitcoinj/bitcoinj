@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Cole Barnes [cryptofreek{at}gmail{dot}com]
+ * Copyright by the original author or authors.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,89 +23,28 @@
 
 package org.bitcoinj.crypto;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.SecretKeyFactory;
 
 /**
- * This is a clean-room implementation of PBKDF2 using RFC 2898 as a reference.
- * Modified to use SHA-512 by Ken Sedgwick (ken@bonsai.com)
+ * Implement PBKDF2 using SHA512 with built-in Java algorithm.
  * <p>
- * This code passes all <a href="https://datatracker.ietf.org/doc/html/rfc6070">RFC 6070 test vectors</a>
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc2898#section-5.2">RFC 2898 (Section 5.2)</a>
- * @see <a href="https://cryptofreek.org/2012/11/29/pbkdf2-pure-java-implementation/">PBKDF2 – Pure Java Implementation by Cryptofreek</a>
  */
 public class PBKDF2SHA512 {
     public static byte[] derive(String P, String S, int c, int dkLen) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
+        PBEKeySpec spec = new PBEKeySpec(P.toCharArray(), S.getBytes(StandardCharsets.UTF_8), c, dkLen * 8);
         try {
-            int hLen = 20;
-
-            if (dkLen > ((Math.pow(2, 32)) - 1) * hLen) {
-                throw new IllegalArgumentException("derived key too long");
-            } else {
-                int l = (int) Math.ceil((double) dkLen / (double) hLen);
-                // int r = dkLen - (l-1)*hLen;
-
-                for (int i = 1; i <= l; i++) {
-                    byte[] T = F(P, S, c, i);
-                    baos.write(T);
-                }
-            }
-        } catch (Exception e) {
+            return SecretKeyFactory
+                    .getInstance("PBKDF2WithHmacSHA512")
+                    .generateSecret(spec)
+                    .getEncoded();
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-
-        byte[] baDerived = new byte[dkLen];
-        System.arraycopy(baos.toByteArray(), 0, baDerived, 0, baDerived.length);
-
-        return baDerived;
-    }
-
-    private static byte[] F(String P, String S, int c, int i) throws Exception {
-        byte[] U_LAST = null;
-        byte[] U_XOR = null;
-
-        SecretKeySpec key = new SecretKeySpec(P.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
-        Mac mac = Mac.getInstance(key.getAlgorithm());
-        mac.init(key);
-
-        for (int j = 0; j < c; j++) {
-            if (j == 0) {
-                byte[] baS = S.getBytes(StandardCharsets.UTF_8);
-                byte[] baI = INT(i);
-                byte[] baU = new byte[baS.length + baI.length];
-
-                System.arraycopy(baS, 0, baU, 0, baS.length);
-                System.arraycopy(baI, 0, baU, baS.length, baI.length);
-
-                U_XOR = mac.doFinal(baU);
-                U_LAST = U_XOR;
-                mac.reset();
-            } else {
-                byte[] baU = mac.doFinal(U_LAST);
-                mac.reset();
-
-                for (int k = 0; k < U_XOR.length; k++) {
-                    U_XOR[k] = (byte) (U_XOR[k] ^ baU[k]);
-                }
-
-                U_LAST = baU;
-            }
-        }
-
-        return U_XOR;
-    }
-
-    private static byte[] INT(int i) {
-        ByteBuffer bb = ByteBuffer.allocate(4);
-        bb.order(ByteOrder.BIG_ENDIAN);
-        bb.putInt(i);
-
-        return bb.array();
     }
 }
