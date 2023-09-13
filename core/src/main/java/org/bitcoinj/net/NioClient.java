@@ -129,7 +129,7 @@ public class NioClient implements MessageWriteTarget {
     }
 
     @Override
-    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
+    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message)  {
         return handler.writeTarget.writeBytes(message);
     }
 }

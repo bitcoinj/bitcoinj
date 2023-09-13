@@ -148,7 +148,7 @@ class ConnectionHandler implements MessageWriteTarget {
     }
 
     @Override
-    public ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
+    public ListenableCompletableFuture<Void> writeBytes(byte[] message) {
         boolean andUnlock = true;
         lock.lock();
         try {
@@ -158,7 +158,7 @@ class ConnectionHandler implements MessageWriteTarget {
             // register our SelectionKey to wakeup when we have free outbound buffer space available.
 
             if (bytesToWriteRemaining + message.length > OUTBOUND_BUFFER_BYTE_COUNT)
-                throw new IOException("Outbound buffer overflowed");
+                throw new RuntimeException("Outbound buffer overflowed");
             // Just dump the message onto the write buffer and call tryWriteBytes
             // TODO: Kill the needless message duplication when the write completes right away
             final ListenableCompletableFuture<Void> future = new ListenableCompletableFuture<>();
@@ -166,18 +166,18 @@ class ConnectionHandler implements MessageWriteTarget {
             bytesToWriteRemaining += message.length;
             setWriteOps();
             return future;
-        } catch (IOException e) {
-            lock.unlock();
-            andUnlock = false;
-            log.warn("Error writing message to connection, closing connection", e);
-            closeConnection();
-            throw e;
+//        } catch (IOException e) {
+//            lock.unlock();
+//            andUnlock = false;
+//            log.warn("Error writing message to connection, closing connection", e);
+//            closeConnection();
+//            throw new RuntimeException(e);
         } catch (CancelledKeyException e) {
             lock.unlock();
             andUnlock = false;
             log.warn("Error writing message to connection, closing connection", e);
             closeConnection();
-            throw new IOException(e);
+            throw new RuntimeException(e);
         } finally {
             if (andUnlock)
                 lock.unlock();
