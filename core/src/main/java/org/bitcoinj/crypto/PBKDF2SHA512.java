@@ -43,17 +43,16 @@ public class PBKDF2SHA512 {
     public static byte[] derive(String P, String S, int c, int dkLen) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
+        if (dkLen > ((Math.pow(2, 32)) - 1) * H_LEN) {
+            throw new IllegalArgumentException("derived key too long");
+        }
         try {
-            if (dkLen > ((Math.pow(2, 32)) - 1) * H_LEN) {
-                throw new IllegalArgumentException("derived key too long");
-            } else {
-                int l = (int) Math.ceil((double) dkLen / (double) H_LEN);
-                // int r = dkLen - (l-1)*hLen;
+            int l = (int) Math.ceil((double) dkLen / (double) H_LEN);
+            // int r = dkLen - (l-1)*hLen;
 
-                for (int i = 1; i <= l; i++) {
-                    byte[] T = F(P, S, c, i);
-                    baos.write(T);
-                }
+            for (int i = 1; i <= l; i++) {
+                byte[] T = F(P, S, c, i);
+                baos.write(T);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
