@@ -54,7 +54,7 @@ public class PBKDF2SHA512 {
             throw new IllegalArgumentException("derived key too long");
         }
         try {
-            int l = (int) Math.ceil((double) dkLen / (double) H_LEN);
+            int l = (dkLen + H_LEN - 1) / H_LEN;    // Divide by H_LEN with rounding up
             // int r = dkLen - (l-1)*hLen;
 
             for (int i = 1; i <= l; i++) {
