@@ -23,8 +23,12 @@
 
 package org.bitcoinj.crypto;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.spec.PBEKeySpec;
@@ -36,14 +40,17 @@ import javax.crypto.SecretKeyFactory;
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc2898#section-5.2">RFC 2898 (Section 5.2)</a>
  */
 public class PBKDF2SHA512 {
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
     public static byte[] derive(String P, String S, int c, int dkLen) {
         PBEKeySpec spec = new PBEKeySpec(P.toCharArray(), S.getBytes(StandardCharsets.UTF_8), c, dkLen * 8);
         try {
             return SecretKeyFactory
-                    .getInstance("PBKDF2WithHmacSHA512")
+                    .getInstance("PBKDF2WithHmacSHA512", "BC")
                     .generateSecret(spec)
                     .getEncoded();
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException e) {
             throw new RuntimeException(e);
         }
     }
