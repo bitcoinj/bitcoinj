@@ -23,6 +23,8 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.internal.Preconditions;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
@@ -41,6 +43,8 @@ public class PBKDF2SHA512 {
     private static final int H_LEN = 64;
 
     public static byte[] derive(String P, String S, int c, int dkLen) {
+        Preconditions.checkArgument(c > 0, () -> "count must be greater than zero");
+        Preconditions.checkArgument(dkLen > 0, () -> "derived key length must be greater than zero");
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         if (dkLen > ((Math.pow(2, 32)) - 1) * H_LEN) {
