@@ -28,9 +28,12 @@ import org.bitcoinj.base.internal.Preconditions;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * This is a clean-room implementation of PBKDF2 using RFC 2898 as a reference.
@@ -58,7 +61,7 @@ public class PBKDF2SHA512 {
                 byte[] T = F(P, S, c, i);
                 baos.write(T);
             }
-        } catch (Exception e) {
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
 
@@ -68,7 +71,7 @@ public class PBKDF2SHA512 {
         return baDerived;
     }
 
-    private static byte[] F(String P, String S, int c, int i) throws Exception {
+    private static byte[] F(String P, String S, int c, int i) throws NoSuchAlgorithmException, InvalidKeyException {
         byte[] U_LAST = null;
         byte[] U_XOR = null;
 
