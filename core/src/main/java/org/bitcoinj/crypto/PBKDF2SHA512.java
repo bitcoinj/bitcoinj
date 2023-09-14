@@ -50,9 +50,6 @@ public class PBKDF2SHA512 {
         Preconditions.checkArgument(dkLen > 0, () -> "derived key length must be greater than zero");
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        if (dkLen > ((Math.pow(2, 32)) - 1) * H_LEN) {
-            throw new IllegalArgumentException("derived key too long");
-        }
         try {
             int l = (dkLen + H_LEN - 1) / H_LEN;    // Divide by H_LEN with rounding up
             // int r = dkLen - (l-1)*hLen;
