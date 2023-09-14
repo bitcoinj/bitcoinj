@@ -33,8 +33,6 @@ import java.nio.charset.StandardCharsets;
 /**
  * This is a clean-room implementation of PBKDF2 using RFC 2898 as a reference.
  * Modified to use SHA-512 by Ken Sedgwick (ken@bonsai.com)
- * <p>
- * This code passes all <a href="https://datatracker.ietf.org/doc/html/rfc6070">RFC 6070 test vectors</a>
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc2898#section-5.2">RFC 2898 (Section 5.2)</a>
  * @see <a href="https://cryptofreek.org/2012/11/29/pbkdf2-pure-java-implementation/">PBKDF2 – Pure Java Implementation by Cryptofreek</a>
  */
