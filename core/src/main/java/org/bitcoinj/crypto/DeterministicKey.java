@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -483,7 +482,7 @@ public class DeterministicKey extends ECKey {
         return key;
     }
 
-    @VisibleForTesting
+    // For testing only
     byte[] serialize(Network network, boolean pub) {
         return serialize(network, pub, ScriptType.P2PKH);
     }
@@ -491,7 +490,6 @@ public class DeterministicKey extends ECKey {
     /**
      * @deprecated Use {@link #serialize(Network, boolean)}
      */
-    @VisibleForTesting
     @Deprecated
     byte[] serialize(NetworkParameters params, boolean pub) {
         return serialize(params.network(), pub);

@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -72,7 +71,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * To make a copy that won't be changed, use {@link TransactionConfidence#duplicate()}.
  */
 public class TransactionConfidence {
-    @VisibleForTesting
+    // For testing only
     interface Factory {
         TransactionConfidence createConfidence(Sha256Hash hash);
     }
