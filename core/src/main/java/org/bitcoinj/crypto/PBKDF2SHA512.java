@@ -29,6 +29,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +45,8 @@ import java.security.NoSuchAlgorithmException;
 public class PBKDF2SHA512 {
     // Length of HMAC result
     private static final int H_LEN = 64;
-    private static final double MAX_DK_LEN = (Math.pow(2, 32) - 1) * H_LEN;
+    private static final long MAX_UNSIGNED_INT = BigInteger.valueOf(2).pow(32).longValue() - 1;
+    private static final long MAX_DK_LEN = MAX_UNSIGNED_INT * H_LEN;
 
     public static byte[] derive(String P, String S, int c, int dkLen) {
         Preconditions.checkArgument(c > 0, () -> "count must be greater than zero");
