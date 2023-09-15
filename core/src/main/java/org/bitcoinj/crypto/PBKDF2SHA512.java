@@ -44,13 +44,14 @@ import java.security.NoSuchAlgorithmException;
 public class PBKDF2SHA512 {
     // Length of HMAC result
     private static final int H_LEN = 64;
+    private static final double MAX_DK_LEN = (Math.pow(2, 32) - 1) * H_LEN;
 
     public static byte[] derive(String P, String S, int c, int dkLen) {
         Preconditions.checkArgument(c > 0, () -> "count must be greater than zero");
         Preconditions.checkArgument(dkLen > 0, () -> "derived key length must be greater than zero");
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        if (dkLen > ((Math.pow(2, 32)) - 1) * H_LEN) {
+        if (dkLen > MAX_DK_LEN) {
             throw new IllegalArgumentException("derived key too long");
         }
         try {
