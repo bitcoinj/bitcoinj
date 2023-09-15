@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
@@ -427,7 +426,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param chain used to process blocks
      * @param connectionManager used to create new connections and keep track of existing ones.
      */
-    @VisibleForTesting
+    // For testing only
     protected PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain, ClientConnectionManager connectionManager) {
         Objects.requireNonNull(params);
         Context.getOrCreate(); // create a context for convenience
@@ -1109,7 +1108,7 @@ public class PeerGroup implements TransactionBroadcaster {
         return addressList.size();
     }
 
-    @VisibleForTesting
+    // For testing only
     void waitForJobQueue() {
         Futures.getUnchecked(executor.submit(Runnables.doNothing()));
     }
@@ -2013,7 +2012,7 @@ public class PeerGroup implements TransactionBroadcaster {
     }
     @Nullable private ChainDownloadSpeedCalculator chainDownloadSpeedCalculator;
 
-    @VisibleForTesting
+    // For testing only
     void startBlockChainDownloadFromPeer(Peer peer) {
         lock.lock();
         try {

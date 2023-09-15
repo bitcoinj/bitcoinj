@@ -2020,7 +2020,7 @@ public class Wallet extends BaseTaggableObject
      * If isSpent - check that all my outputs spent, otherwise check that there at least
      * one unspent.
      */
-    @VisibleForTesting
+    // For testing only
     boolean isTxConsistent(final Transaction tx, final boolean isSpent) {
         boolean isActuallySpent = true;
         for (TransactionOutput o : tx.getOutputs()) {
@@ -4694,7 +4694,7 @@ public class Wallet extends BaseTaggableObject
      * @param inputs a list of possibly unconnected/unvalued inputs (e.g. from a spend request)
      * @return a list of the same inputs, but connected/valued if not previously valued and found in wallet
      */
-    @VisibleForTesting
+    // For testing only
     static List<TransactionInput> connectInputs(List<TransactionOutput> candidates, List<TransactionInput> inputs) {
         return inputs.stream()
                 .map(in -> candidates.stream()

@@ -128,7 +128,7 @@ public class Block extends BaseMessage {
     private long nonce;
 
     // If null, it means this object holds only the headers.
-    @VisibleForTesting
+    // For testing only
     @Nullable List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
@@ -180,7 +180,7 @@ public class Block extends BaseMessage {
     }
 
     /** Special case constructor, used for unit tests. */
-    @VisibleForTesting
+    // For testing only
     Block(long setVersion) {
         // Set up a few basic things. We are not complete after this though.
         this(setVersion,
@@ -191,7 +191,7 @@ public class Block extends BaseMessage {
     }
 
     // For unit-test genesis blocks
-    @VisibleForTesting
+    // For testing only
     Block(long setVersion, Instant time, long difficultyTarget, List<Transaction> transactions) {
         this(setVersion, time, difficultyTarget, 0, transactions);
         // Solve for nonce?
@@ -522,7 +522,7 @@ public class Block extends BaseMessage {
         }
     }
 
-    @VisibleForTesting
+    // For testing only
     void checkWitnessRoot() throws VerificationException {
         Transaction coinbase = transactions.get(0);
         checkState(coinbase.isCoinBase());
@@ -666,7 +666,7 @@ public class Block extends BaseMessage {
     }
 
     /** Exists only for unit testing. */
-    @VisibleForTesting
+    // For testing only
     void setMerkleRoot(Sha256Hash value) {
         unCacheHeader();
         merkleRoot = value;
@@ -715,7 +715,7 @@ public class Block extends BaseMessage {
         return prevBlockHash;
     }
 
-    @VisibleForTesting
+    // For testing only
     void setPrevBlockHash(Sha256Hash prevBlockHash) {
         unCacheHeader();
         this.prevBlockHash = prevBlockHash;
@@ -748,7 +748,7 @@ public class Block extends BaseMessage {
         return Date.from(time());
     }
 
-    @VisibleForTesting
+    // For testing only
     void setTime(Instant time) {
         unCacheHeader();
         this.time = time.truncatedTo(ChronoUnit.SECONDS); // convert to Bitcoin time
@@ -769,7 +769,7 @@ public class Block extends BaseMessage {
     }
 
     /** Sets the difficulty target in compact form. */
-    @VisibleForTesting
+    // For testing only
     void setDifficultyTarget(long compactForm) {
         unCacheHeader();
         this.difficultyTarget = compactForm;
@@ -785,7 +785,7 @@ public class Block extends BaseMessage {
     }
 
     /** Sets the nonce and clears any cached data. */
-    @VisibleForTesting
+    // For testing only
     void setNonce(long nonce) {
         unCacheHeader();
         this.nonce = nonce;
@@ -808,7 +808,7 @@ public class Block extends BaseMessage {
      * 
      * @param height block height, if known, or -1 otherwise.
      */
-    @VisibleForTesting
+    // For testing only
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
         unCacheTransactions();
         transactions = new ArrayList<>();
@@ -864,7 +864,7 @@ public class Block extends BaseMessage {
      * @param height        block height if known, or -1 otherwise
      * @return created block
      */
-    @VisibleForTesting
+    // For testing only
     Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint prevOut, Instant time,
                           byte[] pubKey, Coin coinbaseValue, int height) {
         Block b = new Block(version);
@@ -974,7 +974,7 @@ public class Block extends BaseMessage {
      * @param height  block height if known, or -1 otherwise
      * @return created block
      */
-    @VisibleForTesting
+    // For testing only
     Block createNextBlockWithCoinbase(long version, byte[] pubKey, int height) {
         return createNextBlock(null, version, (TransactionOutPoint) null, TimeUtils.currentTime(), pubKey,
                 FIFTY_COINS, height);
