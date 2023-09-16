@@ -19,7 +19,6 @@ package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import net.jcip.annotations.GuardedBy;
@@ -132,7 +131,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.Spliterator;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -142,7 +140,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -3502,8 +3499,7 @@ public class Wallet extends BaseTaggableObject
         lock.lock();
         keyChainGroupLock.lock();
         try {
-            Spliterator<Transaction> spliterator = Iterables.concat(unspent.values(), pending.values()).spliterator();
-            return StreamSupport.stream(spliterator, false)
+            return Stream.concat(unspent.values().stream(), pending.values().stream())
                     .filter(tx -> !excludeImmatureCoinbases || isTransactionMature(tx))
                     .flatMap(tx -> tx.getOutputs().stream())
                             .filter(TransactionOutput::isAvailableForSpending)
