@@ -26,11 +26,11 @@ public class WTUtils {
     private static final Logger log = LoggerFactory.getLogger(WTUtils.class);
 
     public interface UncheckedRun<T> {
-        public T run() throws Throwable;
+        T run() throws Throwable;
     }
 
     public interface UncheckedRunnable {
-        public void run() throws Throwable;
+        void run() throws Throwable;
     }
 
     public static <T> T unchecked(UncheckedRun<T> run) {
