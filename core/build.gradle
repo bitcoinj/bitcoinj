@@ -52,6 +52,11 @@ protobuf {
     }
 }
 
+tasks.withType(AbstractArchiveTask) {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
 tasks.withType(Test) {
     exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
     testLogging {
