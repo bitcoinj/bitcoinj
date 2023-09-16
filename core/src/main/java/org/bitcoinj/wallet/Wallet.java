@@ -132,6 +132,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -141,6 +142,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -3500,24 +3502,25 @@ public class Wallet extends BaseTaggableObject
         lock.lock();
         keyChainGroupLock.lock();
         try {
-            List<TransactionOutput> candidates = new LinkedList<>();
-            for (Transaction tx : Iterables.concat(unspent.values(), pending.values())) {
-                if (excludeImmatureCoinbases && !isTransactionMature(tx)) continue;
-                for (TransactionOutput output : tx.getOutputs()) {
-                    if (!output.isAvailableForSpending()) continue;
-                    try {
-                        Script scriptPubKey = output.getScriptPubKey();
-                        if (!watchedScripts.contains(scriptPubKey)) continue;
-                        candidates.add(output);
-                    } catch (ScriptException e) {
-                        // Ignore
-                    }
-                }
-            }
-            return candidates;
+            Spliterator<Transaction> spliterator = Iterables.concat(unspent.values(), pending.values()).spliterator();
+            return StreamSupport.stream(spliterator, false)
+                    .filter(tx -> !excludeImmatureCoinbases || isTransactionMature(tx))
+                    .flatMap(tx -> tx.getOutputs().stream())
+                            .filter(TransactionOutput::isAvailableForSpending)
+                            .filter(this::isWatchedScriptPubKey)
+                            .collect(StreamUtils.toUnmodifiableList());
         } finally {
             keyChainGroupLock.unlock();
             lock.unlock();
+        }
+    }
+
+    private boolean isWatchedScriptPubKey(TransactionOutput output) {
+        try {
+            Script scriptPubKey = output.getScriptPubKey();
+            return watchedScripts.contains(scriptPubKey);
+        } catch (ScriptException e) {
+            return false;
         }
     }
 
