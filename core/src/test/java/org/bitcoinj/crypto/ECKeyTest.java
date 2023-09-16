@@ -18,7 +18,6 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Bytes;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
@@ -310,7 +309,7 @@ public class ECKeyTest {
         Address expectedAddress = LegacyAddress.fromBase58("3HnHC8dJCqixUBFNYXdz2LFXQwvAkkTR3m", MAINNET);
         ECKey key = ECKey.signedMessageToKey(message, sigBase64);
         final byte[] segwitV0_OpPush20 = {0x00, 0x14};
-        byte[] segwitV0ScriptPubKey = Bytes.concat(segwitV0_OpPush20, key.getPubKeyHash()); // as defined in BIP 141
+        byte[] segwitV0ScriptPubKey = ByteUtils.concat(segwitV0_OpPush20, key.getPubKeyHash()); // as defined in BIP 141
         byte[] scriptHashOfSegwitScript = CryptoUtils.sha256hash160(segwitV0ScriptPubKey);
         Address gotAddress = LegacyAddress.fromScriptHash(MAINNET, scriptHashOfSegwitScript);
         assertEquals(expectedAddress, gotAddress);

@@ -742,4 +742,17 @@ public class ByteUtils {
     private static int compareUnsigned(byte a, byte b) {
         return Byte.toUnsignedInt(a) - Byte.toUnsignedInt(b);
     }
+
+    /**
+     * Concatentate two byte arrays
+     * @param b1 first byte array
+     * @param b2 second byte array
+     * @return new concatenated byte array
+     */
+    public static byte[] concat(byte[] b1, byte[] b2) {
+        byte[] result = new byte[b1.length + b2.length];
+        System.arraycopy(b1, 0, result, 0, b1.length);
+        System.arraycopy(b2, 0, result, b1.length, b2.length);
+        return result;
+    }
 }

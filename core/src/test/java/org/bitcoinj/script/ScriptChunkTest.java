@@ -16,8 +16,8 @@
 
 package org.bitcoinj.script;
 
-import com.google.common.primitives.Bytes;
 import nl.jqno.equalsverifier.EqualsVerifier;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.junit.Test;
 
 import java.util.Random;
@@ -96,7 +96,7 @@ public class ScriptChunkTest {
         for (byte len = 1; len < OP_PUSHDATA1; len++) {
             byte[] bytes = new byte[len];
             RANDOM.nextBytes(bytes);
-            byte[] expected = Bytes.concat(new byte[] { len }, bytes);
+            byte[] expected = ByteUtils.concat(new byte[] { len }, bytes);
             byte[] actual = new ScriptChunk(len, bytes).toByteArray();
             assertArrayEquals(expected, actual);
         }
@@ -107,7 +107,7 @@ public class ScriptChunkTest {
         // OP_PUSHDATA1
         byte[] bytes = new byte[0xFF];
         RANDOM.nextBytes(bytes);
-        byte[] expected = Bytes.concat(new byte[] { OP_PUSHDATA1, (byte) 0xFF }, bytes);
+        byte[] expected = ByteUtils.concat(new byte[] { OP_PUSHDATA1, (byte) 0xFF }, bytes);
         byte[] actual = new ScriptChunk(OP_PUSHDATA1, bytes).toByteArray();
         assertArrayEquals(expected, actual);
     }
@@ -117,7 +117,7 @@ public class ScriptChunkTest {
         // OP_PUSHDATA2
         byte[] bytes = new byte[0x0102];
         RANDOM.nextBytes(bytes);
-        byte[] expected = Bytes.concat(new byte[] { OP_PUSHDATA2, 0x02, 0x01 }, bytes);
+        byte[] expected = ByteUtils.concat(new byte[] { OP_PUSHDATA2, 0x02, 0x01 }, bytes);
         byte[] actual = new ScriptChunk(OP_PUSHDATA2, bytes).toByteArray();
         assertArrayEquals(expected, actual);
     }
@@ -127,7 +127,7 @@ public class ScriptChunkTest {
         // OP_PUSHDATA4
         byte[] bytes = new byte[0x0102];
         RANDOM.nextBytes(bytes);
-        byte[] expected = Bytes.concat(new byte[] { OP_PUSHDATA4, 0x02, 0x01, 0x00, 0x00 }, bytes);
+        byte[] expected = ByteUtils.concat(new byte[] { OP_PUSHDATA4, 0x02, 0x01, 0x00, 0x00 }, bytes);
         byte[] actual = new ScriptChunk(OP_PUSHDATA4, bytes).toByteArray();
         assertArrayEquals(expected, actual);
     }

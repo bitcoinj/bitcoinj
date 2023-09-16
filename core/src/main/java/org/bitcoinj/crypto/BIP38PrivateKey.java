@@ -16,7 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.primitives.Bytes;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -169,14 +168,14 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
 
             byte[] passFactorBytes = SCrypt.generate(normalizedPassphrase.getBytes(StandardCharsets.UTF_8), ownerSalt, 16384, 8, 8, 32);
             if (hasLotAndSequence) {
-                byte[] hashBytes = Bytes.concat(passFactorBytes, ownerEntropy);
+                byte[] hashBytes = ByteUtils.concat(passFactorBytes, ownerEntropy);
                 checkState(hashBytes.length == 40);
                 passFactorBytes = Sha256Hash.hashTwice(hashBytes);
             }
             BigInteger passFactor = ByteUtils.bytesToBigInteger(passFactorBytes);
             ECKey k = ECKey.fromPrivate(passFactor, true);
 
-            byte[] salt = Bytes.concat(addressHash, ownerEntropy);
+            byte[] salt = ByteUtils.concat(addressHash, ownerEntropy);
             checkState(salt.length == 12);
             byte[] derived = SCrypt.generate(k.getPubKey(), salt, 1024, 1, 1, 64);
             byte[] aeskey = Arrays.copyOfRange(derived, 32, 64);
@@ -191,13 +190,13 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
             for (int i = 0; i < 16; i++)
                 decrypted2[i] ^= derived[i + 16];
 
-            byte[] encrypted1 = Bytes.concat(Arrays.copyOfRange(content, 8, 16), Arrays.copyOfRange(decrypted2, 0, 8));
+            byte[] encrypted1 = ByteUtils.concat(Arrays.copyOfRange(content, 8, 16), Arrays.copyOfRange(decrypted2, 0, 8));
             byte[] decrypted1 = cipher.doFinal(encrypted1);
             checkState(decrypted1.length == 16);
             for (int i = 0; i < 16; i++)
                 decrypted1[i] ^= derived[i];
 
-            byte[] seed = Bytes.concat(decrypted1, Arrays.copyOfRange(decrypted2, 8, 16));
+            byte[] seed = ByteUtils.concat(decrypted1, Arrays.copyOfRange(decrypted2, 8, 16));
             checkState(seed.length == 24);
             BigInteger seedFactor = ByteUtils.bytesToBigInteger(Sha256Hash.hashTwice(seed));
             checkState(passFactor.signum() >= 0);

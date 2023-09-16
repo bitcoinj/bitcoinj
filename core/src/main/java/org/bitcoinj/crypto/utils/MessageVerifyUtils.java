@@ -1,9 +1,9 @@
 package org.bitcoinj.crypto.utils;
 
-import com.google.common.primitives.Bytes;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.crypto.internal.CryptoUtils;
@@ -128,6 +128,6 @@ public class MessageVerifyUtils {
         // 0x14 is OP_PUSH_20, pushes the next 20 bytes (=length of the pubkeyHash) on the stack
         // (it's safe to hardcode version 0 here, as P2SH-wrapping is only defined for segwit version 0)
         final byte[] scriptPubKeyPrefix = {0x00, 0x14};
-        return Bytes.concat(scriptPubKeyPrefix, pubKeyHash);
+        return ByteUtils.concat(scriptPubKeyPrefix, pubKeyHash);
     }
 }
