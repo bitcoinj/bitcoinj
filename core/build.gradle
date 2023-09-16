@@ -24,6 +24,22 @@ dependencies {
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
 }
 
+// Prevent newer Gradle from switching to JRE version of Guava
+
+def gradleVersionTargetJVM = GradleVersion.version("7.0")
+
+if (GradleVersion.current().compareTo(gradleVersionTargetJVM) > 0) {
+    dependencies.constraints {
+        implementation("com.google.guava:guava") {
+            attributes {
+                attribute(
+                        TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                        objects.named(TargetJvmEnvironment, TargetJvmEnvironment.ANDROID))
+            }
+        }
+    }
+}
+
 sourceCompatibility = 8
 targetCompatibility = 8
 compileJava.options.encoding = 'UTF-8'
