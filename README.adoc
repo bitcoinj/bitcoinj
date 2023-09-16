@@ -22,7 +22,7 @@ To get started, it is best to have the latest JDK and Gradle installed. The HEAD
 
 #### Building from the command line
 
-Official builds are currently using JDK 11. Our GitHub Actions build and test with JDK 11 and JDK 17.
+Official builds are currently using JDK 11. Our GitHub Actions build and test with JDK 11, 17 and 21.
 
 To perform a full build (_including_ JavaDocs, unit/integration _tests_, and `wallettemplate`) use JDK 17+.
 
