@@ -63,7 +63,7 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayContro
     @FXML protected Label copyWidget;
     @FXML protected Label qrCode;
 
-    protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
+    protected final SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private final StringExpression addressStr;
 
     private OverlayableStackPaneController rootController;
