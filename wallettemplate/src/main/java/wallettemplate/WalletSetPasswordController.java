@@ -73,36 +73,6 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
         progressMeter.setOpacity(0);
     }
 
-    private static Duration estimatedKeyDerivationTime = null;
-
-    /**
-     * Initialize the {@code estimatedKeyDerivationTime} static field if not already initialized
-     * <p>
-     * This is run in the background after startup. If we haven't recorded it before, do a key derivation to see
-     * how long it takes. This helps us produce better progress feedback, as on Windows we don't currently have a
-     * native Scrypt impl and the Java version is ~3 times slower, plus it depends a lot on CPU speed.
-     */
-    public static void initEstimatedKeyDerivationTime() {
-        if (estimatedKeyDerivationTime == null) {
-            CompletableFuture
-                .supplyAsync(WalletSetPasswordController::estimateKeyDerivationTime)
-                .thenAccept(duration -> estimatedKeyDerivationTime = duration);
-        }
-    }
-    
-    /**
-     * Estimate key derivation time with no side effects
-     * @return duration in milliseconds
-     */
-    private static Duration estimateKeyDerivationTime() {
-        log.info("Doing background test key derivation");
-        KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
-        long start = System.currentTimeMillis();
-        scrypt.deriveKey("test password");
-        long msec = System.currentTimeMillis() - start;
-        log.info("Background test key derivation took {}msec", msec);
-        return Duration.ofMillis(msec);
-    }
 
     @FXML
     public void setPasswordClicked(ActionEvent event) {
@@ -126,11 +96,11 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
 
         // Deriving the actual key runs on a background thread. 500msec is empirical on my laptop (actual val is more like 333 but we give padding time).
-        KeyDerivationTasks tasks = new KeyDerivationTasks(scrypt, password, estimatedKeyDerivationTime) {
+        KeyDerivationTasks tasks = new KeyDerivationTasks(scrypt, password, WalletPasswordController.getTargetTime()) {
             @Override
             protected final void onFinish(AesKey aesKey, int timeTakenMsec) {
-                // Write the target time to the wallet so we can make the progress bar work when entering the password.
-                WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
+                // Earlier versions of this code persisted the target time to the wallet, so
+                // it could initialize the progress bar more accurately when the user is entering the password.
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
                 log.info("Key derived, now encrypting");
                 app.walletAppKit().wallet().encrypt(scrypt, aesKey);
