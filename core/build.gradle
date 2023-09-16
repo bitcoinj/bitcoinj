@@ -57,6 +57,10 @@ tasks.withType(AbstractArchiveTask) {
     reproducibleFileOrder = true
 }
 
+tasks.withType(Javadoc) {
+    options.noTimestamp = true
+}
+
 tasks.withType(Test) {
     exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
     testLogging {
