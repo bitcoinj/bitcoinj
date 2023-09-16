@@ -1,0 +1,20 @@
+build.Containerfile
+**/.*
+
+# bitcoinj
+**/*.wallet
+**/*.spvchain
+
+# Gradle
+**/build/
+gradle/
+gradlew*
+
+# IntelliJ
+**/*.iml
+.idea/
+
+# Eclipse
+**/.project
+**/.classpath
+**/.settings/

@@ -74,6 +74,12 @@ To dump the state of the wallet in `~/bitcoinj/bitcoinj-test.wallet` with the te
 
 NOTE: These instructions are for macOS/Linux, for Windows use the `wallettool/build/install/wallet-tool/bin/wallet-tool.bat` batch file with the equivalent Windows command-line commands and options.
 
+### Building the reference build
+
+Our reference build (which is also used for our releases) is running within a container to provide good reproducibility.
+Buildah 1.26+, Podman 4.1+ and Docker (with BuildKit) are supported. We tested various combinations of host OSes
+(Debian, Ubuntu, macOS, Windows+WSL) and architectures (amd64, arm64). For usage instructions see `build.Containerfile`.
+
 ### Example applications
 
 These are found in the `examples` module.
