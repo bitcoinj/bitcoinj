@@ -106,10 +106,9 @@ public class PBKDF2SHA512 {
     }
 
     private static byte[] INT(int i) {
-        ByteBuffer bb = ByteBuffer.allocate(4);
-        bb.order(ByteOrder.BIG_ENDIAN);
-        bb.putInt(i);
-
-        return bb.array();
+        return ByteBuffer.allocate(4)
+                .order(ByteOrder.BIG_ENDIAN)
+                .putInt(i)
+                .array();
     }
 }
