@@ -45,6 +45,14 @@ public class PBKDF2SHA512 {
     // Length of HMAC result
     private static final int H_LEN = 64;
 
+    /**
+     * Derive a key using PBKDF2SHA512
+     * @param P password
+     * @param S salt
+     * @param c iteration count, a positive integer
+     * @param dkLen intended length in octets of the derived key, a positive integer
+     * @return derived key
+     */
     public static byte[] derive(String P, String S, int c, int dkLen) {
         Preconditions.checkArgument(c > 0, () -> "count must be greater than zero");
         Preconditions.checkArgument(dkLen > 0, () -> "derived key length must be greater than zero");
