@@ -23,6 +23,7 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.Preconditions;
 
 import javax.crypto.Mac;
@@ -88,12 +89,7 @@ public class PBKDF2SHA512 {
 
         for (int j = 0; j < c; j++) {
             if (j == 0) {
-                byte[] baS = S.getBytes(StandardCharsets.UTF_8);
-                byte[] baI = INT(i);
-                byte[] baU = new byte[baS.length + baI.length];
-
-                System.arraycopy(baS, 0, baU, 0, baS.length);
-                System.arraycopy(baI, 0, baU, baS.length, baI.length);
+                byte[] baU = ByteUtils.concat(S.getBytes(StandardCharsets.UTF_8), INT(i));
 
                 U_XOR = mac.doFinal(baU);
                 U_LAST = U_XOR;
