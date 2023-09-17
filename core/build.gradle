@@ -4,7 +4,6 @@ plugins {
     id 'java-library'
     id 'com.google.protobuf'
     id 'maven-publish'
-    id 'eclipse'
 }
 
 version = '0.17-SNAPSHOT'
