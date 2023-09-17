@@ -93,10 +93,8 @@ public class PBKDF2SHA512 {
 
                 U_XOR = mac.doFinal(baU);
                 U_LAST = U_XOR;
-                mac.reset();
             } else {
                 byte[] baU = mac.doFinal(U_LAST);
-                mac.reset();
 
                 for (int k = 0; k < U_XOR.length; k++) {
                     U_XOR[k] = (byte) (U_XOR[k] ^ baU[k]);
