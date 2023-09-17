@@ -3,7 +3,6 @@ import org.gradle.util.GradleVersion
 plugins {
     id 'java'
     id 'application'
-    id 'eclipse'
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
     id 'org.graalvm.buildtools.native' version '0.9.11' apply false
 }
