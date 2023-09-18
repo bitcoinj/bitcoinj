@@ -19,7 +19,7 @@ bullseye-jdk11:
     - apt-get update
     - apt-get -y install openjdk-11-jdk-headless gradle
   script:
-    - gradle build --stacktrace
+    - gradle build :bitcoinj-wallettool:installDist --stacktrace
   after_script:
     - gradle --version
   artifacts:
@@ -33,7 +33,7 @@ bookworm-jdk17:
     - apt-get update
     - apt-get -y install openjdk-17-jdk-headless gradle
   script:
-    - gradle build --stacktrace
+    - gradle build :bitcoinj-wallettool:installDist --stacktrace
   after_script:
     - gradle --version
   artifacts:
@@ -47,7 +47,7 @@ trixie-jdk21:
     - apt-get update
     - apt-get -y install openjdk-21-jdk-headless gradle
   script:
-    - gradle build --stacktrace
+    - gradle build :bitcoinj-wallettool:installDist --stacktrace
   after_script:
     - gradle --version
   artifacts:
