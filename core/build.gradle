@@ -57,6 +57,11 @@ tasks.withType(AbstractArchiveTask) {
     reproducibleFileOrder = true
 }
 
+tasks.withType(Jar) {
+    dirMode = 0755
+    fileMode = 0644
+}
+
 tasks.withType(Javadoc) {
     options.noTimestamp = true
 }
