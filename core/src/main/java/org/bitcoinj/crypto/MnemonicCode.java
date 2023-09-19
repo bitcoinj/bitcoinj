@@ -139,7 +139,7 @@ public class MnemonicCode {
         // To create binary seed from mnemonic, we use PBKDF2 function
         // with mnemonic sentence (in UTF-8) used as a password and
         // string "mnemonic" + passphrase (again in UTF-8) used as a
-        // salt. Iteration count is set to 4096 and HMAC-SHA512 is
+        // salt. Iteration count is set to 2048 and HMAC-SHA512 is
         // used as a pseudo-random function. Desired length of the
         // derived key is 512 bits (= 64 bytes).
         //
