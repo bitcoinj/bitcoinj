@@ -1,0 +1,28 @@
+version: "3.5"
+
+#
+# Docker Compose File for reproducibly building bitcoinj
+#
+# To build use:
+#     docker compose run --rm build
+#
+# This will create a local image `named bitcoinj-build-tools-image` (if it does
+# not already exist) using `reference-container.ContainerFile`. This is a debian slim image
+# with openjdk and gradle installed via `apt-get`.
+# The `build` "service" will mount this directory in the container as "/project" and run
+# the Gradle build inside the container, writing artifacts to the same locations on your
+# disk as if you had run `gradle` on the host.
+#
+services:
+    build:
+        image: bitcoinj-build-tools-image 
+        depends_on:
+            - build-image-builder
+        volumes:
+            - .:/project
+        command: /usr/bin/gradle --no-build-cache --no-daemon --no-parallel --project-dir /project/ clean :bitcoinj-core:build :bitcoinj-wallettool:installDist
+    build-image-builder:
+        build:
+            context: .
+            dockerfile: reference-container.ContainerFile
+        image: bitcoinj-build-tools-image             # this service builds the image
