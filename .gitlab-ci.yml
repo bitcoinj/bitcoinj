@@ -1,3 +1,18 @@
+reference:
+  image: debian:bookworm-slim
+  before_script:
+    - apt-get update
+    - apt-get -y install ca-certificates buildah
+    # switch to iptables legacy, as GitLab CI doesn't support nftables
+    - apt-get -y install --no-install-recommends iptables
+    - update-alternatives --set iptables /usr/sbin/iptables-legacy
+  script:
+    - buildah build --file build.Containerfile --output build .
+  artifacts:
+    name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+    paths:
+      - build/**
+
 bullseye-jdk11:
   image: debian:bullseye-slim
   before_script:
