@@ -52,20 +52,6 @@ protobuf {
     }
 }
 
-tasks.withType(AbstractArchiveTask) {
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
-}
-
-tasks.withType(Jar) {
-    dirMode = 0755
-    fileMode = 0644
-}
-
-tasks.withType(Javadoc) {
-    options.noTimestamp = true
-}
-
 tasks.withType(Test) {
     exclude 'org/bitcoinj/net/discovery/DnsDiscoveryTest*'
     testLogging {

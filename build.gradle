@@ -21,4 +21,20 @@ allprojects {
     }
 
     group = 'org.bitcoinj'
+
+    // Ensure standard artifacts in all projects are built reproducibly
+
+    tasks.withType(AbstractArchiveTask) {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+
+    tasks.withType(Jar) {
+        dirMode = 0755
+        fileMode = 0644
+    }
+
+    tasks.withType(Javadoc) {
+        options.noTimestamp = true
+    }
 }
