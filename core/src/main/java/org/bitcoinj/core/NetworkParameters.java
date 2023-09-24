@@ -35,8 +35,13 @@ import org.bitcoinj.utils.VersionTally;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -267,11 +272,18 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * Return IP addresses of active peers
-     * @return array of IP addresses
+     * Return socket addresses of active peers
+     * @return array of socket addresses
      */
-    public int[] getAddrSeeds() {
-        return addrSeeds;
+    public final List<InetSocketAddress> getAddrSeeds() {
+        ByteBuffer buf = ByteBuffer.allocate(addrSeeds.length);
+        for (int value : addrSeeds)
+            buf.put((byte) value);
+        ((Buffer) buf).rewind();
+        List<InetSocketAddress> seeds = new LinkedList<InetSocketAddress>();
+        while (buf.hasRemaining())
+            seeds.add(PeerAddress.readSeeds(buf).getSocketAddress());
+        return seeds;
     }
 
     /**

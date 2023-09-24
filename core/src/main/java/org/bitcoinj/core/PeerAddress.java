@@ -225,6 +225,62 @@ public class PeerAddress {
         return new PeerAddress(addr, hostname, port, services, time);
     }
 
+    /**
+     * Deserialize this peer address from a given buffer containing BIP155 serialized (networkID, addr, port) tuples.
+     *
+     * @param payload payload to deserialize from
+     * @return read message
+     * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
+     */
+    public static PeerAddress readSeeds(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        InetAddress addr = null;
+        String hostname = null;
+        int networkId = payload.get();
+        byte[] addrBytes = Buffers.readLengthPrefixedBytes(payload);
+        int addrLen = addrBytes.length;
+        Optional<NetworkId> id = NetworkId.of(networkId);
+        if (id.isPresent()) {
+            switch(id.get()) {
+                case IPV4:
+                    if (addrLen != 4)
+                        throw new ProtocolException("invalid length of IPv4 address: " + addrLen);
+                    addr = getByAddress(addrBytes);
+                    hostname = null;
+                    break;
+                case IPV6:
+                    if (addrLen != 16)
+                        throw new ProtocolException("invalid length of IPv6 address: " + addrLen);
+                    addr = getByAddress(addrBytes);
+                    hostname = null;
+                    break;
+                case TORV2:
+                    if (addrLen != 10)
+                        throw new ProtocolException("invalid length of TORv2 address: " + addrLen);
+                    hostname = TorUtils.encodeOnionUrlV2(addrBytes);
+                    addr = null;
+                    break;
+                case TORV3:
+                    if (addrLen != 32)
+                        throw new ProtocolException("invalid length of TORv3 address: " + addrLen);
+                    hostname = TorUtils.encodeOnionUrlV3(addrBytes);
+                    addr = null;
+                    break;
+                case I2P:
+                case CJDNS:
+                    // ignore unimplemented network IDs for now
+                    addr = null;
+                    hostname = null;
+                    break;
+            }
+        } else {
+            // ignore unknown network IDs
+            addr = null;
+            hostname = null;
+        }
+        int port = ByteUtils.readUint16BE(payload);
+        return new PeerAddress(addr, hostname, port, Services.none(), TimeUtils.currentTime());
+    }
+
     private PeerAddress(InetAddress addr, String hostname, int port, Services services, Instant time) {
         this.addr = addr;
         this.hostname = hostname;
