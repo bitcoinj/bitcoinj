@@ -25,10 +25,6 @@ bullseye-jdk11:
   after_script:
     - gradle --version
     - sha256sum core/build/libs/*.jar wallettool/build/install/wallet-tool/bin/*  wallettool/build/install/wallet-tool/lib/*.jar
-  artifacts:
-    name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
-    paths:
-      - core/build/libs/*.jar
 
 bookworm-jdk17:
   image: debian:bookworm-slim
@@ -40,10 +36,6 @@ bookworm-jdk17:
   after_script:
     - gradle --version
     - sha256sum core/build/libs/*.jar wallettool/build/install/wallet-tool/bin/*  wallettool/build/install/wallet-tool/lib/*.jar
-  artifacts:
-    name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
-    paths:
-      - core/build/libs/*.jar
 
 trixie-jdk21:
   image: debian:trixie-slim
@@ -55,10 +47,6 @@ trixie-jdk21:
   after_script:
     - gradle --version
     - sha256sum core/build/libs/*.jar wallettool/build/install/wallet-tool/bin/*  wallettool/build/install/wallet-tool/lib/*.jar
-  artifacts:
-    name: bitcoinj-$CI_JOB_NAME-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
-    paths:
-      - core/build/libs/*.jar
 
 sast:
   stage: test
