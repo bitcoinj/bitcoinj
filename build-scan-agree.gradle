@@ -1,0 +1,37 @@
+/* Gradle Init Script to non-interactively agree to the Gradle Build Scan terms of service
+ * Provided by Stefan Wolf via GitHub Issues
+ * See: https://github.com/gradle/gradle/issues/26316#issuecomment-1739245349
+ * To use add `--scan --init-script build-scan-agree.gradle` to your Gradle command-line
+ * Works with Gradle 4.4 - Gradle 8.4 (at least)
+ */
+def isTopLevelBuild = gradle.getParent() == null
+
+if (isTopLevelBuild) {
+    def gradleVersion = GradleVersion.current().baseVersion
+    def atLeastGradle6 = gradleVersion >= GradleVersion.version("6.0")
+    if (atLeastGradle6) {
+        settingsEvaluated { settings ->
+            settings.pluginManager.withPlugin("com.gradle.enterprise") {
+                configureExtension(settings.extensions["gradleEnterprise"].buildScan)
+            }
+        }
+    } else {
+        rootProject { root ->
+            root.pluginManager.withPlugin("com.gradle.build-scan") {
+                configureExtension(root.extensions["buildScan"])
+            }
+        }
+    }
+}
+
+void configureExtension(extension) {
+    extension.with {
+        if (delegate.metaClass.respondsTo(delegate, 'setTermsOfServiceUrl')) {
+            termsOfServiceUrl = "https://gradle.com/terms-of-service"
+            termsOfServiceAgree = "yes"
+        } else {
+            licenseAgreementUrl = "https://gradle.com/terms-of-service"
+            licenseAgree = "yes"
+        }
+    }
+}

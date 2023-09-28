@@ -27,7 +27,7 @@ jobs:
         uses: gradle/gradle-build-action@v2.8.0
         with:
           gradle-version: ${{ matrix.gradle }}
-          arguments: test nativeCompile --info --stacktrace
+          arguments: test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload wallet-tool as artifact
         uses: actions/upload-artifact@v3
         with:
