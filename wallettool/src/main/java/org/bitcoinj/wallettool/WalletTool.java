@@ -39,7 +39,6 @@ import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DeterministicKeyChain;
 import org.bitcoinj.wallet.DeterministicSeed;
 
-import com.google.common.io.Resources;
 import com.google.protobuf.ByteString;
 
 import org.bitcoinj.core.AbstractBlockChain;
@@ -339,11 +338,6 @@ public class WalletTool implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException, BlockStoreException {
-        if (help) {
-            System.out.println(Resources.toString(WalletTool.class.getResource("wallet-tool-help.txt"), StandardCharsets.UTF_8));
-            return 0;
-        }
-
         ActionEnum action;
         try {
             action = ActionEnum.valueOf(actionStr.toUpperCase().replace("-", "_"));
