@@ -219,7 +219,7 @@ public class BitcoinSerializer extends MessageSerializer {
         // We use an if ladder rather than reflection because reflection is very slow on Android.
         if (command.equals("version")) {
             return VersionMessage.read(payload);
-        } else if (command.equals("inv")) { 
+        } else if (command.equals("inv")) {
             return makeInventoryMessage(payload);
         } else if (command.equals("block")) {
             return makeBlock(payload);
