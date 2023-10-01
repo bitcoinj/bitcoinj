@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -271,7 +272,7 @@ public class TransactionBroadcast {
 
     private static Runnable dropPeerAfterBroadcastHandler(Peer peer) {
         return () ->  {
-            InternalUtils.sleepUninterruptibly(1, TimeUnit.SECONDS);
+            InternalUtils.sleepUninterruptibly(Duration.ofSeconds(1));
             peer.close();
         };
     }

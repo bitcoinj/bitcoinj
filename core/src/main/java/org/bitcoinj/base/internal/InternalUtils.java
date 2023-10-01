@@ -16,6 +16,7 @@
 
 package org.bitcoinj.base.internal;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -102,10 +103,9 @@ public class InternalUtils {
      * sure we re-set the thread's interrupt status, so higher-level code on the thread can handle the
      * interruption properly. Based upon the Guava implementation.
      * @param timeout duration to sleep for
-     * @param unit time unit for {@code timeout}
      */
-    public static void sleepUninterruptibly(long timeout, TimeUnit unit) {
-        long end = System.nanoTime() + unit.toNanos(timeout);
+    public static void sleepUninterruptibly(Duration timeout) {
+        long end = System.nanoTime() + timeout.toNanos();
         boolean interrupted = false;
         try {
             while (true) {
