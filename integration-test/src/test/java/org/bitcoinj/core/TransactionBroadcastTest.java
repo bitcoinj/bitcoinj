@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
@@ -41,7 +40,9 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
+import static java.lang.Double.longBitsToDouble;
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
@@ -89,11 +90,11 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.getConfidence().setSource(TransactionConfidence.Source.SELF);
         TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
-        final AtomicDouble lastProgress = new AtomicDouble();
-        broadcast.setProgressCallback(lastProgress::set);
+        final AtomicLong lastProgress = new AtomicLong();
+        broadcast.setProgressCallback(atomicCallback(lastProgress));
         CompletableFuture<TransactionBroadcast> future = broadcast.broadcastAndAwaitRelay();
         assertFalse(future.isDone());
-        assertEquals(0.0, lastProgress.get(), 0.0);
+        assertEquals(0.0, longBitsToDouble(lastProgress.get()), 0.0);
         // We expect two peers to receive a tx message, and at least one of the others must announce for the future to
         // complete successfully.
         Message[] messages = {
@@ -109,11 +110,11 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         assertNull(messages[2]);
         Threading.waitForUserCode();
         assertFalse(future.isDone());
-        assertEquals(0.0, lastProgress.get(), 0.0);
+        assertEquals(0.0, longBitsToDouble(lastProgress.get()), 0.0);
         inbound(channels[1], InventoryMessage.ofTransactions(tx));
         future.get();
         Threading.waitForUserCode();
-        assertEquals(1.0, lastProgress.get(), 0.0);
+        assertEquals(1.0, longBitsToDouble(lastProgress.get()), 0.0);
         // There is no response from the Peer as it has nothing to do.
         assertNull(outbound(channels[1]));
     }
@@ -129,8 +130,8 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
         inbound(channels[1], InventoryMessage.ofTransactions(tx));
         pingAndWait(channels[1]);
-        final AtomicDouble p = new AtomicDouble();
-        broadcast.setProgressCallback(p::set, Threading.SAME_THREAD);
+        final AtomicLong p = new AtomicLong();
+        broadcast.setProgressCallback(atomicCallback(p), Threading.SAME_THREAD);
         assertEquals(1.0, p.get(), 0.01);
     }
 
@@ -256,5 +257,10 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         peerGroup.addWallet(wallet);
         // Transaction announced to the first peer. No extra Bloom filter because no change address was needed.
         assertEquals(t3.getTxId(), ((Transaction) outbound(p1)).getTxId());
+    }
+
+    // Adapt an AtomicLong to be a TransactionBroadcast.ProgressCallback for use in tests
+    private TransactionBroadcast.ProgressCallback atomicCallback(AtomicLong atomicLong) {
+        return (double d) -> atomicLong.set(Double.doubleToRawLongBits(d));
     }
 }
