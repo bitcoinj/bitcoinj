@@ -18,7 +18,6 @@ package org.bitcoinj.walletfx.utils;
 
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import com.google.common.util.concurrent.Uninterruptibles;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.concurrent.Task;
 import org.slf4j.Logger;
@@ -26,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.*;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
 
@@ -78,7 +76,7 @@ public class KeyDerivationTasks {
                         double progress = (curTime - startTime) / (double) targetTimeMillis;
                         updateProgress(progress, 1.0);
 
-                        Uninterruptibles.sleepUninterruptibly(PROGRESS_UPDATE_INTERVAL.toMillis(), TimeUnit.MILLISECONDS);
+                        Thread.sleep(PROGRESS_UPDATE_INTERVAL.toMillis());
                     }
                     // Wait for the encryption thread before switching back to main UI.
                     updateProgress(1.0, 1.0);
