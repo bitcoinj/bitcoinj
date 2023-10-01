@@ -16,8 +16,6 @@
 
 package org.bitcoinj.testing;
 
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.MemoryPoolMessage;
@@ -40,6 +38,7 @@ import org.junit.rules.Timeout;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.Semaphore;
@@ -115,8 +114,8 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     private PeerGroup createPeerGroup(final ClientConnectionManager manager) {
         return new PeerGroup(UNITTEST, blockChain, manager, PeerGroup.DEFAULT_BLOOM_FILTER_FP_RATE) {
             @Override
-            protected ListeningScheduledExecutorService createPrivateExecutor() {
-                return MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup test thread")) {
+            protected ScheduledExecutorService createPrivateExecutor() {
+                return new ScheduledThreadPoolExecutor(1, new ContextPropagatingThreadFactory("PeerGroup test thread")) {
                     @Override
                     public ScheduledFuture<?> schedule(final Runnable command, final long delay, final TimeUnit unit) {
                         if (!blockJobs)
@@ -127,7 +126,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
                             jobBlocks.acquireUninterruptibly();
                         }, 0 /* immediate */, unit);
                     }
-                });
+                };
             }
         };
     }
