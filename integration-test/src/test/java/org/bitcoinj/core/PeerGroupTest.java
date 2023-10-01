@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
@@ -547,11 +546,11 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     @Ignore("disabled for now as this test is too flaky")
     public void peerPriority() throws Exception {
-        final List<InetSocketAddress> addresses = Lists.newArrayList(
+        final List<InetSocketAddress> addresses = new ArrayList<>(List.of(
                 new InetSocketAddress("localhost", 2000),
                 new InetSocketAddress("localhost", 2001),
                 new InetSocketAddress("localhost", 2002)
-        );
+        ));
         peerGroup.addConnectedEventListener(connectedListener);
         peerGroup.addDisconnectedEventListener(disconnectedListener);
         peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
@@ -580,7 +579,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         connectedPeers.take();
         connectedPeers.take();
         addresses.clear();
-        addresses.addAll(Lists.newArrayList(new InetSocketAddress("localhost", 2003)));
+        addresses.add(new InetSocketAddress("localhost", 2003));
         stopPeerServer(2);
         assertEquals(2002, disconnectedPeers.take().getAddress().getPort()); // peer died
 

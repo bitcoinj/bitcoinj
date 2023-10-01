@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
@@ -812,7 +811,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.addOutput(COIN, wallet.currentChangeAddress());
         inbound(writeTarget, t2);
         final InventoryItem inventoryItem = new InventoryItem(InventoryItem.Type.TRANSACTION, t2.getInput(0).getOutpoint().hash());
-        final NotFoundMessage nfm = new NotFoundMessage(Lists.newArrayList(inventoryItem));
+        final NotFoundMessage nfm = new NotFoundMessage(List.of(inventoryItem));
         inbound(writeTarget, nfm);
         pingAndWait(writeTarget);
         Threading.waitForUserCode();
