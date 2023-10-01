@@ -19,7 +19,10 @@ package org.bitcoinj.base.internal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Utilities for internal use only.
@@ -92,5 +95,35 @@ public class InternalUtils {
      */
     public static String commaJoin(String... strings) {
         return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Sleep <q>uninterruptibly</q> by temporarily ignoring {@link InterruptedException}, but making
+     * sure we re-set the thread's interrupt status, so higher-level code on the thread can handle the
+     * interruption properly. Based upon the Guava implementation.
+     * @param timeout duration to sleep for
+     * @param unit time unit for {@code timeout}
+     */
+    public static void sleepUninterruptibly(long timeout, TimeUnit unit) {
+        long end = System.nanoTime() + unit.toNanos(timeout);
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    // Calculate remaining time to sleep in nanoseconds, zero or negative means "don't sleep"
+                    long timeoutNanos = end - System.nanoTime();
+                    NANOSECONDS.sleep(timeoutNanos);
+                    return;
+                } catch (InterruptedException e) {
+                    // Temporarily ignore InterruptedException, but re-set the thread's interrupt status
+                    // in the `finally` clause so the interrupt will be seen later on the current thread.
+                    interrupted = true;
+                }
+            }
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
