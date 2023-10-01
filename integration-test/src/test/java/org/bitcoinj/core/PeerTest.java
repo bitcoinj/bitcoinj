@@ -17,11 +17,11 @@
 package org.bitcoinj.core;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
@@ -779,8 +779,8 @@ public class PeerTest extends TestWithNetworkConnections {
         connectWithVersion(500, Services.NODE_NETWORK);
         // We must wait uninterruptibly here because connect[WithVersion] generates a peer that interrupts the current
         // thread when it disconnects.
-        Uninterruptibles.getUninterruptibly(connectedFuture);
-        Uninterruptibles.getUninterruptibly(disconnectedFuture);
+        InternalUtils.getUninterruptibly(connectedFuture);
+        InternalUtils.getUninterruptibly(disconnectedFuture);
         try {
             peer.writeTarget.writeBytes(new byte[1]);
             fail();
