@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import net.jcip.annotations.GuardedBy;
 import org.bitcoinj.base.Network;
+import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -1528,7 +1529,7 @@ public class PeerGroup implements TransactionBroadcaster {
                     peers.size(), pendingPeers.size(), maxConnections);
             CompletableFuture<SocketAddress> future = channels.openConnection(address.toSocketAddress(), peer);
             if (future.isDone())
-                Uninterruptibles.getUninterruptibly(future);
+                InternalUtils.getUninterruptibly(future);
         } catch (ExecutionException e) {
             Throwable cause = Throwables.getRootCause(e);
             log.warn("Failed to connect to " + address + ": " + cause.getMessage());

@@ -19,6 +19,8 @@ package org.bitcoinj.base.internal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -92,5 +94,32 @@ public class InternalUtils {
      */
     public static String commaJoin(String... strings) {
         return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
+    }
+
+
+    /**
+     * Get a future's value <q>uninterruptibly</q> by temporarily ignoring {@link InterruptedException}, but making
+     * sure we re-set the thread's interrupt status, so higher-level code on the thread can handle the
+     * interruption properly. Based upon the Guava implementation.
+     * @param future future with value to get
+     * @return the value
+     * @param <V> type of value
+     * @throws ExecutionException if the computation through an exception
+     */
+    public static <V> V getUninterruptibly(Future<V> future) throws ExecutionException {
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    return future.get();
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                }
+            }
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
