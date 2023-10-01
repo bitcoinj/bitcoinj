@@ -35,6 +35,8 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
  */
 public class KeyDerivationTasks {
     private static final Logger log = LoggerFactory.getLogger(KeyDerivationTasks.class);
+    // 60fps would require a 16 millisecond value here.
+    private static final Duration PROGRESS_UPDATE_INTERVAL = Duration.ofMillis(20);
 
     public final Task<AesKey> keyDerivationTask;
     public final ReadOnlyDoubleProperty progress;
@@ -76,8 +78,7 @@ public class KeyDerivationTasks {
                         double progress = (curTime - startTime) / (double) targetTimeMillis;
                         updateProgress(progress, 1.0);
 
-                        // 60fps would require 16msec sleep here.
-                        Uninterruptibles.sleepUninterruptibly(20, TimeUnit.MILLISECONDS);
+                        Uninterruptibles.sleepUninterruptibly(PROGRESS_UPDATE_INTERVAL.toMillis(), TimeUnit.MILLISECONDS);
                     }
                     // Wait for the encryption thread before switching back to main UI.
                     updateProgress(1.0, 1.0);
