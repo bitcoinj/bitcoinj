@@ -262,8 +262,13 @@ public class FakeTxBuilder {
     }
 
     public static class BlockPair {
-        public StoredBlock storedBlock;
-        public Block block;
+        public final Block block;
+        public final StoredBlock storedBlock;
+
+        public BlockPair(Block block, StoredBlock storedBlock) {
+            this.storedBlock = storedBlock;
+            this.block = block;
+        }
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
@@ -291,9 +296,7 @@ public class FakeTxBuilder {
                 b.addTransaction(tx);
             }
             b.solve();
-            BlockPair pair = new BlockPair();
-            pair.block = b;
-            pair.storedBlock = previousStoredBlock.build(b);
+            BlockPair pair = new BlockPair(b, previousStoredBlock.build(b));
             blockStore.put(pair.storedBlock);
             blockStore.setChainHead(pair.storedBlock);
             return pair;
