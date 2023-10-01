@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.Preconditions;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
@@ -523,8 +524,12 @@ public class TransactionConfidence {
      * from the peer to peer network, or make it ourselves, or receive it via Bluetooth, or import it from another app,
      * and so on. This information is useful for {@link CoinSelector} implementations to risk analyze
      * transactions and decide when to spend them.
+     * <p>
+     * Once set it's immutable.
      */
     public synchronized void setSource(Source source) {
+        checkState(this.source == Source.UNKNOWN || source == this.source, () ->
+                "source cannot be set again: from " + this.source + " to " + source);
         this.source = source;
     }
 
