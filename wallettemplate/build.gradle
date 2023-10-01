@@ -10,6 +10,9 @@ dependencies {
     implementation 'de.jensd:fontawesomefx:8.0.0'
     implementation 'com.google.zxing:core:3.5.1'
     implementation 'org.slf4j:slf4j-jdk14:2.0.7'
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.0"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.0"
 }
 
 javafx {
@@ -28,3 +31,7 @@ compileJava {
 }
 
 mainClassName = 'wallettemplate.Main'
+
+test {
+    useJUnitPlatform()
+}
