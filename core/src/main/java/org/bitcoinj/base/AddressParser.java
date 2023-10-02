@@ -22,17 +22,18 @@ import org.bitcoinj.core.NetworkParameters;
 import javax.annotation.Nullable;
 
 /**
- * Functional interface for address parsing. It takes a single parameter, but its behavior is context-specific. For example if the
- * function was created with ({@link AddressParser#getDefault(Network)} it will only parse addresses for a single expected
- * value of {@link Network}. Or, if created with {@link AddressParser#getDefault()} it will parse addresses matching any
- * network. The default set of known networks is defined by {@link BitcoinNetwork}, but be aware that the {@link Address#network()} value
- * is normalized (see {@link Address} for details.
+ * Functional interface for parsing an {@link Address}. It takes a {@link String} parameter and will parse address
+ * strings for a configured set of {@link Network}s. For example, if the parser was created with ({@link AddressParser#getDefault(Network)}
+ * it will only parse addresses for the provided value of {@link Network}. If created with {@link AddressParser#getDefault()} it will parse
+ * addresses matching any known network. The default set of known networks is defined by {@link BitcoinNetwork}.
+ * <p>
+ * Note: Be aware that the value returned by {@link Address#network()} will be normalized. See {@link Address#network()} for details.
  */
 @FunctionalInterface
 public interface AddressParser {
     /**
-     * Parse an address for any known/configured network
-     * @param addressString string representation of address
+     * Parse an address for a configured set of {@link Network}s.
+     * @param addressString string representation of an address
      * @return A validated address object
      * @throws AddressFormatException invalid address string
      */

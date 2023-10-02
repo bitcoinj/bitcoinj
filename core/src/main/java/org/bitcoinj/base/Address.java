@@ -107,8 +107,13 @@ public interface Address extends Comparable<Address> {
     int compareTo(Address o);
 
     /**
-     * Get the network this address works on. Use of {@link BitcoinNetwork} is preferred to use of {@link NetworkParameters}
-     * when you need to know what network an address is for.
+     * Get the network this address is used on. Returns the <i>normalized</i> network (see below.)
+     * <p>
+     * <b>Note:</b> The network value returned is <i>normalized</i>. For example the address {@code "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"}
+     * may be used on either {@link BitcoinNetwork#TESTNET} or {@link BitcoinNetwork#SIGNET}, but the value returned by
+     * this method will always be {@link BitcoinNetwork#TESTNET}. Similarly, the address {@code "mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R"}
+     * may be used on {@link BitcoinNetwork#TESTNET}, {@link BitcoinNetwork#REGTEST}, or {@link BitcoinNetwork#REGTEST}, but
+     * the value returned by this method will always be {@link BitcoinNetwork#TESTNET}.
      * @return the Network.
      */
     Network network();
