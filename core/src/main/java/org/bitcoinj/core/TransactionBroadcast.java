@@ -17,7 +17,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
@@ -29,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -272,7 +271,11 @@ public class TransactionBroadcast {
 
     private static Runnable dropPeerAfterBroadcastHandler(Peer peer) {
         return () ->  {
-            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+            try {
+                Thread.sleep(Duration.ofSeconds(1).toMillis());
+            } catch (InterruptedException e) {
+                log.warn("Sleep before drop-peer-after-broadcast interrupted. Peer will be closed now.");
+            }
             peer.close();
         };
     }
