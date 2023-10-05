@@ -204,8 +204,7 @@ public class BlockFileLoader implements Iterable<Block> {
     }
 
     public Stream<Block> stream() {
-        return files.stream()
-                .flatMap(this::fileBlockStream)
+        return streamBuffers()
                 .map(serializer::makeBlock);
     }
 
