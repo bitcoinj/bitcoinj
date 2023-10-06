@@ -51,7 +51,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.FullPrunedBlockChain;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
@@ -188,8 +187,6 @@ public class WalletTool implements Callable<Integer> {
             "BLOCK      A new block that builds on the best chain.%n" +
             "BALANCE    Waits until the wallets balance meets the --condition.")
     private WaitForEnum waitFor = null;
-    @CommandLine.Option(names = "--mode", description = "Whether to do full verification of the chain or just light mode. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
-    private ValidationMode mode = ValidationMode.SPV;
     @CommandLine.Option(names = "--chain", description = "Specifies the name of the file that stores the block chain.")
     private File chainFile = null;
     @CommandLine.Option(names = "--pubkey", description = "Specifies a hex/base58 encoded non-compressed public key.")
@@ -324,11 +321,6 @@ public class WalletTool implements Callable<Integer> {
         WALLET_TX,
         BLOCK,
         BALANCE
-    }
-
-    public enum ValidationMode {
-        FULL,
-        SPV
     }
 
     public static void main(String[] args) {
@@ -970,24 +962,19 @@ public class WalletTool implements Callable<Integer> {
             System.out.println("Chain file is missing so resetting the wallet.");
             reset();
         }
-        if (mode == ValidationMode.SPV) {
-            store = new SPVBlockStore(params, chainFile);
-            if (reset) {
-                try {
-                    CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,
-                            wallet.earliestKeyCreationTime());
-                    StoredBlock head = store.getChainHead();
-                    System.out.println("Skipped to checkpoint " + head.getHeight() + " at "
-                            + TimeUtils.dateTimeFormat(head.getHeader().time()));
-                } catch (IOException x) {
-                    System.out.println("Could not load checkpoints: " + x.getMessage());
-                }
+        store = new SPVBlockStore(params, chainFile);
+        if (reset) {
+            try {
+                CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,
+                        wallet.earliestKeyCreationTime());
+                StoredBlock head = store.getChainHead();
+                System.out.println("Skipped to checkpoint " + head.getHeight() + " at "
+                        + TimeUtils.dateTimeFormat(head.getHeader().time()));
+            } catch (IOException x) {
+                System.out.println("Could not load checkpoints: " + x.getMessage());
             }
-            chain = new BlockChain(net, wallet, store);
-        } else if (mode == ValidationMode.FULL) {
-            store = new MemoryFullPrunedBlockStore(params, 5000);
-            chain = new FullPrunedBlockChain(params, wallet, (FullPrunedBlockStore) store);
         }
+        chain = new BlockChain(net, wallet, store);
         // This will ensure the wallet is saved when it changes.
         wallet.autosaveToFile(walletFile, Duration.ofSeconds(5), null);
         if (peerGroup == null) {
