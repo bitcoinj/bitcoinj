@@ -187,6 +187,8 @@ public class WalletTool implements Callable<Integer> {
             "BLOCK      A new block that builds on the best chain.%n" +
             "BALANCE    Waits until the wallets balance meets the --condition.")
     private WaitForEnum waitFor = null;
+    @CommandLine.Option(names = "--filter", description = "Use filter when synching the chain. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
+    private Filter filter = Filter.SERVER;
     @CommandLine.Option(names = "--chain", description = "Specifies the name of the file that stores the block chain.")
     private File chainFile = null;
     @CommandLine.Option(names = "--pubkey", description = "Specifies a hex/base58 encoded non-compressed public key.")
@@ -321,6 +323,11 @@ public class WalletTool implements Callable<Integer> {
         WALLET_TX,
         BLOCK,
         BALANCE
+    }
+
+    public enum Filter  {
+        NONE,
+        SERVER, // bloom filter
     }
 
     public static void main(String[] args) {
@@ -987,6 +994,7 @@ public class WalletTool implements Callable<Integer> {
             peerGroup.setMaxConnections(1);
         }
         peerGroup.addWallet(wallet);
+        peerGroup.setBloomFilteringEnabled(filter == Filter.SERVER);
         if (peersStr != null) {
             String[] peerAddrs = peersStr.split(",");
             for (String peer : peerAddrs) {
