@@ -455,9 +455,9 @@ public class BitcoinURITest {
 
     @Test
     public void testUnescapedPaymentProtocolReq() throws Exception {
-        BitcoinURI uri = BitcoinURI.of("bitcoin:?r=https://merchant.com/pay.php?h%3D2a8628fc2fbe", TESTNET);
-        assertEquals("https://merchant.com/pay.php?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
-        assertEquals(Collections.singletonList("https://merchant.com/pay.php?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
+        BitcoinURI uri = BitcoinURI.of("bitcoin:?r=https://merchant.example.com/pay?h%3D2a8628fc2fbe", TESTNET);
+        assertEquals("https://merchant.example.com/pay?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
+        assertEquals(Collections.singletonList("https://merchant.example.com/pay?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
         assertNull(uri.getAddress());
     }
 }
