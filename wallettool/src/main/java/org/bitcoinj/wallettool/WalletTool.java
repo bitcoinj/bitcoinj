@@ -143,8 +143,8 @@ public class WalletTool implements Callable<Integer> {
             "                       <key> CHECKSIG as the script.%n" +
             "                       If --payment-request is specified, a transaction will be created using the provided payment request. A payment request can be a local file, a bitcoin uri, or url to download the payment request, e.g.:%n" +
             "                         --payment-request=/path/to/my.bitcoinpaymentrequest%n" +
-            "                         --payment-request=bitcoin:?r=http://merchant.com/pay.php?123%n" +
-            "                         --payment-request=http://merchant.com/pay.php?123%n" +
+            "                         --payment-request=bitcoin:?r=https://merchant.example.com/pay?123%n" +
+            "                         --payment-request=https://merchant.example.com/pay?123%n" +
             "                       Other options include:%n" +
             "                         --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below%n" +
             "                         --select-addr or --select-output to select specific outputs%n" +
