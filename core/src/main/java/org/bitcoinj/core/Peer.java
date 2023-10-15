@@ -727,7 +727,7 @@ public class Peer extends PeerSocketHandler {
             // Peer to stash the tx object somewhere if they want to keep receiving updates about network propagation
             // and so on.
             TransactionConfidence confidence = tx.getConfidence();
-            confidence.setSource(TransactionConfidence.Source.NETWORK);
+            confidence.maybeSetSourceToNetwork();
             pendingTxDownloads.remove(confidence);
             if (maybeHandleRequestedData(tx, tx.getTxId())) {
                 return;
@@ -937,6 +937,11 @@ public class Peer extends PeerSocketHandler {
     protected void processBlock(Block m) {
         if (log.isDebugEnabled())
             log.debug("{}: Received broadcast block {}", getAddress(), m.getHashAsString());
+        if (m.getTransactions() != null) {
+            m.getTransactions().forEach(tx ->
+                tx.getConfidence().maybeSetSourceToNetwork()
+            );
+        }
         // Was this block requested by getBlock()?
         if (maybeHandleRequestedData(m, m.getHash())) return;
         if (blockChain == null) {
