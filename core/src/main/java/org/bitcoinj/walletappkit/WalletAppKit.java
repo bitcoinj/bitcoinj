@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.kits;
+package org.bitcoinj.walletappkit;
 
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;

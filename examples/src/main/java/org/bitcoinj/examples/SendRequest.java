@@ -20,7 +20,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.*;
-import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.walletappkit.WalletAppKit;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 

@@ -18,7 +18,7 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.*;
-import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.walletappkit.WalletAppKit;
 
 import java.io.File;
 
