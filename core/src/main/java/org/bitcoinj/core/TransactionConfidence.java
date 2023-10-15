@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -525,6 +526,18 @@ public class TransactionConfidence {
      */
     public synchronized void setSource(Source source) {
         this.source = source;
+    }
+
+    /**
+     * Called when we receive a transaction from the network. It's possible we may have already seen this locally
+     * so we don't want to override a setting of Source.SELF, but if source was not set, we should set it.
+     * This method should only be used internally to bitcoinj and will be removed in a future release.
+     */
+    @VisibleForTesting
+    public synchronized void maybeSetSourceToNetwork() {
+        if (source == Source.UNKNOWN) {
+            source = Source.NETWORK;
+        }
     }
 
     /**
