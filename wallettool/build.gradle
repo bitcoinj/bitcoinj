@@ -8,19 +8,14 @@ plugins {
     id 'org.graalvm.buildtools.native' version '0.9.27' apply false
 }
 
-def annotationProcessorMinVersion = GradleVersion.version("4.6")
-boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) >= 0)
-def junit5MinVersion = GradleVersion.version("4.6")
-boolean hasJunit5 = (GradleVersion.current().compareTo(junit5MinVersion) >= 0)
-
-def graalVMMinVersion = GradleVersion.version("7.4")     // Toolchains with selection by vendor
-boolean hasGraalVM = (GradleVersion.current().compareTo(graalVMMinVersion) >= 0)
+def minModernGradleVersion = GradleVersion.version("7.4")
+boolean isModernGradle = (GradleVersion.current().compareTo(minModernGradleVersion) >= 0)
 
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'info.picocli:picocli:4.7.4'
     implementation 'org.slf4j:slf4j-jdk14:2.0.7'
-    if (hasAnnotationProcessor) {
+    if (isModernGradle) {
         annotationProcessor 'info.picocli:picocli-codegen:4.7.4'
     } else {
         compileOnly 'info.picocli:picocli-codegen:4.7.4'
@@ -46,7 +41,7 @@ mainClassName = "org.bitcoinj.wallettool.WalletTool"
 applicationName = "wallet-tool"
 
 // wallettool is using JUnit 5 for testing, if it's not available no tests will be run
-if (hasJunit5) {
+if (isModernGradle) {
     test {
         useJUnitPlatform()
     }
@@ -56,7 +51,7 @@ task generateManpageAsciiDoc(type: JavaExec) {
     dependsOn(classes)
     group = "Documentation"
     description = "Generate AsciiDoc manpage"
-    if (hasAnnotationProcessor) {
+    if (isModernGradle) {
         classpath(sourceSets.main.compileClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
     } else {
         classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
@@ -76,7 +71,7 @@ asciidoctor {
     }
 }
 
-if (hasGraalVM) {
+if (isModernGradle) {
 
     apply plugin: 'org.graalvm.buildtools.native'
 

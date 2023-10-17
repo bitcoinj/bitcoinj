@@ -67,9 +67,9 @@ test {
     }
 }
 
-def gradleVersionToolchains = GradleVersion.version("6.7")
+def minModernGradleVersion = GradleVersion.version("7.4")
 
-if (GradleVersion.current().compareTo(gradleVersionToolchains) > 0) {
+if (GradleVersion.current().compareTo(minModernGradleVersion) > 0) {
     // If the Gradle Java Toolchains feature is available, run tests on older JDKs
     System.err.println "Adding 'testOnJdk8' task, because ${GradleVersion.current()}"
 
@@ -96,10 +96,8 @@ jar {
     }
 }
 
-def minGradleArchiveClassifierVersion = GradleVersion.version("5.0")
-
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    if (GradleVersion.current().compareTo(minGradleArchiveClassifierVersion) > 0) {
+    if (GradleVersion.current().compareTo(minModernGradleVersion) > 0) {
         archiveClassifier.set('javadoc')
     } else {
         classifier = 'javadoc'
@@ -108,7 +106,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    if (GradleVersion.current().compareTo(minGradleArchiveClassifierVersion) > 0) {
+    if (GradleVersion.current().compareTo(minModernGradleVersion) > 0) {
         archiveClassifier.set('sources')
     } else {
         classifier = 'sources'
