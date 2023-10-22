@@ -129,12 +129,13 @@ class DefaultAddressParserProvider implements AddressParser.AddressParserProvide
      */
     private SegwitAddress parseBech32AnyNetwork(String bech32)
             throws AddressFormatException {
-        String hrp = Bech32.decode(bech32).hrp;
-        return segwitNetworks.stream()
+        Bech32.Bech32Data bechData = Bech32.decode(bech32);
+        String hrp = bechData.hrp;
+        Network network = segwitNetworks.stream()
                 .filter(n -> hrp.equals(n.segwitAddressHrp()))
                 .findFirst()
-                .map(n -> SegwitAddress.fromBech32(bech32, n))
                 .orElseThrow(() -> new AddressFormatException.InvalidPrefix("No network found for " + bech32));
+        return SegwitAddress.fromBechData(network, bechData);
     }
 
     /**
