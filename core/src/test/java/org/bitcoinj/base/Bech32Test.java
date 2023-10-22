@@ -16,14 +16,19 @@
 
 package org.bitcoinj.base;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.bitcoinj.base.exceptions.AddressFormatException;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+@RunWith(JUnitParamsRunner.class)
 public class Bech32Test {
     @Test
     public void valid_bech32() {
@@ -43,7 +48,7 @@ public class Bech32Test {
         assertEquals(String.format("Failed to roundtrip '%s' -> '%s'", valid, recode),
                 valid.toLowerCase(Locale.ROOT), recode.toLowerCase(Locale.ROOT));
         // Test encoding with an uppercase HRP
-        recode = Bech32.encode(bechData.encoding, bechData.hrp.toUpperCase(Locale.ROOT), bechData.data);
+        recode = Bech32.encode(bechData.encoding, bechData.hrp.toUpperCase(Locale.ROOT), bechData);
         assertEquals(String.format("Failed to roundtrip '%s' -> '%s'", valid, recode),
                 valid.toLowerCase(Locale.ROOT), recode.toLowerCase(Locale.ROOT));
     }
@@ -119,6 +124,41 @@ public class Bech32Test {
             "16plkw9", // empty HRP
             "1p2gdwpf", // empty HRP
     };
+
+    @Test
+    @Parameters(method = "nip19Vectors")
+    public void encodeBytes(String hex, String hrp, String expectedBech32) {
+        String bech32 = Bech32.encodeBytes(Bech32.Encoding.BECH32, hrp, ByteUtils.parseHex(hex));
+        assertEquals("incorrect encoding", expectedBech32, bech32);
+    }
+
+    @Test
+    @Parameters(method = "nip19Vectors")
+    public void decodeBytes(String expectedHex, String hrp, String bech32) {
+        Bech32.Bech32Data decoded = Bech32.decode(bech32);
+        String decodedData = ByteUtils.formatHex(decoded.decode5to8());
+
+        assertEquals("incorrect encoding type", Bech32.Encoding.BECH32, decoded.encoding);
+        assertEquals("incorrect hrp", hrp, decoded.hrp);
+        assertEquals("incorrect decoded data", expectedHex, decodedData);
+    }
+
+    @Test
+    @Parameters(method = "nip19Vectors")
+    public void decodeBytes2(String expectedHex, String hrp, String bech32) {
+        byte[] decoded = Bech32.decodeBytes(bech32, hrp, Bech32.Encoding.BECH32);
+
+        assertEquals("incorrect decoded data", expectedHex, ByteUtils.formatHex(decoded));
+    }
+
+    // These vectors are from NIP-19: https://github.com/nostr-protocol/nips/blob/master/19.md
+    private Object[] nip19Vectors() {
+        return new Object[]{
+                new Object[]{ "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d", "npub", "npub180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsyjh6w6"},
+                new Object[]{ "7e7e9c42a91bfef19fa929e5fda1b72e0ebc1a4c1141673e2794234d86addf4e", "npub", "npub10elfcs4fr0l0r8af98jlmgdh9c8tcxjvz9qkw038js35mp4dma8qzvjptg"},
+                new Object[]{ "67dea2ed018072d675f5415ecfaed7d2597555e202d85b3d65ea4e58d2d92ffa", "nsec", "nsec1vl029mgpspedva04g90vltkh6fvh240zqtv9k0t9af8935ke9laqsnlfe5"},
+        };
+    }
 
     @Test(expected = AddressFormatException.InvalidCharacter.class)
     public void decode_invalidCharacter_notInAlphabet() {

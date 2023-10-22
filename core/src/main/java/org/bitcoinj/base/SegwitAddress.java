@@ -23,7 +23,6 @@ import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -133,14 +132,6 @@ public class SegwitAddress implements Address {
             }
         }
         return network;
-    }
-
-    private static byte[] encode8to5(byte[] data) {
-        return convertBits(data, 0, data.length, 8, 5, true);
-    }
-
-    private static byte[] decode5to8(byte[] data) {
-        return convertBits(data, 0, data.length, 5, 8, false);
     }
 
     /**
@@ -276,13 +267,12 @@ public class SegwitAddress implements Address {
         throw new AddressFormatException.WrongNetwork(bechData.hrp);
     }
 
-    private static SegwitAddress fromBechData(Network network, Bech32.Bech32Data bechData) {
-        if (bechData.data.length < 1) {
+    static SegwitAddress fromBechData(@Nonnull Network network, Bech32.Bech32Data bechData) {
+        if (bechData.bytes().length < 1) {
             throw new AddressFormatException.InvalidDataLength("invalid address length (0)");
         }
-        final int witnessVersion = bechData.data[0];
-        byte[] witnessProgram = decode5to8(trimVersion(bechData.data));
-        final SegwitAddress address = new SegwitAddress(network, witnessVersion, witnessProgram);
+        final int witnessVersion = bechData.witnessVersion();
+        final SegwitAddress address = new SegwitAddress(network, witnessVersion, bechData.witnessProgram());
         if ((witnessVersion == 0 && bechData.encoding != Bech32.Encoding.BECH32) ||
                 (witnessVersion != 0 && bechData.encoding != Bech32.Encoding.BECH32M))
             throw new AddressFormatException.UnexpectedWitnessVersion("Unexpected witness version: " + witnessVersion);
@@ -396,54 +386,7 @@ public class SegwitAddress implements Address {
      */
     public String toBech32() {
         Bech32.Encoding encoding = (witnessVersion == 0) ?  Bech32.Encoding.BECH32 : Bech32.Encoding.BECH32M;
-        return Bech32.encode(encoding, network.segwitAddressHrp(), appendVersion(witnessVersion, encode8to5(witnessProgram)));
-    }
-
-    // Trim the version byte and return the witness program only
-    private static byte[] trimVersion(byte[] data) {
-        byte[] program = new byte[data.length - 1];
-        System.arraycopy(data, 1, program, 0, program.length);
-        return program;
-    }
-
-    // concatenate the witnessVersion and witnessProgram
-    private static byte[] appendVersion(short version, byte[] program) {
-        byte[] data = new byte[program.length + 1];
-        data[0] = (byte) version;
-        System.arraycopy(program, 0, data, 1, program.length);
-        return data;
-    }
-
-    /**
-     * Helper for re-arranging bits into groups.
-     */
-    private static byte[] convertBits(final byte[] in, final int inStart, final int inLen, final int fromBits,
-            final int toBits, final boolean pad) throws AddressFormatException {
-        int acc = 0;
-        int bits = 0;
-        ByteArrayOutputStream out = new ByteArrayOutputStream(64);
-        final int maxv = (1 << toBits) - 1;
-        final int max_acc = (1 << (fromBits + toBits - 1)) - 1;
-        for (int i = 0; i < inLen; i++) {
-            int value = in[i + inStart] & 0xff;
-            if ((value >>> fromBits) != 0) {
-                throw new AddressFormatException(
-                        String.format("Input value '%X' exceeds '%d' bit size", value, fromBits));
-            }
-            acc = ((acc << fromBits) | value) & max_acc;
-            bits += fromBits;
-            while (bits >= toBits) {
-                bits -= toBits;
-                out.write((acc >>> bits) & maxv);
-            }
-        }
-        if (pad) {
-            if (bits > 0)
-                out.write((acc << (toBits - bits)) & maxv);
-        } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv) != 0) {
-            throw new AddressFormatException("Could not convert bits, invalid padding");
-        }
-        return out.toByteArray();
+        return Bech32.encode(encoding, network.segwitAddressHrp(), Bech32.Bech32Bytes.ofSegwit(witnessVersion, witnessProgram));
     }
 
     // Comparator for SegwitAddress, left argument must be SegwitAddress, right argument can be any Address
