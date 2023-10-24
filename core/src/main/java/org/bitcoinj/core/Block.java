@@ -24,6 +24,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.Stopwatch;
+import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
@@ -52,6 +53,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Sha256Hash.hashTwice;
@@ -162,19 +164,19 @@ public class Block extends BaseMessage {
     }
 
     /**
-     * Parse transactions from the block.
+     * Read transactions from a block message.
+     * @param payload Contains the block message being read
+     * @return An unmodifiable list of transactions
+     * @throws BufferUnderflowException if end-of-buffer reached before a complete, valid message could be read
+     * @throws ProtocolException if the message is not compliant with the protocol
      */
     private static List<Transaction> readTransactions(ByteBuffer payload) throws BufferUnderflowException,
             ProtocolException {
-        VarInt numTransactionsVarInt = VarInt.read(payload);
-        check(numTransactionsVarInt.fitsInt(), BufferUnderflowException::new);
-        int numTransactions = numTransactionsVarInt.intValue();
-        List<Transaction> transactions = new ArrayList<>(Math.min(numTransactions, Utils.MAX_INITIAL_ARRAY_LENGTH));
-        for (int i = 0; i < numTransactions; i++) {
-            Transaction tx = Transaction.read(payload);
-            transactions.add(tx);
-        }
-        return transactions;
+        VarInt numTransactions = VarInt.read(payload);
+        check(numTransactions.fitsInt(), BufferUnderflowException::new);
+        return IntStream.range(0, numTransactions.intValue())
+                .mapToObj(i -> Transaction.read(payload))
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     /** Special case constructor, used for unit tests. */
