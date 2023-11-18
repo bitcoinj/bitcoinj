@@ -21,7 +21,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import java.io.IOException;
 import java.net.URL;

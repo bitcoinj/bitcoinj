@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;

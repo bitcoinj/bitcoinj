@@ -36,7 +36,7 @@ import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 /**
  * Wraps the given Node in a BorderPane and allows a thin bar to slide in from the bottom or top, squeezing the content

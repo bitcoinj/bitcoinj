@@ -23,7 +23,7 @@ import javafx.concurrent.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.*;
+import jakarta.annotation.*;
 import java.time.Duration;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;

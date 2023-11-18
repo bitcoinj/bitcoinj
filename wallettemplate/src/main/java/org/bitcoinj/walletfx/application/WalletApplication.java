@@ -34,7 +34,7 @@ import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import wallettemplate.WalletSetPasswordController;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 
