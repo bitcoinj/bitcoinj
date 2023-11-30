@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
         java: ['11', '17', '21']
         distribution: ['temurin']
-        gradle: ['8.4']
+        gradle: ['8.5']
         include:
           # Special case to test something close to Debian config with the oldest supported (standard) Gradle on Ubuntu
           - os: ubuntu-latest
