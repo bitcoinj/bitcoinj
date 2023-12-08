@@ -68,7 +68,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
 
         dnsSeeds = new String[] {
                 "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
-                "seed.tbtc.petertodd.org",               // Peter Todd
+                "seed.tbtc.petertodd.net",               // Peter Todd
                 "seed.testnet.bitcoin.sprovoost.nl",     // Sjors Provoost
                 "testnet-seed.bluematt.me",              // Matt Corallo
         };
