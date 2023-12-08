@@ -78,7 +78,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 "dnsseed.bitcoin.dashjr.org",   // Luke Dashjr
                 "seed.bitcoinstats.com",        // Chris Decker
                 "seed.bitcoin.jonasschnelli.ch",// Jonas Schnelli
-                "seed.btc.petertodd.org",       // Peter Todd
+                "seed.btc.petertodd.net",       // Peter Todd
                 "seed.bitcoin.sprovoost.nl",    // Sjors Provoost
                 "dnsseed.emzy.de",              // Stephan Oeste
                 "seed.bitcoin.wiz.biz",         // Jason Maurice
@@ -111,7 +111,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
                 0x23159dd8, 0x368fea55, 0x50bd4031, 0x5395de6c, 0x05c6902f, 0x60c09350, 0x66d6d168, 0x70d90337,
                 0x7a549ac3, 0x9012d552, 0x94a60f33, 0xa490ff36, 0xb030d552, 0xb0729450, 0xb12b4c4a, 0x0b7e7e60,
                 0xc4f84b2f, 0xc533f42f, 0xc8f60ec2, 0xc9d1bab9, 0xd329cb74, 0xe4b26ab4, 0xe70e5db0, 0xec072034,
-                // seed.btc.petertodd.org
+                // seed.btc.petertodd.net
                 0x10ac1242, 0x131c4a79, 0x1477da47, 0x2899ec63, 0x45660451, 0x4b1b0050, 0x6931d0c2, 0x070ed85f,
                 0x806a9950, 0x80b0d522, 0x810d2bc1, 0x829d3b8b, 0x848bdfb0, 0x87a5e52e, 0x9664bb25, 0xa021a6df,
                 0x0a5f8548, 0x0a66c752, 0xaaf5b64f, 0xabba464a, 0xc5df4165, 0xe8c5efd5, 0xfa08d01f,
