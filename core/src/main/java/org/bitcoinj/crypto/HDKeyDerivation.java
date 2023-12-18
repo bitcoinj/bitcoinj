@@ -138,7 +138,7 @@ public final class HDKeyDerivation {
 
     /**
      * @throws HDDerivationException if private derivation is attempted for a public-only parent key, or
-     * if the resulting derived key is invalid (eg. private key == 0).
+     * if the resulting derived key is invalid (e.g. private key == 0).
      */
     public static DeterministicKey deriveChildKey(DeterministicKey parent, ChildNumber childNumber) throws HDDerivationException {
         if (!parent.hasPrivKey())

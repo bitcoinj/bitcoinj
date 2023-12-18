@@ -115,7 +115,7 @@ public interface KeyChainGroupStructure {
 
     /**
      * Return coin type path component for a network id
-     * @param network network id string, eg. {@link BitcoinNetwork#ID_MAINNET}
+     * @param network network id string, e.g. {@link BitcoinNetwork#ID_MAINNET}
      */
     static ChildNumber coinType(Network network) {
         if (!(network instanceof BitcoinNetwork)) {
