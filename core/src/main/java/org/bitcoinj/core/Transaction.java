@@ -323,7 +323,7 @@ public class Transaction extends BaseMessage {
         vLockTime = LockTime.unset();
     }
 
-    /** @deprecated */
+    /** @deprecated use {@link #Transaction()} */
     @Deprecated
     public Transaction(NetworkParameters params) {
         this();
