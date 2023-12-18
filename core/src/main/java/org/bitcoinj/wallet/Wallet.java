@@ -628,9 +628,9 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
-     * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
-     * {@link #loadFromFile}.
+     * Creates a new, empty wallet with no transactions. If you haven't already done so,
+     * make sure to provide for sufficient backup of the keys in the {@link KeyChainGroup}.
+     * To restore a wallet from disk instead, see {@link #loadFromFile}.
      * @param network network wallet will operate on
      * @param keyChainGroup keychain group to manage keychains
      */
