@@ -582,14 +582,22 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key. This HAS
-     * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
-     * @param network network wallet will operate on
+     * Creates a spending wallet that tracks payments to and from a BIP32-style HD key hierarchy rooted by {@code masterKey} and
+     * {@code accountNumber}. The account path must be directly below the master key as in BIP-32.
+     * <p>
+     * This method should not be used for BIP-43 compliant wallets or accounts not of the form {@code m/accountNumber'}.
+     * <p>
+ *     This wallet will not store the {@code masterKey}, only the account key.
+     * @param network network the wallet will operate on
+     * @param masterKey The root private key (e.g. path {@code m})
+     * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
+     * @param accountNumber The account number to append, resulting in an account path of {@code m/accountNumber'}
+     * @return A newly created Wallet object
      */
     public static Wallet fromMasterKey(Network network, DeterministicKey masterKey,
                                        ScriptType outputScriptType, ChildNumber accountNumber) {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
-        accountKey = accountKey.dropParent();
+        accountKey = accountKey.dropParent();   // Drop the parent private key, so it won't be used or saved.
         Optional<Instant> creationTime = masterKey.creationTime();
         if (creationTime.isPresent())
             accountKey.setCreationTime(creationTime.get());
