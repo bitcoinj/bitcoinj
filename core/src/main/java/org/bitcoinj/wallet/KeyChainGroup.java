@@ -110,7 +110,7 @@ public class KeyChainGroup implements KeyBag {
          * <p>In the case of P2PKH, just a P2PKH chain is created and activated which is then the default chain for fresh
          * addresses. It can be upgraded to P2WPKH later.</p>
          * <p>In the case of P2WPKH, both a P2PKH and a P2WPKH chain are created and activated, the latter being the default
-         * chain. This behaviour will likely be changed with bitcoinj 0.16 such that only a P2WPKH chain is created and
+         * chain. This behaviour will likely be changed in future such that only a P2WPKH chain is created and
          * activated.</p>
          * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
          */
@@ -126,7 +126,7 @@ public class KeyChainGroup implements KeyBag {
          * <p>In the case of P2PKH, just a P2PKH chain is created and activated which is then the default chain for fresh
          * addresses. It can be upgraded to P2WPKH later.</p>
          * <p>In the case of P2WPKH, both a P2PKH and a P2WPKH chain are created and activated, the latter being the default
-         * chain. This behaviour will likely be changed with bitcoinj 0.16 such that only a P2WPKH chain is created and
+         * chain. This behaviour will likely be changed in future such that only a P2WPKH chain is created and
          * activated.</p>
          * @param seed deterministic seed to derive all keys from
          * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
