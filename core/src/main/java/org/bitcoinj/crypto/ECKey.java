@@ -470,6 +470,12 @@ public class ECKey implements EncryptableItem {
             checkArgument(this.isCompressed(), () ->
                     "only compressed keys allowed");
             return SegwitAddress.fromHash(network, this.getPubKeyHash());
+        } else if (scriptType == ScriptType.P2TR) {
+            checkArgument(this.isCompressed(), () ->
+                    "only compressed keys allowed");
+            // TODO: Fix this once we have support for calculating a P2TR program
+            // byte[] witnessProgram = maker.calcWitnessProgram(this);
+            return SegwitAddress.fromProgram(network, 1, Sha256Hash.hash("BROKEN!".getBytes(StandardCharsets.UTF_8)));
         } else {
             throw new IllegalArgumentException(scriptType.toString());
         }

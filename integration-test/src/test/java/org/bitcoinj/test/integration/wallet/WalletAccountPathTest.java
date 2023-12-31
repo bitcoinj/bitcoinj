@@ -16,6 +16,7 @@
 
 package org.bitcoinj.test.integration.wallet;
 
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -39,10 +40,12 @@ import java.util.List;
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.bitcoinj.base.ScriptType.P2PKH;
+import static org.bitcoinj.base.ScriptType.P2TR;
 import static org.bitcoinj.base.ScriptType.P2WPKH;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP32;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Create new Wallets in a temp directory and make sure their account paths are correct.
@@ -67,6 +70,10 @@ public class WalletAccountPathTest {
 
         // Then the account path is as expected
         assertEquals(expectedPath, wallet.getActiveKeyChain().accountFullPath());
+
+        // We can get the first receive address
+        Address address = wallet.currentReceiveAddress();
+        assertNotNull(address);
     }
 
     static final List<Arguments> walletStructureParams = List.of(
@@ -78,7 +85,9 @@ public class WalletAccountPathTest {
             Arguments.of(BIP43, "m/44H/0H/0H", P2PKH, MAINNET),
             Arguments.of(BIP43, "m/44H/1H/0H", P2PKH, TESTNET),
             Arguments.of(BIP43, "m/84H/0H/0H", P2WPKH, MAINNET),
-            Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, TESTNET)
+            Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, TESTNET),
+            Arguments.of(BIP43, "m/86H/0H/0H", P2TR, MAINNET),
+            Arguments.of(BIP43, "m/86H/1H/0H", P2TR, TESTNET)
         );
 
     // Create a wallet, save it to a file, then reload from a file
