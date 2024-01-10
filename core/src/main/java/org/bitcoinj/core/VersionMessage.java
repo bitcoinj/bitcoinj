@@ -58,6 +58,8 @@ public class VersionMessage extends Message {
     public static final int NODE_WITNESS = 1 << 3;
     /** A service bit that denotes whether the peer has at least the last two days worth of blockchain (BIP159). */
     public static final int NODE_NETWORK_LIMITED = 1 << 10;
+    /** Indicates the node supports BIP324 transport. */
+    public static final int NODE_P2P_V2 = 1 << 11;
     /** A service bit used by Bitcoin-ABC to announce Bitcoin Cash nodes. */
     public static final int NODE_BITCOIN_CASH = 1 << 5;
 
@@ -332,6 +334,10 @@ public class VersionMessage extends Message {
         if ((services & NODE_NETWORK_LIMITED) == NODE_NETWORK_LIMITED) {
             strings.add("NETWORK_LIMITED");
             services &= ~NODE_NETWORK_LIMITED;
+        }
+        if ((services & NODE_P2P_V2) == NODE_P2P_V2) {
+            strings.add("P2P_V2");
+            services &= ~NODE_P2P_V2;
         }
         if (services != 0)
             strings.add("remaining: " + Long.toBinaryString(services));
