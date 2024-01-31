@@ -16,7 +16,7 @@ jobs:
     name: ${{ matrix.os }} JDK ${{ matrix.java-version }}.${{ matrix.distribution }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
