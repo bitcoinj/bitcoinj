@@ -24,7 +24,7 @@ jobs:
           distribution: ${{ matrix.distribution }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2.8.0
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ matrix.gradle }}
           arguments: test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
