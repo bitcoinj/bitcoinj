@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
         java: ['11', '17', '21']
         distribution: ['temurin']
         gradle: ['8.5']
