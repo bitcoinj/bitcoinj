@@ -29,7 +29,7 @@ jobs:
           gradle-version: ${{ matrix.gradle }}
           arguments: test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload wallet-tool as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wallet-tool-${{ matrix.os }}
+          name: wallet-tool-${{ matrix.os }}-${{ matrix.java-version }}
           path: wallettool/build/native/nativeCompile/wallet-tool
