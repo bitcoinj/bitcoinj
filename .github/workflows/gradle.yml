@@ -29,7 +29,7 @@ jobs:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2.8.0
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ matrix.gradle }}
           arguments: -PtestJdk8=true build --init-script build-scan-agree.gradle --scan --info --stacktrace
