@@ -229,7 +229,7 @@ message TransactionConfidence {
     SOURCE_NETWORK = 1;  // We received it from a network broadcast. This is the normal way to get payments.
     SOURCE_SELF = 2;     // We made it ourselves, so we know it should be valid.
     // In future:
-    // - direct from trusted counterparty, eg via bluetooth/wifi direct
+    // - direct from trusted counterparty, e.g. via bluetooth/wifi direct
     // - direct from untrusted counterparty
     // - from a wallet that uses trusted computing/secure hardware that won't create double spends
   }

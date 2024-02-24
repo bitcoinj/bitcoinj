@@ -143,7 +143,7 @@ class DefaultAddressParserProvider implements AddressParser.AddressParserProvide
      *
      * @param base58 base58-encoded textual form of the address
      * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
-     * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (eg testnet vs mainnet)
+     * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (e.g. testnet vs mainnet)
      */
     private LegacyAddress parseBase58AnyNetwork(String base58)
             throws AddressFormatException, AddressFormatException.WrongNetwork {

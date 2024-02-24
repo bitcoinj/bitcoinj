@@ -93,7 +93,7 @@ class ConnectionHandler implements MessageWriteTarget {
         }
         this.connection = connection;
         readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
-        connection.setWriteTarget(this); // May callback into us (eg closeConnection() now)
+        connection.setWriteTarget(this); // May callback into us (e.g. closeConnection() now)
         connectedHandlers = null;
     }
 
@@ -245,7 +245,7 @@ class ConnectionHandler implements MessageWriteTarget {
             if (key.isWritable())
                 handler.tryWriteBytes();
         } catch (Exception e) {
-            // This can happen eg if the channel closes while the thread is about to get killed
+            // This can happen e.g. if the channel closes while the thread is about to get killed
             // (ClosedByInterruptException), or if handler.connection.receiveBytes throws something
             Throwable t = Throwables.getRootCause(e);
             log.warn("Error handling SelectionKey: {} {}", t.getClass().getName(), t.getMessage() != null ? t.getMessage() : "", e);

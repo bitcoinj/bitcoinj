@@ -147,7 +147,7 @@ public abstract class AbstractBlockChain {
             this.filteredTxn = filteredTxn;
         }
     }
-    // Holds blocks that we have received but can't plug into the chain yet, eg because they were created whilst we
+    // Holds blocks that we have received but can't plug into the chain yet, e.g. because they were created whilst we
     // were downloading the block chain.
     private final LinkedHashMap<Sha256Hash, OrphanBlock> orphanBlocks = new LinkedHashMap<>();
 
@@ -578,7 +578,7 @@ public abstract class AbstractBlockChain {
     }
 
     // expensiveChecks enables checks that require looking at blocks further back in the chain
-    // than the previous one when connecting (eg median timestamp check)
+    // than the previous one when connecting (e.g. median timestamp check)
     // It could be exposed, but for now we just set it to shouldVerifyTransactions()
     private void connectBlock(final Block block, StoredBlock storedPrev, boolean expensiveChecks,
                               @Nullable final List<Sha256Hash> filteredTxHashList,

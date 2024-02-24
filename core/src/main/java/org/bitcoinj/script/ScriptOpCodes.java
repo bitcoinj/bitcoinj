@@ -292,7 +292,7 @@ public class ScriptOpCodes {
     }
 
     /**
-     * Converts the given OpCode into a string (eg "0", "PUSHDATA", or "NON_OP(10)")
+     * Converts the given OpCode into a string (e.g. "0", "PUSHDATA", or "NON_OP(10)")
      */
     public static String getOpCodeName(int opcode) {
         if (opCodeMap.containsKey(opcode))
@@ -302,7 +302,7 @@ public class ScriptOpCodes {
     }
 
     /**
-     * Converts the given pushdata OpCode into a string (eg "PUSHDATA2", or "PUSHDATA(23)")
+     * Converts the given pushdata OpCode into a string (e.g. "PUSHDATA2", or "PUSHDATA(23)")
      */
     public static String getPushDataName(int opcode) {
         if (opCodeMap.containsKey(opcode))

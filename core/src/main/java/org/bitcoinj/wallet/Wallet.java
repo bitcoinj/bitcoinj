@@ -178,7 +178,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * <p>Wallets can be serialized using protocol buffers. You need to save the wallet whenever it changes, there is an
  * auto-save feature that simplifies this for you although you're still responsible for manually triggering a save when
  * your app is about to quit because the auto-save feature waits a moment before actually committing to disk to avoid IO
- * thrashing when the wallet is changing very fast (eg due to a block chain sync). See
+ * thrashing when the wallet is changing very fast (e.g. due to a block chain sync). See
  * {@link Wallet#autosaveToFile(File, long, TimeUnit, WalletFiles.Listener)}
  * for more information about this.</p>
  */
@@ -1833,7 +1833,7 @@ public class Wallet extends BaseTaggableObject
      * <p>A background thread will be created and the wallet will only be saved to
      * disk every periodically. If no changes have occurred for the given time period, nothing will be written.
      * In this way disk IO can be rate limited. It's a good idea to set this as otherwise the wallet can change very
-     * frequently, eg if there are a lot of transactions in it or during block sync, and there will be a lot of redundant
+     * frequently, e.g. if there are a lot of transactions in it or during block sync, and there will be a lot of redundant
      * writes. Note that when a new key is added, that always results in an immediate save regardless of
      * delayTime. <b>You should still save the wallet manually using {@link Wallet#saveToFile(File)} when your program
      * is about to shut down as the JVM will not wait for the background thread.</b></p>
@@ -3392,7 +3392,7 @@ public class Wallet extends BaseTaggableObject
      * Dead transactions (overridden by double spends) are optionally included.</p>
      * <p>Note: the current implementation is O(num transactions in wallet). Regardless of how many transactions are
      * requested, the cost is always the same. In future, requesting smaller numbers of transactions may be faster
-     * depending on how the wallet is implemented (eg if backed by a database).</p>
+     * depending on how the wallet is implemented (e.g. if backed by a database).</p>
      */
     public List<Transaction> getRecentTransactions(int numTransactions, boolean includeDead) {
         lock.lock();

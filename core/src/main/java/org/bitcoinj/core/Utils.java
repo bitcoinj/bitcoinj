@@ -50,7 +50,7 @@ public class Utils {
 
     /**
      * Max initial size of variable length arrays and ArrayLists that could be attacked.
-     * Avoids this attack: Attacker sends a msg indicating it will contain a huge number (eg 2 billion) elements (eg transaction inputs) and
+     * Avoids this attack: Attacker sends a msg indicating it will contain a huge number (e.g. 2 billion) elements (e.g. transaction inputs) and
      * forces bitcoinj to try to allocate a huge piece of the memory resulting in OutOfMemoryError.
     */
     public static final int MAX_INITIAL_ARRAY_LENGTH = 20;

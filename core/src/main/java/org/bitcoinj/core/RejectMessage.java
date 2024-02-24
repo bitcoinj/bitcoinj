@@ -43,7 +43,7 @@ public class RejectMessage extends BaseMessage {
         MALFORMED((byte) 0x01),
         /** The message described an invalid object */
         INVALID((byte) 0x10),
-        /** The message was obsolete or described an object which is obsolete (eg unsupported, old version, v1 block) */
+        /** The message was obsolete or described an object which is obsolete (e.g. unsupported, old version, v1 block) */
         OBSOLETE((byte) 0x11),
         /**
          * The message was relayed multiple times or described an object which is in conflict with another.

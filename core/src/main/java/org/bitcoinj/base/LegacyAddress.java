@@ -168,7 +168,7 @@ public class LegacyAddress implements Address {
      * @throws AddressFormatException
      *             if the given base58 doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
-     *             if the given address is valid but for a different chain (eg testnet vs mainnet)
+     *             if the given address is valid but for a different chain (e.g. testnet vs mainnet)
      * @deprecated Use {@link #fromBase58(String, Network)}
      */
     @Deprecated
@@ -183,7 +183,7 @@ public class LegacyAddress implements Address {
      * @param base58  base58-encoded textual form of the address
      * @param network expected network this address is valid for
      * @throws AddressFormatException              if the given base58 doesn't parse or the checksum is invalid
-     * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (eg testnet vs mainnet)
+     * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (e.g. testnet vs mainnet)
      */
     public static LegacyAddress fromBase58(String base58, @Nonnull Network network)
             throws AddressFormatException, AddressFormatException.WrongNetwork {

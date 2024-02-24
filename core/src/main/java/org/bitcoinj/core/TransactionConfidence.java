@@ -112,7 +112,7 @@ public class TransactionConfidence {
         /**
          * If DEAD, then it means the transaction won't confirm unless there is another re-org,
          * because some other transaction is spending one of its inputs. Such transactions should be alerted to the user
-         * so they can take action, eg, suspending shipment of goods if they are a merchant.
+         * so they can take action, e.g., suspending shipment of goods if they are a merchant.
          * It can also mean that a coinbase transaction has been made dead from it being moved onto a side chain.
          */
         DEAD(4),

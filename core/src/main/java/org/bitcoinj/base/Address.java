@@ -40,7 +40,7 @@ public interface Address extends Comparable<Address> {
      * @throws AddressFormatException
      *             if the given string doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork
-     *             if the given string is valid but not for the expected network (eg testnet vs mainnet)
+     *             if the given string is valid but not for the expected network (e.g. testnet vs mainnet)
      * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String)}
      */
     @Deprecated
