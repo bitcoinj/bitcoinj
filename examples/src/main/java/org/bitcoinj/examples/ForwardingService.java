@@ -72,7 +72,9 @@ public class ForwardingService implements Closeable {
             // Wait for Control-C
             try {
                 Thread.sleep(Long.MAX_VALUE);
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
