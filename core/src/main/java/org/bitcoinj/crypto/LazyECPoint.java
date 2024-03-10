@@ -25,20 +25,21 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+
 /**
- * A wrapper around ECPoint that delays decoding of the point for as long as possible. This is useful because point
+ * A wrapper around a SECP256K1 ECPoint that delays decoding of the point for as long as possible. This is useful because point
  * encode/decode in Bouncy Castle is quite slow especially on Dalvik, as it often involves decompression/recompression.
  */
 public class LazyECPoint {
-    // If curve is set, bits is also set. If curve is unset, point is set and bits is unset. Point can be set along
-    // with curve and bits when the cached form has been accessed and thus must have been converted.
+    private static final ECCurve curve = ECKey.CURVE.getCurve();
 
-    private final ECCurve curve;
+    // bits will be null if LazyECPoint is constructed from an (already decoded) point
+    @Nullable
     private final byte[] bits;
     private final boolean compressed;
 
-    // This field is effectively final - once set it won't change again. However it can be set after
-    // construction.
+    // This field is lazy - once set it won't change again. However, it can be set after construction.
     @Nullable
     private ECPoint point;
 
@@ -46,11 +47,24 @@ public class LazyECPoint {
      * Construct a LazyECPoint from a public key. Due to the delayed decoding of the point the validation of the
      * public key is delayed too, e.g. until a getter is called.
      *
-     * @param curve a curve the point is on
      * @param bits  public key bytes
      */
+    public LazyECPoint(byte[] bits) {
+        this.bits = bits;
+        this.compressed = ECKey.isPubKeyCompressed(bits);
+    }
+
+    /**
+     * Construct a LazyECPoint from a public key. Due to the delayed decoding of the point the validation of the
+     * public key is delayed too, e.g. until a getter is called.
+     *
+     * @param curve a curve the point is on
+     * @param bits  public key bytes
+     * @deprecated Use {@link LazyECPoint#LazyECPoint(byte[])}
+     */
+    @Deprecated
     public LazyECPoint(ECCurve curve, byte[] bits) {
-        this.curve = curve;
+        checkArgument(LazyECPoint.curve.equals(curve), () -> "Curve must be SECP256K1");
         this.bits = bits;
         this.compressed = ECKey.isPubKeyCompressed(bits);
     }
@@ -64,7 +78,6 @@ public class LazyECPoint {
     public LazyECPoint(ECPoint point, boolean compressed) {
         this.point = Objects.requireNonNull(point).normalize();
         this.compressed = compressed;
-        this.curve = null;
         this.bits = null;
     }
 
