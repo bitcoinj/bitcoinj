@@ -192,7 +192,7 @@ public class DefaultRiskAnalysisTest {
         // First, a synthetic test.
         TransactionSignature sig = TransactionSignature.dummy();
         Script scriptHighS = ScriptBuilder
-                .createInputScript(new TransactionSignature(sig.r, ECKey.CURVE.getN().subtract(sig.s)));
+                .createInputScript(new TransactionSignature(sig.r, ECKey.ecDomainParameters().getN().subtract(sig.s)));
         assertEquals(RuleViolation.SIGNATURE_CANONICAL_ENCODING, DefaultRiskAnalysis.isInputStandard(
                 new TransactionInput(null, scriptHighS.program(), TransactionOutPoint.UNCONNECTED)));
 

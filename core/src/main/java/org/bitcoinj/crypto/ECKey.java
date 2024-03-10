@@ -126,7 +126,17 @@ public class ECKey implements EncryptableItem {
     private static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
-    public static final ECDomainParameters CURVE;
+    static final ECDomainParameters CURVE;
+
+    /**
+     * Return EC parameters for the SECP256K1 curve, in a Bouncy Castle type.
+     * Note that we are migrating to using the build in JDK types for EC parameters,
+     * so we anticipate this method will be deprecated in the near future.
+     * @return Elliptic Curve Domain Parameters (Bouncy Castle)
+     */
+    public static ECDomainParameters ecDomainParameters() {
+        return CURVE;
+    }
 
     /**
      * Equal to CURVE.getN().shiftRight(1), used for canonicalising the S value of a signature. If you aren't
