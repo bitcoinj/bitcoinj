@@ -259,7 +259,7 @@ public class ECKey implements EncryptableItem {
     public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
         Objects.requireNonNull(priv);
         Objects.requireNonNull(pub);
-        return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(CURVE.getCurve(), pub));
+        return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(pub));
     }
 
     /**
@@ -275,7 +275,7 @@ public class ECKey implements EncryptableItem {
      * The compression state of pub will be preserved.
      */
     public static ECKey fromPublicOnly(byte[] pub) {
-        return new ECKey(null, new LazyECPoint(CURVE.getCurve(), pub));
+        return new ECKey(null, new LazyECPoint(pub));
     }
 
     public static ECKey fromPublicOnly(ECKey key) {
