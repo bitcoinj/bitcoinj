@@ -132,7 +132,7 @@ public class ECKey implements EncryptableItem {
      * Equal to CURVE.getN().shiftRight(1), used for canonicalising the S value of a signature. If you aren't
      * sure what this is about, you can ignore it.
      */
-    public static final BigInteger HALF_CURVE_ORDER;
+    static final BigInteger HALF_CURVE_ORDER;
 
     private static final SecureRandom secureRandom;
 
