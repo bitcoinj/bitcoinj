@@ -49,7 +49,7 @@ public final class HDUtils {
     }
 
     static byte[] toCompressed(byte[] uncompressedPoint) {
-        return ECKey.CURVE.getCurve().decodePoint(uncompressedPoint).getEncoded(true);
+        return ECKey.BC_CURVE.getCurve().decodePoint(uncompressedPoint).getEncoded(true);
     }
 
     static byte[] longTo4ByteArray(long n) {

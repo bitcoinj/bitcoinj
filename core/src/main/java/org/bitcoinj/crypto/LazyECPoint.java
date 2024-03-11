@@ -32,7 +32,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * encode/decode in Bouncy Castle is quite slow especially on Dalvik, as it often involves decompression/recompression.
  */
 public class LazyECPoint {
-    private static final ECCurve curve = ECKey.CURVE.getCurve();
+    private static final ECCurve curve = ECKey.BC_CURVE.getCurve();
 
     // bits will be null if LazyECPoint is constructed from an (already decoded) point
     @Nullable
