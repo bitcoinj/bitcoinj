@@ -201,7 +201,7 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
             BigInteger seedFactor = ByteUtils.bytesToBigInteger(Sha256Hash.hashTwice(seed));
             checkState(passFactor.signum() >= 0);
             checkState(seedFactor.signum() >= 0);
-            BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.CURVE.getN());
+            BigInteger priv = passFactor.multiply(seedFactor).mod(ECKey.BC_CURVE.getN());
 
             return ECKey.fromPrivate(priv, compressed);
         } catch (GeneralSecurityException x) {
