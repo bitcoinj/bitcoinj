@@ -73,6 +73,9 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
+import java.security.spec.ECFieldFp;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.EllipticCurve;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -121,6 +124,15 @@ public class ECKey implements EncryptableItem {
 
     /** Compares by extracting pub key as a {@code byte[]} and using a lexicographic comparator */
     public static final Comparator<ECKey> PUBKEY_COMPARATOR = Comparator.comparing(ECKey::getPubKey, LEXICOGRAPHICAL_COMPARATOR);
+
+    private static final ECFieldFp FIELD = new ECFieldFp(new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16));
+    private static final EllipticCurve CURVE = new EllipticCurve(FIELD, BigInteger.ZERO, BigInteger.valueOf(7));
+    private static final ECParameterSpec EC_PARAMS = new ECParameterSpec(CURVE,
+            new java.security.spec.ECPoint(
+                    new BigInteger("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16), // G.x
+                    new BigInteger("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)),// G.y
+            new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16),         // n
+            1);                                                                                                       // h
 
     // The parameters of the secp256k1 curve that Bitcoin uses.
     private static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
