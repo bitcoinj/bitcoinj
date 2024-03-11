@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.kits;
+package org.bitcoinj.walletappkit;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;

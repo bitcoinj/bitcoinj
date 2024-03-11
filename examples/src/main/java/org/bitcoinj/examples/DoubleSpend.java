@@ -19,7 +19,7 @@ package org.bitcoinj.examples;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.*;
-import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.walletappkit.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
