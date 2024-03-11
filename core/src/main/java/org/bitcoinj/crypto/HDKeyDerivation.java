@@ -176,7 +176,7 @@ public final class HDKeyDerivation {
         BigInteger ilInt = ByteUtils.bytesToBigInteger(il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         final BigInteger priv = parent.getPrivKey();
-        BigInteger ki = priv.add(ilInt).mod(ECKey.BC_CURVE.getN());
+        BigInteger ki = priv.add(ilInt).mod(ECKey.ecParams().getOrder());
         assertNonZero(ki, "Illegal derived key: derived private key equals 0.");
         return new RawKeyBytes(ki.toByteArray(), chainCode);
     }
@@ -210,7 +210,7 @@ public final class HDKeyDerivation {
         BigInteger ilInt = ByteUtils.bytesToBigInteger(il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
 
-        final BigInteger N = ECKey.BC_CURVE.getN();
+        final BigInteger N = ECKey.ecParams().getOrder();
         ECPoint Ki;
         switch (mode) {
             case NORMAL:
@@ -244,7 +244,7 @@ public final class HDKeyDerivation {
     }
 
     private static void assertLessThanN(BigInteger integer, String errorMessage) {
-        if (integer.compareTo(ECKey.BC_CURVE.getN()) > 0)
+        if (integer.compareTo(ECKey.ecParams().getOrder()) > 0)
             throw new HDDerivationException(errorMessage);
     }
 

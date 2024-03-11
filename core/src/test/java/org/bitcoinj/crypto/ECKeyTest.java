@@ -99,7 +99,7 @@ public class ECKeyTest {
         assertEquals(first, duplicate);
         assertEquals(first.hashCode(), duplicate.hashCode());
 
-        final ECKey.ECDSASignature highS = new ECKey.ECDSASignature(first.r, ECKey.BC_CURVE.getN().subtract(first.s));
+        final ECKey.ECDSASignature highS = new ECKey.ECDSASignature(first.r, ECKey.ecParams().getOrder().subtract(first.s));
         assertFalse(highS.isCanonical());
     }
 

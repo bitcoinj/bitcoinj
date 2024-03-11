@@ -140,6 +140,10 @@ public class ECKey implements EncryptableItem {
     /** The parameters of the secp256k1 curve that Bitcoin uses (using Bouncy Castle types.) */
     static final ECDomainParameters BC_CURVE;
 
+    static ECParameterSpec ecParams() {
+        return EC_PARAMS;
+    }
+
     /**
      * Return EC parameters for the SECP256K1 curve, in a Bouncy Castle type.
      * Note that we are migrating to using the build in JDK types for EC parameters,
@@ -395,8 +399,8 @@ public class ECKey implements EncryptableItem {
          * TODO: FixedPointCombMultiplier currently doesn't support scalars longer than the group order,
          * but that could change in future versions.
          */
-        if (privKey.bitLength() > BC_CURVE.getN().bitLength()) {
-            privKey = privKey.mod(BC_CURVE.getN());
+        if (privKey.bitLength() > EC_PARAMS.getOrder().bitLength()) {
+            privKey = privKey.mod(EC_PARAMS.getOrder());
         }
         return new FixedPointCombMultiplier().multiply(BC_CURVE.getG(), privKey);
     }
@@ -491,7 +495,7 @@ public class ECKey implements EncryptableItem {
                 //    N = 10
                 //    s = 8, so (-8 % 10 == 2) thus both (r, 8) and (r, 2) are valid solutions.
                 //    10 - 8 == 2, giving us always the latter solution, which is canonical.
-                return new ECDSASignature(r, BC_CURVE.getN().subtract(s));
+                return new ECDSASignature(r, EC_PARAMS.getOrder().subtract(s));
             } else {
                 return this;
             }
@@ -982,7 +986,7 @@ public class ECKey implements EncryptableItem {
         // see https://www.secg.org/sec1-v2.pdf, section 4.1.6
         // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
         //   1.1 Let x = r + jn
-        BigInteger n = BC_CURVE.getN();  // Curve order.
+        BigInteger n = EC_PARAMS.getOrder();  // Curve order.
         BigInteger i = BigInteger.valueOf((long) recId / 2);
         BigInteger x = sig.r.add(i.multiply(n));
         //   1.2. Convert the integer x to an octet string X of length mlen using the conversion routine
