@@ -96,7 +96,7 @@ class G,S,A,BC,P external;
 
 In a proposed 0.19 release, we hope to do the following:
 
-1. enhance `bitcoin-crypto` to contain a "provider" API so that core crypto functions that it needs can be provided by either Bouncy Castle _or_ `libsecp256k1`. We also hope to completely eliminate dependencies on Guava for all modules.
+1. Update `bitcoin-crypto` to use the `secp256k1-jdk` API so that core crypto functions that it needs can be provided by either Bouncy Castle _or_ `libsecp256k1`.
 2. Separate the current ProtoBuf-based wallet implementation into it's own module. This will require creating a `Wallet` interface in core.
 3. Eliminate dependencies on Guava for all modules.
 
@@ -124,13 +124,14 @@ flowchart TD
     CORE --> CRYPTO
     CORE .-> S[slf4j]
     subgraph CRYPTO [bitcoinj-crypto]
-        CR[o.b.crypto] --> CRPR[o.b.crypto.provider]
+        CR[o.b.crypto]
     end
     CRYPTO --> BASE
-    CRPR .-> CRIMPL
-    CRIMPL((impl))
-    CRIMPL .-> BC[Bouncy Castle]
-    CRIMPL .-> LP[libsecp256k1]
+    CRYPTO --> SECP256K1
+    SECP256K1[secp256k1-jdk] .-> SECPFFM[secp256k1-foreign]
+    SECP256K1[secp256k1-jdk] .-> SECPBOUNCY[secp256k1-bouncy]
+    SECPBOUNCY .-> BC[Bouncy Castle]
+    SECPFFM .-> LP['C' libsecp256k1]
     subgraph BASE [bitcoinj-base]
         B[o.b.base]
     end
