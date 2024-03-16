@@ -305,7 +305,7 @@ public class ChildKeyDerivationTest {
         assertEquals("Parent fingerprint of deserialized parentless private HD key is wrong",
                           key.getParentFingerprint(), 0xbef5a2f9);
 
-        // These encodings are of the the root key of that hierarchy
+        // These encodings are of the root key of that hierarchy
         assertEquals("Parent fingerprint of root node public HD key should be zero",
                           DeterministicKey.deserializeB58("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB", MAINNET).getParentFingerprint(),
                           0);
