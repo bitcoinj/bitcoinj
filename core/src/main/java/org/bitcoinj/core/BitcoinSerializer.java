@@ -135,7 +135,7 @@ public class BitcoinSerializer extends MessageSerializer {
     }
 
     /**
-     * Writes message to to the output stream.
+     * Writes message to the output stream.
      */
     @Override
     public void serialize(String name, byte[] message, OutputStream out) throws IOException {
@@ -160,7 +160,7 @@ public class BitcoinSerializer extends MessageSerializer {
     }
 
     /**
-     * Writes message to to the output stream.
+     * Writes message to the output stream.
      */
     @Override
     public void serialize(Message message, OutputStream out) throws IOException {

@@ -1224,7 +1224,7 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Returns the the encrypted private key bytes and initialisation vector for this ECKey, or null if the ECKey
+     * Returns the encrypted private key bytes and initialisation vector for this ECKey, or null if the ECKey
      * is not encrypted.
      */
     @Nullable

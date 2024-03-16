@@ -56,7 +56,7 @@ public interface TransactionReceivedInBlockListener {
      * compared to the relativity count of another transaction received inside the same block. It is used to establish
      * an ordering of transactions relative to one another.</p>
      *
-     * <p>This method should return false if the given tx hash isn't known about, e.g. because the the transaction was
+     * <p>This method should return false if the given tx hash isn't known about, e.g. because the transaction was
      * a Bloom false positive. If it was known about and stored, it should return true. The caller may need to know
      * this to calculate the effective FP rate.</p>
      *
