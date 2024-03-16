@@ -161,7 +161,7 @@ public class LegacyAddress implements Address {
      * Construct a {@link LegacyAddress} from its base58 form.
      * 
      * @param params
-     *            expected network this address is valid for, or null if if the network should be derived from the
+     *            expected network this address is valid for, or null if the network should be derived from the
      *            base58
      * @param base58
      *            base58-encoded textual form of the address

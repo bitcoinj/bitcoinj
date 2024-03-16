@@ -106,7 +106,7 @@ public abstract class MessageSerializer {
     public abstract void seekPastMagicBytes(ByteBuffer in) throws BufferUnderflowException;
 
     /**
-     * Writes message to to the output stream.
+     * Writes message to the output stream.
      * 
      * @throws UnsupportedOperationException if this serializer/deserializer
      * does not support serialization. This can occur either because it's a dummy
@@ -116,7 +116,7 @@ public abstract class MessageSerializer {
     public abstract void serialize(String name, byte[] message, OutputStream out) throws IOException, UnsupportedOperationException;
 
     /**
-     * Writes message to to the output stream.
+     * Writes message to the output stream.
      * 
      * @throws UnsupportedOperationException if this serializer/deserializer
      * does not support serialization. This can occur either because it's a dummy
