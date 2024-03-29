@@ -422,6 +422,18 @@ public class WalletProtobufSerializerTest {
         assertEquals(0, wallet5.getExtensions().size());
     }
 
+    /*@Test
+    public void encryptedWallet() throws Exception {
+        myWallet.encrypt("1");
+        Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
+        try {
+            new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET, null, proto);
+            fail();
+        } catch (UnreadableWalletException e) {
+            assertTrue(e.getMessage().contains("mandatory"));
+        }
+    }*/
+
     @Test
     public void extensionsWithError() throws Exception {
         WalletExtension extension = new WalletExtension() {

@@ -37,6 +37,7 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.KeyCrypter;
+import org.bitcoinj.crypto.KeyCrypterFactory;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
@@ -100,6 +101,7 @@ public class WalletProtobufSerializer {
     private boolean requireMandatoryExtensions = true;
     private boolean requireAllExtensionsKnown = false;
     private int walletWriteBufferSize = CodedOutputStream.DEFAULT_BUFFER_SIZE;
+    private KeyCrypterFactory keyCrypterFactory;
 
     @FunctionalInterface
     public interface WalletFactory {
@@ -126,6 +128,10 @@ public class WalletProtobufSerializer {
 
     public void setKeyChainFactory(KeyChainFactory keyChainFactory) {
         this.keyChainFactory = keyChainFactory;
+    }
+
+    public void setKeyCrypterFactory(KeyCrypterFactory keyCrypterFactory) {
+        this.keyCrypterFactory = keyCrypterFactory;
     }
 
     /**
@@ -506,8 +512,13 @@ public class WalletProtobufSerializer {
         KeyChainGroup keyChainGroup;
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
-            final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            keyChainGroup = KeyChainGroup.fromProtobufEncrypted(network, walletProto.getKeyList(), keyCrypter, keyChainFactory);
+            if (encryptionParameters.getSalt().toString().contains("KeyStoreKeyCrypter")) {
+                final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) keyCrypterFactory.createKeyCrypter();
+                keyChainGroup = KeyChainGroup.fromProtobufEncrypted(network, walletProto.getKeyList(), keyCrypter, keyChainFactory);
+            } else {
+                final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
+                keyChainGroup = KeyChainGroup.fromProtobufEncrypted(network, walletProto.getKeyList(), keyCrypter, keyChainFactory);
+            }
         } else {
             keyChainGroup = KeyChainGroup.fromProtobufUnencrypted(network, walletProto.getKeyList(), keyChainFactory);
         }
