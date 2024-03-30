@@ -485,7 +485,7 @@ public class KeyChainGroup implements KeyBag {
 
     /**
      * Returns the key chain that's used for generation of default fresh/current keys. This is always the newest
-     * deterministic chain. If no deterministic chain is present but imported keys instead, a deterministic upgrate is
+     * deterministic chain. If no deterministic chain is present but imported keys instead, a deterministic upgrade is
      * tried.
      */
     public final DeterministicKeyChain getActiveKeyChain() {

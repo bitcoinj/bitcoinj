@@ -2552,7 +2552,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Creates and returns a new List with the same txns as inputSet
-     * but txns are sorted by depencency (a topological sort).
+     * but txns are sorted by dependency (a topological sort).
      * If tx B spends tx A, then tx A should be before tx B on the returned List.
      * Several invocations to this method with the same inputSet could result in lists with txns in different order,
      * as there is no guarantee on the order of the returned txns besides what was already stated.
