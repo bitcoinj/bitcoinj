@@ -73,6 +73,9 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
+import java.security.spec.ECFieldFp;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.EllipticCurve;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -122,11 +125,24 @@ public class ECKey implements EncryptableItem {
     /** Compares by extracting pub key as a {@code byte[]} and using a lexicographic comparator */
     public static final Comparator<ECKey> PUBKEY_COMPARATOR = Comparator.comparing(ECKey::getPubKey, LEXICOGRAPHICAL_COMPARATOR);
 
+    private static final ECFieldFp FIELD = new ECFieldFp(new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16));
+    private static final EllipticCurve CURVE = new EllipticCurve(FIELD, BigInteger.ZERO, BigInteger.valueOf(7));
+    private static final ECParameterSpec EC_PARAMS = new ECParameterSpec(CURVE,
+            new java.security.spec.ECPoint(
+                    new BigInteger("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16), // G.x
+                    new BigInteger("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)),// G.y
+            new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16),         // n
+            1);                                                                                                       // h
+
     // The parameters of the secp256k1 curve that Bitcoin uses.
     private static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
 
-    /** The parameters of the secp256k1 curve that Bitcoin uses. */
-    static final ECDomainParameters CURVE;
+    /** The parameters of the secp256k1 curve that Bitcoin uses (using Bouncy Castle types.) */
+    static final ECDomainParameters BC_CURVE;
+
+    static ECParameterSpec ecParams() {
+        return EC_PARAMS;
+    }
 
     /**
      * Return EC parameters for the SECP256K1 curve, in a Bouncy Castle type.
@@ -135,7 +151,7 @@ public class ECKey implements EncryptableItem {
      * @return Elliptic Curve Domain Parameters (Bouncy Castle)
      */
     public static ECDomainParameters ecDomainParameters() {
-        return CURVE;
+        return BC_CURVE;
     }
 
     /**
@@ -149,7 +165,7 @@ public class ECKey implements EncryptableItem {
     static {
         // Tell Bouncy Castle to precompute data that's needed during secp256k1 calculations.
         FixedPointUtil.precompute(CURVE_PARAMS.getG());
-        CURVE = new ECDomainParameters(CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(),
+        BC_CURVE = new ECDomainParameters(CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(),
                 CURVE_PARAMS.getH());
         HALF_CURVE_ORDER = CURVE_PARAMS.getN().shiftRight(1);
         secureRandom = new SecureRandom();
@@ -182,7 +198,7 @@ public class ECKey implements EncryptableItem {
      */
     public ECKey(SecureRandom secureRandom) {
         ECKeyPairGenerator generator = new ECKeyPairGenerator();
-        ECKeyGenerationParameters keygenParams = new ECKeyGenerationParameters(CURVE, secureRandom);
+        ECKeyGenerationParameters keygenParams = new ECKeyGenerationParameters(BC_CURVE, secureRandom);
         generator.init(keygenParams);
         AsymmetricCipherKeyPair keypair = generator.generateKeyPair();
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
@@ -383,10 +399,10 @@ public class ECKey implements EncryptableItem {
          * TODO: FixedPointCombMultiplier currently doesn't support scalars longer than the group order,
          * but that could change in future versions.
          */
-        if (privKey.bitLength() > CURVE.getN().bitLength()) {
-            privKey = privKey.mod(CURVE.getN());
+        if (privKey.bitLength() > EC_PARAMS.getOrder().bitLength()) {
+            privKey = privKey.mod(EC_PARAMS.getOrder());
         }
-        return new FixedPointCombMultiplier().multiply(CURVE.getG(), privKey);
+        return new FixedPointCombMultiplier().multiply(BC_CURVE.getG(), privKey);
     }
 
     /** Gets the hash160 form of the public key (as seen in addresses). */
@@ -479,7 +495,7 @@ public class ECKey implements EncryptableItem {
                 //    N = 10
                 //    s = 8, so (-8 % 10 == 2) thus both (r, 8) and (r, 2) are valid solutions.
                 //    10 - 8 == 2, giving us always the latter solution, which is canonical.
-                return new ECDSASignature(r, CURVE.getN().subtract(s));
+                return new ECDSASignature(r, EC_PARAMS.getOrder().subtract(s));
             } else {
                 return this;
             }
@@ -595,7 +611,7 @@ public class ECKey implements EncryptableItem {
     protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
         Objects.requireNonNull(privateKeyForSigning);
         ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
-        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
+        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, BC_CURVE);
         signer.init(true, privKey);
         BigInteger[] components = signer.generateSignature(input.getBytes());
         return new ECDSASignature(components[0], components[1]).toCanonicalised();
@@ -610,7 +626,7 @@ public class ECKey implements EncryptableItem {
      */
     public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
         ECDSASigner signer = new ECDSASigner();
-        ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE.getCurve().decodePoint(pub), CURVE);
+        ECPublicKeyParameters params = new ECPublicKeyParameters(BC_CURVE.getCurve().decodePoint(pub), BC_CURVE);
         signer.init(false, params);
         try {
             return signer.verifySignature(data, signature.r, signature.s);
@@ -970,7 +986,7 @@ public class ECKey implements EncryptableItem {
         // see https://www.secg.org/sec1-v2.pdf, section 4.1.6
         // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
         //   1.1 Let x = r + jn
-        BigInteger n = CURVE.getN();  // Curve order.
+        BigInteger n = EC_PARAMS.getOrder();  // Curve order.
         BigInteger i = BigInteger.valueOf((long) recId / 2);
         BigInteger x = sig.r.add(i.multiply(n));
         //   1.2. Convert the integer x to an octet string X of length mlen using the conversion routine
@@ -1008,16 +1024,16 @@ public class ECKey implements EncryptableItem {
         BigInteger rInv = sig.r.modInverse(n);
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
-        ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
+        ECPoint q = ECAlgorithms.sumOfTwoMultiplies(BC_CURVE.getG(), eInvrInv, R, srInv);
         return ECKey.fromPublicOnly(q, compressed);
     }
 
     /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
     private static ECPoint decompressKey(BigInteger xBN, boolean yBit) {
         X9IntegerConverter x9 = new X9IntegerConverter();
-        byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(CURVE.getCurve()));
+        byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(BC_CURVE.getCurve()));
         compEnc[0] = (byte)(yBit ? 0x03 : 0x02);
-        return CURVE.getCurve().decodePoint(compEnc);
+        return BC_CURVE.getCurve().decodePoint(compEnc);
     }
 
     /**
