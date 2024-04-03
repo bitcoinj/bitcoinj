@@ -29,6 +29,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
+import org.bitcoinj.protobuf.wallet.Protos;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -432,7 +433,9 @@ public class ECKeyTest {
 
         // Break the encrypted private key and check it is broken.
         byte[] badEncryptedPrivateKeyBytes = new byte[goodEncryptedPrivateKeyBytes.length];
-        encryptedPrivateKey = new EncryptedData(encryptedPrivateKey.initialisationVector, badEncryptedPrivateKeyBytes);
+        encryptedPrivateKey = new EncryptedData(encryptedPrivateKey.initialisationVector,
+                badEncryptedPrivateKeyBytes,
+                Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
         ECKey badEncryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, originalUnencryptedKey.getPubKey());
         assertFalse("Key encryption is reversible with faulty encrypted bytes", ECKey.encryptionIsReversible(originalUnencryptedKey, badEncryptedKey, keyCrypter, keyCrypter.deriveKey(PASSWORD1)));
     }
