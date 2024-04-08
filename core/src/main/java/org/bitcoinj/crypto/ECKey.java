@@ -806,7 +806,7 @@ public class ECKey implements EncryptableItem {
         byte[] data = formatMessageForSigning(message);
         Sha256Hash hash = Sha256Hash.twiceOf(data);
         ECDSASignature sig = sign(hash, aesKey);
-        byte recId = findRecoveryId(hash, sig);
+        byte recId = findRecoveryId(hash, sig); // for detailed explanation of recId see recoverFromSignature()
 
         // Meaning of header byte ranges:
         //  * 27-30: P2PKH uncompressed, recId 0-3
@@ -900,6 +900,7 @@ public class ECKey implements EncryptableItem {
         // keys was the key used to create the signature (see also BIP 137):
         // header byte:  27 = first key with even y,  28 = first key with odd y,
         //               29 = second key with even y, 30 = second key with odd y
+        // (for detailed explanation of recId see recoverFromSignature() )
         int recId = header - 27;
         ECKey key = ECKey.recoverFromSignature(recId, sig, messageHash, compressed);
         if (key == null)
@@ -955,7 +956,7 @@ public class ECKey implements EncryptableItem {
      * <p>Given the above two points, a correct usage of this method is inside a for loop from 0 to 3, and if the
      * output is null OR a key that is not the one you expect, you try again with the next recId.</p>
      *
-     * @param recId Which possible key to recover.
+     * @param recId Which possible key to recover (see inline comments for detailed explanation)
      * @param sig the R and S components of the signature, wrapped.
      * @param message Hash of the data that was signed.
      * @param compressed Whether or not the original pubkey was compressed.
@@ -971,8 +972,27 @@ public class ECKey implements EncryptableItem {
         // 1.0 For j from 0 to h   (h == recId here and the loop is outside this function)
         //   1.1 Let x = r + jn
         BigInteger n = CURVE.getN();  // Curve order.
+
+        // The value r in the signature (r,s) is the x-coordinate mod n of the point R
+        // R is the public key of k (the nonce used when creating the signature)
+        //
+        // There are now 4 possible matching public keys R (the pubkey from the nonce k), indicated by recId:
+        //
+        // - recId 0: x-coordinate of R was smaller than n, the y-coordinate of R was even
+        // - recId 1: x-coordinate of R was smaller than n, the y-coordinate of R was odd
+        // - recId 2: x-coordinate of R was greater than n (but smaller than p), the y-coordinate of R was even
+        // - recId 3: x-coordinate of R was greater than n (but smaller than p), the y-coordinate of R was odd
+        //
+        // Keep in mind, that the value r was taken "mod n" (n = order of the curve) but the valid range for
+        // coordinate values of points is 0 to p-1 (p being the prime of the prime field Fp which is larger than n).
+        // So if the x-coordinate originally was >n, we need to add n to r here again to get the original value.
+
+        // But it is very very unlikely (but not impossible) to ever see recId 2 or 3, because
+        // n is almost as large as p in secp256k1.
+        // The chances to ever see this are 1 to 2.677 * 10^38  ( 1 to n/(p-n) )
+
         BigInteger i = BigInteger.valueOf((long) recId / 2);
-        BigInteger x = sig.r.add(i.multiply(n));
+        BigInteger x = sig.r.add(i.multiply(n)); // if the original x was >n, add n here again (to undo the mod n)
         //   1.2. Convert the integer x to an octet string X of length mlen using the conversion routine
         //        specified in Section 2.3.7, where mlen = ⌈(log2 p)/8⌉ or mlen = ⌈m/8⌉.
         //   1.3. Convert the octet string (16 set binary digits)||X to an elliptic curve point R using the
@@ -987,7 +1007,7 @@ public class ECKey implements EncryptableItem {
         }
         // Compressed keys require you to know an extra bit of data about the y-coord as there are two possibilities.
         // So it's encoded in the recId.
-        ECPoint R = decompressKey(x, (recId & 1) == 1);
+        ECPoint R = decompressKey(x, (recId & 1) == 1); // even recId means even y, odd recId means odd y
         //   1.4. If nR != point at infinity, then do another iteration of Step 1 (callers responsibility).
         if (!R.multiply(n).isInfinity())
             return null;
@@ -1012,7 +1032,16 @@ public class ECKey implements EncryptableItem {
         return ECKey.fromPublicOnly(q, compressed);
     }
 
-    /** Decompress a compressed public key (x co-ord and low-bit of y-coord). */
+    /**
+     * Decompress a compressed public key. With a given x-coordinate there are always (except for the point
+     * at infinity) two possible points on the curve with two different y-coordinates, an even one and an odd one.
+     * Therefore you have to specify if you want the point with the even or the odd y.
+     *
+     * @param xBN x-coordinate of the curve point
+     * @param yBit least significant bit of the y-coordinate to be used. If set to <code>true</code>,
+     *             the odd y coordinate will be used, if set to <code>false</code> the even y coordinate
+     *             will be used
+     */
     private static ECPoint decompressKey(BigInteger xBN, boolean yBit) {
         X9IntegerConverter x9 = new X9IntegerConverter();
         byte[] compEnc = x9.integerToBytes(xBN, 1 + x9.getByteLength(CURVE.getCurve()));
