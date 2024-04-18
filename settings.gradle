@@ -7,6 +7,8 @@ def minGradleVersion = GradleVersion.version("4.4")
 def minJunit5GradleVersion = GradleVersion.version("4.6")
 // Minimum Gradle version for builds of JavaFX 17 module using JDK 17
 def minFxGradleVersion = GradleVersion.version("7.3")
+// Minimum Gradle version for kotlin
+def minKotlinGradleVersion = GradleVersion.version("6.8.3")
 
 rootProject.name = 'bitcoinj-parent'
 
@@ -44,4 +46,9 @@ if (GradleVersion.current().compareTo(minJunit5GradleVersion) >= 0) {
     project(':integration-test').name = 'bitcoinj-integration-test'
 } else {
     System.err.println "Skipping integration-test, requires Gradle ${minJunit5GradleVersion}+, currently running: ${GradleVersion.current()}"
+}
+
+if (GradleVersion.current().compareTo(minKotlinGradleVersion) >= 0) {
+    include 'examples-kotlin'
+    project(':examples-kotlin').name = 'bitcoinj-examples-kotlin'
 }
