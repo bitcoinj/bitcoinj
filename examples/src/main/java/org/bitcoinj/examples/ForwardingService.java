@@ -95,7 +95,7 @@ public class ForwardingService implements Closeable {
      * Start the wallet and register the coin-forwarding listener.
      */
     public void run() {
-        System.out.println("Network: " + network.id());
+        System.out.println("Network: " + network);
         System.out.println("Forwarding address: " + forwardingAddress);
 
         // Create and start the WalletKit
