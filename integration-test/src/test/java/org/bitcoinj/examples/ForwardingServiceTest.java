@@ -21,12 +21,15 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.kits.WalletAppKit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
+
+import static org.bitcoinj.examples.ForwardingService.getPrefix;
 
 /**
  * Forwarding Service Functional/Integration test. Uses {@link BitcoinNetwork#TESTNET} so is {@code @Disabled}.
@@ -36,18 +39,28 @@ import java.io.File;
 public class ForwardingServiceTest {
     static final BitcoinNetwork network = BitcoinNetwork.TESTNET;
     static final Address forwardingAddress = new ECKey().toAddress(ScriptType.P2WPKH, network);
-    static final String[] args = new String[] { forwardingAddress.toString(), network.toString() };
+    ForwardingService.Config config;
 
     @BeforeEach
-    void setupTest() {
+    void setupTest(@TempDir File tempDir) {
         Context.propagate(new Context());
+        config = new ForwardingService.Config(network, forwardingAddress,
+                tempDir, getPrefix(network),
+                4, 1);
     }
 
     @Test
     public void startAndImmediatelyInterrupt(@TempDir File tempDir) {
         // Start the service and immediately interrupt
         Thread thread = new Thread(
-                () -> new ForwardingService(args).run()
+                () -> {
+                    WalletAppKit walletAppKit = WalletAppKit.launch(config.network(), config.walletDirectory(), config.walletPrefix(), config.maxConnections());
+                    // Create the service, which will listen for transactions and forward coins until closed
+                    ForwardingService forwardingService = new ForwardingService(walletAppKit.wallet(), config);
+                    try (walletAppKit; forwardingService ) {
+                        // Sleep here?
+                    }
+                }
         );
         thread.start();
         thread.interrupt();
@@ -56,8 +69,11 @@ public class ForwardingServiceTest {
     @Test
     public void startAndImmediatelyClose(@TempDir File tempDir) {
         // Instantiate the service, start it, and immediately close it
-        try (ForwardingService service = new ForwardingService(args) ) {
-            service.run();
+
+        WalletAppKit walletAppKit = WalletAppKit.launch(config.network(), config.walletDirectory(), config.walletPrefix(), config.maxConnections());
+        // Create the service, which will listen for transactions and forward coins until closed
+        ForwardingService forwardingService = new ForwardingService(walletAppKit.wallet(), config);
+        try (walletAppKit; forwardingService ) {
         }
     }
 }
