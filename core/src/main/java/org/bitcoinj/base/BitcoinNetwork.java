@@ -197,17 +197,24 @@ public enum BitcoinNetwork implements Network {
      * @return An {@code Optional} containing the matching enum or empty
      */
     public static Optional<BitcoinNetwork> fromIdString(String idString) {
-        return Arrays.stream(values())
+        return stream()
                 .filter(n -> n.id.equals(idString))
                 .findFirst();
     }
 
+    /**
+     * @return stream of all instances of this enum
+     */
+    private static Stream<BitcoinNetwork> stream() {
+        return Arrays.stream(values());
+    }
+
     // Create a Map that maps name Strings to networks for all instances
     private static Map<String, BitcoinNetwork> mergedNameMap() {
-        return Stream.of(values())
-                    .collect(HashMap::new,                  // Supply HashMaps as mutable containers
-                        BitcoinNetwork::accumulateNames,    // Accumulate one network into hashmap
-                        Map::putAll);                       // Combine two containers
+        return stream()
+                .collect(HashMap::new,                  // Supply HashMaps as mutable containers
+                    BitcoinNetwork::accumulateNames,    // Accumulate one network into hashmap
+                    Map::putAll);                       // Combine two containers
     }
 
     // Add allNames for this Network as keys to a map that can be used to find it
