@@ -160,16 +160,20 @@ public class ForwardingService implements Closeable {
     }
 
     /**
-     * Forward an incoming transaction by creating a new transaction, signing, and sending to the specified address.
+     * Forward an incoming transaction by creating a new transaction, signing, and sending to the specified address. The
+     * inputs for the new transaction should only come from the incoming transaction, so we use a custom {@link CoinSelector}
+     * that only selects wallet UTXOs with the correct parent transaction ID.
      * @param wallet The active wallet
      * @param incomingTx the received transaction
      * @param forwardingAddress the address to send to
      * @return A future for a TransactionBroadcast object that completes when relay is acknowledged by peers
      */
     private CompletableFuture<TransactionBroadcast> forward(Wallet wallet, Transaction incomingTx, Address forwardingAddress) {
-        // Send coins received in incomingTx onwards by sending exactly the outputs that have been sent to us
+        // Send coins received in incomingTx onwards by sending exactly the UTXOs we have just received.
+        // We're not truly emptying the wallet because we're limiting the available outputs with a CoinSelector.
         SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
-        sendRequest.coinSelector = forwardingCoinSelector(incomingTx.getTxId());
+        // Use a CoinSelector that only returns wallet UTXOs from the incoming transaction.
+        sendRequest.coinSelector = CoinSelector.fromPredicate(output -> Objects.equals(output.getParentTransactionHash(), incomingTx.getTxId()));
         System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
         return wallet.sendTransaction(sendRequest)
                 .thenCompose(broadcast -> {
@@ -180,17 +184,5 @@ public class ForwardingService implements Closeable {
 
     static String getPrefix(BitcoinNetwork network) {
         return String.format("forwarding-service-%s", network.toString());
-    }
-
-    /**
-     * Create a CoinSelector that only returns outputs from a given parent transaction.
-     * <p>
-     * This is using the idea of partial function application to create a 2-argument function for coin selection
-     * with a third, fixed argument of the transaction id.
-     * @param parentTxId The parent transaction hash
-     * @return a coin selector
-     */
-    static CoinSelector forwardingCoinSelector(Sha256Hash parentTxId) {
-        return CoinSelector.fromPredicate(output -> Objects.equals(output.getParentTransactionHash(), parentTxId));
     }
 }
