@@ -54,10 +54,8 @@ public class ForwardingServiceTest {
         // Start the service and immediately interrupt
         Thread thread = new Thread(
                 () -> {
-                    WalletAppKit walletAppKit = WalletAppKit.launch(config.network(), config.walletDirectory(), config.walletPrefix(), config.maxConnections());
                     // Create the service, which will listen for transactions and forward coins until closed
-                    ForwardingService forwardingService = new ForwardingService(walletAppKit.wallet(), config);
-                    try (walletAppKit; forwardingService ) {
+                    try (ForwardingService forwardingService = new ForwardingService(config) ) {
                         // Sleep here?
                     }
                 }
@@ -70,10 +68,8 @@ public class ForwardingServiceTest {
     public void startAndImmediatelyClose(@TempDir File tempDir) {
         // Instantiate the service, start it, and immediately close it
 
-        WalletAppKit walletAppKit = WalletAppKit.launch(config.network(), config.walletDirectory(), config.walletPrefix(), config.maxConnections());
         // Create the service, which will listen for transactions and forward coins until closed
-        ForwardingService forwardingService = new ForwardingService(walletAppKit.wallet(), config);
-        try (walletAppKit; forwardingService ) {
+        try (ForwardingService forwardingService = new ForwardingService(config)) {
         }
     }
 }

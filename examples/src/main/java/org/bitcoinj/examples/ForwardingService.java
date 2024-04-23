@@ -66,17 +66,11 @@ public class ForwardingService implements Closeable {
 
         System.out.println("Network: " + config.network);
         System.out.println("Forwarding address: " + config.forwardingAddress);
-        /* Create and start the WalletKit
-         * Note that {@link WalletAppKit#setAutoStop(boolean)} is set by default and installs a shutdown handler
-         * via {@link Runtime#addShutdownHook(Thread)} so we do not need to worry about explicitly shutting down
-         * the {@code WalletAppKit} if the process is terminated.
-         */
-        WalletAppKit walletAppKit = WalletAppKit.launch(config.network, config.walletDirectory, config.walletPrefix, config.maxConnections);
+
         // Create the service, which will listen for transactions and forward coins until closed
-        ForwardingService forwardingService = new ForwardingService(walletAppKit.wallet(), config);
-        try (walletAppKit; forwardingService) {
+        try (ForwardingService forwardingService = new ForwardingService(config)) {
             // After we start listening, we can tell the user the receiving address
-            System.out.printf("Waiting to receive coins on: %s\n", walletAppKit.wallet().currentReceiveAddress());
+            System.out.println(forwardingService.status());
             System.out.println("Press Ctrl-C to quit.");
 
             // Wait for Control-C
@@ -86,13 +80,19 @@ public class ForwardingService implements Closeable {
 
     private final Config config;
     private final Wallet wallet;
+    private final WalletAppKit walletAppKit;
 
     /**
-     * Initialize by adding a listener to the wallet.
+     * Create and start the WalletKit and adding a listener to the wallet.
+     * Note that {@link WalletAppKit#setAutoStop(boolean)} is set by default and installs a shutdown handler
+     * via {@link Runtime#addShutdownHook(Thread)} so we do not need to worry about explicitly shutting down
+     * the {@code WalletAppKit} if the process is terminated.
+     * @param config the configuration to use
      */
-    public ForwardingService(Wallet wallet, Config config) {
-        this.wallet = wallet;
+    public ForwardingService(Config config) {
         this.config = config;
+        walletAppKit = WalletAppKit.launch(config.network, config.walletDirectory, config.walletPrefix, config.maxConnections);
+        wallet = walletAppKit.wallet();
         // Add a listener that forwards received coins
         wallet.addCoinsReceivedEventListener(this::coinForwardingListener);
     }
@@ -152,12 +152,17 @@ public class ForwardingService implements Closeable {
                 });
     }
 
+    String status() {
+        return String.format("Waiting to receive coins on: %s", wallet.currentReceiveAddress());
+    }
+
     /**
      * Close the service.
      */
     @Override
     public void close() {
         wallet.removeCoinsReceivedEventListener(this::coinForwardingListener);
+        walletAppKit.close();
     }
 
     static final int REQUIRED_CONFIRMATIONS = 1;
