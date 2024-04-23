@@ -46,14 +46,15 @@ import static java.util.stream.Collectors.toList;
 public class ForwardingService implements Closeable {
     static private final String NETS = String.join("|", BitcoinNetwork.strings());
     static final String USAGE = String.format("Usage: address-to-forward-to [%s]", NETS);
-    static final int REQUIRED_CONFIRMATIONS = 1;
-    static final int MAX_CONNECTIONS = 4;
-    private final BitcoinNetwork network;
-    private final Address forwardingAddress;
-    private volatile WalletAppKit kit;
+    public record Config(BitcoinNetwork network,        // Network to operate on
+                         Address forwardingAddress,     // Address to forward to
+                         File walletDirectory,          // Directory to create wallet files in
+                         String walletPrefix,           // Prefix for wallet file names
+                         int requiredConfirmations,     // Required number of tx confirmations before forwarding
+                         int maxConnections) {}         // Maximum number of Peer connections
 
     /**
-     * Run the forwarding service as a command line tool
+     * Create a Wallet and run the forwarding service as a command line tool
      * @param args See {@link #USAGE}
      */
     public static void main(String[] args) throws InterruptedException {
@@ -61,69 +62,39 @@ public class ForwardingService implements Closeable {
         BriefLogFormatter.init();
         Context.propagate(new Context());
 
-        if (args.length < 1 || args.length > 2) {
-            System.err.println(USAGE);
-            System.exit(1);
-        }
+        Config config = parse(args);
 
-        // Create and run the service, which will listen for transactions and forward coins until stopped
-        try (ForwardingService forwardingService = new ForwardingService(args)) {
-            forwardingService.run();
+        System.out.println("Network: " + config.network);
+        System.out.println("Forwarding address: " + config.forwardingAddress);
+        /* Create and start the WalletKit
+         * Note that {@link WalletAppKit#setAutoStop(boolean)} is set by default and installs a shutdown handler
+         * via {@link Runtime#addShutdownHook(Thread)} so we do not need to worry about explicitly shutting down
+         * the {@code WalletAppKit} if the process is terminated.
+         */
+        WalletAppKit walletAppKit = WalletAppKit.launch(config.network, config.walletDirectory, config.walletPrefix, config.maxConnections);
+        // Create the service, which will listen for transactions and forward coins until closed
+        ForwardingService forwardingService = new ForwardingService(walletAppKit.wallet(), config);
+        try (walletAppKit; forwardingService) {
+            // After we start listening, we can tell the user the receiving address
+            System.out.printf("Waiting to receive coins on: %s\n", walletAppKit.wallet().currentReceiveAddress());
+            System.out.println("Press Ctrl-C to quit.");
+
             // Wait for Control-C
             Thread.sleep(Long.MAX_VALUE);
         }
     }
 
-    /**
-     * Initialize by parsing the network and forwarding address command-line arguments.
-     *
-     * @param args the arguments from {@link #main(String[])}
-     */
-    public ForwardingService(String[] args) {
-        forwardingAddress = AddressParser.getDefault().parseAddress(args[0]);
-        if (args.length >= 2) {
-            // If network was specified, validate address against network
-            network = BitcoinNetwork.fromString(args[1]).orElseThrow();
-            network.checkAddress(forwardingAddress);
-        } else {
-            // Else network not-specified, extract network from address
-            network = (BitcoinNetwork) forwardingAddress.network();
-        }
-    }
+    private final Config config;
+    private final Wallet wallet;
 
     /**
-     * Start the wallet and register the coin-forwarding listener.
+     * Initialize by adding a listener to the wallet.
      */
-    public void run() {
-        System.out.println("Network: " + network);
-        System.out.println("Forwarding address: " + forwardingAddress);
-
-        // Create and start the WalletKit
-        kit = WalletAppKit.launch(network, new File("."), getPrefix(network), MAX_CONNECTIONS);
-
+    public ForwardingService(Wallet wallet, Config config) {
+        this.wallet = wallet;
+        this.config = config;
         // Add a listener that forwards received coins
-        kit.wallet().addCoinsReceivedEventListener(this::coinForwardingListener);
-
-        // After we start listening, we can tell the user the receiving address
-        System.out.printf("Waiting to receive coins on: %s\n", kit.wallet().currentReceiveAddress());
-        System.out.println("Press Ctrl-C to quit.");
-    }
-
-    /**
-     * Close the service.
-     * <p>
-     * Note that {@link WalletAppKit#setAutoStop(boolean)} is set by default and installs a shutdown handler
-     * via {@link Runtime#addShutdownHook(Thread)} so we do not need to worry about explicitly shutting down
-     * the {@code WalletAppKit} if the process is terminated.
-     */
-    @Override
-    public void close() {
-        if (kit != null) {
-            if (kit.isRunning()) {
-                kit.wallet().removeCoinsReceivedEventListener(this::coinForwardingListener);
-            }
-            kit.close();
-        }
+        wallet.addCoinsReceivedEventListener(this::coinForwardingListener);
     }
 
     /**
@@ -134,18 +105,18 @@ public class ForwardingService implements Closeable {
      * @param prevBalance wallet balance before this transaction (unused)
      * @param newBalance wallet balance after this transaction (unused)
      */
-    private void coinForwardingListener(Wallet wallet, Transaction incomingTx, Coin prevBalance, Coin newBalance) {
+    void coinForwardingListener(Wallet wallet, Transaction incomingTx, Coin prevBalance, Coin newBalance) {
         // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
         // The transaction "incomingTx" can either be pending, or included into a block (we didn't see the broadcast).
         Coin value = incomingTx.getValueSentToMe(wallet);
         System.out.printf("Received tx for %s : %s\n", value.toFriendlyString(), incomingTx);
         System.out.println("Transaction will be forwarded after it confirms.");
         System.out.println("Waiting for confirmation...");
-        wallet.waitForConfirmations(incomingTx, REQUIRED_CONFIRMATIONS)
+        wallet.waitForConfirmations(incomingTx, config.requiredConfirmations)
             .thenCompose(confidence -> {
                 // Required confirmations received, now create and send forwarding transaction
                 System.out.printf("Incoming tx has received %d confirmations.\n", confidence.getDepthInBlocks());
-                return forward(wallet, incomingTx, forwardingAddress);
+                return forward(wallet, incomingTx, config.forwardingAddress);
             })
             .whenComplete((broadcast, throwable) -> {
                 if (broadcast != null) {
@@ -156,7 +127,6 @@ public class ForwardingService implements Closeable {
                     System.out.println("Exception occurred: "  + throwable);
                 }
             });
-
     }
 
     /**
@@ -168,7 +138,7 @@ public class ForwardingService implements Closeable {
      * @param forwardingAddress the address to send to
      * @return A future for a TransactionBroadcast object that completes when relay is acknowledged by peers
      */
-    private CompletableFuture<TransactionBroadcast> forward(Wallet wallet, Transaction incomingTx, Address forwardingAddress) {
+    CompletableFuture<TransactionBroadcast> forward(Wallet wallet, Transaction incomingTx, Address forwardingAddress) {
         // Send coins received in incomingTx onwards by sending exactly the UTXOs we have just received.
         // We're not truly emptying the wallet because we're limiting the available outputs with a CoinSelector.
         SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
@@ -177,9 +147,39 @@ public class ForwardingService implements Closeable {
         System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
         return wallet.sendTransaction(sendRequest)
                 .thenCompose(broadcast -> {
-                    System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), network);
+                    System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), wallet.network());
                     return broadcast.awaitRelayed(); // Wait until peers report they have seen the transaction
                 });
+    }
+
+    /**
+     * Close the service.
+     */
+    @Override
+    public void close() {
+        wallet.removeCoinsReceivedEventListener(this::coinForwardingListener);
+    }
+
+    static final int REQUIRED_CONFIRMATIONS = 1;
+    static final int MAX_CONNECTIONS = 4;
+    static Config parse(String[] args) {
+        if (args.length < 1 || args.length > 2) {
+            System.err.println(USAGE);
+            System.exit(1);
+        }
+        BitcoinNetwork network;
+        Address forwardingAddress;
+
+        if (args.length >= 2) {
+            // If network was specified, validate address against network
+            network = BitcoinNetwork.fromString(args[1]).orElseThrow();
+            forwardingAddress = AddressParser.getDefault(network).parseAddress(args[0]);
+        } else {
+            // Else network not-specified, extract network from address
+            forwardingAddress = AddressParser.getDefault().parseAddress(args[0]);
+            network = (BitcoinNetwork) forwardingAddress.network();
+        }
+        return new Config(network, forwardingAddress, new File("."), getPrefix(network), REQUIRED_CONFIRMATIONS, MAX_CONNECTIONS);
     }
 
     static String getPrefix(BitcoinNetwork network) {
