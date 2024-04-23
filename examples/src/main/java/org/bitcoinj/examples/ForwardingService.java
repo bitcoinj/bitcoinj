@@ -44,7 +44,8 @@ import static java.util.stream.Collectors.toList;
  * and when it receives coins, simply sends them onwards to the address given on the command line.
  */
 public class ForwardingService implements Closeable {
-    static final String USAGE = "Usage: address-to-forward-to [mainnet|testnet|signet|regtest]";
+    static private final String NETS = String.join("|", BitcoinNetwork.strings());
+    static final String USAGE = String.format("Usage: address-to-forward-to [%s]", NETS);
     static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
     private final BitcoinNetwork network;
