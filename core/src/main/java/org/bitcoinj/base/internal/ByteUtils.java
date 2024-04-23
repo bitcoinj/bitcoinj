@@ -320,7 +320,7 @@ public class ByteUtils {
      * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
      *
      * @param val    value to be written
-     * @param stream strean to be written into
+     * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt16LE(int val, OutputStream stream) throws IOException {
@@ -335,7 +335,7 @@ public class ByteUtils {
      * The value is expected as an unsigned {@code int} as per the Java Unsigned Integer API.
      *
      * @param val    value to be written
-     * @param stream strean to be written into
+     * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt16BE(int val, OutputStream stream) throws IOException {
@@ -366,7 +366,7 @@ public class ByteUtils {
      * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
      *
      * @param val    value to be written
-     * @param stream strean to be written into
+     * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt32LE(long val, OutputStream stream) throws IOException {
@@ -381,7 +381,7 @@ public class ByteUtils {
      * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
      *
      * @param val    value to be written
-     * @param stream strean to be written into
+     * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt32BE(long val, OutputStream stream) throws IOException {
@@ -396,7 +396,7 @@ public class ByteUtils {
      * The value is expected as a signed or unsigned {@code int}.
      *
      * @param val    value to be written
-     * @param stream strean to be written into
+     * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt32BE(int val, OutputStream stream) throws IOException {
@@ -411,7 +411,7 @@ public class ByteUtils {
      * The value is expected as a signed or unsigned {@code long}.
      *
      * @param val    value to be written
-     * @param stream strean to be written into
+     * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt64LE(long val, OutputStream stream) throws IOException {
@@ -426,7 +426,7 @@ public class ByteUtils {
      * The value is expected as an unsigned {@link BigInteger}.
      *
      * @param val    value to be written
-     * @param stream strean to be written into
+     * @param stream stream to be written into
      * @throws IOException if an I/O error occurs
      */
     public static void writeInt64LE(BigInteger val, OutputStream stream) throws IOException {
@@ -744,7 +744,7 @@ public class ByteUtils {
     }
 
     /**
-     * Concatentate two byte arrays
+     * Concatenate two byte arrays
      * @param b1 first byte array
      * @param b2 second byte array
      * @return new concatenated byte array
