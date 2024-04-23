@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.bitcoinj.base.Coin.COIN;
@@ -200,6 +201,15 @@ public enum BitcoinNetwork implements Network {
         return stream()
                 .filter(n -> n.id.equals(idString))
                 .findFirst();
+    }
+
+    /**
+     * @return list of the names of all instances of this enum
+     */
+    public static List<String> strings() {
+        return stream()
+                .map(BitcoinNetwork::toString)
+                .collect(Collectors.toList());
     }
 
     /**
