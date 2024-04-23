@@ -46,12 +46,6 @@ import static java.util.stream.Collectors.toList;
 public class ForwardingService implements Closeable {
     static private final String NETS = String.join("|", BitcoinNetwork.strings());
     static final String USAGE = String.format("Usage: address-to-forward-to [%s]", NETS);
-    public record Config(BitcoinNetwork network,        // Network to operate on
-                         Address forwardingAddress,     // Address to forward to
-                         File walletDirectory,          // Directory to create wallet files in
-                         String walletPrefix,           // Prefix for wallet file names
-                         int requiredConfirmations,     // Required number of tx confirmations before forwarding
-                         int maxConnections) {}         // Maximum number of Peer connections
 
     /**
      * Create a Wallet and run the forwarding service as a command line tool
@@ -167,6 +161,15 @@ public class ForwardingService implements Closeable {
 
     static final int REQUIRED_CONFIRMATIONS = 1;
     static final int MAX_CONNECTIONS = 4;
+
+    public record Config(BitcoinNetwork network,        // Network to operate on
+                         Address forwardingAddress,     // Address to forward to
+                         File walletDirectory,          // Directory to create wallet files in
+                         String walletPrefix,           // Prefix for wallet file names
+                         int requiredConfirmations,     // Required number of tx confirmations before forwarding
+                         int maxConnections)            // Maximum number of Peer connections
+    {}
+
     static Config parse(String[] args) {
         if (args.length < 1 || args.length > 2) {
             System.err.println(USAGE);
