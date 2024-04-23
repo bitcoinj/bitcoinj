@@ -182,6 +182,30 @@ public enum BitcoinNetwork implements Network {
         }
     }
 
+    public boolean supportsAddress(Address address) {
+        boolean valid;
+        switch (this) {
+            case MAINNET:
+                valid = address.network() == MAINNET;
+                break;
+            case TESTNET:
+            case SIGNET:
+                valid = address.network() == TESTNET;
+                break;
+            case REGTEST:
+                if (address instanceof LegacyAddress) {
+                    valid = ((LegacyAddress) address).network == TESTNET;
+                } else {
+                    valid = address.network() == REGTEST;
+                }
+                break;
+            default:
+                valid = false;
+                break;
+        }
+        return valid;
+    }
+
     /**
      * Check if an address is valid on this network.
      * This is meant to be used as a precondition for a method or function that expects a valid address. If

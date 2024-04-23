@@ -56,7 +56,17 @@ public class ForwardingService implements Closeable {
         BriefLogFormatter.init();
         Context.propagate(new Context());
 
-        Config config = parse(args);
+        if (args.length < 1 || args.length > 2) {
+            System.err.println(USAGE);
+            System.exit(1);
+        }
+
+        // If only an address is provided, derive network from the address
+        // If address and network provided, use network and validate address against network
+        Address address = AddressParser.getDefault().parseAddress(args[0]);
+        Config config = args.length == 1
+                ? new Config(address)
+                : new Config(BitcoinNetwork.fromString(args[1]).orElseThrow(), address);
 
         System.out.println("Network: " + config.network);
         System.out.println("Forwarding address: " + config.forwardingAddress);
@@ -170,30 +180,15 @@ public class ForwardingService implements Closeable {
         static final int MAX_CONNECTIONS = 4;
         Config(BitcoinNetwork network, Address forwardingAddress) {
             this(network, forwardingAddress, new File("."), getPrefix(network), REQUIRED_CONFIRMATIONS, MAX_CONNECTIONS);
+            if (!network.supportsAddress(forwardingAddress)) {
+                throw new IllegalArgumentException("Incompatible network for address");
+            }
         }
-    }
-
-    static Config parse(String[] args) {
-        if (args.length < 1 || args.length > 2) {
-            System.err.println(USAGE);
-            System.exit(1);
+        Config(Address forwardingAddress) {
+            this((BitcoinNetwork) forwardingAddress.network(), forwardingAddress);
         }
-        BitcoinNetwork network;
-        Address forwardingAddress;
-
-        if (args.length >= 2) {
-            // If network was specified, validate address against network
-            network = BitcoinNetwork.fromString(args[1]).orElseThrow();
-            forwardingAddress = AddressParser.getDefault(network).parseAddress(args[0]);
-        } else {
-            // Else network not-specified, extract network from address
-            forwardingAddress = AddressParser.getDefault().parseAddress(args[0]);
-            network = (BitcoinNetwork) forwardingAddress.network();
+        static String getPrefix(BitcoinNetwork network) {
+            return String.format("forwarding-service-%s", network);
         }
-        return new Config(network, forwardingAddress);
-    }
-
-    static String getPrefix(BitcoinNetwork network) {
-        return String.format("forwarding-service-%s", network.toString());
     }
 }

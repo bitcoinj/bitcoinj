@@ -21,15 +21,12 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.kits.WalletAppKit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
-
-import static org.bitcoinj.examples.ForwardingService.getPrefix;
 
 /**
  * Forwarding Service Functional/Integration test. Uses {@link BitcoinNetwork#TESTNET} so is {@code @Disabled}.
@@ -44,9 +41,7 @@ public class ForwardingServiceTest {
     @BeforeEach
     void setupTest(@TempDir File tempDir) {
         Context.propagate(new Context());
-        config = new ForwardingService.Config(network, forwardingAddress,
-                tempDir, getPrefix(network),
-                4, 1);
+        config = new ForwardingService.Config(network, forwardingAddress);
     }
 
     @Test
