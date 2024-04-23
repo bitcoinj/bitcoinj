@@ -91,10 +91,10 @@ public class ForwardingService implements Closeable {
      * Note that {@link WalletAppKit#setAutoStop(boolean)} is set by default and installs a shutdown handler
      * via {@link Runtime#addShutdownHook(Thread)} so we do not need to worry about explicitly shutting down
      * the {@code WalletAppKit} if the process is terminated.
-     * @param config the configuration to use
+     * @param configuration the configuration to use
      */
-    public ForwardingService(Config config) {
-        this.config = config;
+    public ForwardingService(Config configuration) {
+        config = configuration;
         walletAppKit = WalletAppKit.launch(config.network, config.walletDirectory, config.walletPrefix, config.maxConnections);
         wallet = walletAppKit.wallet();
         // Add a listener that forwards received coins
