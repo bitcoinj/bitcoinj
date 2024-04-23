@@ -56,7 +56,7 @@ public class ForwardingService implements Closeable {
      * Run the forwarding service as a command line tool
      * @param args See {@link #USAGE}
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
         BriefLogFormatter.init();
         Context.propagate(new Context());
@@ -70,9 +70,7 @@ public class ForwardingService implements Closeable {
         try (ForwardingService forwardingService = new ForwardingService(args)) {
             forwardingService.run();
             // Wait for Control-C
-            try {
-                Thread.sleep(Long.MAX_VALUE);
-            } catch (InterruptedException ignored) {}
+            Thread.sleep(Long.MAX_VALUE);
         }
     }
 
