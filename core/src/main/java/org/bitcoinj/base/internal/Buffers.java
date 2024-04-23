@@ -87,7 +87,7 @@ public class Buffers {
     }
 
     /**
-     * Encode a given string using UTF-8. Then write the lnegth of the encoded bytes as a {@link VarInt}. Then write
+     * Encode a given string using UTF-8. Then write the length of the encoded bytes as a {@link VarInt}. Then write
      * the bytes themselves.
      *
      * @param buf buffer to write to
