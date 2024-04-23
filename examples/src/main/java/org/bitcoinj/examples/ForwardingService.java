@@ -120,7 +120,27 @@ public class ForwardingService implements Closeable {
             .thenCompose(confidence -> {
                 // Required confirmations received, now create and send forwarding transaction
                 System.out.printf("Incoming tx has received %d confirmations.\n", confidence.getDepthInBlocks());
-                return forward(wallet, incomingTx, config.forwardingAddress);
+                // Send coins received in incomingTx onwards by sending exactly the UTXOs we have just received.
+                // We're not truly emptying the wallet because we're limiting the available outputs with a CoinSelector.
+                System.out.printf("Creating outgoing transaction for %s...\n", config.forwardingAddress);
+                SendRequest sendRequest = SendRequest.emptyWallet(config.forwardingAddress);
+                // Use a CoinSelector that only returns wallet UTXOs from the incoming transaction.
+                sendRequest.coinSelector = CoinSelector.fromPredicate(output -> Objects.equals(output.getParentTransactionHash(), incomingTx.getTxId()));
+                return send(wallet, sendRequest);
+            });
+    }
+
+    /**
+     * Create a transaction specified by a {@link org.bitcoinj.examples.SendRequest}, sign it, and send to the specified address.
+     * @param wallet The active wallet
+     * @param sendRequest requested transaction parameters
+     * @return A future for a TransactionBroadcast object that completes when relay is acknowledged by peers
+     */
+    CompletableFuture<TransactionBroadcast> send(Wallet wallet, SendRequest sendRequest) {
+        return wallet.sendTransaction(sendRequest)
+                .thenCompose(broadcast -> {
+                    System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), wallet.network());
+                    return broadcast.awaitRelayed(); // Wait until peers report they have seen the transaction
             })
             .whenComplete((broadcast, throwable) -> {
                 if (broadcast != null) {
@@ -131,29 +151,6 @@ public class ForwardingService implements Closeable {
                     System.out.println("Exception occurred: "  + throwable);
                 }
             });
-    }
-
-    /**
-     * Forward an incoming transaction by creating a new transaction, signing, and sending to the specified address. The
-     * inputs for the new transaction should only come from the incoming transaction, so we use a custom {@link CoinSelector}
-     * that only selects wallet UTXOs with the correct parent transaction ID.
-     * @param wallet The active wallet
-     * @param incomingTx the received transaction
-     * @param forwardingAddress the address to send to
-     * @return A future for a TransactionBroadcast object that completes when relay is acknowledged by peers
-     */
-    CompletableFuture<TransactionBroadcast> forward(Wallet wallet, Transaction incomingTx, Address forwardingAddress) {
-        // Send coins received in incomingTx onwards by sending exactly the UTXOs we have just received.
-        // We're not truly emptying the wallet because we're limiting the available outputs with a CoinSelector.
-        SendRequest sendRequest = SendRequest.emptyWallet(forwardingAddress);
-        // Use a CoinSelector that only returns wallet UTXOs from the incoming transaction.
-        sendRequest.coinSelector = CoinSelector.fromPredicate(output -> Objects.equals(output.getParentTransactionHash(), incomingTx.getTxId()));
-        System.out.printf("Creating outgoing transaction for %s...\n", forwardingAddress);
-        return wallet.sendTransaction(sendRequest)
-                .thenCompose(broadcast -> {
-                    System.out.printf("Transaction %s is signed and is being delivered to %s...\n", broadcast.transaction().getTxId(), wallet.network());
-                    return broadcast.awaitRelayed(); // Wait until peers report they have seen the transaction
-                });
     }
 
     String status() {
