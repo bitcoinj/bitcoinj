@@ -166,24 +166,42 @@ public class ForwardingService implements Closeable {
         walletAppKit.close();
     }
 
-    public record Config(BitcoinNetwork network,        // Network to operate on
-                         Address forwardingAddress,     // Address to forward to
-                         File walletDirectory,          // Directory to create wallet files in
-                         String walletPrefix,           // Prefix for wallet file names
-                         int requiredConfirmations,     // Required number of tx confirmations before forwarding
-                         int maxConnections)            // Maximum number of Peer connections
-    {
+    // This should be converted to a record when we migrate to JDK 17
+    public static final class Config  {
         static final int REQUIRED_CONFIRMATIONS = 1;
         static final int MAX_CONNECTIONS = 4;
+        private final BitcoinNetwork network;
+        private final Address forwardingAddress;
+        private final File walletDirectory;
+        private final String walletPrefix;
+        private final int requiredConfirmations;
+        private final int maxConnections;
+
+        public Config(BitcoinNetwork network,        // Network to operate on
+                      Address forwardingAddress,     // Address to forward to
+                      File walletDirectory,          // Directory to create wallet files in
+                      String walletPrefix,           // Prefix for wallet file names
+                      int requiredConfirmations,     // Required number of tx confirmations before forwarding
+                      int maxConnections) {          // Maximum number of Peer connections
+            this.network = network;
+            this.forwardingAddress = forwardingAddress;
+            this.walletDirectory = walletDirectory;
+            this.walletPrefix = walletPrefix;
+            this.requiredConfirmations = requiredConfirmations;
+            this.maxConnections = maxConnections;
+        }
+
         Config(BitcoinNetwork network, Address forwardingAddress) {
             this(network, forwardingAddress, new File("."), getPrefix(network), REQUIRED_CONFIRMATIONS, MAX_CONNECTIONS);
             if (!network.supportsAddress(forwardingAddress)) {
                 throw new IllegalArgumentException("Incompatible network for address");
             }
         }
+
         Config(Address forwardingAddress) {
             this((BitcoinNetwork) forwardingAddress.network(), forwardingAddress);
         }
+
         static String getPrefix(BitcoinNetwork network) {
             return String.format("forwarding-service-%s", network);
         }
