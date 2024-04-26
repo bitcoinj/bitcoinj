@@ -18,14 +18,13 @@ dependencies {
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.10.0"
 }
 
-sourceCompatibility = 17
+sourceCompatibility = 11
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
 compileJava {
     options.compilerArgs << '-Xlint:deprecation'
-    options.compilerArgs.addAll(['--release', '17'])
 }
 
 test {

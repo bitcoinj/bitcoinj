@@ -36,12 +36,11 @@ import java.io.File;
 public class ForwardingServiceTest {
     static final BitcoinNetwork network = BitcoinNetwork.TESTNET;
     static final Address forwardingAddress = new ECKey().toAddress(ScriptType.P2WPKH, network);
-    ForwardingService.Config config;
+    static final ForwardingService.Config config = new ForwardingService.Config(network, forwardingAddress);;
 
     @BeforeEach
-    void setupTest(@TempDir File tempDir) {
+    void setupTest() {
         Context.propagate(new Context());
-        config = new ForwardingService.Config(network, forwardingAddress);
     }
 
     @Test
