@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, macos-14, windows-latest]
         java: ['11', '17', '21']
         distribution: ['temurin']
         gradle: ['8.7']
@@ -32,7 +32,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ matrix.gradle }}
-          arguments: -PtestJdk8=true build --init-script build-scan-agree.gradle --scan --info --stacktrace
+          arguments: -PtestJdk8=false build --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
