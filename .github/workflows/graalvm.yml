@@ -23,11 +23,12 @@ jobs:
           java-version: ${{ matrix.java-version }}
           distribution: ${{ matrix.distribution }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build with Gradle
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ matrix.gradle }}
-          arguments: test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
+      - name: Run Gradle
+        run: gradle test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload wallet-tool as artifact
         uses: actions/upload-artifact@v4
         with:

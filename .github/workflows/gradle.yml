@@ -28,11 +28,12 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
-      - name: Build with Gradle
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: ${{ matrix.gradle }}
-          arguments: -PtestJdk8=true build --init-script build-scan-agree.gradle --scan --info --stacktrace
+      - name: Run Gradle
+        run: gradle -PtestJdk8=true build --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
