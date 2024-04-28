@@ -183,6 +183,57 @@ public enum BitcoinNetwork implements Network {
     }
 
     /**
+     * Check if an address is valid on this network.
+     * This is meant to be used as a precondition for a method or function that expects a valid address. If
+     * you are validating addresses provided externally, you probably want to use
+     * {@link #isValidAddress(Address)} to handle errors more gracefully. This method uses {@link #isValidAddress(Address)}
+     * internally which properly accounts for address normalization.
+     * @param address Address to validate
+     * @return The unmodified address if valid on this network
+     * @throws IllegalArgumentException if address not valid on this network
+     */
+    public Address checkAddress(Address address) throws IllegalArgumentException {
+        if (!isValidAddress(address)) {
+            throw new IllegalArgumentException(String.format("Address %s not valid on network %s", address, this));
+        }
+        return address;
+    }
+
+    /**
+     * Is address valid for this network. Because we normalize the {@code network()} value in the {@link Address}
+     * type (see the JavaDoc for {@link Address#network()}) this method should be used in preference to simply
+     * verifying that {@code address.network()} returns the desired network type.
+     * @param address Address to validate
+     * @return {@code true} if valid on this network, {@code false} otherwise
+     */
+    public boolean isValidAddress(Address address) {
+        boolean valid;
+        switch (this) {
+            case MAINNET:
+                valid = address.network() == MAINNET;
+                break;
+            case TESTNET:
+            case SIGNET:
+                // SIGNET uses the same addresses as TESTNET
+                valid = address.network() == TESTNET;
+                break;
+            case REGTEST:
+                if (address instanceof LegacyAddress) {
+                    // For Legacy addresses, REGTEST uses TESTNET addresses
+                    valid = ((LegacyAddress) address).network == TESTNET;
+                } else {
+                    // On segwit, REGTEST has its own address type
+                    valid = address.network() == REGTEST;
+                }
+                break;
+            default:
+                valid = false;
+                break;
+        }
+        return valid;
+    }
+
+    /**
      * Find the {@code BitcoinNetwork} from a name string, e.g. "mainnet", "testnet" or "signet".
      * A number of common alternate names are allowed too, e.g. "main" or "prod".
      * @param nameString A name string
