@@ -18,8 +18,13 @@ package org.bitcoinj.base;
 
 import org.junit.Test;
 
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
+import static org.bitcoinj.base.BitcoinNetwork.SIGNET;
+import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class BitcoinNetworkTest {
     @Test
@@ -78,5 +83,48 @@ public class BitcoinNetworkTest {
     @Test
     public void fromIdString_notExisting() {
         assertFalse(BitcoinNetwork.fromIdString("a.b.c").isPresent());
+    }
+
+    @Test
+    public void testLegacyAddressValidity() {
+        LegacyAddress m = LegacyAddress.fromBase58("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", MAINNET);
+        LegacyAddress t = LegacyAddress.fromBase58("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", TESTNET);
+        assertTrue(MAINNET.isValidAddress(m) &&
+                TESTNET.isValidAddress(t) &&
+                SIGNET.isValidAddress(t) &&
+                REGTEST.isValidAddress(t));
+        assertFalse(MAINNET.isValidAddress(t) &&
+                TESTNET.isValidAddress(m) &&
+                SIGNET.isValidAddress(m) &&
+                REGTEST.isValidAddress(m));
+    }
+
+    @Test
+    public void testSegwitAddressValidity() {
+        SegwitAddress m = SegwitAddress.fromBech32("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", MAINNET);
+        SegwitAddress t = SegwitAddress.fromBech32("tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c", TESTNET);
+        SegwitAddress rt = SegwitAddress.fromBech32("bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2", REGTEST);
+        assertTrue(MAINNET.isValidAddress(m) &&
+                TESTNET.isValidAddress(t) &&
+                SIGNET.isValidAddress(t) &&
+                REGTEST.isValidAddress(rt));
+        assertFalse(MAINNET.isValidAddress(t) &&
+                MAINNET.isValidAddress(rt) &&
+                TESTNET.isValidAddress(m) &&
+                TESTNET.isValidAddress(rt) &&
+                SIGNET.isValidAddress(m) &&
+                SIGNET.isValidAddress(rt) &&
+                REGTEST.isValidAddress(m) &&
+                REGTEST.isValidAddress(t));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLegacyAddressCheckThrow() {
+        MAINNET.checkAddress(LegacyAddress.fromBase58("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", TESTNET));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSegwitAddressCheckThrow() {
+        MAINNET.checkAddress(SegwitAddress.fromBech32("tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c", TESTNET));
     }
 }
