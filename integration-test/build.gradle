@@ -12,7 +12,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.10.0"
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.easymock:easymock:5.2.0'
-    testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.15.2'
+    testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.16.1'
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.0"
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.10.0"
