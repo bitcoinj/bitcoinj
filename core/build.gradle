@@ -37,8 +37,8 @@ if (GradleVersion.current().compareTo(gradleVersionTargetJVM) > 0) {
     }
 }
 
-sourceCompatibility = 8
-targetCompatibility = 8
+sourceCompatibility = 17
+targetCompatibility = 17
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
@@ -46,7 +46,7 @@ javadoc.options.encoding = 'UTF-8'
 //javadoc.options.addStringOption('Xmaxwarns', '10000')
 
 compileJava {
-    options.compilerArgs.addAll(['--release', '8'])
+    options.compilerArgs.addAll(['--release', '17'])
     options.compilerArgs << '-Xlint:deprecation'
 }
 
