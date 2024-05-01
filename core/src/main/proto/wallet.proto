@@ -90,7 +90,7 @@ message Key {
     ORIGINAL = 1;
 
     /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
-    ENCRYPTED_SCRYPT_AES = 2;
+    ENCRYPTED = 2;
 
     /**
     * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
