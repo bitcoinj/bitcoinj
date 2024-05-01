@@ -875,12 +875,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     if (key.hasDeterministicSeed())
                         throw new UnreadableWalletException("Malformed key proto: " + key);
                     EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
-                            key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
+                            key.getEncryptedData().getEncryptedPrivateKey().toByteArray(),
+                            crypter.getUnderstoodEncryptionType());
                     EncryptedData encryptedSeedBytes = null;
                     if (key.hasEncryptedDeterministicSeed()) {
                         Protos.EncryptedData encryptedSeed = key.getEncryptedDeterministicSeed();
                         encryptedSeedBytes = new EncryptedData(encryptedSeed.getInitialisationVector().toByteArray(),
-                                encryptedSeed.getEncryptedPrivateKey().toByteArray());
+                                encryptedSeed.getEncryptedPrivateKey().toByteArray(),
+                                crypter.getUnderstoodEncryptionType());
                     }
                     seed = new DeterministicSeed(data, encryptedSeedBytes, seedCreationTime);
                 } else {
@@ -948,7 +950,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     if (key.hasEncryptedData()) {
                         Protos.EncryptedData proto = key.getEncryptedData();
                         EncryptedData data = new EncryptedData(proto.getInitialisationVector().toByteArray(),
-                                proto.getEncryptedPrivateKey().toByteArray());
+                                proto.getEncryptedPrivateKey().toByteArray(),
+                                crypter.getUnderstoodEncryptionType());
                         Objects.requireNonNull(crypter, "Encountered an encrypted key but no key crypter provided");
                         detkey = new DeterministicKey(path, chainCode, crypter, pubkey, data, parent);
                     } else {
@@ -1385,7 +1388,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
                     .setInitialisationVector(ByteString.copyFrom(data.initialisationVector)));
             // We don't allow mixing of encryption types at the moment.
-            checkState(seed.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
+            checkState(seed.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES ^
+                    seed.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_KEYSTORE_AES);
         } else {
             final byte[] secret = seed.getSeedBytes();
             if (secret != null)

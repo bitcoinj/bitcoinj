@@ -89,8 +89,8 @@ message Key {
     /** Unencrypted - Original bitcoin secp256k1 curve */
     ORIGINAL = 1;
 
-    /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
-    ENCRYPTED_SCRYPT_AES = 2;
+    /** Encrypted - Original bitcoin secp256k1 curve */
+    ENCRYPTED = 2;
 
     /**
     * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
@@ -358,6 +358,7 @@ message Wallet {
   enum EncryptionType {
     UNENCRYPTED = 1;                 // All keys in the wallet are unencrypted
     ENCRYPTED_SCRYPT_AES = 2;        // All keys are encrypted with a passphrase based KDF of scrypt and AES encryption
+    ENCRYPTED_KEYSTORE_AES = 3;      // All keys are encrypted KeyStore HW encryption
   }
 
   required string network_identifier = 1; // the network used by this wallet

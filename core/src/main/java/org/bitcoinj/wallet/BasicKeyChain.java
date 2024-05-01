@@ -360,8 +360,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
                     .setInitialisationVector(ByteString.copyFrom(data.initialisationVector)));
             // We don't allow mixing of encryption types at the moment.
-            checkState(item.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
-            proto.setType(Protos.Key.Type.ENCRYPTED_SCRYPT_AES);
+            checkState(item.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES ^
+                    item.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_KEYSTORE_AES);
+            proto.setType(Protos.Key.Type.ENCRYPTED);
         } else {
             final byte[] secret = item.getSecretBytes();
             // The secret might be missing in the case of a watching wallet, or a key for which the private key
@@ -401,9 +402,9 @@ public class BasicKeyChain implements EncryptableKeyChain {
             checkState(hashToKeys.isEmpty(), () ->
                     "tried to deserialize into a non-empty chain");
             for (Protos.Key key : keys) {
-                if (key.getType() != Protos.Key.Type.ORIGINAL && key.getType() != Protos.Key.Type.ENCRYPTED_SCRYPT_AES)
+                if (key.getType() != Protos.Key.Type.ORIGINAL && key.getType() != Protos.Key.Type.ENCRYPTED)
                     continue;
-                boolean encrypted = key.getType() == Protos.Key.Type.ENCRYPTED_SCRYPT_AES;
+                boolean encrypted = key.getType() == Protos.Key.Type.ENCRYPTED;
                 byte[] priv = key.hasSecretBytes() ? key.getSecretBytes().toByteArray() : null;
                 if (!key.hasPublicKey())
                     throw new UnreadableWalletException("Public key missing");
@@ -416,7 +417,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
                         throw new UnreadableWalletException("Encrypted private key data missing");
                     Protos.EncryptedData proto = key.getEncryptedData();
                     EncryptedData e = new EncryptedData(proto.getInitialisationVector().toByteArray(),
-                            proto.getEncryptedPrivateKey().toByteArray());
+                            proto.getEncryptedPrivateKey().toByteArray(),
+                            keyCrypter.getUnderstoodEncryptionType());
                     ecKey = ECKey.fromEncrypted(e, keyCrypter, pub);
                 } else {
                     if (priv != null)

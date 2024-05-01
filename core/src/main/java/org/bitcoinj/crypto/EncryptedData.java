@@ -16,6 +16,8 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.protobuf.wallet.Protos;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -29,10 +31,12 @@ import java.util.Objects;
 public final class EncryptedData {
     public final byte[] initialisationVector;
     public final byte[] encryptedBytes;
+    public final Protos.Wallet.EncryptionType encryptionType;
 
-    public EncryptedData(byte[] initialisationVector, byte[] encryptedBytes) {
+    public EncryptedData(byte[] initialisationVector, byte[] encryptedBytes, Protos.Wallet.EncryptionType encryptionType) {
         this.initialisationVector = Arrays.copyOf(initialisationVector, initialisationVector.length);
         this.encryptedBytes = Arrays.copyOf(encryptedBytes, encryptedBytes.length);
+        this.encryptionType = encryptionType;
     }
 
     @Override
