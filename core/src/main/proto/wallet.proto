@@ -86,11 +86,18 @@ message DeterministicKey {
  */
 message Key {
   enum Type {
+    option allow_alias = true;
     /** Unencrypted - Original bitcoin secp256k1 curve */
     ORIGINAL = 1;
 
-    /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
+    /**
+    * Encrypted - Original bitcoin secp256k1 curve
+    * Details of the encryption are declared via Wallet.EncryptionType enum
+    */
     ENCRYPTED = 2;
+
+    /** Encrypted with Scrypt and AES - Original bitcoin secp256k1 curve */
+    ENCRYPTED_SCRYPT_AES = 2 [deprecated = true];
 
     /**
     * Not really a key, but rather contains the mnemonic phrase for a deterministic key hierarchy in the private_key field.
