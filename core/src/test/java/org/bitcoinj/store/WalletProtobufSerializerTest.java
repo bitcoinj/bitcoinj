@@ -148,7 +148,7 @@ public class WalletProtobufSerializerTest {
         Transaction t1copy = wallet1.getTransaction(t1.getTxId());
         assertArrayEquals(t1.serialize(), t1copy.serialize());
         assertEquals(2, t1copy.getConfidence().numBroadcastPeers());
-        assertNotNull(t1copy.getConfidence().lastBroadcastTime());
+        assertNotNull(t1copy.getConfidence().getLastBroadcastTime());
         assertEquals(TransactionConfidence.Source.NETWORK, t1copy.getConfidence().getSource());
         
         Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(myWallet);
