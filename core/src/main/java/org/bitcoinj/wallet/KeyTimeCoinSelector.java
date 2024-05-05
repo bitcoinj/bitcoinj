@@ -79,7 +79,7 @@ public class KeyTimeCoinSelector implements CoinSelector {
     private boolean isKeyBeforeCutoff(TransactionOutput output) {
         Optional<ECKey> optKey = findKey(output);
         // It's older than the cutoff time so select.
-        return optKey.isPresent() && optKey.get().creationTime().orElse(Instant.EPOCH).isBefore(time);
+        return optKey.isPresent() && optKey.get().getCreationTime().orElse(Instant.EPOCH).isBefore(time);
     }
 
     /**

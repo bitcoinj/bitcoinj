@@ -88,7 +88,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         }
 
         // Set the date picker to show the birthday of this wallet.
-        Instant creationTime = seed.creationTime().get();
+        Instant creationTime = seed.getCreationTime().get();
         LocalDate origDate = creationTime.atZone(ZoneId.systemDefault()).toLocalDate();
         datePicker.setValue(origDate);
 

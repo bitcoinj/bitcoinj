@@ -598,7 +598,7 @@ public class Wallet extends BaseTaggableObject
                                        ScriptType outputScriptType, ChildNumber accountNumber) {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
         accountKey = accountKey.dropParent();   // Drop the parent private key, so it won't be used or saved.
-        Optional<Instant> creationTime = masterKey.creationTime();
+        Optional<Instant> creationTime = masterKey.getCreationTime();
         if (creationTime.isPresent())
             accountKey.setCreationTime(creationTime.get());
         else
@@ -3782,7 +3782,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Returns the earliest creation time of keys or watched scripts in this wallet, ie the min
-     * of {@link ECKey#creationTime()}. This can return {@link Instant#EPOCH} if at least one key does
+     * of {@link ECKey#getCreationTime()}. This can return {@link Instant#EPOCH} if at least one key does
      * not have that data (e.g. is an imported key with unknown timestamp). <p>
      *
      * This method is most often used in conjunction with {@link PeerGroup#setFastCatchupTime(Instant)} in order to
@@ -5714,7 +5714,7 @@ public class Wallet extends BaseTaggableObject
     /** Returns whether the keys creation time is before the key rotation time, if one was set. */
     public boolean isKeyRotating(ECKey key) {
         Instant keyRotationTime = vKeyRotationTime;
-        return keyRotationTime != null && key.creationTime().orElse(Instant.EPOCH).isBefore(keyRotationTime);
+        return keyRotationTime != null && key.getCreationTime().orElse(Instant.EPOCH).isBefore(keyRotationTime);
     }
 
     /**

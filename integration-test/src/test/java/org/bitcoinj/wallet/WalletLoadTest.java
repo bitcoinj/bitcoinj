@@ -38,7 +38,7 @@ public class WalletLoadTest {
         Context.propagate(new Context());
         Wallet wallet = Wallet.loadFromFile(walletFile);
 
-        Instant creation = wallet.getKeyChainSeed().creationTime().get();
+        Instant creation = wallet.getKeyChainSeed().getCreationTime().get();
         assertEquals(testWalletCreation, creation, "unexpected creation timestamp");
 
         String mnemonic = wallet.getKeyChainSeed().getMnemonicString();

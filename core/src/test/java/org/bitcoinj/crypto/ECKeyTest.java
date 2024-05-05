@@ -384,12 +384,12 @@ public class ECKeyTest {
     public void testUnencryptedCreate() {
         TimeUtils.setMockClock();
         ECKey key = new ECKey();
-        Optional<Instant> time = key.creationTime();
+        Optional<Instant> time = key.getCreationTime();
         assertTrue(time.isPresent());
         assertFalse(key.isEncrypted());
         byte[] originalPrivateKeyBytes = key.getPrivKeyBytes();
         ECKey encryptedKey = key.encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
-        assertEquals(time, encryptedKey.creationTime());
+        assertEquals(time, encryptedKey.getCreationTime());
         assertTrue(encryptedKey.isEncrypted());
         assertNull(encryptedKey.getSecretBytes());
         key = encryptedKey.decrypt(keyCrypter.deriveKey(PASSWORD1));
