@@ -1786,7 +1786,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * the min of the wallets earliest key times.
      * @return a time in seconds since the epoch
      */
-    public Instant fastCatchupTime() {
+    public Instant getFastCatchupTime() {
         lock.lock();
         try {
             return fastCatchupTime;
@@ -1795,10 +1795,10 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    /** @deprecated use {@link #fastCatchupTime()} */
+    /** @deprecated use {@link #getFastCatchupTime()} */
     @Deprecated
     public long getFastCatchupTimeSecs() {
-        return fastCatchupTime().getEpochSecond();
+        return getFastCatchupTime().getEpochSecond();
     }
 
     protected void handlePeerDeath(final Peer peer, @Nullable Throwable exception) {
