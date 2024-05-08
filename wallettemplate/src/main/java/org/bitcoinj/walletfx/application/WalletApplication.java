@@ -25,7 +25,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.walletappkit.WalletAppKit;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
