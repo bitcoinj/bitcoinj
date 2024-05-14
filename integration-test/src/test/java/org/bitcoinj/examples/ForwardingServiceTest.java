@@ -36,7 +36,7 @@ import java.io.File;
 public class ForwardingServiceTest {
     static final BitcoinNetwork network = BitcoinNetwork.TESTNET;
     static final Address forwardingAddress = new ECKey().toAddress(ScriptType.P2WPKH, network);
-    static final String[] args = new String[] { forwardingAddress.toString(), network.toString() };
+    static final ForwardingService.Config config = new ForwardingService.Config(network, forwardingAddress);;
 
     @BeforeEach
     void setupTest() {
@@ -47,7 +47,12 @@ public class ForwardingServiceTest {
     public void startAndImmediatelyInterrupt(@TempDir File tempDir) {
         // Start the service and immediately interrupt
         Thread thread = new Thread(
-                () -> new ForwardingService(args).run()
+                () -> {
+                    // Create the service, which will listen for transactions and forward coins until closed
+                    try (ForwardingService forwardingService = new ForwardingService(config) ) {
+                        // Sleep here?
+                    }
+                }
         );
         thread.start();
         thread.interrupt();
@@ -56,8 +61,9 @@ public class ForwardingServiceTest {
     @Test
     public void startAndImmediatelyClose(@TempDir File tempDir) {
         // Instantiate the service, start it, and immediately close it
-        try (ForwardingService service = new ForwardingService(args) ) {
-            service.run();
+
+        // Create the service, which will listen for transactions and forward coins until closed
+        try (ForwardingService forwardingService = new ForwardingService(config)) {
         }
     }
 }
