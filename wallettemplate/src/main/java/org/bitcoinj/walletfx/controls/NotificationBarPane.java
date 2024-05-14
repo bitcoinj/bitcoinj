@@ -16,6 +16,7 @@
 
 package org.bitcoinj.walletfx.controls;
 
+import jakarta.annotation.Nullable;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -35,8 +36,6 @@ import javafx.util.Duration;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
-
-import jakarta.annotation.Nullable;
 
 /**
  * Wraps the given Node in a BorderPane and allows a thin bar to slide in from the bottom or top, squeezing the content

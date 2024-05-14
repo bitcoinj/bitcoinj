@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import org.bitcoinj.base.BitcoinNetwork
 import org.bitcoinj.base.Address
-import org.bitcoinj.base.Coin
 import org.bitcoinj.base.AddressParser
+import org.bitcoinj.base.BitcoinNetwork
+import org.bitcoinj.base.Coin
 import org.bitcoinj.core.Context
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.core.TransactionBroadcast

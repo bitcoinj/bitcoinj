@@ -16,11 +16,8 @@
 
 package wallettemplate;
 
-import org.bitcoinj.base.internal.InternalUtils;
-import org.bitcoinj.crypto.AesKey;
-import org.bitcoinj.crypto.MnemonicCode;
-import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.util.concurrent.Service;
+import jakarta.annotation.Nullable;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
@@ -28,14 +25,17 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
+import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.crypto.AesKey;
+import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
+import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.bitcoinj.walletfx.utils.TextFieldValidator;
 
-import jakarta.annotation.Nullable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -43,7 +43,10 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 
-import static javafx.beans.binding.Bindings.*;
+import static javafx.beans.binding.Bindings.createBooleanBinding;
+import static javafx.beans.binding.Bindings.equal;
+import static javafx.beans.binding.Bindings.not;
+import static javafx.beans.binding.Bindings.or;
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
 import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 import static org.bitcoinj.walletfx.utils.WTUtils.didThrow;

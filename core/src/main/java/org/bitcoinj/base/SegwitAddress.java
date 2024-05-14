@@ -16,10 +16,11 @@
 
 package org.bitcoinj.base;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,8 +30,6 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
  * <p>Implementation of native segwit addresses. They are composed of two parts:</p>
@@ -64,9 +63,9 @@ public class SegwitAddress implements Address {
      *  <a href="https://github.com/bitcoin/bitcoin/issues/12314">Bitcoin Core Issue 1234 - discussion of {@code bcrt} HRP</a> for details.
      */
     public enum SegwitHrp {
-        BC(MAINNET),
-        TB(TESTNET, SIGNET),
-        BCRT(REGTEST);
+        BC(BitcoinNetwork.MAINNET),
+        TB(BitcoinNetwork.TESTNET, BitcoinNetwork.SIGNET),
+        BCRT(BitcoinNetwork.REGTEST);
 
         private final EnumSet<BitcoinNetwork> networks;
 

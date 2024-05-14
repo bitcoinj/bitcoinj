@@ -18,7 +18,8 @@ package org.bitcoinj.examples;
 
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
@@ -26,7 +27,9 @@ import org.bitcoinj.wallet.Wallet;
 
 import java.io.File;
 
-import static org.bitcoinj.base.Coin.*;
+import static org.bitcoinj.base.Coin.CENT;
+import static org.bitcoinj.base.Coin.COIN;
+import static org.bitcoinj.base.Coin.SATOSHI;
 
 /**
  * This is a little test app that waits for a coin on a local regtest node, then  generates two transactions that double

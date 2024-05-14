@@ -15,13 +15,12 @@
  */
 package org.bitcoinj.walletfx.overlay;
 
+import jakarta.annotation.Nullable;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import org.bitcoinj.walletfx.utils.GuiUtils;
-
-import jakarta.annotation.Nullable;
 
 import java.io.IOException;
 import java.net.URL;

@@ -16,10 +16,8 @@
 
 package org.bitcoinj.walletfx.controls;
 
-import java.awt.Desktop;
-import java.io.IOException;
-import java.net.URI;
-
+import de.jensd.fx.fontawesome.AwesomeDude;
+import de.jensd.fx.fontawesome.AwesomeIcon;
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -38,17 +36,16 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
-
 import org.bitcoinj.base.Address;
 import org.bitcoinj.uri.BitcoinURI;
-
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.QRCodeImages;
 
-import de.jensd.fx.fontawesome.AwesomeDude;
-import de.jensd.fx.fontawesome.AwesomeIcon;
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.URI;
 
 import static javafx.beans.binding.Bindings.convert;
 

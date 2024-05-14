@@ -16,14 +16,14 @@
 
 package org.bitcoinj.walletfx.utils;
 
-import org.bitcoinj.crypto.AesKey;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
+import jakarta.annotation.Nullable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.concurrent.Task;
+import org.bitcoinj.crypto.AesKey;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.annotation.Nullable;
 import java.time.Duration;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;

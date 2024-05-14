@@ -18,12 +18,12 @@ package org.bitcoinj.tools;
 
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.TrustStoreLoader;
+import org.bitcoinj.protobuf.payments.Protos;
 import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.protocols.payments.PaymentProtocolException;
 import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.uri.BitcoinURI;
 import org.bitcoinj.uri.BitcoinURIParseException;
-import org.bitcoinj.protobuf.payments.Protos;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -33,7 +33,6 @@ import java.net.URISyntaxException;
 import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
-import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;

@@ -26,7 +26,8 @@ import org.junit.runner.RunWith;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnitParamsRunner.class)
 public class LockTimeTest {

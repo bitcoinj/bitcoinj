@@ -17,10 +17,10 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;

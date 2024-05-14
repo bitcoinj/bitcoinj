@@ -17,28 +17,30 @@
 package wallettemplate;
 
 import javafx.application.Platform;
-import javafx.scene.layout.HBox;
-import org.bitcoinj.base.Address;
-import org.bitcoinj.base.Coin;
-import org.bitcoinj.crypto.AesKey;
-import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.wallet.SendRequest;
-import org.bitcoinj.wallet.Wallet;
-
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.crypto.AesKey;
+import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.walletfx.application.WalletApplication;
+import org.bitcoinj.walletfx.controls.BitcoinAddressValidator;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
-import org.bitcoinj.walletfx.controls.BitcoinAddressValidator;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.bitcoinj.walletfx.utils.WTUtils;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
-import static org.bitcoinj.walletfx.utils.GuiUtils.*;
+import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
+import static org.bitcoinj.walletfx.utils.GuiUtils.crashAlert;
+import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 
 public class SendMoneyController implements OverlayController<SendMoneyController> {
     public Button sendBtn;

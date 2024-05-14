@@ -1,5 +1,4 @@
 import org.gradle.util.GradleVersion
-import org.gradle.api.GradleScriptException
 
 // Minimum Gradle version for build
 def minGradleVersion = GradleVersion.version("4.4")

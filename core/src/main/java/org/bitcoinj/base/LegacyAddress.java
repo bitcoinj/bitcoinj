@@ -18,10 +18,11 @@
 
 package org.bitcoinj.base;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,8 +31,6 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.stream.Stream;
-
-import static org.bitcoinj.base.BitcoinNetwork.*;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
@@ -295,9 +294,9 @@ public class LegacyAddress implements Address {
      * Address header of legacy P2PKH addresses for standard Bitcoin networks.
      */
     public enum AddressHeader {
-        X0(0, MAINNET),
-        X111(111, TESTNET, REGTEST),
-        X6F(0x6f, SIGNET);
+        X0(0, BitcoinNetwork.MAINNET),
+        X111(111, BitcoinNetwork.TESTNET, BitcoinNetwork.REGTEST),
+        X6F(0x6f, BitcoinNetwork.SIGNET);
 
         private final int headerByte;
         private final EnumSet<BitcoinNetwork> networks;
@@ -327,8 +326,8 @@ public class LegacyAddress implements Address {
      * Address header of legacy P2SH addresses for standard Bitcoin networks.
      */
     public enum P2SHHeader {
-        X5(5, MAINNET),
-        X196(196, TESTNET, SIGNET, REGTEST);
+        X5(5, BitcoinNetwork.MAINNET),
+        X196(196, BitcoinNetwork.TESTNET, BitcoinNetwork.SIGNET, BitcoinNetwork.REGTEST);
 
         private final int headerByte;
         private final EnumSet<BitcoinNetwork> networks;

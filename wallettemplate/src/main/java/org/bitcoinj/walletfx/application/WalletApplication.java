@@ -17,6 +17,7 @@
 package org.bitcoinj.walletfx.application;
 
 import com.google.common.util.concurrent.Service;
+import jakarta.annotation.Nullable;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
@@ -34,7 +35,6 @@ import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.walletfx.utils.GuiUtils;
 import wallettemplate.WalletSetPasswordController;
 
-import jakarta.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 
