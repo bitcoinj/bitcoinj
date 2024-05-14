@@ -192,10 +192,7 @@ public class ForwardingService implements Closeable {
         }
 
         Config(BitcoinNetwork network, Address forwardingAddress) {
-            this(network, forwardingAddress, new File("."), getPrefix(network), REQUIRED_CONFIRMATIONS, MAX_CONNECTIONS);
-            if (!network.supportsAddress(forwardingAddress)) {
-                throw new IllegalArgumentException("Incompatible network for address");
-            }
+            this(network, network.checkAddress(forwardingAddress), new File("."), getPrefix(network), REQUIRED_CONFIRMATIONS, MAX_CONNECTIONS);
         }
 
         Config(Address forwardingAddress) {
