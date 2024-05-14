@@ -17,6 +17,27 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Network;
+import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.crypto.SignatureDecodeException;
+import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.signers.LocalTransactionSigner;
+import org.bitcoinj.signers.TransactionSigner.ProposedTransaction;
+import org.bitcoinj.wallet.KeyBag;
+import org.bitcoinj.wallet.RedeemData;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
@@ -24,28 +45,7 @@ import java.security.SecureRandom;
 import java.util.EnumSet;
 import java.util.Objects;
 
-import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Network;
-import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.base.Coin;
-import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.crypto.SignatureDecodeException;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptChunk;
-import org.bitcoinj.script.ScriptException;
-
 import static org.bitcoinj.script.ScriptOpCodes.getOpCodeName;
-import org.bitcoinj.signers.LocalTransactionSigner;
-import org.bitcoinj.signers.TransactionSigner.ProposedTransaction;
-import org.bitcoinj.wallet.KeyBag;
-import org.bitcoinj.wallet.RedeemData;
 
 /**
  * Test case generator for transactions with low-S and high-S signatures, to
