@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-import org.bitcoinj.base.*
-import org.bitcoinj.core.*
+import org.bitcoinj.base.BitcoinNetwork
+import org.bitcoinj.base.Address
+import org.bitcoinj.base.Coin
+import org.bitcoinj.base.AddressParser
+import org.bitcoinj.core.Context
+import org.bitcoinj.core.Transaction
+import org.bitcoinj.core.TransactionBroadcast
+import org.bitcoinj.core.TransactionConfidence
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.CoinSelector
@@ -24,49 +30,38 @@ import org.bitcoinj.wallet.Wallet
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener
 import java.io.Closeable
 import java.io.File
-import java.util.Objects.*
+import java.util.Objects
 import java.util.concurrent.CompletableFuture
 
-data class Config(
-    val network: BitcoinNetwork,              // Network to operate on
-    val forwardingAddress: Address,           // Address to forward to
-    val walletDirectory: File,                // Directory to create wallet files in
-    val walletPrefix: String,                 // Prefix for wallet file names
-    val requiredConfirmations: Int,           // Required number of tx confirmations before forwarding
-    val maxConnections: Int                   // Maximum number of connections
-)
 
+val NETS = BitcoinNetwork.strings().joinToString(separator = "|")
+val USAGE = "Usage: address-to-forward-to $NETS"
 fun main(args: Array<String>) { //pass the network and forwarding address in this order [address, network]
     // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
     BriefLogFormatter.init()
     Context.propagate(Context())
 
-    val addressAndNetwork = parseArgs(args)
-    val network: BitcoinNetwork = addressAndNetwork[1] as BitcoinNetwork
-    val forwardingAddress: Address = addressAndNetwork[0] as Address
+    if (args.isEmpty() || args.size > 2) {
+        System.err.println(USAGE)
+        System.exit(1)
+    }
 
-    val config = Config(network, forwardingAddress, File("."), getPrefix(network), 1, 4)
+    // If only an address is provided, derive network from the address
+    // If address and network provided, use network and validate address against network
+    val forwardingAddress: Address = AddressParser.getDefault().parseAddress(args[0])
+    val config = if (args.size == 1) Config(forwardingAddress) else
+        Config(forwardingAddress, BitcoinNetwork.fromString(args[1]).orElseThrow())
+    println("Network: ${config.network}")
+    println("Forwarding address: ${config.forwardingAddress}")
 
-    println("Network: ${config.network}");
-    println("Forwarding address: ${config.forwardingAddress}");
+    // Create the service, which will listen for transactions and forward coins until closed
+    ForwardingService(config).use { forwardingService ->
+        // After we start listening, we can tell the user the receiving address
+        println(forwardingService.status())
+        println("Press Ctrl-C to quit.")
 
-    // Create and start the WalletKit
-    val walletAppKit: WalletAppKit =
-        WalletAppKit.launch(network, config.walletDirectory, getPrefix(network), config.maxConnections)
-    val forwardingService = ForwardingService(config, walletAppKit.wallet())
-
-    walletAppKit.use { walletAppKit ->
-        forwardingService.use { forwardingService ->
-            // After we start listening, we can tell the user the receiving address
-            println("Waiting to receive coins on: ${walletAppKit.wallet().currentReceiveAddress()}")
-            println("Press Ctrl-C to quit.")
-
-            // Wait for Control-C
-            try {
-                Thread.sleep(Long.MAX_VALUE)
-            } catch (ignored: InterruptedException) {
-            }
-        }
+        // Wait for Control-C
+        Thread.sleep(Long.MAX_VALUE)
     }
 }
 
@@ -74,13 +69,18 @@ fun main(args: Array<String>) { //pass the network and forwarding address in thi
  * ForwardingService demonstrates basic usage of bitcoinj. It creates an SPV Wallet, listens on the network
  * and when it receives coins, simply sends them onwards to the address given on the command line.
  */
-class ForwardingService(val config: Config, val wallet: Wallet) : Closeable {
+class ForwardingService(val config: Config) : Closeable {
+    val walletAppKit: WalletAppKit
+    val wallet: Wallet
 
     /**
      * Start the wallet and register the coin-forwarding listener.
      */
     init {
-        wallet.addCoinsReceivedEventListener(this::coinForwardingListener);
+        walletAppKit =
+            WalletAppKit.launch(config.network, config.walletDirectory, config.walletPrefix, config.maxConnections)
+        wallet = walletAppKit.wallet()
+        wallet.addCoinsReceivedEventListener(this::coinForwardingListener)
     }
 
     /**
@@ -102,9 +102,20 @@ class ForwardingService(val config: Config, val wallet: Wallet) : Closeable {
             .thenCompose { confidence: TransactionConfidence ->
                 // Required confirmations received, now create and send forwarding transaction
                 println("Incoming tx has received ${confidence.depthInBlocks} confirmations.\n")
-                forward(wallet, incomingTx, config.forwardingAddress)
+                // Send coins received in incomingTx onwards by sending exactly the UTXOs we have just received.
+                // We're not truly emptying the wallet because we're limiting the available outputs with a CoinSelector.
+                println("Creating outgoing transaction for ${config.forwardingAddress}...\n");
+                val sendRequest = SendRequest.emptyWallet(config.forwardingAddress)
+                // Use a CoinSelector that only returns wallet UTXOs from the incoming transaction.
+                sendRequest.coinSelector = CoinSelector.fromPredicate { output ->
+                    Objects.equals(
+                        output.parentTransactionHash,
+                        incomingTx.txId
+                    )
+                }
+                send(wallet, sendRequest)
             }
-            .whenComplete { broadcast: TransactionBroadcast?, throwable: Throwable ->
+            .whenComplete { broadcast: TransactionBroadcast?, throwable: Throwable? ->
                 if (broadcast != null) {
                     println("Sent ${broadcast.transaction().outputSum.toFriendlyString()} onwards and acknowledged by peers, via transaction ${broadcast.transaction().txId}\n")
                 } else {
@@ -114,42 +125,28 @@ class ForwardingService(val config: Config, val wallet: Wallet) : Closeable {
     }
 
     /**
-     * Forward an incoming transaction by creating a new transaction, signing, and sending to the specified address.
+     * Create a transaction specified by a {@link org.bitcoinj.examples.SendRequest}, sign it, and send to the specified address.
      * @param wallet The active wallet
-     * @param incomingTx the received transaction
-     * @param forwardingAddress the address to send to
+     * @param sendRequest requested transaction parameters
      * @return A future for a TransactionBroadcast object that completes when relay is acknowledged by peers
      */
-    fun forward(
-        wallet: Wallet,
-        incomingTx: Transaction,
-        forwardingAddress: Address?
-    ): CompletableFuture<TransactionBroadcast?> {
-        // Send coins received in incomingTx onwards by sending exactly the outputs that have been sent to us
-        val sendRequest = SendRequest.emptyWallet(forwardingAddress)
-        sendRequest.coinSelector = forwardingCoinSelector(incomingTx.txId)
-        println("Creating outgoing transaction for $forwardingAddress...\n")
+    open fun send(wallet: Wallet, sendRequest: SendRequest?): CompletableFuture<TransactionBroadcast?>? {
         return wallet.sendTransaction(sendRequest)
             .thenCompose { broadcast: TransactionBroadcast ->
                 println("Transaction ${broadcast.transaction().txId} is signed and is being delivered to ${wallet.network()}...\n")
                 broadcast.awaitRelayed() // Wait until peers report they have seen the transaction
             }
+            .whenComplete { broadcast: TransactionBroadcast?, throwable: Throwable? ->
+                if (broadcast != null) {
+                    println("Sent ${broadcast.transaction().outputSum.toFriendlyString()} onwards and acknowledged by peers, via transaction ${broadcast.transaction().txId}\n")
+                } else {
+                    println("Exception occurred: $throwable")
+                }
+            }
     }
 
-    /**
-     * Create a CoinSelector that only returns outputs from a given parent transaction.
-     *
-     *
-     * This is using the idea of partial function application to create a 2-argument function for coin selection
-     * with a third, fixed argument of the transaction id.
-     * @param parentTxId The parent transaction hash
-     * @return a coin selector
-     */
-    fun forwardingCoinSelector(parentTxId: Sha256Hash): CoinSelector {
-        requireNonNull(parentTxId)
-        return CoinSelector.fromPredicate { output: TransactionOutput ->
-            output.parentTransactionHash == parentTxId
-        }
+    fun status(): String? {
+        return String.format("Waiting to receive coins on: %s", wallet.currentReceiveAddress())
     }
 
     /**
@@ -157,29 +154,32 @@ class ForwardingService(val config: Config, val wallet: Wallet) : Closeable {
      */
     override fun close() {
         wallet.removeCoinsReceivedEventListener(::coinForwardingListener)
+        walletAppKit.close()
     }
 }
 
-fun getPrefix(network: BitcoinNetwork?): String {
-    return String.format("forwarding-service-%s", network.toString())
-}
+data class Config(
+    val forwardingAddress: Address,                                              // Address to forward to
+    val network: BitcoinNetwork,                                                 // Network to operate on
+    val walletDirectory: File,                                                   // Directory to create wallet files in
+    val walletPrefix: String = getPrefix(network),                               // Prefix for wallet file names
+    val requiredConfirmations: Int = 1,                                          // Required number of tx confirmations before forwarding
+    val maxConnections: Int = 4                                                  // Maximum number of connections
+) {
+    constructor(forwardingAddress: Address) : this(
+        forwardingAddress,
+        forwardingAddress.network() as BitcoinNetwork
+    )
 
-fun parseArgs(args: Array<String>): Array<Any> {
-    val USAGE = "Usage: address-to-forward-to [mainnet|testnet|signet|regtest]"
-    if (args.size < 1 || args.size > 2) {
-        System.err.println(USAGE)
-        System.exit(1)
+    constructor(forwardingAddress: Address, network: BitcoinNetwork) : this(
+        network.checkAddress(forwardingAddress),
+        network,
+        File(".")
+    )
+
+    companion object {
+        fun getPrefix(network: BitcoinNetwork): String {
+            return String.format("forwarding-service-%s", network.toString())
+        }
     }
-    val network: BitcoinNetwork
-    val forwardingAddress: Address
-    if (args.size >= 2) {
-        // If network was specified, validate address against network
-        network = BitcoinNetwork.fromString(args[1]).orElseThrow()
-        forwardingAddress = AddressParser.getDefault(network).parseAddress(args[0])
-    } else {
-        // Else network not-specified, extract network from address
-        forwardingAddress = AddressParser.getDefault().parseAddress(args[0])
-        network = forwardingAddress.network() as BitcoinNetwork
-    }
-    return arrayOf(forwardingAddress, network)
 }
