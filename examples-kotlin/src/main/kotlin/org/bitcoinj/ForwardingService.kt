@@ -91,6 +91,7 @@ class ForwardingService(val config: Config) : Closeable {
      * @param prevBalance wallet balance before this transaction (unused)
      * @param newBalance wallet balance after this transaction (unused)
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun coinForwardingListener(wallet: Wallet, incomingTx: Transaction, prevBalance: Coin, newBalance: Coin) {
         // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
         // The transaction "incomingTx" can either be pending, or included into a block (we didn't see the broadcast).
@@ -130,7 +131,7 @@ class ForwardingService(val config: Config) : Closeable {
      * @param sendRequest requested transaction parameters
      * @return A future for a TransactionBroadcast object that completes when relay is acknowledged by peers
      */
-    open fun send(wallet: Wallet, sendRequest: SendRequest?): CompletableFuture<TransactionBroadcast?>? {
+    fun send(wallet: Wallet, sendRequest: SendRequest?): CompletableFuture<TransactionBroadcast?>? {
         return wallet.sendTransaction(sendRequest)
             .thenCompose { broadcast: TransactionBroadcast ->
                 println("Transaction ${broadcast.transaction().txId} is signed and is being delivered to ${wallet.network()}...\n")
