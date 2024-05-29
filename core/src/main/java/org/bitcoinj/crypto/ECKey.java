@@ -91,7 +91,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  *
  * <p>ECKey also provides access to Bitcoin Core compatible text message signing, as accessible via the UI or JSON-RPC.
  * This is slightly different to signing raw bytes - if you want to sign your own data and it won't be exposed as
- * text to people, you don't want to use this. If in doubt, ask on the mailing list.</p>
+ * text to people, you don't want to use this.</p>
  *
  * <p>The ECDSA algorithm supports <i>key recovery</i> in which a signature plus a couple of discriminator bits can
  * be reversed to find the public key used to calculate it. This can be convenient when you have a message and a
