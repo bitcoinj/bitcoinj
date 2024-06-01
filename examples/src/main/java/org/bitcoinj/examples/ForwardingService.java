@@ -51,6 +51,8 @@ public class ForwardingService implements Closeable {
     private final BitcoinNetwork network;
     private final Address forwardingAddress;
     private volatile WalletAppKit kit;
+    /* We need to save the listener object (created by a method reference) so we can remove it later */
+    private final WalletCoinsReceivedEventListener coinsReceivedListener = this::coinForwardingListener;
 
     /**
      * Run the forwarding service as a command line tool
@@ -102,7 +104,7 @@ public class ForwardingService implements Closeable {
         kit = WalletAppKit.launch(network, new File("."), getPrefix(network), MAX_CONNECTIONS);
 
         // Add a listener that forwards received coins
-        kit.wallet().addCoinsReceivedEventListener(this::coinForwardingListener);
+        kit.wallet().addCoinsReceivedEventListener(coinsReceivedListener);
 
         // After we start listening, we can tell the user the receiving address
         System.out.printf("Waiting to receive coins on: %s\n", kit.wallet().currentReceiveAddress());
@@ -120,7 +122,7 @@ public class ForwardingService implements Closeable {
     public void close() {
         if (kit != null) {
             if (kit.isRunning()) {
-                kit.wallet().removeCoinsReceivedEventListener(this::coinForwardingListener);
+                kit.wallet().removeCoinsReceivedEventListener(coinsReceivedListener);
             }
             kit.close();
         }
