@@ -12,7 +12,6 @@ buildscript {
     }
     dependencies {
         classpath "com.google.protobuf:protobuf-gradle-plugin:${gradleProtobufVersion}"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23"
     }
 }
 
