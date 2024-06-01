@@ -1,8 +1,9 @@
-apply plugin: 'kotlin'
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "2.0.0"
+}
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.23'
 }
 compileKotlin {
     kotlinOptions {
