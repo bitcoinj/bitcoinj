@@ -889,8 +889,8 @@ public class Transaction extends BaseMessage {
      * Creates and adds an input to this transaction, with no checking that it's valid.
      * @return the newly created input.
      */
-    public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
-        return addInput(new TransactionInput(this, script.program(), new TransactionOutPoint(outputIndex, spendTxHash)));
+    public TransactionInput addInput(TransactionInputParameters params) {
+        return addInput(new TransactionInput(this, params.getScript().program(), new TransactionOutPoint(params.getOutputIndex(), params.getSpendTxHash())));
     }
 
     /**
@@ -899,44 +899,40 @@ public class Transaction extends BaseMessage {
      * to understand the values of sigHash and anyoneCanPay: otherwise you can use the other form of this method
      * that sets them to typical defaults.
      *
-     * @param prevOut A reference to the output being spent
-     * @param scriptPubKey The scriptPubKey of the output
-     * @param amount The amount of the output (which is part of the signature hash for segwit)
-     * @param sigKey The signing key
-     * @param sigHash enum specifying how the transaction hash is calculated
-     * @param anyoneCanPay anyone-can-pay hashing
+     * @param params Input parameters containing a reference to the output being spent, the scriptPubKey of the output,
+     *               the amount of the output (which is part of the signature hash for segwit), the signing key,
+     *               and flags for how the transaction hash is calculated and anyone-can-pay hashing
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey,
-                                           SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
+    public TransactionInput addSignedInput(SignedInputParameters params) throws ScriptException {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), () ->
                 "attempting to sign tx without outputs");
-        if (amount == null || amount.value <= 0) {
+        if (params.getAmount() == null || params.getAmount().value <= 0) {
             log.warn("Illegal amount value. Amount is required for SegWit transactions.");
         }
-        TransactionInput input = new TransactionInput(this, new byte[] {}, prevOut, amount);
+        TransactionInput input = new TransactionInput(this, new byte[] {}, params.getPrevOut(), params.getAmount());
         addInput(input);
         int inputIndex = inputs.size() - 1;
-        if (ScriptPattern.isP2PK(scriptPubKey)) {
-            TransactionSignature signature = calculateSignature(inputIndex, sigKey, scriptPubKey, sigHash,
-                    anyoneCanPay);
+        if (ScriptPattern.isP2PK(params.getScript())) {
+            TransactionSignature signature = calculateSignature(inputIndex, params.getSigKey(), params.getScript(), params.getSigHash(),
+                    params.isAnyoneCanPay());
             input.setScriptSig(ScriptBuilder.createInputScript(signature));
             input.setWitness(null);
-        } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
-            TransactionSignature signature = calculateSignature(inputIndex, sigKey, scriptPubKey, sigHash,
-                    anyoneCanPay);
-            input.setScriptSig(ScriptBuilder.createInputScript(signature, sigKey));
+        } else if (ScriptPattern.isP2PKH(params.getScript())) {
+            TransactionSignature signature = calculateSignature(inputIndex, params.getSigKey(), params.getScript(), params.getSigHash(),
+                    params.isAnyoneCanPay());
+            input.setScriptSig(ScriptBuilder.createInputScript(signature, params.getSigKey()));
             input.setWitness(null);
-        } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
-            Script scriptCode = ScriptBuilder.createP2PKHOutputScript(sigKey);
-            TransactionSignature signature = calculateWitnessSignature(inputIndex, sigKey, scriptCode, input.getValue(),
-                    sigHash, anyoneCanPay);
+        } else if (ScriptPattern.isP2WPKH(params.getScript())) {
+            Script scriptCode = ScriptBuilder.createP2PKHOutputScript(params.getSigKey());
+            TransactionSignature signature = calculateWitnessSignature(inputIndex, params.getSigKey(), scriptCode, input.getValue(),
+                    params.getSigHash(), params.isAnyoneCanPay());
             input.setScriptSig(ScriptBuilder.createEmpty());
-            input.setWitness(TransactionWitness.redeemP2WPKH(signature, sigKey));
+            input.setWitness(TransactionWitness.redeemP2WPKH(signature, params.getSigKey()));
         } else {
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Don't know how to sign for this kind of scriptPubKey: " + params.getScript());
         }
         return input;
     }
@@ -949,12 +945,13 @@ public class Transaction extends BaseMessage {
      * @param anyoneCanPay anyone-can-pay hashing
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)}
+     * @deprecated Use {@link Transaction#addSignedInput(SignedInputParameters)}
      */
     @Deprecated
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, null, sigKey, sigHash, anyoneCanPay);
+        SignedInputParameters params = new SignedInputParameters(prevOut, scriptPubKey, null, sigKey, sigHash, anyoneCanPay);
+        return addSignedInput(params);
     }
 
     /**
@@ -969,7 +966,8 @@ public class Transaction extends BaseMessage {
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, amount, sigKey, SigHash.ALL, false);
+        SignedInputParameters params = new SignedInputParameters(prevOut, scriptPubKey, amount, sigKey, SigHash.ALL, false);
+        return addSignedInput(params);
     }
 
     /**
@@ -978,11 +976,12 @@ public class Transaction extends BaseMessage {
      * @param sigKey The signing key
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey)}
+     * @deprecated Use {@link Transaction#addSignedInput(SignedInputParameters)}
      */
     @Deprecated
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, null, sigKey);
+        SignedInputParameters params = new SignedInputParameters(prevOut, scriptPubKey, null, sigKey, null, false);
+        return addSignedInput(params);
     }
 
     /**
@@ -999,7 +998,7 @@ public class Transaction extends BaseMessage {
     /**
      * Adds an input that points to the given output and contains a valid signature for it, calculated using the
      * signing key.
-     * @see Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)
+     * @see Transaction#addSignedInput(SignedInputParameters)
      * @param output output to sign and use as input
      * @param sigKey The signing key
      * @param sigHash enum specifying how the transaction hash is calculated
@@ -1010,7 +1009,8 @@ public class Transaction extends BaseMessage {
         Objects.requireNonNull(output.getValue(), "TransactionOutput.getValue() must not be null");
         checkState(output.getValue().value > 0, () ->
                 "transactionOutput.getValue() must not be greater than zero");
-        return addSignedInput(output.getOutPointFor(), output.getScriptPubKey(), output.getValue(), sigKey, sigHash, anyoneCanPay);
+        SignedInputParameters params = new SignedInputParameters(output.getOutPointFor(), output.getScriptPubKey(), output.getValue(), sigKey, sigHash, anyoneCanPay);
+        return addSignedInput(params);
     }
 
     /**

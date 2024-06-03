@@ -133,7 +133,9 @@ public class TransactionTest {
     @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
     public void coinbaseInputInNonCoinbaseTX() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
-        tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
+        TransactionInputParameters txParams = new TransactionInputParameters(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
+                new ScriptBuilder().build());
+        tx.addInput(txParams);
         Transaction.verify(TESTNET.network(), tx);
     }
 
@@ -141,7 +143,9 @@ public class TransactionTest {
     public void coinbaseScriptSigTooSmall() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.clearInputs();
-        tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
+        TransactionInputParameters txParams = new TransactionInputParameters(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
+                new ScriptBuilder().build());
+        tx.addInput(txParams);
         Transaction.verify(TESTNET.network(), tx);
     }
 
@@ -149,7 +153,9 @@ public class TransactionTest {
     public void coinbaseScriptSigTooLarge() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         tx.clearInputs();
-        TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[99]).build());
+        TransactionInputParameters txParams = new TransactionInputParameters(Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
+                new ScriptBuilder().data(new byte[99]).build());
+        TransactionInput input = tx.addInput(txParams);
         assertEquals(101, input.getScriptBytes().length);
         Transaction.verify(TESTNET.network(), tx);
     }

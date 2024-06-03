@@ -1253,7 +1253,8 @@ public class FullBlockTestGenerator {
             b65.addTransaction(tx1);
             Transaction tx2 = new Transaction();
             tx2.addOutput(ZERO, OP_TRUE_SCRIPT);
-            tx2.addInput(tx1.getTxId(), 0, OP_TRUE_SCRIPT);
+            TransactionInputParameters txParams=new TransactionInputParameters(tx1.getTxId(), 0, OP_NOP_SCRIPT);
+            tx2.addInput(txParams);
             b65.addTransaction(tx2);
         }
         b65.solve();
@@ -1273,7 +1274,8 @@ public class FullBlockTestGenerator {
             addOnlyInputToTransaction(tx1, out20, 0);
             Transaction tx2 = new Transaction();
             tx2.addOutput(ZERO, OP_TRUE_SCRIPT);
-            tx2.addInput(tx1.getTxId(), 0, OP_NOP_SCRIPT);
+            TransactionInputParameters txParams=new TransactionInputParameters(tx1.getTxId(), 0, OP_NOP_SCRIPT);
+            tx2.addInput(txParams);
             b66.addTransaction(tx2);
             b66.addTransaction(tx1);
         }
@@ -1292,11 +1294,13 @@ public class FullBlockTestGenerator {
             b67.addTransaction(tx1);
             Transaction tx2 = new Transaction();
             tx2.addOutput(ZERO, OP_TRUE_SCRIPT);
-            tx2.addInput(tx1.getTxId(), 0, OP_NOP_SCRIPT);
+            TransactionInputParameters txParams=new TransactionInputParameters(tx1.getTxId(), 0, OP_NOP_SCRIPT);
+            tx2.addInput(txParams);
             b67.addTransaction(tx2);
             Transaction tx3 = new Transaction();
             tx3.addOutput(out20.value, OP_TRUE_SCRIPT);
-            tx3.addInput(tx1.getTxId(), 0, OP_NOP_SCRIPT);
+            txParams=new TransactionInputParameters(tx1.getTxId(), 0, OP_NOP_SCRIPT);
+            tx3.addInput(txParams);
             b67.addTransaction(tx3);
         }
         b67.solve();
@@ -1336,8 +1340,11 @@ public class FullBlockTestGenerator {
         {
             Transaction tx = new Transaction();
             tx.addOutput(ZERO, OP_TRUE_SCRIPT);
-            tx.addInput(Sha256Hash.wrap("23c70ed7c0506e9178fc1a987f40a33946d4ad4c962b5ae3a52546da53af0c5c"), 0,
+            TransactionInputParameters txParams=new TransactionInputParameters(
+                Sha256Hash.wrap("23c70ed7c0506e9178fc1a987f40a33946d4ad4c962b5ae3a52546da53af0c5c"), 0,
                     OP_NOP_SCRIPT);
+            
+            tx.addInput(txParams);
             b70.addTransaction(tx);
         }
         b70.solve();
@@ -1484,7 +1491,8 @@ public class FullBlockTestGenerator {
 
         {
             b79tx.addOutput(ZERO, OP_TRUE_SCRIPT);
-            b79tx.addInput(b78tx.getTxId(), 0, OP_NOP_SCRIPT);
+            TransactionInput input = new TransactionInput(b79tx, new byte[]{}, new TransactionOutPoint(0, b78tx.getTxId()));
+            b79tx.addInput(input);
             b79.addTransaction(b79tx);
         }
         b79.solve();
@@ -1684,7 +1692,8 @@ public class FullBlockTestGenerator {
                 NewBlock block = createNextBlock(lastBlock, nextHeight++, null, null);
                 while (block.block.messageSize() < Block.MAX_BLOCK_SIZE - 500) {
                     Transaction tx = new Transaction();
-                    tx.addInput(lastOutput.hash(), lastOutput.index(), OP_NOP_SCRIPT);
+                    TransactionInputParameters txParams = new TransactionInputParameters(lastOutput.hash(), lastOutput.index(), OP_NOP_SCRIPT);
+                    tx.addInput(txParams);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                     lastOutput = new TransactionOutPoint(1, tx.getTxId());
@@ -1702,7 +1711,8 @@ public class FullBlockTestGenerator {
                 NewBlock block = createNextBlock(lastBlock, nextHeight++, null, null);
                 while (block.block.messageSize() < Block.MAX_BLOCK_SIZE - 500 && hashes.hasNext()) {
                     Transaction tx = new Transaction();
-                    tx.addInput(hashes.next(), 0, OP_NOP_SCRIPT);
+                    TransactionInputParameters txParams = new TransactionInputParameters(hashes.next(), 0, OP_NOP_SCRIPT);
+                    tx.addInput(txParams);
                     tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                     block.addTransaction(tx);
                 }
@@ -1728,7 +1738,8 @@ public class FullBlockTestGenerator {
             NewBlock b1002 = createNextBlock(lastBlock, nextHeight, null, null);
             {
                 Transaction tx = new Transaction();
-                tx.addInput(hashesToSpend.get(0), 0, OP_NOP_SCRIPT);
+                TransactionInputParameters txParams = new TransactionInputParameters(hashesToSpend.get(0), 0, OP_NOP_SCRIPT);
+                tx.addInput(txParams);
                 tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                 b1002.addTransaction(tx);
             }
@@ -1743,7 +1754,8 @@ public class FullBlockTestGenerator {
             NewBlock b1004 = createNextBlock(b1003, nextHeight + 1, null, null);
             {
                 Transaction tx = new Transaction();
-                tx.addInput(hashesToSpend.get(0), 0, OP_NOP_SCRIPT);
+                TransactionInputParameters txParams = new TransactionInputParameters(hashesToSpend.get(0), 0, OP_NOP_SCRIPT);
+                tx.addInput(txParams);
                 tx.addOutput(ZERO, OP_TRUE_SCRIPT);
                 b1004.addTransaction(tx);
             }
