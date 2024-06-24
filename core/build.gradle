@@ -15,7 +15,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation 'net.jcip:jcip-annotations:1.0'
     compileOnly 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
-    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.easymock:easymock:3.2'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.5.2'
     testImplementation 'org.slf4j:slf4j-jdk14:1.7.36'
