@@ -79,7 +79,9 @@ class DefaultAddressParserProvider implements AddressParser.AddressParserProvide
      * Dynamically create a new AddressParser using a snapshot of currently configured networks
      * from Networks.get().
      * @return A backward-compatible parser
+     * @deprecated This is only used by deprecated methods in {@link AddressParser}
      */
+    @Deprecated
     static DefaultAddressParserProvider fromNetworks() {
         List<Network> nets = Networks.get().stream()
                 .map(NetworkParameters::network)
