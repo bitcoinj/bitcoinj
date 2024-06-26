@@ -40,10 +40,18 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 public class StoredBlock {
 
     // A BigInteger representing the total amount of work done so far on this chain. As of June 22, 2024, it takes 12
-    // unsigned bytes to store this value, so we need to create an updated storage format soon.
-    private static final int CHAIN_WORK_BYTES = 12;
-    private static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES];
-    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES + 4;  // for height
+    // unsigned bytes to store this value, so developers should use the V2 format.
+    private static final int CHAIN_WORK_BYTES_V1 = 12;
+    // A BigInteger representing the total amount of work done so far on this chain.
+    private static final int CHAIN_WORK_BYTES_V2 = 32;
+    // Height is an int.
+    private static final int HEIGHT_BYTES = 4;
+    // Used for padding.
+    private static final byte[] EMPTY_BYTES = new byte[CHAIN_WORK_BYTES_V2]; // fit larger format
+    /** Number of bytes serialized by {@link #serializeCompact(ByteBuffer)} */
+    public static final int COMPACT_SERIALIZED_SIZE = Block.HEADER_SIZE + CHAIN_WORK_BYTES_V1 + HEIGHT_BYTES;
+    /** Number of bytes serialized by {@link #serializeCompactV2(ByteBuffer)} */
+    public static final int COMPACT_SERIALIZED_SIZE_V2 = Block.HEADER_SIZE + CHAIN_WORK_BYTES_V2 + HEIGHT_BYTES;
 
     private final Block header;
     private final BigInteger chainWork;
@@ -126,14 +134,35 @@ public class StoredBlock {
 
     /**
      * Serializes the stored block to a custom packed format. Used internally.
+     * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
+     * so developers should use the V2 format.
+     *
+     * @param buffer buffer to write to
+     * @deprecated use {@link #serializeCompactV2(ByteBuffer)}
+     */
+    @Deprecated
+    public void serializeCompact(ByteBuffer buffer) {
+        byte[] chainWorkBytes = ByteUtils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES_V1);
+        if (chainWorkBytes.length < CHAIN_WORK_BYTES_V1) {
+            // Pad to the right size.
+            buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES_V1 - chainWorkBytes.length);
+        }
+        buffer.put(chainWorkBytes);
+        buffer.putInt(getHeight());
+        byte[] bytes = getHeader().serialize();
+        buffer.put(bytes, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
+    }
+
+    /**
+     * Serializes the stored block to a custom packed format. Used internally.
      *
      * @param buffer buffer to write to
      */
-    public void serializeCompact(ByteBuffer buffer) {
-        byte[] chainWorkBytes = ByteUtils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES);
-        if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
+    public void serializeCompactV2(ByteBuffer buffer) {
+        byte[] chainWorkBytes = ByteUtils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES_V2);
+        if (chainWorkBytes.length < CHAIN_WORK_BYTES_V2) {
             // Pad to the right size.
-            buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES - chainWorkBytes.length);
+            buffer.put(EMPTY_BYTES, 0, CHAIN_WORK_BYTES_V2 - chainWorkBytes.length);
         }
         buffer.put(chainWorkBytes);
         buffer.putInt(getHeight());
@@ -143,12 +172,32 @@ public class StoredBlock {
 
     /**
      * Deserializes the stored block from a custom packed format. Used internally.
+     * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
+     * so developers should use the V2 format.
+     *
+     * @param buffer data to deserialize
+     * @return deserialized stored block
+     * @deprecated use {@link #deserializeCompactV2(ByteBuffer)}
+     */
+    @Deprecated
+    public static StoredBlock deserializeCompact(ByteBuffer buffer) throws ProtocolException {
+        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V1];
+        buffer.get(chainWorkBytes);
+        BigInteger chainWork = ByteUtils.bytesToBigInteger(chainWorkBytes);
+        int height = buffer.getInt();  // +4 bytes
+        byte[] header = new byte[Block.HEADER_SIZE + 1];    // Extra byte for the 00 transactions length.
+        buffer.get(header, 0, Block.HEADER_SIZE);
+        return new StoredBlock(Block.read(ByteBuffer.wrap(header)), chainWork, height);
+    }
+
+    /**
+     * Deserializes the stored block from a custom packed format. Used internally.
      *
      * @param buffer data to deserialize
      * @return deserialized stored block
      */
-    public static StoredBlock deserializeCompact(ByteBuffer buffer) throws ProtocolException {
-        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES];
+    public static StoredBlock deserializeCompactV2(ByteBuffer buffer) throws ProtocolException {
+        byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V2];
         buffer.get(chainWorkBytes);
         BigInteger chainWork = ByteUtils.bytesToBigInteger(chainWorkBytes);
         int height = buffer.getInt();  // +4 bytes

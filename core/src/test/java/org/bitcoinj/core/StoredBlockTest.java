@@ -33,9 +33,15 @@ import static org.junit.Assert.assertTrue;
 public class StoredBlockTest {
 
     // Max chain work to fit in 12 bytes
-    private static final BigInteger MAX_WORK = new BigInteger(/* 12 bytes */ "ffffffffffffffffffffffff", 16);
+    private static final BigInteger MAX_WORK_V1 = new BigInteger(/* 12 bytes */ "ffffffffffffffffffffffff", 16);
     // Chain work too large to fit in 12 bytes
-    private static final BigInteger TOO_LARGE_WORK = new BigInteger(/* 13 bytes */ "ffffffffffffffffffffffffff", 16);
+    private static final BigInteger TOO_LARGE_WORK_V1 = new BigInteger(/* 13 bytes */ "ffffffffffffffffffffffffff", 16);
+    // Max chain work to fit in 32 bytes
+    private static final BigInteger MAX_WORK_V2 = new BigInteger(/* 32 bytes */
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+    // Chain work too large to fit in 32 bytes
+    private static final BigInteger TOO_LARGE_WORK_V2 = new BigInteger(/* 33 bytes */
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
     // Just an arbitrary block
     private static final Block BLOCK = Block.createGenesis(Instant.now(), Block.EASIEST_DIFFICULTY_TARGET);
 
@@ -44,7 +50,7 @@ public class StoredBlockTest {
                 new Object[] { BigInteger.ZERO }, // no work
                 new Object[] { BigInteger.ONE }, // small work
                 new Object[] { BigInteger.valueOf(Long.MAX_VALUE) }, // a larg-ish work
-                new Object[] { MAX_WORK },
+                new Object[] { MAX_WORK_V1 },
         };
     }
 
@@ -56,7 +62,9 @@ public class StoredBlockTest {
 
     private Object[] vectors_serializeCompact_fail() {
         return new Object[] {
-                new Object[] { TOO_LARGE_WORK },
+                new Object[] { TOO_LARGE_WORK_V1 },
+                new Object[] { MAX_WORK_V2 },
+                new Object[] { TOO_LARGE_WORK_V2 },
                 new Object[] { BigInteger.valueOf(-1) }, // negative
         };
     }
@@ -76,14 +84,55 @@ public class StoredBlockTest {
         assertEquals(StoredBlock.deserializeCompact(buf), block);
     }
 
+    private Object[] vectors_serializeCompactV2_pass() {
+        return new Object[] {
+                new Object[] { BigInteger.ZERO }, // no work
+                new Object[] { BigInteger.ONE }, // small work
+                new Object[] { BigInteger.valueOf(Long.MAX_VALUE) }, // a larg-ish work
+                new Object[] { MAX_WORK_V1 },
+                new Object[] { TOO_LARGE_WORK_V1 },
+                new Object[] { MAX_WORK_V2 },
+        };
+    }
+
+    @Test
+    @Parameters(method = "vectors_serializeCompactV2_pass")
+    public void roundtripSerializeCompactV2_pass(BigInteger chainWork) {
+        roundtripSerializeCompactV2(chainWork);
+    }
+
+    private Object[] vectors_serializeCompactV2_fail() {
+        return new Object[] {
+                new Object[] { TOO_LARGE_WORK_V2 },
+                new Object[] { BigInteger.valueOf(-1) }, // negative
+        };
+    }
+
+    @Test(expected = RuntimeException.class)
+    @Parameters(method = "vectors_serializeCompactV2_fail")
+    public void roundtripSerializeCompactV2_fail(BigInteger chainWork) {
+        roundtripSerializeCompactV2(chainWork);
+    }
+
+    private void roundtripSerializeCompactV2(BigInteger chainWork) {
+        StoredBlock block = new StoredBlock(BLOCK, chainWork, 0);
+        ByteBuffer buf = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
+        block.serializeCompactV2(buf);
+        assertEquals(StoredBlock.COMPACT_SERIALIZED_SIZE_V2, buf.position());
+        ((Buffer) buf).rewind();
+        assertEquals(StoredBlock.deserializeCompactV2(buf), block);
+    }
+
     @Test
     public void moreWorkThan() {
         StoredBlock noWorkBlock = new StoredBlock(BLOCK, BigInteger.ZERO, 0);
         StoredBlock smallWorkBlock = new StoredBlock(BLOCK, BigInteger.ONE, 0);
-        StoredBlock maxWorkBlock = new StoredBlock(BLOCK, MAX_WORK, 0);
+        StoredBlock maxWorkBlockV1 = new StoredBlock(BLOCK, MAX_WORK_V1, 0);
+        StoredBlock maxWorkBlockV2 = new StoredBlock(BLOCK, MAX_WORK_V2, 0);
 
         assertTrue(smallWorkBlock.moreWorkThan(noWorkBlock));
-        assertTrue(maxWorkBlock.moreWorkThan(noWorkBlock));
-        assertTrue(maxWorkBlock.moreWorkThan(smallWorkBlock));
+        assertTrue(maxWorkBlockV1.moreWorkThan(noWorkBlock));
+        assertTrue(maxWorkBlockV1.moreWorkThan(smallWorkBlock));
+        assertTrue(maxWorkBlockV2.moreWorkThan(maxWorkBlockV1));
     }
 }
