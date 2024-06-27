@@ -66,19 +66,18 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * different concept of checkpoints that are used to hard-code the validity of blocks that violate BIP30 (duplicate
  * coinbase transactions). Those "checkpoints" can be found in NetworkParameters.</p>
  *
- * <p>The file format consists of the string "CHECKPOINTS 1", followed by a uint32 containing the number of signatures
- * to read. The value may not be larger than 256 (so it could have been a byte but isn't for historical reasons).
+ * <p>Checkpoints are read from a text file, one value per line.
+ * It consists of the magic string "TXT CHECKPOINTS 1", followed by the number of signatures
+ * to read. The value may not be larger than 256.
  * If the number of signatures is larger than zero, each 65 byte ECDSA secp256k1 signature then follows. The signatures
  * sign the hash of all bytes that follow the last signature.</p>
  *
- * <p>After the signatures come an int32 containing the number of checkpoints in the file. Then each checkpoint follows
- * one after the other. A checkpoint is 12 bytes for the total work done field, 4 bytes for the height, 80 bytes
- * for the block header and then 1 zero byte at the end (i.e. number of transactions in the block: always zero).</p>
+ * <p>After the signatures come the number of checkpoints in the file. Then each checkpoint follows one per line in
+ * compact format (as written by {@link StoredBlock#serializeCompact(ByteBuffer)}) as a base64-encoded blob.</p>
  */
 public class CheckpointManager {
     private static final Logger log = LoggerFactory.getLogger(CheckpointManager.class);
 
-    private static final String BINARY_MAGIC = "CHECKPOINTS 1";
     private static final String TEXTUAL_MAGIC = "TXT CHECKPOINTS 1";
     private static final int MAX_SIGNATURES = 256;
 
@@ -105,9 +104,7 @@ public class CheckpointManager {
         inputStream.mark(1);
         int first = inputStream.read();
         inputStream.reset();
-        if (first == BINARY_MAGIC.charAt(0))
-            dataHash = readBinary(inputStream);
-        else if (first == TEXTUAL_MAGIC.charAt(0))
+        if (first == TEXTUAL_MAGIC.charAt(0))
             dataHash = readTextual(inputStream);
         else
             throw new IOException("Unsupported format.");
@@ -116,49 +113,6 @@ public class CheckpointManager {
     /** Returns a checkpoints stream pointing to inside the bitcoinj JAR */
     public static InputStream openStream(NetworkParameters params) {
         return CheckpointManager.class.getResourceAsStream("/" + params.getId() + ".checkpoints.txt");
-    }
-
-    private Sha256Hash readBinary(InputStream inputStream) throws IOException {
-        DataInputStream dis = null;
-        try {
-            MessageDigest digest = Sha256Hash.newDigest();
-            DigestInputStream digestInputStream = new DigestInputStream(inputStream, digest);
-            dis = new DataInputStream(digestInputStream);
-            digestInputStream.on(false);
-            byte[] header = new byte[BINARY_MAGIC.length()];
-            dis.readFully(header);
-            if (!Arrays.equals(header, BINARY_MAGIC.getBytes(StandardCharsets.US_ASCII)))
-                throw new IOException("Header bytes did not match expected version");
-            int numSignatures = dis.readInt();
-            checkState(numSignatures >= 0 && numSignatures < MAX_SIGNATURES, () ->
-                    "numSignatures out of range: " + numSignatures);
-            for (int i = 0; i < numSignatures; i++) {
-                byte[] sig = new byte[65];
-                dis.readFully(sig);
-                // TODO: Do something with the signature here.
-            }
-            digestInputStream.on(true);
-            int numCheckpoints = dis.readInt();
-            checkState(numCheckpoints > 0);
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(size);
-            for (int i = 0; i < numCheckpoints; i++) {
-                if (dis.read(buffer.array(), 0, size) < size)
-                    throw new IOException("Incomplete read whilst loading checkpoints.");
-                StoredBlock block = StoredBlock.deserializeCompact(buffer);
-                ((Buffer) buffer).position(0);
-                checkpoints.put(block.getHeader().time(), block);
-            }
-            Sha256Hash dataHash = Sha256Hash.wrap(digest.digest());
-            log.info("Read {} checkpoints up to time {}, hash is {}", checkpoints.size(),
-                    TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey()), dataHash);
-            return dataHash;
-        } catch (ProtocolException e) {
-            throw new IOException(e);
-        } finally {
-            if (dis != null) dis.close();
-            inputStream.close();
-        }
     }
 
     private Sha256Hash readTextual(InputStream inputStream) throws IOException {
