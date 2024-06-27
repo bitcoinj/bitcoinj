@@ -122,7 +122,11 @@ public class StoredBlock {
         return store.get(getHeader().getPrevBlockHash());
     }
 
-    /** Serializes the stored block to a custom packed format. Used by {@link CheckpointManager}. */
+    /**
+     * Serializes the stored block to a custom packed format. Used internally.
+     *
+     * @param buffer buffer to write to
+     */
     public void serializeCompact(ByteBuffer buffer) {
         byte[] chainWorkBytes = Utils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES);
         if (chainWorkBytes.length < CHAIN_WORK_BYTES) {
@@ -137,7 +141,12 @@ public class StoredBlock {
         buffer.put(bytes, 0, Block.HEADER_SIZE);  // Trim the trailing 00 byte (zero transactions).
     }
 
-    /** De-serializes the stored block from a custom packed format. Used by {@link CheckpointManager}. */
+    /**
+     * Deserializes the stored block from a custom packed format. Used internally.
+     *
+     * @param buffer data to deserialize
+     * @return deserialized stored block
+     */
     public static StoredBlock deserializeCompact(NetworkParameters params, ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES];
         buffer.get(chainWorkBytes);
