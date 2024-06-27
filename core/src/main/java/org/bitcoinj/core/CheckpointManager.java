@@ -73,7 +73,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * sign the hash of all bytes that follow the last signature.</p>
  *
  * <p>After the signatures come the number of checkpoints in the file. Then each checkpoint follows one per line in
- * compact format (as written by {@link StoredBlock#serializeCompact(ByteBuffer)}) as a base64-encoded blob.</p>
+ * compact format (as written by {@link StoredBlock#serializeCompactV2(ByteBuffer)}) as a base64-encoded blob.</p>
  */
 public class CheckpointManager {
     private static final Logger log = LoggerFactory.getLogger(CheckpointManager.class);
@@ -129,15 +129,17 @@ public class CheckpointManager {
             checkState(numCheckpoints > 0);
             // Hash numCheckpoints in a way compatible to the binary format.
             hasher.putBytes(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
-            final int size = StoredBlock.COMPACT_SERIALIZED_SIZE;
-            ByteBuffer buffer = ByteBuffer.allocate(size);
             for (int i = 0; i < numCheckpoints; i++) {
                 byte[] bytes = BASE64.decode(reader.readLine());
                 hasher.putBytes(bytes);
-                ((Buffer) buffer).position(0);
-                buffer.put(bytes);
-                ((Buffer) buffer).position(0);
-                StoredBlock block = StoredBlock.deserializeCompact(buffer);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                StoredBlock block;
+                if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE)
+                    block = StoredBlock.deserializeCompact(buffer);
+                else if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE_V2)
+                    block = StoredBlock.deserializeCompactV2(buffer);
+                else
+                    throw new IllegalStateException("unexpected length of checkpoint: " + bytes.length);
                 checkpoints.put(block.getHeader().time(), block);
             }
             HashCode hash = hasher.hash();

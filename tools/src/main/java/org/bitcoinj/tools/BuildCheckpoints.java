@@ -179,9 +179,9 @@ public class BuildCheckpoints implements Callable<Integer> {
             writer.println("TXT CHECKPOINTS 1");
             writer.println("0"); // Number of signatures to read. Do this later.
             writer.println(checkpoints.size());
-            ByteBuffer buffer = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
+            ByteBuffer buffer = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
             for (StoredBlock block : checkpoints.values()) {
-                block.serializeCompact(buffer);
+                block.serializeCompactV2(buffer);
                 writer.println(CheckpointManager.BASE64.encode(buffer.array()));
                 ((Buffer) buffer).position(0);
             }
