@@ -22,7 +22,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +39,7 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
+import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -44,12 +49,14 @@ import com.google.common.base.Stopwatch;
 
 public class SPVBlockStoreTest {
     private static NetworkParameters UNITTEST;
+    private static NetworkParameters TESTNET;
     private File blockStoreFile;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
         Utils.resetMocking();
         UNITTEST = UnitTestParams.get();
+        TESTNET = TestNet3Params.get();
     }
 
     @Before
@@ -182,5 +189,35 @@ public class SPVBlockStoreTest {
             // TODO: Deletion is failing on Windows
             assertTrue(deleted);
         }
+    }
+
+    @Test
+    public void migrateV1toV2() throws Exception {
+        // create V1 format
+        RandomAccessFile raf = new RandomAccessFile(blockStoreFile, "rw");
+        FileChannel channel = raf.getChannel();
+        ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0,
+                SPVBlockStore.FILE_PROLOGUE_BYTES + SPVBlockStore.RECORD_SIZE_V1 * 3);
+        buffer.put(SPVBlockStore.HEADER_MAGIC_V1); // header magic
+        Block genesisBlock = TESTNET.getGenesisBlock();
+        StoredBlock storedGenesisBlock = new StoredBlock(genesisBlock.cloneAsHeader(), genesisBlock.getWork(), 0);
+        Sha256Hash genesisHash = storedGenesisBlock.getHeader().getHash();
+        ((Buffer) buffer).position(SPVBlockStore.FILE_PROLOGUE_BYTES);
+        buffer.put(genesisHash.getBytes());
+        storedGenesisBlock.serializeCompact(buffer);
+        buffer.putInt(4, buffer.position()); // ring cursor
+        ((Buffer) buffer).position(8);
+        buffer.put(genesisHash.getBytes()); // chain head
+        raf.close();
+
+        // migrate to V2 format
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+
+        // check block is the same
+        assertEquals(genesisHash, store.getChainHead().getHeader().getHash());
+        // check ring cursor
+        assertEquals(SPVBlockStore.FILE_PROLOGUE_BYTES + SPVBlockStore.RECORD_SIZE_V2 * 1,
+                store.getRingCursor());
+        store.close();
     }
 }
