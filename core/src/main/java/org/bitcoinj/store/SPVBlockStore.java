@@ -117,8 +117,16 @@ public class SPVBlockStore implements BlockStore {
         checkArgument(capacity > 0);
         try {
             boolean exists = file.exists();
-            // Set up the backing file.
+            // Set up the backing file, empty if it doesn't exist.
             randomAccessFile = new RandomAccessFile(file, "rw");
+            FileChannel channel = randomAccessFile.getChannel();
+
+            // Lock the file.
+            fileLock = channel.tryLock();
+            if (fileLock == null)
+                throw new ChainFileLockedException("Store file is already locked by another process");
+
+            // Ensure expected file size, grow if desired.
             fileLength = getFileSize(capacity);
             if (!exists) {
                 log.info("Creating new SPV block chain file " + file);
@@ -139,11 +147,6 @@ public class SPVBlockStore implements BlockStore {
                         randomAccessFile.setLength(fileLength);
                 }
             }
-
-            FileChannel channel = randomAccessFile.getChannel();
-            fileLock = channel.tryLock();
-            if (fileLock == null)
-                throw new ChainFileLockedException("Store file is already locked by another process");
 
             // Map it into memory read/write. The kernel will take care of flushing writes to disk at the most
             // efficient times, which may mean that until the map is deallocated the data on disk is randomly
