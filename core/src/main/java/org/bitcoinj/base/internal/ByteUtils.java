@@ -16,8 +16,6 @@
 
 package org.bitcoinj.base.internal;
 
-import com.google.common.io.BaseEncoding;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,13 +39,6 @@ public class ByteUtils {
     /** Maximum unsigned value that can be expressed by 32 bits. */
     public static final long MAX_UNSIGNED_INTEGER = Integer.toUnsignedLong(-1);
 
-    /**
-     * Hex encoding used throughout the framework. Use with ByteUtils.formatHex(byte[]) or ByteUtils.parseHex(CharSequence).
-     * @deprecated Use {@link ByteUtils#hexFormat} or {@link ByteUtils#parseHex(String)} or other available
-     * options.
-     */
-    @Deprecated
-    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
     // 00000001, 00000010, 00000100, 00001000, ...
     private static final int[] bitMask = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 
