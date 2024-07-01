@@ -35,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.Buffer;
@@ -172,6 +173,8 @@ public class BuildCheckpoints implements Callable<Integer> {
         return 0;
     }
 
+    private static final BigInteger MAX_WORK_V1 = new BigInteger(/* 12 bytes */ "ffffffffffffffffffffffff", 16);
+
     private static void writeTextualCheckpoints(TreeMap<Integer, StoredBlock> checkpoints, File file)
             throws IOException {
         try (PrintWriter writer = new PrintWriter(
@@ -179,11 +182,18 @@ public class BuildCheckpoints implements Callable<Integer> {
             writer.println("TXT CHECKPOINTS 1");
             writer.println("0"); // Number of signatures to read. Do this later.
             writer.println(checkpoints.size());
-            ByteBuffer buffer = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
+            ByteBuffer bufferV1 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
+            ByteBuffer bufferV2 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
             for (StoredBlock block : checkpoints.values()) {
-                block.serializeCompactV2(buffer);
-                writer.println(CheckpointManager.BASE64.encode(buffer.array()));
-                ((Buffer) buffer).position(0);
+                if (block.getChainWork().compareTo(MAX_WORK_V1) <= 0) {
+                    ((Buffer) bufferV1).rewind();
+                    block.serializeCompact(bufferV1);
+                    writer.println(CheckpointManager.BASE64.encode(bufferV1.array()));
+                } else {
+                    ((Buffer) bufferV2).rewind();
+                    block.serializeCompactV2(bufferV2);
+                    writer.println(CheckpointManager.BASE64.encode(bufferV2.array()));
+                }
             }
             System.out.println("Checkpoints written to '" + file.getCanonicalPath() + "'.");
         }

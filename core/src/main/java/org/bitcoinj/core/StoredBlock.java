@@ -135,12 +135,10 @@ public class StoredBlock {
     /**
      * Serializes the stored block to a custom packed format. Used internally.
      * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
-     * so developers should use the V2 format.
+     * so developers should use {@link #serializeCompactV2(ByteBuffer)}.
      *
      * @param buffer buffer to write to
-     * @deprecated use {@link #serializeCompactV2(ByteBuffer)}
      */
-    @Deprecated
     public void serializeCompact(ByteBuffer buffer) {
         byte[] chainWorkBytes = ByteUtils.bigIntegerToBytes(getChainWork(), CHAIN_WORK_BYTES_V1);
         if (chainWorkBytes.length < CHAIN_WORK_BYTES_V1) {
@@ -173,13 +171,11 @@ public class StoredBlock {
     /**
      * Deserializes the stored block from a custom packed format. Used internally.
      * As of June 22, 2024, it takes 12 unsigned bytes to store the chain work value,
-     * so developers should use the V2 format.
+     * so developers should use {@link #deserializeCompactV2(ByteBuffer)}.
      *
      * @param buffer data to deserialize
      * @return deserialized stored block
-     * @deprecated use {@link #deserializeCompactV2(ByteBuffer)}
      */
-    @Deprecated
     public static StoredBlock deserializeCompact(ByteBuffer buffer) throws ProtocolException {
         byte[] chainWorkBytes = new byte[StoredBlock.CHAIN_WORK_BYTES_V1];
         buffer.get(chainWorkBytes);
