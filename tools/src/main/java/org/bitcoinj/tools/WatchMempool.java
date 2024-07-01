@@ -17,18 +17,9 @@
 
 package org.bitcoinj.tools;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.core.listeners.*;
-import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.net.discovery.DnsDiscovery;
@@ -37,6 +28,13 @@ import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.RiskAnalysis.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class WatchMempool {
     private static final Logger log = LoggerFactory.getLogger(WatchMempool.class);

@@ -16,16 +16,15 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.AddressParser;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.wallet.CoinSelection;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
@@ -35,9 +34,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toList;
 
 /**
  * ForwardingService demonstrates basic usage of bitcoinj. It creates an SPV Wallet, listens on the network

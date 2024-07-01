@@ -16,10 +16,8 @@
 
 package wallettemplate;
 
-import javafx.application.Platform;
-import org.bitcoinj.crypto.AesKey;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
 import com.google.protobuf.ByteString;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
@@ -30,18 +28,23 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import org.bitcoinj.crypto.AesKey;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
+import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Objects;
 
-import static org.bitcoinj.walletfx.utils.GuiUtils.*;
+import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
+import static org.bitcoinj.walletfx.utils.GuiUtils.fadeIn;
+import static org.bitcoinj.walletfx.utils.GuiUtils.fadeOut;
+import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 
 /**
  * User interface for entering a password on demand, e.g. to send money. Also used when encrypting a wallet. Shows a

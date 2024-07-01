@@ -20,12 +20,16 @@ package org.bitcoinj.examples;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 
-import java.net.InetAddress;
 import java.util.List;
 import java.util.concurrent.Future;
 

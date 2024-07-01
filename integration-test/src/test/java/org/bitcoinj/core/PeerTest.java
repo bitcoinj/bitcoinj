@@ -29,7 +29,6 @@ import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithNetworkConnections;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
