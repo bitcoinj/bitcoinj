@@ -27,6 +27,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.crypto.OutputDescriptor;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.ChildNumber;
@@ -455,12 +456,33 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    // Incubating/Experimental
+    public static DeterministicKeyChain fromDescriptor(OutputDescriptor.HDKeychainOutputDescriptor descriptor) {
+        return new DeterministicKeyChain(descriptor.accountKey(), false, descriptor.isPublicKey(), descriptor.scriptType());
+    }
+
     public HDPath getAccountPath() {
         return accountPath;
     }
 
     public ScriptType getOutputScriptType() {
         return outputScriptType;
+    }
+
+    /**
+     * Return the output descriptor for this keychain on the specified network
+     * @param network The network the descriptor will be valid for
+     * @return the descriptor
+     */
+    public OutputDescriptor outputDescriptorFor(Network network) {
+        DeterministicKey accountKey = getKeyByPath(accountPath, false);
+        // Descriptors always use the xpub format (never ypub or zpub) so don't use outputScriptType when generating the xpub
+        String xpub = accountKey.serializePubB58(network);
+        if (rootKey != null) {
+            return OutputDescriptor.HDKeychainOutputDescriptor.of(outputScriptType, xpub, getAccountPath(), rootKey.getFingerprint());
+        } else {
+            return OutputDescriptor.HDKeychainOutputDescriptor.of(outputScriptType, xpub);
+        }
     }
 
     private DeterministicKey encryptNonLeaf(AesKey aesKey, DeterministicKeyChain chain,
