@@ -16,6 +16,7 @@
 
 package org.bitcoinj.store;
 
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
@@ -59,6 +60,8 @@ public class SPVBlockStore implements BlockStore {
     public static final int DEFAULT_CAPACITY = 10000;
     @Deprecated
     public static final String HEADER_MAGIC = "SPVB";
+    // Magic header.
+    private static final byte[] MAGIC_HEADER = HEADER_MAGIC.getBytes(StandardCharsets.US_ASCII);
 
     protected volatile MappedByteBuffer buffer;
     protected final NetworkParameters params;
@@ -158,10 +161,10 @@ public class SPVBlockStore implements BlockStore {
 
             // Check or initialize the header bytes to ensure we don't try to open some random file.
             if (exists) {
-                byte[] header = new byte[4];
-                buffer.get(header);
-                if (!new String(header, StandardCharsets.US_ASCII).equals(HEADER_MAGIC))
-                    throw new BlockStoreException("Header bytes do not equal " + HEADER_MAGIC);
+                byte[] currentHeader = new byte[4];
+                buffer.get(currentHeader);
+                if (!Arrays.equals(currentHeader, MAGIC_HEADER))
+                    throw new BlockStoreException("Magic header expected, got: " + ByteUtils.formatHex(currentHeader));
             } else {
                 initNewStore(params.getGenesisBlock());
             }
@@ -176,9 +179,7 @@ public class SPVBlockStore implements BlockStore {
     }
 
     private void initNewStore(Block genesisBlock) throws Exception {
-        byte[] header;
-        header = HEADER_MAGIC.getBytes(StandardCharsets.US_ASCII);
-        buffer.put(header);
+        buffer.put(MAGIC_HEADER);
         // Insert the genesis block.
         lock.lock();
         try {
