@@ -146,6 +146,7 @@ public class SPVBlockStore implements BlockStore {
             // Check or initialize the header bytes to ensure we don't try to open some random file.
             if (exists) {
                 byte[] currentHeader = new byte[4];
+                ((Buffer) buffer).rewind();
                 buffer.get(currentHeader);
                 if (!Arrays.equals(currentHeader, MAGIC_HEADER))
                     throw new BlockStoreException("Magic header expected, got: " + Utils.HEX.encode(currentHeader));
@@ -163,6 +164,7 @@ public class SPVBlockStore implements BlockStore {
     }
 
     private void initNewStore(NetworkParameters params) throws Exception {
+        ((Buffer) buffer).rewind();
         buffer.put(MAGIC_HEADER);
         // Insert the genesis block.
         lock.lock();
@@ -342,7 +344,6 @@ public class SPVBlockStore implements BlockStore {
                 buffer.put((byte)0);
             }
             // Initialize store again
-            ((Buffer) buffer).position(0);
             initNewStore(params);
         } finally { lock.unlock(); }
     }
