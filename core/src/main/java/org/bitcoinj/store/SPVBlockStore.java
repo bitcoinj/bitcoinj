@@ -169,7 +169,7 @@ public class SPVBlockStore implements BlockStore {
         // Insert the genesis block.
         lock.lock();
         try {
-            setRingCursor(buffer, FILE_PROLOGUE_BYTES);
+            setRingCursor(FILE_PROLOGUE_BYTES);
         } finally {
             lock.unlock();
         }
@@ -191,7 +191,7 @@ public class SPVBlockStore implements BlockStore {
 
         lock.lock();
         try {
-            int cursor = getRingCursor(buffer);
+            int cursor = getRingCursor();
             if (cursor == fileLength) {
                 // Wrapped around.
                 cursor = FILE_PROLOGUE_BYTES;
@@ -201,7 +201,7 @@ public class SPVBlockStore implements BlockStore {
             notFoundCache.remove(hash);
             buffer.put(hash.getBytes());
             block.serializeCompact(buffer);
-            setRingCursor(buffer, buffer.position());
+            setRingCursor(buffer.position());
             blockCache.put(hash, block);
         } finally { lock.unlock(); }
     }
@@ -222,7 +222,7 @@ public class SPVBlockStore implements BlockStore {
 
             // Starting from the current tip of the ring work backwards until we have either found the block or
             // wrapped around.
-            int cursor = getRingCursor(buffer);
+            int cursor = getRingCursor();
             final int startingPoint = cursor;
             final byte[] targetHashBytes = hash.getBytes();
             byte[] scratch = new byte[32];
@@ -320,13 +320,13 @@ public class SPVBlockStore implements BlockStore {
     protected static final int FILE_PROLOGUE_BYTES = 1024;
 
     /** Returns the offset from the file start where the latest block should be written (end of prev block). */
-    private int getRingCursor(ByteBuffer buffer) {
+    private int getRingCursor() {
         int c = buffer.getInt(4);
         checkState(c >= FILE_PROLOGUE_BYTES, "Integer overflow");
         return c;
     }
 
-    private void setRingCursor(ByteBuffer buffer, int newCursor) {
+    private void setRingCursor(int newCursor) {
         checkArgument(newCursor >= 0);
         buffer.putInt(4, newCursor);
     }
