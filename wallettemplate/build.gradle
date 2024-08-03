@@ -7,7 +7,7 @@ plugins {
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'de.jensd:fontawesomefx:8.0.0'
-    implementation 'com.google.zxing:core:3.5.1'
+    implementation 'com.google.zxing:core:3.5.3'
     implementation 'org.slf4j:slf4j-jdk14:2.0.13'
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
