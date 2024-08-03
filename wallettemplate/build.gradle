@@ -16,7 +16,7 @@ dependencies {
 }
 
 javafx {
-    version = '21.0.1'
+    version = '21.0.4'
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
