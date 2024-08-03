@@ -25,8 +25,8 @@ dependencies {
         compileOnly 'info.picocli:picocli-codegen:4.7.6'
     }
 
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.0"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.3"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.3"
 
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.13'
 }
