@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-22.04, macOS-12, windows-2022]
         java: ['11', '17', '21']
         distribution: ['temurin']
-        gradle: ['8.8']
+        gradle: ['8.9']
         include:
           # Special case to test something close to Debian config with the oldest supported (standard) Gradle on Ubuntu
           - os: ubuntu-22.04
