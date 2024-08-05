@@ -121,16 +121,6 @@ public class LegacyAddressTest {
     }
 
     @Test
-    @Deprecated
-    // Test a deprecated method just to make sure we didn't break it
-    public void getNetworkViaParameters() {
-        NetworkParameters params = LegacyAddress.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-        assertEquals(MAINNET.id(), params.getId());
-        params = LegacyAddress.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        assertEquals(TESTNET.id(), params.getId());
-    }
-
-    @Test
     public void getNetwork() {
         AddressParser parser = AddressParser.getDefault();
         Network mainNet = parser.parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL").network();

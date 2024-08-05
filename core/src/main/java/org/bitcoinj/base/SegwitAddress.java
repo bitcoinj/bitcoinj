@@ -18,8 +18,6 @@ package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -235,24 +233,6 @@ public class SegwitAddress implements Address {
 
     /**
      * Construct a {@link SegwitAddress} from its textual form.
-     * 
-     * @param params
-     *            expected network this address is valid for, or null if the network should be derived from the bech32
-     * @param bech32
-     *            bech32-encoded textual form of the address
-     * @return constructed address
-     * @throws AddressFormatException
-     *             if something about the given bech32 address isn't right
-     * @deprecated Use {@link AddressParser}
-     */
-    @Deprecated
-    public static SegwitAddress fromBech32(@Nullable NetworkParameters params, String bech32)
-            throws AddressFormatException {
-        return (SegwitAddress) AddressParser.getLegacy(params).parseAddress(bech32);
-    }
-
-    /**
-     * Construct a {@link SegwitAddress} from its textual form.
      *
      * @param bech32  bech32-encoded textual form of the address
      * @param network expected network this address is valid for
@@ -282,22 +262,6 @@ public class SegwitAddress implements Address {
     /**
      * Construct a {@link SegwitAddress} that represents the given hash, which is either a pubkey hash or a script hash.
      * The resulting address will be either a P2WPKH or a P2WSH type of address.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param hash
-     *            20-byte pubkey hash or 32-byte script hash
-     * @return constructed address
-     * @deprecated Use {@link #fromHash(Network, byte[])}
-     */
-    @Deprecated
-    public static SegwitAddress fromHash(NetworkParameters params, byte[] hash) {
-        return fromHash(params.network(), hash);
-    }
-
-    /**
-     * Construct a {@link SegwitAddress} that represents the given hash, which is either a pubkey hash or a script hash.
-     * The resulting address will be either a P2WPKH or a P2WSH type of address.
      *
      * @param network network this address is valid for
      * @param hash 20-byte pubkey hash or 32-byte script hash
@@ -312,25 +276,6 @@ public class SegwitAddress implements Address {
      * or a script hash – depending on the script version. The resulting address will be either a P2WPKH, a P2WSH or
      * a P2TR type of address.
      *
-     * @param params
-     *            network this address is valid for
-     * @param witnessVersion
-     *            version number between 0 and 16
-     * @param witnessProgram
-     *            version dependent witness program
-     * @return constructed address
-     * @deprecated Use {@link #fromProgram(Network, int, byte[])}
-     */
-    @Deprecated
-    public static SegwitAddress fromProgram(NetworkParameters params, int witnessVersion, byte[] witnessProgram) {
-        return fromProgram(params.network(), witnessVersion, witnessProgram);
-    }
-
-    /**
-     * Construct a {@link SegwitAddress} that represents the given program, which is either a pubkey, a pubkey hash
-     * or a script hash – depending on the script version. The resulting address will be either a P2WPKH, a P2WSH or
-     * a P2TR type of address.
-     *
      * @param network network this address is valid for
      * @param witnessVersion version number between 0 and 16
      * @param witnessProgram version dependent witness program
@@ -338,22 +283,6 @@ public class SegwitAddress implements Address {
      */
     public static SegwitAddress fromProgram(Network network, int witnessVersion, byte[] witnessProgram) {
         return new SegwitAddress(network, witnessVersion, witnessProgram);
-    }
-
-    /**
-     * Construct a {@link SegwitAddress} that represents the public part of the given {@link ECKey}. Note that an
-     * address is derived from a hash of the public key and is not the public key itself.
-     * 
-     * @param params
-     *            network this address is valid for
-     * @param key
-     *            only the public part is used
-     * @return constructed address
-     * @deprecated Use {@link ECKey#toAddress(ScriptType, org.bitcoinj.base.Network)}
-     */
-    @Deprecated
-    public static SegwitAddress fromKey(NetworkParameters params, ECKey key) {
-        return (SegwitAddress) key.toAddress(ScriptType.P2WPKH, params.network());
     }
 
     /**
