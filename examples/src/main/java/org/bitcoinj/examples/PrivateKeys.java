@@ -17,22 +17,21 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.Address;
-import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.crypto.DumpedPrivateKey;
-import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.crypto.DumpedPrivateKey;
+import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
 
 import java.math.BigInteger;
-import java.net.InetAddress;
 
 /**
  * This example shows how to solve the challenge Hal posted here:<p>

@@ -16,12 +16,11 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.base.BitcoinNetwork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,12 +32,12 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.stream.Stream;
 
-import static org.bitcoinj.base.ScriptType.P2PKH;
-import static org.bitcoinj.base.ScriptType.P2WPKH;
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
-import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
+import static org.bitcoinj.base.ScriptType.P2PKH;
+import static org.bitcoinj.base.ScriptType.P2WPKH;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP32;
+import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**

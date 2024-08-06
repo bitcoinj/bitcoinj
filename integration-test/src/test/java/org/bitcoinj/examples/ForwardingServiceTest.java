@@ -16,9 +16,9 @@
 
 package org.bitcoinj.examples;
 
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
 import org.junit.jupiter.api.BeforeEach;
