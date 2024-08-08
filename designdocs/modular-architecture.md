@@ -12,6 +12,7 @@ flowchart TD
     T[tools] --> CORE
     FX[wallettemplate] --> CORE
     subgraph CORE [bitcoinj-core]
+        WAK[o.b.kits] --> W
         W[o.b.wallet] --> CO
         W --> CR
         CO[o.b.core] --> CR
@@ -33,6 +34,8 @@ class G,S,A,BC,P external;
 
 In release 0.17 (currently in progress) there has been a large amount of refactoring to prepare the `o.b.base` and `o.b.crypto` packages to become independent modules/JARs in the following release. Those packages will still contain some deprecated methods that depend on other internal packages and external modules. Those deprecated methods will be removed in release 0.18 when `o.b.base` and `o.b.crypto` are moved to their own modules.
 
+We have also renamed the `o.b.kits` package (containing the `WalletAppKit` class) to `o.b.walletappkit` in preparation for it becoming a separate module in release 0.18.
+
 
 ````mermaid
 flowchart TD
@@ -42,6 +45,7 @@ flowchart TD
     FX[wallettemplate] --> CORE
     WT[wallettool] --> CORE
     subgraph CORE [bitcoinj-core]
+        WAK[o.b.walletappkit] --> W
         W[o.b.wallet] --> CO[o.b.core]
         CO --> W
         W --> CR
@@ -63,13 +67,20 @@ class G,S,A,BC,P external;
  
 In this release it will be possible to use the `bitcoinj-base` module as a standalone module with no external dependencies. `bitcoinj-crypto` will be able to be used with a single dependency on the **Bouncy Castle*** library.
 
+`WalletAppKit` will be in a separate module which will _hopefully_ allow us to make the `o.b.core` Guava dependency an `implementation` dependency rather than a `api` dependency. This also allows us to develop a Guava-less alternative to `WalletAppKit` while continuing to provide `WalletAppKit` for apps that are still using it.
+
 ````mermaid
 flowchart TD
-    E[examples] --> CORE
+    E[examples] --> WAKP
     IT[integration-test] --> CORE
-    T[tools] --> CORE
-    FX[wallettemplate] --> CORE
+    T[tools] --> WAKP
+    FX[wallettemplate] --> WAKP
     WT[wallettool] --> CORE
+    subgraph WAKP [bitcoinj-walletappkit]
+        WAK[o.b.walletappkit]
+    end
+    WAKP --> CORE
+    WAKP --> G
     subgraph CORE [bitcoinj-core]
         W[o.b.wallet] --> CO[o.b.core]
         CO --> W
@@ -83,10 +94,10 @@ flowchart TD
     subgraph BASE [bitcoinj-base]
         B[o.b.base]
     end
-    CORE --> G[Guava]
     CORE --> P[ProtoBuf]
     CORE .-> S[slf4j]
     CORE .-> A[jcip-annotations]
+    CORE .-> G[Guava]
 
 classDef external fill:#999;
 class G,S,A,BC,P external;
