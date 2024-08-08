@@ -47,7 +47,9 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
     private Sha256Hash(byte[] rawHashBytes) {
         checkArgument(rawHashBytes.length == LENGTH, () ->
                 "length must be " + LENGTH + ": " + rawHashBytes.length);
-        this.bytes = rawHashBytes;
+        // Defensive copy (should we subclass ByteArray instead?)
+        this.bytes = new byte[rawHashBytes.length];
+        System.arraycopy(rawHashBytes, 0, this.bytes, 0, rawHashBytes.length);
     }
 
     /**
@@ -265,7 +267,9 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      * Returns the internal byte array, without defensively copying. Therefore do NOT modify the returned array.
      */
     public byte[] getBytes() {
-        return bytes;
+        byte[] copy = new byte[bytes.length];
+        System.arraycopy(bytes, 0, copy, 0, bytes.length);
+        return copy;
     }
 
     /**
