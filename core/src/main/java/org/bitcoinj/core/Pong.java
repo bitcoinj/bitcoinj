@@ -22,13 +22,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0031.mediawiki">BIP31</a> for details.
  * <p>
  * Instances of this class are immutable.
  */
-public class Pong extends BaseMessage {
+public class Pong implements Message {
+    public static final int BYTES = Long.BYTES;
     private final long nonce;
 
     /**
@@ -57,8 +59,16 @@ public class Pong extends BaseMessage {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        ByteUtils.writeInt64LE(nonce, stream);
+    public int messageSize() {
+        return BYTES;
+    }
+
+    @Override
+    public byte[] serialize() {
+        return ByteBuffer.allocate(BYTES)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putLong(nonce)
+                .array();
     }
     
     /** Returns the nonce sent by the remote peer. */
