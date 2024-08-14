@@ -407,7 +407,7 @@ import static org.bitcoinj.utils.BtcAutoFormat.Style.SYMBOL;
  * interpret every number as being denominated in the units that were specified when
  * constructing the instance doing the parsing.  This default behavior of {@link
  * BtcFixedFormat} can be overridden by setting a parsing pattern that includes a currency sign
- * using the {@link BtcFormat.Builder#pattern()} method.</p>
+ * using the {@link BtcFormat#pattern()} method.</p>
  *
  * <p>The {@link BtcAutoFormat#parse(String)} method of {@link BtcAutoFormat} (and of
  * {@link BtcAutoFormat} configured with applicable non-default pattern) will recognize a

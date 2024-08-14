@@ -559,7 +559,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using ASN.1 format, so you want {@link ECKey.ECDSASignature#toASN1()}
+     * usually encoded using ASN.1 format, so you want {@link ECKey#toASN1()}
      * instead. However sometimes the independent components can be useful, for instance, if you're going to do
      * further EC maths on them.
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
