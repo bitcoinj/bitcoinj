@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.crypto.internal;
+package org.bitcoinj.core.internal;
 
 import org.junit.Test;
 
