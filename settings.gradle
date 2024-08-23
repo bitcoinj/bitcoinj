@@ -13,9 +13,8 @@ rootProject.name = 'bitcoinj-parent'
 if (GradleVersion.current().compareTo(minGradleVersion) < 0) {
     throw new GradleScriptException("bitcoinj build requires Gradle ${minGradleVersion} or later", null)
 }
-
-if (!JavaVersion.current().isJava11Compatible()) {
-    throw new GradleScriptException("bitcoinj build requires Java 11 or later", null)
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+    throw new GradleScriptException("bitcoinj build requires Java 17 or later", null)
 }
 
 include 'core'
@@ -30,13 +29,8 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-    System.err.println "Including wallettemplate because ${JavaVersion.current()}"
-    include 'wallettemplate'
-    project(':wallettemplate').name = 'bitcoinj-wallettemplate'
-} else {
-    System.err.println "Skipping wallettemplate, requires Java 17+, currently running Java ${JavaVersion.current()}"
-}
+include 'wallettemplate'
+project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 
 include 'integration-test'
 project(':integration-test').name = 'bitcoinj-integration-test'

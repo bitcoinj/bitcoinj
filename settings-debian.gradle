@@ -12,8 +12,9 @@ if (GradleVersion.current().compareTo(gradleVersion) != 0) {
     throw new GradleScriptException("bitcoinj build requires Debian Gradle ${gradleVersion}", null)
 }
 
+// we can't test for Java 17 in Gradle 4.4, so at least we test for Java 11
 if (!JavaVersion.current().isJava11Compatible()) {
-    throw new GradleScriptException("bitcoinj build requires Java 11 or later", null)
+    throw new GradleScriptException("bitcoinj build requires Java 17 or later", null)
 }
 
 rootProject.name = 'bitcoinj-parent'
