@@ -92,7 +92,7 @@ Now you are ready to https://bitcoinj.github.io/getting-started[follow the tutor
 
 Building apps with official releases of *bitcoinj* is covered in the https://bitcoinj.github.io/getting-started[tutorial].
 
-If you want to develop or test your app with a https://jitpack.io[Jitpack]-powered build of the latest `master` or `release-0.16` branch of *bitcoinj* follow the dynamically-generated instructions for that branch by following the correct link.
+If you want to develop or test your app with a https://jitpack.io[Jitpack]-powered build of the latest `master` or `release-0.17` branch of *bitcoinj* follow the dynamically-generated instructions for that branch by following the correct link.
 
 * https://jitpack.io/#bitcoinj/bitcoinj/master-SNAPSHOT[master] branch
-* https://jitpack.io/#bitcoinj/bitcoinj/release-0.16-SNAPSHOT[release-0.16] branch
+* https://jitpack.io/#bitcoinj/bitcoinj/release-0.17-SNAPSHOT[release-0.17] branch
