@@ -38,6 +38,7 @@ COPY --chown=builder / project/
 # build project
 RUN /usr/bin/gradle --project-dir project/ \
     --no-build-cache --no-daemon --no-parallel \
+    --settings-file=settings-debian.gradle \
     -Dmaven.repo.local=repo \
     clean ${ADDITIONAL_GRADLE_TASK} :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist
 

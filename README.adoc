@@ -80,6 +80,13 @@ Our reference build (which is also used for our releases) is running within a co
 Buildah 1.26+, Podman 4.1+ and Docker (with BuildKit) are supported. We tested various combinations of host OSes
 (Debian, Ubuntu, macOS, Windows+WSL) and architectures (amd64, arm64). For usage instructions see `build.Containerfile`.
 
+This uses Debian Gradle with the `settings-debian.gradle` settings. If you happen to use Debian and have Gradle
+installed from the Debian repository, you can invoke these settings directly:
+
+```
+gradle --settings-file settings-debian.gradle clean build
+```
+
 ### Example applications
 
 These are found in the `examples` module.

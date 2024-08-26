@@ -21,7 +21,7 @@ bullseye-jdk11:
     - apt-get update
     - apt-get -y install openjdk-11-jdk-headless gradle
   script:
-    - gradle build :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist --init-script build-scan-agree.gradle --scan --stacktrace
+    - gradle --settings-file settings-debian.gradle build :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist --init-script build-scan-agree.gradle --scan --stacktrace
   after_script:
     - gradle --version
     - sha256sum core/build/libs/*.jar wallettool/build/install/wallet-tool/bin/*  wallettool/build/install/wallet-tool/lib/*.jar
@@ -32,7 +32,7 @@ bookworm-jdk17:
     - apt-get update
     - apt-get -y install openjdk-17-jdk-headless gradle
   script:
-    - gradle build :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist --init-script build-scan-agree.gradle --scan --stacktrace
+    - gradle --settings-file settings-debian.gradle build :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist --init-script build-scan-agree.gradle --scan --stacktrace
   after_script:
     - gradle --version
     - sha256sum core/build/libs/*.jar wallettool/build/install/wallet-tool/bin/*  wallettool/build/install/wallet-tool/lib/*.jar
