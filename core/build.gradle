@@ -80,26 +80,6 @@ test {
     }
 }
 
-def gradleVersionToolchains = GradleVersion.version("6.7")
-
-if (GradleVersion.current().compareTo(gradleVersionToolchains) > 0) {
-    // If the Gradle Java Toolchains feature is available, run tests on older JDKs
-    System.err.println "Adding 'testOnJdk8' task, because ${GradleVersion.current()}"
-
-    task('testOnJdk8', type: Test) {
-        doFirst {
-            logger.lifecycle("Testing with JDK ${javaLauncher.get().metadata.javaRuntimeVersion}")
-        }
-        javaLauncher = javaToolchains.launcherFor {
-            languageVersion = JavaLanguageVersion.of(8)
-        }
-    }
-    // Activate if `testJdk8` is `true` in `gradle.properties` or `-PtestJdk8=true` is on command-line
-    if (Boolean.valueOf(findProperty('testJdk8'))) {
-        check.dependsOn testOnJdk8
-    }
-}
-
 ext.moduleName = 'org.bitcoinj.core'
 
 jar {
