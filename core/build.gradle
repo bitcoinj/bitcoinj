@@ -6,7 +6,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.17-beta1'
+version = '0.17-SNAPSHOT'
 
 dependencies {
     api 'org.bouncycastle:bcprov-jdk15to18:1.78.1'
