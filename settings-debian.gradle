@@ -9,7 +9,7 @@ import org.gradle.util.GradleVersion
 def gradleVersion = GradleVersion.version("4.4.1")
 
 if (GradleVersion.current().compareTo(gradleVersion) != 0) {
-    throw new GradleScriptException("bitcoinj build requires Debian Gradle ${gradleVersion}", null)
+    throw new GradleScriptException("bitcoinj build requires Debian Gradle ${gradleVersion.version}", null)
 }
 
 // we can't test for Java 17 in Gradle 4.4, so at least we test for Java 11

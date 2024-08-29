@@ -11,7 +11,7 @@ def minGradleVersion = GradleVersion.version("7.3")
 rootProject.name = 'bitcoinj-parent'
 
 if (GradleVersion.current().compareTo(minGradleVersion) < 0) {
-    throw new GradleScriptException("bitcoinj build requires Gradle ${minGradleVersion} or later", null)
+    throw new GradleScriptException("bitcoinj build requires Gradle ${minGradleVersion.version} or later", null)
 }
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     throw new GradleScriptException("bitcoinj build requires Java 17 or later", null)
