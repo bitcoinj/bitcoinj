@@ -16,14 +16,12 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -230,24 +228,6 @@ public class SegwitAddress implements Address {
     @Override
     public String toString() {
         return toBech32();
-    }
-
-    /**
-     * Construct a {@link SegwitAddress} from its textual form.
-     * 
-     * @param params
-     *            expected network this address is valid for, or null if the network should be derived from the bech32
-     * @param bech32
-     *            bech32-encoded textual form of the address
-     * @return constructed address
-     * @throws AddressFormatException
-     *             if something about the given bech32 address isn't right
-     * @deprecated Use {@link AddressParser}
-     */
-    @Deprecated
-    public static SegwitAddress fromBech32(@Nullable NetworkParameters params, String bech32)
-            throws AddressFormatException {
-        return (SegwitAddress) AddressParser.getLegacy(params).parseAddress(bech32);
     }
 
     /**

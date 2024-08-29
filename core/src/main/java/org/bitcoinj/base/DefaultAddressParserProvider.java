@@ -17,9 +17,6 @@
 package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.base.internal.StreamUtils;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.Networks;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,19 +70,6 @@ class DefaultAddressParserProvider implements AddressParser.AddressParserProvide
     @Override
     public AddressParser forNetwork(Network network) {
         return address -> this.parseAddress(address, network);
-    }
-
-    /**
-     * Dynamically create a new {@link AddressParser} using a snapshot of currently configured networks
-     * from {@code Networks.get()}. This is only used by deprecated methods in {@link AddressParser}.
-     * @return A backward-compatible parser
-     */
-    @Deprecated
-    static DefaultAddressParserProvider fromNetworks() {
-        List<Network> nets = Networks.get().stream()
-                .map(NetworkParameters::network)
-                .collect(StreamUtils.toUnmodifiableList());
-        return new DefaultAddressParserProvider(nets, nets);
     }
 
     private Address parseAddress(String addressString) throws AddressFormatException {

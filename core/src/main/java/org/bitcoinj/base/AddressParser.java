@@ -17,9 +17,6 @@
 package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.core.NetworkParameters;
-
-import javax.annotation.Nullable;
 
 /**
  * Functional interface for parsing an {@link Address}. It takes a {@link String} parameter and will parse address
@@ -71,40 +68,4 @@ public interface AddressParser {
          */
         AddressParser forNetwork(Network network);
     }
-
-    /**
-     * Get a <i>legacy</i> address parser that knows about networks that have been
-     * dynamically added to the list maintained by {@link org.bitcoinj.params.Networks}.
-     * @return A parser for all known networks
-     */
-    @Deprecated
-    static AddressParser getLegacy() {
-        return DefaultAddressParserProvider.fromNetworks().forKnownNetworks();
-    }
-
-    /**
-     * Get a <i>legacy</i> address parser that knows about networks that have been
-     * dynamically added to the list maintained by {@link org.bitcoinj.params.Networks}.
-     * @param network the network to parse for
-     * @return A parser that will throw for strings that are not valid for network.
-     */
-    @Deprecated
-    static AddressParser getLegacy(Network network) {
-        return DefaultAddressParserProvider.fromNetworks().forNetwork(network);
-    }
-
-    /**
-     * Get a <i>legacy</i> address parser that knows about networks that have been
-     * dynamically added to the list maintained by {@link org.bitcoinj.params.Networks}.
-     * @param params the network to parser for, or {@code null} for all networks.
-     * @return A parser that will throw for strings that are not valid for network.
-     */
-    @Deprecated
-    static AddressParser getLegacy(@Nullable NetworkParameters params) {
-        AddressParser.AddressParserProvider provider = DefaultAddressParserProvider.fromNetworks();
-        return (params == null)
-                ? provider.forKnownNetworks()
-                : provider.forNetwork(params.network());
-    }
-
 }

@@ -121,45 +121,12 @@ public class LegacyAddressTest {
     }
 
     @Test
-    @Deprecated
-    // Test a deprecated method just to make sure we didn't break it
-    public void getNetworkViaParameters() {
-        NetworkParameters params = LegacyAddress.getParametersFromAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-        assertEquals(MAINNET.id(), params.getId());
-        params = LegacyAddress.getParametersFromAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv");
-        assertEquals(TESTNET.id(), params.getId());
-    }
-
-    @Test
     public void getNetwork() {
         AddressParser parser = AddressParser.getDefault();
         Network mainNet = parser.parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL").network();
         assertEquals(MAINNET, mainNet);
         Network testNet = parser.parseAddress("n4eA2nbYqErp7H6jebchxAN59DmNpksexv").network();
         assertEquals(TESTNET, testNet);
-    }
-
-    @Test
-    public void getAltNetworkUsingNetworks() {
-        // An alternative network
-        NetworkParameters altNetParams = new MockAltNetworkParams();
-        // Add new network params, this MODIFIES GLOBAL STATE in `Networks`
-        Networks.register(altNetParams);
-        try {
-            // Check if can parse address
-            Address altAddress = AddressParser.getLegacy().parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-            assertEquals(altNetParams.getId(), altAddress.network().id());
-            // Check if main network works as before
-            Address mainAddress = AddressParser.getLegacy(MAINNET).parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-            assertEquals(MAINNET.id(), mainAddress.network().id());
-        } finally {
-            // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
-            Networks.unregister(altNetParams);
-        }
-        try {
-            AddressParser.getLegacy().parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-            fail();
-        } catch (AddressFormatException e) { }
     }
 
     @Test
@@ -188,11 +155,6 @@ public class LegacyAddressTest {
             // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
             Networks.unregister(altNetParams);
         }
-
-        try {
-            AddressParser.getLegacy().parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-            fail();
-        } catch (AddressFormatException e) { }
     }
 
     @Test
