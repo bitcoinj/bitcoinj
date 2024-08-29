@@ -19,6 +19,7 @@ dependencies {
 }
 
 sourceCompatibility = 17
+compileJava.options.release = 17
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
