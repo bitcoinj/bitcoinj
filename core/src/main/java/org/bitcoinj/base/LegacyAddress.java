@@ -39,7 +39,7 @@ import java.util.stream.Stream;
  *
  * <p>A standard address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
  * checksum suffix, then encoding it textually as base58. The version prefix is used to both denote the network for
- * which the address is valid (see {@link NetworkParameters}, and also to indicate how the bytes inside the address
+ * which the address is valid (see {@link BitcoinNetwork}, and also to indicate how the bytes inside the address
  * should be interpreted. Whilst almost all addresses today are hashes of public keys, another (currently unsupported
  * type) can contain a hash of a script instead.</p>
  */
