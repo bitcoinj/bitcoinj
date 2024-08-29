@@ -37,8 +37,6 @@ if (GradleVersion.current().compareTo(gradleVersionTargetJVM) > 0) {
     }
 }
 
-sourceCompatibility = 8
-targetCompatibility = 8
 tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '8'])
     options.compilerArgs << '-Xlint:deprecation'

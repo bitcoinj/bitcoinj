@@ -31,7 +31,6 @@ dependencies {
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.13'
 }
 
-sourceCompatibility = 17
 tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '17'])
     options.compilerArgs << '-Xlint:deprecation'

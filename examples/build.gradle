@@ -8,7 +8,6 @@ dependencies {
     implementation 'org.slf4j:slf4j-jdk14:2.0.13'
 }
 
-sourceCompatibility = 17
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
     options.compilerArgs.addAll(['--release', '17'])
