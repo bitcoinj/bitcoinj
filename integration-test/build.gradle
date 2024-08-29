@@ -18,7 +18,7 @@ dependencies {
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.10.3"
 }
 
-sourceCompatibility = 11
+sourceCompatibility = 17
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'

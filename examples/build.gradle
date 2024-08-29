@@ -8,12 +8,12 @@ dependencies {
     implementation 'org.slf4j:slf4j-jdk14:2.0.13'
 }
 
-sourceCompatibility = 11
+sourceCompatibility = 17
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
 compileJava {
-    options.compilerArgs.addAll(['--release', '11'])
+    options.compilerArgs.addAll(['--release', '17'])
     options.compilerArgs << '-Xlint:deprecation'
 }
