@@ -16,11 +16,9 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 
-import javax.annotation.Nullable;
 import java.util.Comparator;
 
 /**
@@ -29,26 +27,6 @@ import java.util.Comparator;
  * Use {@link AddressParser} to construct any kind of address from its textual form.
  */
 public interface Address extends Comparable<Address> {
-    /**
-     * Construct an address from its textual form.
-     * 
-     * @param params the expected network this address is valid for, or null if the network should be derived from the
-     *               textual form
-     * @param str the textual form of the address, such as "17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL" or
-     *            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-     * @return constructed address
-     * @throws AddressFormatException
-     *             if the given string doesn't parse or the checksum is invalid
-     * @throws AddressFormatException.WrongNetwork
-     *             if the given string is valid but not for the expected network (e.g. testnet vs mainnet)
-     * @deprecated Use {@link org.bitcoinj.wallet.Wallet#parseAddress(String)} or {@link AddressParser#parseAddress(String)}
-     */
-    @Deprecated
-    static Address fromString(@Nullable NetworkParameters params, String str)
-            throws AddressFormatException {
-        return AddressParser.getLegacy(params).parseAddress(str);
-    }
-
     /**
      * Construct an {@link Address} that represents the public part of the given {@link ECKey}.
      * 

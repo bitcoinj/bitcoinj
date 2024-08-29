@@ -18,14 +18,12 @@
 
 package org.bitcoinj.base;
 
-import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ECKey;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -158,26 +156,6 @@ public class LegacyAddress implements Address {
 
     /**
      * Construct a {@link LegacyAddress} from its base58 form.
-     * 
-     * @param params
-     *            expected network this address is valid for, or null if the network should be derived from the
-     *            base58
-     * @param base58
-     *            base58-encoded textual form of the address
-     * @throws AddressFormatException
-     *             if the given base58 doesn't parse or the checksum is invalid
-     * @throws AddressFormatException.WrongNetwork
-     *             if the given address is valid but for a different chain (e.g. testnet vs mainnet)
-     * @deprecated Use {@link #fromBase58(String, Network)}
-     */
-    @Deprecated
-    public static LegacyAddress fromBase58(@Nullable NetworkParameters params, String base58)
-            throws AddressFormatException, AddressFormatException.WrongNetwork {
-        return (LegacyAddress) AddressParser.getLegacy(params).parseAddress(base58);
-    }
-
-    /**
-     * Construct a {@link LegacyAddress} from its base58 form.
      *
      * @param base58  base58-encoded textual form of the address
      * @param network expected network this address is valid for
@@ -239,19 +217,6 @@ public class LegacyAddress implements Address {
     @Override
     public ScriptType getOutputScriptType() {
         return p2sh ? ScriptType.P2SH : ScriptType.P2PKH;
-    }
-
-    /**
-     * Given an address, examines the version byte and attempts to find a matching NetworkParameters. If you aren't sure
-     * which network the address is intended for (eg, it was provided by a user), you can use this to decide if it is
-     * compatible with the current wallet.
-     * 
-     * @return network the address is valid for
-     * @throws AddressFormatException if the given base58 doesn't parse or the checksum is invalid
-     */
-    @Deprecated
-    public static NetworkParameters getParametersFromAddress(String address) throws AddressFormatException {
-        return NetworkParameters.fromAddress(AddressParser.getLegacy().parseAddress(address));
     }
 
     @Override
