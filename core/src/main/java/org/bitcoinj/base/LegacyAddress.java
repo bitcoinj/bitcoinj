@@ -55,7 +55,7 @@ public class LegacyAddress implements Address {
     /**
      * Private constructor. Use {@link #fromBase58(String, Network)},
      * {@link #fromPubKeyHash(Network, byte[])}, {@link #fromScriptHash(Network, byte[])} or
-     * {@link ECKey#toAddress(ScriptType, Network)}.
+     * {@code ECKey#toAddress(ScriptType, Network)}.
      *
      * @param network
      *            network this address is valid for
@@ -113,7 +113,7 @@ public class LegacyAddress implements Address {
     }
 
     /**
-     * Construct a {@link LegacyAddress} that represents the public part of the given {@link ECKey}. Note that an address is
+     * Construct a {@link LegacyAddress} that represents the public part of the given {@code ECKey}. Note that an address is
      * derived from a hash of the public key and is not the public key itself.
      * 
      * @param params
@@ -121,7 +121,7 @@ public class LegacyAddress implements Address {
      * @param key
      *            only the public part is used
      * @return constructed address
-     * @deprecated Use {@link ECKey#toAddress(ScriptType, Network)}
+     * @deprecated Use {@code ECKey#toAddress(ScriptType, Network)}
      */
     @Deprecated
     public static LegacyAddress fromKey(NetworkParameters params, ECKey key) {
@@ -175,7 +175,7 @@ public class LegacyAddress implements Address {
     }
 
     /**
-     * Get the network this address works on. Use of {@link BitcoinNetwork} is preferred to use of {@link NetworkParameters}
+     * Get the network this address works on. Use of {@link BitcoinNetwork} is preferred to use of {@code NetworkParameters}
      * when you need to know what network an address is for.
      * @return the Network.
      */

@@ -28,7 +28,7 @@ import java.util.Comparator;
  */
 public interface Address extends Comparable<Address> {
     /**
-     * Construct an {@link Address} that represents the public part of the given {@link ECKey}.
+     * Construct an {@link Address} that represents the public part of the given {@code ECKey}.
      * 
      * @param params
      *            network this address is valid for

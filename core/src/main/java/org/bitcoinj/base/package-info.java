@@ -23,7 +23,7 @@
  * </ul>
  * <p>
  * <b>Temporary exception:</b> In the 0.17 release, we are allowing some dependencies on other packages, e.g. to
- * {@link org.bitcoinj.core.NetworkParameters} or to Guava <i>provided</i> that those references are in <b>deprecated</b> methods.
+ * {@code org.bitcoinj.core.NetworkParameters} or to Guava <i>provided</i> that those references are in <b>deprecated</b> methods.
  * This smooths migration by allowing users to, for example, replace {@code import org.bitcoinj.core.Address} with
  * {@code import org.bitcoinj.base.Address} as first step of conversion and then remove usages of the deprecated methods
  * of {@code Address} in a second step.
