@@ -17,6 +17,7 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.internal.MockAltNetwork;
 import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
