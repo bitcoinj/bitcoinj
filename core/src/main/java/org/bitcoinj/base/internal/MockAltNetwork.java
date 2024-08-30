@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.testing;
+package org.bitcoinj.base.internal;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Monetary;
