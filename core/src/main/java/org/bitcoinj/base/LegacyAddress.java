@@ -30,8 +30,8 @@ import java.util.stream.Stream;
 
 /**
  * <p>A Bitcoin address looks like 1MsScoe2fTJoq4ZPdQgqyhgWeoNamYPevy and is derived from an elliptic curve public key
- * plus a set of network parameters. Not to be confused with a {@link org.bitcoinj.core.PeerAddress}
- * or {@link org.bitcoinj.core.AddressMessage} which are about network (TCP) addresses.</p>
+ * plus a set of network parameters. Not to be confused with a {@code org.bitcoinj.core.PeerAddress}
+ * or {@code org.bitcoinj.core.AddressMessage} which are about network (TCP) addresses.</p>
  *
  * <p>A standard address is built by taking the RIPE-MD160 hash of the public key bytes, with a version prefix and a
  * checksum suffix, then encoding it textually as base58. The version prefix is used to both denote the network for
