@@ -199,10 +199,10 @@ public class LegacyAddressTest {
     public void p2shAddress() {
         // Test that we can construct P2SH addresses
         LegacyAddress mainNetP2SHAddress = LegacyAddress.fromBase58("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", MAINNET);
-        assertEquals(mainNetP2SHAddress.getVersion(), NetworkParameters.of(MAINNET).getP2SHHeader());
+        assertEquals(mainNetP2SHAddress.getVersion(), MAINNET.legacyP2SHHeader());
         assertEquals(ScriptType.P2SH, mainNetP2SHAddress.getOutputScriptType());
         LegacyAddress testNetP2SHAddress = LegacyAddress.fromBase58("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", TESTNET);
-        assertEquals(testNetP2SHAddress.getVersion(), NetworkParameters.of(TESTNET).getP2SHHeader());
+        assertEquals(testNetP2SHAddress.getVersion(), TESTNET.legacyP2SHHeader());
         assertEquals(ScriptType.P2SH, testNetP2SHAddress.getOutputScriptType());
 
         AddressParser parser = AddressParser.getDefault();
