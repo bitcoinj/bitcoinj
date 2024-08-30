@@ -22,8 +22,6 @@ import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.MockAltNetwork;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptPattern;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -168,9 +166,6 @@ public class LegacyAddressTest {
         assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", a.toString());
         LegacyAddress b = LegacyAddress.fromScriptHash(TESTNET, ByteUtils.parseHex("18a0e827269b5211eb51a4af1b2fa69333efa722"));
         assertEquals("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", b.toString());
-        LegacyAddress c = LegacyAddress.fromScriptHash(MAINNET,
-                ScriptPattern.extractHashFromP2SH(ScriptBuilder.createP2SHOutputScript(hex)));
-        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
     }
 
     @Test

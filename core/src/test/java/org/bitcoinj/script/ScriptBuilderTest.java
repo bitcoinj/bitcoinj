@@ -16,8 +16,11 @@
 
 package org.bitcoinj.script;
 
+import org.bitcoinj.base.LegacyAddress;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.junit.Test;
 
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.script.ScriptOpCodes.OP_FALSE;
 import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 import static org.junit.Assert.assertArrayEquals;
@@ -119,5 +122,14 @@ public class ScriptBuilderTest {
         byte[] expected = new byte[] { OP_FALSE };
         byte[] s = new ScriptBuilder().opFalse().build().program();
         assertArrayEquals(expected, s);
+    }
+
+    @Test
+    public void p2shAddressTest() {
+        // Test that we can convert a redeem script to an address
+        byte[] redeemScriptHex = ByteUtils.parseHex("2ac4b0b501117cc8119c5797b519538d4942e90e");
+        LegacyAddress c = LegacyAddress.fromScriptHash(MAINNET,
+                ScriptPattern.extractHashFromP2SH(ScriptBuilder.createP2SHOutputScript(redeemScriptHex)));
+        assertEquals("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", c.toString());
     }
 }
