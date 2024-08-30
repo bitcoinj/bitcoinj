@@ -21,11 +21,10 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.internal.MockAltNetwork;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.testing.MockAltNetworkParams;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -131,30 +130,20 @@ public class LegacyAddressTest {
 
     @Test
     public void getAltNetworkUsingList() {
-        // An alternative network
-        NetworkParameters altNetParams = new MockAltNetworkParams();
+        Network altNet = new MockAltNetwork();
 
         // Create a parser that knows about the new network (this does not modify global state)
         List<Network> nets = new ArrayList<>(DefaultAddressParserProvider.DEFAULT_NETWORKS_LEGACY);
-        nets.add(altNetParams.network());
+        nets.add(altNet);
         AddressParser customParser = new DefaultAddressParserProvider(DefaultAddressParserProvider.DEFAULT_NETWORKS_SEGWIT, nets).forKnownNetworks();
 
-        // Unfortunately for NetworkParameters.of() to work properly we still have to modify gobal state
-        Networks.register(altNetParams);
-        try {
+        // Check if we can parse address
+        Address altAddress = customParser.parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
+        assertEquals(altNet.id(), altAddress.network().id());
 
-            // Check if can parse address
-            Address altAddress = customParser.parseAddress("LLxSnHLN2CYyzB5eWTR9K9rS9uWtbTQFb6");
-            assertEquals(altNetParams.getId(), altAddress.network().id());
-
-            // Check if main network works with custom parser
-            Address mainAddress = customParser.parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
-            assertEquals(MAINNET.id(), mainAddress.network().id());
-
-        } finally {
-            // Unregister network. Do this in a finally block so other tests don't fail if the try block fails to complete
-            Networks.unregister(altNetParams);
-        }
+        // Check if main network works with custom parser
+        Address mainAddress = customParser.parseAddress("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL");
+        assertEquals(MAINNET.id(), mainAddress.network().id());
     }
 
     @Test
