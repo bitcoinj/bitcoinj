@@ -16,8 +16,18 @@
 
 package org.bitcoinj.script;
 
+import org.bitcoinj.base.Address;
+import org.bitcoinj.base.AddressParser;
+import org.bitcoinj.base.SegwitAddress;
+import org.bitcoinj.base.internal.AddressData;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.junit.Test;
 
+import java.util.Locale;
+
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
+import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.bitcoinj.script.ScriptOpCodes.OP_FALSE;
 import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 import static org.junit.Assert.assertArrayEquals;
@@ -120,4 +130,84 @@ public class ScriptBuilderTest {
         byte[] s = new ScriptBuilder().opFalse().build().program();
         assertArrayEquals(expected, s);
     }
+
+    @Test
+    public void example_p2wpkh_mainnet() {
+        String bech32 = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
+
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, MAINNET);
+
+        assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
+                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
+    }
+
+    @Test
+    public void example_p2wsh_mainnet() {
+        String bech32 = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3";
+
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, MAINNET);
+
+        assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
+                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
+    }
+
+    @Test
+    public void example_p2wpkh_testnet() {
+        String bech32 = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx";
+
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, TESTNET);
+
+        assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
+                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
+    }
+
+    @Test
+    public void example_p2wpkh_regtest() {
+        String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
+
+        SegwitAddress address = SegwitAddress.fromBech32(bcrt1_bech32, REGTEST);
+
+        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
+                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
+    }
+
+    @Test
+    public void example_p2wpkh_regtest_any_network() {
+        AddressParser addressParser = AddressParser.getDefault();
+
+        String bcrt1_bech32 = "bcrt1qspfueag7fvty7m8htuzare3xs898zvh30fttu2";
+
+        Address address = addressParser.parseAddress(bcrt1_bech32);
+
+        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
+                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
+    }
+
+    @Test
+    public void example_p2wsh_testnet() {
+        String bech32 = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7";
+
+        SegwitAddress address = SegwitAddress.fromBech32(bech32, TESTNET);
+
+        assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
+                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
+    }
+
+    @Test
+    public void validAddresses() {
+        AddressParser addressParser = AddressParser.getDefault();
+
+        for (AddressData valid : AddressData.VALID_ADDRESSES) {
+            SegwitAddress address = (SegwitAddress) addressParser.parseAddress(valid.address);
+
+            assertEquals(valid.expectedScriptPubKey,
+                    ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
+            if (valid.expectedWitnessVersion == 0) {
+                Script expectedScriptPubKey = Script.parse(ByteUtils.parseHex(valid.expectedScriptPubKey));
+                assertEquals(address, SegwitAddress.fromHash(valid.expectedNetwork,
+                        ScriptPattern.extractHashFromP2WH(expectedScriptPubKey)));
+            }
+        }
+    }
+
 }
