@@ -1,0 +1,22 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api project(':bitcoinj-core')
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs.addAll(['--release', '8'])
+    options.compilerArgs << '-Xlint:deprecation'
+    options.encoding = 'UTF-8'
+}
+
+ext.moduleName = 'org.bitcoinj.test-support'
+
+jar {
+    inputs.property("moduleName", moduleName)
+    manifest {
+        attributes 'Automatic-Module-Name': moduleName
+    }
+}

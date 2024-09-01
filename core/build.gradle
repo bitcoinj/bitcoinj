@@ -14,6 +14,8 @@ dependencies {
     api 'com.google.protobuf:protobuf-javalite:4.27.3'
     implementation 'org.slf4j:slf4j-api:2.0.13'
     implementation 'net.jcip:jcip-annotations:1.0'
+
+    testImplementation project(':bitcoinj-test-support')
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.easymock:easymock:5.4.0'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'

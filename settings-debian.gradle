@@ -19,6 +19,9 @@ if (!JavaVersion.current().isJava11Compatible()) {
 
 rootProject.name = 'bitcoinj-parent'
 
+include 'test-support'
+project(':test-support').name = 'bitcoinj-test-support'
+
 include 'core'
 project(':core').name = 'bitcoinj-core'
 
