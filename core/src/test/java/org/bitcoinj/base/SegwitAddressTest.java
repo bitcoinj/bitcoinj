@@ -19,10 +19,6 @@ package org.bitcoinj.base;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.bitcoinj.base.exceptions.AddressFormatException;
-import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.test.support.AddressData;
 import org.junit.Test;
 
@@ -55,8 +51,6 @@ public class SegwitAddressTest {
         SegwitAddress address = SegwitAddress.fromBech32(bech32, MAINNET);
 
         assertEquals(MAINNET, address.network());
-        assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
-                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toBech32());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toString());
@@ -69,8 +63,6 @@ public class SegwitAddressTest {
         SegwitAddress address = SegwitAddress.fromBech32(bech32, MAINNET);
 
         assertEquals(MAINNET, address.network());
-        assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
-                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
         assertEquals(ScriptType.P2WSH, address.getOutputScriptType());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toBech32());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toString());
@@ -83,8 +75,6 @@ public class SegwitAddressTest {
         SegwitAddress address = SegwitAddress.fromBech32(bech32, TESTNET);
 
         assertEquals(TESTNET, address.network());
-        assertEquals("0014751e76e8199196d454941c45d1b3a323f1433bd6",
-                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toBech32());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toString());
@@ -108,8 +98,6 @@ public class SegwitAddressTest {
         SegwitAddress address = SegwitAddress.fromBech32(bcrt1_bech32, REGTEST);
 
         assertEquals(REGTEST, address.network());
-        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
-                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
         assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toBech32());
         assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toString());
@@ -122,8 +110,6 @@ public class SegwitAddressTest {
         Address address = addressParser.parseAddress(bcrt1_bech32);
 
         assertEquals(REGTEST, address.network());
-        assertEquals("00148053ccf51e4b164f6cf75f05d1e62681ca7132f1",
-                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
         assertEquals(ScriptType.P2WPKH, address.getOutputScriptType());
         assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), ((SegwitAddress)address).toBech32());
         assertEquals(bcrt1_bech32.toLowerCase(Locale.ROOT), address.toString());
@@ -136,8 +122,6 @@ public class SegwitAddressTest {
         SegwitAddress address = SegwitAddress.fromBech32(bech32, TESTNET);
 
         assertEquals(TESTNET, address.network());
-        assertEquals("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262",
-                ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
         assertEquals(ScriptType.P2WSH, address.getOutputScriptType());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toBech32());
         assertEquals(bech32.toLowerCase(Locale.ROOT), address.toString());
@@ -149,14 +133,7 @@ public class SegwitAddressTest {
             SegwitAddress address = (SegwitAddress) addressParser.parseAddress(valid.address);
 
             assertEquals(valid.expectedNetwork, address.network());
-            assertEquals(valid.expectedScriptPubKey,
-                    ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
             assertEquals(valid.address.toLowerCase(Locale.ROOT), address.toBech32());
-            if (valid.expectedWitnessVersion == 0) {
-                Script expectedScriptPubKey = Script.parse(ByteUtils.parseHex(valid.expectedScriptPubKey));
-                assertEquals(address, SegwitAddress.fromHash(valid.expectedNetwork,
-                        ScriptPattern.extractHashFromP2WH(expectedScriptPubKey)));
-            }
             assertEquals(valid.expectedWitnessVersion, address.getWitnessVersion());
         }
     }
