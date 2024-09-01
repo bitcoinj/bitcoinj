@@ -22,6 +22,9 @@ rootProject.name = 'bitcoinj-parent'
 include 'test-support'
 project(':test-support').name = 'bitcoinj-test-support'
 
+include 'base'
+project(':base').name = 'bitcoinj-base'
+
 include 'core'
 project(':core').name = 'bitcoinj-core'
 

@@ -20,6 +20,9 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 include 'test-support'
 project(':test-support').name = 'bitcoinj-test-support'
 
+include 'base'
+project(':base').name = 'bitcoinj-base'
+
 include 'core'
 project(':core').name = 'bitcoinj-core'
 
