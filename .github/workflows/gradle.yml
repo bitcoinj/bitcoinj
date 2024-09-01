@@ -38,6 +38,8 @@ jobs:
         with:
           name: bitcoinj-core-test-results-jdk${{ matrix.java }}-${{ matrix.os }}-${{ matrix.gradle }}
           path: |
+            base/build/reports/tests/test/
+            base/build/test-results/test/
             core/build/reports/tests/test/
             core/build/test-results/test/
             wallettool/build/reports/tests/test/
