@@ -48,18 +48,4 @@ public interface Message {
      * @return serialized data in Bitcoin protocol format
      */
     byte[] serialize();
-
-    /**
-     * @deprecated use {@link #serialize()}
-     */
-    @Deprecated
-    default byte[] bitcoinSerialize()  {
-        return serialize();
-    }
-
-    /** @deprecated use {@link #serialize()} */
-    @Deprecated
-    default byte[] unsafeBitcoinSerialize() {
-        return serialize();
-    }
 }

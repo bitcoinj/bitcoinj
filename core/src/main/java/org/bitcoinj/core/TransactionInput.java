@@ -185,12 +185,6 @@ public class TransactionInput {
         return write(ByteBuffer.allocate(messageSize())).array();
     }
 
-    /** @deprecated use {@link #serialize()} */
-    @Deprecated
-    public byte[] bitcoinSerialize() {
-        return serialize();
-    }
-
     /**
      * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
      * size can differ from the size of the original payload.

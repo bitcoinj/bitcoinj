@@ -60,6 +60,5 @@ public class TransactionOutPointTest {
         outpoint.getHash();
         outpoint.getMessageSize();
         outpoint.getIndex();
-        outpoint.bitcoinSerialize();
     }
 }

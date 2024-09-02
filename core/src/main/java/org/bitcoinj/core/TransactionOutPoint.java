@@ -117,12 +117,6 @@ public class TransactionOutPoint {
         return write(ByteBuffer.allocate(BYTES)).array();
     }
 
-    /** @deprecated use {@link #serialize()} */
-    @Deprecated
-    public byte[] bitcoinSerialize() {
-        return serialize();
-    }
-
     /** @deprecated use {@link #BYTES} */
     @Deprecated
     public int getMessageSize() {
