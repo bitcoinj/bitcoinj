@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
-// TODO: Finish adding Context c'tors to all the different objects so we can start deprecating the versions that take NetworkParameters.
 // TODO: Add a working directory notion to Context and make various subsystems that want to use files default to that directory (e.g. Orchid, block stores, wallet, etc).
 // TODO: Auto-register the block chain object here, and then use it in the (newly deprecated) TransactionConfidence.getDepthInBlocks() method: the new version should take an AbstractBlockChain specifically.
 //       Also use the block chain object reference from the context in PeerGroup and remove the other constructors, as it's easy to forget to wire things up.
@@ -56,19 +55,10 @@ public class Context {
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
-     * expected to do this yourself in the same manner as fetching a NetworkParameters object (at the start of your app).
+     * expected to do this yourself.
      */
     public Context() {
         this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true, false);
-    }
-
-    /**
-     * Note that NetworkParameters have been removed from this class. Thus, this constructor just swallows them.
-     * @deprecated Use {@link Context#Context()}
-     */
-    @Deprecated
-    public Context(NetworkParameters params) {
-        this();
     }
 
     /**
@@ -87,15 +77,6 @@ public class Context {
         this.feePerKb = feePerKb;
         this.relaxProofOfWork = relaxProofOfWork;
         lastConstructed = this;
-    }
-
-    /**
-     * Note that NetworkParameters have been removed from this class. Thus, this constructor just swallows them.
-     * @deprecated Use {@link Context#Context(int, Coin, boolean, boolean)}
-     */
-    @Deprecated
-    public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
-        this(eventHorizon, feePerKb, ensureMinRequiredFee, false);
     }
 
     private static volatile Context lastConstructed;
@@ -155,15 +136,6 @@ public class Context {
             return context;
         }
         return context;
-    }
-
-    /**
-     * Note that NetworkParameters have been removed from this class. Thus, this method just swallows them.
-     * @deprecated Use {@link Context#getOrCreate()}
-     */
-    @Deprecated
-    public static Context getOrCreate(NetworkParameters params) {
-        return getOrCreate();
     }
 
     /**
