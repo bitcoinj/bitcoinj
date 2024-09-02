@@ -5350,7 +5350,7 @@ public class Wallet extends BaseTaggableObject
 
     private void addSuppliedInputs(Transaction tx, List<TransactionInput> originalInputs) {
         for (TransactionInput input : originalInputs)
-            tx.addInput(TransactionInput.read(ByteBuffer.wrap(input.bitcoinSerialize()), tx));
+            tx.addInput(TransactionInput.read(ByteBuffer.wrap(input.serialize()), tx));
     }
 
     private Coin estimateFees(Transaction tx, CoinSelection coinSelection, Coin requestedFeePerKb, boolean ensureMinRequiredFee) {
