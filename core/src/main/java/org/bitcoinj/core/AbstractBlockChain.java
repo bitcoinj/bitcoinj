@@ -601,7 +601,7 @@ public abstract class AbstractBlockChain {
                         block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
                 for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
             }
-            if (expensiveChecks && block.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(head, blockStore))
+            if (expensiveChecks && block.time().getEpochSecond() <= getMedianTimestampOfRecentBlocks(head, blockStore))
                 throw new VerificationException("Block's timestamp is too early");
 
             // BIP 66 & 65: Enforce block version 3/4 once they are a supermajority of blocks
@@ -775,9 +775,9 @@ public abstract class AbstractBlockChain {
                                                          BlockStore store) throws BlockStoreException {
         long[] timestamps = new long[11];
         int unused = 9;
-        timestamps[10] = storedBlock.getHeader().getTimeSeconds();
+        timestamps[10] = storedBlock.getHeader().time().getEpochSecond();
         while (unused >= 0 && (storedBlock = storedBlock.getPrev(store)) != null)
-            timestamps[unused--] = storedBlock.getHeader().getTimeSeconds();
+            timestamps[unused--] = storedBlock.getHeader().time().getEpochSecond();
         
         Arrays.sort(timestamps, unused+1, 11);
         return timestamps[unused + (11-unused)/2];
@@ -833,7 +833,7 @@ public abstract class AbstractBlockChain {
             for (Iterator<StoredBlock> it = newBlocks.descendingIterator(); it.hasNext();) {
                 cursor = it.next();
                 Block cursorBlock = cursor.getHeader();
-                if (expensiveChecks && cursorBlock.getTimeSeconds() <= getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore), blockStore))
+                if (expensiveChecks && cursorBlock.time().getEpochSecond() <= getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore), blockStore))
                     throw new VerificationException("Block's timestamp is too early during reorg");
                 TransactionOutputChanges txOutChanges;
                 if (cursor != newChainHead || block == null)

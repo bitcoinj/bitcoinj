@@ -319,7 +319,7 @@ public class BlockTest {
                 ByteUtils.writeInt32LE(getVersion(), stream);
                 stream.write(getPrevBlockHash().serialize());
                 stream.write(getMerkleRoot().serialize());
-                ByteUtils.writeInt32LE(getTimeSeconds(), stream);
+                ByteUtils.writeInt32LE(time().getEpochSecond(), stream);
                 ByteUtils.writeInt32LE(getDifficultyTarget(), stream);
                 ByteUtils.writeInt32LE(getNonce(), stream);
 
