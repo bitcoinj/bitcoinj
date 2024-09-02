@@ -22,7 +22,6 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.core.NetworkParameters;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -120,21 +119,6 @@ public class BitcoinURI {
      */
     public static BitcoinURI of(String uri, @Nonnull Network network) throws BitcoinURIParseException {
         return new BitcoinURI(uri, Objects.requireNonNull(network));
-    }
-
-    /**
-     * Constructs a new object by trying to parse the input as a valid Bitcoin URI.
-     *
-     * @param params The network parameters that determine which network the URI is from, or null if you don't have
-     *               any expectation about what network the URI is for and wish to check yourself.
-     * @param input The raw URI data to be parsed (see class comments for accepted formats)
-     *
-     * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
-     * @deprecated Use {@link BitcoinURI#of(String, Network)} or {@link BitcoinURI#of(String)}
-     */
-    @Deprecated
-    public BitcoinURI(@Nullable NetworkParameters params, String input) throws BitcoinURIParseException {
-        this(input, params != null ? params.network() : null);
     }
 
     private BitcoinURI(String input, @Nullable Network network) throws BitcoinURIParseException {
@@ -365,25 +349,6 @@ public class BitcoinURI {
     public static String convertToBitcoinURI(Address address, Coin amount,
                                              String label, String message) {
         return convertToBitcoinURI(address.network(), address.toString(), amount, label, message);
-    }
-
-    /**
-     * Simple Bitcoin URI builder using known good fields.
-     *
-     * @param params The network parameters that determine which network the URI
-     * is for.
-     * @param address The Bitcoin address
-     * @param amount The amount
-     * @param label A label
-     * @param message A message
-     * @return A String containing the Bitcoin URI
-     * @deprecated Use {@link #convertToBitcoinURI(Network, String, Coin, String, String)}
-     */
-    @Deprecated
-    public static String convertToBitcoinURI(NetworkParameters params,
-                                             String address, @Nullable Coin amount,
-                                             @Nullable String label, @Nullable String message) {
-        return convertToBitcoinURI(params.network(), address, amount, label, message);
     }
 
     /**
