@@ -26,7 +26,6 @@ import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -250,30 +249,12 @@ public class KeyChainGroup implements KeyBag {
         return new KeyChainGroup(network, new BasicKeyChain(), null, -1, -1, null, null);
     }
 
-    /** @deprecated use {@link #createBasic(Network)} */
-    @Deprecated
-    public static KeyChainGroup createBasic(NetworkParameters params) {
-        return createBasic(params.network());
-    }
-
     public static KeyChainGroup.Builder builder(Network network) {
         return new Builder(network, KeyChainGroupStructure.BIP32);
     }
 
-    /** @deprecated use {@link #builder(Network)} */
-    @Deprecated
-    public static KeyChainGroup.Builder builder(NetworkParameters params) {
-        return builder(params.network());
-    }
-
     public static KeyChainGroup.Builder builder(Network network, KeyChainGroupStructure structure) {
         return new Builder(network, structure);
-    }
-
-    /** @deprecated use {@link #builder(Network, KeyChainGroupStructure)} */
-    @Deprecated
-    public static KeyChainGroup.Builder builder(NetworkParameters params, KeyChainGroupStructure structure) {
-        return builder(params.network(), structure);
     }
 
     private KeyChainGroup(Network network, @Nullable BasicKeyChain basicKeyChain,
