@@ -242,14 +242,6 @@ public class TransactionOutPoint {
         return index;
     }
 
-    /**
-     * @deprecated Use {@link #index()}
-     */
-    @Deprecated
-    public long getIndex() {
-        return index();
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

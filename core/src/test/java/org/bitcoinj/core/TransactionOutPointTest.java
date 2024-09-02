@@ -53,10 +53,4 @@ public class TransactionOutPointTest {
             return new TransactionOutPoint(Integer.toUnsignedLong(random.nextInt()), Sha256Hash.wrap(randomBytes));
         }).limit(10).iterator();
     }
-
-    @Test
-    public void deprecatedMembers() {
-        TransactionOutPoint outpoint = TransactionOutPoint.UNCONNECTED;
-        outpoint.getIndex();
-    }
 }
