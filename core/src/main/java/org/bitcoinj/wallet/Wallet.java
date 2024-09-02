@@ -326,14 +326,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @deprecated use {@link #createDeterministic(Network, ScriptType)}
-     */
-    @Deprecated
-    public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType) {
-        return createDeterministic(params.network(), outputScriptType);
-    }
-
-    /**
      * Creates a new, empty wallet with a randomly chosen seed and no transactions. Make sure to provide for sufficient
      * backup! Any keys will be derived from the seed. If you want to restore a wallet from disk instead, see
      * {@link #loadFromFile}.
@@ -347,28 +339,12 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @deprecated use {@link Wallet#createDeterministic(Network, ScriptType, KeyChainGroupStructure)}
-     */
-    @Deprecated
-    public static Wallet createDeterministic(NetworkParameters params, ScriptType outputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
-        return new Wallet(params.network(), KeyChainGroup.builder(params.network(), keyChainGroupStructure).fromRandom(outputScriptType).build());
-    }
-
-    /**
      * Creates a new, empty wallet with just a basic keychain and no transactions. No deterministic chains will be created
      * automatically. This is meant for when you just want to import a few keys and operate on them.
      * @param network network wallet will operate on
      */
     public static Wallet createBasic(Network network) {
         return new Wallet(network, KeyChainGroup.createBasic(network));
-    }
-
-    /**
-     * @deprecated use {@link #createBasic(Network)}
-     */
-    @Deprecated
-    public static Wallet createBasic(NetworkParameters params) {
-        return createBasic(params.network());
     }
 
     /**
@@ -383,15 +359,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @deprecated use {@link #fromSeed(Network, DeterministicSeed, ScriptType)}
-     */
-    @Deprecated
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed,
-                                  ScriptType outputScriptType) {
-        return fromSeed(params.network(), seed, outputScriptType);
-    }
-
-    /**
      * @param network network wallet will operate on
      * @param seed deterministic seed
      * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
@@ -401,15 +368,6 @@ public class Wallet extends BaseTaggableObject
     public static Wallet fromSeed(Network network, DeterministicSeed seed, ScriptType outputScriptType,
             KeyChainGroupStructure structure) {
         return new Wallet(network, KeyChainGroup.builder(network, structure).fromSeed(seed, outputScriptType).build());
-    }
-
-    /**
-     * @deprecated use {@link #fromSeed(Network, DeterministicSeed, ScriptType, KeyChainGroupStructure)}
-     */
-    @Deprecated
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ScriptType outputScriptType,
-                                  KeyChainGroupStructure structure) {
-        return fromSeed(params.network(), seed, outputScriptType, structure);
     }
 
     /**
@@ -427,15 +385,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @deprecated use {@link #fromSeed(Network, DeterministicSeed, ScriptType, List)}
-     */
-    @Deprecated
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed, ScriptType outputScriptType,
-                                  List<ChildNumber> accountPath) {
-        return fromSeed(params.network(), seed, outputScriptType, accountPath);
-    }
-
-    /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. This HAS
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}.
      */
@@ -444,15 +393,6 @@ public class Wallet extends BaseTaggableObject
         DeterministicKeyChain chain = DeterministicKeyChain.builder().watch(watchKey).outputScriptType(outputScriptType)
                 .build();
         return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
-    }
-
-    /**
-     * @deprecated use {@link #fromWatchingKey(Network, DeterministicKey, ScriptType)}
-     */
-    @Deprecated
-    public static Wallet fromWatchingKey(NetworkParameters params, DeterministicKey watchKey,
-                                         ScriptType outputScriptType) {
-        return fromWatchingKey(params.network(), watchKey, outputScriptType);
     }
 
     /**
@@ -470,14 +410,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @deprecated use {@link #fromWatchingKeyB58(Network, String, Instant)}
-     */
-    @Deprecated
-    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, Instant creationTime) {
-        return fromWatchingKeyB58(params.network(), watchKeyB58, creationTime);
-    }
-
-    /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given watching key. The
      * account path is specified. The key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME}
      * @param network network wallet will operate on
@@ -486,14 +418,6 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet fromWatchingKeyB58(Network network, String watchKeyB58) {
         return fromWatchingKeyB58(network, watchKeyB58, DeterministicHierarchy.BIP32_STANDARDISATION_TIME);
-    }
-
-    /**
-     * @deprecated use {@link #fromWatchingKeyB58(Network, String)}
-     */
-    @Deprecated
-    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58) {
-        return fromWatchingKeyB58(params.network(), watchKeyB58);
     }
 
     /**
@@ -506,17 +430,6 @@ public class Wallet extends BaseTaggableObject
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).outputScriptType(outputScriptType)
                 .build();
         return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
-    }
-
-    /**
-     * @deprecated use {@link #fromSpendingKey(Network, DeterministicKey, ScriptType)}
-     */
-    @Deprecated
-    public static Wallet fromSpendingKey(NetworkParameters params, DeterministicKey spendKey,
-                                         ScriptType outputScriptType) {
-        DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(spendKey).outputScriptType(outputScriptType)
-                .build();
-        return new Wallet(params.network(), KeyChainGroup.builder(params.network()).addChain(chain).build());
     }
 
     /**
@@ -533,14 +446,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @deprecated use {@link #fromWatchingKeyB58(Network, String, Instant)}
-     */
-    @Deprecated
-    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, Instant creationTime) {
-        return fromWatchingKeyB58(params.network(), spendingKeyB58, creationTime);
-    }
-
-    /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key.
      * The key's creation time will be set to {@link DeterministicHierarchy#BIP32_STANDARDISATION_TIME}.
      * @param network network wallet will operate on
@@ -549,14 +454,6 @@ public class Wallet extends BaseTaggableObject
      */
     public static Wallet fromSpendingKeyB58(Network network, String spendingKeyB58) {
         return fromSpendingKeyB58(network, spendingKeyB58, DeterministicHierarchy.BIP32_STANDARDISATION_TIME);
-    }
-
-    /**
-     * @deprecated use {@link #fromSpendingKeyB58(Network, String)}
-     */
-    @Deprecated
-    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58) {
-        return fromSpendingKeyB58(params.network(), spendingKeyB58);
     }
 
     /**
@@ -584,15 +481,6 @@ public class Wallet extends BaseTaggableObject
         DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(outputScriptType).build();
         return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
-    }
-
-    /**
-     * @deprecated use {@link #fromMasterKey(Network, DeterministicKey, ScriptType, ChildNumber)}
-     */
-    @Deprecated
-    public static Wallet fromMasterKey(NetworkParameters params, DeterministicKey masterKey,
-                                       ScriptType outputScriptType, ChildNumber accountNumber) {
-        return fromMasterKey(params.network(), masterKey, outputScriptType, accountNumber);
     }
 
     private static ScriptType outputScriptTypeFromB58(NetworkParameters params, String base58) {
@@ -632,14 +520,6 @@ public class Wallet extends BaseTaggableObject
         createTransientState();
     }
 
-    /**
-     * @deprecated  use {@link Wallet(NetworkParameters, KeyChainGroup)}
-     */
-    @Deprecated
-    public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
-        this(params.network(), keyChainGroup);
-    }
-
     private void createTransientState() {
         ignoreNextNewBlock = new HashSet<>();
         txConfidenceListener = (confidence, reason) -> {
@@ -666,14 +546,6 @@ public class Wallet extends BaseTaggableObject
 
     public Network network() {
         return network;
-    }
-
-    /**
-     * @deprecated Use {@link #network()}
-     */
-    @Deprecated
-    public NetworkParameters getNetworkParameters() {
-        return params;
     }
 
     /**
@@ -1876,15 +1748,6 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
-    }
-
-    /**
-     * Returns the parameters this wallet was created with.
-     * @deprecated Use {@link #network()}
-     */
-    @Deprecated
-    public NetworkParameters getParams() {
-        return params;
     }
 
     /**
