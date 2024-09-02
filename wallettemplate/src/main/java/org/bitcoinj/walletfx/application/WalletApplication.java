@@ -25,7 +25,6 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -76,15 +75,6 @@ public abstract class WalletApplication implements AppDelegate {
 
     public String applicationName() {
         return applicationName;
-    }
-
-    /**
-     * @return Parameters for network this wallet is running on
-     * @deprecated Use {@link #network} (or {@link NetworkParameters#of} if you really need a {@link NetworkParameters}.)
-     */
-    @Deprecated
-    public NetworkParameters params() {
-        return NetworkParameters.of(network);
     }
 
     public BitcoinNetwork network() {
