@@ -168,7 +168,7 @@ public class BloomFilter extends BaseMessage {
     }
 
     /**
-     * Serializes this message to the provided stream. If you just want the raw bytes use bitcoinSerialize().
+     * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
      */
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
