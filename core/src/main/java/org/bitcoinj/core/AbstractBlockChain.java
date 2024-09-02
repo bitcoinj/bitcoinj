@@ -600,7 +600,7 @@ public abstract class AbstractBlockChain {
                         block.getHashAsString(), filteredTxHashList.size(), filteredTxn.size());
                 for (Sha256Hash hash : filteredTxHashList) log.debug("  matched tx {}", hash);
             }
-            if (expensiveChecks && block.time().getEpochSecond() <= getMedianTimestampOfRecentBlocks(head, blockStore))
+            if (expensiveChecks && !block.time().isAfter(getMedianTimestampOfRecentBlocks(head, blockStore)))
                 throw new VerificationException("Block's timestamp is too early");
 
             // BIP 66 & 65: Enforce block version 3/4 once they are a supermajority of blocks
@@ -770,13 +770,13 @@ public abstract class AbstractBlockChain {
     /**
      * Gets the median timestamp of the last 11 blocks
      */
-    private static long getMedianTimestampOfRecentBlocks(StoredBlock storedBlock,
+    private static Instant getMedianTimestampOfRecentBlocks(StoredBlock storedBlock,
                                                          BlockStore store) throws BlockStoreException {
-        long[] timestamps = new long[11];
+        Instant[] timestamps = new Instant[11];
         int unused = 9;
-        timestamps[10] = storedBlock.getHeader().time().getEpochSecond();
+        timestamps[10] = storedBlock.getHeader().time();
         while (unused >= 0 && (storedBlock = storedBlock.getPrev(store)) != null)
-            timestamps[unused--] = storedBlock.getHeader().time().getEpochSecond();
+            timestamps[unused--] = storedBlock.getHeader().time();
         
         Arrays.sort(timestamps, unused+1, 11);
         return timestamps[unused + (11-unused)/2];
@@ -832,7 +832,7 @@ public abstract class AbstractBlockChain {
             for (Iterator<StoredBlock> it = newBlocks.descendingIterator(); it.hasNext();) {
                 cursor = it.next();
                 Block cursorBlock = cursor.getHeader();
-                if (expensiveChecks && cursorBlock.time().getEpochSecond() <= getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore), blockStore))
+                if (expensiveChecks && !cursorBlock.time().isAfter(getMedianTimestampOfRecentBlocks(cursor.getPrev(blockStore), blockStore)))
                     throw new VerificationException("Block's timestamp is too early during reorg");
                 TransactionOutputChanges txOutChanges;
                 if (cursor != newChainHead || block == null)
