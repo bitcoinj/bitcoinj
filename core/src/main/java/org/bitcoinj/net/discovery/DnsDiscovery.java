@@ -67,23 +67,6 @@ public class DnsDiscovery extends MultiplexingDiscovery {
         super(network, buildDiscoveries(network, dnsSeeds));
     }
 
-    /**
-     * @deprecated Use {@link DnsDiscovery#DnsDiscovery(Network)}
-     */
-    @Deprecated
-    public DnsDiscovery(NetworkParameters netParams) {
-        this(netParams.getDnsSeeds(), netParams.network());
-    }
-
-    /**
-     * @deprecated Use {@link DnsDiscovery#DnsDiscovery(String[], Network)}
-     */
-    @Deprecated
-    public DnsDiscovery(String[] dnsSeeds, NetworkParameters params) {
-        this(dnsSeeds, params.network());
-    }
-
-
     private static List<PeerDiscovery> buildDiscoveries(Network network, String[] seeds) {
         List<PeerDiscovery> discoveries = new ArrayList<>();
         if (seeds != null)
@@ -105,14 +88,6 @@ public class DnsDiscovery extends MultiplexingDiscovery {
         public DnsSeedDiscovery(Network network, String hostname) {
             this.hostname = hostname;
             this.params = NetworkParameters.of(network);
-        }
-
-        /**
-         * @deprecated Use {@link DnsSeedDiscovery#DnsSeedDiscovery(Network, String)}
-         */
-        @Deprecated
-        public DnsSeedDiscovery(NetworkParameters params, String hostname) {
-            this(params.network(), hostname);
         }
 
         @Override

@@ -51,8 +51,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     private static final Logger log = LoggerFactory.getLogger(MultiplexingDiscovery.class);
 
     protected final List<PeerDiscovery> seeds;
-    @Deprecated
-    protected final NetworkParameters netParams;
     private volatile ExecutorService vThreadPool;
     private final boolean parallelQueries;
     private final boolean shufflePeers;
@@ -84,23 +82,6 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     }
 
     /**
-     * @deprecated Use {@link #forServices(Network, long)} 
-     */
-    @Deprecated
-    public static MultiplexingDiscovery forServices(NetworkParameters params, long services) {
-        return forServices(params.network(), services);
-    }
-
-    /**
-     * @deprecated Use {@link #forServices(Network, long, boolean, boolean)} 
-     */
-    @Deprecated
-    public static MultiplexingDiscovery forServices(NetworkParameters params, long services, boolean parallelQueries,
-                                                    boolean shufflePeers) {
-        return forServices(params.network(), services, parallelQueries, shufflePeers);
-    }
-
-    /**
      * Will query the given seeds in parallel before producing a merged response.
      * @param network The network we are querying for
      * @param seeds Sources to query in parallel
@@ -109,19 +90,9 @@ public class MultiplexingDiscovery implements PeerDiscovery {
         this(network, seeds, true, true);
     }
 
-    /**
-     * Will query the given seeds in parallel before producing a merged response.
-     * @deprecated Use {@link MultiplexingDiscovery#MultiplexingDiscovery(Network, List)}
-     */
-    @Deprecated
-    public MultiplexingDiscovery(NetworkParameters params, List<PeerDiscovery> seeds) {
-        this(params.network(), seeds);
-    }
-
     private MultiplexingDiscovery(Network network, List<PeerDiscovery> seeds, boolean parallelQueries,
                                   boolean shufflePeers) {
         checkArgument(!seeds.isEmpty() || network == REGTEST);
-        this.netParams = NetworkParameters.of(network);
         this.seeds = seeds;
         this.parallelQueries = parallelQueries;
         this.shufflePeers = shufflePeers;
