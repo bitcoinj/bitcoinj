@@ -35,6 +35,7 @@ import org.bitcoinj.utils.VersionTally;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -117,7 +118,7 @@ public abstract class NetworkParameters {
      * network rules in a soft-forking manner, that is, blocks that don't follow the rules are accepted but not
      * mined upon and thus will be quickly re-orged out as long as the majority are enforcing the rule.
      */
-    public static final int BIP16_ENFORCE_TIME = 1333238400;
+    public static final Instant BIP16_ENFORCE_TIME = Instant.ofEpochSecond(1333238400);
     
     /**
      * The maximum number of coins to be generated
@@ -524,7 +525,7 @@ public abstract class NetworkParameters {
     public EnumSet<Script.VerifyFlag> getTransactionVerificationFlags(final Block block,
             final Transaction transaction, final VersionTally tally, final Integer height) {
         final EnumSet<Script.VerifyFlag> verifyFlags = EnumSet.noneOf(Script.VerifyFlag.class);
-        if (block.time().getEpochSecond() >= NetworkParameters.BIP16_ENFORCE_TIME)
+        if (!block.time().isBefore(NetworkParameters.BIP16_ENFORCE_TIME))
             verifyFlags.add(Script.VerifyFlag.P2SH);
 
         // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
