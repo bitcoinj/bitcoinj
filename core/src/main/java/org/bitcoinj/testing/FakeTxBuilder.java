@@ -26,7 +26,6 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -62,15 +61,6 @@ public class FakeTxBuilder {
     /** Create a fake transaction, without change. */
     public static Transaction createFakeTx(Network network) {
         return createFakeTxWithoutChangeAddress(Coin.COIN, randomAddress(network));
-    }
-
-    /**
-     * Create a fake transaction, without change.
-     * @deprecated use {@link FakeTxBuilder#createFakeTx(Network)}
-     */
-    @Deprecated
-    public static Transaction createFakeTx(final NetworkParameters params) {
-        return createFakeTxWithoutChangeAddress(Coin.COIN, randomAddress(params.network()));
     }
 
     /** Create a fake transaction, without change. */
@@ -155,16 +145,6 @@ public class FakeTxBuilder {
      */
     public static Transaction createFakeTx(Network network, Coin value, Address to) {
         return createFakeTxWithChangeAddress(value, to, randomAddress(network));
-    }
-
-    /**
-     * Create a fake TX of sufficient realism to exercise the unit tests. Two outputs, one to us, one to somewhere
-     * else to simulate change. There is one random input.
-     * @deprecated use {@link #createFakeTx(Network, Coin, Address)}
-     */
-    @Deprecated
-    public static Transaction createFakeTx(NetworkParameters params, Coin value, Address to) {
-        return createFakeTx(params.network(), value, to);
     }
 
     /**
