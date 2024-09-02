@@ -312,7 +312,8 @@ public class BlockTest {
     @Test
     public void parseBlockWithHugeDeclaredTransactionsSize() {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Block block = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 1, 1, 1, new ArrayList<Transaction>()) {
+        Block block = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.ofEpochSecond(1), 1, 1,
+                new ArrayList<Transaction>()) {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 ByteUtils.writeInt32LE(getVersion(), stream);

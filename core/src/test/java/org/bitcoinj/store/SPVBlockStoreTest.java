@@ -154,7 +154,7 @@ public class SPVBlockStoreTest {
         Stopwatch watch = Stopwatch.start();
         for (int i = 0; i < ITERATIONS; i++) {
             // Using i as the nonce so that the block hashes are different.
-            Block block = new Block(0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0, 0, i,
+            Block block = new Block(0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH, 0, i,
                     Collections.emptyList());
             StoredBlock b = new StoredBlock(block, BigInteger.ZERO, i);
             store.put(b);
