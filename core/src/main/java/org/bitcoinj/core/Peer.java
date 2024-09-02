@@ -1354,15 +1354,6 @@ public class Peer extends PeerSocketHandler {
         }
     }
 
-    /** @deprecated use {@link #setDownloadParameters(boolean)} or {@link #setFastDownloadParameters(boolean, Instant)} */
-    @Deprecated
-    public void setDownloadParameters(long fastCatchupTimeSecs, boolean useFilteredBlocks) {
-        if (fastCatchupTimeSecs > 0)
-            setFastDownloadParameters(useFilteredBlocks, Instant.ofEpochSecond(fastCatchupTimeSecs));
-        else
-            setDownloadParameters(useFilteredBlocks);
-    }
-
     /**
      * Links the given wallet to this peer. If you have multiple peers, you should use a {@link PeerGroup} to manage
      * them and use the {@link PeerGroup#addWallet(Wallet)} method instead of registering the wallet with each peer

@@ -230,24 +230,6 @@ public class Block extends BaseMessage {
                 null;
     }
 
-    /**
-     * Construct a block initialized with all the given fields.
-     * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
-     * @param prevBlockHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
-     * @param merkleRoot The root of the merkle tree formed by the transactions.
-     * @param time UNIX time seconds when the block was mined.
-     * @param difficultyTarget Number which this block hashes lower than.
-     * @param nonce Arbitrary number to make the block hash lower than the target.
-     * @param transactions List of transactions including the coinbase, or {@code null} for header-only blocks
-     * @deprecated use {@link #Block(long, Sha256Hash, Sha256Hash, Instant, long, long, List)}
-     */
-    @Deprecated
-    public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, long time,
-                 long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
-        this(version, prevBlockHash, merkleRoot, Instant.ofEpochSecond(time), difficultyTarget, nonce,
-                transactions);
-    }
-
     public static Block createGenesis(Instant time, long difficultyTarget) {
         return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, genesisTransactions());
     }

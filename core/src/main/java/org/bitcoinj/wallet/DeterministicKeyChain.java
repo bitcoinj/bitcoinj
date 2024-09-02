@@ -219,13 +219,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             return self();
         }
 
-        /** @deprecated use {@link #entropy(byte[], Instant)} */
-        @Deprecated
-        public T entropy(byte[] entropy, long creationTimeSecs) {
-            checkArgument(creationTimeSecs > 0);
-            return entropy(entropy, Instant.ofEpochSecond(creationTimeSecs));
-        }
-
         /**
          * Creates a deterministic key chain starting from the given seed. All keys yielded by this chain will be the same
          * if the starting seed is the same.

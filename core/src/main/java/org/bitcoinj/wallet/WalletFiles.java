@@ -104,12 +104,6 @@ public class WalletFiles {
         };
     }
 
-    /** @deprecated use {@link #WalletFiles(Wallet, File, Duration)} */
-    @Deprecated
-    public WalletFiles(final Wallet wallet, File file, long delayTime, TimeUnit timeUnit) {
-        this(wallet, file, Duration.ofMillis(timeUnit.toMillis(delayTime)));
-    }
-
     /** Get the {@link Wallet} this {@link WalletFiles} is managing. */
     public Wallet getWallet() {
         return wallet;

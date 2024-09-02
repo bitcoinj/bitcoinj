@@ -42,7 +42,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalUnit;
-import java.util.concurrent.TimeUnit;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 

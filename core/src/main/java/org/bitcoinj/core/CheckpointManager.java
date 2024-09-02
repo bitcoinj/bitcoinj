@@ -166,12 +166,6 @@ public class CheckpointManager {
         }
     }
 
-    /** @deprecated use {@link #getCheckpointBefore(Instant)} */
-    @Deprecated
-    public StoredBlock getCheckpointBefore(long timeSecs) {
-         return getCheckpointBefore(Instant.ofEpochSecond(timeSecs));
-    }
-
     /** Returns the number of checkpoints that were loaded. */
     public int numCheckpoints() {
         return checkpoints.size();
@@ -206,12 +200,5 @@ public class CheckpointManager {
         StoredBlock checkpoint = manager.getCheckpointBefore(time);
         store.put(checkpoint);
         store.setChainHead(checkpoint);
-    }
-
-    /** @deprecated use {@link #checkpoint(NetworkParameters, InputStream, BlockStore, Instant)} */
-    @Deprecated
-    public static void checkpoint(NetworkParameters params, InputStream checkpoints, BlockStore store, long timeSecs)
-            throws IOException, BlockStoreException {
-        checkpoint(params, checkpoints, store, Instant.ofEpochSecond(timeSecs));
     }
 }

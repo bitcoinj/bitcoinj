@@ -44,11 +44,4 @@ public interface EncryptableItem {
 
     /** Returns the time at which this encryptable item was first created/derived, or empty of unknown. */
     Optional<Instant> getCreationTime();
-
-    /** @deprecated use {@link #getCreationTime()} */
-    @Deprecated
-    default long getCreationTimeSeconds() {
-        Optional<Instant> creationTime = getCreationTime();
-        return creationTime.isPresent() ? creationTime.get().getEpochSecond() : 0;
-    }
 }

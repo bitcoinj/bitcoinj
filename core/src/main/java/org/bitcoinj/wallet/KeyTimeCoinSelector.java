@@ -57,12 +57,6 @@ public class KeyTimeCoinSelector implements CoinSelector {
         this.ignorePending = ignorePending;
     }
 
-    /** @deprecated use {@link #KeyTimeCoinSelector(Wallet, Instant, boolean)} */
-    @Deprecated
-    public KeyTimeCoinSelector(Wallet wallet, long timeSecs, boolean ignorePending) {
-        this(wallet, Instant.ofEpochSecond(timeSecs), ignorePending);
-    }
-
     @Override
     public CoinSelection select(Coin target, List<TransactionOutput> candidates) {
         try {

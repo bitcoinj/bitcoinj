@@ -382,12 +382,6 @@ public class Script {
         return Optional.ofNullable(creationTime);
     }
 
-    /** @deprecated use {@link #creationTime()} */
-    @Deprecated
-    public long getCreationTimeSeconds() {
-        return creationTime().orElse(Instant.EPOCH).getEpochSecond();
-    }
-
     /**
      * Returns the program opcodes as a string, for example "[1234] DUP HASH160", or "&lt;empty&gt;".
      */

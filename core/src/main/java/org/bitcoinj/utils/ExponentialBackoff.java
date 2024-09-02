@@ -95,15 +95,6 @@ public class ExponentialBackoff implements Comparable<ExponentialBackoff> {
         return retryTime;
     }
 
-    /**
-     * Get the next time to retry, in milliseconds since the epoch
-     * @deprecated use {@link #retryTime()}
-     **/
-    @Deprecated
-    public long getRetryTime() {
-        return retryTime.toEpochMilli();
-    }
-
     @Override
     public int compareTo(ExponentialBackoff other) {
         // note that in this implementation compareTo() is not consistent with equals()

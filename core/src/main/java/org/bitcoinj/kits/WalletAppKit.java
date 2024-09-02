@@ -60,7 +60,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;

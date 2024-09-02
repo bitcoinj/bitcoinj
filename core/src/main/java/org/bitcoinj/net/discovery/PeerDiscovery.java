@@ -23,7 +23,6 @@ import org.bitcoinj.core.VersionMessage;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A PeerDiscovery object is responsible for finding addresses of other nodes in the Bitcoin P2P network. Note that
@@ -39,14 +38,6 @@ public interface PeerDiscovery {
      * @return found addresses
      */
     List<InetSocketAddress> getPeers(long services, Duration timeout) throws PeerDiscoveryException;
-
-    /**
-     * @deprecated use {@link #getPeers(long, Duration)}
-     */
-    @Deprecated
-    default List<InetSocketAddress> getPeers(long services, long timeoutValue, TimeUnit timeoutUnit) throws PeerDiscoveryException {
-        return getPeers(services, Duration.ofMillis(timeoutUnit.toMillis(timeoutValue)));
-    }
 
     /** Stops any discovery in progress when we want to shut down quickly. */
     void shutdown();

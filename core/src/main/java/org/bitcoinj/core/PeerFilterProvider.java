@@ -33,13 +33,6 @@ public interface PeerFilterProvider {
      */
     Instant earliestKeyCreationTime();
 
-    /** @deprecated use {@link #earliestKeyCreationTime()} */
-    @Deprecated
-    default long getEarliestKeyCreationTime() {
-        Instant earliestKeyCreationTime = earliestKeyCreationTime();
-        return earliestKeyCreationTime.equals(Instant.MAX) ? Long.MAX_VALUE : earliestKeyCreationTime.getEpochSecond();
-    }
-
     /**
      * Called on all registered filter providers before {@link #getBloomFilterElementCount()} and
      * {@link #getBloomFilter(int, double, int)} are called. Once called, the provider should ensure that the items

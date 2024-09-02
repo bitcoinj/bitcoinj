@@ -141,12 +141,6 @@ public class DeterministicSeed implements EncryptableItem {
         this(decodeMnemonicCode(mnemonicString), seed, passphrase, creationTime);
     }
 
-    /** @deprecated use {@link #ofMnemonic(String, String, Instant)} or {@link #ofMnemonic(String, String)} */
-    @Deprecated
-    public DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, long creationTimeSecs) {
-        this(mnemonicString, seed, passphrase, creationTimeSecs > 0 ? Instant.ofEpochSecond(creationTimeSecs) : null);
-    }
-
     /** Internal use only. */
     private DeterministicSeed(byte[] seed, List<String> mnemonic, @Nullable Instant creationTime) {
         this.seed = Objects.requireNonNull(seed);
@@ -165,21 +159,9 @@ public class DeterministicSeed implements EncryptableItem {
         this.creationTime = creationTime;
     }
 
-    /** @deprecated will be removed in a future release */
-    @Deprecated
-    public DeterministicSeed(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, long creationTimeSecs) {
-        this(encryptedMnemonic, encryptedSeed, creationTimeSecs > 0 ? Instant.ofEpochSecond(creationTimeSecs) : null);
-    }
-
     /** Internal use only. */
     private DeterministicSeed(List<String> mnemonicCode, @Nullable byte[] seed, String passphrase, @Nullable Instant creationTime) {
         this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, Objects.requireNonNull(passphrase))), mnemonicCode, creationTime);
-    }
-
-    /** @deprecated use {@link #ofMnemonic(List, String, Instant)} or {@link #ofMnemonic(List, String)} */
-    @Deprecated
-    public DeterministicSeed(List<String> mnemonicCode, @Nullable byte[] seed, String passphrase, long creationTimeSecs) {
-        this(mnemonicCode, seed, passphrase, creationTimeSecs > 0 ? Instant.ofEpochSecond(creationTimeSecs) : null);
     }
 
     /** @deprecated use {@link #ofRandom(SecureRandom, int, String)} */
@@ -198,12 +180,6 @@ public class DeterministicSeed implements EncryptableItem {
         this.encryptedMnemonicCode = null;
         this.encryptedSeed = null;
         this.creationTime = creationTime;
-    }
-
-    /** @deprecated use {@link #ofEntropy(byte[], String, Instant)} or {@link #ofEntropy(byte[], String)} */
-    @Deprecated
-    public DeterministicSeed(byte[] entropy, String passphrase, long creationTimeSecs) {
-        this(entropy, passphrase, creationTimeSecs > 0 ? Instant.ofEpochSecond(creationTimeSecs) : null);
     }
 
     private static byte[] getEntropy(SecureRandom random, int bits) {
@@ -289,17 +265,6 @@ public class DeterministicSeed implements EncryptableItem {
      */
     public void clearCreationTime() {
         this.creationTime = null;
-    }
-
-    /** @deprecated use {@link #setCreationTime(Instant)} */
-    @Deprecated
-    public void setCreationTimeSeconds(long creationTimeSecs) {
-        if (creationTimeSecs > 0)
-            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
-        else if (creationTimeSecs == 0)
-            clearCreationTime();
-        else
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
     }
 
     public DeterministicSeed encrypt(KeyCrypter keyCrypter, AesKey aesKey) {

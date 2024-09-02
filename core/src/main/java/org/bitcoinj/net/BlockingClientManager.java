@@ -73,12 +73,6 @@ public class BlockingClientManager extends AbstractIdleService implements Client
         this.connectTimeout = connectTimeout;
     }
 
-    /** @deprecated use {@link #setConnectTimeout(Duration)} */
-    @Deprecated
-    public void setConnectTimeoutMillis(int connectTimeoutMillis) {
-        setConnectTimeout(Duration.ofMillis(connectTimeoutMillis));
-    }
-
     @Override
     protected void startUp() throws Exception { }
 

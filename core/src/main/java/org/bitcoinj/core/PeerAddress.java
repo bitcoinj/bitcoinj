@@ -414,12 +414,6 @@ public class PeerAddress {
         return time;
     }
 
-    /** @deprecated use {@link #time()} */
-    @Deprecated
-    public long getTime() {
-        return time.getEpochSecond();
-    }
-
     @Override
     public String toString() {
         if (hostname != null) {

@@ -134,7 +134,6 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -498,16 +497,6 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * @deprecated Use {@link #fromWatchingKeyB58(Network, String, Instant)} or {@link #fromWatchingKeyB58(Network, String)}
-     */
-    @Deprecated
-    public static Wallet fromWatchingKeyB58(NetworkParameters params, String watchKeyB58, long creationTimeSeconds) {
-        return (creationTimeSeconds == 0)
-                ? fromWatchingKeyB58(params.network(), watchKeyB58)
-                : fromWatchingKeyB58(params.network(), watchKeyB58, Instant.ofEpochSecond(creationTimeSeconds));
-    }
-
-    /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy rooted by the given spending key. This HAS
      * to be an account key as returned by {@link DeterministicKeyChain#getWatchingKey()}. This wallet can also spend.
      * @param network network wallet will operate on
@@ -568,16 +557,6 @@ public class Wallet extends BaseTaggableObject
     @Deprecated
     public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58) {
         return fromSpendingKeyB58(params.network(), spendingKeyB58);
-    }
-
-    /**
-     * @deprecated Use {@link #fromSpendingKeyB58(Network, String, Instant)} or {@link #fromSpendingKeyB58(Network, String)}
-     */
-    @Deprecated
-    public static Wallet fromSpendingKeyB58(NetworkParameters params, String spendingKeyB58, long creationTimeSeconds) {
-        return (creationTimeSeconds == 0)
-                ? fromSpendingKeyB58(params.network(), spendingKeyB58)
-                : fromSpendingKeyB58(params.network(), spendingKeyB58, Instant.ofEpochSecond(creationTimeSeconds));
     }
 
     /**
@@ -1189,14 +1168,6 @@ public class Wallet extends BaseTaggableObject
         return addWatchedAddresses(Collections.singletonList(address), creationTime) == 1;
     }
 
-    /** @deprecated use {@link #addWatchedAddress(Address, Instant)} or {@link #addWatchedAddress(Address)} */
-    @Deprecated
-    public boolean addWatchedAddress(final Address address, long creationTime) {
-        return creationTime > 0 ?
-                addWatchedAddress(address, Instant.ofEpochSecond(creationTime)) :
-                addWatchedAddress(address);
-    }
-
     /**
      * Adds the given addresses to the wallet to be watched. Outputs can be retrieved
      * by {@link #getWatchedOutputs(boolean)}.
@@ -1226,14 +1197,6 @@ public class Wallet extends BaseTaggableObject
             scripts.add(script);
         }
         return addWatchedScripts(scripts);
-    }
-
-    /** @deprecated use {@link #addWatchedAddresses(List, Instant)} or {@link #addWatchedAddresses(List)} */
-    @Deprecated
-    public int addWatchedAddresses(final List<Address> addresses, long creationTime) {
-        return creationTime > 0 ?
-                addWatchedAddresses(addresses, creationTime) :
-                addWatchedAddresses(addresses);
     }
 
     /**
@@ -1857,12 +1820,6 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
-    }
-
-    /** @deprecated use {@link #autosaveToFile(File, Duration, WalletFiles.Listener)} */
-    @Deprecated
-    public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit, @Nullable WalletFiles.Listener eventListener) {
-        return autosaveToFile(f, Duration.ofMillis(timeUnit.toMillis(delayTime)), eventListener);
     }
 
     /**
@@ -3855,13 +3812,6 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** @deprecated use {@link #setLastBlockSeenTime(Instant)} or {@link #clearLastBlockSeenTime()} */
-    @Deprecated
-    public void setLastBlockSeenTimeSecs(long timeSecs) {
-        checkArgument(timeSecs > 0);
-        setLastBlockSeenTime(Instant.ofEpochSecond(timeSecs));
-    }
-
     /**
      * Returns time extracted from the last best seen block header, or empty. This timestamp
      * is <b>not</b> the local time at which the block was first observed by this application but rather what the block
@@ -3876,12 +3826,6 @@ public class Wallet extends BaseTaggableObject
         } finally {
             lock.unlock();
         }
-    }
-
-    /** @deprecated use {@link #lastBlockSeenTime()} */
-    @Deprecated
-    public long getLastBlockSeenTimeSecs() {
-        return lastBlockSeenTime().map(Instant::getEpochSecond).orElse((long) 0);
     }
 
     /**
@@ -5665,15 +5609,6 @@ public class Wallet extends BaseTaggableObject
                 "given time cannot be in the future: " + TimeUtils.dateTimeFormat(keyRotationTime));
         vKeyRotationTime = keyRotationTime;
         saveNow();
-    }
-
-    /** @deprecated use {@link #setKeyRotationTime(Instant)} */
-    @Deprecated
-    public void setKeyRotationTime(long timeSecs) {
-        if (timeSecs == 0)
-            setKeyRotationTime((Instant) null);
-        else
-            setKeyRotationTime(Instant.ofEpochSecond(timeSecs));
     }
 
     /**

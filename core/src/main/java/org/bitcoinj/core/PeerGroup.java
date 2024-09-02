@@ -512,15 +512,6 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * This is how many milliseconds we wait for peer discoveries to return their results.
-     * @deprecated use {@link #setPeerDiscoveryTimeout(Duration)}
-     */
-    @Deprecated
-    public void setPeerDiscoveryTimeoutMillis(long peerDiscoveryTimeoutMillis) {
-        setPeerDiscoveryTimeout(Duration.ofMillis(peerDiscoveryTimeoutMillis));
-    }
-
-    /**
      * Adjusts the desired number of connections that we will create to peers. Note that if there are already peers
      * open and the new value is lower than the current number of peers, those connections will be terminated. Likewise
      * if there aren't enough current connections to meet the new requested max size, some will be added.
@@ -1774,12 +1765,6 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    /** @deprecated use {@link #setFastCatchupTime(Instant)} */
-    @Deprecated
-    public void setFastCatchupTimeSecs(long fastCatchupTimeSecs) {
-        setFastCatchupTime(Instant.ofEpochSecond(fastCatchupTimeSecs));
-    }
-
     /**
      * Returns the current fast catchup time. The contents of blocks before this time won't be downloaded as they
      * cannot contain any interesting transactions. If you use {@link PeerGroup#addWallet(Wallet)} this just returns
@@ -1793,12 +1778,6 @@ public class PeerGroup implements TransactionBroadcaster {
         } finally {
             lock.unlock();
         }
-    }
-
-    /** @deprecated use {@link #getFastCatchupTime()} */
-    @Deprecated
-    public long getFastCatchupTimeSecs() {
-        return getFastCatchupTime().getEpochSecond();
     }
 
     protected void handlePeerDeath(final Peer peer, @Nullable Throwable exception) {

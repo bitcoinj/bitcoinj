@@ -650,13 +650,6 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    /** @deprecated use {@link #findOldestKeyAfter(Instant)} */
-    @Nullable
-    @Deprecated
-    public ECKey findOldestKeyAfter(long timeSecs) {
-        return findOldestKeyAfter(Instant.ofEpochSecond(timeSecs)).orElse(null);
-    }
-
     /** Returns a list of all ECKeys created after the given time. */
     public List<ECKey> findKeysBefore(Instant time) {
         lock.lock();
@@ -672,12 +665,6 @@ public class BasicKeyChain implements EncryptableKeyChain {
         } finally {
             lock.unlock();
         }
-    }
-
-    /** @deprecated use {@link #findKeysBefore(Instant)} */
-    @Deprecated
-    public List<ECKey> findKeysBefore(long timeSecs) {
-        return findKeysBefore(Instant.ofEpochSecond(timeSecs));
     }
 
     public String toString(boolean includePrivateKeys, @Nullable AesKey aesKey, Network network) {

@@ -277,13 +277,6 @@ public class FakeTxBuilder {
         return createFakeBlock(blockStore, version, time, 0, transactions);
     }
 
-    /** @deprecated use {@link #createFakeBlock(BlockStore, long, Instant, Transaction...)} */
-    @Deprecated
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version,
-                                            long timeSecs, Transaction... transactions) {
-        return createFakeBlock(blockStore, version, Instant.ofEpochSecond(timeSecs), transactions);
-    }
-
     /** Emulates receiving a valid block */
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, long version,
                                             Instant time, int height, Transaction... transactions) {
@@ -305,14 +298,6 @@ public class FakeTxBuilder {
         }
     }
 
-    /** @deprecated use {@link #createFakeBlock(BlockStore, StoredBlock, long, Instant, int, Transaction...)} */
-    @Deprecated
-    public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, long version,
-                                            long timeSecs, int height, Transaction... transactions) {
-        return createFakeBlock(blockStore, previousStoredBlock, version, Instant.ofEpochSecond(timeSecs), height,
-                transactions);
-    }
-
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height, Transaction... transactions) {
         return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, TimeUtils.currentTime(), height, transactions);
     }
@@ -324,12 +309,6 @@ public class FakeTxBuilder {
         } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-    }
-
-    /** @deprecated use {@link #createFakeBlock(BlockStore, long, Instant, int, Transaction...)} */
-    @Deprecated
-    public static BlockPair createFakeBlock(BlockStore blockStore, long version, long timeSecs, int height, Transaction... transactions) {
-        return createFakeBlock(blockStore, version, Instant.ofEpochSecond(timeSecs), height, transactions);
     }
 
     /** Emulates receiving a valid block that builds on top of the chain. */
