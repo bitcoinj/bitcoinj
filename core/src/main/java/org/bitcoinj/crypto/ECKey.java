@@ -27,7 +27,6 @@ import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.crypto.utils.MessageVerifyUtils;
@@ -1070,20 +1069,6 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Exports the private key in the form used by Bitcoin Core's "dumpprivkey" and "importprivkey" commands. Use
-     * the {@link DumpedPrivateKey#toString()} method to get the string.
-     *
-     * @param params The network this key is intended for use on.
-     * @return Private key bytes as a {@link DumpedPrivateKey}.
-     * @throws IllegalStateException if the private key is not available.
-     * @deprecated Use {@link #getPrivateKeyEncoded(Network)}
-     */
-    @Deprecated
-    public DumpedPrivateKey getPrivateKeyEncoded(NetworkParameters params) {
-        return getPrivateKeyEncoded(params.network());
-    }
-
-    /**
      * Returns the creation time of this key, or empty if the key was deserialized from a version that did not store
      * that data.
      */
@@ -1305,16 +1290,6 @@ public class ECKey implements EncryptableItem {
         return toString(true, aesKey, network);
     }
 
-    /**
-     * Produce a string rendering of the ECKey INCLUDING the private key.
-     * Unless you absolutely need the private key it is better for security reasons to just use {@link #toString()}.
-     * @deprecated Use {@link #toStringWithPrivate(AesKey, Network)}
-     */
-    @Deprecated
-    public String toStringWithPrivate(@Nullable AesKey aesKey, NetworkParameters params) {
-        return toStringWithPrivate(aesKey, params.network());
-    }
-
     public String getPrivateKeyAsHex() {
         return ByteUtils.formatHex(getPrivKeyBytes());
     }
@@ -1326,14 +1301,6 @@ public class ECKey implements EncryptableItem {
 
     public String getPrivateKeyAsWiF(Network network) {
         return getPrivateKeyEncoded(network).toString();
-    }
-
-    /**
-     * @deprecated Use {@link #getPrivateKeyEncoded(Network)}
-     */
-    @Deprecated
-    public String getPrivateKeyAsWiF(NetworkParameters params) {
-        return getPrivateKeyAsWiF(params.network());
     }
 
     private String toString(boolean includePrivate, @Nullable AesKey aesKey, Network network) {
@@ -1361,16 +1328,6 @@ public class ECKey implements EncryptableItem {
         return helper.toString();
     }
 
-    /**
-     * @deprecated Use {@link #toString(boolean, AesKey, Network)}
-     */
-    @Deprecated
-    private String toString(boolean includePrivate, @Nullable AesKey aesKey, @Nullable NetworkParameters params) {
-        Network network = (params != null) ? params.network() : BitcoinNetwork.MAINNET;
-        return toString(includePrivate, aesKey, network);
-    }
-
-
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
                                      Network network, ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:");
@@ -1396,15 +1353,6 @@ public class ECKey implements EncryptableItem {
             builder.append(toStringWithPrivate(aesKey, network));
             builder.append("\n");
         }
-    }
-
-    /**
-     * @deprecated Use {@link #formatKeyWithAddress(boolean, AesKey, StringBuilder, Network, ScriptType, String)}
-     */
-    @Deprecated
-    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
-                                     NetworkParameters params, ScriptType outputScriptType, @Nullable String comment) {
-        formatKeyWithAddress(includePrivateKeys, aesKey, builder, params.network(), outputScriptType, comment);
     }
 
     /** The string that prefixes all text messages signed using Bitcoin keys. */
