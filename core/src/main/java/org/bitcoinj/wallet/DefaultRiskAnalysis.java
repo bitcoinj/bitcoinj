@@ -102,14 +102,13 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
         // If the transaction has a lock time specified in blocks, we consider that if the tx would become final in the
         // next block it is not risky (as it would confirm normally).
         final int adjustedHeight = height + 1;
-        final long timeSecs = time.get().getEpochSecond();
 
-        if (!tx.isFinal(adjustedHeight, timeSecs)) {
+        if (!tx.isFinal(adjustedHeight, time.get())) {
             nonFinal = tx;
             return Result.NON_FINAL;
         }
         for (Transaction dep : dependencies) {
-            if (!dep.isFinal(adjustedHeight, timeSecs)) {
+            if (!dep.isFinal(adjustedHeight, time.get())) {
                 nonFinal = dep;
                 return Result.NON_FINAL;
             }

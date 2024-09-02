@@ -1652,7 +1652,7 @@ public class Transaction extends BaseMessage {
      * <p>A transaction is time-locked if at least one of its inputs is non-final and it has a lock time. A transaction can
      * also have a relative lock time which this method doesn't tell. Use {@link #hasRelativeLockTime()} to find out.</p>
      *
-     * <p>To check if this transaction is final at a given height and time, see {@link Transaction#isFinal(int, long)}
+     * <p>To check if this transaction is final at a given height and time, see {@link Transaction#isFinal(int, Instant)}
      * </p>
      */
     public boolean isTimeLocked() {
@@ -1698,10 +1698,16 @@ public class Transaction extends BaseMessage {
      * <p>Note that currently the replacement feature is disabled in Bitcoin Core and will need to be
      * re-activated before this functionality is useful.</p>
      */
-    public boolean isFinal(int height, long blockTimeSeconds) {
+    public boolean isFinal(int height, Instant blockTime) {
         LockTime locktime = lockTime();
-        return locktime.rawValue() < (locktime instanceof HeightLock ? height : blockTimeSeconds) ||
+        return locktime.rawValue() < (locktime instanceof HeightLock ? height : blockTime.getEpochSecond()) ||
                 !isTimeLocked();
+    }
+
+    /** @deprecated use {@link #isFinal(int, Instant)} */
+    @Deprecated
+    public boolean isFinal(int height, long blockTimeSeconds) {
+        return isFinal(height, Instant.ofEpochSecond(blockTimeSeconds));
     }
 
     /**
