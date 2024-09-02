@@ -119,12 +119,6 @@ public class TransactionOutput {
         availableForSpending = true;
     }
 
-    /** @deprecated use {@link TransactionOutput#TransactionOutput(Transaction, Coin, byte[])} */
-    @Deprecated
-    public TransactionOutput(NetworkParameters params, @Nullable Transaction parent, Coin value, byte[] scriptBytes) {
-        this(parent, value, scriptBytes);
-    }
-
     public Script getScriptPubKey() throws ScriptException {
         if (scriptPubKey == null) {
             scriptPubKey = Script.parse(scriptBytes);
