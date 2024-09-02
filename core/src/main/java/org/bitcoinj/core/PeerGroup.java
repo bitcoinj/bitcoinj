@@ -383,17 +383,6 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     /**
-     * Creates a PeerGroup with the given network. No chain is provided so this node will report its chain height
-     * as zero to other peers. This constructor is useful if you just want to explore the network but aren't interested
-     * in downloading block data.
-     * @deprecated Use {@link #PeerGroup(Network)}
-     */
-    @Deprecated
-    public PeerGroup(NetworkParameters params) {
-        this(params.network());
-    }
-
-    /**
      * Creates a PeerGroup for the given network and chain. Blocks will be passed to the chain as they are broadcast
      * and downloaded. This is probably the constructor you want to use.
      * @param network the P2P network to connect to
@@ -401,16 +390,6 @@ public class PeerGroup implements TransactionBroadcaster {
      */
     public PeerGroup(Network network, @Nullable AbstractBlockChain chain) {
         this(network, chain, new NioClientManager());
-    }
-
-    /**
-     * Creates a PeerGroup for the given network and chain. Blocks will be passed to the chain as they are broadcast
-     * and downloaded.
-     * @deprecated Use {@link PeerGroup#PeerGroup(Network, AbstractBlockChain)}
-     */
-    @Deprecated
-    public PeerGroup(NetworkParameters params, @Nullable AbstractBlockChain chain) {
-        this(params.network(), chain);
     }
 
     /**
