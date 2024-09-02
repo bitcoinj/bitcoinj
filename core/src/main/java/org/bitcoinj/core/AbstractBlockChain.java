@@ -590,7 +590,7 @@ public abstract class AbstractBlockChain {
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
         if (shouldVerifyTransactions()) {
             for (Transaction tx : block.getTransactions())
-                if (!tx.isFinal(storedPrev.getHeight() + 1, block.getTimeSeconds()))
+                if (!tx.isFinal(storedPrev.getHeight() + 1, block.time()))
                    throw new VerificationException("Block contains non-final transaction");
         }
         
