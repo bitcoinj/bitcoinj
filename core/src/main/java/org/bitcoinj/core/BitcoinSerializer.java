@@ -42,7 +42,6 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  *
  * <ul>
  * <li>The proper Class instance needs to be mapped to its message name in the names variable below</li>
- * <li>There needs to be a constructor matching: NetworkParameters params, byte[] payload</li>
  * <li>Message.bitcoinSerializeToStream() needs to be properly subclassed</li>
  * </ul>
  */
@@ -84,31 +83,10 @@ public class BitcoinSerializer extends MessageSerializer {
     /**
      * Constructs a BitcoinSerializer with the given behavior.
      *
-     * @param params networkParams used to determine packetMagic
-     */
-    @Deprecated
-    public BitcoinSerializer(NetworkParameters params) {
-        this(params.network());
-    }
-
-    /**
-     * Constructs a BitcoinSerializer with the given behavior.
-     *
      * @param network used to determine packetMagic
      */
     public BitcoinSerializer(Network network) {
         this(network, ProtocolVersion.CURRENT.intValue());
-    }
-
-    /**
-     * Constructs a BitcoinSerializer with the given behavior.
-     *
-     * @param params networkParams used to determine packetMagic
-     * @param protocolVersion the protocol version to use
-     */
-    @Deprecated
-    public BitcoinSerializer(NetworkParameters params, int protocolVersion) {
-        this(params.network, protocolVersion);
     }
 
     /**
@@ -288,14 +266,6 @@ public class BitcoinSerializer extends MessageSerializer {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new UnknownMessage(command);
         }
-    }
-
-    /**
-     * Get the network parameters for this serializer.
-     */
-    @Deprecated
-    public NetworkParameters getParameters() {
-        return NetworkParameters.of(network);
     }
 
     /**
