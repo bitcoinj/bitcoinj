@@ -115,25 +115,6 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     @Nullable protected PeerDiscovery discovery;
 
     /**
-     * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
-     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
-     */
-    @Deprecated
-    public WalletAppKit(NetworkParameters params, File directory, String filePrefix) {
-        this((BitcoinNetwork) params.network(), ScriptType.P2PKH, KeyChainGroupStructure.BIP32, directory, filePrefix);
-    }
-
-    /**
-     * Creates a new WalletAppKit, with a newly created {@link Context}. Files will be stored in the given directory.
-     * @deprecated Use {@link #WalletAppKit(BitcoinNetwork, ScriptType, KeyChainGroupStructure, File, String)}
-     */
-    @Deprecated
-    public WalletAppKit(NetworkParameters params, ScriptType preferredOutputScriptType,
-            @Nullable KeyChainGroupStructure structure, File directory, String filePrefix) {
-        this((BitcoinNetwork) params.network(), preferredOutputScriptType, structure, directory, filePrefix);
-    }
-
-    /**
      * Creates a new WalletAppKit, on the specified {@link BitcoinNetwork}. Files will be stored in the given directory.
      *
      * @param network The network the wallet connects to
