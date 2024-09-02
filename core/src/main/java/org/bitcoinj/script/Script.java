@@ -28,7 +28,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.LockTime;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
@@ -426,15 +425,6 @@ public class Script {
 
     /**
      * Gets the destination address from this script, if it's in the required form.
-     * @deprecated Use {@link #getToAddress(Network)}
-     */
-    @Deprecated
-    public Address getToAddress(NetworkParameters params) throws ScriptException {
-        return getToAddress(params.network(), false);
-    }
-
-    /**
-     * Gets the destination address from this script, if it's in the required form.
      *
      * @param forcePayToPubKey
      *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
@@ -453,19 +443,6 @@ public class Script {
             return SegwitAddress.fromProgram(network, 1, ScriptPattern.extractOutputKeyFromP2TR(this));
         else
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Cannot cast this script to an address");
-    }
-
-    /**
-     * Gets the destination address from this script, if it's in the required form.
-     *
-     * @param forcePayToPubKey
-     *            If true, allow payToPubKey to be casted to the corresponding address. This is useful if you prefer
-     *            showing addresses rather than pubkeys.
-     * @deprecated Use {@link #getToAddress(Network, boolean)}
-     */
-    @Deprecated
-    public Address getToAddress(NetworkParameters params, boolean forcePayToPubKey) throws ScriptException {
-        return getToAddress(params.network(), forcePayToPubKey);
     }
 
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
