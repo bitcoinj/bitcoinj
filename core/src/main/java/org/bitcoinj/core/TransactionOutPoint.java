@@ -243,14 +243,6 @@ public class TransactionOutPoint {
     }
 
     /**
-     * @deprecated Use {@link #hash()}
-     */
-    @Deprecated
-    public Sha256Hash getHash() {
-        return hash();
-    }
-
-    /**
      * @deprecated Use {@link #index()}
      */
     @Deprecated
