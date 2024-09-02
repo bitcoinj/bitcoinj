@@ -24,7 +24,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.utils.ExchangeRate;
@@ -188,12 +187,6 @@ public class SendRequest {
         Transaction tx = new Transaction();
         tx.addOutput(value, destination);
         return new SendRequest(tx);
-    }
-
-    /** @deprecated use {@link #to(ECKey, Coin)} */
-    @Deprecated
-    public static SendRequest to(NetworkParameters params, ECKey destination, Coin value) {
-        return to(destination, value);
     }
 
     /** Simply wraps a pre-built incomplete transaction provided by you. */
