@@ -1255,7 +1255,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * <ol>
      *   <li>So the wallet receives broadcast transactions.</li>
      *   <li>Announcing pending transactions that didn't get into the chain yet to our peers.</li>
-     *   <li>Set the fast catchup time using {@link PeerGroup#setFastCatchupTimeSecs(long)}, to optimize chain
+     *   <li>Set the fast catchup time using {@link PeerGroup#setFastCatchupTime(Instant)}, to optimize chain
      *       download.</li>
      * </ol>
      *
