@@ -22,8 +22,7 @@
  *     <li>No API dependencies on external libraries other than the core JDK and {@code slf4j-api}</li>
  * </ul>
  * <p>
- * The base package makes bitcoinj more modular as it breaks circular dependencies between existing packages and provides
- * a "zero-dependency" foundation for the other packages. In a future release {@code base} will be
- * split into a separate JAR/module (tentatively {@code bitcoinj-base}.)
+ * The base package/module makes bitcoinj more modular as it breaks circular dependencies between existing packages
+ * and provides a "zero-dependency" foundation for the other packages.
  */
 package org.bitcoinj.base;
