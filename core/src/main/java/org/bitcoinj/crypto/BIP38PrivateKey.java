@@ -21,7 +21,6 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Base58;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.generators.SCrypt;
 
@@ -97,21 +96,6 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
         byte[] addressHash = Arrays.copyOfRange(bytes, 2, 6);
         byte[] content = Arrays.copyOfRange(bytes, 6, 38);
         return new BIP38PrivateKey(network, bytes, ecMultiply, compressed, hasLotAndSequence, addressHash, content);
-    }
-
-    /**
-     * Construct a password-protected private key from its Base58 representation.
-     * @param params
-     *            The network of the chain that the key is for.
-     * @param base58
-     *            The textual form of the password-protected private key.
-     * @throws AddressFormatException
-     *             if the given base58 doesn't parse or the checksum is invalid
-     * @deprecated use {@link #fromBase58(Network, String)}
-     */
-    @Deprecated
-    public static BIP38PrivateKey fromBase58(NetworkParameters params, String base58) throws AddressFormatException {
-        return fromBase58(params.network(), base58);
     }
 
     private BIP38PrivateKey(Network network, byte[] bytes, boolean ecMultiply, boolean compressed,

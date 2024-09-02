@@ -18,7 +18,6 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.Network;
-import org.bitcoinj.core.NetworkParameters;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -35,26 +34,12 @@ public abstract class EncodedPrivateKey {
         this.bytes = Objects.requireNonNull(bytes);
     }
 
-    @Deprecated
-    protected EncodedPrivateKey(NetworkParameters params, byte[] bytes) {
-        this(Objects.requireNonNull(params).network(), Objects.requireNonNull(bytes));
-    }
-
     /**
      * Get the network this data is prefixed with.
      * @return the Network.
      */
     public Network network() {
         return network;
-    }
-
-    /**
-     * @return network this data is valid for
-     * @deprecated Use {@link #network()}
-     */
-    @Deprecated
-    public final NetworkParameters getParameters() {
-        return NetworkParameters.of(network);
     }
 
     @Override
