@@ -103,19 +103,6 @@ public class BlockFileLoader implements Iterable<Block> {
         serializer = params.getDefaultSerializer();
     }
 
-    @Deprecated
-    public BlockFileLoader(NetworkParameters params, File blocksDir) {
-        this(params.network(), getReferenceClientBlockFileList(blocksDir));
-    }
-
-    @Deprecated
-    public BlockFileLoader(NetworkParameters params, List<File> files) {
-        this.files = files;
-        packetMagic = params.getPacketMagic();
-        serializer = params.getDefaultSerializer();
-    }
-
-
     /**
      * Iterates all the blocks in a single block file.
      */
