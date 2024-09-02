@@ -17,7 +17,6 @@
 package org.bitcoinj.net;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
@@ -28,6 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>A thin wrapper around a set of {@link BlockingClient}s.</p>
@@ -55,7 +55,7 @@ public class BlockingClientManager extends AbstractIdleService implements Client
     }
 
     @Override
-    public ListenableCompletableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection) {
+    public CompletableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection) {
         try {
             if (!isRunning())
                 throw new IllegalStateException();

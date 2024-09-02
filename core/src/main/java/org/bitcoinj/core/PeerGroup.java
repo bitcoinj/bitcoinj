@@ -50,7 +50,6 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.utils.ExponentialBackoff;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -1137,7 +1136,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Starts the PeerGroup and begins network activity.
      * @return A future that completes when first connection activity has been triggered (note: not first connection made).
      */
-    public ListenableCompletableFuture<Void> startAsync() {
+    public CompletableFuture<Void> startAsync() {
         // This is run in a background thread by the Service implementation.
         if (chain == null) {
             // Just try to help catch what might be a programming error.
@@ -1160,7 +1159,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 log.error("Exception when starting up", e);  // The executor swallows exceptions :(
             }
         }, executor);
-        return ListenableCompletableFuture.of(future);
+        return future;
     }
 
     /** Does a blocking startup. */
@@ -1168,7 +1167,7 @@ public class PeerGroup implements TransactionBroadcaster {
         startAsync().join();
     }
 
-    public ListenableCompletableFuture<Void>  stopAsync() {
+    public CompletableFuture<Void>  stopAsync() {
         checkState(vRunning);
         vRunning = false;
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
@@ -1190,7 +1189,7 @@ public class PeerGroup implements TransactionBroadcaster {
             }
         }, executor);
         executor.shutdown();
-        return ListenableCompletableFuture.of(future);
+        return future;
     }
 
     /** Does a blocking stop */
@@ -1263,12 +1262,12 @@ public class PeerGroup implements TransactionBroadcaster {
      * than the current chain head, the relevant parts of the chain won't be redownloaded for you.</p>
      *
      * <p>This method invokes {@link PeerGroup#recalculateFastCatchupAndFilter(FilterRecalculateMode)}.
-     * The return value of this method is the {@code ListenableCompletableFuture} returned by that invocation.</p>
+     * The return value of this method is the {@code CompletableFuture} returned by that invocation.</p>
      *
      * @return a future that completes once each {@code Peer} in this group has had its
      *         {@code BloomFilter} (re)set.
      */
-    public ListenableCompletableFuture<BloomFilter> addPeerFilterProvider(PeerFilterProvider provider) {
+    public CompletableFuture<BloomFilter> addPeerFilterProvider(PeerFilterProvider provider) {
         lock.lock();
         try {
             Objects.requireNonNull(provider);
@@ -1287,7 +1286,7 @@ public class PeerGroup implements TransactionBroadcaster {
             // if a key is added. Of course, by then we may have downloaded the chain already. Ideally adding keys would
             // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
             // all transparently and in the background. But we are a long way from that yet.
-            ListenableCompletableFuture<BloomFilter> future = recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
+            CompletableFuture<BloomFilter> future = recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
             updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
             return future;
         } finally {
@@ -1331,7 +1330,7 @@ public class PeerGroup implements TransactionBroadcaster {
         DONT_SEND,
     }
 
-    private final Map<FilterRecalculateMode, ListenableCompletableFuture<BloomFilter>> inFlightRecalculations = Maps.newHashMap();
+    private final Map<FilterRecalculateMode, CompletableFuture<BloomFilter>> inFlightRecalculations = Maps.newHashMap();
 
     /**
      * Recalculates the bloom filter given to peers as well as the timestamp after which full blocks are downloaded
@@ -1341,8 +1340,8 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param mode In what situations to send the filter to connected peers.
      * @return a future that completes once the filter has been calculated (note: this does not mean acknowledged by remote peers).
      */
-    public ListenableCompletableFuture<BloomFilter> recalculateFastCatchupAndFilter(final FilterRecalculateMode mode) {
-        final ListenableCompletableFuture<BloomFilter> future = new ListenableCompletableFuture<>();
+    public CompletableFuture<BloomFilter> recalculateFastCatchupAndFilter(final FilterRecalculateMode mode) {
+        final CompletableFuture<BloomFilter> future = new CompletableFuture<>();
         synchronized (inFlightRecalculations) {
             if (inFlightRecalculations.get(mode) != null)
                 return inFlightRecalculations.get(mode);
@@ -2016,7 +2015,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param numPeers How many peers to wait for.
      * @return a future that will be triggered when the number of connected peers is greater than or equals numPeers
      */
-    public ListenableCompletableFuture<List<Peer>> waitForPeers(final int numPeers) {
+    public CompletableFuture<List<Peer>> waitForPeers(final int numPeers) {
         return waitForPeersOfVersion(numPeers, 0);
     }
 
@@ -2028,14 +2027,14 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param protocolVersion The protocol version the awaited peers must implement (or better).
      * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher is greater than or equals numPeers
      */
-    public ListenableCompletableFuture<List<Peer>> waitForPeersOfVersion(final int numPeers, final long protocolVersion) {
+    public CompletableFuture<List<Peer>> waitForPeersOfVersion(final int numPeers, final long protocolVersion) {
         List<Peer> foundPeers = findPeersOfAtLeastVersion(protocolVersion);
         if (foundPeers.size() >= numPeers) {
-            ListenableCompletableFuture<List<Peer>> f = new ListenableCompletableFuture<>();
+            CompletableFuture<List<Peer>> f = new CompletableFuture<>();
             f.complete(foundPeers);
             return f;
         }
-        final ListenableCompletableFuture<List<Peer>> future = new ListenableCompletableFuture<List<Peer>>();
+        final CompletableFuture<List<Peer>> future = new CompletableFuture<List<Peer>>();
         addConnectedEventListener(new PeerConnectedEventListener() {
             @Override
             public void onPeerConnected(Peer peer, int peerCount) {
@@ -2073,16 +2072,16 @@ public class PeerGroup implements TransactionBroadcaster {
      * @param mask An integer representing a bit mask that will be ANDed with the peers advertised service masks.
      * @return a future that will be triggered when the number of connected peers implementing protocolVersion or higher is greater than or equals numPeers
      */
-    public ListenableCompletableFuture<List<Peer>> waitForPeersWithServiceMask(final int numPeers, final int mask) {
+    public CompletableFuture<List<Peer>> waitForPeersWithServiceMask(final int numPeers, final int mask) {
         lock.lock();
         try {
             List<Peer> foundPeers = findPeersWithServiceMask(mask);
             if (foundPeers.size() >= numPeers) {
-                ListenableCompletableFuture<List<Peer>> f = new ListenableCompletableFuture<>();
+                CompletableFuture<List<Peer>> f = new CompletableFuture<>();
                 f.complete(foundPeers);
                 return f;
             }
-            final ListenableCompletableFuture<List<Peer>> future = new ListenableCompletableFuture<>();
+            final CompletableFuture<List<Peer>> future = new CompletableFuture<>();
             addConnectedEventListener(new PeerConnectedEventListener() {
                 @Override
                 public void onPeerConnected(Peer peer, int peerCount) {
@@ -2165,7 +2164,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * peers. Once all connected peers have announced the transaction, the future available via the
      * {@link TransactionBroadcast#awaitRelayed()} ()} method will be completed. If anything goes
      * wrong the exception will be thrown when get() is called, or you can receive it via a callback on the
-     * {@link ListenableCompletableFuture}. This method returns immediately, so if you want it to block just call get() on the
+     * {@link CompletableFuture}. This method returns immediately, so if you want it to block just call get() on the
      * result.</p>
      *
      * <p>Optionally, peers will be dropped after they have been used for broadcasting the transaction and they have
