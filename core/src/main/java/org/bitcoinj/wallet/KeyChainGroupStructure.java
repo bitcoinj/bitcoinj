@@ -19,7 +19,6 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.HDPath;
 
@@ -42,7 +41,7 @@ public interface KeyChainGroupStructure {
      *  Default to MainNet, BIP-32 Keychains use the same path for MainNet and TestNet
      * @param outputScriptType the script/address type
      * @return account path
-     * @deprecated Use {@link #accountPathFor(ScriptType, Network)} or {@link #accountPathFor(ScriptType, NetworkParameters)}
+     * @deprecated Use {@link #accountPathFor(ScriptType, Network)}
      */
     @Deprecated
     default HDPath accountPathFor(ScriptType outputScriptType) {
@@ -56,19 +55,6 @@ public interface KeyChainGroupStructure {
      * @return The HD Path: purpose / coinType / accountIndex
      */
     HDPath accountPathFor(ScriptType outputScriptType, Network network);
-
-    /**
-     * Map desired output script type and network to an account path
-     * @param outputScriptType output script type (purpose)
-     * @param networkParameters network/coin type
-     * @return The HD Path: purpose / coinType / accountIndex
-     * @deprecated use {@link #accountPathFor(ScriptType, Network)}
-     */
-    @Deprecated
-    default HDPath accountPathFor(ScriptType outputScriptType, NetworkParameters networkParameters) {
-        return accountPathFor(outputScriptType, networkParameters.network());
-    }
-
 
     /**
      * Original <b>bitcoinj</b> {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure".
