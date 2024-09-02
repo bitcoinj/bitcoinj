@@ -179,7 +179,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * auto-save feature that simplifies this for you although you're still responsible for manually triggering a save when
  * your app is about to quit because the auto-save feature waits a moment before actually committing to disk to avoid IO
  * thrashing when the wallet is changing very fast (e.g. due to a block chain sync). See
- * {@link Wallet#autosaveToFile(File, long, TimeUnit, WalletFiles.Listener)}
+ * {@link Wallet#autosaveToFile(File, Duration, WalletFiles.Listener)}
  * for more information about this.</p>
  */
 public class Wallet extends BaseTaggableObject
@@ -1052,7 +1052,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Imports the given keys to the wallet.
-     * If {@link Wallet#autosaveToFile(File, long, TimeUnit, WalletFiles.Listener)}
+     * If {@link Wallet#autosaveToFile(File, Duration, WalletFiles.Listener)}
      * has been called, triggers an auto save bypassing the normal coalescing delay and event handlers.
      * Returns the number of keys added, after duplicates are ignored. The onKeyAdded event will be called for each key
      * in the list that was not already present.
@@ -1835,7 +1835,7 @@ public class Wallet extends BaseTaggableObject
      * In this way disk IO can be rate limited. It's a good idea to set this as otherwise the wallet can change very
      * frequently, e.g. if there are a lot of transactions in it or during block sync, and there will be a lot of redundant
      * writes. Note that when a new key is added, that always results in an immediate save regardless of
-     * delayTime. <b>You should still save the wallet manually using {@link Wallet#saveToFile(File)} when your program
+     * delay. <b>You should still save the wallet manually using {@link Wallet#saveToFile(File)} when your program
      * is about to shut down as the JVM will not wait for the background thread.</b></p>
      *
      * <p>An event listener can be provided. It will be called on a background thread
@@ -1869,7 +1869,7 @@ public class Wallet extends BaseTaggableObject
     /**
      * <p>
      * Disables auto-saving, after it had been enabled with
-     * {@link Wallet#autosaveToFile(File, long, TimeUnit, WalletFiles.Listener)}
+     * {@link Wallet#autosaveToFile(File, Duration, WalletFiles.Listener)}
      * before. This method blocks until finished.
      * </p>
      */
