@@ -37,7 +37,6 @@ import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.internal.FutureUtils;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
@@ -424,15 +423,15 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * Provides a ListenableCompletableFuture that can be used to wait for the socket to connect.  A socket connection does not
+     * Provides a CompletableFuture that can be used to wait for the socket to connect.  A socket connection does not
      * mean that protocol handshake has occurred.
      */
-    public ListenableCompletableFuture<Peer> getConnectionOpenFuture() {
-        return ListenableCompletableFuture.of(connectionOpenFuture);
+    public CompletableFuture<Peer> getConnectionOpenFuture() {
+        return connectionOpenFuture;
     }
 
-    public ListenableCompletableFuture<Peer> getVersionHandshakeFuture() {
-        return ListenableCompletableFuture.of(versionHandshakeFuture);
+    public CompletableFuture<Peer> getVersionHandshakeFuture() {
+        return versionHandshakeFuture;
     }
 
     @Override
@@ -816,12 +815,12 @@ public class Peer extends PeerSocketHandler {
      * @param tx The transaction
      * @return A Future for a list of dependent transactions
      */
-    public ListenableCompletableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
+    public CompletableFuture<List<Transaction>> downloadDependencies(Transaction tx) {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getTxId());
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
-        return ListenableCompletableFuture.of(downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0));
+        return downloadDependenciesInternal(tx, vDownloadTxDependencyDepth, 0);
     }
 
     /**
@@ -1275,11 +1274,11 @@ public class Peer extends PeerSocketHandler {
      * If you want the block right away and don't mind waiting for it, just call .get() on the result. Your thread
      * will block until the peer answers.
      */
-    public ListenableCompletableFuture<Block> getBlock(Sha256Hash blockHash) {
+    public CompletableFuture<Block> getBlock(Sha256Hash blockHash) {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = GetDataMessage.ofBlock(blockHash, true);
-        return ListenableCompletableFuture.of(sendSingleGetData(getdata));
+        return sendSingleGetData(getdata);
     }
 
     /**
@@ -1287,12 +1286,12 @@ public class Peer extends PeerSocketHandler {
      * retrieved this way because peers don't have a transaction ID to transaction-pos-on-disk index, and besides,
      * in future many peers will delete old transaction data they don't need.
      */
-    public ListenableCompletableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) {
+    public CompletableFuture<Transaction> getPeerMempoolTransaction(Sha256Hash hash) {
         // This does not need to be locked.
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
         GetDataMessage getdata = GetDataMessage.ofTransaction(hash, vPeerVersionMessage.services().has(Services.NODE_WITNESS));
-        return ListenableCompletableFuture.of(sendSingleGetData(getdata));
+        return sendSingleGetData(getdata);
     }
 
     /** Sends a getdata with a single item in it. */
@@ -1306,8 +1305,8 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Sends a getaddr request to the peer and returns a future that completes with the answer once the peer has replied. */
-    public ListenableCompletableFuture<AddressMessage> getAddr() {
-        ListenableCompletableFuture<AddressMessage> future = new ListenableCompletableFuture<>();
+    public CompletableFuture<AddressMessage> getAddr() {
+        CompletableFuture<AddressMessage> future = new CompletableFuture<>();
         synchronized (getAddrFutures) {
             getAddrFutures.add(future);
         }
@@ -1558,8 +1557,8 @@ public class Peer extends PeerSocketHandler {
      * @deprecated Use {@link #sendPing()}
      */
     @Deprecated
-    public ListenableCompletableFuture<Long> ping() {
-        return ListenableCompletableFuture.of(sendPing().thenApply(Duration::toMillis));
+    public CompletableFuture<Long> ping() {
+        return sendPing().thenApply(Duration::toMillis);
     }
 
     /**

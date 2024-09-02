@@ -17,9 +17,9 @@
 package org.bitcoinj.net;
 
 import com.google.common.util.concurrent.Service;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 
 import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>A generic interface for an object which keeps track of a set of open client connections, creates new ones and
@@ -33,7 +33,7 @@ public interface ClientConnectionManager extends Service {
      * Creates a new connection to the given address, with the given connection used to handle incoming data. Any errors
      * that occur during connection will be returned in the given future, including errors that can occur immediately.
      */
-    ListenableCompletableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection);
+    CompletableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection);
 
     /** Gets the number of connected peers */
     int getConnectedClientCount();

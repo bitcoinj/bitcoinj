@@ -18,7 +18,6 @@
 package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +25,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Creates a simple connection to a server using a {@link StreamConnection} to process data.
@@ -129,7 +129,7 @@ public class NioClient implements MessageWriteTarget {
     }
 
     @Override
-    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
+    public synchronized CompletableFuture<Void> writeBytes(byte[] message) throws IOException {
         return handler.writeTarget.writeBytes(message);
     }
 }

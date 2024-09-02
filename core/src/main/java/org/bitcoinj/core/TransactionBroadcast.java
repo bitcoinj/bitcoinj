@@ -21,7 +21,6 @@ import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
@@ -89,13 +88,13 @@ public class TransactionBroadcast {
     public static TransactionBroadcast createMockBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
         return new TransactionBroadcast(tx) {
             @Override
-            public ListenableCompletableFuture<Transaction> broadcast() {
-                return ListenableCompletableFuture.of(future);
+            public CompletableFuture<Transaction> broadcast() {
+                return future;
             }
 
             @Override
-            public ListenableCompletableFuture<Transaction> future() {
-                return ListenableCompletableFuture.of(future);
+            public CompletableFuture<Transaction> future() {
+                return future;
             }
         };
     }
@@ -105,8 +104,8 @@ public class TransactionBroadcast {
      * @deprecated Use {@link #awaitRelayed()} (and maybe {@link CompletableFuture#thenApply(Function)})
      */
     @Deprecated
-    public ListenableCompletableFuture<Transaction> future() {
-        return ListenableCompletableFuture.of(awaitRelayed().thenApply(TransactionBroadcast::transaction));
+    public CompletableFuture<Transaction> future() {
+        return awaitRelayed().thenApply(TransactionBroadcast::transaction);
     }
 
     public void setMinConnections(int minConnections) {
@@ -246,10 +245,8 @@ public class TransactionBroadcast {
      * @deprecated Use {@link #broadcastAndAwaitRelay()} or {@link #broadcastOnly()} as appropriate
      */
     @Deprecated
-    public ListenableCompletableFuture<Transaction> broadcast() {
-        return ListenableCompletableFuture.of(
-                broadcastAndAwaitRelay().thenApply(TransactionBroadcast::transaction)
-        );
+    public CompletableFuture<Transaction> broadcast() {
+        return broadcastAndAwaitRelay().thenApply(TransactionBroadcast::transaction);
     }
 
     private CompletableFuture<Void> broadcastOne(Peer peer) {

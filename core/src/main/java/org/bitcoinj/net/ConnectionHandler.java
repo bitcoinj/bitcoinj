@@ -18,7 +18,6 @@ package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
 import org.bitcoinj.core.Message;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +35,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -68,9 +68,9 @@ class ConnectionHandler implements MessageWriteTarget {
 
     private static class BytesAndFuture {
         public final ByteBuffer bytes;
-        public final ListenableCompletableFuture<Void> future;
+        public final CompletableFuture<Void> future;
 
-        public BytesAndFuture(ByteBuffer bytes, ListenableCompletableFuture<Void> future) {
+        public BytesAndFuture(ByteBuffer bytes, CompletableFuture<Void> future) {
             this.bytes = bytes;
             this.future = future;
         }
@@ -148,7 +148,7 @@ class ConnectionHandler implements MessageWriteTarget {
     }
 
     @Override
-    public ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
+    public CompletableFuture<Void> writeBytes(byte[] message) throws IOException {
         boolean andUnlock = true;
         lock.lock();
         try {
@@ -161,7 +161,7 @@ class ConnectionHandler implements MessageWriteTarget {
                 throw new IOException("Outbound buffer overflowed");
             // Just dump the message onto the write buffer and call tryWriteBytes
             // TODO: Kill the needless message duplication when the write completes right away
-            final ListenableCompletableFuture<Void> future = new ListenableCompletableFuture<>();
+            final CompletableFuture<Void> future = new CompletableFuture<>();
             bytesToWrite.offer(new BytesAndFuture(ByteBuffer.wrap(Arrays.copyOf(message, message.length)), future));
             bytesToWriteRemaining += message.length;
             setWriteOps();

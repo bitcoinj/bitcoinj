@@ -17,13 +17,13 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.net.MessageWriteTarget;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.SocketTimeoutTask;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.net.TimeoutHandler;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.Threading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +38,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.NotYetConnectedException;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
@@ -92,7 +93,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
      * the peer will have received it. Throws NotYetConnectedException if we are not yet connected to the remote peer.
      * TODO: Maybe use something other than the unchecked NotYetConnectedException here
      */
-    public ListenableCompletableFuture<Void> sendMessage(Message message) throws NotYetConnectedException {
+    public CompletableFuture<Void> sendMessage(Message message) throws NotYetConnectedException {
         lock.lock();
         try {
             if (writeTarget == null)
@@ -107,7 +108,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
             return writeTarget.writeBytes(out.toByteArray());
         } catch (IOException e) {
             exceptionCaught(e);
-            return ListenableCompletableFuture.failedFuture(e);
+            return FutureUtils.failedFuture(e);
         }
     }
 

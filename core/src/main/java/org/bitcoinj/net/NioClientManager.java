@@ -18,8 +18,8 @@ package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -156,7 +156,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
     }
 
     @Override
-    public ListenableCompletableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection) {
+    public CompletableFuture<SocketAddress> openConnection(SocketAddress serverAddress, StreamConnection connection) {
         if (!isRunning())
             throw new IllegalStateException();
         // Create a new connection, give it a connection as an attachment
@@ -167,9 +167,9 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             PendingConnect data = new PendingConnect(sc, connection, serverAddress);
             newConnectionChannels.offer(data);
             selector.wakeup();
-            return ListenableCompletableFuture.of(data.future);
+            return data.future;
         } catch (Throwable e) {
-            return ListenableCompletableFuture.failedFuture(e);
+            return FutureUtils.failedFuture(e);
         }
     }
 

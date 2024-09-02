@@ -34,7 +34,6 @@ import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.TrustStoreLoader;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -212,10 +211,10 @@ public class PaymentSessionTest {
         }
 
         @Override
-        protected ListenableCompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
+        protected CompletableFuture<PaymentProtocol.Ack> sendPayment(final URL url, final Protos.Payment payment) {
             paymentLog.add(new PaymentLogItem(url, payment));
             // Return a completed future that has a `null` value. This will satisfy the current tests.
-            return ListenableCompletableFuture.completedFuture(null);
+            return CompletableFuture.completedFuture(null);
         }
 
         public static class PaymentLogItem {

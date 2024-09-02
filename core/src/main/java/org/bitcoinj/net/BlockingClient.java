@@ -18,7 +18,6 @@ package org.bitcoinj.net;
 
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.Peer;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,12 +146,12 @@ public class BlockingClient implements MessageWriteTarget {
     }
 
     @Override
-    public synchronized ListenableCompletableFuture<Void> writeBytes(byte[] message) throws IOException {
+    public synchronized CompletableFuture<Void> writeBytes(byte[] message) throws IOException {
         try {
             OutputStream stream = socket.getOutputStream();
             stream.write(message);
             stream.flush();
-            return ListenableCompletableFuture.completedFuture(null);
+            return CompletableFuture.completedFuture(null);
         } catch (IOException e) {
             log.error("Error writing message to connection, closing connection", e);
             closeConnection();
@@ -161,7 +160,7 @@ public class BlockingClient implements MessageWriteTarget {
     }
 
     /** Returns a future that completes once connection has occurred at the socket level or with an exception if failed to connect. */
-    public ListenableCompletableFuture<SocketAddress> getConnectFuture() {
-        return ListenableCompletableFuture.of(connectFuture);
+    public CompletableFuture<SocketAddress> getConnectFuture() {
+        return connectFuture;
     }
 }

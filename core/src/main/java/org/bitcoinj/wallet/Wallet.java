@@ -85,7 +85,6 @@ import org.bitcoinj.signers.MissingSigResolutionSigner;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.BaseTaggableObject;
 import org.bitcoinj.base.internal.FutureUtils;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.protobuf.wallet.Protos;
@@ -3850,7 +3849,7 @@ public class Wallet extends BaseTaggableObject
      * you can use {@link Threading#waitForUserCode()} to block until the future had a
      * chance to be updated.</p>
      */
-    public ListenableCompletableFuture<Coin> getBalanceFuture(final Coin value, final BalanceType type) {
+    public CompletableFuture<Coin> getBalanceFuture(final Coin value, final BalanceType type) {
         lock.lock();
         try {
             final CompletableFuture<Coin> future = new CompletableFuture<>();
@@ -3864,7 +3863,7 @@ public class Wallet extends BaseTaggableObject
                 // avoid giving the user back futures that require the user code thread to be free.
                 balanceFutureRequests.add(new BalanceFutureRequest(future, value, type));
             }
-            return ListenableCompletableFuture.of(future);
+            return future;
         } finally {
             lock.unlock();
         }
@@ -3980,7 +3979,7 @@ public class Wallet extends BaseTaggableObject
          * @deprecated Use {@link #awaitRelayed()}
          */
         @Deprecated
-        public final ListenableCompletableFuture<Transaction> broadcastComplete;
+        public final CompletableFuture<Transaction> broadcastComplete;
         /**
          * The broadcast object returned by the linked TransactionBroadcaster
          * @deprecated Use {@link #getBroadcast()}
@@ -3999,7 +3998,7 @@ public class Wallet extends BaseTaggableObject
         public SendResult(TransactionBroadcast broadcast) {
             this.tx = broadcast.transaction();
             this.broadcast = broadcast;
-            this.broadcastComplete = ListenableCompletableFuture.of(broadcast.awaitRelayed().thenApply(TransactionBroadcast::transaction));
+            this.broadcastComplete = broadcast.awaitRelayed().thenApply(TransactionBroadcast::transaction);
         }
 
         public Transaction transaction() {
@@ -5502,7 +5501,7 @@ public class Wallet extends BaseTaggableObject
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableCompletableFuture<List<Transaction>> doMaintenance(@Nullable AesKey aesKey, boolean signAndSend)
+    public CompletableFuture<List<Transaction>> doMaintenance(@Nullable AesKey aesKey, boolean signAndSend)
             throws DeterministicUpgradeRequiresPassword {
         return doMaintenance(KeyChainGroupStructure.BIP32, aesKey, signAndSend);
     }
@@ -5522,7 +5521,7 @@ public class Wallet extends BaseTaggableObject
      * @return A list of transactions that the wallet just made/will make for internal maintenance. Might be empty.
      * @throws org.bitcoinj.wallet.DeterministicUpgradeRequiresPassword if key rotation requires the users password.
      */
-    public ListenableCompletableFuture<List<Transaction>> doMaintenance(KeyChainGroupStructure structure,
+    public CompletableFuture<List<Transaction>> doMaintenance(KeyChainGroupStructure structure,
             @Nullable AesKey aesKey, boolean signAndSend) throws DeterministicUpgradeRequiresPassword {
         List<Transaction> txns;
         lock.lock();
@@ -5530,7 +5529,7 @@ public class Wallet extends BaseTaggableObject
         try {
             txns = maybeRotateKeys(structure, aesKey, signAndSend);
             if (!signAndSend)
-                return ListenableCompletableFuture.completedFuture(txns);
+                return CompletableFuture.completedFuture(txns);
         } finally {
             keyChainGroupLock.unlock();
             lock.unlock();
@@ -5555,7 +5554,7 @@ public class Wallet extends BaseTaggableObject
                 log.error("Failed to broadcast rekey tx", e);
             }
         }
-        return ListenableCompletableFuture.of(FutureUtils.allAsList(futures));
+        return FutureUtils.allAsList(futures);
     }
 
     // Checks to see if any coins are controlled by rotating keys and if so, spends them.

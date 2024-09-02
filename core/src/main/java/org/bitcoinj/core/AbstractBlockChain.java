@@ -27,7 +27,6 @@ import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.utils.VersionTally;
@@ -51,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
@@ -1071,8 +1071,8 @@ public abstract class AbstractBlockChain {
      * @param height desired height
      * @return future that will complete when height is reached
      */
-    public ListenableCompletableFuture<StoredBlock> getHeightFuture(final int height) {
-        final ListenableCompletableFuture<StoredBlock> result = new ListenableCompletableFuture<>();
+    public CompletableFuture<StoredBlock> getHeightFuture(final int height) {
+        final CompletableFuture<StoredBlock> result = new CompletableFuture<>();
         addNewBestBlockListener(Threading.SAME_THREAD, new NewBestBlockListener() {
             @Override
             public void notifyNewBestBlock(StoredBlock block) throws VerificationException {

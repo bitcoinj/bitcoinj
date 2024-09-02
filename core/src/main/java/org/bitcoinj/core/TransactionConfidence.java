@@ -21,7 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.utils.ListenableCompletableFuture;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.CoinSelector;
@@ -35,6 +34,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 
@@ -535,8 +535,8 @@ public class TransactionConfidence {
      * depth to one will wait until it appears in a block on the best chain, and zero will wait until it has been seen
      * on the network.
      */
-    private synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(final int depth, Executor executor) {
-        final ListenableCompletableFuture<TransactionConfidence> result = new ListenableCompletableFuture<>();
+    private synchronized CompletableFuture<TransactionConfidence> getDepthFuture(final int depth, Executor executor) {
+        final CompletableFuture<TransactionConfidence> result = new CompletableFuture<>();
         if (getDepthInBlocks() >= depth) {
             result.complete(this);
         }
@@ -551,7 +551,7 @@ public class TransactionConfidence {
         return result;
     }
 
-    public synchronized ListenableCompletableFuture<TransactionConfidence> getDepthFuture(final int depth) {
+    public synchronized CompletableFuture<TransactionConfidence> getDepthFuture(final int depth) {
         return getDepthFuture(depth, Threading.USER_THREAD);
     }
 
