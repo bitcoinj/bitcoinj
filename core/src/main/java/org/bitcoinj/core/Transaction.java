@@ -1704,12 +1704,6 @@ public class Transaction extends BaseMessage {
                 !isTimeLocked();
     }
 
-    /** @deprecated use {@link #isFinal(int, Instant)} */
-    @Deprecated
-    public boolean isFinal(int height, long blockTimeSeconds) {
-        return isFinal(height, Instant.ofEpochSecond(blockTimeSeconds));
-    }
-
     /**
      * Returns either the lock time, if it was specified as a timestamp, or an estimate based on the time in
      * the current head block if it was specified as a block height.
