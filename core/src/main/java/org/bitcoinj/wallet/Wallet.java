@@ -1172,7 +1172,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     /**
-     * Same as {@link #addWatchedAddress(Address, long)} with the current time as the creation time.
+     * Same as {@link #addWatchedAddress(Address, Instant)} with the current time as the creation time.
      */
     public boolean addWatchedAddress(final Address address) {
         Instant now = TimeUtils.currentTime();
