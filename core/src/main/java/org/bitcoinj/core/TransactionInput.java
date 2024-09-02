@@ -199,14 +199,6 @@ public class TransactionInput {
     }
 
     /**
-     * @deprecated Use {@link #messageSize()}
-     */
-    @Deprecated
-    public int getMessageSize() {
-        return messageSize();
-    }
-
-    /**
      * Coinbase transactions have special inputs with hashes of zero. If this is such an input, returns true.
      */
     public boolean isCoinBase() {

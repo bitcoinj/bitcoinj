@@ -161,14 +161,6 @@ public class TransactionOutput {
     }
 
     /**
-     * @deprecated Use {@link #messageSize()}
-     */
-    @Deprecated
-    public int getMessageSize() {
-        return messageSize();
-    }
-
-    /**
      * Returns the value of this output. This is the amount of currency that the destination address
      * receives.
      */

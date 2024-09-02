@@ -154,14 +154,6 @@ public class TransactionWitness {
         return size;
     }
 
-    /**
-     * @deprecated Use {@link #messageSize()}
-     */
-    @Deprecated
-    public int getMessageSize() {
-        return messageSize();
-    }
-
     @Override
     public String toString() {
         List<String> stringPushes = new ArrayList<>(pushes.size());

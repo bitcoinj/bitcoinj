@@ -117,12 +117,6 @@ public class TransactionOutPoint {
         return write(ByteBuffer.allocate(BYTES)).array();
     }
 
-    /** @deprecated use {@link #BYTES} */
-    @Deprecated
-    public int getMessageSize() {
-        return BYTES;
-    }
-
     /**
      * An outpoint is a part of a transaction input that points to the output of another transaction. If we have both
      * sides in memory, and they have been linked together, this returns a pointer to the connected output, or null

@@ -58,7 +58,6 @@ public class TransactionOutPointTest {
     public void deprecatedMembers() {
         TransactionOutPoint outpoint = TransactionOutPoint.UNCONNECTED;
         outpoint.getHash();
-        outpoint.getMessageSize();
         outpoint.getIndex();
     }
 }

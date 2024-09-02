@@ -161,14 +161,6 @@ public class PartialMerkleTree {
         return size;
     }
 
-    /**
-     * @deprecated Use {@link #messageSize()}
-     */
-    @Deprecated
-    public int getMessageSize() {
-        return messageSize();
-    }
-
     // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.
     private static void traverseAndBuild(int height, int pos, List<Sha256Hash> allLeafHashes, byte[] includeBits,
                                          List<Boolean> matchedChildBits, List<Sha256Hash> resultHashes) {

@@ -1233,9 +1233,9 @@ public class FullBlockTestGenerator {
             checkState(stream.size() == b64Original.block.messageSize() + 8);
             // This check fails because it was created for "retain mode" and the likely encoding is not "optimal".
             // We since removed this capability retain the original encoding, but could not rewrite this test data.
-            // checkState(stream.size() == b64.getMessageSize());
+            // checkState(stream.size() == b64.messageSize());
             // checkState(Arrays.equals(stream.toByteArray(), b64.serialize()));
-            // checkState(b64.getOptimalEncodingMessageSize() == b64Original.block.getMessageSize());
+            // checkState(b64.getOptimalEncodingMessageSize() == b64Original.block.messageSize());
         }
         blocks.add(new BlockAndValidity(b64, true, false, b64.getHash(), chainHeadHeight + 19, "b64"));
         spendableOutputs.offer(b64Original.getCoinbaseOutput());

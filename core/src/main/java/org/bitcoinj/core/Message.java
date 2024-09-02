@@ -35,14 +35,6 @@ public interface Message {
     int messageSize();
 
     /**
-     * @deprecated use {@link #messageSize()}
-     */
-    @Deprecated
-    default int getMessageSize() {
-        return messageSize();
-    }
-
-    /**
      * Serialize this message to a byte array that conforms to the Bitcoin wire protocol.
      *
      * @return serialized data in Bitcoin protocol format
