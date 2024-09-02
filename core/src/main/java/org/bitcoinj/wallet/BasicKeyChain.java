@@ -22,7 +22,6 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.crypto.EncryptableItem;
 import org.bitcoinj.crypto.EncryptedData;
 import org.bitcoinj.crypto.KeyCrypter;
@@ -674,11 +673,5 @@ public class BasicKeyChain implements EncryptableKeyChain {
         for (ECKey key : keys)
             key.formatKeyWithAddress(includePrivateKeys, aesKey, builder, network, null, "imported");
         return builder.toString();
-    }
-
-    /** @deprecated use {@link #toString(boolean, AesKey, Network)} */
-    @Deprecated
-    public String toString(boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
-        return toString(includePrivateKeys, aesKey, params.network());
     }
 }

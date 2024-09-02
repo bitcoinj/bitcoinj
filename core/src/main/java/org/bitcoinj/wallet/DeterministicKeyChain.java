@@ -27,7 +27,6 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicHierarchy;
@@ -1460,12 +1459,6 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         builder.append("Lookahead siz/thr: ").append(lookaheadSize).append('/').append(lookaheadThreshold).append('\n');
         formatAddresses(includeLookahead, includePrivateKeys, aesKey, network, builder);
         return builder.toString();
-    }
-
-    /** @deprecated use {@link #toString(boolean, boolean, AesKey, Network)} */
-    @Deprecated
-    public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey, NetworkParameters params) {
-        return toString(includeLookahead, includePrivateKeys, aesKey, params.network());
     }
 
     protected void formatAddresses(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey,
