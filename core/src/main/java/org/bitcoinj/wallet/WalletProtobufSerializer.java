@@ -471,13 +471,6 @@ public class WalletProtobufSerializer {
         return readWallet(network, extensions, walletProto, false);
     }
 
-    /** @deprecated use {@link #readWallet(Network, WalletExtension[], Protos.Wallet)} */
-    @Deprecated
-    public Wallet readWallet(NetworkParameters params, @Nullable WalletExtension[] extensions,
-                             Protos.Wallet walletProto) throws UnreadableWalletException {
-        return readWallet(params.network(), extensions, walletProto);
-    }
-
     /**
      * <p>Loads wallet data from the given protocol buffer and inserts it into the given Wallet object. This is primarily
      * useful when you wish to pre-register extension objects. Note that if loading fails the provided Wallet object
@@ -584,13 +577,6 @@ public class WalletProtobufSerializer {
         txMap.clear();
 
         return wallet;
-    }
-
-    /** @deprecated use {@link #readWallet(Network, WalletExtension[], Protos.Wallet, boolean)} */
-    @Deprecated
-    public Wallet readWallet(NetworkParameters params, @Nullable WalletExtension[] extensions,
-                             Protos.Wallet walletProto, boolean forceReset) throws UnreadableWalletException {
-        return readWallet(params.network(), extensions, walletProto, forceReset);
     }
 
     private void loadExtensions(Wallet wallet, WalletExtension[] extensionsList, Protos.Wallet walletProto) throws UnreadableWalletException {
