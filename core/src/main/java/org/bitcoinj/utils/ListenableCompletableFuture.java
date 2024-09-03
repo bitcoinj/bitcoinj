@@ -21,21 +21,25 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * A {@link CompletableFuture} that is also a {@link com.google.common.util.concurrent.ListenableFuture} for migration
- * from Guava {@code ListenableFuture} to {@link CompletableFuture}.
+ * from <b>Guava</b> {@code ListenableFuture} to {@link CompletableFuture}. This allows clients of <b>bitcoinj</b> to change the type
+ * of variables receiving {@code Future}s from bitcoinj methods. You must switch from Guava's
+ * {@link com.google.common.util.concurrent.ListenableFuture} (and related types) to Java 8's {@link CompletableFuture}.
+ * Release 0.18 of bitcoinj will <b>remove</b> this class,
+ * and the type of returned futures from bitcoinj, will be changed to {@link CompletableFuture}.
+ * <p>
+ * <b>WARNING: This class should be considered Deprecated for Removal, as it will be removed in Release 0.18.</b> See above for details.
  */
 public class ListenableCompletableFuture<V> extends CompletableFuture<V> implements ListenableCompletionStage<V> {
-
     /**
      * Returns a new {@link CompletableFuture} that is already completed with
      * the given value.
-     * <p>
-     * When the migration to {@link CompletableFuture} is finished use of this method
-     * can be replaced with {@link CompletableFuture#completedFuture(Object)}.
      *
      * @param value the value
      * @param <T> the type of the value
      * @return the completed CompletableFuture
+     * @deprecated Use {@link CompletableFuture#completedFuture(Object)}
      */
+    @Deprecated
     public static <T> ListenableCompletableFuture<T> completedFuture(T value) {
         ListenableCompletableFuture<T> future = new ListenableCompletableFuture<>();
         future.complete(value);
@@ -45,14 +49,13 @@ public class ListenableCompletableFuture<V> extends CompletableFuture<V> impleme
     /**
      * Returns a new {@link ListenableCompletableFuture} that is already completed exceptionally
      * with the given throwable.
-     * <p>
-     * When the migration to {@link CompletableFuture} is finished this can be deprecated
-     * and {@link FutureUtils#failedFuture(Throwable)} can be used instead.
      *
      * @param throwable the exceptions
      * @param <T> the type of the expected value
      * @return the completed CompletableFuture
+     * @deprecated Use {@code new CompletableFuture() + CompletableFuture.completeExceptionally()} or if JDK 9+ use {@code CompletableFuture.failedFuture()}
      */
+    @Deprecated
     public static <T> ListenableCompletableFuture<T> failedFuture(Throwable throwable) {
         return ListenableCompletableFuture.of(FutureUtils.failedFuture(throwable));
     }
@@ -60,13 +63,12 @@ public class ListenableCompletableFuture<V> extends CompletableFuture<V> impleme
     /**
      * Converts a generic {@link CompletableFuture} to a {@code ListenableCompletableFuture}. If the passed
      * in future is already a {@code ListenableCompletableFuture} no conversion is performed.
-     * <p>
-     * When the migration to {@link CompletableFuture} is finished usages of this method
-     * can simply be removed as the conversion will no longer be required.
      * @param future A CompletableFuture that may need to be converted
      * @param <T> the type of the futures return value
      * @return A ListenableCompletableFuture
+     * @deprecated Don't convert to {@link ListenableCompletableFuture}, use {@link CompletableFuture} directly.
      */
+    @Deprecated
     public static <T> ListenableCompletableFuture<T> of(CompletableFuture<T> future) {
         ListenableCompletableFuture<T> listenable;
         if (future instanceof ListenableCompletableFuture) {

@@ -24,8 +24,7 @@ import java.util.concurrent.Executor;
  * A {@link CompletionStage} with a {@link ListenableFuture}-compatible interface to smooth migration
  * from Guava {@code ListenableFuture} to {@link java.util.concurrent.CompletableFuture}/{@code CompletionStage}.
  * <p>
- * Note that this is much easier to implement than trying to extend {@link com.google.common.util.concurrent.AbstractFuture}
- * to implement {@code CompletionStage}.
+ * <b>WARNING: This interface should be considered Deprecated for Removal, It will be removed in Release 0.18</b>. See {@link ListenableCompletableFuture} for details.
  */
 public interface ListenableCompletionStage<V> extends CompletionStage<V>, ListenableFuture<V> {
     /**
