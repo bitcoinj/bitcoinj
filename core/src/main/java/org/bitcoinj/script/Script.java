@@ -224,7 +224,7 @@ public class Script {
     private final List<ScriptChunk> chunks;
     // Unfortunately, scripts are not ever re-serialized or canonicalized when used in signature hashing. Thus we
     // must preserve the exact bytes that we read off the wire, along with the parsed form.
-    private final byte[] program;
+    @Nullable private final byte[] program;
 
     // Creation time of the associated keys, or null if unknown.
     @Nullable private final Instant creationTime;
