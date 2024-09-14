@@ -276,16 +276,29 @@ public class Script {
     public static Script parse(byte[] program, Instant creationTime) throws ScriptException {
         Objects.requireNonNull(creationTime);
         program = Arrays.copyOf(program, program.length); // defensive copy
-        List<ScriptChunk> chunks = new ArrayList<>(5); // common size
-        parseIntoChunks(program, chunks);
+        List<ScriptChunk> chunks = parseIntoChunks(program);
         return new Script(program, chunks, creationTime);
     }
 
     /**
      * To run a script, first we parse it which breaks it up into chunks representing pushes of data or logical
      * opcodes. Then we can run the parsed chunks.
+     * @param program program bytes to parse
+     * @return An unmodifiable list of chunks
      */
-    private static void parseIntoChunks(byte[] program, List<ScriptChunk> chunks) throws ScriptException {
+    private static List<ScriptChunk> parseIntoChunks(byte[] program) throws ScriptException {
+        List<ScriptChunk> chunks = new ArrayList<>();
+        parseIntoChunksPartial(program, chunks);
+        return Collections.unmodifiableList(chunks);
+    }
+
+    /**
+     * Parse a script program into a mutable List of chunks. If an exception is thrown a partial parsing
+     * will be present in the provided chunk list.
+     * @param program The script program
+     * @param chunks An empty, mutable array to fill with chunks
+     */
+    private static void parseIntoChunksPartial(byte[] program, List<ScriptChunk> chunks) throws ScriptException {
         ByteArrayInputStream bis = new ByteArrayInputStream(program);
         while (bis.available() > 0) {
             int opcode = bis.read();
@@ -685,7 +698,7 @@ public class Script {
     public static int getSigOpCount(byte[] program) throws ScriptException {
         List<ScriptChunk> chunks = new ArrayList<>(5); // common size
         try {
-            parseIntoChunks(program, chunks);
+            parseIntoChunksPartial(program, chunks);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
@@ -698,7 +711,7 @@ public class Script {
     public static long getP2SHSigOpCount(byte[] scriptSig) throws ScriptException {
         List<ScriptChunk> chunks = new ArrayList<>(5); // common size
         try {
-            parseIntoChunks(scriptSig, chunks);
+            parseIntoChunksPartial(scriptSig, chunks);
         } catch (ScriptException e) {
             // Ignore errors and count up to the parse-able length
         }
