@@ -247,9 +247,7 @@ public class Script {
      * @return script that wraps the chunks
      */
     public static Script of(List<ScriptChunk> chunks, Instant creationTime) {
-        chunks = Collections.unmodifiableList(new ArrayList<>(chunks)); // defensive copy
-        Objects.requireNonNull(creationTime);
-        return new Script(null, chunks, creationTime);
+        return new Script(chunks, creationTime);
     }
 
     /**
@@ -275,10 +273,7 @@ public class Script {
      * @throws ScriptException if the program could not be parsed
      */
     public static Script parse(byte[] program, Instant creationTime) throws ScriptException {
-        Objects.requireNonNull(creationTime);
-        program = Arrays.copyOf(program, program.length); // defensive copy
-        List<ScriptChunk> chunks = parseIntoChunks(program);
-        return new Script(program, chunks, creationTime);
+        return new Script(program, creationTime);
     }
 
     /**
@@ -340,9 +335,22 @@ public class Script {
         }
     }
 
-    private Script(byte[] programBytes, List<ScriptChunk> chunks, Instant creationTime) {
-        this.program = programBytes;
-        this.chunks = chunks;
+
+    // When constructing from a program, we store both program and chunks
+    private Script(byte[] program, Instant creationTime) {
+        Objects.requireNonNull(program);
+        Objects.requireNonNull(creationTime);
+        this.program = Arrays.copyOf(program, program.length); // defensive copy;
+        this.chunks = parseIntoChunks(this.program);
+        this.creationTime = creationTime;
+    }
+
+    // When constructing from chunks, we store only chunks, and generate program when getter is called
+    private Script(List<ScriptChunk> chunks, Instant creationTime) {
+        Objects.requireNonNull(chunks);
+        Objects.requireNonNull(creationTime);
+        this.program = null;
+        this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));    // defensive copy
         this.creationTime = creationTime;
     }
 
