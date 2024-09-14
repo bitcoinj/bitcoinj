@@ -335,6 +335,21 @@ public class Script {
         }
     }
 
+    /**
+     * @deprecated Use {@link Script#parse(byte[])}
+     */
+    @Deprecated
+    public Script(byte[] program) {
+        this(program, TimeUtils.currentTime());
+    }
+
+    /**
+     * @deprecated Use {@link Script#parse(byte[], Instant)}
+     */
+    @Deprecated
+    public Script(byte[] program, long creationTimeInSeconds) {
+        this(program, Instant.ofEpochSecond(creationTimeInSeconds));
+    }
 
     // When constructing from a program, we store both program and chunks
     private Script(byte[] program, Instant creationTime) {
