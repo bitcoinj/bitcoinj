@@ -378,14 +378,13 @@ public class Script {
         if (program != null)
             // Don't round-trip as Bitcoin Core doesn't and it would introduce a mismatch.
             return Arrays.copyOf(program, program.length);
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            for (ScriptChunk chunk : chunks) {
-                chunk.write(bos);
-            }
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+        else {
+            int size = chunks.stream().mapToInt(ScriptChunk::size).sum();
+            ByteBuffer buf = ByteBuffer.allocate(size);
+            chunks.forEach(chunk ->
+                buf.put(chunk.toByteArray())
+            );
+            return buf.array();
         }
     }
 
