@@ -250,14 +250,12 @@ public class WalletTool implements Callable<Integer> {
         String value;
 
         public Condition(String from) {
-            if (from.length() < 2) throw new RuntimeException("Condition string too short: " + from);
-
             if (from.startsWith("<=")) type = Type.LTE;
             else if (from.startsWith(">=")) type = Type.GTE;
             else if (from.startsWith("<")) type = Type.LT;
             else if (from.startsWith("=")) type = Type.EQUAL;
             else if (from.startsWith(">")) type = Type.GT;
-            else throw new RuntimeException("Unknown operator in condition: " + from);
+            else throw new IllegalArgumentException("Unknown operator in condition: " + from);
 
             String s;
 
