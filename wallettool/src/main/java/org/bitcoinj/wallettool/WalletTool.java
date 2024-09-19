@@ -260,18 +260,11 @@ public class WalletTool implements Callable<Integer> {
             else throw new RuntimeException("Unknown operator in condition: " + from);
 
             String s;
+
             switch (type) {
-                case LT:
-                case GT:
-                case EQUAL:
-                    s = from.substring(1);
-                    break;
-                case LTE:
-                case GTE:
-                    s = from.substring(2);
-                    break;
-                default:
-                    throw new RuntimeException("Unreachable");
+                case LTE, GTE -> s = from.substring(2);
+                case LT, GT, EQUAL -> s = from.substring(1);
+                default -> throw new RuntimeException("Unreachable");
             }
             value = s;
         }
@@ -279,15 +272,14 @@ public class WalletTool implements Callable<Integer> {
         public boolean matchBitcoins(Coin comparison) {
             try {
                 Coin units = parseCoin(value);
-                switch (type) {
-                    case LT: return comparison.compareTo(units) < 0;
-                    case GT: return comparison.compareTo(units) > 0;
-                    case EQUAL: return comparison.compareTo(units) == 0;
-                    case LTE: return comparison.compareTo(units) <= 0;
-                    case GTE: return comparison.compareTo(units) >= 0;
-                    default:
-                        throw new RuntimeException("Unreachable");
-                }
+                return switch (type) {
+                    case LT -> comparison.compareTo(units) < 0;
+                    case GT -> comparison.compareTo(units) > 0;
+                    case EQUAL -> comparison.compareTo(units) == 0;
+                    case LTE -> comparison.compareTo(units) <= 0;
+                    case GTE -> comparison.compareTo(units) >= 0;
+                    default -> throw new RuntimeException("Unreachable");
+                };
             } catch (NumberFormatException e) {
                 System.err.println("Could not parse value from condition string: " + value);
                 System.exit(1);
