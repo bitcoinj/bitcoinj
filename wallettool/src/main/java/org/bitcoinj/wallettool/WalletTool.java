@@ -250,21 +250,28 @@ public class WalletTool implements Callable<Integer> {
         String value;
 
         public Condition(String from) {
-            if (from.startsWith("<=")) type = Type.LTE;
-            else if (from.startsWith(">=")) type = Type.GTE;
-            else if (from.startsWith("<")) type = Type.LT;
-            else if (from.startsWith("=")) type = Type.EQUAL;
-            else if (from.startsWith(">")) type = Type.GT;
+            this.type = extractType(from);
+            this.value = extractValue(from);
+        }
+
+        private static Type extractType(String from) {
+            if (from.startsWith("<=")) return Type.LTE;
+            else if (from.startsWith(">=")) return Type.GTE;
+            else if (from.startsWith("<")) return Type.LT;
+            else if (from.startsWith("=")) return Type.EQUAL;
+            else if (from.startsWith(">")) return Type.GT;
             else throw new IllegalArgumentException("Unknown operator in condition: " + from);
+        }
 
-            String s;
-
-            switch (type) {
-                case LTE, GTE -> s = from.substring(2);
-                case LT, GT, EQUAL -> s = from.substring(1);
-                default -> throw new RuntimeException("Unreachable");
+        private static String extractValue(String from) {
+            if (from.startsWith("<=") || from.startsWith(">=")) {
+                //When type is LTE or GTE
+                return from.substring(2);
+            } else if (from.startsWith("<") || from.startsWith(">") || from.startsWith("=")){
+                return from.substring(1);
+            } else {
+                throw new RuntimeException("Unreachable");
             }
-            value = s;
         }
 
         public boolean matchBitcoins(Coin comparison) {
@@ -716,24 +723,36 @@ public class WalletTool implements Callable<Integer> {
         public final ECKey key;
 
         public OutputSpec(String spec) throws IllegalArgumentException {
+            this.value = extractValue(spec);
+            this.addr = extractAddress(spec);
+            this.key = extractKey(spec);
+        }
+
+        private static Coin extractValue(String spec) {
             String[] parts = spec.split(":");
-            if (parts.length != 2) {
-                throw new IllegalArgumentException("Malformed output specification, must have two parts separated by :");
+            if (parts.length != 2) throw new IllegalArgumentException("Malformed output specification, must have two parts separated by :");
+
+            return "ALL".equalsIgnoreCase(parts[1]) ? null : parseCoin(parts[1]);
+        }
+
+        private static Address extractAddress(String spec) {
+            String destination = spec.split(":")[0];
+            if (!destination.startsWith("0")) {
+                // Treat as an address.
+                return wallet.parseAddress(destination);
+            } else {
+                return null;
             }
-            String destination = parts[0];
-            if ("ALL".equalsIgnoreCase(parts[1]))
-                value = null;
-            else
-                value = parseCoin(parts[1]);
+        }
+
+        private static ECKey extractKey(String spec) {
+            String destination = spec.split(":")[0];
             if (destination.startsWith("0")) {
                 // Treat as a raw public key.
                 byte[] pubKey = new BigInteger(destination, 16).toByteArray();
-                key = ECKey.fromPublicOnly(pubKey);
-                addr = null;
+                return ECKey.fromPublicOnly(pubKey);
             } else {
-                // Treat as an address.
-                addr = wallet.parseAddress(destination);
-                key = null;
+                return null;
             }
         }
 
