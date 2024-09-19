@@ -241,17 +241,14 @@ public class WalletTool implements Callable<Integer> {
     private static Wallet wallet;
     private static org.bitcoinj.protobuf.payments.Protos.PaymentRequest paymentRequest;
 
-    public static class Condition {
+    public record Condition(Type type, String value) {
         public enum Type {
             // Less than, greater than, less than or equal, greater than or equal.
             EQUAL, LT, GT, LTE, GTE
         }
-        Type type;
-        String value;
 
         public Condition(String from) {
-            this.type = extractType(from);
-            this.value = extractValue(from);
+            this(extractType(from), extractValue(from));
         }
 
         private static Type extractType(String from) {
@@ -717,15 +714,9 @@ public class WalletTool implements Callable<Integer> {
         return req;
     }
 
-    static class OutputSpec {
-        public final Coin value;
-        public final Address addr;
-        public final ECKey key;
-
+    public record OutputSpec(Coin value, Address addr, ECKey key) {
         public OutputSpec(String spec) throws IllegalArgumentException {
-            this.value = extractValue(spec);
-            this.addr = extractAddress(spec);
-            this.key = extractKey(spec);
+            this(extractValue(spec), extractAddress(spec), extractKey(spec));
         }
 
         private static Coin extractValue(String spec) {
