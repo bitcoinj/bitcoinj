@@ -28,7 +28,7 @@ dependencies {
 
 // Prevent newer Gradle from switching to JRE version of Guava
 def gradleVersionTargetJVM = GradleVersion.version("7.0")
-if (GradleVersion.current().compareTo(gradleVersionTargetJVM) > 0) {
+if (GradleVersion.current() > gradleVersionTargetJVM) {
     dependencies.constraints {
         implementation("com.google.guava:guava") {
             attributes {
@@ -82,7 +82,7 @@ test {
 
 def gradleVersionToolchains = GradleVersion.version("6.7")
 
-if (GradleVersion.current().compareTo(gradleVersionToolchains) > 0) {
+if (GradleVersion.current() > gradleVersionToolchains) {
     // If the Gradle Java Toolchains feature is available, run tests on older JDKs
     System.err.println "Adding 'testOnJdk8' task, because ${GradleVersion.current()}"
 
@@ -112,7 +112,7 @@ jar {
 def minGradleArchiveClassifierVersion = GradleVersion.version("5.0")
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    if (GradleVersion.current().compareTo(minGradleArchiveClassifierVersion) > 0) {
+    if (GradleVersion.current() > minGradleArchiveClassifierVersion) {
         archiveClassifier.set('javadoc')
     } else {
         classifier = 'javadoc'
@@ -121,7 +121,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    if (GradleVersion.current().compareTo(minGradleArchiveClassifierVersion) > 0) {
+    if (GradleVersion.current() > minGradleArchiveClassifierVersion) {
         archiveClassifier.set('sources')
     } else {
         classifier = 'sources'
