@@ -8,12 +8,12 @@ plugins {
 }
 
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
-boolean hasAnnotationProcessor = (GradleVersion.current().compareTo(annotationProcessorMinVersion) >= 0)
+boolean hasAnnotationProcessor = GradleVersion.current() >= annotationProcessorMinVersion
 def junit5MinVersion = GradleVersion.version("4.6")
-boolean hasJunit5 = (GradleVersion.current().compareTo(junit5MinVersion) >= 0)
+boolean hasJunit5 = GradleVersion.current() >= junit5MinVersion
 
 def graalVMMinVersion = GradleVersion.version("7.4")     // Toolchains with selection by vendor
-boolean hasGraalVM = (GradleVersion.current().compareTo(graalVMMinVersion) >= 0)
+boolean hasGraalVM = GradleVersion.current() >= graalVMMinVersion
 
 dependencies {
     implementation project(':bitcoinj-core')
