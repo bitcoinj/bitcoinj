@@ -121,8 +121,7 @@ class TransactionalHashMap<KeyType, ValueType> {
             for(KeyType key : tempSetRemoved.get())
                 map.remove(key);
         if (tempMap.get() != null)
-            for (Map.Entry<KeyType, ValueType> entry : tempMap.get().entrySet())
-                map.put(entry.getKey(), entry.getValue());
+            map.putAll(tempMap.get());
         abortDatabaseBatchWrite();
     }
 
