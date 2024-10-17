@@ -239,7 +239,7 @@ public class Script {
      * @return script that wraps the chunks
      */
     public static Script of(List<ScriptChunk> chunks) {
-        return of(chunks, TimeUtils.currentTime());
+        return of(chunks, null);
     }
 
     /**
@@ -262,7 +262,7 @@ public class Script {
      * @throws ScriptException if the program could not be parsed
      */
     public static Script parse(byte[] program) throws ScriptException {
-        return parse(program, TimeUtils.currentTime());
+        return parse(program, null);
     }
 
     /**
@@ -339,18 +339,16 @@ public class Script {
 
 
     // When constructing from a program, we store both program and chunks
-    private Script(byte[] program, Instant creationTime) {
+    private Script(byte[] program, @Nullable Instant creationTime) {
         Objects.requireNonNull(program);
-        Objects.requireNonNull(creationTime);
         this.program = Arrays.copyOf(program, program.length); // defensive copy;
         this.chunks = parseIntoChunks(this.program);
         this.creationTime = creationTime;
     }
 
     // When constructing from chunks, we store only chunks, and generate program when getter is called
-    private Script(List<ScriptChunk> chunks, Instant creationTime) {
+    private Script(List<ScriptChunk> chunks, @Nullable Instant creationTime) {
         Objects.requireNonNull(chunks);
-        Objects.requireNonNull(creationTime);
         this.program = null;
         this.chunks = Collections.unmodifiableList(new ArrayList<>(chunks));    // defensive copy
         this.creationTime = creationTime;
