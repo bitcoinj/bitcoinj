@@ -84,19 +84,19 @@ def gradleVersionToolchains = GradleVersion.version("6.7")
 
 if (GradleVersion.current().compareTo(gradleVersionToolchains) > 0) {
     // If the Gradle Java Toolchains feature is available, run tests on older JDKs
-    System.err.println "Adding 'testOnJdk8' task, because ${GradleVersion.current()}"
+    System.err.println "Adding 'testOnJdk11' task, because ${GradleVersion.current()}"
 
-    task('testOnJdk8', type: Test) {
+    task('testOnJdk11', type: Test) {
         doFirst {
             logger.lifecycle("Testing with JDK ${javaLauncher.get().metadata.javaRuntimeVersion}")
         }
         javaLauncher = javaToolchains.launcherFor {
-            languageVersion = JavaLanguageVersion.of(8)
+            languageVersion = JavaLanguageVersion.of(11)
         }
     }
-    // Activate if `testJdk8` is `true` in `gradle.properties` or `-PtestJdk8=true` is on command-line
-    if (Boolean.valueOf(findProperty('testJdk8'))) {
-        check.dependsOn testOnJdk8
+    // Activate if `testJdk11` is `true` in `gradle.properties` or `-PtestJdk11=true` is on command-line
+    if (Boolean.valueOf(findProperty('testJdk11'))) {
+        check.dependsOn testOnJdk11
     }
 }
 
