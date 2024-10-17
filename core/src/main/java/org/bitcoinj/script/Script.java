@@ -225,8 +225,12 @@ public class Script {
     // must preserve the exact bytes that we read off the wire, along with the parsed form.
     @Nullable private final byte[] program;
 
-    // Creation time of the associated keys, or null if unknown.
-    @Nullable private final Instant creationTime;
+    /**
+     * If this is set, the script is associated with a creation time. This is currently used in the context of
+     * watching wallets only, where the scriptPubKeys being watched actually represent public keys and their addresses.
+     */
+    @Nullable
+    private final Instant creationTime;
 
     /**
      * Wraps given script chunks.
@@ -242,7 +246,7 @@ public class Script {
      * Wraps given script chunks.
      *
      * @param chunks       chunks to wrap
-     * @param creationTime creation time of the script
+     * @param creationTime creation time to associate the script with
      * @return script that wraps the chunks
      */
     public static Script of(List<ScriptChunk> chunks, Instant creationTime) {
@@ -262,12 +266,11 @@ public class Script {
     }
 
     /**
-     * Construct a script that copies and wraps a given program, and a creation time. The array is parsed and checked
-     * for syntactic validity. Programs like this are e.g. used in {@link TransactionInput} and
-     * {@link TransactionOutput}.
+     * Construct a script that copies and wraps a given program. The array is parsed and checked for syntactic
+     * validity. Programs like this are e.g. used in {@link TransactionInput} and {@link TransactionOutput}.
      *
      * @param program      Array of program bytes from a transaction.
-     * @param creationTime creation time of the script
+     * @param creationTime creation time to associate the script with
      * @return parsed program
      * @throws ScriptException if the program could not be parsed
      */
@@ -394,8 +397,11 @@ public class Script {
     }
 
     /**
-     * Gets the creation time of this script, or empty if unknown.
-     * @return creation time of this script, or empty if unknown
+     * Gets the associated creation time of this script, or empty if undefined. This is currently used in the context of
+     * watching wallets only, where the scriptPubKeys being watched actually represent public keys and their
+     * addresses.
+     *
+     * @return associated creation time of this script, or empty if undefined
      */
     public Optional<Instant> creationTime() {
         return Optional.ofNullable(creationTime);

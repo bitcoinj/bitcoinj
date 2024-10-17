@@ -61,6 +61,12 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_RETURN;
  */
 public class ScriptBuilder {
     private final List<ScriptChunk> chunks;
+    /**
+     * If this is set, the script to be built is associated with a creation time. This is currently used in the
+     * context of watching wallets only, where the scriptPubKeys being watched actually represent public keys and
+     * their addresses.
+     */
+    @Nullable
     private Instant creationTime = TimeUtils.currentTime();
 
     /** Creates a fresh ScriptBuilder with an empty program. */
@@ -74,9 +80,12 @@ public class ScriptBuilder {
     }
 
     /**
-     * Sets the creation time to build the script with. If this is not set, the current time is used by the builder.
+     * Associates this script to be built with a given creation time. This is currently used in the context of
+     * watching wallets only, where the scriptPubKeys being watched actually represent public keys and their addresses.
+     * <p>
+     * If this is not set, the current time is used by the builder.
      *
-     * @param creationTime creation time to build the script with
+     * @param creationTime creation time to associate the script with
      * @return this builder
      */
     public ScriptBuilder creationTime(Instant creationTime) {
