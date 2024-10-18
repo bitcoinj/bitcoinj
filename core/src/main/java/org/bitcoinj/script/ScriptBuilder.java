@@ -61,7 +61,13 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_RETURN;
  */
 public class ScriptBuilder {
     private final List<ScriptChunk> chunks;
-    private Instant creationTime = TimeUtils.currentTime();
+    /**
+     * If this is set, the script to be built is associated with a creation time. This is currently used in the
+     * context of watching wallets only, where the scriptPubKeys being watched actually represent public keys and
+     * their addresses.
+     */
+    @Nullable
+    private Instant creationTime = null;
 
     /** Creates a fresh ScriptBuilder with an empty program. */
     public ScriptBuilder() {
@@ -74,9 +80,10 @@ public class ScriptBuilder {
     }
 
     /**
-     * Sets the creation time to build the script with. If this is not set, the current time is used by the builder.
+     * Associates this script to be built with a given creation time. This is currently used in the context of
+     * watching wallets only, where the scriptPubKeys being watched actually represent public keys and their addresses.
      *
-     * @param creationTime creation time to build the script with
+     * @param creationTime creation time to associate the script with
      * @return this builder
      */
     public ScriptBuilder creationTime(Instant creationTime) {
@@ -277,7 +284,10 @@ public class ScriptBuilder {
 
     /** Creates a new immutable Script based on the state of the builder. */
     public Script build() {
-        return Script.of(chunks, creationTime);
+        if (creationTime != null)
+            return Script.of(chunks, creationTime);
+        else
+            return Script.of(chunks);
     }
 
     /** Creates an empty script. */
@@ -297,7 +307,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes payment to the given address. The creation time will be the current time.
+     * Creates a scriptPubKey that encodes payment to the given address.
      *
      * @param to address to send payment to
      * @return scriptPubKey
