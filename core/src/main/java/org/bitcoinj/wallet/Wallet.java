@@ -4854,7 +4854,7 @@ public class Wallet extends BaseTaggableObject
             // because there are so many ways the block can be invalid.
 
             // Avoid spuriously informing the user of wallet/tx confidence changes whilst we're re-organizing.
-            checkState(confidenceChanged.size() == 0);
+            checkState(confidenceChanged.isEmpty());
             checkState(!insideReorg);
             insideReorg = true;
             checkState(onWalletChangedSuppressions == 0);
