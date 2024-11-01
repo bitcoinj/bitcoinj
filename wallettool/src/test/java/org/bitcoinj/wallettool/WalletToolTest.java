@@ -97,6 +97,7 @@ public class WalletToolTest {
 
         int syncExitCode = execute("sync", "--wallet", walletFile, "--net", "regtest", "--waitfor", "BLOCK");
         assertEquals(0, syncExitCode);
+        
     }
 
     /**

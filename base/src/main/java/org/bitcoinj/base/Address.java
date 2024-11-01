@@ -80,7 +80,8 @@ public interface Address extends Comparable<Address> {
     static int compareTypes(Address a, Address b) {
         if (a instanceof LegacyAddress && b instanceof SegwitAddress) {
             return -1;  // Legacy addresses (starting with 1 or 3) come before Segwit addresses.
-        } else if (a instanceof SegwitAddress && b instanceof LegacyAddress) {
+        } else 
+        if (a instanceof SegwitAddress && b instanceof LegacyAddress) {
             return 1;
         } else {
             return 0;   // Both are the same type: additional `thenComparing()` lambda(s) for that type must finish the comparison

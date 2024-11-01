@@ -127,7 +127,10 @@ public class Base58 {
             return new byte[0];
         }
         // Convert the base58-encoded ASCII chars to a base58 byte sequence (base58 digits).
+
+        // Creates a new byte array input58 with the same length as the input string. This array will store the decoded bytes.
         byte[] input58 = new byte[input.length()];
+        
         for (int i = 0; i < input.length(); ++i) {
             char c = input.charAt(i);
             int digit = c < 128 ? INDEXES[c] : -1;
