@@ -259,35 +259,22 @@ public class WalletTool implements Callable<Integer> {
             else if (from.startsWith(">")) type = Type.GT;
             else throw new RuntimeException("Unknown operator in condition: " + from);
 
-            String s;
-            switch (type) {
-                case LT:
-                case GT:
-                case EQUAL:
-                    s = from.substring(1);
-                    break;
-                case LTE:
-                case GTE:
-                    s = from.substring(2);
-                    break;
-                default:
-                    throw new RuntimeException("Unreachable");
-            }
-            value = s;
+            value = switch (type) {
+                case LT, GT, EQUAL -> from.substring(1);
+                case LTE, GTE -> from.substring(2);
+            };
         }
 
         public boolean matchBitcoins(Coin comparison) {
             try {
                 Coin units = parseCoin(value);
-                switch (type) {
-                    case LT: return comparison.compareTo(units) < 0;
-                    case GT: return comparison.compareTo(units) > 0;
-                    case EQUAL: return comparison.compareTo(units) == 0;
-                    case LTE: return comparison.compareTo(units) <= 0;
-                    case GTE: return comparison.compareTo(units) >= 0;
-                    default:
-                        throw new RuntimeException("Unreachable");
-                }
+                return switch (type) {
+                    case LT -> comparison.compareTo(units) < 0;
+                    case GT -> comparison.compareTo(units) > 0;
+                    case EQUAL -> comparison.compareTo(units) == 0;
+                    case LTE -> comparison.compareTo(units) <= 0;
+                    case GTE -> comparison.compareTo(units) >= 0;
+                };
             } catch (NumberFormatException e) {
                 System.err.println("Could not parse value from condition string: " + value);
                 System.exit(1);
@@ -400,14 +387,14 @@ public class WalletTool implements Callable<Integer> {
 
         // What should we do?
         switch (action) {
-            case DUMP: dumpWallet(); break;
-            case ADD_KEY: addKey(); break;
-            case ADD_ADDR: addAddr(); break;
-            case DELETE_KEY: deleteKey(); break;
-            case CURRENT_RECEIVE_ADDR: currentReceiveAddr(); break;
-            case RESET: reset(); break;
-            case SYNC: syncChain(); break;
-            case SEND:
+            case DUMP -> dumpWallet();
+            case ADD_KEY -> addKey();
+            case ADD_ADDR -> addAddr();
+            case DELETE_KEY -> deleteKey();
+            case CURRENT_RECEIVE_ADDR -> currentReceiveAddr();
+            case RESET -> reset();
+            case SYNC -> syncChain();
+            case SEND -> {
                 if (paymentRequestLocationStr != null && outputsStr != null) {
                     System.err.println("--payment-request and --output cannot be used together.");
                     return 1;
@@ -460,12 +447,12 @@ public class WalletTool implements Callable<Integer> {
                     System.err.println("You must specify a --payment-request or at least one --output=addr:value.");
                     return 1;
                 }
-                break;
-            case ENCRYPT: encrypt(); break;
-            case DECRYPT: decrypt(); break;
-            case UPGRADE: upgrade(); break;
-            case ROTATE: rotate(); break;
-            case SET_CREATION_TIME: setCreationTime(); break;
+            }
+            case ENCRYPT -> encrypt();
+            case DECRYPT -> decrypt();
+            case UPGRADE -> upgrade();
+            case ROTATE -> rotate();
+            case SET_CREATION_TIME -> setCreationTime();
         }
 
         if (!wallet.isConsistent()) {
@@ -906,26 +893,25 @@ public class WalletTool implements Callable<Integer> {
      */
     private CompletableFuture<String> wait(WaitForEnum waitFor, Condition condition) {
         CompletableFuture<String> future = new CompletableFuture<>();
-        switch (waitFor) {
-            case EVER:
-                break;  // Future will never complete
 
-            case WALLET_TX:
+        switch (waitFor) {
+            case EVER -> {
+                // Future will never complete
+            }
+            case WALLET_TX -> {
                 // Future will complete with a transaction ID string
                 Consumer<Transaction> txListener = tx ->  future.complete(tx.getTxId().toString());
                 // Both listeners run in a peer thread
                 wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
                 wallet.addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
-                break;
-
-            case BLOCK:
+            }
+            case BLOCK -> {
                 // Future will complete with a Block hash string
                 peerGroup.addBlocksDownloadedEventListener((peer, block, filteredBlock, blocksLeft) ->
                     future.complete(block.getHashAsString())
                 );
-                break;
-
-            case BALANCE:
+            }
+            case BALANCE -> {
                 // Future will complete with a balance amount string
                 // Check if the balance already meets the given condition.
                 Coin existingBalance = wallet.getBalance(Wallet.BalanceType.ESTIMATED);
@@ -946,7 +932,7 @@ public class WalletTool implements Callable<Integer> {
                     wallet.addChangeEventListener(w -> onChange.run());
                     wallet.addReorganizeEventListener(w -> onChange.run());
                 }
-                break;
+            }
         }
         return future;
     }
