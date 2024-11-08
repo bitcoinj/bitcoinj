@@ -50,6 +50,11 @@ public class SegwitAddress implements Address {
     public static final int WITNESS_PROGRAM_LENGTH_TR = 32;
     public static final int WITNESS_PROGRAM_MIN_LENGTH = 2;
     public static final int WITNESS_PROGRAM_MAX_LENGTH = 40;
+    /**
+     * <p>P2A (pay-to-anchor) Script</p>
+     * Defined <a href="https://github.com/bitcoin/bitcoin/blob/455fca86cfada1823aa28615b5683f9dc73dbb9a/src/script/script.cpp#L216-L222">here in Bitcoin Core</a>:
+     */
+    private static final byte[] P2A_SCRIPT = {0x4e, 0x73};
 
 
     /**
@@ -166,12 +171,24 @@ public class SegwitAddress implements Address {
 
         // Rationale for still restricting length here: creating anyone-can-spend Taproot addresses is probably
         // not that what callers expect.
-        if (witnessVersion == 1 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_TR)
+        // (With one exception, the P2A (pay-to-anchor) output scripts are expected to be version 1 but shorter
+        // than 32 bytes.)
+        if (witnessVersion == 1 && witnessProgram.length != WITNESS_PROGRAM_LENGTH_TR
+                && !isPayToAnchorOutputScript(witnessVersion, witnessProgram))
             throw new AddressFormatException.InvalidDataLength(
                     "Invalid length for address version 1: " + witnessProgram.length);
         this.network = normalizeNetwork(Objects.requireNonNull(network));
         this.witnessVersion = (short) witnessVersion;
         this.witnessProgram = Objects.requireNonNull(witnessProgram);
+    }
+
+    /**
+     * Check if this script is a P2A (pay-to-anchor) output script.
+     *
+     * @return <code>true</code> if the given wittnessProgram and wittnessVersion represent a Pay-to-anchor output script, <code>false</code> otherwise
+     */
+    private boolean isPayToAnchorOutputScript(int witnessVersion, byte[] witnessProgram) {
+        return witnessVersion == 1 && Arrays.equals(P2A_SCRIPT, witnessProgram);
     }
 
     /**
