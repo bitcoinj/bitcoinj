@@ -3,6 +3,7 @@ image:https://gitlab.com/bitcoinj/bitcoinj/badges/master/pipeline.svg[GitLab Bui
 image:https://coveralls.io/repos/bitcoinj/bitcoinj/badge.png?branch=master[Coverage Status,link=https://coveralls.io/r/bitcoinj/bitcoinj?branch=master]
 
 image::https://img.shields.io/badge/chat-Join%20bitcoinj--users%20on%20Matrix-blue[Join the bitcoinj-users Matrix room, link=https://matrix.to/#/#bitcoinj-users:matrix.org]
+image::https://img.shields.io/badge/Gurubase-Ask%20bitcoinj%20Guru-006BFF[Ask bitcoinj Guru, link=https://gurubase.io/g/bitcoinj]
 
 ### Welcome to bitcoinj
 
