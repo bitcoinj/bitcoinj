@@ -21,11 +21,14 @@ package org.bitcoinj.script;
 import com.google.common.collect.Lists;
 
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Utils;
 import org.junit.Test;
 
 import java.util.List;
 
 import static org.bitcoinj.script.ScriptOpCodes.OP_CHECKMULTISIG;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -92,5 +95,56 @@ public class ScriptPatternTest {
         assertTrue(ScriptPattern.isOpReturn(
                 ScriptBuilder.createOpReturnScript(new byte[10])
         ));
+    }
+
+    @Test
+    public void isWitnessCommitment() {
+        // OP_RETURN <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6a24aa21a9ed0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = new Script(Utils.HEX.decode(hex));
+        assertTrue(ScriptPattern.isWitnessCommitment(script));
+        assertEquals(Sha256Hash.ZERO_HASH, ScriptPattern.extractWitnessCommitmentHash(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_tooShort() {
+        // OP_RETURN <1-byte length 35> <4-byte commitment header> <31 bytes commitment>
+        String hex = "6a23aa21a9ed00000000000000000000000000000000000000000000000000000000000000";
+        Script script = new Script(Utils.HEX.decode(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_tooLong() {
+        // OP_RETURN <1-byte length 37> <4-byte commitment header> <33 bytes commitment>
+        String hex = "6a25aa21a9ed000000000000000000000000000000000000000000000000000000000000000000";
+        Script script = new Script(Utils.HEX.decode(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_noOpReturn() {
+        // OP_NOP <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6124aa21a9ed0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = new Script(Utils.HEX.decode(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_wrongCommitmentHeader() {
+        // OP_RETURN <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6a24ffffffff0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = new Script(Utils.HEX.decode(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void extractWitnessCommitmentHash() {
+        // OP_RETURN <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6a24aa21a9ed0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = new Script(Utils.HEX.decode(hex));
+        Sha256Hash hash = ScriptPattern.extractWitnessCommitmentHash(script);
+        assertEquals("0000000000000000000000000000000000000000000000000000000000000000",
+                Utils.HEX.encode(hash.getBytes()));
     }
 }

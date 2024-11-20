@@ -258,25 +258,23 @@ public class ScriptPattern {
     /**
      * Returns whether this script matches the pattern for a segwit commitment (in an output of the coinbase
      * transaction).
+     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#commitment-structure">BIP141</a>.
      */
     public static boolean isWitnessCommitment(Script script) {
-        List<ScriptChunk> chunks = script.chunks;
-        if (chunks.size() < 2)
-            return false;
-        if (!chunks.get(0).equalsOpCode(ScriptOpCodes.OP_RETURN))
-            return false;
-        byte[] chunkData = chunks.get(1).data;
-        if (chunkData == null || chunkData.length != 36)
-            return false;
-        if (!Arrays.equals(Arrays.copyOfRange(chunkData, 0, 4), SEGWIT_COMMITMENT_HEADER))
-            return false;
-        return true;
+        byte[] bytes = script.getProgram();
+        return bytes.length >= 38
+                && bytes[0] == ScriptOpCodes.OP_RETURN
+                && bytes[1] == 36 // length byte
+                && Arrays.equals(Arrays.copyOfRange(bytes, 2, 6), SEGWIT_COMMITMENT_HEADER);
     }
 
     /**
      * Retrieves the hash from a segwit commitment (in an output of the coinbase transaction).
+     * You will want to guard calls to this method with {@link #isWitnessCommitment(Script)}.
+     * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#commitment-structure">BIP141</a>.
      */
     public static Sha256Hash extractWitnessCommitmentHash(Script script) {
-        return Sha256Hash.wrap(Arrays.copyOfRange(script.chunks.get(1).data, 4, 36));
+        byte[] hash = Arrays.copyOfRange(script.getProgram(), 6, 38);
+        return Sha256Hash.wrap(hash);
     }
 }
