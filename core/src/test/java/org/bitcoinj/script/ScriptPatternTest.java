@@ -19,6 +19,7 @@
 package org.bitcoinj.script;
 
 import com.google.common.collect.Lists;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
@@ -111,5 +112,56 @@ public class ScriptPatternTest {
         Script p2shScript = ScriptBuilder.createP2SHOutputScript(2, keys);
         byte[] p2shScriptHash = ScriptPattern.extractHashFromP2SH(p2shScript);
         assertEquals("defdb71910720a2c854529019189228b4245eddd", ByteUtils.formatHex(p2shScriptHash));
+    }
+
+    @Test
+    public void isWitnessCommitment() {
+        // OP_RETURN <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6a24aa21a9ed0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = Script.parse(ByteUtils.parseHex(hex));
+        assertTrue(ScriptPattern.isWitnessCommitment(script));
+        assertEquals(Sha256Hash.ZERO_HASH, ScriptPattern.extractWitnessCommitmentHash(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_tooShort() {
+        // OP_RETURN <1-byte length 35> <4-byte commitment header> <31 bytes commitment>
+        String hex = "6a23aa21a9ed00000000000000000000000000000000000000000000000000000000000000";
+        Script script = Script.parse(ByteUtils.parseHex(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_tooLong() {
+        // OP_RETURN <1-byte length 37> <4-byte commitment header> <33 bytes commitment>
+        String hex = "6a25aa21a9ed000000000000000000000000000000000000000000000000000000000000000000";
+        Script script = Script.parse(ByteUtils.parseHex(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_noOpReturn() {
+        // OP_NOP <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6124aa21a9ed0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = Script.parse(ByteUtils.parseHex(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void isWitnessCommitment_wrongCommitmentHeader() {
+        // OP_RETURN <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6a24ffffffff0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = Script.parse(ByteUtils.parseHex(hex));
+        assertFalse(ScriptPattern.isWitnessCommitment(script));
+    }
+
+    @Test
+    public void extractWitnessCommitmentHash() {
+        // OP_RETURN <1-byte length 36> <4-byte commitment header> <32 bytes commitment>
+        String hex = "6a24aa21a9ed0000000000000000000000000000000000000000000000000000000000000000";
+        Script script = Script.parse(ByteUtils.parseHex(hex));
+        Sha256Hash hash = ScriptPattern.extractWitnessCommitmentHash(script);
+        assertEquals("0000000000000000000000000000000000000000000000000000000000000000",
+                ByteUtils.formatHex(hash.getBytes()));
     }
 }
