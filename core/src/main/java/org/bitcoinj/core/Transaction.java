@@ -268,35 +268,39 @@ public class Transaction extends BaseMessage {
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
     public static Transaction read(ByteBuffer payload, int protocolVersion) throws BufferUnderflowException, ProtocolException {
-        Transaction tx = new Transaction(protocolVersion);
+        return new Transaction(payload, protocolVersion);
+    }
+
+    private Transaction(ByteBuffer payload, int protocolVersion) {
+        this(protocolVersion);
         boolean allowWitness = allowWitness(protocolVersion);
 
         // version
-        tx.version = ByteUtils.readUint32(payload);
+        this.version = ByteUtils.readUint32(payload);
         byte flags = 0;
         // Try to parse the inputs. In case the dummy is there, this will be read as an empty array list.
-        tx.readInputs(payload);
-        if (tx.inputs.size() == 0 && allowWitness) {
+        this.readInputs(payload);
+        if (this.inputs.size() == 0 && allowWitness) {
             // We read a dummy or an empty input
             flags = payload.get();
 
             if (flags != 0) {
-                tx.readInputs(payload);
-                tx.readOutputs(payload);
+                this.readInputs(payload);
+                this.readOutputs(payload);
             } else {
-                tx.outputs = new ArrayList<>(0);
+                this.outputs = new ArrayList<>(0);
             }
         } else {
             // We read non-empty inputs. Assume normal outputs follows.
-            tx.readOutputs(payload);
+            this.readOutputs(payload);
         }
 
         if (((flags & 1) != 0) && allowWitness) {
             // The witness flag is present, and we support witnesses.
             flags ^= 1;
             // script_witnesses
-            tx.readWitnesses(payload);
-            if (!tx.hasWitnesses()) {
+            this.readWitnesses(payload);
+            if (!this.hasWitnesses()) {
                 // It's illegal to encode witnesses when all witness stacks are empty.
                 throw new ProtocolException("Superfluous witness record");
             }
@@ -306,8 +310,7 @@ public class Transaction extends BaseMessage {
             throw new ProtocolException("Unknown transaction optional data");
         }
         // lock_time
-        tx.vLockTime = LockTime.of(ByteUtils.readUint32(payload));
-        return tx;
+        this.vLockTime = LockTime.of(ByteUtils.readUint32(payload));
     }
 
     private Transaction(int protocolVersion) {
@@ -327,6 +330,18 @@ public class Transaction extends BaseMessage {
     @Deprecated
     public Transaction(NetworkParameters params) {
         this();
+    }
+
+    /** @deprecated use {@link Transaction#readOutputs(ByteBuffer)} */
+    @Deprecated
+    public Transaction(NetworkParameters parameters, byte[] payload) {
+        this(ByteBuffer.wrap(payload), ProtocolVersion.CURRENT.intValue());
+    }
+
+    /** @deprecated use {@link Transaction#readOutputs(ByteBuffer)} */
+    @Deprecated
+    public Transaction(NetworkParameters parameters, byte[] payload, int offset) {
+        this(ByteBuffer.wrap(payload, offset, payload.length - offset), ProtocolVersion.CURRENT.intValue());
     }
 
     /**
