@@ -20,6 +20,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
+import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
 
 /**
  * AddressData wrapper class with valid and invalid address test vectors.
@@ -39,6 +40,10 @@ public class AddressData {
                     "5120000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433", 1),
             new AddressData("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0", MAINNET,
                     "512079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", 1),
+            // P2A (pay-to-anchor) output script address representations (see https://delvingbitcoin.org/t/segwit-ephemeral-anchors/160/2)
+            new AddressData("bc1pfeessrawgf", MAINNET, "51024e73", 1), // pay-2-anchor (P2A) mainnet address
+            new AddressData("tb1pfees9rn5nz", TESTNET, "51024e73", 1), // pay-2-anchor (P2A) testnet address
+            new AddressData("bcrt1pfeesnyr2tx", REGTEST, "51024e73", 1), // pay-2-anchor (P2A) regtest address
     };
     public static String[] INVALID_ADDRESSES = {
             // from BIP173:
