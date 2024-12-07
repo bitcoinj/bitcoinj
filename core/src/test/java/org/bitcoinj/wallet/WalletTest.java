@@ -20,21 +20,16 @@ package org.bitcoinj.wallet;
 import com.google.common.collect.Lists;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.*;
+import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.crypto.AesKey;
+import org.bitcoinj.crypto.*;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
-import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.base.Coin;
-import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.PeerAddress;
-import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
@@ -44,15 +39,6 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.crypto.ChildNumber;
-import org.bitcoinj.crypto.DeterministicKey;
-import org.bitcoinj.crypto.HDPath;
-import org.bitcoinj.crypto.KeyCrypter;
-import org.bitcoinj.crypto.KeyCrypterException;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.crypto.MnemonicCode;
-import org.bitcoinj.crypto.MnemonicException;
-import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -104,6 +90,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.COIN;
@@ -3530,4 +3517,67 @@ public class WalletTest extends TestWithWallet {
         Wallet wallet10 = Wallet.fromWatchingKeyB58(TESTNET, watchingKeyb58, Instant.ofEpochSecond(1415282801));
         assertEquals(TESTNET, wallet10.network());
     }
+
+    @Test
+    public void testFromSpendingKey() {
+        Network network = BitcoinNetwork.TESTNET;
+
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey spendingKey = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
+        Instant creationTime = Instant.ofEpochSecond(1415282801);
+        key1.setCreationTime(creationTime);
+        Wallet wallet = Wallet.fromSpendingKey(network, spendingKey, ScriptType.P2PKH);
+
+        assertNotNull(wallet);
+        assertEquals(network, wallet.network());
+        assertTrue(wallet.isConsistent());
+        assertEquals(creationTime, wallet.earliestKeyCreationTime());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFromSpendingKeyInvalidInput() {
+        Network network = BitcoinNetwork.TESTNET;
+        Wallet.fromSpendingKey(network, null, ScriptType.P2PKH); // Null key should throw an exception.
+    }
+
+    @Test
+    public void testFromSpendingKeyB58() {
+        Network network = BitcoinNetwork.TESTNET;
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
+
+        final String priv58 = key2.serializePrivB58(network);
+        Instant creationTime = Instant.ofEpochSecond(1415282801);
+
+        Wallet wallet = Wallet.fromSpendingKeyB58(network, priv58, creationTime);
+
+        assertNotNull(wallet);
+        assertEquals(network, wallet.network());
+        assertEquals(creationTime, wallet.earliestKeyCreationTime());
+        assertTrue(wallet.isConsistent());
+        assertEquals(DeterministicKey.deserializeB58(key1, priv58, network), key2);
+    }
+
+    @Test(expected = AddressFormatException.class)
+    public void testFromSpendingKeyB58InvalidBase58() {
+        Network network = BitcoinNetwork.TESTNET;
+        Wallet.fromSpendingKeyB58(network, "invalid_base58", Instant.now());
+    }
+
+    @Test
+    public void testFromMasterKey() {
+        Network network = BitcoinNetwork.TESTNET;
+        DeterministicKey masterKey = HDKeyDerivation.createMasterPrivateKey(new byte[32]);
+        Instant creationTime = Instant.ofEpochSecond(1415282801);
+        masterKey.setCreationTime(creationTime);
+        ChildNumber accountNumber = new ChildNumber(0, true);
+
+        Wallet wallet = Wallet.fromMasterKey(network, masterKey, ScriptType.P2PKH, accountNumber);
+
+        assertNotNull(wallet);
+        assertEquals(network, wallet.network());
+        assertTrue(wallet.isConsistent());
+        assertEquals(creationTime, wallet.earliestKeyCreationTime());
+    }
+
 }
