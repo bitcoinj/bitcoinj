@@ -64,12 +64,14 @@ public class PeerMonitorFx extends Application {
 
         // Center: Table view for peers
         peerTable = new TableView<>();
+        peerTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
         setupPeerTable();
         root.setTop(topControls);
         root.setCenter(peerTable);
 
         // Scene and stage setup
-        Scene scene = new Scene(root, 1280, 768);
+        Scene scene = new Scene(root, 800, 600);
         primaryStage.setScene(scene);
         primaryStage.setOnCloseRequest(event -> {
             System.out.println("Shutting down...");
