@@ -427,6 +427,13 @@ public class ECKey implements EncryptableItem {
         return pub.isCompressed();
     }
 
+    /**
+     * Return an address that can receive outputs spendable with a signature from this key.
+     * @param scriptType A supported script type. ({@link ScriptType#P2PKH} or {@link ScriptType#P2WPKH})
+     * @param network Network type used to encode the address.
+     * @return address for this key.
+     * @throws IllegalArgumentException if unsupported script type or if key is uncompressed and {@code ScriptType.P2WPKH}.
+     */
     public Address toAddress(ScriptType scriptType, Network network) {
         if (scriptType == ScriptType.P2PKH) {
             return LegacyAddress.fromPubKeyHash(network, this.getPubKeyHash());
