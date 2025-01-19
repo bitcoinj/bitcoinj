@@ -12,7 +12,7 @@ dependencies {
     api project(':bitcoinj-base')
     api 'org.bouncycastle:bcprov-jdk15to18:1.80'
     api 'com.google.guava:guava:33.4.0-android'
-    api 'com.google.protobuf:protobuf-javalite:4.28.3'
+    api 'com.google.protobuf:protobuf-javalite:4.29.3'
     implementation 'org.slf4j:slf4j-api:2.0.16'
     implementation 'net.jcip:jcip-annotations:1.0'
 
@@ -52,7 +52,7 @@ javadoc.options.encoding = 'UTF-8'
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:4.28.3'
+        artifact = 'com.google.protobuf:protoc:4.29.3'
     }
     generateProtoTasks {
         all().each { task ->
