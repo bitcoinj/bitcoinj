@@ -11,8 +11,8 @@ dependencies {
     implementation 'org.slf4j:slf4j-jdk14:2.0.16'
     implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
 
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.3"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.3"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
 }
 
 javafx {
