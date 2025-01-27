@@ -236,9 +236,9 @@ public class SPVBlockStore implements BlockStore {
         final byte[] zeroPadding = new byte[20]; // 32 (V2 work) - 12 (V1 work)
         for (int i = currentCapacity - 1; i >= 0; i--) {
             byte[] record = new byte[RECORD_SIZE_V1];
-            buffer.position(FILE_PROLOGUE_BYTES + i * RECORD_SIZE_V1);
+            ((Buffer) buffer).position(FILE_PROLOGUE_BYTES + i * RECORD_SIZE_V1);
             buffer.get(record);
-            buffer.position(FILE_PROLOGUE_BYTES + i * RECORD_SIZE_V2);
+            ((Buffer) buffer).position(FILE_PROLOGUE_BYTES + i * RECORD_SIZE_V2);
             buffer.put(record, 0, 32); // hash
             buffer.put(zeroPadding);
             buffer.put(record, 32, RECORD_SIZE_V1 - 32); // work, height, block header
