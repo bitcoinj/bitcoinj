@@ -16,8 +16,6 @@
 
 package org.bitcoinj.walletfx.controls;
 
-import de.jensd.fx.fontawesome.AwesomeDude;
-import de.jensd.fx.fontawesome.AwesomeIcon;
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -90,10 +88,7 @@ public class ClickableBitcoinAddress extends AnchorPane implements OverlayContro
             loader.setClassLoader(getClass().getClassLoader());
             loader.load();
 
-            AwesomeDude.setIcon(copyWidget, AwesomeIcon.COPY);
             Tooltip.install(copyWidget, new Tooltip("Copy address to clipboard"));
-
-            AwesomeDude.setIcon(qrCode, AwesomeIcon.QRCODE);
             Tooltip.install(qrCode, new Tooltip("Show a barcode scannable with a mobile phone for this address"));
 
             addressStr = convert(address);

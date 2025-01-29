@@ -3,6 +3,8 @@
 <?import javafx.scene.control.ContextMenu?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
@@ -23,8 +25,24 @@
             </ContextMenu>
           </contextMenu>
         </Label>
-        <Label fx:id="copyWidget" onMouseClicked="#copyWidgetClicked" text="&lt;COPY&gt;" />
-        <Label fx:id="qrCode" onMouseClicked="#showQRCode" text="&lt;QR&gt;" />
+        <Label fx:id="copyWidget" onMouseClicked="#copyWidgetClicked" text="&lt;COPY&gt;" >
+          <graphic>
+            <ImageView fitHeight="16" fitWidth="16">
+              <image>
+                <Image url="@../images/content-copy.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Label>
+        <Label fx:id="qrCode" onMouseClicked="#showQRCode" text="&lt;QR&gt;" >
+          <graphic>
+            <ImageView fitHeight="16" fitWidth="16">
+              <image>
+                <Image url="@../images/qrcode.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Label>
       </children>
     </HBox>
   </children>
