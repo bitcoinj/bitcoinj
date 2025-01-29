@@ -28,7 +28,7 @@ tasks.withType(JavaCompile) {
 
 javadoc.options.encoding = 'UTF-8'
 
-mainClassName = 'wallettemplate.Main'
+mainClassName = 'wallettemplate.Launcher'
 
 test {
     useJUnitPlatform()
