@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <fx:root type="javafx.scene.layout.AnchorPane" prefWidth="441.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
   <children>
-    <HBox id="addressLabelBox" fx:id="box" alignment="CENTER_LEFT" layoutX="0.0" layoutY="0.0" prefHeight="21.0" prefWidth="591.0" spacing="10.0">
+    <HBox id="addressLabelBox" fx:id="box" alignment="CENTER_LEFT" layoutX="0.0" layoutY="0.0" prefHeight="21.0" prefWidth="391.0" spacing="10.0">
       <children>
         <Label fx:id="addressLabel" onMouseClicked="#requestMoney" style="-fx-cursor: hand" text="&lt;address goes here&gt;" textFill="BLUE" underline="true">
           <contextMenu>
