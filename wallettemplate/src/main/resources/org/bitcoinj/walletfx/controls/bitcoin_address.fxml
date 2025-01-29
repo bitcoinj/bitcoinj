@@ -25,7 +25,7 @@
             </ContextMenu>
           </contextMenu>
         </Label>
-        <Label fx:id="copyWidget" onMouseClicked="#copyWidgetClicked" text="&lt;COPY&gt;" >
+        <Label fx:id="copyWidget" onMouseClicked="#copyWidgetClicked">
           <graphic>
             <ImageView fitHeight="16" fitWidth="16">
               <image>
@@ -34,7 +34,7 @@
             </ImageView>
           </graphic>
         </Label>
-        <Label fx:id="qrCode" onMouseClicked="#showQRCode" text="&lt;QR&gt;" >
+        <Label fx:id="qrCode" onMouseClicked="#showQRCode">
           <graphic>
             <ImageView fitHeight="16" fitWidth="16">
               <image>
