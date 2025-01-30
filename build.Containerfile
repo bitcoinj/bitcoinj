@@ -40,7 +40,8 @@ RUN /usr/bin/gradle --project-dir project/ \
     --no-build-cache --no-daemon --no-parallel \
     --settings-file=settings-debian.gradle \
     -Dmaven.repo.local=repo \
-    clean ${ADDITIONAL_GRADLE_TASK} :bitcoinj-base:publishToMavenLocal :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist
+    clean ${ADDITIONAL_GRADLE_TASK} :bitcoinj-base:publishToMavenLocal :bitcoinj-core:publishToMavenLocal \
+    :bitcoinj-wallettool:installDist :bitcoinj-wallettemplate:installDist
 
 # stage: export build output
 FROM scratch AS export-stage
@@ -55,3 +56,6 @@ COPY --from=build-stage \
 COPY --from=build-stage \
     /home/builder/project/wallettool/build/install/wallet-tool/ \
     /wallettool/
+COPY --from=build-stage \
+    /home/builder/project/wallettemplate/build/install/bitcoinj-wallettemplate/ \
+    /wallettemplate/
