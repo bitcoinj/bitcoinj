@@ -73,13 +73,26 @@ To dump the state of the wallet in `~/bitcoinj/bitcoinj-test.wallet` with the te
 
 NOTE: These instructions are for macOS/Linux, for Windows use the `wallettool/build/install/wallet-tool/bin/wallet-tool.bat` batch file with the equivalent Windows command-line commands and options.
 
-### Building the Wallet Template
+### Building and Running the Wallet Template
 
 The *bitcoinj* `wallettemplate` subproject includes a template JavaFX wallet application (`bitcoinj-wallettemplate`) that can be used as a starting point for building a JavaFX-based *bitcoinj* wallet application.
 
 To build an executable shell script that runs the wallettemplate, use:
 ```
 gradle bitcoinj-wallettemplate:installDist
+```
+
+You can now run `bitcoinj-wallettemplate` to launch the application:
+```
+./wallettemplate/build/install/bitcoinj-wallettemplate/bin/bitcoinj-wallettemplate
+```
+
+ NOTE: On Windows, use `bitcoinj-wallettemplate.bat`.
+
+You can also use `jlink` to build and run the application with a bundled JVM runtime:
+```
+gradle bitcoinj-wallettemplate:jlink
+./wallettemplate/build/image/bin/bitcoinj-wallettemplate
 ```
 
 ### Building the reference build

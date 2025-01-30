@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'org.beryx.jlink' version '3.1.1'
 }
 
 dependencies {
@@ -29,7 +30,14 @@ tasks.withType(JavaCompile) {
 
 javadoc.options.encoding = 'UTF-8'
 
-mainClassName = 'wallettemplate.Main'
+application {
+    mainClass = "wallettemplate.Main"
+    mainModule = "wallettemplate"
+}
+
+jlink {
+    options = ['--add-modules', 'org.slf4j.jul']
+}
 
 test {
     useJUnitPlatform()
