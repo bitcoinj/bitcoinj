@@ -170,7 +170,7 @@ public class TransactionInput {
      * @throws BufferOverflowException if the input doesn't fit the remaining buffer
      */
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-        buf.put(outpoint.serialize());
+        outpoint.write(buf);
         Buffers.writeLengthPrefixedBytes(buf, scriptBytes);
         ByteUtils.writeInt32LE(sequence, buf);
         return buf;

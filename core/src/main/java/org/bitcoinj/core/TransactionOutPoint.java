@@ -103,7 +103,7 @@ public class TransactionOutPoint {
      * @throws BufferOverflowException if the outpoint doesn't fit the remaining buffer
      */
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-        buf.put(hash.serialize());
+        hash.write(buf);
         ByteUtils.writeInt32LE(index, buf);
         return buf;
     }
