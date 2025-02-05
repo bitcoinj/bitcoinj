@@ -1034,6 +1034,21 @@ public class Transaction extends BaseMessage {
     }
 
     /**
+     * Replaces an already added output. This is meant to amend a transaction before it's committed to a wallet.
+     *
+     * @param index  index of output to replace
+     * @param output output to replace with
+     */
+    public void replaceOutput(int index, TransactionOutput output) {
+        TransactionOutput oldOutput = outputs.remove(index);
+        checkState(oldOutput.isAvailableForSpending(), () ->
+                "output to be replaced is buried in a wallet: " + oldOutput);
+        oldOutput.setParent(null);
+        output.setParent(this);
+        outputs.add(index, output);
+    }
+
+    /**
      * Creates an output based on the given address and value, adds it to this transaction, and returns the new output.
      */
     public TransactionOutput addOutput(Coin value, Address address) {
