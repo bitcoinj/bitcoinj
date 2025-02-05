@@ -57,7 +57,7 @@ public class TransactionOutput {
     @Nullable protected Transaction parent;
 
     // The output's value is kept as a native type in order to save class instances.
-    private long value;
+    private final long value;
 
     // A transaction output has a script used for authenticating that the redeemer is allowed to spend
     // this output.
@@ -169,14 +169,14 @@ public class TransactionOutput {
     }
 
     /**
-     * Sets the value of this output.
+     * Returns a clone of this output, with given value. The typical use case is fee calculation.
+     *
+     * @param value value for the clone
+     * @return clone of output, with given value
      */
-    public void setValue(Coin value) {
+    public TransactionOutput withValue(Coin value) {
         Objects.requireNonNull(value);
-        // Negative values obviously make no sense, except for -1 which is used as a sentinel value when calculating
-        // SIGHASH_SINGLE signatures, so unfortunately we have to allow that here.
-        checkArgument(value.signum() >= 0 || value.equals(Coin.NEGATIVE_SATOSHI), () -> "value out of range: " + value);
-        this.value = value.value;
+        return new TransactionOutput(this.parent, value, this.scriptBytes);
     }
 
     /**

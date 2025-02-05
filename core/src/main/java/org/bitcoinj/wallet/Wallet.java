@@ -4439,7 +4439,7 @@ public class Wallet extends BaseTaggableObject
                 CoinSelector selector = req.coinSelector == null ? coinSelector : req.coinSelector;
                 bestCoinSelection = selector.select((Coin) network.maxMoney(), candidates);
                 candidates = null;  // Selector took ownership and might have changed candidates. Don't access again.
-                req.tx.getOutput(0).setValue(bestCoinSelection.totalValue());
+                req.tx.replaceOutput(0, req.tx.getOutput(0).withValue(bestCoinSelection.totalValue()));
                 log.info("  emptying {}", bestCoinSelection.totalValue().toFriendlyString());
             }
 
@@ -4453,7 +4453,7 @@ public class Wallet extends BaseTaggableObject
 
             if (updatedOutputValues != null) {
                 for (int i = 0; i < updatedOutputValues.size(); i++) {
-                    req.tx.getOutput(i).setValue(updatedOutputValues.get(i));
+                    req.tx.replaceOutput(i, req.tx.getOutput(i).withValue(updatedOutputValues.get(i)));
                 }
             }
 
@@ -4591,7 +4591,8 @@ public class Wallet extends BaseTaggableObject
             boolean ensureMinRequiredFee) {
         Coin fee = estimateFees(tx, coinSelection, feePerKb, ensureMinRequiredFee);
         TransactionOutput output = tx.getOutput(0);
-        output.setValue(output.getValue().subtract(fee));
+        output = output.withValue(output.getValue().subtract(fee));
+        tx.replaceOutput(0, output);
         return !output.isDust();
     }
 
@@ -5269,11 +5270,12 @@ public class Wallet extends BaseTaggableObject
                         ByteBuffer.wrap(req.tx.getOutput(i).serialize()), tx);
                 if (req.recipientsPayFees) {
                     // Subtract fee equally from each selected recipient
-                    output.setValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));
+                    output = output.withValue(output.getValue().subtract(fee.divide(req.tx.getOutputs().size())));
                     // first receiver pays the remainder not divisible by output count
                     if (i == 0) {
-                        output.setValue(
-                                output.getValue().subtract(fee.divideAndRemainder(req.tx.getOutputs().size())[1])); // Subtract fee equally from each selected recipient
+                        // Subtract fee equally from each selected recipient
+                        Coin feeRemainder = fee.divideAndRemainder(req.tx.getOutputs().size())[1];
+                        output = output.withValue(output.getValue().subtract(feeRemainder));
                     }
                     result.updatedOutputValues.add(output.getValue());
                     Coin nonDustValue = output.getMinNonDustValue();
@@ -5304,9 +5306,10 @@ public class Wallet extends BaseTaggableObject
                     // This would be against the purpose of the all-inclusive feature.
                     // So instead we raise the change and deduct from the first recipient.
                     Coin missingToNotBeDust = changeOutput.getMinNonDustValue().subtract(changeOutput.getValue());
-                    changeOutput.setValue(changeOutput.getValue().add(missingToNotBeDust));
+                    changeOutput = changeOutput.withValue(changeOutput.getValue().add(missingToNotBeDust));
                     TransactionOutput firstOutput = tx.getOutput(0);
-                    firstOutput.setValue(firstOutput.getValue().subtract(missingToNotBeDust));
+                    firstOutput = firstOutput.withValue(firstOutput.getValue().subtract(missingToNotBeDust));
+                    tx.replaceOutput(0, firstOutput);
                     result.updatedOutputValues.set(0, firstOutput.getValue());
                     if (firstOutput.isDust()) {
                         throw new CouldNotAdjustDownwards();

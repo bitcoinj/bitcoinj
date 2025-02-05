@@ -116,7 +116,7 @@ public class TransactionTest {
     @Test(expected = VerificationException.NegativeValueOutput.class)
     public void negativeOutput() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
-        tx.getOutput(0).setValue(Coin.NEGATIVE_SATOSHI);
+        tx.replaceOutput(0, tx.getOutput(0).withValue(Coin.NEGATIVE_SATOSHI));
         Transaction.verify(TESTNET.network(), tx);
     }
 
@@ -124,7 +124,7 @@ public class TransactionTest {
     public void exceedsMaxMoney2() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         Coin half = BitcoinNetwork.MAX_MONEY.divide(2).add(Coin.SATOSHI);
-        tx.getOutput(0).setValue(half);
+        tx.replaceOutput(0, tx.getOutput(0).withValue(half));
         tx.addOutput(half, ADDRESS);
         Transaction.verify(TESTNET.network(), tx);
     }
