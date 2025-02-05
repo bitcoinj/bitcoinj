@@ -93,7 +93,8 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
             TransactionSignature txSig = new TransactionSignature(sigKey.sig, Transaction.SigHash.ALL, false);
             int sigIndex = inputScript.getSigInsertionIndex(sighash, sigKey.pubKey);
             inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, txSig.encodeToBitcoin(), sigIndex);
-            txIn.setScriptSig(inputScript);
+            txIn = txIn.withScriptSig(inputScript);
+            tx.replaceInput(i, txIn);
         }
         return true;
     }

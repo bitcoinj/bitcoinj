@@ -3050,8 +3050,10 @@ public class WalletTest extends TestWithWallet {
         SendRequest req = SendRequest.emptyWallet(OTHER_ADDRESS);
         wallet.completeTx(req);
         // Delete the sigs
-        for (TransactionInput input : req.tx.getInputs())
-            input.clearScriptBytes();
+        for (int i = 0; i < req.tx.getInputs().size(); i++) {
+            TransactionInput input = req.tx.getInput(i).withoutScriptBytes();
+            req.tx.replaceInput(i, input);
+        }
         Wallet watching = Wallet.fromWatchingKey(TESTNET, wallet.getWatchingKey().dropParent().dropPrivateBytes(),
                 ScriptType.P2PKH);
         watching.freshReceiveKey();
@@ -3458,7 +3460,7 @@ public class WalletTest extends TestWithWallet {
         Script scriptCode1 = ScriptBuilder.createP2PKHOutputScript(sigKey1);
         TransactionSignature txSig1 = sendReq.tx.calculateWitnessSignature(0, sigKey1, scriptCode1,
                 inputW1.getValue(), Transaction.SigHash.ALL, false);
-        inputW1.setScriptSig(ScriptBuilder.createEmpty());
+        inputW1 = inputW1.withScriptSig(ScriptBuilder.createEmpty());
         inputW1 = inputW1.withWitness(TransactionWitness.redeemP2WPKH(txSig1, sigKey1));
         sendReq.tx.replaceInput(0, inputW1);
 
@@ -3468,7 +3470,7 @@ public class WalletTest extends TestWithWallet {
         Script scriptCode2 = ScriptBuilder.createP2PKHOutputScript(sigKey2);
         TransactionSignature txSig2 = sendReq.tx.calculateWitnessSignature(0, sigKey2, scriptCode2,
                 inputW2.getValue(), Transaction.SigHash.ALL, false);
-        inputW2.setScriptSig(ScriptBuilder.createEmpty());
+        inputW2 = inputW2.withScriptSig(ScriptBuilder.createEmpty());
         inputW2 = inputW2.withWitness(TransactionWitness.redeemP2WPKH(txSig2, sigKey2));
         sendReq.tx.replaceInput(1, inputW2);
 

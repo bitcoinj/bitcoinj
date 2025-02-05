@@ -902,20 +902,20 @@ public class Transaction extends BaseMessage {
         if (ScriptPattern.isP2PK(scriptPubKey)) {
             TransactionSignature signature = calculateSignature(inputIndex, sigKey, scriptPubKey, sigHash,
                     anyoneCanPay);
-            input.setScriptSig(ScriptBuilder.createInputScript(signature));
+            input = input.withScriptSig(ScriptBuilder.createInputScript(signature));
             input = input.withoutWitness();
             replaceInput(inputIndex, input);
         } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
             TransactionSignature signature = calculateSignature(inputIndex, sigKey, scriptPubKey, sigHash,
                     anyoneCanPay);
-            input.setScriptSig(ScriptBuilder.createInputScript(signature, sigKey));
+            input = input.withScriptSig(ScriptBuilder.createInputScript(signature, sigKey));
             input = input.withoutWitness();
             replaceInput(inputIndex, input);
         } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
             Script scriptCode = ScriptBuilder.createP2PKHOutputScript(sigKey);
             TransactionSignature signature = calculateWitnessSignature(inputIndex, sigKey, scriptCode, input.getValue(),
                     sigHash, anyoneCanPay);
-            input.setScriptSig(ScriptBuilder.createEmpty());
+            input = input.withScriptSig(ScriptBuilder.createEmpty());
             input = input.withWitness(TransactionWitness.redeemP2WPKH(signature, sigKey));
             replaceInput(inputIndex, input);
         } else {
@@ -1210,7 +1210,7 @@ public class Transaction extends BaseMessage {
             // EC math so we'll do it anyway.
             for (int i = 0; i < tx.inputs.size(); i++) {
                 TransactionInput input = tx.getInput(i);
-                input.clearScriptBytes();
+                input = input.withoutScriptBytes();
                 input = input.withoutWitness();
                 tx.replaceInput(i, input);
             }
@@ -1227,8 +1227,9 @@ public class Transaction extends BaseMessage {
             // Set the input to the script of its output. Bitcoin Core does this but the step has no obvious purpose as
             // the signature covers the hash of the prevout transaction which obviously includes the output script
             // already. Perhaps it felt safer to him in some way, or is another leftover from how the code was written.
-            TransactionInput input = tx.inputs.get(inputIndex);
-            input.setScriptBytes(connectedScript);
+            TransactionInput input = tx.getInput(inputIndex);
+            input = input.withScriptBytes(connectedScript);
+            tx.replaceInput(inputIndex, input);
 
             if ((sigHashType & 0x1f) == SigHash.NONE.value) {
                 // SIGHASH_NONE means no outputs are signed at all - the signature is effectively for a "blank cheque".

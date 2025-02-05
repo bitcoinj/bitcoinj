@@ -4564,7 +4564,8 @@ public class Wallet extends BaseTaggableObject
                 RedeemData redeemData = txIn.getConnectedRedeemData(maybeDecryptingKeyBag);
                 Objects.requireNonNull(redeemData, () ->
                         "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().hash());
-                txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+                tx.replaceInput(i, txIn.withScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0),
+                        redeemData.redeemScript)));
             }
 
             TransactionSigner.ProposedTransaction proposal = new TransactionSigner.ProposedTransaction(tx);

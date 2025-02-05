@@ -96,7 +96,7 @@ public class GenerateLowSTests {
         // Sign the transaction
         final ProposedTransaction proposedTransaction = new ProposedTransaction(outputTransaction);
         signer.signInputs(proposedTransaction, bag);
-        final TransactionInput input = proposedTransaction.partialTx.getInput(0);
+        TransactionInput input = proposedTransaction.partialTx.getInput(0);
 
         input.verify(output);
         input.getScriptSig().correctlySpends(outputTransaction, 0, null, null, output.getScriptPubKey(),
@@ -116,7 +116,7 @@ public class GenerateLowSTests {
 
         final BigInteger highS = HIGH_S_DIFFERENCE.subtract(signature.s);
         final TransactionSignature highSig = new TransactionSignature(signature.r, highS);
-        input.setScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(scriptSig.chunks().get(1).data).build());
+        input = input.withScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(scriptSig.chunks().get(1).data).build());
         input.getScriptSig().correctlySpends(outputTransaction, 0, null, null, output.getScriptPubKey(),
             EnumSet.of(Script.VerifyFlag.P2SH));
 
@@ -147,7 +147,7 @@ public class GenerateLowSTests {
             RedeemData redeemData = txIn.getConnectedRedeemData(bag);
             Objects.requireNonNull(redeemData, () ->
                     "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().hash());
-            txIn.setScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript));
+            outputTransaction.replaceInput(i, txIn.withScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript)));
         }
     }
 

@@ -97,7 +97,9 @@ public class FakeTxBuilder {
         TransactionOutput prevOut = new TransactionOutput(prevTx, value, to);
         prevTx.addOutput(prevOut);
         // Connect it.
-        t.addInput(prevOut).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        TransactionInput in = t.addInput(prevOut);
+        in = in.withScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        t.replaceInput(t.getInputs().size() - 1, in);
         // Fake signature.
         // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
         return roundTripTransaction(t);
@@ -126,14 +128,18 @@ public class FakeTxBuilder {
         TransactionOutput prevOut1 = new TransactionOutput(prevTx1, Coin.valueOf(split), to);
         prevTx1.addOutput(prevOut1);
         // Connect it.
-        t.addInput(prevOut1).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        TransactionInput in1 = t.addInput(prevOut1);
+        in1 = in1.withScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        t.replaceInput(t.getInputs().size() - 1, in1);
         // Fake signature.
 
         // Do it again
         Transaction prevTx2 = new Transaction();
         TransactionOutput prevOut2 = new TransactionOutput(prevTx2, Coin.valueOf(value.getValue() - split), to);
         prevTx2.addOutput(prevOut2);
-        t.addInput(prevOut2).setScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        TransactionInput in2 = t.addInput(prevOut2);
+        in2 = in2.withScriptSig(ScriptBuilder.createInputScript(TransactionSignature.dummy()));
+        t.replaceInput(t.getInputs().size() - 1, in2);
 
         // Serialize/deserialize to ensure internal state is stripped, as if it had been read from the wire.
         return roundTripTransaction(t);

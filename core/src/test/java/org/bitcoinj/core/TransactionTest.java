@@ -100,7 +100,7 @@ public class TransactionTest {
     @Test(expected = VerificationException.LargerThanMaxBlockSize.class)
     public void tooHuge() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
-        tx.getInput(0).setScriptBytes(new byte[Block.MAX_BLOCK_SIZE]);
+        tx.replaceInput(0, tx.getInput(0).withScriptBytes(new byte[Block.MAX_BLOCK_SIZE]));
         Transaction.verify(TESTNET.network(), tx);
     }
 
@@ -108,7 +108,7 @@ public class TransactionTest {
     public void duplicateOutPoint() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         TransactionInput input = tx.getInput(0);
-        input.setScriptBytes(new byte[1]);
+        input = input.withScriptBytes(new byte[1]);
         tx.addInput(input);
         Transaction.verify(TESTNET.network(), tx);
     }
@@ -336,7 +336,8 @@ public class TransactionTest {
                 ByteUtils.formatHex(txSig1.encodeToBitcoin()));
 
         assertFalse(correctlySpends(txIn0, scriptPubKey0, 0));
-        txIn0.setScriptSig(new ScriptBuilder().data(txSig0.encodeToBitcoin()).build());
+        txIn0 = txIn0.withScriptSig(new ScriptBuilder().data(txSig0.encodeToBitcoin()).build());
+	    tx.replaceInput(0, txIn0);
         assertTrue(correctlySpends(txIn0, scriptPubKey0, 0));
 
         assertFalse(correctlySpends(txIn1, scriptPubKey1, 1));
@@ -415,8 +416,8 @@ public class TransactionTest {
 
         assertFalse(correctlySpends(txIn, scriptPubKey, 0));
         txIn = txIn.withWitness(TransactionWitness.redeemP2WPKH(txSig, key));
+        txIn = txIn.withScriptSig(new ScriptBuilder().data(redeemScript.program()).build());
         tx.replaceInput(0, txIn);
-        txIn.setScriptSig(new ScriptBuilder().data(redeemScript.program()).build());
         assertTrue(correctlySpends(txIn, scriptPubKey, 0));
 
         String signedTxHex = "01000000" // version
@@ -571,11 +572,11 @@ public class TransactionTest {
         int size1 = tx1.messageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
-        tx1.getInput(0).setScriptSig(Script.parse(new byte[109]));
+        tx1.replaceInput(0, tx1.getInput(0).withScriptSig(Script.parse(new byte[109])));
         assertEquals(78, tx1.getMessageSizeForPriorityCalc());
-        tx1.getInput(0).setScriptSig(Script.parse(new byte[110]));
+        tx1.replaceInput(0, tx1.getInput(0).withScriptSig(Script.parse(new byte[110])));
         assertEquals(78, tx1.getMessageSizeForPriorityCalc());
-        tx1.getInput(0).setScriptSig(Script.parse(new byte[111]));
+        tx1.replaceInput(0, tx1.getInput(0).withScriptSig(Script.parse(new byte[111])));
         assertEquals(79, tx1.getMessageSizeForPriorityCalc());
     }
 

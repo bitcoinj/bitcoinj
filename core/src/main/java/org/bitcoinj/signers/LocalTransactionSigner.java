@@ -127,14 +127,14 @@ public class LocalTransactionSigner implements TransactionSigner {
                     int sigIndex = 0;
                     inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, signature.encodeToBitcoin(),
                             sigIndex);
-                    txIn.setScriptSig(inputScript);
+                    txIn = txIn.withScriptSig(inputScript);
                     txIn = txIn.withoutWitness();
                 } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
                     Script scriptCode = ScriptBuilder.createP2PKHOutputScript(key);
                     Coin value = txIn.getValue();
                     TransactionSignature signature = tx.calculateWitnessSignature(i, key, scriptCode, value,
                             Transaction.SigHash.ALL, false);
-                    txIn.setScriptSig(ScriptBuilder.createEmpty());
+                    txIn = txIn.withScriptSig(ScriptBuilder.createEmpty());
                     txIn = txIn.withWitness(TransactionWitness.redeemP2WPKH(signature, key));
                 } else {
                     throw new IllegalStateException(script.toString());
