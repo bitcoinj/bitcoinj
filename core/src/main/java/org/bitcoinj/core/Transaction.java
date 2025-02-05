@@ -1365,8 +1365,9 @@ public class Transaction extends BaseMessage {
                             BigInteger.valueOf(output.getValue().getValue()),
                             bosHashOutputs
                     );
-                    bosHashOutputs.write(VarInt.of(output.getScriptBytes().length).serialize());
-                    bosHashOutputs.write(output.getScriptBytes());
+                    byte[] scriptBytes = output.getScriptBytes();
+                    bosHashOutputs.write(VarInt.of(scriptBytes.length).serialize());
+                    bosHashOutputs.write(scriptBytes);
                 }
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
@@ -1375,8 +1376,9 @@ public class Transaction extends BaseMessage {
                         BigInteger.valueOf(this.outputs.get(inputIndex).getValue().getValue()),
                         bosHashOutputs
                 );
-                bosHashOutputs.write(VarInt.of(this.outputs.get(inputIndex).getScriptBytes().length).serialize());
-                bosHashOutputs.write(this.outputs.get(inputIndex).getScriptBytes());
+                byte[] scriptBytes = this.outputs.get(inputIndex).getScriptBytes();
+                bosHashOutputs.write(VarInt.of(scriptBytes.length).serialize());
+                bosHashOutputs.write(scriptBytes);
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             }
             writeInt32LE(version, bos);
