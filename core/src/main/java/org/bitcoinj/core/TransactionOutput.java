@@ -61,7 +61,7 @@ public class TransactionOutput {
 
     // A transaction output has a script used for authenticating that the redeemer is allowed to spend
     // this output.
-    private byte[] scriptBytes;
+    private final byte[] scriptBytes;
 
     // The script bytes are parsed and turned into a Script on demand.
     private Script scriptPubKey;
@@ -308,7 +308,7 @@ public class TransactionOutput {
      * @return the scriptBytes
     */
     public byte[] getScriptBytes() {
-        return scriptBytes;
+        return Arrays.copyOf(scriptBytes, scriptBytes.length);
     }
 
     /**
