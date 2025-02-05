@@ -37,6 +37,19 @@ import java.util.Objects;
 import static org.bitcoinj.base.internal.Preconditions.check;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
+/**
+ * This structure contains data required to check transaction validity but not required to determine transaction
+ * effects. It is described as a number of byte vectors called "pushes". Those vectors are pushed to the script stack
+ * before script execution when validating a transaction.
+ * <p>
+ * For example, for inputs spending a P2WPKH output the witness consists of a signature and a public key – the same
+ * data that would have been pushed to the stack via a scriptSig for P2PKH.
+ * <p>
+ * Instances of this class are immutable.
+ *
+ * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki">BIP 141</a>
+ * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki">BIP 143</a>
+ */
 public class TransactionWitness {
     public static final TransactionWitness EMPTY = TransactionWitness.of(Collections.emptyList());
 
@@ -66,7 +79,7 @@ public class TransactionWitness {
     }
 
     /**
-     * Construct a transaction witness from a given list of arbitrary pushes.
+     * Construct a transaction witness from a given list of arbitrary stack pushes.
      *
      * @param pushes list of pushes
      * @return constructed transaction witness
@@ -76,7 +89,7 @@ public class TransactionWitness {
     }
 
     /**
-     * Construct a transaction witness from a given list of arbitrary pushes.
+     * Construct a transaction witness from a given list of arbitrary stack pushes.
      *
      * @param pushes list of pushes
      * @return constructed transaction witness
@@ -110,10 +123,21 @@ public class TransactionWitness {
         this.pushes = pushes;
     }
 
+    /**
+     * Get the stack push at a specified index.
+     *
+     * @param i index to get push at
+     * @return stack push
+     */
     public byte[] getPush(int i) {
         return pushes.get(i);
     }
 
+    /**
+     * Gets the number of stack pushes in this witness.
+     *
+     * @return number of pushes
+     */
     public int getPushCount() {
         return pushes.size();
     }
