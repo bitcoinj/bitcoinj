@@ -483,7 +483,7 @@ public class FullBlockTestGenerator {
         //
         NewBlock b26 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         // 1 is too small, but we already generate every other block with 2, so that is tested
-        b26.block.getTransactions().get(0).getInput(0).clearScriptBytes();
+        b26.block.getTransactions().get(0).replaceInput(0, b26.block.getTransactions().get(0).getInput(0).withoutScriptBytes());
         b26.block.setMerkleRoot(null);
         b26.solve();
         blocks.add(new BlockAndValidity(b26, false, true, b23.getHash(), chainHeadHeight + 7, "b26"));
@@ -496,7 +496,7 @@ public class FullBlockTestGenerator {
         {
             byte[] coinbase = new byte[101];
             Arrays.fill(coinbase, (byte)0);
-            b28.block.getTransactions().get(0).getInput(0).setScriptBytes(coinbase);
+            b28.block.getTransactions().get(0).replaceInput(0, b28.block.getTransactions().get(0).getInput(0).withScriptBytes(coinbase));
         }
         b28.block.setMerkleRoot(null);
         b28.solve();
@@ -510,7 +510,7 @@ public class FullBlockTestGenerator {
         {
             byte[] coinbase = new byte[100];
             Arrays.fill(coinbase, (byte)0);
-            b30.block.getTransactions().get(0).getInput(0).setScriptBytes(coinbase);
+            b30.block.getTransactions().get(0).replaceInput(0, b30.block.getTransactions().get(0).getInput(0).withScriptBytes(coinbase));
         }
         b30.block.setMerkleRoot(null);
         b30.solve();
@@ -761,6 +761,7 @@ public class FullBlockTestGenerator {
                 TransactionInput input = new TransactionInput(tx, new byte[]{},
                         new TransactionOutPoint(0, b39.block.getTransactions().get(i).getTxId()));
                 tx.addInput(input);
+                int inputIndex = tx.getInputs().size() - 1;
 
                 if (scriptSig == null) {
                     // Exploit the SigHash.SINGLE bug to avoid having to make more than one signature
@@ -784,7 +785,7 @@ public class FullBlockTestGenerator {
                     }
                 }
 
-                input.setScriptBytes(scriptSig);
+                tx.replaceInput(inputIndex, tx.getInput(inputIndex).withScriptBytes(scriptSig));
 
                 lastOutPoint = new TransactionOutPoint(0, tx.getTxId());
 
@@ -828,6 +829,7 @@ public class FullBlockTestGenerator {
                     TransactionInput input = new TransactionInput(tx, new byte[] {},
                             new TransactionOutPoint(0, b39.block.getTransactions().get(i).getTxId()));
                     tx.addInput(input);
+                    int inputIndex = tx.getInputs().size() - 1;
 
                     if (scriptSig == null) {
                         // Exploit the SigHash.SINGLE bug to avoid having to make more than one signature
@@ -857,7 +859,7 @@ public class FullBlockTestGenerator {
                         }
                     }
 
-                    input.setScriptBytes(scriptSig);
+                    tx.replaceInput(inputIndex, tx.getInput(inputIndex).withScriptBytes(scriptSig));
 
                     lastOutPoint = new TransactionOutPoint(0,
                             tx.getTxId());
@@ -1163,7 +1165,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b61 = createNextBlock(b60, chainHeadHeight + 19, out18, null);
         {
-            b61.block.getTransactions().get(0).getInput(0).setScriptBytes(b60.block.getTransactions().get(0).getInput(0).getScriptBytes());
+            b61.block.getTransactions().get(0).replaceInput(0, b61.block.getTransactions().get(0).getInput(0).withScriptBytes(b60.block.getTransactions().get(0).getInput(0).getScriptBytes()));
             b61.block.unCache();
             checkState(b61.block.getTransactions().get(0).equals(b60.block.getTransactions().get(0)));
         }
@@ -1799,16 +1801,17 @@ public class FullBlockTestGenerator {
         TransactionInput input = new TransactionInput(t, new byte[]{}, prevOut.outpoint);
         input = input.withSequence(sequence);
         t.addInput(input);
+        int inputIndex = t.getInputs().size() - 1;
 
         if (prevOut.scriptPubKey.chunks().get(0).equalsOpCode(OP_TRUE)) {
-            input.setScriptSig(new ScriptBuilder().op(OP_1).build());
+            t.replaceInput(inputIndex, input.withScriptSig(new ScriptBuilder().op(OP_1).build()));
         } else {
             // Sign input
             checkState(ScriptPattern.isP2PK(prevOut.scriptPubKey));
             Sha256Hash hash = t.hashForSignature(0, prevOut.scriptPubKey, SigHash.ALL, false);
-            input.setScriptSig(ScriptBuilder.createInputScript(
-                            new TransactionSignature(coinbaseOutKey.sign(hash), SigHash.ALL, false))
-            );
+            t.replaceInput(inputIndex, input.withScriptSig(ScriptBuilder.createInputScript(
+                    new TransactionSignature(coinbaseOutKey.sign(hash), SigHash.ALL, false))
+            ));
         }
     }
 

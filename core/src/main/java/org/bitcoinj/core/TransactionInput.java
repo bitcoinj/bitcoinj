@@ -79,7 +79,7 @@ public class TransactionInput {
     // The "script bytes" might not actually be a script. In coinbase transactions where new coins are minted there
     // is no input transaction, so instead the scriptBytes contains some extra stuff (like a rollover nonce) that we
     // don't care about much. The bytes are turned into a Script object (cached below) on demand via a getter.
-    private byte[] scriptBytes;
+    private final byte[] scriptBytes;
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
     private WeakReference<Script> scriptSig;
@@ -256,11 +256,16 @@ public class TransactionInput {
         return script;
     }
 
-    /** Set the given program as the scriptSig that is supposed to satisfy the connected output script. */
-    public void setScriptSig(Script scriptSig) {
-        this.scriptSig = new WeakReference<>(Objects.requireNonNull(scriptSig));
-        // TODO: This should all be cleaned up so we have a consistent internal representation.
-        setScriptBytes(scriptSig.program());
+    /**
+     * Returns a clone of this input, with given scriptSig. The typical use case is transaction signing.
+     *
+     * @param scriptSig scriptSig for the clone
+     * @return clone of input, with given scriptSig
+     */
+    public TransactionInput withScriptSig(Script scriptSig) {
+        Objects.requireNonNull(scriptSig);
+        return new TransactionInput(this.parent, scriptSig, scriptSig.program(), this.outpoint, this.sequence,
+                this.value, this.witness);
     }
 
     /**
@@ -307,20 +312,29 @@ public class TransactionInput {
      * @return the scriptBytes
      */
     public byte[] getScriptBytes() {
-        return scriptBytes;
-    }
-
-    /** Clear input scripts, e.g. in preparation for signing. */
-    public void clearScriptBytes() {
-        setScriptBytes(TransactionInput.EMPTY_ARRAY);
+        return Arrays.copyOf(scriptBytes, scriptBytes.length);
     }
 
     /**
-     * @param scriptBytes the scriptBytes to set
+     * Returns a clone of this input, without script bytes. The typical use case is transaction signing.
+     *
+     * @return clone of input, without script bytes
      */
-    void setScriptBytes(byte[] scriptBytes) {
-        this.scriptSig = null;
-        this.scriptBytes = scriptBytes;
+    public TransactionInput withoutScriptBytes() {
+        return new TransactionInput(this.parent, null, TransactionInput.EMPTY_ARRAY, this.outpoint, this.sequence,
+                this.value, this.witness);
+    }
+
+    /**
+     * Returns a clone of this input, with given script bytes. The typical use case is transaction signing.
+     *
+     * @param scriptBytes script bytes for the clone
+     * @return clone of input, with given script bytes
+     */
+    public TransactionInput withScriptBytes(byte[] scriptBytes) {
+        Objects.requireNonNull(scriptBytes);
+        return new TransactionInput(this.parent, null, scriptBytes, this.outpoint, this.sequence, this.value,
+                this.witness);
     }
 
     /**

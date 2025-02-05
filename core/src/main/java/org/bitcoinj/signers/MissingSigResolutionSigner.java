@@ -80,7 +80,7 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                         if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                             throw new MissingSignatureException();
                         } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
-                            txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, j - 1));
+                            txIn = txIn.withScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, j - 1));
                         }
                     }
                 }
@@ -89,7 +89,7 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                     if (missingSigsMode == Wallet.MissingSigsMode.THROW) {
                         throw new ECKey.MissingPrivateKeyException();
                     } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
-                        txIn.setScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, 0));
+                        txIn = txIn.withScriptSig(scriptPubKey.getScriptSigWithSignature(inputScript, dummySig, 0));
                     }
                 }
             } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
