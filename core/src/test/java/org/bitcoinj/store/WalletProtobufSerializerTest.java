@@ -246,10 +246,10 @@ public class WalletProtobufSerializerTest {
     public void testSequenceNumber() throws Exception {
         Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         Transaction tx1 = createFakeTx(TESTNET.network(), Coin.COIN, wallet.currentReceiveAddress());
-        tx1.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx1.replaceInput(0, tx1.getInput(0).withSequence(TransactionInput.NO_SEQUENCE));
         wallet.receivePending(tx1, null);
         Transaction tx2 = createFakeTx(TESTNET.network(), Coin.COIN, wallet.currentReceiveAddress());
-        tx2.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
+        tx2.replaceInput(0, tx2.getInput(0).withSequence(TransactionInput.NO_SEQUENCE - 1));
         wallet.receivePending(tx2, null);
         Wallet walletCopy = roundTrip(wallet);
         Transaction tx1copy = Objects.requireNonNull(walletCopy.getTransaction(tx1.getTxId()));

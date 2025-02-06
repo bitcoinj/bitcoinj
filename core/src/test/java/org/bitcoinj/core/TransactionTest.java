@@ -482,8 +482,7 @@ public class TransactionTest {
     @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
-        TransactionInput input = tx.getInput(0);
-        input.setSequenceNumber(42);
+        tx.replaceInput(0, tx.getInput(0).withSequence(42));
 
         int TEST_LOCK_TIME = 20;
         tx.setLockTime(TEST_LOCK_TIME);
@@ -609,7 +608,7 @@ public class TransactionTest {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
         assertFalse(tx.isOptInFullRBF());
 
-        tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+        tx.replaceInput(0, tx.getInput(0).withSequence(TransactionInput.NO_SEQUENCE - 2));
         assertTrue(tx.isOptInFullRBF());
     }
 

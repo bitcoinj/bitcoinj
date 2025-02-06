@@ -73,7 +73,7 @@ public class TransactionInput {
     @Nullable private Transaction parent;
 
     // Allows for altering transactions after they were broadcast. Values below NO_SEQUENCE-1 mean it can be altered.
-    private long sequence;
+    private final long sequence;
     // Data needed to connect to the output of the transaction we're gathering coins from.
     private TransactionOutPoint outpoint;
     // The "script bytes" might not actually be a script. In coinbase transactions where new coins are minted there
@@ -124,18 +124,32 @@ public class TransactionInput {
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
+                            TransactionOutPoint outpoint, long sequence) {
+        this(parentTransaction, scriptBytes, outpoint, sequence, null);
+    }
+
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint, @Nullable Coin value) {
         this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, value);
     }
 
-    private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-                            TransactionOutPoint outpoint, long sequence, @Nullable Coin value) {
+    /** internal use only */
+    public TransactionInput(Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
+                            long sequence, @Nullable Coin value) {
+        this(parentTransaction, null, scriptBytes, outpoint, sequence, value, null);
+    }
+
+    private TransactionInput(@Nullable Transaction parentTransaction, @Nullable Script scriptSig, byte[] scriptBytes,
+                            TransactionOutPoint outpoint, long sequence, @Nullable Coin value,
+                            @Nullable TransactionWitness witness) {
         checkArgument(value == null || value.signum() >= 0, () -> "value out of range: " + value);
         parent = parentTransaction;
-        this.scriptBytes = scriptBytes;
-        this.outpoint = outpoint;
+        this.scriptSig = scriptSig != null ? new WeakReference<>(scriptSig) : null;
+        this.scriptBytes = Objects.requireNonNull(scriptBytes);
+        this.outpoint = Objects.requireNonNull(outpoint);
         this.sequence = sequence;
         this.value = value;
+        this.witness = witness;
     }
 
     /**
@@ -143,12 +157,13 @@ public class TransactionInput {
      */
     TransactionInput(Transaction parentTransaction, TransactionOutput output) {
         this(parentTransaction,
-                EMPTY_ARRAY,
+                null, EMPTY_ARRAY,
                 output.getParentTransaction() != null ?
                         new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
                         new TransactionOutPoint(output),
                 NO_SEQUENCE,
-                output.getValue());
+                output.getValue(),
+                null);
     }
 
     /**
@@ -253,15 +268,22 @@ public class TransactionInput {
     }
 
     /**
+     * Returns a clone of this input, with a given sequence number.
+     * <p>
      * Sequence numbers allow participants in a multi-party transaction signing protocol to create new versions of the
      * transaction independently of each other. Newer versions of a transaction can replace an existing version that's
      * in nodes memory pools if the existing version is time locked. See the Contracts page on the Bitcoin wiki for
      * examples of how you can use this feature to build contract protocols.
+     *
+     * @param sequence sequence number for the clone
+     * @return clone of input, with given sequence number
      */
-    public void setSequenceNumber(long sequence) {
+    public TransactionInput withSequence(long sequence) {
         checkArgument(sequence >= 0 && sequence <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
                 "sequence out of range: " + sequence);
-        this.sequence = sequence;
+        Script scriptSig = this.scriptSig != null ? this.scriptSig.get() : null;
+        return new TransactionInput(this.parent, scriptSig, this.scriptBytes, this.outpoint, sequence, this.value,
+                this.witness);
     }
 
     /**
