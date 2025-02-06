@@ -18,13 +18,35 @@ package org.bitcoinj.script;
 
 import org.junit.Test;
 
+import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_FALSE;
 import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class ScriptBuilderTest {
+
+    @Test
+    public void emptyPushData() {
+        Script script = new ScriptBuilder().data(new byte[0]).build();
+        ScriptChunk chunk = script.chunks().get(0);
+        assertEquals(OP_0, chunk.opcode);
+        assertNotNull(chunk.data);
+        assertEquals(0, chunk.data.length);
+
+        byte[] serialized = script.program();
+        assertArrayEquals(new byte[] {
+                0x00         // Pushed data
+        }, serialized);
+
+        Script parsedScript = Script.parse(script.program());
+        ScriptChunk parsedChunk = parsedScript.chunks().get(0);
+        assertEquals(OP_0, parsedChunk.opcode);
+        assertNotNull(parsedChunk.data);
+        assertEquals(0, parsedChunk.data.length);
+    }
 
     @Test
     public void testNumber() {

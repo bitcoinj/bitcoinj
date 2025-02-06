@@ -115,10 +115,7 @@ public class ScriptBuilder {
 
     /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the end of the program. */
     public ScriptBuilder data(byte[] data) {
-        if (data.length == 0)
-            return smallNum(0);
-        else
-            return data(chunks.size(), data);
+        return data(chunks.size(), data);
     }
 
     /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the given index in the program. */
