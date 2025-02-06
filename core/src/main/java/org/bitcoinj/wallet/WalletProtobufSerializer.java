@@ -655,9 +655,8 @@ public class WalletProtobufSerializer {
                     byteStringToHash(inputProto.getTransactionOutPointHash())
             );
             Coin value = inputProto.hasValue() ? Coin.valueOf(inputProto.getValue()) : null;
-            TransactionInput input = new TransactionInput(tx, scriptBytes, outpoint, value);
-            if (inputProto.hasSequence())
-                input.setSequenceNumber(0xffffffffL & inputProto.getSequence());
+            long sequence = inputProto.hasSequence() ? 0xffffffffL & inputProto.getSequence() : TransactionInput.NO_SEQUENCE;
+            TransactionInput input = new TransactionInput(tx, scriptBytes, outpoint, sequence, value);
             if (inputProto.hasWitness()) {
                 Protos.ScriptWitness witnessProto = inputProto.getWitness();
                 if (witnessProto.getDataCount() > 0) {

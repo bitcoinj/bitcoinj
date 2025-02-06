@@ -1193,7 +1193,7 @@ public class FullBlockTestGenerator {
         NewBlock b63 = createNextBlock(b60, chainHeadHeight + 19, null, null);
         {
             b63.block.getTransactions().get(0).setLockTime(0xffffffffL);
-            b63.block.getTransactions().get(0).getInput(0).setSequenceNumber(0xdeadbeefL);
+            b63.block.getTransactions().get(0).replaceInput(0, b63.block.getTransactions().get(0).getInput(0).withSequence(0xdeadbeefL));
             checkState(!b63.block.getTransactions().get(0).isFinal(chainHeadHeight + 17, b63.block.time()));
         }
         b63.solve();
@@ -1797,7 +1797,7 @@ public class FullBlockTestGenerator {
 
     private void addOnlyInputToTransaction(Transaction t, TransactionOutPointWithValue prevOut, long sequence) throws ScriptException {
         TransactionInput input = new TransactionInput(t, new byte[]{}, prevOut.outpoint);
-        input.setSequenceNumber(sequence);
+        input = input.withSequence(sequence);
         t.addInput(input);
 
         if (prevOut.scriptPubKey.chunks().get(0).equalsOpCode(OP_TRUE)) {

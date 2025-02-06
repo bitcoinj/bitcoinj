@@ -992,6 +992,19 @@ public class Transaction extends BaseMessage {
     }
 
     /**
+     * Replaces an already added input. This is meant to amend a transaction before it's committed to a wallet.
+     *
+     * @param index index of input to replace
+     * @param input input to replace with
+     */
+    public void replaceInput(int index, TransactionInput input) {
+        TransactionInput oldInput = inputs.remove(index);
+        oldInput.setParent(null);
+        input.setParent(this);
+        inputs.add(index, input);
+    }
+
+    /**
      * Removes all the outputs from this transaction.
      * Note that this also invalidates the length attribute
      */
@@ -1217,7 +1230,7 @@ public class Transaction extends BaseMessage {
                 // The signature isn't broken by new versions of the transaction issued by other parties.
                 for (int i = 0; i < tx.inputs.size(); i++)
                     if (i != inputIndex)
-                        tx.inputs.get(i).setSequenceNumber(0);
+                        tx.replaceInput(i, tx.getInput(i).withSequence(0));
             } else if ((sigHashType & 0x1f) == SigHash.SINGLE.value) {
                 // SIGHASH_SINGLE means only sign the output at the same index as the input (ie, my output).
                 if (inputIndex >= tx.outputs.size()) {
@@ -1239,7 +1252,7 @@ public class Transaction extends BaseMessage {
                 // The signature isn't broken by new versions of the transaction issued by other parties.
                 for (int i = 0; i < tx.inputs.size(); i++)
                     if (i != inputIndex)
-                        tx.inputs.get(i).setSequenceNumber(0);
+                        tx.replaceInput(i, tx.getInput(i).withSequence(0));
             }
 
             if ((sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value) {
