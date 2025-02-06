@@ -100,12 +100,13 @@ public class MissingSigResolutionSigner implements TransactionSigner {
                     } else if (missingSigsMode == Wallet.MissingSigsMode.USE_DUMMY_SIG) {
                         ECKey key = keyBag.findKeyFromPubKeyHash(
                                 ScriptPattern.extractHashFromP2WH(scriptPubKey), ScriptType.P2WPKH);
-                        txIn.setWitness(TransactionWitness.redeemP2WPKH(TransactionSignature.dummy(), key));
+                        txIn = txIn.withWitness(TransactionWitness.redeemP2WPKH(TransactionSignature.dummy(), key));
                     }
                 }
             } else {
                 throw new IllegalStateException("cannot handle: " + scriptPubKey);
             }
+            propTx.partialTx.replaceInput(i, txIn);
         }
         return true;
     }

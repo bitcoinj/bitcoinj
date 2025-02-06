@@ -340,7 +340,8 @@ public class TransactionTest {
         assertTrue(correctlySpends(txIn0, scriptPubKey0, 0));
 
         assertFalse(correctlySpends(txIn1, scriptPubKey1, 1));
-        txIn1.setWitness(TransactionWitness.redeemP2WPKH(txSig1, key1));
+        txIn1 = txIn1.withWitness(TransactionWitness.redeemP2WPKH(txSig1, key1));
+        tx.replaceInput(1, txIn1);
         // no redeem script for p2wpkh
         assertTrue(correctlySpends(txIn1, scriptPubKey1, 1));
 
@@ -413,7 +414,8 @@ public class TransactionTest {
                 ByteUtils.formatHex(txSig.encodeToBitcoin()));
 
         assertFalse(correctlySpends(txIn, scriptPubKey, 0));
-        txIn.setWitness(TransactionWitness.redeemP2WPKH(txSig, key));
+        txIn = txIn.withWitness(TransactionWitness.redeemP2WPKH(txSig, key));
+        tx.replaceInput(0, txIn);
         txIn.setScriptSig(new ScriptBuilder().data(redeemScript.program()).build());
         assertTrue(correctlySpends(txIn, scriptPubKey, 0));
 
@@ -713,7 +715,7 @@ public class TransactionTest {
             this.addInput(inputTx.getOutput(0));
             this.getInput(0).disconnect();
             TransactionWitness witness = TransactionWitness.of(new byte[] { 0 });
-            this.getInput(0).setWitness(witness);
+            this.replaceInput(0, this.getInput(0).withWitness(witness));
             this.addOutput(Coin.COIN, new ECKey());
 
             this.hackInputsSize = hackInputsSize;

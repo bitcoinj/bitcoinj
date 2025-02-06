@@ -634,8 +634,10 @@ public class Transaction extends BaseMessage {
     }
 
     private void readWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        for (TransactionInput input : inputs) {
-            input.setWitness(TransactionWitness.read(payload));
+        int numInputs = inputs.size();
+        for (int i = 0; i < numInputs; i++) {
+            TransactionWitness witness = TransactionWitness.read(payload);
+            replaceInput(i, getInput(i).withWitness(witness));
         }
     }
 
@@ -901,18 +903,21 @@ public class Transaction extends BaseMessage {
             TransactionSignature signature = calculateSignature(inputIndex, sigKey, scriptPubKey, sigHash,
                     anyoneCanPay);
             input.setScriptSig(ScriptBuilder.createInputScript(signature));
-            input.setWitness(null);
+            input = input.withoutWitness();
+            replaceInput(inputIndex, input);
         } else if (ScriptPattern.isP2PKH(scriptPubKey)) {
             TransactionSignature signature = calculateSignature(inputIndex, sigKey, scriptPubKey, sigHash,
                     anyoneCanPay);
             input.setScriptSig(ScriptBuilder.createInputScript(signature, sigKey));
-            input.setWitness(null);
+            input = input.withoutWitness();
+            replaceInput(inputIndex, input);
         } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
             Script scriptCode = ScriptBuilder.createP2PKHOutputScript(sigKey);
             TransactionSignature signature = calculateWitnessSignature(inputIndex, sigKey, scriptCode, input.getValue(),
                     sigHash, anyoneCanPay);
             input.setScriptSig(ScriptBuilder.createEmpty());
-            input.setWitness(TransactionWitness.redeemP2WPKH(signature, sigKey));
+            input = input.withWitness(TransactionWitness.redeemP2WPKH(signature, sigKey));
+            replaceInput(inputIndex, input);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Don't know how to sign for this kind of scriptPubKey: " + scriptPubKey);
         }
@@ -1204,9 +1209,10 @@ public class Transaction extends BaseMessage {
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
             // EC math so we'll do it anyway.
             for (int i = 0; i < tx.inputs.size(); i++) {
-                TransactionInput input = tx.inputs.get(i);
+                TransactionInput input = tx.getInput(i);
                 input.clearScriptBytes();
-                input.setWitness(null);
+                input = input.withoutWitness();
+                tx.replaceInput(i, input);
             }
 
             // This step has no purpose beyond being synchronized with Bitcoin Core's bugs. OP_CODESEPARATOR

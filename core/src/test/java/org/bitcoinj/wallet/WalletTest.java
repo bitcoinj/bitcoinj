@@ -3459,7 +3459,8 @@ public class WalletTest extends TestWithWallet {
         TransactionSignature txSig1 = sendReq.tx.calculateWitnessSignature(0, sigKey1, scriptCode1,
                 inputW1.getValue(), Transaction.SigHash.ALL, false);
         inputW1.setScriptSig(ScriptBuilder.createEmpty());
-        inputW1.setWitness(TransactionWitness.redeemP2WPKH(txSig1, sigKey1));
+        inputW1 = inputW1.withWitness(TransactionWitness.redeemP2WPKH(txSig1, sigKey1));
+        sendReq.tx.replaceInput(0, inputW1);
 
         // Wallet2 sign input 1
         TransactionInput inputW2 = sendReq.tx.getInput(1);
@@ -3468,7 +3469,8 @@ public class WalletTest extends TestWithWallet {
         TransactionSignature txSig2 = sendReq.tx.calculateWitnessSignature(0, sigKey2, scriptCode2,
                 inputW2.getValue(), Transaction.SigHash.ALL, false);
         inputW2.setScriptSig(ScriptBuilder.createEmpty());
-        inputW2.setWitness(TransactionWitness.redeemP2WPKH(txSig2, sigKey2));
+        inputW2 = inputW2.withWitness(TransactionWitness.redeemP2WPKH(txSig2, sigKey2));
+        sendReq.tx.replaceInput(1, inputW2);
 
         wallet1.commitTx(sendReq.tx);
         wallet2.commitTx(sendReq.tx);

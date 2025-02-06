@@ -128,14 +128,14 @@ public class LocalTransactionSigner implements TransactionSigner {
                     inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, signature.encodeToBitcoin(),
                             sigIndex);
                     txIn.setScriptSig(inputScript);
-                    txIn.setWitness(null);
+                    txIn = txIn.withoutWitness();
                 } else if (ScriptPattern.isP2WPKH(scriptPubKey)) {
                     Script scriptCode = ScriptBuilder.createP2PKHOutputScript(key);
                     Coin value = txIn.getValue();
                     TransactionSignature signature = tx.calculateWitnessSignature(i, key, scriptCode, value,
                             Transaction.SigHash.ALL, false);
                     txIn.setScriptSig(ScriptBuilder.createEmpty());
-                    txIn.setWitness(TransactionWitness.redeemP2WPKH(signature, key));
+                    txIn = txIn.withWitness(TransactionWitness.redeemP2WPKH(signature, key));
                 } else {
                     throw new IllegalStateException(script.toString());
                 }
@@ -144,7 +144,7 @@ public class LocalTransactionSigner implements TransactionSigner {
             } catch (ECKey.MissingPrivateKeyException e) {
                 log.warn("No private key in keypair for input {}", i);
             }
-
+            tx.replaceInput(i, txIn);
         }
         return true;
     }
