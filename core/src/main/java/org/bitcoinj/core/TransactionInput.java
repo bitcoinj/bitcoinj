@@ -87,7 +87,7 @@ public class TransactionInput {
     @Nullable
     private Coin value;
 
-    private TransactionWitness witness;
+    private final TransactionWitness witness;
 
     /**
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
@@ -134,9 +134,15 @@ public class TransactionInput {
     }
 
     /** internal use only */
-    public TransactionInput(Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
-                            long sequence, @Nullable Coin value) {
+    private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
+                             long sequence, @Nullable Coin value) {
         this(parentTransaction, null, scriptBytes, outpoint, sequence, value, null);
+    }
+
+    /** internal use only */
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
+                            long sequence, @Nullable Coin value, @Nullable TransactionWitness witness) {
+        this(parentTransaction, null, scriptBytes, outpoint, sequence, value, witness);
     }
 
     private TransactionInput(@Nullable Transaction parentTransaction, @Nullable Script scriptSig, byte[] scriptBytes,
@@ -342,10 +348,27 @@ public class TransactionInput {
     }
 
     /**
-     * Set the transaction witness of an input.
+     * Returns a clone of this input, with a given witness. The typical use-case is transaction signing.
+     *
+     * @param witness witness for the clone
+     * @return clone of input, with given witness
      */
-    public void setWitness(TransactionWitness witness) {
-        this.witness = witness;
+    public TransactionInput withWitness(TransactionWitness witness) {
+        Objects.requireNonNull(witness);
+        Script scriptSig = this.scriptSig != null ? this.scriptSig.get() : null;
+        return new TransactionInput(this.parent, scriptSig, this.scriptBytes, this.outpoint, sequence, this.value,
+                witness);
+    }
+
+    /**
+     * Returns a clone of this input, without witness. The typical use-case is transaction signing.
+     *
+     * @return clone of input, without witness
+     */
+    public TransactionInput withoutWitness() {
+        Script scriptSig = this.scriptSig != null ? this.scriptSig.get() : null;
+        return new TransactionInput(this.parent, scriptSig, this.scriptBytes, this.outpoint, sequence, this.value,
+                null);
     }
 
     /**

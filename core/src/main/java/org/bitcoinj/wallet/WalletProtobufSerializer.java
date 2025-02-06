@@ -671,16 +671,17 @@ public class WalletProtobufSerializer {
             );
             Coin value = inputProto.hasValue() ? Coin.valueOf(inputProto.getValue()) : null;
             long sequence = inputProto.hasSequence() ? 0xffffffffL & inputProto.getSequence() : TransactionInput.NO_SEQUENCE;
-            TransactionInput input = new TransactionInput(tx, scriptBytes, outpoint, sequence, value);
+            TransactionWitness witness = null;
             if (inputProto.hasWitness()) {
                 Protos.ScriptWitness witnessProto = inputProto.getWitness();
                 if (witnessProto.getDataCount() > 0) {
                     List<byte[]> pushes = new ArrayList<>(witnessProto.getDataCount());
                     for (int j = 0; j < witnessProto.getDataCount(); j++)
                         pushes.add(witnessProto.getData(j).toByteArray());
-                    input.setWitness(TransactionWitness.of(pushes));
+                    witness = TransactionWitness.of(pushes);
                 }
             }
+            TransactionInput input = new TransactionInput(tx, scriptBytes, outpoint, sequence, value, witness);
             tx.addInput(input);
         }
 
