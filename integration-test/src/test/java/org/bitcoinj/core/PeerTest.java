@@ -732,8 +732,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.of("abc".getBytes(StandardCharsets.UTF_8));
-        t2.addInput(new TransactionInput(t2, new byte[]{}, new TransactionOutPoint(0, t3)));
-        t2.getInput(0).setSequenceNumber(0xDEADBEEF);
+        t2.addInput(new TransactionInput(t2, new byte[] {}, new TransactionOutPoint(0, t3), 0xDEADBEEF));
         t2.addOutput(COIN, new ECKey());
         Transaction t1 = new Transaction();
         t1.addInput(t2.getOutput(0));

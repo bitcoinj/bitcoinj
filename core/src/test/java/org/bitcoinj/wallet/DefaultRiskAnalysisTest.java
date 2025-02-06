@@ -90,7 +90,7 @@ public class DefaultRiskAnalysisTest {
         assertNull(analysis.getNonFinal());
 
         // Set a sequence number on the input to make it genuinely non-final. Verify it's risky.
-        input.setSequenceNumber(TransactionInput.NO_SEQUENCE - 1);
+        tx.replaceInput(0, input.withSequence(TransactionInput.NO_SEQUENCE - 1));
         analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx, analysis.getNonFinal());
@@ -104,7 +104,9 @@ public class DefaultRiskAnalysisTest {
     @Test
     public void selfCreatedAreNotRisky() {
         Transaction tx = new Transaction();
-        tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0)).setSequenceNumber(1);
+        TransactionInput input =
+                tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0)).withSequence(1);
+        tx.replaceInput(0, input);
         tx.addOutput(COIN, key1);
         tx.setLockTime(TIMESTAMP + 86400);
 
@@ -125,7 +127,9 @@ public class DefaultRiskAnalysisTest {
     public void nonFinalDependency() {
         // Final tx has a dependency that is non-final.
         Transaction tx1 = new Transaction();
-        tx1.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0)).setSequenceNumber(1);
+        TransactionInput input1 =
+                tx1.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0)).withSequence(1);
+        tx1.replaceInput(0, input1);
         TransactionOutput output = tx1.addOutput(COIN, key1);
         tx1.setLockTime(TIMESTAMP + 86400);
         Transaction tx2 = new Transaction();
@@ -239,7 +243,7 @@ public class DefaultRiskAnalysisTest {
     @Test
     public void optInFullRBF() {
         Transaction tx = FakeTxBuilder.createFakeTx(MAINNET.network());
-        tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+        tx.replaceInput(0, tx.getInput(0).withSequence(TransactionInput.NO_SEQUENCE - 2));
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx, analysis.getNonFinal());
@@ -251,11 +255,11 @@ public class DefaultRiskAnalysisTest {
         tx.setVersion(2);
         checkState(!tx.hasRelativeLockTime());
 
-        tx.getInput(0).setSequenceNumber(TransactionInput.NO_SEQUENCE);
+        tx.replaceInput(0, tx.getInput(0).withSequence(TransactionInput.NO_SEQUENCE));
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.OK, analysis.analyze());
 
-        tx.getInput(0).setSequenceNumber(0);
+        tx.replaceInput(0, tx.getInput(0).withSequence(0));
         analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
         assertEquals(tx, analysis.getNonFinal());
