@@ -20,7 +20,7 @@ FROM debian:bookworm-slim AS setup-stage
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN /usr/bin/apt-get update && \
-    /usr/bin/apt-get --yes install openjdk-17-jdk-headless gradle && \
+    /usr/bin/apt-get --yes --no-install-recommends install openjdk-17-jdk-headless gradle && \
     /usr/sbin/adduser --disabled-login --gecos "" builder
 
 # stage: build
