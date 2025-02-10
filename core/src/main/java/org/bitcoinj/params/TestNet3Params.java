@@ -71,6 +71,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
                 "seed.tbtc.petertodd.net",               // Peter Todd
                 "seed.testnet.bitcoin.sprovoost.nl",     // Sjors Provoost
                 "testnet-seed.bluematt.me",              // Matt Corallo
+                "seed.testnet.achownodes.xyz",           // Ava Chow
         };
         addrSeeds = null;
 
