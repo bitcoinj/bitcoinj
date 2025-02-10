@@ -72,13 +72,13 @@ public class MainNetParams extends BitcoinNetworkParams {
         dnsSeeds = new String[] {
                 "seed.bitcoin.sipa.be",         // Pieter Wuille
                 "dnsseed.bluematt.me",          // Matt Corallo
-                "dnsseed.bitcoin.dashjr.org",   // Luke Dashjr
-                "seed.bitcoinstats.com",        // Chris Decker
+                "dnsseed.bitcoin.dashjr-list-of-p2p-nodes.us", // Luke Dashjr
                 "seed.bitcoin.jonasschnelli.ch",// Jonas Schnelli
                 "seed.btc.petertodd.net",       // Peter Todd
                 "seed.bitcoin.sprovoost.nl",    // Sjors Provoost
                 "dnsseed.emzy.de",              // Stephan Oeste
                 "seed.bitcoin.wiz.biz",         // Jason Maurice
+                "seed.mainnet.achownodes.xyz",  // Ava Chow
         };
 
         // These are in big-endian format, which is what the SeedPeers code expects.

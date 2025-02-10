@@ -62,7 +62,8 @@ public class SigNetParams extends BitcoinNetworkParams {
         majorityWindow = TESTNET_MAJORITY_WINDOW;
 
         dnsSeeds = new String[] {
-                "seed.signet.bitcoin.sprovoost.nl",
+                "seed.signet.bitcoin.sprovoost.nl", // Sjors Provoost
+                "seed.signet.achownodes.xyz",       // Ava Chow
         };
         addrSeeds = null;
     }
