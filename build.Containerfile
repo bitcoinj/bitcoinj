@@ -23,6 +23,23 @@ RUN /usr/bin/apt-get update && \
     /usr/bin/apt-get --yes install openjdk-17-jdk-headless gradle && \
     /usr/sbin/adduser --disabled-login --gecos "" builder
 
+# stage: download dependencies
+FROM setup-stage as download-stage
+
+# give up privileges
+USER builder
+WORKDIR /home/builder
+
+# copy project source code
+COPY --chown=builder / project/
+
+# download
+RUN /usr/bin/gradle --project-dir project/ \
+    --no-build-cache --no-daemon --no-parallel \
+    --settings-file=settings-debian.gradle \
+    -Dmaven.repo.local=repo \
+    clean ${ADDITIONAL_GRADLE_TASK} :bitcoinj-base:publishToMavenLocal :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist
+
 # stage: build
 FROM setup-stage AS build-stage
 
@@ -32,12 +49,14 @@ ARG ADDITIONAL_GRADLE_TASK=""
 USER builder
 WORKDIR /home/builder
 
-# copy project source code
+# copy project source code and downloaded repo
 COPY --chown=builder / project/
+COPY --from=download-stage /home/builder/.gradle /home/builder/.gradle
 
 # build project
-RUN /usr/bin/gradle --project-dir project/ \
-    --no-build-cache --no-daemon --no-parallel \
+RUN --network=none \
+    /usr/bin/gradle --project-dir project/ \
+    --offline --no-build-cache --no-daemon --no-parallel \
     --settings-file=settings-debian.gradle \
     -Dmaven.repo.local=repo \
     clean ${ADDITIONAL_GRADLE_TASK} :bitcoinj-base:publishToMavenLocal :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist
