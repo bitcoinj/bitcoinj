@@ -222,6 +222,10 @@ public class Transaction extends BaseMessage {
     @Nullable
     private String memo;
 
+    // These are in memory helpers only. They contain the transaction hashes without and with witness.
+    private Sha256Hash cachedTxId;
+    private Sha256Hash cachedWTxId;
+
     /**
      * Constructs an incomplete coinbase transaction with a minimal input script and no outputs.
      *
@@ -330,17 +334,26 @@ public class Transaction extends BaseMessage {
     }
 
     /**
-     * Returns the transaction id as you see them in block explorers. It is used as a reference by transaction inputs
+     * Returns the transaction ID as you see them in block explorers. It is used as a reference by transaction inputs
      * via outpoints.
+     *
+     * @return transaction ID
      */
     public Sha256Hash getTxId() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            bitcoinSerializeToStream(baos, false);
-        } catch (IOException e) {
-            throw new RuntimeException(e); // cannot happen
+        if (cachedTxId == null) {
+            if (!hasWitnesses() && cachedWTxId != null) {
+                cachedTxId = cachedWTxId;
+            } else {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try {
+                    bitcoinSerializeToStream(baos, false);
+                } catch (IOException e) {
+                    throw new RuntimeException(e); // cannot happen
+                }
+                cachedTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
+            }
         }
-        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
+        return cachedTxId;
     }
 
     /**
@@ -352,17 +365,32 @@ public class Transaction extends BaseMessage {
     }
 
     /**
-     * Returns the witness transaction id (aka witness id) as per BIP144. For transactions without witness, this is the
+     * Returns the witness transaction ID (aka witness ID) as per BIP144. For transactions without witness, this is the
      * same as {@link #getTxId()}.
+     *
+     * @return witness transaction ID
      */
     public Sha256Hash getWTxId() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            bitcoinSerializeToStream(baos, hasWitnesses());
-        } catch (IOException e) {
-            throw new RuntimeException(e); // cannot happen
+        if (cachedWTxId == null) {
+            if (!hasWitnesses() && cachedTxId != null) {
+                cachedWTxId = cachedTxId;
+            } else {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try {
+                    bitcoinSerializeToStream(baos, hasWitnesses());
+                } catch (IOException e) {
+                    throw new RuntimeException(e); // cannot happen
+                }
+                cachedWTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
+            }
         }
-        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
+        return cachedWTxId;
+    }
+
+    /** invalidates cache for both transaction IDs */
+    private void invalidateCachedTxIds() {
+        cachedTxId = null;
+        cachedWTxId = null;
     }
 
     /** Gets the transaction weight as defined in BIP141. */
@@ -643,6 +671,7 @@ public class Transaction extends BaseMessage {
         for (long i = 0; i < numInputs; i++) {
             inputs.add(TransactionInput.read(payload, this));
         }
+        invalidateCachedTxIds();
     }
 
     private void readOutputs(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
@@ -653,6 +682,7 @@ public class Transaction extends BaseMessage {
         for (long i = 0; i < numOutputs; i++) {
             outputs.add(TransactionOutput.read(payload, this));
         }
+        invalidateCachedTxIds();
     }
 
     private void readWitnesses(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
@@ -864,6 +894,7 @@ public class Transaction extends BaseMessage {
             input.setParent(null);
         }
         inputs.clear();
+        invalidateCachedTxIds();
     }
 
     /**
@@ -874,7 +905,9 @@ public class Transaction extends BaseMessage {
      * @return the newly created input.
      */
     public TransactionInput addInput(TransactionOutput from) {
-        return addInput(new TransactionInput(this, from));
+        TransactionInput input = addInput(new TransactionInput(this, from));
+        invalidateCachedTxIds();
+        return input;
     }
 
     /**
@@ -884,6 +917,7 @@ public class Transaction extends BaseMessage {
     public TransactionInput addInput(TransactionInput input) {
         input.setParent(this);
         inputs.add(input);
+        invalidateCachedTxIds();
         return input;
     }
 
@@ -892,7 +926,10 @@ public class Transaction extends BaseMessage {
      * @return the newly created input.
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
-        return addInput(new TransactionInput(this, script.program(), new TransactionOutPoint(outputIndex, spendTxHash)));
+        TransactionInput input = addInput(new TransactionInput(this, script.program(),
+                new TransactionOutPoint(outputIndex, spendTxHash)));
+        invalidateCachedTxIds();
+        return input;
     }
 
     /**
@@ -1029,6 +1066,7 @@ public class Transaction extends BaseMessage {
         oldInput.setParent(null);
         input.setParent(this);
         inputs.add(index, input);
+        invalidateCachedTxIds();
     }
 
     /**
@@ -1040,6 +1078,7 @@ public class Transaction extends BaseMessage {
             output.setParent(null);
         }
         outputs.clear();
+        invalidateCachedTxIds();
     }
 
     /**
@@ -1048,6 +1087,7 @@ public class Transaction extends BaseMessage {
     public TransactionOutput addOutput(TransactionOutput to) {
         to.setParent(this);
         outputs.add(to);
+        invalidateCachedTxIds();
         return to;
     }
 
@@ -1064,6 +1104,7 @@ public class Transaction extends BaseMessage {
         oldOutput.setParent(null);
         output.setParent(this);
         outputs.add(index, output);
+        invalidateCachedTxIds();
     }
 
     /**
@@ -1549,6 +1590,7 @@ public class Transaction extends BaseMessage {
             log.warn("You are setting the lock time on a transaction but none of the inputs have non-default sequence numbers. This will not do what you expect!");
         }
         this.vLockTime = LockTime.of(lockTime);
+        invalidateCachedTxIds();
     }
 
     public long getVersion() {
@@ -1557,6 +1599,7 @@ public class Transaction extends BaseMessage {
 
     public void setVersion(int version) {
         this.version = version;
+        invalidateCachedTxIds();
     }
 
     /** Returns an unmodifiable view of all inputs. */
