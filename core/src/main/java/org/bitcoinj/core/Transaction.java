@@ -1315,7 +1315,7 @@ public class Transaction extends BaseMessage {
             // We also have to write a hash type (sigHashType is actually an unsigned char)
             writeInt32LE(0x000000ff & sigHashType, bos);
             // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
-            // however then we would expect that it is IS reversed.
+            // however then we would expect that it IS reversed.
             Sha256Hash hash = Sha256Hash.twiceOf(bos.toByteArray());
             bos.close();
 
@@ -1522,7 +1522,7 @@ public class Transaction extends BaseMessage {
         stream.write(VarInt.of(outputs.size()).serialize());
         for (TransactionOutput out : outputs)
             stream.write(out.serialize());
-        // script_witnisses
+        // script_witnesses
         if (useSegwit) {
             for (TransactionInput in : inputs)
                 stream.write(in.getWitness().serialize());
@@ -1591,7 +1591,7 @@ public class Transaction extends BaseMessage {
     }
 
     /**
-     * <p>Returns the list of transacion outputs, whether spent or unspent, that match a wallet by address or that are
+     * <p>Returns the list of transaction outputs, whether spent or unspent, that match a wallet by address or that are
      * watched by a wallet, i.e., transaction outputs whose script's address is controlled by the wallet and transaction
      * outputs whose script is watched by the wallet.</p>
      *
@@ -1624,7 +1624,7 @@ public class Transaction extends BaseMessage {
     }
 
     /**
-     * Gets the output the gihven outpoint is referring to. Note the output must belong to this transaction, or else
+     * Gets the output the given outpoint is referring to. Note the output must belong to this transaction, or else
      * an {@link IllegalArgumentException} will occur.
      *
      * @param outpoint outpoint referring to the output to get
@@ -1632,7 +1632,7 @@ public class Transaction extends BaseMessage {
      */
     public TransactionOutput getOutput(TransactionOutPoint outpoint) {
         checkArgument(outpoint.hash().equals(this.getTxId()), () ->
-                "outpoint poins to a different transaction");
+                "outpoint points to a different transaction");
         return getOutput(outpoint.index());
     }
 
