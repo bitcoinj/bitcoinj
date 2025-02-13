@@ -1613,7 +1613,8 @@ public class Peer extends PeerSocketHandler {
     }
 
     private void processFeeFilter(FeeFilterMessage m) {
-        log.info("{}: Announced fee filter: {}/kB", this, m.feeRate().toFriendlyString());
+        if (log.isDebugEnabled())
+            log.debug("{}: Announced fee filter: {}/kB", this, m.feeRate().toFriendlyString());
         vFeeFilter = m.feeRate();
     }
 
