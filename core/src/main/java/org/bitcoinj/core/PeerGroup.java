@@ -1816,7 +1816,6 @@ public class PeerGroup implements TransactionBroadcaster {
 
             log.info("{}: Peer died      ({} connected, {} pending, {} max)", address, peers.size(), pendingPeers.size(), maxConnections);
             if (peer == downloadPeer) {
-                log.info("Download peer died. Picking a new one.");
                 setDownloadPeer(null);
                 // Pick a new one and possibly tell it to download the chain.
                 final Peer newDownloadPeer = selectDownloadPeer(peers);
