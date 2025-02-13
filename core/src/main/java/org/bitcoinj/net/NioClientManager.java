@@ -88,7 +88,10 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 // may cause this. Otherwise it may be any arbitrary kind of connection failure.
                 // Calling sc.socket().getRemoteSocketAddress() here throws an exception, so we can only log the error itself
                 Throwable cause = Throwables.getRootCause(e);
-                log.warn("Failed to connect with exception: {}: {}", cause.getClass().getName(), cause.getMessage(), e);
+                if (cause instanceof IOException)
+                    log.info("Failed to connect: {}: {}", cause.getClass().getName(), cause.getMessage());
+                else
+                    log.warn("Failed to connect: {}: {}", cause.getClass().getName(), cause.getMessage(), e);
                 handler.closeConnection();
                 data.future.completeExceptionally(cause);
                 data.future = null;
