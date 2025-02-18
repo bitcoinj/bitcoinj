@@ -168,9 +168,9 @@ public class TransactionBroadcast {
             // thread.
 
             // We will send the tx simultaneously to half the connected peers and wait to hear back from at least half
-            // of the other half, i.e., with 4 peers connected we will send the tx to 2 randomly chosen peers, and then
+            // of the other half, e.g., with 4 peers connected we will send the tx to 2 randomly chosen peers, and then
             // wait for it to show up on one of the other two. This will be taken as sign of network acceptance. As can
-            // be seen, 4 peers is probably too little - it doesn't taken many broken peers for tx propagation to have
+            // be seen, 4 peers is probably too little - it doesn't take many broken peers for tx propagation to have
             // a big effect.
             List<Peer> peers = peerGroup.getConnectedPeers();    // snapshots
             // Prepare to send the transaction by adding a listener that'll be called when confidence changes.
