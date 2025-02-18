@@ -171,7 +171,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
+        TransactionBroadcast sendResult = wallet.sendCoins(peerGroup, dest, COIN);
         assertFalse(sendResult.awaitRelayed().isDone());
         Transaction t1;
         {
@@ -215,7 +215,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
 
         // Now create a spend, and expect the announcement on p1.
         Address dest = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        Wallet.SendResult sendResult = wallet.sendCoins(peerGroup, dest, COIN);
+        TransactionBroadcast sendResult = wallet.sendCoins(peerGroup, dest, COIN);
         assertNotNull(sendResult.transaction());
         Threading.waitForUserCode();
         assertFalse(sendResult.awaitRelayed().isDone());

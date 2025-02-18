@@ -25,6 +25,7 @@ import javafx.scene.layout.HBox;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.ECKey;
@@ -54,7 +55,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     private OverlayableStackPaneController rootController;
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> overlayUI;
 
-    private Wallet.SendResult sendResult;
+    private TransactionBroadcast sendResult;
     private AesKey aesKey;
 
     @Override

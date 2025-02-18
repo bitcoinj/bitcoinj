@@ -20,6 +20,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -54,7 +55,7 @@ public class SendRequest {
         // When using the testnet you can use a faucet to get testnet coins.
         // In this example we catch the InsufficientMoneyException and register a BalanceFuture callback that runs once the wallet has enough balance.
         try {
-            Wallet.SendResult result = kit.wallet().sendCoins(kit.peerGroup(), to, value);
+            TransactionBroadcast result = kit.wallet().sendCoins(kit.peerGroup(), to, value);
             System.out.println("coins sent. transaction hash: " + result.transaction().getTxId());
             // you can use a block explorer like https://www.biteasy.com/ to inspect the transaction with the printed transaction hash. 
         } catch (InsufficientMoneyException e) {
