@@ -9,18 +9,18 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, macOS-13]
-        java-version: [ '17', '21' ]
+        java: [ '17', '21' ]
         distribution: [ 'graalvm-community' ]
         gradle: ['8.12.1']
       fail-fast: false
-    name: ${{ matrix.os }} JDK ${{ matrix.java-version }}.${{ matrix.distribution }}
+    name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          java-version: ${{ matrix.java-version }}
+          java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Gradle
@@ -32,5 +32,5 @@ jobs:
       - name: Upload wallet-tool as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wallet-tool-${{ matrix.os }}-${{ matrix.java-version }}
+          name: wallet-tool-${{ matrix.os }}-${{ matrix.java }}
           path: wallettool/build/native/nativeCompile/wallet-tool
