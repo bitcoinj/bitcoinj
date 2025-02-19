@@ -115,15 +115,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
         }
     }
 
-    /**
-     * @return future that completes when some number of remote peers has rebroadcast the transaction
-     * @deprecated Use {@link #awaitRelayed()} (and maybe {@link CompletableFuture#thenApply(Function)})
-     */
-    @Deprecated
-    public CompletableFuture<Transaction> future() {
-        return awaitRelayed().thenApply(TransactionBroadcast::transaction);
-    }
-
     public void setMinConnections(int minConnections) {
         this.minConnections = minConnections;
     }
@@ -227,21 +218,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
      */
     public CompletableFuture<TransactionBroadcast> awaitSent() {
         return sentFuture;
-    }
-
-    /**
-     * If you migrate to {@link #broadcastAndAwaitRelay()} and need a {@link CompletableFuture} that returns
-     *  {@link Transaction} you can use:
-     * <pre>{@code
-     *  CompletableFuture<Transaction> seenFuture = broadcast
-     *              .broadcastAndAwaitRelay()
-     *              .thenApply(TransactionBroadcast::transaction);
-     * }</pre>
-     * @deprecated Use {@link #broadcastAndAwaitRelay()} or {@link #broadcastOnly()} as appropriate
-     */
-    @Deprecated
-    public CompletableFuture<Transaction> broadcast() {
-        return broadcastAndAwaitRelay().thenApply(TransactionBroadcast::transaction);
     }
 
     private CompletableFuture<Void> broadcastOne(Peer peer) {
