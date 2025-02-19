@@ -49,10 +49,10 @@ public class TransactionBroadcast implements Wallet.SendResult {
     private static final Logger log = LoggerFactory.getLogger(TransactionBroadcast.class);
 
     // This future completes when all broadcast messages were sent (to a buffer)
-    private final CompletableFuture<TransactionBroadcast> sentFuture = new CompletableFuture<>();
+    protected final CompletableFuture<TransactionBroadcast> sentFuture = new CompletableFuture<>();
 
     // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
-    private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
+    protected final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
     private final PeerGroup peerGroup;
     private final Transaction tx;
     private int minConnections;
@@ -101,13 +101,17 @@ public class TransactionBroadcast implements Wallet.SendResult {
         }
 
         @Override
-        public CompletableFuture<Transaction> broadcast() {
-            return future;
-        }
-
-        @Override
-        public CompletableFuture<Transaction> future() {
-            return future;
+        public CompletableFuture<TransactionBroadcast> broadcastOnly() {
+            future.whenComplete((transaction, ex) -> {
+                if (transaction != null) {
+                    this.sentFuture.complete(this);
+                    this.seenFuture.complete(this);
+                } else {
+                    this.sentFuture.completeExceptionally(ex);
+                    this.seenFuture.completeExceptionally(ex);
+                }
+            });
+            return sentFuture;
         }
     }
 
