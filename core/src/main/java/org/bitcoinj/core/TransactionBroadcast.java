@@ -89,17 +89,26 @@ public class TransactionBroadcast implements Wallet.SendResult {
 
     @VisibleForTesting
     public static TransactionBroadcast createMockBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
-        return new TransactionBroadcast(tx) {
-            @Override
-            public CompletableFuture<Transaction> broadcast() {
-                return future;
-            }
+        return new MockTransactionBroadcast(tx, future);
+    }
 
-            @Override
-            public CompletableFuture<Transaction> future() {
-                return future;
-            }
-        };
+    static class MockTransactionBroadcast extends TransactionBroadcast {
+        private final CompletableFuture<Transaction> future;
+
+        MockTransactionBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
+            super(tx);
+            this.future = future;
+        }
+
+        @Override
+        public CompletableFuture<Transaction> broadcast() {
+            return future;
+        }
+
+        @Override
+        public CompletableFuture<Transaction> future() {
+            return future;
+        }
     }
 
     /**
