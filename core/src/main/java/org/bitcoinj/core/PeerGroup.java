@@ -329,7 +329,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 if (numAdded >= MAX_ADDRESSES_PER_ADDR_MESSAGE)
                     break;
             }
-            log.info("{} gossiped {} addresses, added {} of them to the inactive pool", peer.getAddress(),
+            log.debug("{} gossiped {} addresses, added {} of them to the inactive pool", peer.getAddress(),
                     addresses.size(), numAdded);
         }
     }
@@ -583,12 +583,13 @@ public class PeerGroup implements TransactionBroadcaster {
                 if (inactives.isEmpty()) {
                     if (countConnectedAndPendingPeers() < getMaxConnections()) {
                         Duration interval = TimeUtils.longest(Duration.between(now, groupBackoff.retryTime()), MIN_PEER_DISCOVERY_INTERVAL);
-                        log.info("Peer discovery didn't provide us any more peers, will try again in "
+                        log.debug("Peer discovery didn't provide us any more peers, will try again in "
                             + interval.toMillis() + " ms.");
                         executor.schedule(this, interval.toMillis(), TimeUnit.MILLISECONDS);
                     } else {
                         // We have enough peers and discovery provided no more, so just settle down. Most likely we
                         // were given a fixed set of addresses in some test scenario.
+                        log.debug("Sufficient number of Peers discovered");
                     }
                     return;
                 }
@@ -599,13 +600,14 @@ public class PeerGroup implements TransactionBroadcaster {
                 if (addrToTry == null) {
                     // We have exhausted the queue of reachable peers, so just settle down.
                     // Most likely we were given a fixed set of addresses in some test scenario.
+                    log.debug("Queue of reachable peers exhausted");
                     return;
                 }
                 Instant retryTime = backoffMap.get(addrToTry).retryTime();
                 retryTime = TimeUtils.later(retryTime, groupBackoff.retryTime());
                 if (retryTime.isAfter(now)) {
                     Duration delay = Duration.between(now, retryTime);
-                    log.info("Waiting {} ms before next connect attempt to {}", delay.toMillis(), addrToTry);
+                    log.debug("Waiting {} ms before next connect attempt to {}", delay.toMillis(), addrToTry);
                     inactives.add(addrToTry);
                     executor.schedule(this, delay.toMillis(), TimeUnit.MILLISECONDS);
                     return;
@@ -1088,7 +1090,7 @@ public class PeerGroup implements TransactionBroadcaster {
                 registration.executor.execute(() -> registration.listener.onPeersDiscovered(peersDiscoveredSet));
             }
         }
-        log.info("Peer discovery took {} and returned {} items from {} discoverers",
+        log.debug("Peer discovery took {} and returned {} items from {} discoverers",
                 watch, addressList.size(), peerDiscoverers.size());
         return addressList.size();
     }
@@ -1494,7 +1496,7 @@ public class PeerGroup implements TransactionBroadcaster {
         pendingPeers.add(peer);
 
         try {
-            log.info("Attempting connection to {}     ({} connected, {} pending, {} max)", address,
+            log.debug("Attempting connection to {}     ({} connected, {} pending, {} max)", address,
                     peers.size(), pendingPeers.size(), maxConnections);
             CompletableFuture<SocketAddress> future = channels.openConnection(address.toSocketAddress(), peer);
             if (future.isDone())
@@ -1628,7 +1630,7 @@ public class PeerGroup implements TransactionBroadcaster {
                         startBlockChainDownloadFromPeer(downloadPeer);
                     }
                 } else {
-                    log.info("Not yet setting download peer because there is no clear candidate.");
+                    log.debug("Not yet setting download peer because there is no clear candidate.");
                 }
             }
             // Make sure the peer knows how to upload transactions that are requested from us.
@@ -1771,9 +1773,9 @@ public class PeerGroup implements TransactionBroadcaster {
 
             PeerAddress address = peer.getAddress();
 
-            log.info("{}: Peer died      ({} connected, {} pending, {} max)", address, peers.size(), pendingPeers.size(), maxConnections);
+            log.debug("{}: Peer died      ({} connected, {} pending, {} max)", address, peers.size(), pendingPeers.size(), maxConnections);
             if (peer == downloadPeer) {
-                log.info("Download peer died. Picking a new one.");
+                log.debug("Download peer died. Picking a new one.");
                 setDownloadPeer(null);
                 // Pick a new one and possibly tell it to download the chain.
                 final Peer newDownloadPeer = selectDownloadPeer(peers);
