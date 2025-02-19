@@ -42,6 +42,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -725,41 +726,77 @@ public class TransactionTest {
         }
 
         @Override
-        protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwit) throws IOException {
-            // version
-            writeInt32LE(getVersion(), stream);
-            // marker, flag
+        protected int messageSize(boolean useSegwit) {
+            int size = 4; // version
+            if (useSegwit)
+                size += 2; // marker, flag
+            List<TransactionInput> inputs = getInputs();
+            long inputsSize = hackInputsSize ? Integer.MAX_VALUE : inputs.size();
+            size += VarInt.sizeOf(inputsSize);
+            for (TransactionInput in : inputs)
+                size += in.messageSize();
+            List<TransactionOutput> outputs = getOutputs();
+            long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : outputs.size();
+            size += VarInt.sizeOf(outputsSize);
+            for (TransactionOutput out : outputs)
+                size += out.messageSize();
             if (useSegwit) {
-                stream.write(0);
-                stream.write(1);
-            }
-            // txin_count, txins
-            long inputsSize = hackInputsSize ? Integer.MAX_VALUE : getInputs().size();
-            stream.write(VarInt.of(inputsSize).serialize());
-            for (TransactionInput in : getInputs())
-                stream.write(in.serialize());
-            // txout_count, txouts
-            long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : getOutputs().size();
-            stream.write(VarInt.of(outputsSize).serialize());
-            for (TransactionOutput out : getOutputs())
-                stream.write(out.serialize());
-            // script_witnisses
-            if (useSegwit) {
-                for (TransactionInput in : getInputs()) {
+                for (TransactionInput in : inputs) {
                     TransactionWitness witness = in.getWitness();
                     long pushCount = hackWitnessPushCountSize ? Integer.MAX_VALUE : witness.getPushCount();
-                    stream.write(VarInt.of(pushCount).serialize());
+                    size += VarInt.sizeOf(pushCount);
                     for (int i = 0; i < witness.getPushCount(); i++) {
                         byte[] push = witness.getPush(i);
-                        stream.write(VarInt.of(push.length).serialize());
-                        stream.write(push);
+                        size += VarInt.sizeOf(push.length);
+                        size += push.length;
                     }
 
-                    stream.write(in.getWitness().serialize());
+                    size += witness.messageSize();
+                }
+            }
+            size += 4; // locktime
+            return size;
+        }
+
+        @Override
+        protected ByteBuffer write(ByteBuffer buf, boolean useSegwit) throws BufferOverflowException {
+            // version
+            ByteUtils.writeInt32LE(getVersion(), buf);
+            // marker, flag
+            if (useSegwit) {
+                buf.put((byte) 0);
+                buf.put((byte) 1);
+            }
+            // txin_count, txins
+            List<TransactionInput> inputs = getInputs();
+            long inputsSize = hackInputsSize ? Integer.MAX_VALUE : inputs.size();
+            VarInt.of(inputsSize).write(buf);
+            for (TransactionInput in : inputs)
+                in.write(buf);
+            // txout_count, txouts
+            List<TransactionOutput> outputs = getOutputs();
+            long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : outputs.size();
+            VarInt.of(outputsSize).write(buf);
+            for (TransactionOutput out : outputs)
+                out.write(buf);
+            // script_witnisses
+            if (useSegwit) {
+                for (TransactionInput in : inputs) {
+                    TransactionWitness witness = in.getWitness();
+                    long pushCount = hackWitnessPushCountSize ? Integer.MAX_VALUE : witness.getPushCount();
+                    VarInt.of(pushCount).write(buf);
+                    for (int i = 0; i < witness.getPushCount(); i++) {
+                        byte[] push = witness.getPush(i);
+                        VarInt.of(push.length).write(buf);
+                        buf.put(push);
+                    }
+
+                    witness.write(buf);
                 }
             }
             // lock_time
-            writeInt32LE(lockTime().rawValue(), stream);
+            ByteUtils.writeInt32LE(lockTime().rawValue(), buf);
+            return buf;
         }
     }
 
