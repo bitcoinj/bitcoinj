@@ -3966,52 +3966,18 @@ public class Wallet extends BaseTaggableObject
 
     //region Creating and sending transactions
 
-    /** A SendResult is returned to you as part of sending coins to a recipient. */
-    public static class SendResult {
-        /**
-         * The Bitcoin transaction message that moves the money.
-         * @deprecated Use {@link #transaction()}
-         */
+    /**
+     * A SendResult is returned to you as part of sending coins to a recipient.
+     * @deprecated  Use {@link TransactionBroadcast}
+     */
+    @Deprecated
+    public interface SendResult {
+        Transaction transaction();
+
         @Deprecated
-        public final Transaction tx;
-        /**
-         * A future that will complete once the tx message has been successfully broadcast to the network. This is just the result of calling broadcast.future()
-         * @deprecated Use {@link #awaitRelayed()}
-         */
-        @Deprecated
-        public final CompletableFuture<Transaction> broadcastComplete;
-        /**
-         * The broadcast object returned by the linked TransactionBroadcaster
-         * @deprecated Use {@link #getBroadcast()}
-         */
-        @Deprecated
-        public final TransactionBroadcast broadcast;
+        TransactionBroadcast getBroadcast();
 
-        /**
-         * @deprecated Use {@link #SendResult(TransactionBroadcast)}
-         */
-        @Deprecated
-        public SendResult(Transaction tx, TransactionBroadcast broadcast) {
-            this(broadcast);
-        }
-
-        public SendResult(TransactionBroadcast broadcast) {
-            this.tx = broadcast.transaction();
-            this.broadcast = broadcast;
-            this.broadcastComplete = broadcast.awaitRelayed().thenApply(TransactionBroadcast::transaction);
-        }
-
-        public Transaction transaction() {
-            return broadcast.transaction();
-        }
-
-        public TransactionBroadcast getBroadcast() {
-            return broadcast;
-        }
-
-        public CompletableFuture<TransactionBroadcast> awaitRelayed() {
-            return broadcast.awaitRelayed();
-        }
+        CompletableFuture<TransactionBroadcast> awaitRelayed();
     }
 
     /**
@@ -4165,7 +4131,7 @@ public class Wallet extends BaseTaggableObject
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
-    public SendResult sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value)
+    public TransactionBroadcast sendCoins(TransactionBroadcaster broadcaster, Address to, Coin value)
             throws InsufficientMoneyException, TransactionCompletionException {
         SendRequest request = SendRequest.to(to, value);
         return sendCoins(broadcaster, request);
@@ -4193,7 +4159,7 @@ public class Wallet extends BaseTaggableObject
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
-    public SendResult sendCoins(TransactionBroadcaster broadcaster, SendRequest request)
+    public TransactionBroadcast sendCoins(TransactionBroadcaster broadcaster, SendRequest request)
             throws InsufficientMoneyException, TransactionCompletionException {
         // Should not be locked here, as we're going to call into the broadcaster and that might want to hold its
         // own lock. sendCoinsOffline handles everything that needs to be locked.
@@ -4202,7 +4168,7 @@ public class Wallet extends BaseTaggableObject
         // Commit the TX to the wallet immediately so the spent coins won't be reused.
         // TODO: We should probably allow the request to specify tx commit only after the network has accepted it.
         Transaction tx = sendCoinsOffline(request);
-        SendResult result = new SendResult(broadcaster.broadcastTransaction(tx));
+        TransactionBroadcast result = broadcaster.broadcastTransaction(tx);
         // The tx has been committed to the pending pool by this point (via sendCoinsOffline -> commitTx), so it has
         // a txConfidenceListener registered. Once the tx is broadcast the peers will update the memory pool with the
         // count of seen peers, the memory pool will update the transaction confidence object, that will invoke the
@@ -4226,7 +4192,7 @@ public class Wallet extends BaseTaggableObject
      * @throws MultipleOpReturnRequested if there is more than one OP_RETURN output for the resultant transaction.
      * @throws BadWalletEncryptionKeyException if the supplied {@link SendRequest#aesKey} is wrong.
      */
-    public SendResult sendCoins(SendRequest request)
+    public TransactionBroadcast sendCoins(SendRequest request)
             throws InsufficientMoneyException, TransactionCompletionException {
         TransactionBroadcaster broadcaster = vTransactionBroadcaster;
         checkState(broadcaster != null, () ->
@@ -4279,7 +4245,7 @@ public class Wallet extends BaseTaggableObject
     public CompletableFuture<TransactionBroadcast> sendTransaction(SendRequest sendRequest) {
         try {
             // Complete successfully when the transaction has been sent (or buffered, at least) to peers.
-            return sendCoins(sendRequest).broadcast.awaitSent();
+            return sendCoins(sendRequest).awaitSent();
         } catch (KeyCrypterException | InsufficientMoneyException e) {
             // We should never try to send more coins than we have, if we do we get an InsufficientMoneyException
             return FutureUtils.failedFuture(e);
