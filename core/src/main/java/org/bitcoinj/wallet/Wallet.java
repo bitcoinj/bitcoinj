@@ -3969,36 +3969,12 @@ public class Wallet extends BaseTaggableObject
     /** A SendResult is returned to you as part of sending coins to a recipient. */
     public static class SendResult {
         /**
-         * The Bitcoin transaction message that moves the money.
-         * @deprecated Use {@link #transaction()}
-         */
-        @Deprecated
-        public final Transaction tx;
-        /**
-         * A future that will complete once the tx message has been successfully broadcast to the network. This is just the result of calling broadcast.future()
-         * @deprecated Use {@link #awaitRelayed()}
-         */
-        @Deprecated
-        public final CompletableFuture<Transaction> broadcastComplete;
-        /**
          * The broadcast object returned by the linked TransactionBroadcaster
-         * @deprecated Use {@link #getBroadcast()}
          */
-        @Deprecated
-        public final TransactionBroadcast broadcast;
-
-        /**
-         * @deprecated Use {@link #SendResult(TransactionBroadcast)}
-         */
-        @Deprecated
-        public SendResult(Transaction tx, TransactionBroadcast broadcast) {
-            this(broadcast);
-        }
+        private final TransactionBroadcast broadcast;
 
         public SendResult(TransactionBroadcast broadcast) {
-            this.tx = broadcast.transaction();
             this.broadcast = broadcast;
-            this.broadcastComplete = broadcast.awaitRelayed().thenApply(TransactionBroadcast::transaction);
         }
 
         public Transaction transaction() {
