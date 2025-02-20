@@ -85,22 +85,12 @@ public class BuildCheckpoints implements Callable<Integer> {
         params = NetworkParameters.of(net);
         Context.propagate(new Context());
 
-        switch (net) {
-            case MAINNET:
-                suffix = "";
-                break;
-            case TESTNET:
-                suffix = "-testnet";
-                break;
-            case SIGNET:
-                suffix = "-signet";
-                break;
-            case REGTEST:
-                suffix = "-regtest";
-                break;
-            default:
-                throw new RuntimeException("Unreachable.");
-        }
+        suffix = switch (net) {
+            case MAINNET -> "";
+            case TESTNET -> "-testnet";
+            case SIGNET -> "-signet";
+            case REGTEST -> "-regtest";
+        };
 
         // Configure bitcoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
