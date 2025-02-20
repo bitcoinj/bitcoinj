@@ -4280,7 +4280,7 @@ public class Wallet extends BaseTaggableObject
         try {
             // Complete successfully when the transaction has been sent (or buffered, at least) to peers.
             return sendCoins(sendRequest).broadcast.awaitSent();
-        } catch (KeyCrypterException | InsufficientMoneyException e) {
+        } catch (KeyCrypterException | InsufficientMoneyException | CompletionException | IllegalStateException | IllegalArgumentException e) {
             // We should never try to send more coins than we have, if we do we get an InsufficientMoneyException
             return FutureUtils.failedFuture(e);
         }
