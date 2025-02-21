@@ -4,7 +4,7 @@ Note: Packages that are not significant or are not changing are not shown (and a
 
 Legend: Dashed lines represent Gradle "implementation" dependencies. Solid lines represent Gradle "api" dependencies (or internal package dependencies.)
 
-## bitcoinj 0.16.x (current stable release)
+## bitcoinj 0.16.x (previous release)
 
 ````mermaid
 flowchart TD
@@ -29,9 +29,9 @@ classDef external fill:#999;
 class G,S,A,BC,P external;
 ````
            
-## bitcoinj 0.17 (current plan)
+## bitcoinj 0.17
 
-In release 0.17 (currently in progress) there has been a large amount of refactoring to prepare the `o.b.base` and `o.b.crypto` packages to become independent modules/JARs in the following release. Those packages will still contain some deprecated methods that depend on other internal packages and external modules. Those deprecated methods will be removed in release 0.18 when `o.b.base` and `o.b.crypto` are moved to their own modules.
+In release 0.17 there has been a large amount of refactoring to prepare the `o.b.base` and `o.b.crypto` packages to become independent modules/JARs in the following release. Those packages will still contain some deprecated methods that depend on other internal packages and external modules. Those deprecated methods will be removed in release 0.18 when `o.b.base` and `o.b.crypto` are moved to their own modules.
 
 
 ````mermaid
