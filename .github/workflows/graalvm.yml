@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, macOS-13]
-        java: [ '17', '21' ]
+        java: [ '17', '21', '23' ]
         distribution: [ 'graalvm-community' ]
         gradle: ['8.12.1']
       fail-fast: false
