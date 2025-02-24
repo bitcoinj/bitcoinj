@@ -49,6 +49,7 @@ import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
+import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -69,6 +70,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
@@ -492,6 +494,14 @@ public class ECKey implements EncryptableItem {
         }
 
         /**
+         * Check that the sig has a low R component, and will thus be 71 bytes or less in DER encoding.
+         */
+        public boolean hasLowR() {
+            final byte[] compact = Utils.bigIntegerToBytes(r, 32);
+            return compact[0] >= 0;
+        }
+
+        /**
          * DER is an international standard for serializing data structures which is widely used in cryptography.
          * It's somewhat like protocol buffers but less convenient. This method returns a standard DER encoding
          * of the signature, as recognized by OpenSSL and other libraries.
@@ -600,11 +610,28 @@ public class ECKey implements EncryptableItem {
 
     protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
         Objects.requireNonNull(privateKeyForSigning);
-        ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
+        ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()) {
+            int counter = 0;
+
+            @Override
+            protected void initAdditionalInput0(HMac hMac) {
+                if (counter > 0)
+                    hMac.update(ByteBuffer.allocate(32).putInt(28, counter).array(), 0, 32);
+                counter++;
+                if (counter >= Integer.MAX_VALUE)
+                    throw new IllegalStateException();
+            }
+        });
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
         signer.init(true, privKey);
-        BigInteger[] components = signer.generateSignature(input.getBytes());
-        return new ECDSASignature(components[0], components[1]).toCanonicalised();
+        ECDSASignature signature = null;
+        do {
+            // grind for low R values
+            // see discussion at https://github.com/bitcoin/bitcoin/pull/13666
+            BigInteger[] components = signer.generateSignature(input.getBytes());
+            signature = new ECDSASignature(components[0], components[1]);
+        } while (!signature.hasLowR());
+        return signature.toCanonicalised();
     }
 
     /**
