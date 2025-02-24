@@ -17,7 +17,7 @@ jobs:
           - java: '21'
             gradle: '7.3'
       fail-fast: false
-    name: JAVA ${{ matrix.distribution }} ${{ matrix.java }} OS ${{ matrix.os }} Gradle ${{ matrix.gradle }}
+    name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
