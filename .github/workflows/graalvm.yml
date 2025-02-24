@@ -20,8 +20,8 @@ jobs:
       - name: Set up GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
-          java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
