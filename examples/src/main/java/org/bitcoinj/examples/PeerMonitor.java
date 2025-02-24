@@ -202,17 +202,17 @@ public class PeerMonitor {
 
         @Override
         public String getColumnName(int i) {
-            switch (i) {
-                case IP_ADDRESS: return "Address";
-                case PROTOCOL_VERSION: return "Protocol version";
-                case USER_AGENT: return "User Agent";
-                case CHAIN_HEIGHT: return "Chain height";
-                case FEE_FILTER: return "Fee filter (per kB)";
-                case PING_TIME: return "Average ping";
-                case LAST_PING_TIME: return "Last ping";
-                case ADDRESSES: return "Peer addresses";
-                default: throw new RuntimeException();
-            }
+            return switch (i) {
+                case IP_ADDRESS -> "Address";
+                case PROTOCOL_VERSION -> "Protocol version";
+                case USER_AGENT -> "User Agent";
+                case CHAIN_HEIGHT -> "Chain height";
+                case FEE_FILTER -> "Fee filter (per kB)";
+                case PING_TIME -> "Average ping";
+                case LAST_PING_TIME -> "Last ping";
+                case ADDRESSES -> "Peer addresses";
+                default -> throw new RuntimeException();
+            };
         }
 
         @Override
@@ -222,16 +222,11 @@ public class PeerMonitor {
 
         @Override
         public Class<?> getColumnClass(int column) {
-            switch (column) {
-                case PROTOCOL_VERSION:
-                    return Integer.class;
-                case CHAIN_HEIGHT:
-                case PING_TIME:
-                case LAST_PING_TIME:
-                    return Long.class;
-                default:
-                    return String.class;
-            }
+            return switch (column) {
+                case PROTOCOL_VERSION -> Integer.class;
+                case CHAIN_HEIGHT, PING_TIME, LAST_PING_TIME -> Long.class;
+                default -> String.class;
+            };
         }
 
         @Override
@@ -239,41 +234,28 @@ public class PeerMonitor {
             if (row >= connectedPeers.size()) {
                 // Peer that isn't connected yet.
                 Peer peer = pendingPeers.get(row - connectedPeers.size());
-                switch (col) {
-                    case IP_ADDRESS:
-                        return getAddressForPeer(peer);
-                    case PROTOCOL_VERSION:
-                        return 0;
-                    case CHAIN_HEIGHT:
-                    case PING_TIME:
-                    case LAST_PING_TIME:
-                        return 0L;
-                    default:
-                        return "(pending)";
-                }
+                return switch (col) {
+                    case IP_ADDRESS -> getAddressForPeer(peer);
+                    case PROTOCOL_VERSION -> 0;
+                    case CHAIN_HEIGHT, PING_TIME, LAST_PING_TIME -> 0L;
+                    default -> "(pending)";
+                };
             }
             Peer peer = connectedPeers.get(row);
-            switch (col) {
-                case IP_ADDRESS:
-                    return getAddressForPeer(peer);
-                case PROTOCOL_VERSION:
-                    return Integer.toString(peer.getPeerVersionMessage().clientVersion);
-                case USER_AGENT:
-                    return peer.getPeerVersionMessage().subVer;
-                case CHAIN_HEIGHT:
-                    return peer.getBestHeight();
-                case FEE_FILTER:
+            return switch (col) {
+                case IP_ADDRESS -> getAddressForPeer(peer);
+                case PROTOCOL_VERSION -> Integer.toString(peer.getPeerVersionMessage().clientVersion);
+                case USER_AGENT -> peer.getPeerVersionMessage().subVer;
+                case CHAIN_HEIGHT -> peer.getBestHeight();
+                case FEE_FILTER -> {
                     Coin feeFilter = peer.getFeeFilter();
-                    return feeFilter != null ? feeFilter.toFriendlyString() : "";
-                case PING_TIME:
-                    return peer.pingInterval().map(Duration::toMillis).orElse(0L);
-                case LAST_PING_TIME:
-                    return peer.lastPingInterval().map(Duration::toMillis).orElse(0L);
-                case ADDRESSES:
-                    return getAddressesForPeer(peer);
-
-                default: throw new RuntimeException();
-            }
+                    yield feeFilter != null ? feeFilter.toFriendlyString() : "";
+                }
+                case PING_TIME -> peer.pingInterval().map(Duration::toMillis).orElse(0L);
+                case LAST_PING_TIME -> peer.lastPingInterval().map(Duration::toMillis).orElse(0L);
+                case ADDRESSES -> getAddressesForPeer(peer);
+                default -> throw new RuntimeException();
+            };
         }
 
         private String getAddressForPeer(Peer peer) {
