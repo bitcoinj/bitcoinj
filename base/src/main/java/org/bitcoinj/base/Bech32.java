@@ -19,7 +19,6 @@ package org.bitcoinj.base;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteArray;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Locale;
@@ -189,8 +188,13 @@ public class Bech32 {
         return ret;
     }
 
-    /** Verify a checksum. */
-    @Nullable
+    /**
+     * Verify a checksum.
+     * @param hrp human-readable part
+     * @param values data in 5-bit byte format
+     * @return Encoding.BECH32 or Encoding.BECH32M if valid
+     * @throws AddressFormatException.InvalidChecksum if invalid
+     */
     private static Encoding verifyChecksum(final String hrp, final byte[] values) {
         byte[] hrpExpanded = expandHrp(hrp);
         byte[] combined = new byte[hrpExpanded.length + values.length];
@@ -202,7 +206,7 @@ public class Bech32 {
         else if (check == BECH32M_CONST)
             return Encoding.BECH32M;
         else
-            return null;
+            throw new AddressFormatException.InvalidChecksum();
     }
 
     /** Create a checksum. */
@@ -319,7 +323,6 @@ public class Bech32 {
         }
         String hrp = str.substring(0, pos).toLowerCase(Locale.ROOT);
         Encoding encoding = verifyChecksum(hrp, values);
-        if (encoding == null) throw new AddressFormatException.InvalidChecksum();
         return new Bech32Data(encoding, hrp, Arrays.copyOfRange(values, 0, values.length - 6));
     }
 
