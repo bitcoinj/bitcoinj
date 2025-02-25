@@ -19,10 +19,10 @@ package org.bitcoinj.base;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteArray;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
@@ -190,19 +190,18 @@ public class Bech32 {
     }
 
     /** Verify a checksum. */
-    @Nullable
-    private static Encoding verifyChecksum(final String hrp, final byte[] values) {
+    private static Optional<Encoding> verifyChecksum(final String hrp, final byte[] values) {
         byte[] hrpExpanded = expandHrp(hrp);
         byte[] combined = new byte[hrpExpanded.length + values.length];
         System.arraycopy(hrpExpanded, 0, combined, 0, hrpExpanded.length);
         System.arraycopy(values, 0, combined, hrpExpanded.length, values.length);
         final int check = polymod(combined);
         if (check == BECH32_CONST)
-            return Encoding.BECH32;
+            return Optional.of(Encoding.BECH32);
         else if (check == BECH32M_CONST)
-            return Encoding.BECH32M;
+            return Optional.of(Encoding.BECH32M);
         else
-            return null;
+            return Optional.empty();
     }
 
     /** Create a checksum. */
@@ -318,8 +317,8 @@ public class Bech32 {
             values[i] = CHARSET_REV[c];
         }
         String hrp = str.substring(0, pos).toLowerCase(Locale.ROOT);
-        Encoding encoding = verifyChecksum(hrp, values);
-        if (encoding == null) throw new AddressFormatException.InvalidChecksum();
+        Encoding encoding = verifyChecksum(hrp, values)
+                .orElseThrow(AddressFormatException.InvalidChecksum::new);
         return new Bech32Data(encoding, hrp, Arrays.copyOfRange(values, 0, values.length - 6));
     }
 
