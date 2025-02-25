@@ -18,6 +18,7 @@ package org.bitcoinj.base;
 
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteArray;
+import org.bitcoinj.base.internal.ByteUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -197,9 +198,7 @@ public class Bech32 {
      */
     private static Encoding verifyChecksum(final String hrp, final byte[] values) {
         byte[] hrpExpanded = expandHrp(hrp);
-        byte[] combined = new byte[hrpExpanded.length + values.length];
-        System.arraycopy(hrpExpanded, 0, combined, 0, hrpExpanded.length);
-        System.arraycopy(values, 0, combined, hrpExpanded.length, values.length);
+        byte[] combined = ByteUtils.concat(hrpExpanded, values);
         final int check = polymod(combined);
         if (check == BECH32_CONST)
             return Encoding.BECH32;
