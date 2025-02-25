@@ -19,7 +19,6 @@ package org.bitcoinj.base;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
 
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -252,7 +251,7 @@ public class SegwitAddress implements Address {
      * @return constructed address
      * @throws AddressFormatException if something about the given bech32 address isn't right
      */
-    public static SegwitAddress fromBech32(String bech32, @Nonnull Network network)
+    public static SegwitAddress fromBech32(String bech32, Network network)
             throws AddressFormatException {
         Bech32.Bech32Data bechData = Bech32.decode(bech32);
         if (bechData.hrp.equals(network.segwitAddressHrp()))
@@ -260,7 +259,7 @@ public class SegwitAddress implements Address {
         throw new AddressFormatException.WrongNetwork(bechData.hrp);
     }
 
-    static SegwitAddress fromBechData(@Nonnull Network network, Bech32.Bech32Data bechData) {
+    static SegwitAddress fromBechData(Network network, Bech32.Bech32Data bechData) {
         if (bechData.bytes().length < 1) {
             throw new AddressFormatException.InvalidDataLength("invalid address length (0)");
         }
