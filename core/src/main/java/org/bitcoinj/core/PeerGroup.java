@@ -23,7 +23,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
-import net.jcip.annotations.GuardedBy;
+import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.base.internal.PlatformUtils;

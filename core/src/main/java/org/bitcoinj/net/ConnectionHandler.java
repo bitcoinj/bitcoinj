@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
+import org.bitcoinj.core.internal.GuardedBy;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
