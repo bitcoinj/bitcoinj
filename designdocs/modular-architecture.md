@@ -1,4 +1,4 @@
-# Overview of our migration plans to a more modular bitcoinj architecture
+# Migration to a more modular bitcoinj architecture
 
 Note: Packages that are not significant or are not changing are not shown (and are generally expected to remain in the `core` module/JAR).
 
@@ -61,53 +61,56 @@ class G,S,A,BC,P external;
 
 ## bitcoinj 0.18 (current plan)
  
-In this release it will be possible to use the `bitcoinj-base` module as a standalone module with no external dependencies. `bitcoinj-crypto` will be able to be used with a single dependency on the **Bouncy Castle*** library.
+In this release the `bitcoinj-base` module will be a standalone module with minimal external dependencies. All use of Elliptic Curve Cryptography will be factored out to use the  `secp-api` module from [secp256k1-jdk](https://github.com/bitcoinj/secp256k1-jdk) with API implementations provided for **Bouncy Castle** and (hopefully) the [secp256k1](https://github.com/bitcoin-core/secp256k1) native ('C') library.
 
 ````mermaid
 flowchart TD
-    E[examples] --> CORE
+    EJ[examples] --> CORE
+    EK[examples-kotlin] --> CORE
     IT[integration-test] --> CORE
     T[tools] --> CORE
     FX[wallettemplate] --> CORE
     WT[wallettool] --> CORE
     subgraph CORE [bitcoinj-core]
-        W[o.b.wallet] --> CO[o.b.core]
         CO --> W
+        W[o.b.wallet] --> CO[o.b.core]
+        W --> CR[o.b.crypto]
+        CO --> CR
     end
-    CORE --> CRYPTO
-    subgraph CRYPTO [bitcoinj-crypto]
-        CR[o.b.crypto]
-    end
-    CRYPTO --> BASE
-    CRYPTO --> BC[Bouncy Castle]
+    CORE --> BASE
     subgraph BASE [bitcoinj-base]
         B[o.b.base]
     end
+    CORE --> SECP[secp-api]
+    SECP .-> SECPBC[secp-bouncy]
+    SECP .-> SECPFFM[secp-ffm]
+    SECPBC --> BC[Bouncy Castle]
+    SECPFFM --> SECPC[libsecp256k1]
     CORE --> G[Guava]
     CORE --> P[ProtoBuf]
     CORE .-> S[slf4j]
-    CORE .-> A[jcip-annotations]
+    CORE .-> JS[JSpecify]
 
 classDef external fill:#999;
-class G,S,A,BC,P external;
+class G,S,JS,BC,SECPC,P external;
 ````
 
 ## bitcoinj 0.19 (proposed)
 
 In a proposed 0.19 release, we hope to do the following:
 
-1. Update `bitcoin-crypto` to use the `secp256k1-jdk` API so that core crypto functions that it needs can be provided by either Bouncy Castle _or_ `libsecp256k1`.
-2. Separate the current ProtoBuf-based wallet implementation into it's own module. This will require creating a `Wallet` interface in core.
-3. Eliminate dependencies on Guava for all modules.
+1. Separate the current ProtoBuf-based wallet implementation into it's own module. This will require creating a `Wallet` interface in core.
+2. Eliminate dependencies on Guava for all modules.
 
 Stretch goal:
 
-4. Alternate wallet implementation, perhaps using **SQLite**.
+3. Alternate wallet implementation, perhaps using **SQLite**.
 
 
 ````mermaid
 flowchart TD
     E[examples] --> WALLET
+    EK[examples-kotlin] --> WALLET
     IT[integration-test] --> WALLET
     T[tools] --> WALLET
     FX[wallettemplate] --> WALLET
@@ -116,26 +119,22 @@ flowchart TD
         W[o.b.wallet]
     end
     WALLET --> CORE
-    WALLET .-> S[slf4j]
     WALLET --> P[ProtoBuf]
     subgraph CORE [bitcoinj-core]
-        CO[o.b.core]
+        CO[o.b.core] --> CR[o.b.crypto]
     end
-    CORE --> CRYPTO
+    CORE --> BASE
     CORE .-> S[slf4j]
-    subgraph CRYPTO [bitcoinj-crypto]
-        CR[o.b.crypto]
-    end
-    CRYPTO --> BASE
-    CRYPTO --> SECP256K1
-    SECP256K1[secp256k1-jdk] .-> SECPFFM[secp256k1-foreign]
-    SECP256K1[secp256k1-jdk] .-> SECPBOUNCY[secp256k1-bouncy]
+    CORE .-> JS[JSpecify]
+    CORE --> SECP
+    SECP[secp-api] .-> SECPFFM[secp-ffm]
+    SECP .-> SECPBOUNCY[secp-bouncy]
     SECPBOUNCY .-> BC[Bouncy Castle]
-    SECPFFM .-> LP['C' libsecp256k1]
+    SECPFFM .-> LP[libsecp256k1]
     subgraph BASE [bitcoinj-base]
         B[o.b.base]
     end
 
 classDef external fill:#999;
-class G,S,A,BC,LP,P external;
+class G,S,JS,BC,LP,P external;
 ````
