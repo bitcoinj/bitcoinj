@@ -86,7 +86,6 @@ flowchart TD
     SECP .-> SECPFFM[secp-ffm]
     SECPBC --> BC[Bouncy Castle]
     SECPFFM --> SECPC[libsecp256k1]
-    CORE --> G[Guava]
     CORE --> P[ProtoBuf]
     CORE .-> S[slf4j]
     CORE .-> JS[JSpecify]
