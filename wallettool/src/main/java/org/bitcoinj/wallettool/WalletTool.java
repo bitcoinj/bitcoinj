@@ -50,9 +50,6 @@ import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 import org.bitcoinj.protobuf.wallet.Protos;
-import org.bitcoinj.protocols.payments.PaymentProtocol;
-import org.bitcoinj.protocols.payments.PaymentProtocolException;
-import org.bitcoinj.protocols.payments.PaymentSession;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -138,10 +135,6 @@ public class WalletTool implements Callable<Integer> {
             "                       The output destination can also be a native segwit address.%n" +
             "                       If the output destination starts with 04 and is 65 or 33 bytes long it will be treated as a public key instead of an address and the send will use%n" +
             "                       <key> CHECKSIG as the script.%n" +
-            "                       If --payment-request is specified, a transaction will be created using the provided payment request. A payment request can be a local file, a bitcoin uri, or url to download the payment request, e.g.:%n" +
-            "                         --payment-request=/path/to/my.bitcoinpaymentrequest%n" +
-            "                         --payment-request=bitcoin:?r=https://merchant.example.com/pay?123%n" +
-            "                         --payment-request=https://merchant.example.com/pay?123%n" +
             "                       Other options include:%n" +
             "                         --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below%n" +
             "                         --select-addr or --select-output to select specific outputs%n" +
@@ -221,8 +214,6 @@ public class WalletTool implements Callable<Integer> {
     private boolean ignoreMandatoryExtensions = false;
     @CommandLine.Option(names = "--password", description = "For an encrypted wallet, the password is provided here.")
     private String password = null;
-    @CommandLine.Option(names = "--payment-request", description = "Specifies a payment request either by name of a local file, a bitcoin uri, or url to download the payment request.")
-    private String paymentRequestLocationStr;
     @CommandLine.Option(names = "--no-pki", description = "Disables pki verification for payment requests.")
     private boolean noPki = false;
     @CommandLine.Option(names = "--dump-privkeys", description = "Private keys and seed are printed.")
@@ -239,7 +230,6 @@ public class WalletTool implements Callable<Integer> {
     private static AbstractBlockChain chain;
     private static PeerGroup peerGroup;
     private static Wallet wallet;
-    private static org.bitcoinj.protobuf.payments.Protos.PaymentRequest paymentRequest;
 
     public static class Condition {
         public enum Type {
@@ -408,10 +398,7 @@ public class WalletTool implements Callable<Integer> {
             case RESET: reset(); break;
             case SYNC: syncChain(); break;
             case SEND:
-                if (paymentRequestLocationStr != null && outputsStr != null) {
-                    System.err.println("--payment-request and --output cannot be used together.");
-                    return 1;
-                } else if (feePerVkbStr != null && feeSatPerVbyteStr != null) {
+                if (feePerVkbStr != null && feeSatPerVbyteStr != null) {
                     System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
                     return 1;
                 } else if (outputsStr != null) {
@@ -454,10 +441,8 @@ public class WalletTool implements Callable<Integer> {
                         coinSelector = null;
                     }
                     send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);
-                } else if (paymentRequestLocationStr != null) {
-                    sendPaymentRequest(paymentRequestLocationStr, !noPki);
                 } else {
-                    System.err.println("You must specify a --payment-request or at least one --output=addr:value.");
+                    System.err.println("You must specify at least one --output=addr:value.");
                     return 1;
                 }
                 break;
@@ -762,140 +747,6 @@ public class WalletTool implements Callable<Integer> {
             return time.getEpochSecond();
         }
         return Long.parseLong(lockTimeStr);
-    }
-
-    private void sendPaymentRequest(String location, boolean verifyPki) {
-        if (location.startsWith("http") || location.startsWith("bitcoin")) {
-            try {
-                CompletableFuture<PaymentSession> future;
-                if (location.startsWith("http")) {
-                    future = PaymentSession.createFromUrl(location, verifyPki);
-                } else {
-                    BitcoinURI paymentRequestURI = BitcoinURI.of(location);
-                    future = PaymentSession.createFromBitcoinUri(paymentRequestURI, verifyPki);
-                }
-                PaymentSession session = future.get();
-                if (session != null) {
-                    send(session);
-                } else {
-                    System.err.println("Server returned null session");
-                    System.exit(1);
-                }
-            } catch (PaymentProtocolException e) {
-                System.err.println("Error creating payment session " + e.getMessage());
-                System.exit(1);
-            } catch (BitcoinURIParseException e) {
-                System.err.println("Invalid bitcoin uri: " + e.getMessage());
-                System.exit(1);
-            } catch (InterruptedException e) {
-                // Ignore.
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            // Try to open the payment request as a file.
-            FileInputStream stream = null;
-            try {
-                File paymentRequestFile = new File(location);
-                stream = new FileInputStream(paymentRequestFile);
-            } catch (Exception e) {
-                System.err.println("Failed to open file: " + e.getMessage());
-                System.exit(1);
-            }
-            try {
-                paymentRequest = org.bitcoinj.protobuf.payments.Protos.PaymentRequest.newBuilder().mergeFrom(stream).build();
-            } catch(IOException e) {
-                System.err.println("Failed to parse payment request from file " + e.getMessage());
-                System.exit(1);
-            }
-            PaymentSession session = null;
-            try {
-                session = new PaymentSession(paymentRequest, verifyPki);
-            } catch (PaymentProtocolException e) {
-                System.err.println("Error creating payment session " + e.getMessage());
-                System.exit(1);
-            }
-            send(session);
-        }
-    }
-
-    private void send(PaymentSession session) {
-        System.out.println("Payment Request");
-        System.out.println("Coin: " + session.getValue().toFriendlyString());
-        System.out.println("Date: " + session.time());
-        System.out.println("Memo: " + session.getMemo());
-        if (session.pkiVerificationData != null) {
-            System.out.println("Pki-Verified Name: " + session.pkiVerificationData.displayName);
-            System.out.println("PKI data verified by: " + session.pkiVerificationData.rootAuthorityName);
-        }
-        final SendRequest req = session.getSendRequest();
-        if (password != null) {
-            req.aesKey = passwordToKey(true);
-            if (req.aesKey == null)
-                return;   // Error message already printed.
-        }
-
-        // Complete the transaction
-        try {
-            wallet.completeTx(req);  // may throw InsufficientMoneyException.
-        } catch (InsufficientMoneyException e) {
-            System.err.println("Insufficient funds: have " + wallet.getBalance().toFriendlyString());
-            System.exit(1);
-        }
-        if (offline) {
-            wallet.commitTx(req.tx);
-            return;
-        }
-
-        // Setup network communication (but not PeerGroup)
-        try {
-            setup();
-        } catch (BlockStoreException e) {
-            System.err.println("BlockStoreException: " + e.getMessage());
-            System.exit(1);
-        }
-
-        // Send the payment
-        try {
-            // No refund address specified, no user-specified memo field.
-            PaymentProtocol.Ack ack = session.sendPayment(Collections.singletonList(req.tx), null, null).get();
-            wallet.commitTx(req.tx);
-            System.out.println("Memo from server: " + ack.getMemo());
-        } catch (ExecutionException e) {
-            try {
-                throw e.getCause();
-            } catch (PaymentProtocolException.InvalidPaymentRequestURL e1) {
-                System.out.println("Missing/Invalid Payment Request URL, broadcasting transaction with PeerGroup");
-                broadcastPayment(req);
-            } catch (PaymentProtocolException e1) {
-                System.err.println("Failed to send payment " + e.getMessage());
-                System.exit(1);
-            } catch (IOException e1) {
-                System.err.println("Invalid payment " + e.getMessage());
-                System.exit(1);
-            } catch (Throwable t) {
-                System.err.println("Unexpected error " + e.getMessage());
-                System.exit(1);
-            }
-        } catch (VerificationException e) {
-            System.err.println("Failed to send payment " + e.getMessage());
-            System.exit(1);
-        } catch (InterruptedException e) {
-            System.err.println("Interrupted: " + e.getMessage());
-            System.exit(1);
-        }
-    }
-
-    private void broadcastPayment(SendRequest req) {
-        peerGroup.start();
-        TransactionBroadcast broadcast = peerGroup.broadcastTransaction(req.tx);
-        try {
-            // Wait for broadcast to be sent
-            broadcast.awaitRelayed().get();
-        } catch (InterruptedException | ExecutionException e) {
-            System.err.println("Failed to broadcast payment " + e.getMessage());
-            System.exit(1);
-        }
     }
 
     /**
