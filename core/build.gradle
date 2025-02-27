@@ -14,7 +14,6 @@ dependencies {
     api 'com.google.guava:guava:33.4.0-android'
     api 'com.google.protobuf:protobuf-javalite:4.29.3'
     implementation 'org.slf4j:slf4j-api:2.0.16'
-    implementation 'net.jcip:jcip-annotations:1.0'
 
     testImplementation project(':bitcoinj-test-support')
     testImplementation 'junit:junit:4.13.2'
