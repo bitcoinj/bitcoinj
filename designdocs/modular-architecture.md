@@ -87,8 +87,8 @@ flowchart TD
     SECPBC --> BC[Bouncy Castle]
     SECPFFM --> SECPC[libsecp256k1]
     CORE --> P[ProtoBuf]
-    CORE .-> S[slf4j]
-    CORE .-> JS[JSpecify]
+    BASE .-> S[slf4j]
+    BASE .-> JS[JSpecify]
 
 classDef external fill:#999;
 class G,S,JS,BC,SECPC,P external;
@@ -123,9 +123,9 @@ flowchart TD
         CO[o.b.core] --> CR[o.b.crypto]
     end
     CORE --> BASE
-    CORE .-> S[slf4j]
-    CORE .-> JS[JSpecify]
     CORE --> SECP
+    BASE .-> S[slf4j]
+    BASE .-> JS[JSpecify]
     SECP[secp-api] .-> SECPFFM[secp-ffm]
     SECP .-> SECPBOUNCY[secp-bouncy]
     SECPBOUNCY .-> BC[Bouncy Castle]
