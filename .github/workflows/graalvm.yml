@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-24.04, macOS-13]
         java: [ '17', '21', '23' ]
         distribution: [ 'graalvm-community' ]
-        gradle: ['8.12.1']
+        gradle: ['8.13']
       fail-fast: false
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }}
     steps:
