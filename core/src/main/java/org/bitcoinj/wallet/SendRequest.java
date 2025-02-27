@@ -18,7 +18,6 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.base.MoreObjects;
-import org.bitcoinj.protobuf.payments.Protos.PaymentDetails;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.AesKey;
@@ -226,13 +225,6 @@ public class SendRequest {
         final SendRequest req = forTx(tx);
         req.completed = true;
         return req;
-    }
-
-    /** Copy data from payment request. */
-    public SendRequest fromPaymentDetails(PaymentDetails paymentDetails) {
-        if (paymentDetails.hasMemo())
-            this.memo = paymentDetails.getMemo();
-        return this;
     }
 
     @Override

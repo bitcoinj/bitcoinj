@@ -82,7 +82,6 @@ public class BitcoinURI {
     public static final String FIELD_LABEL = "label";
     public static final String FIELD_AMOUNT = "amount";
     public static final String FIELD_ADDRESS = "address";
-    public static final String FIELD_PAYMENT_REQUEST_URL = "r";
 
     /**
      * URI Scheme for Bitcoin network.
@@ -188,8 +187,8 @@ public class BitcoinURI {
             }
         }
 
-        if (addressToken.isEmpty() && getPaymentRequestUrl() == null) {
-            throw new BitcoinURIParseException("No address and no r= parameter found");
+        if (addressToken.isEmpty()) {
+            throw new BitcoinURIParseException("No address found");
         }
     }
 
@@ -285,32 +284,6 @@ public class BitcoinURI {
      */
     public String getMessage() {
         return (String) parameterMap.get(FIELD_MESSAGE);
-    }
-
-    /**
-     * @return The URL where a payment request (as specified in BIP 70) may
-     *         be fetched.
-     */
-    public final String getPaymentRequestUrl() {
-        return (String) parameterMap.get(FIELD_PAYMENT_REQUEST_URL);
-    }
-
-    /**
-     * Returns the URLs where a payment request (as specified in BIP 70) may be fetched. The first URL is the main URL,
-     * all subsequent URLs are fallbacks.
-     */
-    public List<String> getPaymentRequestUrls() {
-        ArrayList<String> urls = new ArrayList<>();
-        while (true) {
-            int i = urls.size();
-            String paramName = FIELD_PAYMENT_REQUEST_URL + (i > 0 ? Integer.toString(i) : "");
-            String url = (String) parameterMap.get(paramName);
-            if (url == null)
-                break;
-            urls.add(url);
-        }
-        Collections.reverse(urls);
-        return urls;
     }
 
     /**

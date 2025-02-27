@@ -427,37 +427,4 @@ public class BitcoinURITest {
         BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=" + tooLargeByOne.movePointLeft(8), MAINNET);
     }
-
-    @Test
-    public void testPaymentProtocolReq() throws Exception {
-        // Non-backwards compatible form ...
-        BitcoinURI uri = BitcoinURI.of("bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin%2Ff.php%3Fh%3Db0f02e7cea67f168e25ec9b9f9d584f9", TESTNET);
-        assertEquals("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9", uri.getPaymentRequestUrl());
-        assertEquals(Collections.singletonList("https://bitcoincore.org/~gavin/f.php?h=b0f02e7cea67f168e25ec9b9f9d584f9"),
-                uri.getPaymentRequestUrls());
-        assertNull(uri.getAddress());
-    }
-
-    @Test
-    public void testMultiplePaymentProtocolReq() throws Exception {
-        BitcoinURI uri = BitcoinURI.of("bitcoin:?r=https%3A%2F%2Fbitcoincore.org%2F%7Egavin&r1=bt:112233445566", MAINNET);
-        assertEquals(Arrays.asList("bt:112233445566", "https://bitcoincore.org/~gavin"), uri.getPaymentRequestUrls());
-        assertEquals("https://bitcoincore.org/~gavin", uri.getPaymentRequestUrl());
-    }
-
-    @Test
-    public void testNoPaymentProtocolReq() throws Exception {
-        BitcoinURI uri = BitcoinURI.of("bitcoin:" + MAINNET_GOOD_ADDRESS, MAINNET);
-        assertNull(uri.getPaymentRequestUrl());
-        assertEquals(Collections.emptyList(), uri.getPaymentRequestUrls());
-        assertNotNull(uri.getAddress());
-    }
-
-    @Test
-    public void testUnescapedPaymentProtocolReq() throws Exception {
-        BitcoinURI uri = BitcoinURI.of("bitcoin:?r=https://merchant.example.com/pay?h%3D2a8628fc2fbe", TESTNET);
-        assertEquals("https://merchant.example.com/pay?h=2a8628fc2fbe", uri.getPaymentRequestUrl());
-        assertEquals(Collections.singletonList("https://merchant.example.com/pay?h=2a8628fc2fbe"), uri.getPaymentRequestUrls());
-        assertNull(uri.getAddress());
-    }
 }
