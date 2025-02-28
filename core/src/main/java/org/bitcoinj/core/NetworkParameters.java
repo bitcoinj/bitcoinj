@@ -26,7 +26,6 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.Networks;
-import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -50,22 +49,6 @@ import java.util.Objects;
  * them, you are encouraged to call the static get() methods on each specific params class directly.</p>
  */
 public abstract class NetworkParameters {
-
-    /** The string used by the payment protocol to represent the main net. */
-    @Deprecated
-    public static final String PAYMENT_PROTOCOL_ID_MAINNET = PaymentProtocol.PAYMENT_PROTOCOL_ID_MAINNET;
-    /** The string used by the payment protocol to represent the test net. */
-    @Deprecated
-    public static final String PAYMENT_PROTOCOL_ID_TESTNET = PaymentProtocol.PAYMENT_PROTOCOL_ID_TESTNET;
-    /** The string used by the payment protocol to represent signet (note that this is non-standard). */
-    @Deprecated
-    public static final String PAYMENT_PROTOCOL_ID_SIGNET = PaymentProtocol.PAYMENT_PROTOCOL_ID_SIGNET;
-    /** The string used by the payment protocol to represent unit testing (note that this is non-standard). */
-    @Deprecated
-    public static final String PAYMENT_PROTOCOL_ID_UNIT_TESTS = PaymentProtocol.PAYMENT_PROTOCOL_ID_UNIT_TESTS;
-    @Deprecated
-    public static final String PAYMENT_PROTOCOL_ID_REGTEST = PaymentProtocol.PAYMENT_PROTOCOL_ID_REGTEST;
-
     // TODO: Seed nodes should be here as well.
 
     protected BigInteger maxTarget;
@@ -149,13 +132,6 @@ public abstract class NetworkParameters {
         return network;
     }
 
-    /**
-     * @return the payment protocol network id string
-     * @deprecated Use {@link PaymentProtocol#protocolIdFromParams(NetworkParameters)}
-     */
-    @Deprecated
-    public abstract String getPaymentProtocolId();
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -192,18 +168,6 @@ public abstract class NetworkParameters {
         return (network instanceof BitcoinNetwork)
                 ? BitcoinNetworkParams.of((BitcoinNetwork) network)
                 : Networks.find(network).orElseThrow(() -> new IllegalArgumentException("Unknown network"));
-    }
-
-    /**
-     * Return network parameters for a paymentProtocol ID string
-     * @param pmtProtocolId paymentProtocol ID string
-     * @return network parameters for the given string paymentProtocolID or NULL if not recognized
-     * @deprecated Use {@link PaymentProtocol#paramsFromPmtProtocolID(String)} (String)}
-     */
-    @Nullable
-    @Deprecated
-    public static NetworkParameters fromPmtProtocolID(String pmtProtocolId) {
-        return PaymentProtocol.paramsFromPmtProtocolID(pmtProtocolId);
     }
 
     public int getSpendableCoinbaseDepth() {

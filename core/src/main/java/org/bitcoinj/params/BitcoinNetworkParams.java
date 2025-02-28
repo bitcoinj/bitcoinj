@@ -29,7 +29,6 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.ProtocolVersion;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.protocols.payments.PaymentProtocol;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
@@ -115,15 +114,6 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
             default:
                 throw new IllegalArgumentException("Unknown network");
         }
-    }
-
-    /**
-     * @return the payment protocol network id string
-     * @deprecated Use {@link PaymentProtocol#protocolIdFromParams(NetworkParameters)}
-     */
-    @Deprecated
-    public String getPaymentProtocolId() {
-        return PaymentProtocol.protocolIdFromParams(this);
     }
 
     /**
