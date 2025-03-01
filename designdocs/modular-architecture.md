@@ -22,7 +22,7 @@ flowchart TD
     CORE --> G[Guava]
     CORE --> BC[Bouncy Castle]
     CORE --> P[ProtoBuf]
-    CORE .-> S[slf4j]
+    CORE .-> S[SLF4J]
     CORE .-> A[jcip-annotations]
 
 classDef external fill:#999;
@@ -52,7 +52,7 @@ flowchart TD
     CORE --> G[Guava]
     CORE --> P[ProtoBuf]
     CORE --> BC[Bouncy Castle]
-    CORE .-> S[slf4j]
+    CORE .-> S[SLF4J]
     CORE .-> A[jcip-annotations]
 
 classDef external fill:#999;
@@ -87,7 +87,7 @@ flowchart TD
     SECPBC --> BC[Bouncy Castle]
     SECPFFM --> SECPC[libsecp256k1]
     CORE --> P[ProtoBuf]
-    BASE .-> S[slf4j]
+    BASE .-> S[SLF4J]
     BASE .-> JS[JSpecify]
 
 classDef external fill:#999;
@@ -124,7 +124,7 @@ flowchart TD
     end
     CORE --> BASE
     CORE --> SECP
-    BASE .-> S[slf4j]
+    BASE .-> S[SLF4J]
     BASE .-> JS[JSpecify]
     SECP[secp-api] .-> SECPFFM[secp-ffm]
     SECP .-> SECPBOUNCY[secp-bouncy]
