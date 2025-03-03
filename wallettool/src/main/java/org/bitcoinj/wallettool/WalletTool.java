@@ -231,53 +231,47 @@ public class WalletTool implements Callable<Integer> {
     private static PeerGroup peerGroup;
     private static Wallet wallet;
 
-    public static class Condition {
+    public record Condition(Type type, String value) {
         public enum Type {
             // Less than, greater than, less than or equal, greater than or equal.
             EQUAL, LT, GT, LTE, GTE
         }
-        Type type;
-        String value;
 
         public Condition(String from) {
-            if (from.length() < 2) throw new RuntimeException("Condition string too short: " + from);
+            this(extractType(from), extractValue(from));
+        }
 
-            if (from.startsWith("<=")) type = Type.LTE;
-            else if (from.startsWith(">=")) type = Type.GTE;
-            else if (from.startsWith("<")) type = Type.LT;
-            else if (from.startsWith("=")) type = Type.EQUAL;
-            else if (from.startsWith(">")) type = Type.GT;
-            else throw new RuntimeException("Unknown operator in condition: " + from);
+        private static Type extractType(String from) {
+            if (from.startsWith("<=")) return Type.LTE;
+            else if (from.startsWith(">=")) return Type.GTE;
+            else if (from.startsWith("<")) return Type.LT;
+            else if (from.startsWith("=")) return Type.EQUAL;
+            else if (from.startsWith(">")) return Type.GT;
+            else throw new IllegalArgumentException("Unknown operator in condition: " + from);
+        }
 
-            String s;
-            switch (type) {
-                case LT:
-                case GT:
-                case EQUAL:
-                    s = from.substring(1);
-                    break;
-                case LTE:
-                case GTE:
-                    s = from.substring(2);
-                    break;
-                default:
-                    throw new RuntimeException("Unreachable");
+        private static String extractValue(String from) {
+            if (from.startsWith("<=") || from.startsWith(">=")) {
+                //When type is LTE or GTE
+                return from.substring(2);
+            } else if (from.startsWith("<") || from.startsWith(">") || from.startsWith("=")){
+                return from.substring(1);
+            } else {
+                throw new RuntimeException("Unreachable");
             }
-            value = s;
         }
 
         public boolean matchBitcoins(Coin comparison) {
             try {
                 Coin units = parseCoin(value);
-                switch (type) {
-                    case LT: return comparison.compareTo(units) < 0;
-                    case GT: return comparison.compareTo(units) > 0;
-                    case EQUAL: return comparison.compareTo(units) == 0;
-                    case LTE: return comparison.compareTo(units) <= 0;
-                    case GTE: return comparison.compareTo(units) >= 0;
-                    default:
-                        throw new RuntimeException("Unreachable");
-                }
+                return switch (type) {
+                    case LT -> comparison.compareTo(units) < 0;
+                    case GT -> comparison.compareTo(units) > 0;
+                    case EQUAL -> comparison.compareTo(units) == 0;
+                    case LTE -> comparison.compareTo(units) <= 0;
+                    case GTE -> comparison.compareTo(units) >= 0;
+                    default -> throw new RuntimeException("Unreachable");
+                };
             } catch (NumberFormatException e) {
                 System.err.println("Could not parse value from condition string: " + value);
                 System.exit(1);
@@ -705,30 +699,36 @@ public class WalletTool implements Callable<Integer> {
         return req;
     }
 
-    static class OutputSpec {
-        public final Coin value;
-        public final Address addr;
-        public final ECKey key;
-
+    public record OutputSpec(Coin value, Address addr, ECKey key) {
         public OutputSpec(String spec) throws IllegalArgumentException {
+            this(extractValue(spec), extractAddress(spec), extractKey(spec));
+        }
+
+        private static Coin extractValue(String spec) {
             String[] parts = spec.split(":");
-            if (parts.length != 2) {
-                throw new IllegalArgumentException("Malformed output specification, must have two parts separated by :");
+            if (parts.length != 2) throw new IllegalArgumentException("Malformed output specification, must have two parts separated by :");
+
+            return "ALL".equalsIgnoreCase(parts[1]) ? null : parseCoin(parts[1]);
+        }
+
+        private static Address extractAddress(String spec) {
+            String destination = spec.split(":")[0];
+            if (!destination.startsWith("0")) {
+                // Treat as an address.
+                return wallet.parseAddress(destination);
+            } else {
+                return null;
             }
-            String destination = parts[0];
-            if ("ALL".equalsIgnoreCase(parts[1]))
-                value = null;
-            else
-                value = parseCoin(parts[1]);
+        }
+
+        private static ECKey extractKey(String spec) {
+            String destination = spec.split(":")[0];
             if (destination.startsWith("0")) {
                 // Treat as a raw public key.
                 byte[] pubKey = new BigInteger(destination, 16).toByteArray();
-                key = ECKey.fromPublicOnly(pubKey);
-                addr = null;
+                return ECKey.fromPublicOnly(pubKey);
             } else {
-                // Treat as an address.
-                addr = wallet.parseAddress(destination);
-                key = null;
+                return null;
             }
         }
 
