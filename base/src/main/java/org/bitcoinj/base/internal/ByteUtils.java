@@ -67,19 +67,19 @@ public class ByteUtils {
      * </p>
      * This is the inverse of {@link #bytesToBigInteger(byte[])}.
      * @param b the non-negative integer to format into a byte array
-     * @param numBytes the maximum allowed size of the resulting byte array
-     * @return byte array of max length {@code numBytes}
+     * @param maxBytes the maximum allowed size of the resulting byte array
+     * @return byte array of max length {@code maxBytes}
      */
-    public static byte[] bigIntegerToBytes(BigInteger b, int numBytes) {
+    public static byte[] bigIntegerToBytes(BigInteger b, int maxBytes) {
         checkArgument(b.signum() >= 0, () -> "b must be positive or zero: " + b);
-        checkArgument(numBytes > 0, () -> "numBytes must be positive: " + numBytes);
+        checkArgument(maxBytes > 0, () -> "maxBytes must be positive: " + maxBytes);
         byte[] src = b.toByteArray();
-        byte[] dest = new byte[numBytes];
+        byte[] dest = new byte[maxBytes];
         boolean isFirstByteOnlyForSign = src[0] == 0;
         int length = isFirstByteOnlyForSign ? src.length - 1 : src.length;
-        checkArgument(length <= numBytes, () -> "The given number does not fit in " + numBytes);
+        checkArgument(length <= maxBytes, () -> "The given number does not fit in " + maxBytes);
         int srcPos = isFirstByteOnlyForSign ? 1 : 0;
-        int destPos = numBytes - length;
+        int destPos = maxBytes - length;
         System.arraycopy(src, srcPos, dest, destPos, length);
         return dest;
     }
