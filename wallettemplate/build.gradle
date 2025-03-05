@@ -36,7 +36,7 @@ application {
 }
 
 jlink {
-    options = ['--add-modules', 'org.slf4j.jul']
+    options = ['--add-modules', 'org.slf4j.jul',  '--ignore-signing-information']
 }
 
 test {
