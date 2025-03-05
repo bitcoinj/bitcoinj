@@ -7,7 +7,7 @@ dependencies {
 }
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs.addAll(['--release', '8'])
+    options.compilerArgs.addAll(['--release', '9'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
 }

@@ -13,6 +13,8 @@ dependencies {
     api 'org.bouncycastle:bcprov-jdk15to18:1.80'
     api 'com.google.guava:guava:33.4.0-android'
     api 'com.google.protobuf:protobuf-javalite:4.29.3'
+    api 'org.bitcoinj.secp:secp-api:0.1'
+    implementation 'org.bitcoinj.secp:secp-bouncy:0.1'
     implementation 'org.slf4j:slf4j-api:2.0.16'
 
     testImplementation project(':bitcoinj-test-support')
@@ -40,7 +42,7 @@ if (GradleVersion.current() > gradleVersionTargetJVM) {
 }
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs.addAll(['--release', '8'])
+    options.compilerArgs.addAll(['--release', '9'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
 }
