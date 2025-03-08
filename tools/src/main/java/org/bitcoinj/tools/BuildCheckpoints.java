@@ -98,6 +98,9 @@ public class BuildCheckpoints implements Callable<Integer> {
             case TESTNET:
                 suffix = "-testnet";
                 break;
+            case TESTNET4:
+                suffix = "-testnet4";
+                break;
             case SIGNET:
                 suffix = "-signet";
                 break;

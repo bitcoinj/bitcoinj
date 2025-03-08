@@ -1,6 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
- * Copyright 2014 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,43 +18,46 @@ package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.base.Sha256Hash;
 
 import java.time.Instant;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
- * Parameters for the testnet 3, a separate public instance of Bitcoin that has relaxed rules suitable for development
+ * Parameters for the testnet 4, a separate public instance of Bitcoin that has relaxed rules suitable for development
  * and testing of applications and new Bitcoin versions.
  */
-public class TestNet3Params extends TestNetParams {
-    private static final Instant GENESIS_TIME = Instant.ofEpochSecond(1296688602);
-    private static final long GENESIS_NONCE = 414098458;
-    private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+public class TestNet4Params extends TestNetParams {
+    private static final Instant GENESIS_TIME = Instant.ofEpochSecond(1714777860);
+    private static final long GENESIS_NONCE = 393743547;
+    private static final String GENESIS_MESSAGE =
+            "03/May/2024 000000000000000000001ebd58c244970b3aa9d783bb001011fbe8ea8e98e00e";
+    private static final byte[] GENESIS_OUTPUT_PUBKEY = new byte[33];
+    private static final Sha256Hash GENESIS_HASH =
+            Sha256Hash.wrap("00000000da84f2bafbbc53dee25a72ae507ff4914b867c565be350b0da8bf043");
+    private static final Sha256Hash GENESIS_MERKLE_ROOT =
+            Sha256Hash.wrap("7aa0a7ae1e223414cb807e40cd57e667b718e42aaf9306db9102fe28912b7b4e");
 
-    public TestNet3Params() {
-        super(BitcoinNetwork.TESTNET);
+    public TestNet4Params() {
+        super(BitcoinNetwork.TESTNET4);
 
-        port = 18333;
-        packetMagic = 0x0b110907;
+        port = 48333;
+        packetMagic = 0x1c163f28;
 
         dnsSeeds = new String[] {
-                "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
-                "seed.tbtc.petertodd.net",               // Peter Todd
-                "seed.testnet.bitcoin.sprovoost.nl",     // Sjors Provoost
-                "testnet-seed.bluematt.me",              // Matt Corallo
-                "seed.testnet.achownodes.xyz",           // Ava Chow
+                "seed.testnet4.bitcoin.sprovoost.nl",  // Sjors Provoost
+                "seed.testnet4.wiz.biz",               // Jason Maurice
         };
         addrSeeds = null;
     }
 
-    private static TestNet3Params instance;
-    public static synchronized TestNet3Params get() {
+    private static TestNet4Params instance;
+    public static synchronized TestNet4Params get() {
         if (instance == null) {
-            instance = new TestNet3Params();
+            instance = new TestNet4Params();
         }
         return instance;
     }

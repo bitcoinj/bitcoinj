@@ -1099,6 +1099,15 @@ public class Transaction implements Message {
     }
 
     /**
+     * Creates an output that pays to the given pubkey with the given value, adds it to this
+     * transaction, and returns the new output. The pubkey can be arbitrary data and may be invalid.
+     */
+    public TransactionOutput addPayToInvalidPubkeyOutput(Coin value, byte[] pubkey) {
+        return addOutput(
+                new TransactionOutput(this, value, ScriptBuilder.createP2PKOutputScript(pubkey).program()));
+    }
+
+    /**
      * Creates an output that pays to the given script. The address and key forms are specialisations of this method,
      * you won't normally need to use it unless you're doing unusual things.
      */

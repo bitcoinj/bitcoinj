@@ -42,8 +42,10 @@ import static org.bitcoinj.base.Coin.COIN;
 public enum BitcoinNetwork implements Network {
     /** The main Bitcoin network, known as {@code "mainnet"}, with {@code id} string {@code "org.bitcoin.production"}  */
     MAINNET("org.bitcoin.production", "main", "prod"),
-    /** The Bitcoin test network, known as {@code "testnet"}, with {@code id} string {@code "org.bitcoin.test"}  */
+    /** The Bitcoin test network, iteration 3, known as {@code "testnet"}, with {@code id} string {@code "org.bitcoin.test"}  */
     TESTNET("org.bitcoin.test", "test"),
+    /** The Bitcoin test network, iteration 4, known as {@code "testnet4"}, with {@code id} string {@code "org.bitcoin.testnet4"}  */
+    TESTNET4("org.bitcoin.testnet4"),
     /** The Bitcoin signature-based test network, known as {@code "signet"}, with {@code id} string {@code "org.bitcoin.signet"}  */
     SIGNET("org.bitcoin.signet", "sig"),
     /** A local Bitcoin regression test network, known as {@code "regtest"}, with {@code id} string {@code "org.bitcoin.regtest"}  */
@@ -66,8 +68,10 @@ public enum BitcoinNetwork implements Network {
 
     /** The ID string for the main, production network where people trade things. */
     public static final String ID_MAINNET = MAINNET.id();
-    /** The ID string for the testnet. */
+    /** The ID string for the testnet 3. */
     public static final String ID_TESTNET = TESTNET.id();
+    /** The ID string for the testnet 4. */
+    public static final String ID_TESTNET4 = TESTNET4.id();
     /** The ID string for the signet. */
     public static final String ID_SIGNET = SIGNET.id();
     /** The ID string for regtest mode. */
@@ -95,6 +99,8 @@ public enum BitcoinNetwork implements Network {
      *     <dd>{@code mainnet}</dd>
      *     <dt>{@link #TESTNET}</dt>
      *     <dd>{@code testnet}</dd>
+     *     <dt>{@link #TESTNET4}</dt>
+     *     <dd>{@code testnet4}</dd>
      *     <dt>{@link #SIGNET}</dt>
      *     <dd>{@code signet}</dd>
      *     <dt>{@link #REGTEST}</dt>
@@ -114,6 +120,8 @@ public enum BitcoinNetwork implements Network {
      *     <dd>{@code org.bitcoin.production}</dd>
      *     <dt>{@link #TESTNET}</dt>
      *     <dd>{@code org.bitcoin.test}</dd>
+     *     <dt>{@link #TESTNET4}</dt>
+     *     <dd>{@code org.bitcoin.testnet4}</dd>
      *     <dt>{@link #SIGNET}</dt>
      *     <dd>{@code org.bitcoin.signet}</dd>
      *     <dt>{@link #REGTEST}</dt>
@@ -214,6 +222,7 @@ public enum BitcoinNetwork implements Network {
                 valid = address.network() == MAINNET;
                 break;
             case TESTNET:
+            case TESTNET4:
             case SIGNET:
                 // SIGNET uses the same addresses as TESTNET
                 valid = address.network() == TESTNET;
@@ -235,7 +244,7 @@ public enum BitcoinNetwork implements Network {
     }
 
     /**
-     * Find the {@code BitcoinNetwork} from a name string, e.g. "mainnet", "testnet" or "signet".
+     * Find the {@code BitcoinNetwork} from a name string, e.g. "mainnet", "testnet", "testnet4" or "signet".
      * A number of common alternate names are allowed too, e.g. "main" or "prod".
      * @param nameString A name string
      * @return An {@code Optional} containing the matching enum or empty

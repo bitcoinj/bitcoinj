@@ -181,6 +181,7 @@ public abstract class WalletApplication implements AppDelegate {
         return switch (network) {
             case MAINNET -> "main";
             case TESTNET -> "test";
+            case TESTNET4 -> "testnet4";
             case SIGNET -> "signet";
             case REGTEST -> "regtest";
         };
