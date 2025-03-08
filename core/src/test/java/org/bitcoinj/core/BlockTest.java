@@ -29,8 +29,10 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.TestNet4Params;
 import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.Wallet.BalanceType;
@@ -329,7 +331,10 @@ public class BlockTest {
     public void testGenesisBlock() {
         Block genesisBlock = Block.createGenesis(Instant.ofEpochSecond(1231006505L),
                 Difficulty.ofCompact(0x1d00ffff),
-                2083236893);
+                2083236893,
+                "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks",
+                ByteUtils.parseHex(
+                        "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f"));
         assertEquals(Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"), genesisBlock.getHash());
     }
 }
