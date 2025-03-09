@@ -163,7 +163,7 @@ public class ScriptBuilder {
      * 
      * @see #number(long)
      */
-    protected ScriptBuilder bigNum(long num) {
+    public ScriptBuilder bigNum(long num) {
         final byte[] data;
 
         if (num == 0) {
