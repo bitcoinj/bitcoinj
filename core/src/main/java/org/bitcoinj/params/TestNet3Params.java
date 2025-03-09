@@ -110,9 +110,12 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
             final long timeDelta = nextBlock.time().getEpochSecond() - prev.time().getEpochSecond();
-            // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
-            // goes backwards.
-            if (timeDelta >= 0 && timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
+            BigInteger expectedTarget;
+            if (timeDelta < 0 && nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget())) {
+                // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
+                // goes backwards.
+                return;
+            } else if (timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
                 // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
                 // that difficulty is equal to that one.
                 StoredBlock cursor = storedPrev;
@@ -120,13 +123,16 @@ public class TestNet3Params extends BitcoinNetworkParams {
                            cursor.getHeight() % getInterval() != 0 &&
                            cursor.getHeader().getDifficultyTargetAsInteger().equals(getMaxTarget()))
                         cursor = cursor.getPrev(blockStore);
-                BigInteger cursorTarget = cursor.getHeader().getDifficultyTargetAsInteger();
-                BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
-                if (!cursorTarget.equals(newTarget))
-                        throw new VerificationException("Testnet block transition that is not allowed: " +
-                        Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
-                        Long.toHexString(nextBlock.getDifficultyTarget()));
+                expectedTarget = cursor.getHeader().getDifficultyTargetAsInteger();
+            } else {
+                // 20 minute exception
+                expectedTarget = getMaxTarget();
             }
+            BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
+            if (!newTarget.equals(expectedTarget))
+                throw new VerificationException("Testnet block transition that is not allowed: " +
+                        Long.toHexString(ByteUtils.encodeCompactBits(expectedTarget)) + " vs " +
+                        Long.toHexString(nextBlock.getDifficultyTarget()));
         } else {
             super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
         }
