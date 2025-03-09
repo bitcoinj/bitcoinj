@@ -287,7 +287,7 @@ public class TransactionTest {
     @Test
     public void testWitnessSignatureP2WPKH() {
         // test vector P2WPKH from:
-        // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+        // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#native-p2wpkh
         String txHex = "01000000" // version
                 + "02" // num txIn
                 + "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f" + "00000000" + "00" + "eeffffff" // txIn
@@ -319,7 +319,11 @@ public class TransactionTest {
         TransactionSignature txSig0 = tx.calculateSignature(0, key0,
                 scriptPubKey0,
                 Transaction.SigHash.ALL, false);
-        assertEquals("30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
+        assertEquals(
+                // with grinding for low R values:
+                "30440220414110cf9b6d81fe3f22a8cc8bf867c1bbe0672ccfb2e8338db9d6f907105b2802201cfee6a5cb8a6239572963de01744ae66dd4a3af5b1413b489c165bf14ce297601",
+                // without grinding:
+                // "30450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01",
                 ByteUtils.formatHex(txSig0.encodeToBitcoin()));
 
         Script witnessScript = ScriptBuilder.createP2PKHOutputScript(key1);
@@ -351,7 +355,10 @@ public class TransactionTest {
                 + "01" // flag
                 + "02" // num txIn
                 + "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f" + "00000000"
-                + "494830450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01"
+                // with grinding for low R values:
+                + "484730440220414110cf9b6d81fe3f22a8cc8bf867c1bbe0672ccfb2e8338db9d6f907105b2802201cfee6a5cb8a6239572963de01744ae66dd4a3af5b1413b489c165bf14ce297601"
+                // without grinding:
+                // + "494830450221008b9d1dc26ba6a9cb62127b02742fa9d754cd3bebf337f7a55d114c8e5cdd30be022040529b194ba3f9281a99f2b1c0a19c0489bc22ede944ccf4ecbab4cc618ef3ed01"
                 + "eeffffff" // txIn
                 + "ef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a" + "01000000" + "00" + "ffffffff" // txIn
                 + "02" // num txOut
@@ -371,7 +378,7 @@ public class TransactionTest {
     @Test
     public void testWitnessSignatureP2SH_P2WPKH() {
         // test vector P2SH-P2WPKH from:
-        // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
+        // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki#p2sh-p2wpkh
         String txHex = "01000000" // version
                 + "01" // num txIn
                 + "db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477" + "01000000" + "00" + "feffffff" // txIn
