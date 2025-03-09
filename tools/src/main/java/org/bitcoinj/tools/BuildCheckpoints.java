@@ -68,19 +68,25 @@ public class BuildCheckpoints implements Callable<Integer> {
     private String peer = null;
     @CommandLine.Option(names = "--days", description = "How many days to keep as a safety margin. Checkpointing will be done up to this many days ago.")
     private int days = 7;
+    @CommandLine.Option(names = "--verbose", description = "Enables logging.")
+    private boolean verbose = false;
     @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
     private boolean help;
 
     private static NetworkParameters params;
 
     public static void main(String[] args) throws Exception {
-        BriefLogFormatter.initWithSilentBitcoinJ();
         int exitCode = new CommandLine(new BuildCheckpoints()).execute(args);
         System.exit(exitCode);
     }
 
     @Override
     public Integer call() throws Exception {
+        if (verbose)
+            BriefLogFormatter.init();
+        else
+            BriefLogFormatter.initWithSilentBitcoinJ();
+
         final String suffix;
         params = NetworkParameters.of(net);
         Context.propagate(new Context());
