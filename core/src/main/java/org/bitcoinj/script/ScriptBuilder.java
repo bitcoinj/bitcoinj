@@ -93,33 +93,18 @@ public class ScriptBuilder {
 
     /** Adds the given chunk to the end of the program */
     public ScriptBuilder addChunk(ScriptChunk chunk) {
-        return addChunk(chunks.size(), chunk);
-    }
-
-    /** Adds the given chunk at the given index in the program */
-    public ScriptBuilder addChunk(int index, ScriptChunk chunk) {
-        chunks.add(index, chunk);
+        chunks.add(chunk);
         return this;
     }
 
     /** Adds the given opcode to the end of the program. */
     public ScriptBuilder op(int opcode) {
-        return op(chunks.size(), opcode);
-    }
-
-    /** Adds the given opcode to the given index in the program */
-    public ScriptBuilder op(int index, int opcode) {
         checkArgument(opcode > OP_PUSHDATA4);
-        return addChunk(index, new ScriptChunk(opcode, null));
+        return addChunk(new ScriptChunk(opcode, null));
     }
 
     /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the end of the program. */
     public ScriptBuilder data(byte[] data) {
-        return data(chunks.size(), data);
-    }
-
-    /** Adds a copy of the given byte array as a data element (i.e. PUSHDATA) at the given index in the program. */
-    public ScriptBuilder data(int index, byte[] data) {
         // implements BIP62
         byte[] copy = Arrays.copyOf(data, data.length);
         int opcode;
@@ -140,7 +125,7 @@ public class ScriptBuilder {
         } else {
             throw new RuntimeException("Unimplemented");
         }
-        return addChunk(index, new ScriptChunk(opcode, copy));
+        return addChunk(new ScriptChunk(opcode, copy));
     }
 
     /**
@@ -148,20 +133,12 @@ public class ScriptBuilder {
      * shortest encoding possible.
      */
     public ScriptBuilder number(long num) {
-        return number(chunks.size(), num);
-    }
-
-    /**
-     * Adds the given number to the given index in the program. Automatically
-     * uses shortest encoding possible.
-     */
-    public ScriptBuilder number(int index, long num) {
         if (num == -1) {
-            return op(index, OP_1NEGATE);
+            return op(OP_1NEGATE);
         } else if (num >= 0 && num <= 16) {
-            return smallNum(index, (int) num);
+            return smallNum((int) num);
         } else {
-            return bigNum(index, num);
+            return bigNum(num);
         }
     }
 
@@ -172,7 +149,11 @@ public class ScriptBuilder {
      * @see #number(long)
      */
     public ScriptBuilder smallNum(int num) {
-        return smallNum(chunks.size(), num);
+        checkArgument(num >= 0, () ->
+                "cannot encode negative numbers with smallNum");
+        checkArgument(num <= 16, () ->
+                "cannot encode numbers larger than 16 with smallNum");
+        return addChunk(new ScriptChunk(Script.encodeToOpN(num), null));
     }
 
     /** Adds the given number as a push data chunk.
@@ -183,32 +164,6 @@ public class ScriptBuilder {
      * @see #number(long)
      */
     protected ScriptBuilder bigNum(long num) {
-        return bigNum(chunks.size(), num);
-    }
-
-    /**
-     * Adds the given number as a OP_N opcode to the given index in the program.
-     * Only handles values 0-16 inclusive.
-     * 
-     * @see #number(long)
-     */
-    public ScriptBuilder smallNum(int index, int num) {
-        checkArgument(num >= 0, () ->
-                "cannot encode negative numbers with smallNum");
-        checkArgument(num <= 16, () ->
-                "cannot encode numbers larger than 16 with smallNum");
-        return addChunk(index, new ScriptChunk(Script.encodeToOpN(num), null));
-    }
-
-    /**
-     * Adds the given number as a push data chunk to the given index in the program.
-     * This is intended to use for negative numbers or values greater than 16, and although
-     * it will accept numbers in the range 0-16 inclusive, the encoding would be
-     * considered non-standard.
-     * 
-     * @see #number(long)
-     */
-    protected ScriptBuilder bigNum(int index, long num) {
         final byte[] data;
 
         if (num == 0) {
@@ -242,7 +197,7 @@ public class ScriptBuilder {
 
         // At most the encoded value could take up to 8 bytes, so we don't need
         // to use OP_PUSHDATA opcodes
-        return addChunk(index, new ScriptChunk(data.length, data));
+        return addChunk(new ScriptChunk(data.length, data));
     }
 
     /**
@@ -254,29 +209,11 @@ public class ScriptBuilder {
     }
 
     /**
-     * Adds true to the given index in the program.
-     * @param index at which insert true
-     * @return this
-     */
-    public ScriptBuilder opTrue(int index) {
-        return number(index, 1); // push OP_1/OP_TRUE
-    }
-
-    /**
      * Adds false to the end of the program.
      * @return this
      */
     public ScriptBuilder opFalse() {
         return number(0); // push OP_0/OP_FALSE
-    }
-
-    /**
-     * Adds false to the given index in the program.
-     * @param index at which insert true
-     * @return this
-     */
-    public ScriptBuilder opFalse(int index) {
-        return number(index, 0); // push OP_0/OP_FALSE
     }
 
     /** Creates a new immutable Script based on the state of the builder. */

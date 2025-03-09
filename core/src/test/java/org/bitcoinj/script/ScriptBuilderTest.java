@@ -134,9 +134,8 @@ public class ScriptBuilderTest {
         ScriptBuilder builder = new ScriptBuilder();
         // Numbers greater than 16 must be encoded with PUSHDATA
         builder.number(15).number(16).number(17);
-        builder.number(0, 17).number(1, 16).number(2, 15);
         Script script = builder.build();
-        assertEquals("PUSHDATA(1)[11] 16 15 15 16 PUSHDATA(1)[11]", script.toString());
+        assertEquals("15 16 PUSHDATA(1)[11]", script.toString());
     }
 
     @Test
