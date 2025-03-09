@@ -774,7 +774,7 @@ public class Transaction extends BaseMessage {
                 s.append("in   ");
 
                 try {
-                    s.append(in.getScriptSig());
+                    s.append(in.getScriptSig()); // throws ScriptException
                     final Coin value = in.getValue();
                     if (value != null)
                         s.append("  ").append(value.toFriendlyString());
@@ -809,8 +809,16 @@ public class Transaction extends BaseMessage {
                             s.append(", has RLT");
                         s.append('\n');
                     }
-                } catch (Exception e) {
-                    s.append("[exception: ").append(e.getMessage()).append("]\n");
+                } catch (ScriptException e) {
+                    s.append(ByteUtils.formatHex(in.getScriptBytes()));
+                    if (!isCoinBase()) {
+                        final Coin value = in.getValue();
+                        if (value != null)
+                            s.append("  ").append(value.toFriendlyString());
+                        s.append('\n');
+                        s.append(indent).append("        exception: ").append(e.getMessage());
+                    }
+                    s.append('\n');
                 }
             }
         } else {

@@ -517,7 +517,7 @@ public class TransactionTest {
         };
 
         tx.addInput(ti);
-        assertTrue(tx.toString().contains("[exception: "));
+        assertTrue(tx.toString().contains("exception: "));
     }
 
     @Test
