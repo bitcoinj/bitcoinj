@@ -810,7 +810,15 @@ public class Transaction extends BaseMessage {
                         s.append('\n');
                     }
                 } catch (Exception e) {
-                    s.append("[exception: ").append(e.getMessage()).append("]\n");
+                    s.append(ByteUtils.formatHex(getInput(0).getScriptBytes()));
+                    if (!isCoinBase()) {
+                        final Coin value = in.getValue();
+                        if (value != null)
+                            s.append("  ").append(value.toFriendlyString());
+                        s.append('\n');
+                        s.append(indent).append("        exception: ").append(e.getMessage());
+                    }
+                    s.append('\n');
                 }
             }
         } else {
