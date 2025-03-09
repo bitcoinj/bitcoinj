@@ -769,7 +769,6 @@ public class Transaction extends BaseMessage {
         if (isCoinBase()) {
             s.append(indent).append("coinbase\n");
         } else if (!inputs.isEmpty()) {
-            int i = 0;
             for (TransactionInput in : inputs) {
                 s.append(indent).append("   ");
                 s.append("in   ");
@@ -813,7 +812,6 @@ public class Transaction extends BaseMessage {
                 } catch (Exception e) {
                     s.append("[exception: ").append(e.getMessage()).append("]\n");
                 }
-                i++;
             }
         } else {
             s.append(indent).append("   ");
