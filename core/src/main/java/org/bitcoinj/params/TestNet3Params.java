@@ -18,7 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
@@ -27,7 +27,6 @@ import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
-import java.math.BigInteger;
 import java.time.Instant;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -50,7 +49,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
         super(BitcoinNetwork.TESTNET);
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+        maxTarget = Difficulty.STANDARD_MAX_DIFFICULTY_TARGET;
 
         port = 18333;
         packetMagic = 0x0b110907;
@@ -88,7 +87,8 @@ public class TestNet3Params extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(GENESIS_TIME, Block.STANDARD_MAX_DIFFICULTY_TARGET, GENESIS_NONCE);
+                genesisBlock = Block.createGenesis(GENESIS_TIME, Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
+                        GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
                         "invalid genesis hash");
             }
@@ -107,38 +107,38 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
             long timeDelta = nextBlock.time().getEpochSecond() - storedPrev.getHeader().time().getEpochSecond();
-            boolean isMinDiffBlock = nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget());
+            boolean isMinDiffBlock = nextBlock.difficultyTarget().equals(maxTarget());
             if (timeDelta < 0 && isMinDiffBlock) {
                 // There is an integer underflow bug in Bitcoin Core that means mindiff blocks are accepted when time
                 // goes backwards. Thus, skip any further checks.
                 return;
             } else if (timeDelta > TESTNET_DIFFICULTY_EXCEPTION_SPACING){
                 // 20 minute exception
-                checkDifficultyTarget(nextBlock, getMaxTarget());
+                checkDifficultyTarget(nextBlock, maxTarget());
             } else {
                 // If no special rule applies, expect the last non-mindiff difficulty.
-                checkDifficultyTarget(nextBlock, backwardsSkipMindiffBlocks(storedPrev, blockStore).getDifficultyTargetAsInteger());
+                checkDifficultyTarget(nextBlock, backwardsSkipMindiffBlocks(storedPrev, blockStore).difficultyTarget());
             }
         } else {
             super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
         }
     }
 
-    private void checkDifficultyTarget(Block nextBlock, BigInteger expectedTarget) {
-        BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
+    private void checkDifficultyTarget(Block nextBlock, Difficulty expectedTarget) {
+        Difficulty newTarget = nextBlock.difficultyTarget();
         if (!newTarget.equals(expectedTarget))
             throw new VerificationException("Testnet block transition that is not allowed: " +
-                    Long.toHexString(ByteUtils.encodeCompactBits(expectedTarget)) + " vs " +
-                    Long.toHexString(nextBlock.getDifficultyTarget()));
+                    expectedTarget + " vs " +
+                    newTarget);
     }
 
     private Block backwardsSkipMindiffBlocks(StoredBlock prev, BlockStore blockStore) throws BlockStoreException {
         // Walk backwards until we find a block that doesn't have the easiest proof of work.
         int interval = getInterval();
-        BigInteger maxTarget = getMaxTarget();
+        Difficulty maxTarget = maxTarget();
         while (!prev.getHeader().equals(getGenesisBlock()) &&
                 prev.getHeight() % interval != 0 &&
-                prev.getHeader().getDifficultyTargetAsInteger().equals(maxTarget))
+                prev.getHeader().difficultyTarget().equals(maxTarget))
             prev = prev.getPrev(blockStore);
         return prev.getHeader();
     }

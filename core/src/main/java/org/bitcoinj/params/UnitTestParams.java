@@ -18,8 +18,8 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
 
 /**
@@ -37,7 +37,7 @@ public class UnitTestParams extends BitcoinNetworkParams {
         super(BitcoinNetwork.TESTNET);
 
         targetTimespan = 200000000;  // 6 years. Just a very big number.
-        maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
+        maxTarget = Difficulty.EASIEST_DIFFICULTY_TARGET;
         interval = 10;
         subsidyDecreaseBlockCount = 100;
 
@@ -70,7 +70,7 @@ public class UnitTestParams extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (this) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(TimeUtils.currentTime(), Block.EASIEST_DIFFICULTY_TARGET);
+                genesisBlock = Block.createGenesis(TimeUtils.currentTime(), Difficulty.EASIEST_DIFFICULTY_TARGET);
             }
         }
         return genesisBlock;

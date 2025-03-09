@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.io.ByteStreams;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
@@ -91,7 +92,7 @@ public class BlockTest {
     }
 
     private static class TweakableTestNet3Params extends TestNet3Params {
-        public void setMaxTarget(BigInteger limit) {
+        public void setMaxTarget(Difficulty limit) {
             maxTarget = limit;
         }
     }
@@ -100,7 +101,7 @@ public class BlockTest {
     public void testProofOfWork() {
         // This params accepts any difficulty target.
         final TweakableTestNet3Params TWEAK_TESTNET = new TweakableTestNet3Params();
-        TWEAK_TESTNET.setMaxTarget(ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET));
+        TWEAK_TESTNET.setMaxTarget(Difficulty.EASIEST_DIFFICULTY_TARGET);
         Block block = TWEAK_TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(block700000Bytes));
         block.setNonce(12346);
         try {
@@ -111,7 +112,7 @@ public class BlockTest {
         }
         // Blocks contain their own difficulty target. The BlockChain verification mechanism is what stops real blocks
         // from containing artificially weak difficulties.
-        block.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        block.setDifficultyTarget(Difficulty.EASIEST_DIFFICULTY_TARGET);
         // Now it should pass.
         Block.verify(TWEAK_TESTNET, block, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
         // Break the nonce again at the lower difficulty level so we can try solving for it.
@@ -312,15 +313,15 @@ public class BlockTest {
     @Test
     public void parseBlockWithHugeDeclaredTransactionsSize() {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Block block = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.ofEpochSecond(1), 1, 1,
-                new ArrayList<Transaction>()) {
+        Block block = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.ofEpochSecond(1),
+                Difficulty.EASIEST_DIFFICULTY_TARGET, 1, new ArrayList<Transaction>()) {
             @Override
             protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 ByteUtils.writeInt32LE(getVersion(), stream);
                 stream.write(getPrevBlockHash().serialize());
                 stream.write(getMerkleRoot().serialize());
                 ByteUtils.writeInt32LE(time().getEpochSecond(), stream);
-                ByteUtils.writeInt32LE(getDifficultyTarget(), stream);
+                ByteUtils.writeInt32LE(difficultyTarget().compact(), stream);
                 ByteUtils.writeInt32LE(getNonce(), stream);
 
                 stream.write(VarInt.of(Integer.MAX_VALUE).serialize());
@@ -338,7 +339,7 @@ public class BlockTest {
     @Test
     public void testGenesisBlock() {
         Block genesisBlock = Block.createGenesis(Instant.ofEpochSecond(1231006505L),
-                0x1d00ffffL,
+                Difficulty.ofCompact(0x1d00ffff),
                 2083236893);
         assertEquals(Sha256Hash.wrap("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"), genesisBlock.getHash());
     }

@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
@@ -29,7 +30,6 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.slf4j.Logger;
@@ -101,11 +101,12 @@ public class Block extends BaseMessage {
      */
     public static final int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE / 50;
 
-    /** Standard maximum value for difficultyTarget (nBits) (Bitcoin MainNet and TestNet) */
-    public static final long STANDARD_MAX_DIFFICULTY_TARGET = 0x1d00ffffL;
-
-    /** A value for difficultyTarget (nBits) that allows (slightly less than) half of all possible hash solutions. Used in unit testing. */
-    public static final long EASIEST_DIFFICULTY_TARGET = 0x207fFFFFL;
+    /** @deprecated use {@link Difficulty#STANDARD_MAX_DIFFICULTY_TARGET} */
+    @Deprecated
+    public static final long STANDARD_MAX_DIFFICULTY_TARGET = Difficulty.STANDARD_MAX_DIFFICULTY_TARGET.compact();
+    /** @deprecated use {@link Difficulty#EASIEST_DIFFICULTY_TARGET} */
+    @Deprecated
+    public static final long EASIEST_DIFFICULTY_TARGET = Difficulty.EASIEST_DIFFICULTY_TARGET.compact();
 
     /** Value to use if the block height is unknown */
     public static final int BLOCK_HEIGHT_UNKNOWN = -1;
@@ -125,7 +126,7 @@ public class Block extends BaseMessage {
     private Sha256Hash prevBlockHash;
     private Sha256Hash merkleRoot, witnessRoot;
     private Instant time;
-    private long difficultyTarget; // "nBits"
+    private Difficulty difficultyTarget; // "nBits"
     private long nonce;
 
     // If null, it means this object holds only the headers.
@@ -149,7 +150,7 @@ public class Block extends BaseMessage {
         Sha256Hash prevBlockHash = Sha256Hash.read(payload);
         Sha256Hash merkleRoot = Sha256Hash.read(payload);
         Instant time = Instant.ofEpochSecond(ByteUtils.readUint32(payload));
-        long difficultyTarget = ByteUtils.readUint32(payload);
+        Difficulty difficultyTarget = Difficulty.ofCompact(ByteUtils.readUint32(payload));
         long nonce = ByteUtils.readUint32(payload);
         payload.reset(); // read again from the mark for the hash
         Sha256Hash hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(Buffers.readBytes(payload, HEADER_SIZE)));
@@ -184,20 +185,20 @@ public class Block extends BaseMessage {
         // Set up a few basic things. We are not complete after this though.
         this(setVersion,
                 TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS), // convert to Bitcoin time)
-                0x1d07fff8L,
+                Difficulty.ofCompact(0x1d07fff8L),
                 0,
                 Collections.emptyList());
     }
 
     // For unit-test genesis blocks
     // For testing only
-    Block(long setVersion, Instant time, long difficultyTarget, List<Transaction> transactions) {
+    Block(long setVersion, Instant time, Difficulty difficultyTarget, List<Transaction> transactions) {
         this(setVersion, time, difficultyTarget, 0, transactions);
         // Solve for nonce?
     }
 
     // For genesis blocks (and also unit tests)
-    Block(long setVersion, Instant time, long difficultyTarget, long nonce, List<Transaction> transactions) {
+    Block(long setVersion, Instant time, Difficulty difficultyTarget, long nonce, List<Transaction> transactions) {
         this.version = setVersion;
         this.time = time;
         this.difficultyTarget = difficultyTarget;
@@ -217,7 +218,7 @@ public class Block extends BaseMessage {
      * @param transactions List of transactions including the coinbase, or {@code null} for header-only blocks
      */
     public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
-                 long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
+                 Difficulty difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
         super();
         this.version = version;
         this.prevBlockHash = prevBlockHash;
@@ -230,12 +231,31 @@ public class Block extends BaseMessage {
                 null;
     }
 
-    public static Block createGenesis(Instant time, long difficultyTarget) {
+    /** @deprecated use {@link #Block(long, Sha256Hash, Sha256Hash, Instant, Difficulty, long, List)} */
+    @Deprecated
+    public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
+                 long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
+        this(version, prevBlockHash, merkleRoot, time, Difficulty.ofCompact(difficultyTarget), nonce, transactions);
+    }
+
+    public static Block createGenesis(Instant time, Difficulty difficultyTarget) {
         return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, genesisTransactions());
     }
 
-    public static Block createGenesis(Instant time, long difficultyTarget, long nonce) {
+    /** @deprecated use {@link #createGenesis(Instant, Difficulty)} */
+    @Deprecated
+    public static Block createGenesis(Instant time, long difficultyTarget) {
+        return createGenesis(time, Difficulty.ofCompact(difficultyTarget));
+    }
+
+    public static Block createGenesis(Instant time, Difficulty difficultyTarget, long nonce) {
         return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, nonce, genesisTransactions());
+    }
+
+    /** @deprecated use {@link #createGenesis(Instant, Difficulty, long)} */
+    @Deprecated
+    public static Block createGenesis(Instant time, long difficultyTarget, long nonce) {
+        return createGenesis(time, Difficulty.ofCompact(difficultyTarget), nonce);
     }
 
     private static List<Transaction> genesisTransactions() {
@@ -272,7 +292,7 @@ public class Block extends BaseMessage {
         stream.write(prevBlockHash.serialize());
         stream.write(getMerkleRoot().serialize());
         ByteUtils.writeInt32LE(time.getEpochSecond(), stream);
-        ByteUtils.writeInt32LE(difficultyTarget, stream);
+        ByteUtils.writeInt32LE(difficultyTarget.compact(), stream);
         ByteUtils.writeInt32LE(nonce, stream);
     }
 
@@ -362,7 +382,7 @@ public class Block extends BaseMessage {
      * lower, the amount of work goes up.
      */
     public BigInteger getWork() throws VerificationException {
-        BigInteger target = getDifficultyTargetAsInteger();
+        BigInteger target = difficultyTarget.asInteger();
         return LARGEST_HASH.divide(target.add(BigInteger.ONE));
     }
 
@@ -434,14 +454,10 @@ public class Block extends BaseMessage {
         }
     }
 
-    /**
-     * Returns the difficulty target as a 256 bit value that can be compared to a SHA-256 hash. Inside a block the
-     * target is represented using a compact form.
-     *
-     * @return difficulty target as 256-bit value
-     */
+    /** @deprecated use {@link #difficultyTarget()} then {@link Difficulty#asInteger()} */
+    @Deprecated
     public BigInteger getDifficultyTargetAsInteger() {
-        return ByteUtils.decodeCompactBits(difficultyTarget);
+        return difficultyTarget.asInteger();
     }
 
     /** Returns true if the hash of the block is OK (lower than difficulty target). */
@@ -458,14 +474,11 @@ public class Block extends BaseMessage {
         //
         // To prevent this attack from being possible, elsewhere we check that the difficultyTarget
         // field is of the right value. This requires us to have the preceding blocks.
-        BigInteger target = getDifficultyTargetAsInteger();
-
-        BigInteger h = getHash().toBigInteger();
-        if (h.compareTo(target) > 0) {
+        if (!difficultyTarget.isMetByWork(getHash())) {
             // Proof of work check failed!
             if (throwException)
                 throw new VerificationException("Hash is higher than target: " + getHashAsString() + " vs "
-                        + target.toString(16));
+                        + difficultyTarget.toIntegerString());
             else
                 return false;
         }
@@ -725,23 +738,29 @@ public class Block extends BaseMessage {
     }
 
     /**
-     * Returns the difficulty of the proof of work that this block should meet encoded <b>in compact form</b>. The {@link
+     * Returns the difficulty of the proof of work that this block should meet. The {@link
      * BlockChain} verifies that this is not too easy by looking at the length of the chain when the block is added.
      * To find the actual value the hash should be compared against, use
-     * {@link Block#getDifficultyTargetAsInteger()}. Note that this is <b>not</b> the same as
+     * {@link Difficulty#asInteger()}. Note that this is <b>not</b> the same as
      * the difficulty value reported by the Bitcoin "getdifficulty" RPC that you may see on various block explorers.
      * That number is the result of applying a formula to the underlying difficulty to normalize the minimum to 1.
      * Calculating the difficulty that way is currently unsupported.
      */
-    public long getDifficultyTarget() {
+    public Difficulty difficultyTarget() {
         return difficultyTarget;
     }
 
-    /** Sets the difficulty target in compact form. */
+    /** @deprecated use {@link #difficultyTarget()} then {@link Difficulty#compact()} */
+    @Deprecated
+    public long getDifficultyTarget() {
+        return difficultyTarget.compact();
+    }
+
+    /** Sets the difficulty target. */
     // For testing only
-    void setDifficultyTarget(long compactForm) {
+    void setDifficultyTarget(Difficulty difficultyTarget) {
         unCacheHeader();
-        this.difficultyTarget = compactForm;
+        this.difficultyTarget = difficultyTarget;
         this.hash = null;
     }
 

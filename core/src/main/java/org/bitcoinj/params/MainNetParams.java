@@ -18,7 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
 
@@ -41,7 +41,7 @@ public class MainNetParams extends BitcoinNetworkParams {
         super(BitcoinNetwork.MAINNET);
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+        maxTarget = Difficulty.STANDARD_MAX_DIFFICULTY_TARGET;
 
         port = 8333;
         packetMagic = 0xf9beb4d9;
@@ -131,7 +131,8 @@ public class MainNetParams extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(GENESIS_TIME, Block.STANDARD_MAX_DIFFICULTY_TARGET, GENESIS_NONCE);
+                genesisBlock = Block.createGenesis(GENESIS_TIME, Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
+                        GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () -> "invalid genesis hash");
             }
         }

@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.bitcoinj.base.Difficulty;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,7 +44,7 @@ public class StoredBlockTest {
     private static final BigInteger TOO_LARGE_WORK_V2 = new BigInteger(/* 33 bytes */
             "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
     // Just an arbitrary block
-    private static final Block BLOCK = Block.createGenesis(Instant.now(), Block.EASIEST_DIFFICULTY_TARGET);
+    private static final Block BLOCK = Block.createGenesis(Instant.now(), Difficulty.EASIEST_DIFFICULTY_TARGET);
 
     private Object[] vectors_serializeCompact_pass() {
         return new Object[] {

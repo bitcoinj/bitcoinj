@@ -18,7 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
 
@@ -38,7 +38,7 @@ public class RegTestParams extends BitcoinNetworkParams {
         super(BitcoinNetwork.REGTEST);
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
+        maxTarget = Difficulty.EASIEST_DIFFICULTY_TARGET;
         // Difficulty adjustments are disabled for regtest.
         // By setting the block interval for difficulty adjustments to Integer.MAX_VALUE we make sure difficulty never
         // changes.
@@ -79,7 +79,7 @@ public class RegTestParams extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(GENESIS_TIME, Block.EASIEST_DIFFICULTY_TARGET, GENESIS_NONCE);
+                genesisBlock = Block.createGenesis(GENESIS_TIME, Difficulty.EASIEST_DIFFICULTY_TARGET, GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
                         "invalid genesis hash");
             }

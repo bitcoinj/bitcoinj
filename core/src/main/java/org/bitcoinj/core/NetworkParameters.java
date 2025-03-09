@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.DumpedPrivateKey;
@@ -47,7 +48,7 @@ import java.util.Objects;
 public abstract class NetworkParameters {
     // TODO: Seed nodes should be here as well.
 
-    protected BigInteger maxTarget;
+    protected Difficulty maxTarget;
     protected int port;
     protected int packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
     protected int dumpedPrivateKeyHeader;
@@ -261,8 +262,14 @@ public abstract class NetworkParameters {
      * Maximum target represents the easiest allowable proof of work.
      * @return maximum target integer
      */
-    public BigInteger getMaxTarget() {
+    public Difficulty maxTarget() {
         return maxTarget;
+    }
+
+    /** @deprecated use {@link #maxTarget()} then {@link Difficulty#asInteger()} */
+    @Deprecated
+    public BigInteger getMaxTarget() {
+        return maxTarget.asInteger();
     }
 
     /**

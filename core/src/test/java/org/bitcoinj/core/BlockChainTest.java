@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -208,7 +209,7 @@ public class BlockChainTest {
         Block prev = chain.getChainHead().getHeader();
         Instant newTime = prev.time().plus(Duration.ofMinutes(10));
         Block newBlock = prev.createNextBlock(null, 1, newTime, 1);
-        newBlock.setDifficultyTarget(newBlock.getDifficultyTarget() + 10);
+        newBlock.setDifficultyTarget(Difficulty.ofCompact(newBlock.difficultyTarget().compact() + 10));
         assertTrue(chain.add(newBlock));
     }
 
@@ -227,7 +228,7 @@ public class BlockChainTest {
         // We're going to make this block so easy 50% of solutions will pass, and check it gets rejected for having a
         // bad difficulty target. Unfortunately the encoding mechanism means we cannot make one that accepts all
         // solutions.
-        bad.setDifficultyTarget(Block.EASIEST_DIFFICULTY_TARGET);
+        bad.setDifficultyTarget(Difficulty.EASIEST_DIFFICULTY_TARGET);
         try {
             testNetChain.add(bad);
             // The difficulty target above should be rejected on the grounds of being easier than the networks
@@ -418,7 +419,7 @@ public class BlockChainTest {
                 Sha256Hash.wrap("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206"), // prev
                 Sha256Hash.wrap("20222eb90f5895556926c112bb5aa0df4ab5abc3107e21a6950aec3b2e3541e2"), // merkle
                 Instant.ofEpochSecond(1296688946L),
-                0x1d00ffff,
+                Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
                 875942400L,
                 null);
         assertEquals("000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820", b2.getHashAsString());
@@ -431,7 +432,7 @@ public class BlockChainTest {
                 Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"), // prev
                 Sha256Hash.wrap("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"), // merkle
                 Instant.ofEpochSecond(1296688928),
-                0x1d00ffff,
+                Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
                 1924588547,
                 null);
         assertEquals("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206", b1.getHashAsString());
