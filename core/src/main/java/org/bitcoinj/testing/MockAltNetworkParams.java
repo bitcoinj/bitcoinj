@@ -16,9 +16,7 @@
 
 package org.bitcoinj.testing;
 
-import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.internal.MockAltNetwork;
-import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
@@ -35,8 +33,6 @@ public class MockAltNetworkParams extends NetworkParameters {
 
     public MockAltNetworkParams() {
         super(new MockAltNetwork());
-        addressHeader = 48;
-        p2shHeader = 5;
     }
 
     @Override
@@ -47,26 +43,6 @@ public class MockAltNetworkParams extends NetworkParameters {
     @Override
     public Block getGenesisBlock() {
         return null;
-    }
-
-    @Override
-    public Coin getMaxMoney() {
-        return (Coin) this.network.maxMoney();
-    }
-
-    @Override
-    public MonetaryFormat getMonetaryFormat() {
-        return null;
-    }
-
-    @Override
-    public String getUriScheme() {
-        return this.network.uriScheme();
-    }
-
-    @Override
-    public boolean hasMaxMoney() {
-        return this.network.hasMaxMoney();
     }
 
     @Override

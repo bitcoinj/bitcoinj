@@ -17,10 +17,7 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Coin;
-import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.DumpedPrivateKey;
@@ -32,7 +29,6 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.utils.VersionTally;
 
-import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.EnumSet;
@@ -54,10 +50,7 @@ public abstract class NetworkParameters {
     protected BigInteger maxTarget;
     protected int port;
     protected int packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
-    protected int addressHeader;
-    protected int p2shHeader;
     protected int dumpedPrivateKeyHeader;
-    protected String segwitAddressHrp;
     protected int interval;
     protected int targetTimespan;
     protected int bip32HeaderP2PKHpub;
@@ -102,20 +95,6 @@ public abstract class NetworkParameters {
      * mined upon and thus will be quickly re-orged out as long as the majority are enforcing the rule.
      */
     public static final Instant BIP16_ENFORCE_TIME = Instant.ofEpochSecond(1333238400);
-    
-    /**
-     * The maximum number of coins to be generated
-     * @deprecated Use {@link BitcoinNetwork#MAX_MONEY}
-     */
-    @Deprecated
-    public static final long MAX_COINS = BitcoinNetwork.MAX_MONEY.longValue();
-
-    /**
-     * The maximum money to be generated
-     * @deprecated Use {@link BitcoinNetwork#MAX_MONEY}
-     */
-    @Deprecated
-    public static final Coin MAX_MONEY = BitcoinNetwork.MAX_MONEY;
 
     /**
      * A Java package style string acting as unique ID for these parameters
@@ -142,18 +121,6 @@ public abstract class NetworkParameters {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
-    }
-
-    /**
-     * Return network parameters for a network id
-     * @param id the network id
-     * @return the network parameters for the given string ID or NULL if not recognized
-     * @deprecated Use {@link BitcoinNetworkParams#fromID(String)}
-     */
-    @Deprecated
-    @Nullable
-    public static NetworkParameters fromID(String id) {
-        return BitcoinNetworkParams.fromID(id);
     }
 
     /**
@@ -257,39 +224,11 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * First byte of a base58 encoded address. See {@link LegacyAddress}.
-     * @return the header value
-     */
-    @Deprecated
-    public int getAddressHeader() {
-        return addressHeader;
-    }
-
-    /**
-     * First byte of a base58 encoded P2SH address.  P2SH addresses are defined as part of BIP0013.
-     * @return the header value
-     */
-    @Deprecated
-    public int getP2SHHeader() {
-        return p2shHeader;
-    }
-
-    /**
      * First byte of a base58 encoded dumped private key. See {@link DumpedPrivateKey}.
      * @return the header value
      */
     public int getDumpedPrivateKeyHeader() {
         return dumpedPrivateKeyHeader;
-    }
-
-    /**
-     * Human-readable part of bech32 encoded segwit address.
-     * @return the human-readable part value
-     * @deprecated Use {@link Network#segwitAddressHrp()} or {@link org.bitcoinj.base.SegwitAddress.SegwitHrp}
-     */
-    @Deprecated
-    public String getSegwitAddressHrp() {
-        return segwitAddressHrp;
     }
 
     /**
@@ -357,41 +296,6 @@ public abstract class NetworkParameters {
     public int getBip32HeaderP2WPKHpriv() {
         return bip32HeaderP2WPKHpriv;
     }
-    /**
-     * Returns the number of coins that will be produced in total, on this
-     * network. Where not applicable, a very large number of coins is returned
-     * instead (e.g. the main coin issue for Dogecoin).
-     * @return maximum number of coins for this network
-     * @deprecated Use {@link Network#maxMoney()}
-     */
-    @Deprecated
-    public abstract Coin getMaxMoney();
-
-    /**
-     * The monetary object for this currency.
-     * @return formatting utility object
-     * @deprecated Get one another way or construct your own {@link MonetaryFormat} as needed.
-     */
-    @Deprecated
-    public abstract MonetaryFormat getMonetaryFormat();
-
-    /**
-     * Scheme part for URIs, for example "bitcoin".
-     * @return a string with the "scheme" part
-     * @deprecated Use {@link Network#uriScheme()}
-     */
-    @Deprecated
-    public abstract String getUriScheme();
-
-    /**
-     * Returns whether this network has a maximum number of coins (finite supply) or
-     * not. Always returns true for Bitcoin, but exists to be overridden for other
-     * networks.
-     * @return true if network has a fixed maximum number of coins
-     * @deprecated Use {@link Network#hasMaxMoney()}
-     */
-    @Deprecated
-    public abstract boolean hasMaxMoney();
 
     /**
      * Return the default serializer for this network. This is a shared serializer.
@@ -500,13 +404,5 @@ public abstract class NetworkParameters {
         }
 
         return verifyFlags;
-    }
-
-    /**
-     * @deprecated  use {@link ProtocolVersion#intValue()}
-     */
-    @Deprecated
-    public int getProtocolVersionNum(final ProtocolVersion version) {
-        return version.intValue();
     }
 }
