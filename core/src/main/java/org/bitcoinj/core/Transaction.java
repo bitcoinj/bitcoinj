@@ -768,7 +768,8 @@ public class Transaction extends BaseMessage {
             s.append(indent).append("purpose: ").append(purpose).append('\n');
         if (isCoinBase()) {
             s.append(indent).append("coinbase\n");
-        } else if (!inputs.isEmpty()) {
+        }
+        if (!inputs.isEmpty()) {
             for (TransactionInput in : inputs) {
                 s.append(indent).append("   ");
                 s.append("in   ");
