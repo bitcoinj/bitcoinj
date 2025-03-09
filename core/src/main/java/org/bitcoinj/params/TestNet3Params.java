@@ -109,21 +109,30 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
-            final long timeDelta = nextBlock.time().getEpochSecond() - storedPrev.getHeader().time().getEpochSecond();
-            // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
-            // goes backwards.
-            if (timeDelta >= 0 && timeDelta <= TESTNET_DIFFICULTY_EXCEPTION_SPACING) {
-                Block prevBlock = backwardsSkipMindiffBlocks(storedPrev, blockStore);
-                BigInteger prevTarget = prevBlock.getDifficultyTargetAsInteger();
-                BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
-                if (!prevTarget.equals(newTarget))
-                        throw new VerificationException("Testnet block transition that is not allowed: " +
-                        Long.toHexString(prevBlock.getDifficultyTarget()) + " vs " +
-                        Long.toHexString(nextBlock.getDifficultyTarget()));
+            long timeDelta = nextBlock.time().getEpochSecond() - storedPrev.getHeader().time().getEpochSecond();
+            boolean isMinDiffBlock = nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget());
+            if (timeDelta < 0 && isMinDiffBlock) {
+                // There is an integer underflow bug in Bitcoin Core that means mindiff blocks are accepted when time
+                // goes backwards. Thus, skip any further checks.
+                return;
+            } else if (timeDelta > TESTNET_DIFFICULTY_EXCEPTION_SPACING){
+                // 20 minute exception
+                checkDifficultyTarget(nextBlock, getMaxTarget());
+            } else {
+                // If no special rule applies, expect the last non-mindiff difficulty.
+                checkDifficultyTarget(nextBlock, backwardsSkipMindiffBlocks(storedPrev, blockStore).getDifficultyTargetAsInteger());
             }
         } else {
             super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
         }
+    }
+
+    private void checkDifficultyTarget(Block nextBlock, BigInteger expectedTarget) {
+        BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
+        if (!newTarget.equals(expectedTarget))
+            throw new VerificationException("Testnet block transition that is not allowed: " +
+                    Long.toHexString(ByteUtils.encodeCompactBits(expectedTarget)) + " vs " +
+                    Long.toHexString(nextBlock.getDifficultyTarget()));
     }
 
     private Block backwardsSkipMindiffBlocks(StoredBlock prev, BlockStore blockStore) throws BlockStoreException {
