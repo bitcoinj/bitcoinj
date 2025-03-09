@@ -768,8 +768,8 @@ public class Transaction extends BaseMessage {
             s.append(indent).append("purpose: ").append(purpose).append('\n');
         if (isCoinBase()) {
             s.append(indent).append("coinbase\n");
-        } else if (!inputs.isEmpty()) {
-            int i = 0;
+        }
+        if (!inputs.isEmpty()) {
             for (TransactionInput in : inputs) {
                 s.append(indent).append("   ");
                 s.append("in   ");
@@ -811,9 +811,16 @@ public class Transaction extends BaseMessage {
                         s.append('\n');
                     }
                 } catch (Exception e) {
-                    s.append("[exception: ").append(e.getMessage()).append("]\n");
+                    s.append(ByteUtils.formatHex(getInput(0).getScriptBytes()));
+                    if (!isCoinBase()) {
+                        final Coin value = in.getValue();
+                        if (value != null)
+                            s.append("  ").append(value.toFriendlyString());
+                        s.append('\n');
+                        s.append(indent).append("        exception: ").append(e.getMessage());
+                    }
+                    s.append('\n');
                 }
-                i++;
             }
         } else {
             s.append(indent).append("   ");
