@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
@@ -33,7 +34,6 @@ import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.utils.VersionTally;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -51,7 +51,7 @@ import java.util.Objects;
 public abstract class NetworkParameters {
     // TODO: Seed nodes should be here as well.
 
-    protected BigInteger maxTarget;
+    protected Difficulty maxTarget;
     protected int port;
     protected int packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
     protected int addressHeader;
@@ -322,7 +322,7 @@ public abstract class NetworkParameters {
      * Maximum target represents the easiest allowable proof of work.
      * @return maximum target integer
      */
-    public BigInteger getMaxTarget() {
+    public Difficulty getMaxTarget() {
         return maxTarget;
     }
 
