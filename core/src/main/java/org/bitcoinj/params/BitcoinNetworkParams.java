@@ -26,12 +26,10 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.core.ProtocolVersion;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.base.utils.MonetaryFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,14 +46,6 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * Parameters for Bitcoin-like networks.
  */
 public abstract class BitcoinNetworkParams extends NetworkParameters {
-
-    /**
-     * Scheme part for Bitcoin URIs.
-     * @deprecated Use {@link BitcoinNetwork#BITCOIN_SCHEME}
-     */
-    @Deprecated
-    public static final String BITCOIN_SCHEME = BitcoinNetwork.BITCOIN_SCHEME;
-
     /**
      * Block reward halving interval (number of blocks)
      */
@@ -221,34 +211,7 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
     }
 
     @Override
-    @Deprecated
-    public Coin getMaxMoney() {
-        return BitcoinNetwork.MAX_MONEY;
-    }
-
-    /**
-     * @deprecated Get one another way or construct your own {@link MonetaryFormat} as needed.
-     */
-    @Override
-    @Deprecated
-    public MonetaryFormat getMonetaryFormat() {
-        return new MonetaryFormat();
-    }
-
-    @Override
     public BitcoinSerializer getSerializer() {
         return new BitcoinSerializer(network);
-    }
-
-    @Override
-    @Deprecated
-    public String getUriScheme() {
-        return BitcoinNetwork.BITCOIN_SCHEME;
-    }
-
-    @Override
-    @Deprecated
-    public boolean hasMaxMoney() {
-        return network().hasMaxMoney();
     }
 }

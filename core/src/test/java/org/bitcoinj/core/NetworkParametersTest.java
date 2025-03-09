@@ -16,18 +16,8 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.base.BitcoinNetwork;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-
 /**
  * Test NetworkParameters
  */
 public class NetworkParametersTest {
-    @Test
-    public void deprecatedMembers() {
-        NetworkParameters params = NetworkParameters.of(BitcoinNetwork.MAINNET);
-        assertEquals(70000, params.getProtocolVersionNum(ProtocolVersion.MINIMUM));
-    }
 }
