@@ -279,6 +279,13 @@ public class SPVBlockStore implements BlockStore {
     @Override
     @Nullable
     public StoredBlock get(Sha256Hash hash) throws BlockStoreException {
+        if (hash.equals(Sha256Hash.ZERO_HASH)) {
+            // Valid blocks will never hash to zero, as it will need an astronomical amount of mining to create one.
+            // Nevertheless, we need to catch this case here because our ring buffer contains all zeros at the
+            // beginning so this method would indeed locate and return an invalid block.
+            return null;
+        }
+
         final MappedByteBuffer buffer = this.buffer;
         if (buffer == null) throw new BlockStoreException("Store closed");
 
