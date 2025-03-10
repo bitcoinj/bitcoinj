@@ -19,6 +19,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
@@ -91,8 +92,8 @@ public class DefaultCoinSelector implements CoinSelector {
         int c2 = bValue.compareTo(aValue);
         if (c2 != 0) return c2;
         // They are entirely equivalent (possibly pending) so sort by hash to ensure a total ordering.
-        BigInteger aHash = a.getParentTransactionHash().toBigInteger();
-        BigInteger bHash = b.getParentTransactionHash().toBigInteger();
+        Sha256Hash aHash = a.getParentTransactionHash();
+        Sha256Hash bHash = b.getParentTransactionHash();
         return aHash.compareTo(bHash);
     };
 
