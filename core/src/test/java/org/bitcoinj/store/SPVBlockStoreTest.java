@@ -93,6 +93,14 @@ public class SPVBlockStoreTest {
         store.close();
     }
 
+    @Test
+    public void get_zeroHash() throws Exception {
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        // Needs to fail locating a block even though our fresh ring buffer is full of zero hashes.
+        StoredBlock b = store.get(Sha256Hash.ZERO_HASH);
+        assertNull(b);
+    }
+
     @Test(expected = BlockStoreException.class)
     public void twoStores_onSameFile() throws Exception {
         new SPVBlockStore(TESTNET, blockStoreFile);
