@@ -18,7 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
@@ -48,7 +48,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
         super(BitcoinNetwork.TESTNET);
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = ByteUtils.decodeCompactBits(Block.STANDARD_MAX_DIFFICULTY_TARGET);
+        maxTarget = Difficulty.STANDARD_MAX_DIFFICULTY_TARGET;
 
         port = 18333;
         packetMagic = 0x0b110907;
@@ -89,7 +89,8 @@ public class TestNet3Params extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(GENESIS_TIME, Block.STANDARD_MAX_DIFFICULTY_TARGET, GENESIS_NONCE);
+                genesisBlock = Block.createGenesis(GENESIS_TIME, Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
+                        GENESIS_NONCE);
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
                         "invalid genesis hash");
             }
@@ -118,14 +119,14 @@ public class TestNet3Params extends BitcoinNetworkParams {
                 StoredBlock cursor = storedPrev;
                 while (!cursor.getHeader().equals(getGenesisBlock()) &&
                            cursor.getHeight() % getInterval() != 0 &&
-                           cursor.getHeader().getDifficultyTargetAsInteger().equals(getMaxTarget()))
+                           cursor.getHeader().difficultyTarget().equals(getMaxTarget()))
                         cursor = cursor.getPrev(blockStore);
-                BigInteger cursorTarget = cursor.getHeader().getDifficultyTargetAsInteger();
-                BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
+                Difficulty cursorTarget = cursor.getHeader().difficultyTarget();
+                Difficulty newTarget = nextBlock.difficultyTarget();
                 if (!cursorTarget.equals(newTarget))
                         throw new VerificationException("Testnet block transition that is not allowed: " +
-                        Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
-                        Long.toHexString(nextBlock.getDifficultyTarget()));
+                        cursorTarget + " vs " +
+                        newTarget);
             }
         } else {
             super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
