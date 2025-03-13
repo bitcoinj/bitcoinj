@@ -126,8 +126,11 @@ public class TransactionOutPoint {
 
     /**
      * An outpoint is a part of a transaction input that points to the output of another transaction. If we have both
-     * sides in memory, and they have been linked together, this returns a pointer to the connected output, or null
-     * if there is no such connection.
+     * sides in memory, and they have been linked together, this returns a pointer to the connected output, or {@code
+     * null} if we don't have the output. In the latter case, {@link #hash()} and {@link #index()} could be used to
+     * acquire the output elsewhere.
+     *
+     * @return output this outpoint points to, or {@code null} if we don't have the output
      */
     @Nullable
     public TransactionOutput getConnectedOutput() {
