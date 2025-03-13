@@ -91,6 +91,13 @@ public class TransactionOutPoint {
         checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
                 "index out of range: " + index);
         this.index = index;
+        if (fromTx != null) {
+            TransactionOutput outputFromTx = fromTx.getOutput(index);
+            Objects.requireNonNull(outputFromTx);
+            if (connectedOutput != null) {
+                checkArgument(connectedOutput.equals(outputFromTx), () -> "mismatched connected output");
+            }
+        }
         this.fromTx = fromTx;
         this.connectedOutput = connectedOutput;
     }

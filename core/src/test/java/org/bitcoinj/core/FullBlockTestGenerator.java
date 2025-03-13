@@ -1134,7 +1134,7 @@ public class FullBlockTestGenerator {
             Transaction tx = new Transaction();
             tx.addOutput(new TransactionOutput(tx, ZERO, new byte[] {}));
             // Replace the TransactionOutPoint with an out-of-range OutPoint
-            b58.getSpendableOutput().outpoint = new TransactionOutPoint(42, tx);
+            b58.getSpendableOutput().outpoint = new TransactionOutPoint(42, tx.getTxId());
             addOnlyInputToTransaction(tx, b58);
             b58.addTransaction(tx);
         }
