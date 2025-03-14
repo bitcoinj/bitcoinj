@@ -34,7 +34,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Stack;
@@ -71,7 +70,7 @@ public class ScriptBuilder {
 
     /** Creates a fresh ScriptBuilder with an empty program. */
     public ScriptBuilder() {
-        chunks = new LinkedList<>();
+        chunks = new ArrayList<>(5);
     }
 
     /** Creates a fresh ScriptBuilder with the given program as the starting point. */
