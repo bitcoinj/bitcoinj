@@ -46,8 +46,10 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * defined as seeing the transaction be announced by peers via inv messages, thus indicating their acceptance. A failure
  * is defined as not reaching acceptance within a timeout period, or getting an explicit reject message from a peer
  * indicating that the transaction was not acceptable.
+ * <p>
+ * This class temporarily implements {@link Wallet.SendResult} to allow migration away from that deprecated interface.
  */
-public class TransactionBroadcast {
+public class TransactionBroadcast implements Wallet.SendResult {
     private static final Logger log = LoggerFactory.getLogger(TransactionBroadcast.class);
 
     // This future completes when all broadcast messages were sent (to a buffer)
@@ -82,6 +84,14 @@ public class TransactionBroadcast {
 
     public Transaction transaction() {
         return tx;
+    }
+
+    /**
+     * @deprecated If you are using {@link Wallet.SendResult} switch to {@link TransactionBroadcast}
+     */
+    @Override
+    public TransactionBroadcast getBroadcast() {
+        return this;
     }
 
     @VisibleForTesting
