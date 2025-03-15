@@ -43,6 +43,8 @@ public class TestNet3Params extends BitcoinNetworkParams {
     private static final Instant GENESIS_TIME = Instant.ofEpochSecond(1296688602);
     private static final long GENESIS_NONCE = 414098458;
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+    /** Spacing for the 20-minute difficulty exception. */
+    private static final int TESTNET_DIFFICULTY_EXCEPTION_SPACING = NetworkParameters.TARGET_SPACING * 2;
 
     public TestNet3Params() {
         super(BitcoinNetwork.TESTNET);
@@ -112,7 +114,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
             final long timeDelta = nextBlock.time().getEpochSecond() - prev.time().getEpochSecond();
             // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
             // goes backwards.
-            if (timeDelta >= 0 && timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
+            if (timeDelta >= 0 && timeDelta <= TESTNET_DIFFICULTY_EXCEPTION_SPACING) {
                 // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
                 // that difficulty is equal to that one.
                 StoredBlock cursor = storedPrev;
