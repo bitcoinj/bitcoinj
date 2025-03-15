@@ -117,12 +117,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
                 if (timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
                     // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
                     // that difficulty is equal to that one.
-                    StoredBlock cursor = storedPrev;
-                    while (!cursor.getHeader().equals(getGenesisBlock()) &&
-                            cursor.getHeight() % getInterval() != 0 &&
-                            cursor.getHeader().getDifficultyTargetAsInteger().equals(getMaxTarget()))
-                        cursor = cursor.getPrev(blockStore);
-                    expectedTarget = cursor.getHeader().getDifficultyTargetAsInteger();
+                    expectedTarget = findLastNonEasyBlock(storedPrev, blockStore).getHeader().getDifficultyTargetAsInteger();
                 } else {
                     // 20 minute exception
                     expectedTarget = getMaxTarget();
@@ -136,5 +131,14 @@ public class TestNet3Params extends BitcoinNetworkParams {
         } else {
             super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
         }
+    }
+
+    StoredBlock findLastNonEasyBlock(StoredBlock storedPrev, BlockStore blockStore) throws BlockStoreException {
+        StoredBlock cursor = storedPrev;
+        while (!cursor.getHeader().equals(getGenesisBlock()) &&
+                cursor.getHeight() % getInterval() != 0 &&
+                cursor.getHeader().getDifficultyTargetAsInteger().equals(getMaxTarget()))
+            cursor = cursor.getPrev(blockStore);
+        return cursor;
     }
 }
