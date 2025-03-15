@@ -113,15 +113,11 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
             // goes backwards. In that case we need no further verification.
             if (timeDelta >= 0 || !nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget())) {
-                BigInteger expectedTarget;
-                if (timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
+                BigInteger expectedTarget = (timeDelta <= NetworkParameters.TARGET_SPACING * 2)
                     // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
                     // that difficulty is equal to that one.
-                    expectedTarget = findLastNonEasyBlock(storedPrev, blockStore).getHeader().getDifficultyTargetAsInteger();
-                } else {
-                    // 20 minute exception
-                    expectedTarget = getMaxTarget();
-                }
+                    ? findLastNonEasyBlock(storedPrev, blockStore).getHeader().getDifficultyTargetAsInteger()
+                    : getMaxTarget();  // 20 minute exception
                 BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
                 if (!newTarget.equals(expectedTarget))
                     throw new VerificationException("Testnet block transition that is not allowed: " +
