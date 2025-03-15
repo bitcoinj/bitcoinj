@@ -28,6 +28,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.time.Instant;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -109,7 +110,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
-            final long timeDelta = nextBlock.time().getEpochSecond() - prev.time().getEpochSecond();
+            final long timeDelta = Duration.between(prev.time(), nextBlock.time()).getSeconds();
             // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
             // goes backwards.
             if (timeDelta >= 0 && timeDelta <= NetworkParameters.TARGET_SPACING * 2) {
