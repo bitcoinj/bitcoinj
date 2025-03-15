@@ -434,12 +434,14 @@ public class Block extends BaseMessage {
      */
     @VisibleForTesting
     public void solve() {
+        if (Context.get().isRelaxProofOfWork())
+            return;
         Duration warningThreshold = Duration.ofSeconds(5);
         Stopwatch watch = Stopwatch.start();
         while (true) {
             try {
                 // Is our proof of work valid yet?
-                if (checkProofOfWork(false))
+                if (difficultyTarget.isMetByWork(getHash()))
                     return;
                 // No, so increment the nonce and try again.
                 setNonce(getNonce() + 1);
@@ -460,11 +462,16 @@ public class Block extends BaseMessage {
         return difficultyTarget.asInteger();
     }
 
-    /** Returns true if the hash of the block is OK (lower than difficulty target). */
-    protected boolean checkProofOfWork(boolean throwException) throws VerificationException {
+    /**
+     * Checks the proof of work of this block. If this method returns without throwing, the hash of this block is OK
+     * (lower than difficulty target).
+     *
+     * @throws VerificationException if there is not enough proof of work
+     */
+    private void checkProofOfWork() throws VerificationException {
         // shortcut for unit-testing
         if (Context.get().isRelaxProofOfWork())
-            return true;
+            return;
 
         // This part is key - it is what proves the block was as difficult to make as it claims
         // to be. Note however that in the context of this function, the block can claim to be
@@ -474,15 +481,10 @@ public class Block extends BaseMessage {
         //
         // To prevent this attack from being possible, elsewhere we check that the difficultyTarget
         // field is of the right value. This requires us to have the preceding blocks.
-        if (!difficultyTarget.isMetByWork(getHash())) {
+        if (!difficultyTarget.isMetByWork(getHash()))
             // Proof of work check failed!
-            if (throwException)
-                throw new VerificationException("Hash is higher than target: " + getHashAsString() + " vs "
-                        + difficultyTarget.asInteger().toString(16));
-            else
-                return false;
-        }
-        return true;
+            throw new VerificationException("Hash is higher than target: " + getHashAsString() + " vs "
+                    + difficultyTarget.asInteger().toString(16));
     }
 
     private void checkTimestamp() throws VerificationException {
@@ -1032,7 +1034,7 @@ public class Block extends BaseMessage {
         //
         // Firstly we need to ensure this block does in fact represent real work done. If the difficulty is high
         // enough, it's probably been done by the network.
-        block.checkProofOfWork(true);
+        block.checkProofOfWork();
         block.checkTimestamp();
     }
 
