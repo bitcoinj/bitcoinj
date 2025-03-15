@@ -17,7 +17,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
 
@@ -34,7 +34,7 @@ public class SigNetParams extends BitcoinNetworkParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
     public static final int TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED = 75;
     public static final int TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 51;
-    private static final long GENESIS_DIFFICULTY = 0x1e0377ae;
+    private static final Difficulty GENESIS_DIFFICULTY = Difficulty.ofCompact(0x1e0377ae);
     private static final Instant GENESIS_TIME = Instant.ofEpochSecond(1598918400);
     private static final long GENESIS_NONCE = 52613770;
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6");
@@ -43,7 +43,7 @@ public class SigNetParams extends BitcoinNetworkParams {
         super(BitcoinNetwork.SIGNET);
 
         targetTimespan = TARGET_TIMESPAN;
-        maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
+        maxTarget = Difficulty.EASIEST_DIFFICULTY_TARGET;
 
         port = 38333;
         packetMagic = 0x0a03cf40;
