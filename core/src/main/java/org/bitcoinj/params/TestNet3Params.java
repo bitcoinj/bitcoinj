@@ -106,31 +106,34 @@ public class TestNet3Params extends BitcoinNetworkParams {
     public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
         final BlockStore blockStore) throws VerificationException, BlockStoreException {
         if (!isDifficultyTransitionPoint(storedPrev.getHeight()) && nextBlock.time().isAfter(testnetDiffDate)) {
-            Block prev = storedPrev.getHeader();
-
             // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
-            final long timeDelta = nextBlock.time().getEpochSecond() - prev.time().getEpochSecond();
+            final long timeDelta = nextBlock.time().getEpochSecond() - storedPrev.getHeader().time().getEpochSecond();
             // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
             // goes backwards.
             if (timeDelta >= 0 && timeDelta <= TESTNET_DIFFICULTY_EXCEPTION_SPACING) {
-                // Walk backwards until we find a block that doesn't have the easiest proof of work, then check
-                // that difficulty is equal to that one.
-                StoredBlock cursor = storedPrev;
-                while (!cursor.getHeader().equals(getGenesisBlock()) &&
-                           cursor.getHeight() % getInterval() != 0 &&
-                           cursor.getHeader().getDifficultyTargetAsInteger().equals(getMaxTarget()))
-                        cursor = cursor.getPrev(blockStore);
-                BigInteger cursorTarget = cursor.getHeader().getDifficultyTargetAsInteger();
+                Block prevBlock = backwardsSkipMindiffBlocks(storedPrev, blockStore);
+                BigInteger prevTarget = prevBlock.getDifficultyTargetAsInteger();
                 BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
-                if (!cursorTarget.equals(newTarget))
+                if (!prevTarget.equals(newTarget))
                         throw new VerificationException("Testnet block transition that is not allowed: " +
-                        Long.toHexString(cursor.getHeader().getDifficultyTarget()) + " vs " +
+                        Long.toHexString(prevBlock.getDifficultyTarget()) + " vs " +
                         Long.toHexString(nextBlock.getDifficultyTarget()));
             }
         } else {
             super.checkDifficultyTransitions(storedPrev, nextBlock, blockStore);
         }
+    }
+
+    private Block backwardsSkipMindiffBlocks(StoredBlock prev, BlockStore blockStore) throws BlockStoreException {
+        // Walk backwards until we find a block that doesn't have the easiest proof of work.
+        int interval = getInterval();
+        BigInteger maxTarget = getMaxTarget();
+        while (!prev.getHeader().equals(getGenesisBlock()) &&
+                prev.getHeight() % interval != 0 &&
+                prev.getHeader().getDifficultyTargetAsInteger().equals(maxTarget))
+            prev = prev.getPrev(blockStore);
+        return prev.getHeader();
     }
 }
