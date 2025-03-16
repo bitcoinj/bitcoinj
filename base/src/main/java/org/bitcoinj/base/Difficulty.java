@@ -143,9 +143,23 @@ public class Difficulty implements Comparable<Difficulty> {
         return work.compareTo(this.asInteger()) <= 0;
     }
 
+    /**
+     * Returns the compact form, encoded as a hex string.
+     *
+     * @return compact form encoded as hex string
+     */
     @Override
     public String toString() {
         return Long.toHexString(compact);
+    }
+
+    /**
+     * Returns the integer form, encoded as a hex string.
+     *
+     * @return integer form encoded as hex string
+     */
+    public String toIntegerString() {
+        return asInteger().toString(16);
     }
 
     @Override

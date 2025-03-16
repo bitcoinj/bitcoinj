@@ -33,8 +33,7 @@ public class DifficultyTest {
     @Parameters(method = "testVectors")
     public void compactToInteger(long compact, String expectedInteger) {
         Difficulty difficulty = Difficulty.ofCompact(compact);
-        BigInteger integer = difficulty.asInteger();
-        assertEquals(expectedInteger, integer.toString(16));
+        assertEquals(expectedInteger, difficulty.toIntegerString());
     }
 
     @Test
@@ -59,17 +58,17 @@ public class DifficultyTest {
 
     @Test
     public void exponentZero_mantissaIsShiftedOutOfExistance() {
-        assertEquals("0", Difficulty.ofCompact(0x00778899).asInteger().toString(16));
+        assertEquals("0", Difficulty.ofCompact(0x00778899).toIntegerString());
     }
 
     @Test
     public void exponentOne_mantissaIsLoosingTwoBytes() {
-        assertEquals("77", Difficulty.ofCompact(0x01778899).asInteger().toString(16));
+        assertEquals("77", Difficulty.ofCompact(0x01778899).toIntegerString());
     }
 
     @Test
     public void exponentTwo_mantissaIsLoosingOneByte() {
-        assertEquals("7788", Difficulty.ofCompact(0x02778899).asInteger().toString(16));
+        assertEquals("7788", Difficulty.ofCompact(0x02778899).toIntegerString());
     }
 
     @Test(expected = IllegalArgumentException.class)

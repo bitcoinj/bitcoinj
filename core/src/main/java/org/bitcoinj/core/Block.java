@@ -478,7 +478,7 @@ public class Block extends BaseMessage {
             // Proof of work check failed!
             if (throwException)
                 throw new VerificationException("Hash is higher than target: " + getHashAsString() + " vs "
-                        + difficultyTarget.asInteger().toString(16));
+                        + difficultyTarget.toIntegerString());
             else
                 return false;
         }
