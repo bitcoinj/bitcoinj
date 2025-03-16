@@ -22,6 +22,8 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
 
+import java.time.Duration;
+
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
  * {@link Block#solve()} by setting difficulty to the easiest possible.
@@ -36,7 +38,7 @@ public class UnitTestParams extends BitcoinNetworkParams {
         // This means that tests that run against UnitTestParams expect TEST network behavior.
         super(BitcoinNetwork.TESTNET);
 
-        targetTimespan = 200000000;  // 6 years. Just a very big number.
+        targetTimespan = Duration.ofSeconds(200000000);  // 6 years. Just a very big number.
         maxTarget = ByteUtils.decodeCompactBits(Block.EASIEST_DIFFICULTY_TARGET);
         interval = 10;
         subsidyDecreaseBlockCount = 100;

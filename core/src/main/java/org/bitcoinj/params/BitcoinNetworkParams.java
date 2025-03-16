@@ -49,11 +49,11 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      */
     public static final int REWARD_HALVING_INTERVAL = 210_000;
     /** Desired average time between consecutive blocks */
-    public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
+    public static final Duration TARGET_SPACING = Duration.ofMinutes(10); // 10 minutes per block.
     /** Desired average time for each difficulty cycle */
-    public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle.
+    public static final Duration TARGET_TIMESPAN = Duration.ofDays(14);   // 2 weeks per difficulty cycle.
     /** A difficulty cycle has this many blocks */
-    public static final int INTERVAL_BLOCKS = TARGET_TIMESPAN / TARGET_SPACING;
+    public static final int INTERVAL_BLOCKS = (int) (TARGET_TIMESPAN.getSeconds() / TARGET_SPACING.getSeconds());
 
     private static final Logger log = LoggerFactory.getLogger(BitcoinNetworkParams.class);
 
@@ -177,17 +177,19 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
                 "didn't arrive at a transition point");
 
         Block blockIntervalAgo = cursor.getHeader();
-        int timespan = (int) (prev.time().getEpochSecond() - blockIntervalAgo.time().getEpochSecond());
+        Duration timespan = Duration.between(blockIntervalAgo.time(), prev.time());
         // Limit the adjustment step.
-        final int targetTimespan = this.getTargetTimespan();
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4;
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4;
+        Duration targetTimespan = this.targetTimespan();
+        Duration minTargetTimespan = targetTimespan.dividedBy(4);
+        if (timespan.compareTo(minTargetTimespan) < 0)
+            timespan = minTargetTimespan;
+        Duration maxTargetTimespan = targetTimespan.multipliedBy(4);
+        if (timespan.compareTo(maxTargetTimespan) > 0)
+            timespan = maxTargetTimespan;
 
         BigInteger newTarget = ByteUtils.decodeCompactBits(prev.getDifficultyTarget());
-        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
+        newTarget = newTarget.multiply(BigInteger.valueOf(timespan.getSeconds()));
+        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan.getSeconds()));
 
         BigInteger maxTarget = this.getMaxTarget();
         if (newTarget.compareTo(maxTarget) > 0) {

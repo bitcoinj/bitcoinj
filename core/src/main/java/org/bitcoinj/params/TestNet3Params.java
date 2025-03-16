@@ -27,6 +27,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.time.Instant;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -43,7 +44,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
     private static final long GENESIS_NONCE = 414098458;
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
     /** Spacing for the 20-minute difficulty exception. */
-    private static final int TESTNET_DIFFICULTY_EXCEPTION_SPACING = TARGET_SPACING * 2;
+    private static final Duration TESTNET_DIFFICULTY_EXCEPTION_SPACING = TARGET_SPACING.multipliedBy(2);
 
     public TestNet3Params() {
         super(BitcoinNetwork.TESTNET);
@@ -105,13 +106,13 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // After 15th February 2012 the rules on the testnet change to avoid people running up the difficulty
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
-            long timeDelta = nextBlock.time().getEpochSecond() - storedPrev.getHeader().time().getEpochSecond();
+            Duration timeDelta = Duration.between(storedPrev.getHeader().time(), nextBlock.time());
             boolean isMinDiffBlock = nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget());
-            if (timeDelta < 0 && isMinDiffBlock) {
+            if (timeDelta.isNegative() && isMinDiffBlock) {
                 // There is an integer underflow bug in Bitcoin Core that means mindiff blocks are accepted when time
                 // goes backwards. Thus, skip any further checks.
                 return;
-            } else if (timeDelta > TESTNET_DIFFICULTY_EXCEPTION_SPACING){
+            } else if (timeDelta.compareTo(TESTNET_DIFFICULTY_EXCEPTION_SPACING) > 0) {
                 // 20 minute exception
                 checkDifficultyTarget(nextBlock, getMaxTarget());
             } else {

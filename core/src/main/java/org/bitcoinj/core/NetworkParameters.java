@@ -30,6 +30,7 @@ import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.utils.VersionTally;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -52,7 +53,7 @@ public abstract class NetworkParameters {
     protected int packetMagic;  // Indicates message origin network and is used to seek to the next message when stream state is unknown.
     protected int dumpedPrivateKeyHeader;
     protected int interval;
-    protected int targetTimespan;
+    protected Duration targetTimespan;
     protected int bip32HeaderP2PKHpub;
     protected int bip32HeaderP2PKHpriv;
     protected int bip32HeaderP2WPKHpub;
@@ -87,10 +88,10 @@ public abstract class NetworkParameters {
 
     /** @deprecated use {@link BitcoinNetworkParams#TARGET_TIMESPAN} */
     @Deprecated
-    public static final int TARGET_TIMESPAN = BitcoinNetworkParams.TARGET_TIMESPAN;
+    public static final int TARGET_TIMESPAN = (int) BitcoinNetworkParams.TARGET_TIMESPAN.getSeconds();
     /** @deprecated use {@link BitcoinNetworkParams#TARGET_SPACING} */
     @Deprecated
-    public static final int TARGET_SPACING = BitcoinNetworkParams.TARGET_SPACING;
+    public static final int TARGET_SPACING = (int) BitcoinNetworkParams.TARGET_SPACING.getSeconds();
     /** @deprecated use {@link BitcoinNetworkParams#INTERVAL_BLOCKS} */
     @Deprecated
     public static final int INTERVAL = BitcoinNetworkParams.INTERVAL_BLOCKS;
@@ -238,13 +239,20 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * How much time in seconds is supposed to pass between "interval" blocks. If the actual elapsed time is
+     * How much time is supposed to pass between "interval" blocks. If the actual elapsed time is
      * significantly different from this value, the network difficulty formula will produce a different value. Both
      * test and main Bitcoin networks use 2 weeks (1209600 seconds).
-     * @return target timespan in seconds
+     *
+     * @return target timespan
      */
-    public int getTargetTimespan() {
+    public Duration targetTimespan() {
         return targetTimespan;
+    }
+
+    /** @deprecated use {@link #targetTimespan()} */
+    @Deprecated
+    public int getTargetTimespan() {
+        return (int) (targetTimespan.getSeconds());
     }
 
     /**
