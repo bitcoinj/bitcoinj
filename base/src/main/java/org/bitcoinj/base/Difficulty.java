@@ -34,6 +34,9 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * base-256 version of the scientific notation, consisting of a 1 byte exponent and 3 bytes of mantissa. That form is
  * used for storing the value in this class as well, so when constructing from an integer value, be prepared to lose
  * precision.
+ * <p>
+ * This is a value-based class; use of identity-sensitive operations (including reference equality (==), identity
+ * hash code, or synchronization) on instances of Difficulty may have unpredictable results and should be avoided.
  */
 public class Difficulty implements Comparable<Difficulty> {
 
