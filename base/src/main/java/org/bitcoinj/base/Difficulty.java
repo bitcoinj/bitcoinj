@@ -146,16 +146,16 @@ public class Difficulty implements Comparable<Difficulty> {
     /**
      * Returns the compact form, encoded as a hex string.
      *
-     * @return compact form encoded as hex string
+     * @return compact form encoded in hex
      */
     public String toCompactString() {
         return Long.toHexString(compact);
     }
 
     /**
-     * Returns the integer form, encoded as a hex string.
+     * Returns the integer form, encoded as a hex string. Leading zero bytes are omitted.
      *
-     * @return integer form encoded as hex string
+     * @return integer form encoded in hex
      */
     public String toIntegerString() {
         return asInteger().toString(16);
