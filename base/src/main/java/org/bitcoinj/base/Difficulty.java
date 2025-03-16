@@ -148,8 +148,7 @@ public class Difficulty implements Comparable<Difficulty> {
      *
      * @return compact form encoded as hex string
      */
-    @Override
-    public String toString() {
+    public String toCompactString() {
         return Long.toHexString(compact);
     }
 
@@ -160,6 +159,11 @@ public class Difficulty implements Comparable<Difficulty> {
      */
     public String toIntegerString() {
         return asInteger().toString(16);
+    }
+
+    @Override
+    public String toString() {
+        return toCompactString();
     }
 
     @Override
