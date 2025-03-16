@@ -188,9 +188,9 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
             log.info("Difficulty transition traversal took {}", watch);
 
         Block blockIntervalAgo = cursor.getHeader();
-        long timespan = prev.time().getEpochSecond() - blockIntervalAgo.time().getEpochSecond();
+        int timespan = (int) (prev.time().getEpochSecond() - blockIntervalAgo.time().getEpochSecond());
         // Limit the adjustment step.
-        final long targetTimespan = this.getTargetTimespan();
+        final int targetTimespan = this.getTargetTimespan();
         if (timespan < targetTimespan / 4)
             timespan = targetTimespan / 4;
         if (timespan > targetTimespan * 4)
