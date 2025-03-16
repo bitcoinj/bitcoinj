@@ -144,7 +144,7 @@ public class Difficulty implements Comparable<Difficulty> {
     }
 
     /**
-     * Returns the compact form, encoded as a hex string.
+     * Returns the compact form, encoded as a 4-byte hex string.
      *
      * @return compact form encoded in hex
      */
