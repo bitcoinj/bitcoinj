@@ -110,9 +110,10 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // and then leaving, making it too hard to mine a block. On non-difficulty transition points, easy
             // blocks are allowed if there has been a span of 20 minutes without one.
             final long timeDelta = nextBlock.time().getEpochSecond() - storedPrev.getHeader().time().getEpochSecond();
-            // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
-            // goes backwards.
-            if (timeDelta >= 0 || !nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget())) {
+            if (timeDelta < 0 && nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget())) {
+                // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
+                // goes backwards.
+            } else {
                 BigInteger expectedTarget;
                 if (timeDelta > TESTNET_DIFFICULTY_EXCEPTION_SPACING) {
                     // 20 minute exception
