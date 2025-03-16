@@ -20,7 +20,6 @@ package org.bitcoinj.params;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
@@ -44,7 +43,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
     private static final long GENESIS_NONCE = 414098458;
     private static final Sha256Hash GENESIS_HASH = Sha256Hash.wrap("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
     /** Spacing for the 20-minute difficulty exception. */
-    private static final int TESTNET_DIFFICULTY_EXCEPTION_SPACING = NetworkParameters.TARGET_SPACING * 2;
+    private static final int TESTNET_DIFFICULTY_EXCEPTION_SPACING = TARGET_SPACING * 2;
 
     public TestNet3Params() {
         super(BitcoinNetwork.TESTNET);

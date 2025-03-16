@@ -48,6 +48,12 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      * Block reward halving interval (number of blocks)
      */
     public static final int REWARD_HALVING_INTERVAL = 210_000;
+    /** Desired average time between consecutive blocks */
+    public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
+    /** Desired average time for each difficulty cycle */
+    public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle.
+    /** A difficulty cycle has this many blocks */
+    public static final int INTERVAL_BLOCKS = TARGET_TIMESPAN / TARGET_SPACING;
 
     private static final Logger log = LoggerFactory.getLogger(BitcoinNetworkParams.class);
 
@@ -59,7 +65,7 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      */
     public BitcoinNetworkParams(BitcoinNetwork network) {
         super(network);
-        interval = INTERVAL;
+        interval = INTERVAL_BLOCKS;
         subsidyDecreaseBlockCount = REWARD_HALVING_INTERVAL;
     }
 

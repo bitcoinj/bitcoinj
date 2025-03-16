@@ -85,10 +85,16 @@ public abstract class NetworkParameters {
         this.id = network.id();
     }
 
-    public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
-    public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
-    public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
-    
+    /** @deprecated use {@link BitcoinNetworkParams#TARGET_TIMESPAN} */
+    @Deprecated
+    public static final int TARGET_TIMESPAN = BitcoinNetworkParams.TARGET_TIMESPAN;
+    /** @deprecated use {@link BitcoinNetworkParams#TARGET_SPACING} */
+    @Deprecated
+    public static final int TARGET_SPACING = BitcoinNetworkParams.TARGET_SPACING;
+    /** @deprecated use {@link BitcoinNetworkParams#INTERVAL_BLOCKS} */
+    @Deprecated
+    public static final int INTERVAL = BitcoinNetworkParams.INTERVAL_BLOCKS;
+
     /**
      * Blocks with a timestamp after this should enforce BIP 16, aka "Pay to script hash". This BIP changed the
      * network rules in a soft-forking manner, that is, blocks that don't follow the rules are accepted but not
