@@ -115,12 +115,12 @@ public class TestNet3Params extends BitcoinNetworkParams {
                 // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
                 // goes backwards.
                 return;
-            } else if (timeDelta <= TESTNET_DIFFICULTY_EXCEPTION_SPACING) {
-                Block prevBlock = backwardsSkipMindiffBlocks(storedPrev, blockStore);
-                expectedTarget = prevBlock.getDifficultyTargetAsInteger();
-            } else {
+            } else if (timeDelta > TESTNET_DIFFICULTY_EXCEPTION_SPACING){
                 // 20 minute exception
                 expectedTarget = getMaxTarget();
+            } else {
+                // If no special rule applies, expect the last non-mindiff difficulty.
+                expectedTarget = backwardsSkipMindiffBlocks(storedPrev, blockStore).getDifficultyTargetAsInteger();
             }
             BigInteger newTarget = nextBlock.getDifficultyTargetAsInteger();
             if (!newTarget.equals(expectedTarget))
