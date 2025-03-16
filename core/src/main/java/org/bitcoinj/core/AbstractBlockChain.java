@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.listeners.NewBestBlockListener;
@@ -493,9 +494,9 @@ public abstract class AbstractBlockChain {
                 return false;
             }
 
-            BigInteger target = block.getDifficultyTargetAsInteger();
-            if (target.signum() <= 0 || target.compareTo(params.maxTarget) > 0)
-                throw new VerificationException("Difficulty target is out of range: " + target.toString());
+            Difficulty target = block.difficultyTarget();
+            if (target.compareTo(params.maxTarget) > 0)
+                throw new VerificationException("Difficulty target is out of range: " + target);
 
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
             if (shouldVerifyTransactions() && block.getTransactions() == null)
