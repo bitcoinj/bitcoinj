@@ -111,7 +111,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
             // blocks are allowed if there has been a span of 20 minutes without one.
             final long timeDelta = nextBlock.time().getEpochSecond() - storedPrev.getHeader().time().getEpochSecond();
             if (timeDelta < 0 && nextBlock.getDifficultyTargetAsInteger().equals(getMaxTarget())) {
-                // There is an integer underflow bug in bitcoin-qt that means mindiff blocks are accepted when time
+                // There is an integer underflow bug in Bitcoin Core that means mindiff blocks are accepted when time
                 // goes backwards.
             } else {
                 BigInteger expectedTarget;
