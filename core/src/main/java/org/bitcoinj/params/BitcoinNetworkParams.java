@@ -18,28 +18,16 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.DifficultyTransitions;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalUnit;
-
-import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Parameters for Bitcoin-like networks.
@@ -129,64 +117,10 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
         return Coin.FIFTY_COINS.shiftRight(height / getSubsidyDecreaseBlockCount());
     }
 
-    /**
-     * Checks if we are at a difficulty transition point.
-     * @param previousHeight The height of the previous stored block
-     * @return If this is a difficulty transition point
-     */
+    /** @deprecated use {@link DifficultyTransitions#isDifficultyTransitionPoint(int)} */
+    @Deprecated
     public final boolean isDifficultyTransitionPoint(final int previousHeight) {
-        return ((previousHeight + 1) % this.getInterval()) == 0;
-    }
-
-    @Override
-    public void checkDifficultyTransitions(final StoredBlock storedPrev, final Block nextBlock,
-        final BlockStore blockStore) throws VerificationException, BlockStoreException {
-        final Block prev = storedPrev.getHeader();
-
-        // Is this supposed to be a difficulty transition point?
-        if (!isDifficultyTransitionPoint(storedPrev.getHeight())) {
-
-            // No ... so check the difficulty didn't actually change.
-            if (!nextBlock.difficultyTarget().equals(prev.difficultyTarget()))
-                throw new VerificationException("Unexpected change in difficulty at height " + storedPrev.getHeight() +
-                        ": " + nextBlock.difficultyTarget() + " vs " +
-                        prev.difficultyTarget());
-            return;
-        }
-
-        // We need to find a block far back in the chain. It's OK that this is expensive because it only occurs every
-        // two weeks after the initial block chain download.
-        Sha256Hash hash = prev.getHash();
-        StoredBlock cursor = null;
-        final int interval = this.getInterval();
-        for (int i = 0; i < interval; i++) {
-            cursor = blockStore.get(hash);
-            if (cursor == null) {
-                // This should never happen. If it does, it means we are following an incorrect or busted chain.
-                throw new VerificationException(
-                        "Difficulty transition point but we did not find a way back to the last transition point. Not found: " + hash);
-            }
-            hash = cursor.getHeader().prevHash();
-        }
-        checkState(cursor != null && isDifficultyTransitionPoint(cursor.getHeight() - 1), () ->
-                "didn't arrive at a transition point");
-
-        Block blockIntervalAgo = cursor.getHeader();
-        int timespan = (int) (prev.time().getEpochSecond() - blockIntervalAgo.time().getEpochSecond());
-        // Limit the adjustment step.
-        final int targetTimespan = this.getTargetTimespan();
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4;
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4;
-
-        Difficulty newTarget = prev.difficultyTarget().adjust(
-                Duration.ofSeconds(timespan), Duration.ofSeconds(targetTimespan), this.maxTarget);
-
-        Difficulty receivedTarget = nextBlock.difficultyTarget();
-        if (!newTarget.equals(receivedTarget))
-            throw new VerificationException("Network provided difficulty bits do not match what was calculated: " +
-                    newTarget + " vs " + receivedTarget);
+        return DifficultyTransitions.of((BitcoinNetwork) network).isDifficultyTransitionPoint(previousHeight);
     }
 
     @Override
