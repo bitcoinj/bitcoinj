@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
@@ -129,6 +130,7 @@ public abstract class AbstractBlockChain {
 
     /** network parameters for this chain */
     protected final NetworkParameters params;
+    private final DifficultyTransitions difficultyTransitions;
     private final CopyOnWriteArrayList<ListenerRegistration<NewBestBlockListener>> newBestBlockListeners;
     private final CopyOnWriteArrayList<ListenerRegistration<ReorganizeListener>> reorganizeListeners;
     private final CopyOnWriteArrayList<ListenerRegistration<TransactionReceivedInBlockListener>> transactionReceivedListeners;
@@ -188,6 +190,7 @@ public abstract class AbstractBlockChain {
         chainHead = blockStore.getChainHead();
         log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
         this.params = params;
+        this.difficultyTransitions = DifficultyTransitions.of((BitcoinNetwork) params.network());
 
         this.newBestBlockListeners = new CopyOnWriteArrayList<>();
         this.reorganizeListeners = new CopyOnWriteArrayList<>();
@@ -549,7 +552,7 @@ public abstract class AbstractBlockChain {
             } else {
                 checkState(lock.isHeldByCurrentThread());
                 // It connects to somewhere on the chain. Not necessarily the top of the best known chain.
-                params.checkDifficultyTransitions(storedPrev, block, blockStore);
+                difficultyTransitions.checkDifficultyTransitions(storedPrev, block, blockStore);
                 connectBlock(block, storedPrev, shouldVerifyTransactions(), filteredTxHashList, filteredTxn);
                 if (tryConnecting)
                     tryConnectingOrphans();
