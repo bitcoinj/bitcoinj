@@ -25,8 +25,6 @@ import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.utils.VersionTally;
 
@@ -141,17 +139,6 @@ public abstract class NetworkParameters {
     public int getSpendableCoinbaseDepth() {
         return spendableCoinbaseDepth;
     }
-
-    /**
-     * Throws an exception if the block's difficulty is not correct.
-     *
-     * @param storedPrev previous stored block
-     * @param next proposed block
-     * @param blockStore active BlockStore
-     * @throws VerificationException if the block's difficulty is not correct.
-     * @throws BlockStoreException if an error occurred accessing the BlockStore
-     */
-    public abstract void checkDifficultyTransitions(StoredBlock storedPrev, Block next, final BlockStore blockStore) throws VerificationException, BlockStoreException;
 
     /**
      * Validate the hash for a given block height against checkpoints
