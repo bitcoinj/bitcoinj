@@ -425,21 +425,38 @@ public class ScriptBuilder {
         return builder.build();
     }
 
-    /** Creates a scriptPubKey that encodes payment to the given raw public key. */
+    /**
+     * Creates a scriptPubKey that encodes a payment to the given raw public key. The pubkey can be arbitrary data and
+     * may be invalid.
+     *
+     * This is a special purpose method. For normal P2PK use, it is recommended to construct a pubkey with
+     * {@link ECKey#fromPublicOnly(byte[])} and use that on {@link #createP2PKOutputScript(ECKey)}.
+     *
+     * @param pubKey arbitrary pubkey bytes to pay to
+     * @return scriptPubKey that encodes the P2PK payment
+     */
     public static Script createP2PKOutputScript(byte[] pubKey) {
         return new ScriptBuilder().data(pubKey).op(OP_CHECKSIG).build();
     }
 
-    /** Creates a scriptPubKey that encodes payment to the given raw public key. */
+    /**
+     * Creates a scriptPubKey that encodes a payment to the given public key.
+     *
+     * @param pubKey pubkey to pay to
+     * @return scriptPubKey that encodes the P2PK payment
+     */
     public static Script createP2PKOutputScript(ECKey pubKey) {
         return createP2PKOutputScript(pubKey.getPubKey());
     }
 
     /**
-     * Creates a scriptPubKey that sends to the given public key hash.
+     * Creates a scriptPubKey that encodes a payment to the given public key hash.
+     *
+     * @param pubKeyHash 20 hash bytes of the pubkey to pay to
+     * @return scriptPubKey that encodes the P2PKH payment
      */
-    public static Script createP2PKHOutputScript(byte[] hash) {
-        return new ScriptBuilder().p2pkhOutputScript(hash).build();
+    public static Script createP2PKHOutputScript(byte[] pubKeyHash) {
+        return new ScriptBuilder().p2pkhOutputScript(pubKeyHash).build();
     }
 
     private ScriptBuilder p2pkhOutputScript(byte[] hash) {
@@ -453,39 +470,49 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that sends to the given public key.
+     * Creates a scriptPubKey that encodes a payment to a hash of a given public key.
+     *
+     * @param pubKey pubkey whose hash will be paid to
+     * @return scriptPubKey that encodes the P2PKH payment
      */
-    public static Script createP2PKHOutputScript(ECKey key) {
-        checkArgument(key.isCompressed());
-        return createP2PKHOutputScript(key.getPubKeyHash());
+    public static Script createP2PKHOutputScript(ECKey pubKey) {
+        checkArgument(pubKey.isCompressed());
+        return createP2PKHOutputScript(pubKey.getPubKeyHash());
     }
 
     /**
-     * Creates a segwit scriptPubKey that sends to the given public key hash.
+     * Creates a scriptPubKey that encodes a segwit payment to the given public key hash.
+     *
+     * @param pubKeyHash 20 hash bytes of the pubkey to pay to
+     * @return scriptPubKey that encodes the P2WPKH payment
      */
-    public static Script createP2WPKHOutputScript(byte[] hash) {
-        checkArgument(hash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH);
-        return new ScriptBuilder().smallNum(0).data(hash).build();
+    public static Script createP2WPKHOutputScript(byte[] pubKeyHash) {
+        checkArgument(pubKeyHash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH);
+        return new ScriptBuilder().smallNum(0).data(pubKeyHash).build();
     }
 
     /**
-     * Creates a segwit scriptPubKey that sends to the given public key.
+     * Creates a scriptPubKey that encodes a segwit payment to the hash of a given public key. In accordance with the
+     * segwit specification, the public key must be compressed.
+     *
+     * @param pubKey pubkey whose hash will be paid to
+     * @return scriptPubKey that encodes the P2WPKH payment
      */
-    public static Script createP2WPKHOutputScript(ECKey key) {
-        checkArgument(key.isCompressed());
-        return createP2WPKHOutputScript(key.getPubKeyHash());
+    public static Script createP2WPKHOutputScript(ECKey pubKey) {
+        checkArgument(pubKey.isCompressed());
+        return createP2WPKHOutputScript(pubKey.getPubKeyHash());
     }
 
     /**
-     * Creates a scriptPubKey that sends to the given script hash. Read
+     * Creates a scriptPubKey that encodes a payment to the given script hash. Read
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
      * kind of script.
      *
-     * @param hash The hash of the redeem script
-     * @return an output script that sends to the redeem script
+     * @param redeemScriptHash 20 hash bytes of the redeem script to pay to
+     * @return scriptPubKey that encodes the P2SH payment
      */
-    public static Script createP2SHOutputScript(byte[] hash) {
-        return new ScriptBuilder().p2shOutputScript(hash).build();
+    public static Script createP2SHOutputScript(byte[] redeemScriptHash) {
+        return new ScriptBuilder().p2shOutputScript(redeemScriptHash).build();
     }
 
     private ScriptBuilder p2shOutputScript(byte[] hash) {
@@ -497,10 +524,10 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey for a given redeem script.
+     * Creates a scriptPubKey that encodes a payment to a hash of the given redeem script.
      *
-     * @param redeemScript The redeem script
-     * @return an output script that sends to the redeem script
+     * @param redeemScript redeem script whose hash will be paid to
+     * @return scriptPubKey that encodes the P2SH payment
      */
     public static Script createP2SHOutputScript(Script redeemScript) {
         byte[] hash = CryptoUtils.sha256hash160(redeemScript.program());
@@ -508,15 +535,21 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a segwit scriptPubKey that sends to the given script hash.
+     * Creates a scriptPubKey that encodes a segwit payment to the given script hash.
+     *
+     * @param redeemScriptHash 32 hash bytes of the redeem script to pay to
+     * @return scriptPubKey that encodes the P2WSH payment
      */
-    public static Script createP2WSHOutputScript(byte[] hash) {
-        checkArgument(hash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH);
-        return new ScriptBuilder().smallNum(0).data(hash).build();
+    public static Script createP2WSHOutputScript(byte[] redeemScriptHash) {
+        checkArgument(redeemScriptHash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH);
+        return new ScriptBuilder().smallNum(0).data(redeemScriptHash).build();
     }
 
     /**
-     * Creates a segwit scriptPubKey for the given redeem script.
+     * Creates a scriptPubKey that encodes a segwit payment to a hash of the given redeem script.
+     *
+     * @param redeemScript redeem script whose hash will be paid to
+     * @return scriptPubKey that encodes the P2WSH payment
      */
     public static Script createP2WSHOutputScript(Script redeemScript) {
         byte[] hash = Sha256Hash.hash(redeemScript.program());
