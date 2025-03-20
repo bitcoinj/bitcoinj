@@ -30,5 +30,6 @@ module wallettemplate {
     exports wallettemplate;
     exports org.bitcoinj.walletfx.controls;
     opens wallettemplate to javafx.fxml;
+    opens org.bitcoinj.walletfx.utils to javafx.fxml;
     opens org.bitcoinj.walletfx.controls to javafx.fxml;
 }
