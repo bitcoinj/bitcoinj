@@ -38,14 +38,14 @@ import java.util.Objects;
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class FilteredBlock extends BaseMessage {
-    private Block header;
+    private final Block header;
 
-    private PartialMerkleTree merkleTree;
+    private final PartialMerkleTree merkleTree;
     private List<Sha256Hash> cachedTransactionHashes = null;
     
     // A set of transactions whose hashes are a subset of getTransactionHashes()
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions
-    private Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<>();
+    private final Map<Sha256Hash, Transaction> associatedTransactions = new HashMap<>();
 
     /**
      * Deserialize this message from a given payload.
