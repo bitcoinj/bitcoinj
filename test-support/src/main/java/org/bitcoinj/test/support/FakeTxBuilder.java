@@ -15,24 +15,19 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.testing;
+package org.bitcoinj.test.support;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
-import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.ProtocolException;
-import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -41,8 +36,6 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Random;
@@ -52,11 +45,8 @@ import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
- * Methods for building fake transactions for unit tests. Since these methods are currently used both in the `bitcoinj-core`
- * unit tests and in the `integration-test` subproject, they are (for now) included in the `bitcoinj-core` JAR. They should
- * not be considered part of the API.
+ * Methods for building fake transactions for unit tests.
  */
-@VisibleForTesting
 public class FakeTxBuilder {
     /** Create a fake transaction, without change. */
     public static Transaction createFakeTx(Network network) {

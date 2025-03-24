@@ -28,7 +28,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.test.support.FakeTxBuilder;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Before;
