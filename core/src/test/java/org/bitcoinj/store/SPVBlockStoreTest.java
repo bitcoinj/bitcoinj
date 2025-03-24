@@ -25,6 +25,7 @@ import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.TestBlocks;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -79,7 +80,7 @@ public class SPVBlockStoreTest {
         assertEquals(0, genesis.getHeight());
 
         // Build a new block.
-        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
+        StoredBlock b1 = genesis.build(TestBlocks.createNextBlock(genesis.getHeader(), to).cloneAsHeader());
         store.put(b1);
         store.setChainHead(b1);
         store.close();
@@ -128,9 +129,9 @@ public class SPVBlockStoreTest {
         Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
         final StoredBlock block0 = store.getChainHead();
-        final StoredBlock block1 = block0.build(block0.getHeader().createNextBlock(to).cloneAsHeader());
+        final StoredBlock block1 = block0.build(TestBlocks.createNextBlock(block0.getHeader(), to).cloneAsHeader());
         store.put(block1);
-        final StoredBlock block2 = block1.build(block1.getHeader().createNextBlock(to).cloneAsHeader());
+        final StoredBlock block2 = block1.build(TestBlocks.createNextBlock(block1.getHeader(), to).cloneAsHeader());
         store.put(block2);
         store.setChainHead(block2);
         store.close();
@@ -183,7 +184,7 @@ public class SPVBlockStoreTest {
         // Build a new block.
         Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         StoredBlock genesis = store.getChainHead();
-        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
+        StoredBlock b1 = genesis.build(TestBlocks.createNextBlock(genesis.getHeader(), to).cloneAsHeader());
         store.put(b1);
         store.setChainHead(b1);
         assertEquals(b1.getHeader().getHash(), store.getChainHead().getHeader().getHash());
