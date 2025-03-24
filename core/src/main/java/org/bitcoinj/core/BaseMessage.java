@@ -36,7 +36,7 @@ public abstract class BaseMessage implements Message {
      * @return serialized data in Bitcoin protocol format
      */
     @Override
-    public final byte[] serialize() {
+    public byte[] serialize() {
         // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new ByteArrayOutputStream(100); // initial size just a guess
         try {
