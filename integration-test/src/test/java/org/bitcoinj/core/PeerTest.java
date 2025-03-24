@@ -25,6 +25,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithNetworkConnections;
 import org.bitcoinj.utils.Threading;
@@ -59,7 +60,7 @@ import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
-import static org.bitcoinj.testing.FakeTxBuilder.makeSolvedTestBlock;
+import static org.bitcoinj.testing.FakeTxBuilder.makeTestBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.roundTripTransaction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -128,10 +129,10 @@ public class PeerTest extends TestWithNetworkConnections {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(b1);
-        Block b3 = makeSolvedTestBlock(b2);
-        Block b4 = makeSolvedTestBlock(b3);
-        Block b5 = makeSolvedTestBlock(b4);
+        Block b2 = makeTestBlock(b1);
+        Block b3 = makeTestBlock(b2);
+        Block b4 = makeTestBlock(b3);
+        Block b5 = makeTestBlock(b4);
 
         connect();
         
@@ -169,7 +170,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // timewaste. The getblocks message that would have been generated is set to be the same as the previous
         // because we walk backwards down the orphan chain and then discover we already asked for those blocks, so
         // nothing is done.
-        Block b6 = makeSolvedTestBlock(b5);
+        Block b6 = makeTestBlock(b5);
         inv = InventoryMessage.ofBlocks(b6);
         inbound(writeTarget, inv);
         getdata = (GetDataMessage)outbound(writeTarget);
@@ -199,8 +200,8 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         // Make a missing block.
-        Block b2 = makeSolvedTestBlock(b1);
-        Block b3 = makeSolvedTestBlock(b2);
+        Block b2 = makeTestBlock(b1);
+        Block b3 = makeTestBlock(b2);
         inbound(writeTarget, b3);
         InventoryMessage inv = InventoryMessage.ofBlocks(b3);
         inbound(writeTarget, inv);
@@ -226,7 +227,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Make a missing block that we receive.
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(b1);
+        Block b2 = makeTestBlock(b1);
 
         // Receive an inv.
         InventoryMessage inv = InventoryMessage.ofBlocks(b2);
@@ -297,7 +298,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        final Block b2 = makeSolvedTestBlock(b1);
+        final Block b2 = makeTestBlock(b1);
         // Receive notification of a new block.
         final InventoryMessage inv = InventoryMessage.ofBlocks(b2);
 
@@ -357,7 +358,7 @@ public class PeerTest extends TestWithNetworkConnections {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(b1);
+        Block b2 = makeTestBlock(b1);
         blockChain.add(b2);
 
         connect();
@@ -385,8 +386,8 @@ public class PeerTest extends TestWithNetworkConnections {
 
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(b1);
-        Block b3 = makeSolvedTestBlock(b2);
+        Block b2 = makeTestBlock(b1);
+        Block b3 = makeTestBlock(b2);
 
         // Request the block.
         Future<Block> resultFuture = peer.getBlock(b3.getHash());
@@ -408,7 +409,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        Block b2 = makeSolvedTestBlock(b1);
+        Block b2 = makeTestBlock(b1);
         Transaction t = new Transaction();
         t.addInput(b1.getTransactions().get(0).getOutput(0));
         t.addOutput(new TransactionOutput(t, Coin.ZERO, new byte[Block.MAX_BLOCK_SIZE - 1000]));
@@ -437,15 +438,15 @@ public class PeerTest extends TestWithNetworkConnections {
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         TimeUtils.rollMockClock(Duration.ofMinutes(10));  // 10 minutes later.
-        Block b2 = makeSolvedTestBlock(b1);
+        Block b2 = makeTestBlock(b1);
         b2.setTime(TimeUtils.currentTime());
         b2.solve();
         TimeUtils.rollMockClock(Duration.ofMinutes(10));  // 10 minutes later.
-        Block b3 = makeSolvedTestBlock(b2);
+        Block b3 = makeTestBlock(b2);
         b3.setTime(TimeUtils.currentTime());
         b3.solve();
         TimeUtils.rollMockClock(Duration.ofMinutes(10));
-        Block b4 = makeSolvedTestBlock(b3);
+        Block b4 = makeTestBlock(b3);
         b4.setTime(TimeUtils.currentTime());
         b4.solve();
 

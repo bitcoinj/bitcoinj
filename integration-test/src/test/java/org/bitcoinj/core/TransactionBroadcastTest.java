@@ -164,7 +164,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         connectPeer(2);
 
         // Send ourselves a bit of money.
-        Block b1 = FakeTxBuilder.makeSolvedTestBlock(blockStore, address);
+        Block b1 = FakeTxBuilder.makeTestBlock(blockStore, address);
         inbound(p1, b1);
         assertNull(outbound(p1));
         assertEquals(FIFTY_COINS, wallet.getBalance());
@@ -203,7 +203,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         InboundMessageQueuer p2 = connectPeer(2);
 
         // Send ourselves a bit of money.
-        Block b1 = FakeTxBuilder.makeSolvedTestBlock(blockStore, address);
+        Block b1 = FakeTxBuilder.makeTestBlock(blockStore, address);
         inbound(p1, b1);
         pingAndWait(p1);
         assertNull(outbound(p1));

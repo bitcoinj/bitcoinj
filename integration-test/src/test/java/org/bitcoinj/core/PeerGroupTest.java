@@ -312,8 +312,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // are downloading the chain.
         Block b1 = FakeTxBuilder.createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
-        Block b2 = FakeTxBuilder.makeSolvedTestBlock(b1);
-        Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
+        Block b2 = FakeTxBuilder.makeTestBlock(b1);
+        Block b3 = FakeTxBuilder.makeTestBlock(b2);
 
         // Peer 1 and 2 receives an inv advertising a newly solved block.
         InventoryMessage inv = InventoryMessage.ofBlocks(b3);
@@ -345,8 +345,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // Set up a little block chain.
         Block b1 = FakeTxBuilder.createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS).block;
-        Block b2 = FakeTxBuilder.makeSolvedTestBlock(b1);
-        Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
+        Block b2 = FakeTxBuilder.makeTestBlock(b1);
+        Block b3 = FakeTxBuilder.makeTestBlock(b2);
 
         // Expect a zero hash getblocks on p1. This is how the process starts.
         peerGroup.startBlockChainDownload(new DownloadProgressTracker());
@@ -811,7 +811,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Block prev = blockStore.getChainHead().getHeader();
         for (ECKey key1 : keys) {
             Address addr = key1.toAddress(ScriptType.P2PKH, UNITTEST.network());
-            Block next = FakeTxBuilder.makeSolvedTestBlock(prev, FakeTxBuilder.createFakeTx(UNITTEST.network(), Coin.FIFTY_COINS, addr));
+            Block next = FakeTxBuilder.makeTestBlock(prev, FakeTxBuilder.createFakeTx(UNITTEST.network(), Coin.FIFTY_COINS, addr));
+            next.solve();
             expectedBalance = expectedBalance.add(next.getTransactions().get(1).getOutput(0).getValue());
             blocks.add(next);
             prev = next;

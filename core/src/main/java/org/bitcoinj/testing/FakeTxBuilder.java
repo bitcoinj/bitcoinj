@@ -257,13 +257,13 @@ public class FakeTxBuilder {
         }
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, long version,
                                             Instant time, Transaction... transactions) {
         return createFakeBlock(blockStore, version, time, 0, transactions);
     }
 
-    /** Emulates receiving a valid block */
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, long version,
                                             Instant time, int height, Transaction... transactions) {
         try {
@@ -274,7 +274,6 @@ public class FakeTxBuilder {
                 tx.getConfidence().maybeSetSourceToNetwork();
                 b.addTransaction(tx);
             }
-            b.solve();
             BlockPair pair = new BlockPair(b, previousStoredBlock.build(b));
             blockStore.put(pair.storedBlock);
             blockStore.setChainHead(pair.storedBlock);
@@ -284,11 +283,12 @@ public class FakeTxBuilder {
         }
     }
 
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, StoredBlock previousStoredBlock, int height, Transaction... transactions) {
         return createFakeBlock(blockStore, previousStoredBlock, Block.BLOCK_VERSION_BIP66, TimeUtils.currentTime(), height, transactions);
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, long version, Instant time, int height, Transaction... transactions) {
         try {
             return createFakeBlock(blockStore, blockStore.getChainHead(), version, time, height, transactions);
@@ -297,34 +297,34 @@ public class FakeTxBuilder {
         }
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, int height,
                                             Transaction... transactions) {
         return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTime(), height, transactions);
     }
 
-    /** Emulates receiving a valid block that builds on top of the chain. */
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
     public static BlockPair createFakeBlock(BlockStore blockStore, Transaction... transactions) {
         return createFakeBlock(blockStore, Block.BLOCK_VERSION_GENESIS, TimeUtils.currentTime(), 0, transactions);
     }
 
-    public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
-        Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo);
-        b.solve();
-        return b;
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
+    public static Block makeTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
+        return blockStore.getChainHead().getHeader().createNextBlock(coinsTo);
     }
 
-    public static Block makeSolvedTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
-        return makeSolvedTestBlock(prev, null, transactions);
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
+    public static Block makeTestBlock(Block prev, Transaction... transactions) throws BlockStoreException {
+        return makeTestBlock(prev, null, transactions);
     }
 
-    public static Block makeSolvedTestBlock(Block prev, @Nullable Address to, Transaction... transactions) throws BlockStoreException {
+    /** Creates an unsolved, but otherwise valid block that builds on top of the chain. */
+    public static Block makeTestBlock(Block prev, @Nullable Address to, Transaction... transactions) throws BlockStoreException {
         Block b = prev.createNextBlock(to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);
         }
-        b.solve();
         return b;
     }
 

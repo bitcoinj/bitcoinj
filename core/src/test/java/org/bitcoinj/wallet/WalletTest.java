@@ -114,7 +114,7 @@ import static org.bitcoinj.base.Coin.valueOf;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTxWithoutChangeAddress;
-import static org.bitcoinj.testing.FakeTxBuilder.makeSolvedTestBlock;
+import static org.bitcoinj.testing.FakeTxBuilder.makeTestBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.roundTripTransaction;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
@@ -1493,10 +1493,10 @@ public class WalletTest extends TestWithWallet {
         Transaction t3 = createFakeTx(TESTNET, v3, myAddress);
 
         Block genesis = blockStore.getChainHead().getHeader();
-        Block b10 = makeSolvedTestBlock(genesis, t1);
-        Block b11 = makeSolvedTestBlock(genesis, t2);
-        Block b2 = makeSolvedTestBlock(b10, t3);
-        Block b3 = makeSolvedTestBlock(b2);
+        Block b10 = FakeTxBuilder.makeTestBlock(genesis, t1);
+        Block b11 = FakeTxBuilder.makeTestBlock(genesis, t2);
+        Block b2 = FakeTxBuilder.makeTestBlock(b10, t3);
+        Block b3 = FakeTxBuilder.makeTestBlock(b2);
 
         // Receive a block on the best chain - this should set the last block seen hash.
         chain.add(b10);
@@ -2607,7 +2607,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void transactionGetFeeTest() throws Exception {
         // Prepare wallet to spend
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        StoredBlock block = new StoredBlock(FakeTxBuilder.makeTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx = createFakeTx(TESTNET, COIN, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
@@ -2624,7 +2624,7 @@ public class WalletTest extends TestWithWallet {
         Address mySegwitAddress = mySegwitWallet.freshReceiveAddress(ScriptType.P2WPKH);
 
         // Prepare wallet to spend
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_SEGWIT_ADDRESS), BigInteger.ONE, 1);
+        StoredBlock block = new StoredBlock(FakeTxBuilder.makeTestBlock(blockStore, OTHER_SEGWIT_ADDRESS), BigInteger.ONE, 1);
         Transaction tx = createFakeTx(TESTNET, COIN, mySegwitAddress);
         mySegwitWallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
@@ -2688,7 +2688,7 @@ public class WalletTest extends TestWithWallet {
         // Tests calling completeTx with a SendRequest that already has a few inputs in it
 
         // Generate a few outputs to us
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        StoredBlock block = new StoredBlock(FakeTxBuilder.makeTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx1 = createFakeTx(TESTNET, COIN, myAddress);
         wallet.receiveFromBlock(tx1, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         Transaction tx2 = createFakeTx(TESTNET, COIN, myAddress);
@@ -2746,7 +2746,7 @@ public class WalletTest extends TestWithWallet {
         // Test calling completeTx with a SendRequest that has an unconnected input (i.e. an input with an unconnected outpoint)
 
         // Generate an output to us
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        StoredBlock block = new StoredBlock(FakeTxBuilder.makeTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx = createFakeTx(TESTNET, COIN, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
 
@@ -2796,7 +2796,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void testEmptyRandomWallet() throws Exception {
         // Add a random set of outputs
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        StoredBlock block = new StoredBlock(FakeTxBuilder.makeTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Random rng = new Random();
         for (int i = 0; i < rng.nextInt(100) + 1; i++) {
             Transaction tx = createFakeTx(TESTNET, Coin.valueOf(rng.nextInt((int) COIN.value)), myAddress);
@@ -2811,7 +2811,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void testEmptyWallet() throws Exception {
         // Add exactly 0.01
-        StoredBlock block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
+        StoredBlock block = new StoredBlock(FakeTxBuilder.makeTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 1);
         Transaction tx = createFakeTx(TESTNET, CENT, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         SendRequest request = SendRequest.emptyWallet(OTHER_ADDRESS);
@@ -2823,7 +2823,7 @@ public class WalletTest extends TestWithWallet {
 
         // Add 1 confirmed cent and 1 unconfirmed cent. Verify only one cent is emptied because of the coin selection
         // policies that are in use by default.
-        block = new StoredBlock(makeSolvedTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 2);
+        block = new StoredBlock(FakeTxBuilder.makeTestBlock(blockStore, OTHER_ADDRESS), BigInteger.ONE, 2);
         tx = createFakeTx(TESTNET, CENT, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
         tx = createFakeTx(TESTNET, CENT, myAddress);

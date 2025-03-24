@@ -514,7 +514,7 @@ public class ChainSplitTest {
 
         // Receive some money to the wallet.
         Transaction t1 = FakeTxBuilder.createFakeTx(TESTNET.network(), COIN, coinsTo);
-        final Block b1 = FakeTxBuilder.makeSolvedTestBlock(TESTNET.getGenesisBlock(), t1);
+        final Block b1 = FakeTxBuilder.makeTestBlock(TESTNET.getGenesisBlock(), t1);
         chain.add(b1);
 
         // Send a couple of payments one after the other (so the second depends on the change output of the first).
@@ -522,7 +522,7 @@ public class ChainSplitTest {
         wallet.commitTx(t2);
         Transaction t3 = Objects.requireNonNull(wallet.createSend(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), CENT, true));
         wallet.commitTx(t3);
-        chain.add(FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3));
+        chain.add(FakeTxBuilder.makeTestBlock(b1, t2, t3));
 
         final Coin coins0point98 = COIN.subtract(CENT).subtract(CENT);
         assertEquals(coins0point98, wallet.getBalance());
@@ -531,8 +531,8 @@ public class ChainSplitTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         wallet.saveToFileStream(bos);
         wallet = Wallet.loadFromFileStream(new ByteArrayInputStream(bos.toByteArray()));
-        final Block b2 = FakeTxBuilder.makeSolvedTestBlock(b1, t2, t3);
-        final Block b3 = FakeTxBuilder.makeSolvedTestBlock(b2);
+        final Block b2 = FakeTxBuilder.makeTestBlock(b1, t2, t3);
+        final Block b3 = FakeTxBuilder.makeTestBlock(b2);
         chain.add(b2);
         chain.add(b3);
 
