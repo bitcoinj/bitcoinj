@@ -127,7 +127,6 @@ public class ChainSplitTest {
         final Transaction t = b7.getTransactions().get(1);
         final Sha256Hash tHash = t.getTxId();
         b8.addTransaction(t);
-        b8.solve();
         assertTrue(chain.add(roundtrip(b8)));
         Threading.waitForUserCode();
         assertEquals(2, wallet.getTransaction(tHash).getAppearsInHashes().size());
@@ -197,7 +196,6 @@ public class ChainSplitTest {
         assertEquals(valueOf(40, 0), wallet.getBalance());
         Block b2 = b1.createNextBlock(someOtherGuy);
         b2.addTransaction(spend);
-        b2.solve();
         chain.add(roundtrip(b2));
         // We have 40 coins in change.
         assertEquals(ConfidenceType.BUILDING, spend.getConfidence().getConfidenceType());
@@ -231,7 +229,6 @@ public class ChainSplitTest {
         chain.add(b2);
         Block b3 = b1.createNextBlock(someOtherGuy);
         b3.addTransaction(spend);
-        b3.solve();
         chain.add(roundtrip(b3));
         // The external spend is now pending.
         assertEquals(ZERO, wallet.getBalance());
@@ -258,7 +255,6 @@ public class ChainSplitTest {
         b2.transactions.clear();
         b2.addTransaction(b2coinbase);
         b2.addTransaction(t);
-        b2.solve();
         chain.add(roundtrip(b2));
         assertEquals(FIFTY_COINS, wallet.getBalance());
         assertTrue(wallet.isConsistent());
@@ -288,7 +284,6 @@ public class ChainSplitTest {
         //         -> b2
         Block b3 = b1.createNextBlock(someOtherGuy);
         b3.addTransaction(b2.transactions.get(1));
-        b3.solve();
         chain.add(roundtrip(b3));
         assertEquals(FIFTY_COINS, wallet.getBalance());
     }
@@ -314,13 +309,11 @@ public class ChainSplitTest {
         // Receive t1 as confirmed by the network.
         Block b2 = b1.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         b2.addTransaction(t1);
-        b2.solve();
         chain.add(roundtrip(b2));
 
         // Now we make a double spend become active after a re-org.
         Block b3 = b1.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         b3.addTransaction(t2);
-        b3.solve();
         chain.add(roundtrip(b3));  // Side chain.
         Block b4 = b3.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         chain.add(b4);  // New best chain.
@@ -362,7 +355,6 @@ public class ChainSplitTest {
         //              \-> b3 (t2) -> b4
         Block b3 = b1.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         b3.addTransaction(t2);
-        b3.solve();
         chain.add(roundtrip(b3));  // Side chain.
         Block b4 = b3.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         chain.add(b4);  // New best chain.
