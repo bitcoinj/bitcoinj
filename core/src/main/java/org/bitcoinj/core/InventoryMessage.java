@@ -49,11 +49,6 @@ public class InventoryMessage extends ListMessage {
         return new InventoryMessage(readItems(payload));
     }
 
-    @Deprecated
-    protected InventoryMessage() {
-        super();
-    }
-
     protected InventoryMessage(List<InventoryItem> items) {
         super(items);
     }
@@ -78,30 +73,5 @@ public class InventoryMessage extends ListMessage {
 
     public static InventoryMessage ofTransactions(Transaction ...transactions) {
         return ofTransactions(Arrays.asList(transactions));
-    }
-
-    /**
-     * @deprecated Use a constructor or factoring
-     */
-    @Deprecated
-    public void addBlock(Block block) {
-        addItem(new InventoryItem(block));
-    }
-
-    /**
-     * @deprecated Use a constructor or factoring
-     */
-    @Deprecated
-    public void addTransaction(Transaction tx) {
-        addItem(new InventoryItem(tx));
-    }
-
-    /**
-     * Creates a new inv message for the given transactions.
-     * @deprecated Use {@link #ofTransactions(Transaction...)}
-     */
-    @Deprecated
-    public static InventoryMessage with(Transaction... txns) {
-        return ofTransactions(txns);
     }
 }

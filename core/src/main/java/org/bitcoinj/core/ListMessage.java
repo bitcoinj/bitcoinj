@@ -68,28 +68,12 @@ public abstract class ListMessage extends BaseMessage {
         return items;
     }
 
-    @Deprecated
-    public ListMessage() {
-        super();
-        items = new ArrayList<>(); // TODO: unmodifiable empty list
-    }
-
     protected ListMessage(List<InventoryItem> items) {
         this.items = items;    // TODO: unmodifiable defensive copy
     }
 
     public List<InventoryItem> getItems() {
         return Collections.unmodifiableList(items);
-    }
-
-    @Deprecated
-    public void addItem(InventoryItem item) {
-        items.add(item);
-    }
-
-    @Deprecated
-    public void removeItem(int index) {
-        items.remove(index);
     }
 
     @Override

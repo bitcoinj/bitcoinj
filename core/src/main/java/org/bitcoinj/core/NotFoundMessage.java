@@ -41,11 +41,6 @@ public class NotFoundMessage extends InventoryMessage {
         return new NotFoundMessage(readItems(payload));
     }
 
-    @Deprecated
-    public NotFoundMessage() {
-        super();
-    }
-
     public NotFoundMessage(List<InventoryItem> items) {
         super(new ArrayList<>(items));
     }
