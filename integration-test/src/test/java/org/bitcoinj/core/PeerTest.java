@@ -58,10 +58,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.valueOf;
-import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
-import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
-import static org.bitcoinj.testing.FakeTxBuilder.makeSolvedTestBlock;
-import static org.bitcoinj.testing.FakeTxBuilder.roundTripTransaction;
+import static org.bitcoinj.test.support.FakeTxBuilder.createFakeBlock;
+import static org.bitcoinj.test.support.FakeTxBuilder.createFakeTx;
+import static org.bitcoinj.test.support.FakeTxBuilder.makeSolvedTestBlock;
+import static org.bitcoinj.test.support.FakeTxBuilder.roundTripTransaction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;

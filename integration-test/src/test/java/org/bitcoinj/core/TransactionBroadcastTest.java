@@ -22,7 +22,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.test.support.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
 import org.bitcoinj.utils.Threading;

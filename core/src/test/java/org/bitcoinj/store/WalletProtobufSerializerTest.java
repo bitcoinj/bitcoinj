@@ -42,7 +42,7 @@ import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.test.support.FakeTxBuilder;
 import org.bitcoinj.testing.FooWalletExtension;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
@@ -75,7 +75,7 @@ import java.util.Set;
 
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
-import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
+import static org.bitcoinj.test.support.FakeTxBuilder.createFakeTx;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

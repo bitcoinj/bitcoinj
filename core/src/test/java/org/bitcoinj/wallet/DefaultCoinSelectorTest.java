@@ -25,7 +25,7 @@ import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.test.support.FakeTxBuilder;
 import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
 import org.junit.Before;

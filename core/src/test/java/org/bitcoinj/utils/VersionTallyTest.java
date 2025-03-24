@@ -27,7 +27,7 @@ import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.testing.FakeTxBuilder;
+import org.bitcoinj.test.support.FakeTxBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
