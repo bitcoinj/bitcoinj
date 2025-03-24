@@ -123,7 +123,7 @@ public class BlockTest {
             // Expected to fail as the nonce is no longer correct.
         }
         // Should find an acceptable nonce.
-        block.solve();
+        TestBlocks.solve(block);
         Block.verify(TWEAK_TESTNET, block, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
     }
 
