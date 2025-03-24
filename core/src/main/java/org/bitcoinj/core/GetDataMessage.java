@@ -31,6 +31,8 @@ import java.util.List;
  * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
  */
 public class GetDataMessage extends ListMessage {
+    private final List<InventoryItem> items;
+
     /**
      * Deserialize this message from a given payload.
      *
@@ -43,7 +45,7 @@ public class GetDataMessage extends ListMessage {
     }
 
     GetDataMessage(List<InventoryItem> items) {
-        super(items);
+        this.items = items;    // TODO: unmodifiable defensive copy
     }
 
     public static GetDataMessage ofBlock(Sha256Hash blockHash, boolean includeWitness) {
@@ -64,5 +66,10 @@ public class GetDataMessage extends ListMessage {
 
     public Sha256Hash getHashOf(int i) {
         return getItems().get(i).hash;
+    }
+
+    @Override
+    protected List<InventoryItem> items() {
+        return items;
     }
 }

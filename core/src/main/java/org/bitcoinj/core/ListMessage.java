@@ -37,8 +37,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  */
 public abstract class ListMessage implements Message {
 
-    // For some reason the compiler complains if this is inside InventoryItem
-    protected final List<InventoryItem> items;
+    protected abstract List<InventoryItem> items();
 
     public static final int MAX_INVENTORY_ITEMS = 50000;
 
@@ -66,24 +65,20 @@ public abstract class ListMessage implements Message {
         return items;
     }
 
-    protected ListMessage(List<InventoryItem> items) {
-        this.items = items;    // TODO: unmodifiable defensive copy
-    }
-
     public List<InventoryItem> getItems() {
-        return Collections.unmodifiableList(items);
+        return Collections.unmodifiableList(items());
     }
 
     @Override
     public int messageSize() {
-        return VarInt.sizeOf(items.size()) +
-                items.size() * (4 + Sha256Hash.LENGTH);
+        return VarInt.sizeOf(items().size()) +
+                items().size() * (4 + Sha256Hash.LENGTH);
     }
 
     @Override
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-        VarInt.of(items.size()).write(buf);
-        for (InventoryItem i : items) {
+        VarInt.of(items().size()).write(buf);
+        for (InventoryItem i : items()) {
             // Write out the type code.
             ByteUtils.writeInt32LE(i.type.code, buf);
             // And now the hash.
@@ -96,18 +91,18 @@ public abstract class ListMessage implements Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return items.equals(((ListMessage)o).items);
+        return items().equals(((ListMessage)o).items());
     }
 
     @Override
     public int hashCode() {
-        return items.hashCode();
+        return items().hashCode();
     }
 
     @Override
     public String toString() {
         MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(items);
+        helper.addValue(items());
         return helper.toString();
     }
 }

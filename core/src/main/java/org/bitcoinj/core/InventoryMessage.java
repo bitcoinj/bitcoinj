@@ -37,6 +37,7 @@ public class InventoryMessage extends ListMessage {
 
     /** A hard coded constant in the protocol. */
     public static final int MAX_INV_SIZE = 50000;
+    private final List<InventoryItem> items;
 
     /**
      * Deserialize this message from a given payload.
@@ -50,7 +51,7 @@ public class InventoryMessage extends ListMessage {
     }
 
     protected InventoryMessage(List<InventoryItem> items) {
-        super(items);
+        this.items = items;    // TODO: unmodifiable defensive copy
     }
 
     public static InventoryMessage ofBlocks(List<Block> blocks) {
@@ -73,5 +74,10 @@ public class InventoryMessage extends ListMessage {
 
     public static InventoryMessage ofTransactions(Transaction ...transactions) {
         return ofTransactions(Arrays.asList(transactions));
+    }
+
+    @Override
+    protected List<InventoryItem> items() {
+        return items;
     }
 }
