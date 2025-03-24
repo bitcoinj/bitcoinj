@@ -151,10 +151,12 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        rollingBlock.solve();
         chain.add(rollingBlock);
         TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+            rollingBlock.solve();
             chain.add(rollingBlock);
         }
 
@@ -192,12 +194,14 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        rollingBlock.solve();
         chain.add(rollingBlock);
         TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
         TransactionOutPoint transactionOutPoint = spendableOutput.getOutPointFor();
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+            rollingBlock.solve();
             chain.add(rollingBlock);
         }
         
@@ -225,6 +229,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Create a chain longer than UNDOABLE_BLOCKS_STORED
         for (int i = 0; i < UNDOABLE_BLOCKS_STORED; i++) {
             rollingBlock = rollingBlock.createNextBlock(null);
+            rollingBlock.solve();
             chain.add(rollingBlock);
         }
         // Try to get the garbage collector to run
@@ -265,6 +270,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        rollingBlock.solve();
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
@@ -272,6 +278,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+            rollingBlock.solve();
             chain.add(rollingBlock);
         }
         rollingBlock = rollingBlock.createNextBlock(null);
@@ -317,6 +324,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         // Build some blocks on genesis block to create a spendable output.
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        rollingBlock.solve();
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.getTransactions().get(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
@@ -324,6 +332,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+            rollingBlock.solve();
             chain.add(rollingBlock);
         }
         rollingBlock = rollingBlock.createNextBlock(null);
@@ -389,6 +398,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             for (height = 1; height <= (PARAMS.getMajorityWindow() - PARAMS.getMajorityEnforceBlockUpgrade()); height++) {
                 chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS,
                     outKey.getPubKey(), height);
+                chainHead.solve();
                 chain.add(chainHead);
             }
 
@@ -396,12 +406,14 @@ public abstract class AbstractFullPrunedBlockChainTest {
             for (; height < PARAMS.getMajorityWindow(); height++) {
                 chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_BIP34,
                     outKey.getPubKey(), height);
+                chainHead.solve();
                 chain.add(chainHead);
             }
             // Throw a broken v2 block in before we have a supermajority to enable
             // enforcement, which should validate as-is
             chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_BIP34,
                 outKey.getPubKey(), height * 2);
+            chainHead.solve();
             chain.add(chainHead);
             height++;
 
@@ -410,6 +422,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
             thrown.expect(VerificationException.CoinbaseHeightMismatch.class);
             chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_BIP34,
                 outKey.getPubKey(), height * 2);
+            chainHead.solve();
             chain.add(chainHead);
         }  catch(final VerificationException ex) {
             throw (Exception) ex.getCause();

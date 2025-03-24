@@ -311,6 +311,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Set up a little block chain. We heard about b1 but not b2 (it is pending download). b3 is solved whilst we
         // are downloading the chain.
         Block b1 = FakeTxBuilder.createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS).block;
+        b1.solve();
         blockChain.add(b1);
         Block b2 = FakeTxBuilder.makeTestBlock(b1);
         Block b3 = FakeTxBuilder.makeTestBlock(b2);
