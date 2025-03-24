@@ -29,7 +29,7 @@ import java.util.Random;
  * <p>
  * Instances of this class are immutable.
  */
-public class Ping extends BaseMessage {
+public class Ping implements BaseMessage {
     private final long nonce;
 
     /**

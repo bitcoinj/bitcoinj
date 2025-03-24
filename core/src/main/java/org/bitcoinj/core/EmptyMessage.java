@@ -26,7 +26,7 @@ import java.io.OutputStream;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public abstract class EmptyMessage extends BaseMessage {
+public abstract class EmptyMessage implements BaseMessage {
 
     public EmptyMessage() {
         super();
@@ -38,6 +38,6 @@ public abstract class EmptyMessage extends BaseMessage {
     }
 
     @Override
-    protected final void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public final void bitcoinSerializeToStream(OutputStream stream) throws IOException {
     }
 }

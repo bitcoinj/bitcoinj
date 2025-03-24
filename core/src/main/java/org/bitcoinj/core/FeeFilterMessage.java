@@ -33,7 +33,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * <p>
  * Instances of this class are immutable.
  */
-public class FeeFilterMessage extends BaseMessage {
+public class FeeFilterMessage implements BaseMessage {
     private final Coin feeRate;
 
     /**
@@ -64,7 +64,7 @@ public class FeeFilterMessage extends BaseMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(feeRate.serialize());
     }
 

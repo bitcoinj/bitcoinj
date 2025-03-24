@@ -27,7 +27,7 @@ import java.io.OutputStream;
  * <p>
  * Instances of this class are not safe for use by multiple threads.
  */
-public abstract class BaseMessage implements Message {
+interface BaseMessage extends Message {
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
 
     /**
@@ -36,7 +36,7 @@ public abstract class BaseMessage implements Message {
      * @return serialized data in Bitcoin protocol format
      */
     @Override
-    public byte[] serialize() {
+    default byte[] serialize() {
         // No cached array available so serialize parts by stream.
         ByteArrayOutputStream stream = new ByteArrayOutputStream(100); // initial size just a guess
         try {
@@ -50,7 +50,7 @@ public abstract class BaseMessage implements Message {
     /**
      * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
      */
-    protected abstract void bitcoinSerializeToStream(OutputStream stream) throws IOException;
+    void bitcoinSerializeToStream(OutputStream stream) throws IOException;
 
     /**
      * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
@@ -58,7 +58,7 @@ public abstract class BaseMessage implements Message {
      * @return size of this object when serialized (in bytes)
      */
     @Override
-    public int messageSize() {
+    default int messageSize() {
         return serialize().length;
     }
 }
