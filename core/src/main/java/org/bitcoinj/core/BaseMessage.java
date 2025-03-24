@@ -16,9 +16,6 @@
 
 package org.bitcoinj.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,8 +28,6 @@ import java.io.OutputStream;
  * Instances of this class are not safe for use by multiple threads.
  */
 public abstract class BaseMessage implements Message {
-    private static final Logger log = LoggerFactory.getLogger(BaseMessage.class);
-
     // These methods handle the serialization/deserialization using the custom Bitcoin protocol.
 
     /**
