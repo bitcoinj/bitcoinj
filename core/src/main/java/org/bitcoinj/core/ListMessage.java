@@ -39,8 +39,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  */
 public abstract class ListMessage extends BaseMessage {
 
-    // For some reason the compiler complains if this is inside InventoryItem
-    protected final List<InventoryItem> items;
+    protected abstract List<InventoryItem> items();
 
     public static final int MAX_INVENTORY_ITEMS = 50000;
 
@@ -68,18 +67,14 @@ public abstract class ListMessage extends BaseMessage {
         return items;
     }
 
-    protected ListMessage(List<InventoryItem> items) {
-        this.items = items;    // TODO: unmodifiable defensive copy
-    }
-
     public List<InventoryItem> getItems() {
-        return Collections.unmodifiableList(items);
+        return Collections.unmodifiableList(items());
     }
 
     @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(VarInt.of(items.size()).serialize());
-        for (InventoryItem i : items) {
+        stream.write(VarInt.of(items().size()).serialize());
+        for (InventoryItem i : items()) {
             // Write out the type code.
             ByteUtils.writeInt32LE(i.type.code, stream);
             // And now the hash.
@@ -91,18 +86,18 @@ public abstract class ListMessage extends BaseMessage {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return items.equals(((ListMessage)o).items);
+        return items().equals(((ListMessage)o).items());
     }
 
     @Override
     public int hashCode() {
-        return items.hashCode();
+        return items().hashCode();
     }
 
     @Override
     public String toString() {
         MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(items);
+        helper.addValue(items());
         return helper.toString();
     }
 }
