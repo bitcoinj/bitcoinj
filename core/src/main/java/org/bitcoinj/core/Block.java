@@ -798,8 +798,7 @@ public class Block extends BaseMessage {
      */
     // For testing only
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
-        unCacheTransactions();
-        transactions = new ArrayList<>();
+        checkState(transactions.isEmpty(), () -> "block must not contain transactions");
         Transaction coinbase = new Transaction();
         final ScriptBuilder inputBuilder = new ScriptBuilder();
 
@@ -817,7 +816,7 @@ public class Block extends BaseMessage {
                 inputBuilder.build().program()));
         coinbase.addOutput(new TransactionOutput(coinbase, value,
                 ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(pubKeyTo)).program()));
-        transactions.add(coinbase);
+        addTransaction(coinbase);
     }
 
     private static final byte[] EMPTY_BYTES = new byte[32];
