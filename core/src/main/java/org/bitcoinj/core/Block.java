@@ -694,6 +694,32 @@ public class Block extends BaseMessage {
         hash = null;
     }
 
+    /**
+     * Replace the list of transactions in the block. This method is only useful when building thin
+     * blocks and using different compression techniques to make blocks smaller. This will not recalculate
+     * merkleRoot or block hash.
+     * @param txList New list of transactions. Can be null.
+     */
+    public void replaceTransactionList(List<Transaction> txList) {
+        replaceTransactionList(txList, false);
+    }
+
+    /**
+     * Replace the list of transactions in the block. This method is only useful when building thin
+     * blocks and using different compression techniques to make blocks smaller. If recalc is true
+     * then the merkleRoot and block hash will be recalculated. Default is false.
+     * @param txList New list of transactions. Can be null.
+     * @param recalc Force a recalculation next time merkleRoot and block hash are needed
+     */
+    public void replaceTransactionList(List<Transaction> txList, boolean recalc) {
+        transactions = txList;
+        if (recalc) {
+            // Force a recalculation next time the values are needed.
+            merkleRoot = null;
+            hash = null;
+        }
+    }
+
     /** Returns the version of the block data structure as defined by the Bitcoin protocol. */
     public long getVersion() {
         return version;
