@@ -238,7 +238,7 @@ public class BitcoinSerializerTest {
 
         Message unknownMessage = new BaseMessage() {
             @Override
-            protected void bitcoinSerializeToStream(OutputStream stream) {}
+            public void bitcoinSerializeToStream(OutputStream stream) {}
         };
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);
         serializer.serialize(unknownMessage, bos);

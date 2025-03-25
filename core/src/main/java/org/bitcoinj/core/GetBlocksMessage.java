@@ -36,7 +36,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class GetBlocksMessage extends BaseMessage {
+public class GetBlocksMessage implements BaseMessage {
 
     protected long version;
     protected BlockLocator locator;
@@ -84,7 +84,7 @@ public class GetBlocksMessage extends BaseMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         // Version, for some reason.
         ByteUtils.writeInt32LE(version, stream);
         // Then a vector of block hashes. This is actually a "block locator", a set of block

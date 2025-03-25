@@ -316,7 +316,7 @@ public class BlockTest {
         Block block = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.ofEpochSecond(1),
                 Difficulty.EASIEST_DIFFICULTY_TARGET, 1, new ArrayList<Transaction>()) {
             @Override
-            protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+            public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
                 ByteUtils.writeInt32LE(getVersion(), stream);
                 stream.write(getPrevBlockHash().serialize());
                 stream.write(getMerkleRoot().serialize());
