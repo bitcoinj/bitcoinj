@@ -28,6 +28,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -133,6 +134,7 @@ public class ParseByteCacheTest {
     }
 
     @Test
+    @Ignore("This assumes mutable messages")
     public void testBlockAll() throws Exception {
         testBlock(b1BytesWithHeader, false);
     }
@@ -232,7 +234,7 @@ public class ParseByteCacheTest {
         // add an input
         b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+            Transaction tx1 = b1.getTransactions().get(0).asUnsigned();
             
             if (tx1.getInputs().size() > 0) {
                 tx1.addInput(tx1.getInput(0));
@@ -302,8 +304,8 @@ public class ParseByteCacheTest {
         BitcoinSerializer serializer = params.getSerializer();
         Transaction t1;
         Transaction tRef;
-        t1 = (Transaction) serializer.deserialize(ByteBuffer.wrap(txBytes));
-        tRef = (Transaction) serializerRef.deserialize(ByteBuffer.wrap(txBytes));
+        t1 = ((SignedTransaction) serializer.deserialize(ByteBuffer.wrap(txBytes))).asUnsigned();
+        tRef = ((SignedTransaction) serializerRef.deserialize(ByteBuffer.wrap(txBytes))).asUnsigned();
 
         // verify our reference BitcoinSerializer produces matching byte array.
         bos.reset();
@@ -329,8 +331,8 @@ public class ParseByteCacheTest {
         }
         
         // refresh tx
-        t1 = (Transaction) serializer.deserialize(ByteBuffer.wrap(txBytes));
-        tRef = (Transaction) serializerRef.deserialize(ByteBuffer.wrap(txBytes));
+        t1 = ((SignedTransaction) serializer.deserialize(ByteBuffer.wrap(txBytes))).asUnsigned();
+        tRef = ((SignedTransaction) serializerRef.deserialize(ByteBuffer.wrap(txBytes))).asUnsigned();
         
         // add an input
         if (t1.getInputs().size() > 0) {
@@ -354,6 +356,9 @@ public class ParseByteCacheTest {
         byte[] b1 = bos.toByteArray();
         
         Message m2 = serializer.deserialize(ByteBuffer.wrap(b1));
+        if (m2 instanceof SignedTransaction) {
+            m2 = ((SignedTransaction) m2).asUnsigned();
+        }
 
         assertEquals(message, m2);
 

@@ -255,8 +255,8 @@ public class Transaction extends BaseMessage {
      * @return read message
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    public static Transaction read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        return Transaction.read(payload, ProtocolVersion.CURRENT.intValue());
+    public static SignedTransaction read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
+        return SignedTransaction.read(payload, ProtocolVersion.CURRENT.intValue());
     }
 
     /**
@@ -270,7 +270,7 @@ public class Transaction extends BaseMessage {
      * @return read message
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    public static Transaction read(ByteBuffer payload, int protocolVersion) throws BufferUnderflowException, ProtocolException {
+    public static SignedTransaction read(ByteBuffer payload, int protocolVersion) throws BufferUnderflowException, ProtocolException {
         Transaction tx = new Transaction(protocolVersion);
         boolean allowWitness = allowWitness(protocolVersion);
 
@@ -310,7 +310,7 @@ public class Transaction extends BaseMessage {
         }
         // lock_time
         tx.vLockTime = LockTime.of(ByteUtils.readUint32(payload));
-        return tx;
+        return tx.asSigned();
     }
 
     private Transaction(int protocolVersion) {
@@ -324,6 +324,36 @@ public class Transaction extends BaseMessage {
         outputs = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         vLockTime = LockTime.unset();
+    }
+
+    // Copy constructor
+    public Transaction(Transaction tx) {
+        protocolVersion = tx.protocolVersion;
+        version = tx.version;
+        inputs = tx.inputs;
+        outputs = tx.outputs;
+        // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
+        vLockTime = tx.vLockTime;
+        updateTime = tx.updateTime;
+        confidence = tx.confidence;
+        appearsInHashes = tx.appearsInHashes;
+        purpose = tx.purpose;
+        exchangeRate = tx.exchangeRate;
+        memo = tx.memo;
+        cachedTxId = tx.cachedTxId;
+        cachedWTxId = tx.cachedWTxId;
+    }
+
+    // Copy as signed, for internal use only
+    private SignedTransaction asSigned() {
+        return new SignedTransaction(this);
+    }
+
+    // If signed (immutable) make unsigned (mutable) copy
+    public Transaction asUnsigned() {
+        return (this instanceof SignedTransaction)
+                ? new Transaction(this) // convert to unsigned/mutable
+                : this;  // return as is
     }
 
     /**
@@ -1251,7 +1281,7 @@ public class Transaction extends BaseMessage {
         try {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = Transaction.read(ByteBuffer.wrap(serialize()));
+            Transaction tx = Transaction.read(ByteBuffer.wrap(serialize())).asUnsigned();
 
             // Clear input scripts in preparation for signing. If we're signing a fresh
             // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual

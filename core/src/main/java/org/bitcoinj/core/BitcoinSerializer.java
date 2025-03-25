@@ -61,6 +61,7 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(Block.class, "block");
         names.put(GetDataMessage.class, "getdata");
         names.put(Transaction.class, "tx");
+        names.put(SignedTransaction.class, "tx");
         names.put(AddressV1Message.class, "addr");
         names.put(AddressV2Message.class, "addrv2");
         names.put(Ping.class, "ping");
@@ -329,7 +330,7 @@ public class BitcoinSerializer extends MessageSerializer {
     @Override
     public Transaction makeTransaction(ByteBuffer payload)
             throws ProtocolException {
-        return Transaction.read(payload, protocolVersion);
+        return SignedTransaction.read(payload, protocolVersion);
     }
 
     @Override

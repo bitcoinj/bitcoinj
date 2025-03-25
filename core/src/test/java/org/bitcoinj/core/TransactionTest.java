@@ -296,7 +296,7 @@ public class TransactionTest {
                 + "202cb20600000000" + "1976a914" + "8280b37df378db99f66f85c95a783a76ac7a6d59" + "88ac" // txOut
                 + "9093510d00000000" + "1976a914" + "3bde42dbee7e4dbe6a21b2d50ce2f0167faa8159" + "88ac" // txOut
                 + "11000000"; // nLockTime
-        Transaction tx = Transaction.read(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
+        Transaction tx = Transaction.read(ByteBuffer.wrap(ByteUtils.parseHex(txHex))).asUnsigned();
         assertEquals(txHex, ByteUtils.formatHex(tx.serialize()));
         assertEquals(txHex.length() / 2, tx.messageSize());
         assertEquals(2, tx.getInputs().size());
@@ -381,7 +381,7 @@ public class TransactionTest {
                 + "b8b4eb0b00000000" + "1976a914" + "a457b684d7f0d539a46a45bbc043f35b59d0d963" + "88ac" // txOut
                 + "0008af2f00000000" + "1976a914" + "fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c" + "88ac" // txOut
                 + "92040000"; // nLockTime
-        Transaction tx = Transaction.read(ByteBuffer.wrap(ByteUtils.parseHex(txHex)));
+        Transaction tx = Transaction.read(ByteBuffer.wrap(ByteUtils.parseHex(txHex))).asUnsigned();
         assertEquals(txHex, ByteUtils.formatHex(tx.serialize()));
         assertEquals(txHex.length() / 2, tx.messageSize());
         assertEquals(1, tx.getInputs().size());

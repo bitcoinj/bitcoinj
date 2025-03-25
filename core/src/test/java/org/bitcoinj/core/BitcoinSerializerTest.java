@@ -101,7 +101,7 @@ public class BitcoinSerializerTest {
         MessageSerializer serializer = MAINNET.getSerializer();
         
         // first try writing to a fields to ensure uncaching and children are not affected
-        Transaction transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        Transaction transaction = ((SignedTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES))).asUnsigned();
         assertNotNull(transaction);
 
         transaction.setLockTime(1);
@@ -111,7 +111,7 @@ public class BitcoinSerializerTest {
         assertFalse(Arrays.equals(TRANSACTION_MESSAGE_BYTES, bos.toByteArray()));
 
         // now try writing to a child to ensure uncaching is propagated up to parent but not to siblings
-        transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        transaction = ((SignedTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES))).asUnsigned();
         assertNotNull(transaction);
 
         transaction.replaceInput(0, transaction.getInput(0).withSequence(1));
@@ -121,14 +121,14 @@ public class BitcoinSerializerTest {
         assertFalse(Arrays.equals(TRANSACTION_MESSAGE_BYTES, bos.toByteArray()));
 
         // deserialize/reserialize to check for equals.
-        transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        transaction = ((SignedTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES))).asUnsigned();
         assertNotNull(transaction);
         bos = new ByteArrayOutputStream();
         serializer.serialize(transaction, bos);
         assertArrayEquals(TRANSACTION_MESSAGE_BYTES, bos.toByteArray());
 
         // deserialize/reserialize to check for equals.  Set a field to it's existing value to trigger uncache
-        transaction = (Transaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES));
+        transaction = ((SignedTransaction) serializer.deserialize(ByteBuffer.wrap(TRANSACTION_MESSAGE_BYTES))).asUnsigned();
         assertNotNull(transaction);
 
         transaction.replaceInput(0,
