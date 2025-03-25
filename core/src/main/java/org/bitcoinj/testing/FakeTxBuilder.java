@@ -25,6 +25,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.TestBlocks;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.base.Sha256Hash;
@@ -268,13 +269,13 @@ public class FakeTxBuilder {
                                             Instant time, int height, Transaction... transactions) {
         try {
             Block previousBlock = previousStoredBlock.getHeader();
-            Block b = previousBlock.createNextBlock(null, version, time, height);
+            Block b = TestBlocks.createNextBlock(previousBlock,null, version, time, height);
             // Coinbase tx was already added.
             for (Transaction tx : transactions) {
                 tx.getConfidence().maybeSetSourceToNetwork();
                 b.addTransaction(tx);
             }
-            b.solve();
+            TestBlocks.solve(b);
             BlockPair pair = new BlockPair(b, previousStoredBlock.build(b));
             blockStore.put(pair.storedBlock);
             blockStore.setChainHead(pair.storedBlock);
@@ -309,8 +310,8 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(BlockStore blockStore, Address coinsTo) throws BlockStoreException {
-        Block b = blockStore.getChainHead().getHeader().createNextBlock(coinsTo);
-        b.solve();
+        Block b = TestBlocks.createNextBlock(blockStore.getChainHead().getHeader(), coinsTo);
+        TestBlocks.solve(b);
         return b;
     }
 
@@ -319,12 +320,12 @@ public class FakeTxBuilder {
     }
 
     public static Block makeSolvedTestBlock(Block prev, @Nullable Address to, Transaction... transactions) throws BlockStoreException {
-        Block b = prev.createNextBlock(to);
+        Block b = TestBlocks.createNextBlock(prev, to);
         // Coinbase tx already exists.
         for (Transaction tx : transactions) {
             b.addTransaction(tx);
         }
-        b.solve();
+        TestBlocks.solve(b);
         return b;
     }
 
