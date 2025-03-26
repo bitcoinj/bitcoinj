@@ -26,7 +26,7 @@ import java.io.OutputStream;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public abstract class EmptyMessage implements BaseMessage {
+public abstract class EmptyMessage implements Message {
 
     public EmptyMessage() {
         super();

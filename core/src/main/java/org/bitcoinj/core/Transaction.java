@@ -24,7 +24,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
-import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.LockTime.HeightLock;
 import org.bitcoinj.core.LockTime.TimeLock;
@@ -91,7 +90,7 @@ import static org.bitcoinj.base.internal.ByteUtils.writeInt64LE;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Transaction implements BaseMessage {
+public class Transaction implements Message {
     private static final Comparator<Transaction> SORT_TX_BY_ID = Comparator.comparing(Transaction::getTxId);
 
     /**

@@ -16,6 +16,10 @@
 
 package org.bitcoinj.core;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
 /**
  * A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
  * Classes that can be serialized to the blockchain or P2P protocol should implement this interface.
@@ -27,17 +31,32 @@ public interface Message {
     int MAX_SIZE = 0x02000000;
 
     /**
-     * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
-     * size can differ from the size of the original payload.
-     *
-     * @return size of this object when serialized (in bytes)
+     * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
      */
-    int messageSize();
+    void bitcoinSerializeToStream(OutputStream stream) throws IOException;
 
     /**
-     * Serialize this message to a byte array that conforms to the Bitcoin wire protocol.
+     * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
+     * size can differ from the size of the original payload.
+     * @return size of this object when serialized (in bytes)
+     */
+    default int messageSize() {
+        return serialize().length;
+    }
+
+    /**
+     * <p>Serialize this message to a byte array that conforms to the bitcoin wire protocol.</p>
      *
      * @return serialized data in Bitcoin protocol format
      */
-    byte[] serialize();
+    default byte[] serialize() {
+        // No cached array available so serialize parts by stream.
+        ByteArrayOutputStream stream = new ByteArrayOutputStream(100); // initial size just a guess
+        try {
+            bitcoinSerializeToStream(stream);
+        } catch (IOException e) {
+            // Cannot happen, we are serializing to a memory stream.
+        }
+        return stream.toByteArray();
+    }
 }

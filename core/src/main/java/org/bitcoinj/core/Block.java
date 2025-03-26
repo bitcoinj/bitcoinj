@@ -71,7 +71,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Block implements BaseMessage {
+public class Block implements Message {
     /**
      * Flags used to control which elements of block validation are done on
      * received blocks.

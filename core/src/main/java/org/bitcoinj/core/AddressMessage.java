@@ -31,7 +31,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * Abstract superclass for address messages on the P2P network, which contain network addresses of other peers. This is
  * one of the ways peers can find each other without using the {@link PeerDiscovery} mechanism.
  */
-public abstract class AddressMessage implements BaseMessage {
+public abstract class AddressMessage implements Message {
 
     protected static final long MAX_ADDRESSES = 1000;
     protected List<PeerAddress> addresses;

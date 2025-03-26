@@ -36,7 +36,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class GetBlocksMessage implements BaseMessage {
+public class GetBlocksMessage implements Message {
 
     protected long version;
     protected BlockLocator locator;
