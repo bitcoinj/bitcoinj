@@ -55,7 +55,7 @@ public class AddressV2Message extends AddressMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (addresses == null)
             return;
         stream.write(VarInt.of(addresses.size()).serialize());
