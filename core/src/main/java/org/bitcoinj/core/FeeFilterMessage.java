@@ -64,6 +64,11 @@ public class FeeFilterMessage extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        return Coin.BYTES;
+    }
+
+    @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(feeRate.serialize());
     }

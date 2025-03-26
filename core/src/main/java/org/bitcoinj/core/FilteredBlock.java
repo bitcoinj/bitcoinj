@@ -68,6 +68,12 @@ public class FilteredBlock extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        return Block.HEADER_SIZE +
+                merkleTree.messageSize();
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (header.getTransactions() == null)
             header.bitcoinSerializeToStream(stream);

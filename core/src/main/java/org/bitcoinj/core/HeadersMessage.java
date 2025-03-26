@@ -89,6 +89,12 @@ public class HeadersMessage extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        return VarInt.sizeOf(blockHeaders.size()) +
+                blockHeaders.size() * (Block.HEADER_SIZE + 1);
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(VarInt.of(blockHeaders.size()).serialize());
         for (Block header : blockHeaders) {

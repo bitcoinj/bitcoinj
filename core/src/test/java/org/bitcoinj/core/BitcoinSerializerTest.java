@@ -238,6 +238,9 @@ public class BitcoinSerializerTest {
 
         Message unknownMessage = new BaseMessage() {
             @Override
+            public int messageSize() { return 0; }
+
+            @Override
             protected void bitcoinSerializeToStream(OutputStream stream) {}
         };
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);

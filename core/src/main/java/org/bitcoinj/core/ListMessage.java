@@ -77,6 +77,12 @@ public abstract class ListMessage extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        return VarInt.sizeOf(items.size()) +
+                items.size() * (4 + Sha256Hash.LENGTH);
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(VarInt.of(items.size()).serialize());
         for (InventoryItem i : items) {

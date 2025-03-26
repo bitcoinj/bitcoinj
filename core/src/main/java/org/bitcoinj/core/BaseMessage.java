@@ -51,14 +51,4 @@ public abstract class BaseMessage implements Message {
      * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
      */
     protected abstract void bitcoinSerializeToStream(OutputStream stream) throws IOException;
-
-    /**
-     * Return the size of the serialized message. Note that if the message was deserialized from a payload, this
-     * size can differ from the size of the original payload.
-     * @return size of this object when serialized (in bytes)
-     */
-    @Override
-    public int messageSize() {
-        return serialize().length;
-    }
 }

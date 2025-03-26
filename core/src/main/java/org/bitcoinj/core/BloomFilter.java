@@ -167,6 +167,14 @@ public class BloomFilter extends BaseMessage {
         return helper.toString();
     }
 
+    @Override
+    public int messageSize() {
+        return Buffers.lengthPrefixedBytesSize(data) +
+                4 + // hashFuncs
+                4 + // nTweak
+                1; // nFlags
+    }
+
     /**
      * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
      */

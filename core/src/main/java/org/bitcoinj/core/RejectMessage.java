@@ -113,6 +113,16 @@ public class RejectMessage extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        int size = Buffers.lengthPrefixedStringSize(rejectedMessage) +
+                1 + // code
+                Buffers.lengthPrefixedStringSize(reason);
+        if ("block".equals(rejectedMessage) || "tx".equals(rejectedMessage))
+            size += Sha256Hash.LENGTH;
+        return size;
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         byte[] messageBytes = rejectedMessage.getBytes(StandardCharsets.UTF_8);
         stream.write(VarInt.of(messageBytes.length).serialize());

@@ -192,6 +192,20 @@ public class VersionMessage extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        return Integer.BYTES + // clientVersion
+                Services.BYTES + // localServices
+                Long.BYTES + // time
+                Services.BYTES + // receivingServices
+                16 + 2 + // receivingAddr
+                NETADDR_BYTES +
+                4 + 4 + // local host nonce
+                Buffers.lengthPrefixedStringSize(subVer) +
+                4 + // height
+                1; // relayTxesBeforeFilter
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
         ByteUtils.writeInt32LE(clientVersion, buf);
         buf.write(localServices.serialize());

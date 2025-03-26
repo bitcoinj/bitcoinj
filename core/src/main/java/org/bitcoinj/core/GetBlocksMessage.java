@@ -84,6 +84,14 @@ public class GetBlocksMessage extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        return 4 + // version
+                VarInt.sizeOf(locator.size()) +
+                locator.size() * Sha256Hash.LENGTH + // hashes
+                Sha256Hash.LENGTH; // stopHash
+    }
+
+    @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         // Version, for some reason.
         ByteUtils.writeInt32LE(version, stream);

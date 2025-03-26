@@ -54,6 +54,16 @@ public class AddressV1Message extends AddressMessage {
     }
 
     @Override
+    public int messageSize() {
+        if (addresses == null)
+            return 0;
+        return VarInt.sizeOf(addresses.size()) +
+                addresses.stream()
+                        .mapToInt(addr -> addr.getMessageSize(1))
+                        .sum();
+    }
+
+    @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         if (addresses == null)
             return;

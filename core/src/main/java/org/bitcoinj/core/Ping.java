@@ -70,6 +70,11 @@ public class Ping extends BaseMessage {
     }
 
     @Override
+    public int messageSize() {
+        return Long.BYTES;
+    }
+
+    @Override
     public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         ByteUtils.writeInt64LE(nonce, stream);
     }
