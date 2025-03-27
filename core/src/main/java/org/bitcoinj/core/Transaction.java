@@ -1489,15 +1489,18 @@ public class Transaction extends BaseMessage {
         int size = 4; // version
         if (useSegwit)
             size += 2; // marker, flag
-        size += VarInt.sizeOf(inputs.size());
-        for (TransactionInput in : inputs)
-            size += in.messageSize();
-        size += VarInt.sizeOf(outputs.size());
-        for (TransactionOutput out : outputs)
-            size += out.messageSize();
+        size += VarInt.sizeOf(inputs.size()) +
+                inputs.stream()
+                        .mapToInt(TransactionInput::messageSize)
+                        .sum() +
+                VarInt.sizeOf(outputs.size()) +
+                outputs.stream()
+                        .mapToInt(TransactionOutput::messageSize)
+                        .sum();
         if (useSegwit)
-            for (TransactionInput in : inputs)
-                size += in.getWitness().messageSize();
+            size += inputs.stream()
+                    .mapToInt(in -> in.getWitness().messageSize())
+                    .sum();
         size += 4; // locktime
         return size;
     }

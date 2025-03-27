@@ -155,9 +155,8 @@ public class TransactionOutput {
      * @return size of the serialized message in bytes
      */
     public int messageSize() {
-        int size = Coin.BYTES; // value
-        size += Buffers.lengthPrefixedBytesSize(scriptBytes);
-        return size;
+        return Coin.BYTES + // value
+                Buffers.lengthPrefixedBytesSize(scriptBytes);
     }
 
     /**
