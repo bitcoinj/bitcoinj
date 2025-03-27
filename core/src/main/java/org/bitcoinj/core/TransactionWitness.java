@@ -172,10 +172,10 @@ public class TransactionWitness {
      * @return size of the serialized message in bytes
      */
     public int messageSize() {
-        int size = VarInt.sizeOf(pushes.size());
-        for (byte[] push : pushes)
-            size += Buffers.lengthPrefixedBytesSize(push);
-        return size;
+        return VarInt.sizeOf(pushes.size()) +
+                pushes.stream()
+                        .mapToInt(Buffers::lengthPrefixedBytesSize)
+                        .sum();
     }
 
     @Override

@@ -275,15 +275,14 @@ public class Block extends BaseMessage {
 
     @Override
     public int messageSize() {
-        int size = HEADER_SIZE;
         List<Transaction> transactions = getTransactions();
-        if (transactions != null) {
-            size += VarInt.sizeOf(transactions.size());
-            for (Transaction tx : transactions) {
-                size += tx.messageSize();
-            }
-        }
-        return size;
+        return (transactions == null)
+                ? HEADER_SIZE
+                : HEADER_SIZE
+                    + VarInt.sizeOf(transactions.size())
+                    + transactions.stream()
+                        .mapToInt(Transaction::messageSize)
+                        .sum();
     }
 
     // default for testing
