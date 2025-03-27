@@ -25,6 +25,7 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
@@ -69,6 +70,7 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
@@ -1367,21 +1369,19 @@ public class ECKey implements EncryptableItem {
     private static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(StandardCharsets.UTF_8);
 
     /**
-     * <p>Given a textual message, returns a byte buffer formatted as follows:</p>
-     * <p>{@code [24] "Bitcoin Signed Message:\n" [message.length as a varint] message}</p>
+     * Given a textual message, returns a byte array formatted as follows:
+     * <p>
+     * {@code [24] "Bitcoin Signed Message:\n" [message.length as a varint] message}
+     *
+     * @param message message to format for signing
+     * @return byte array, formatted for signing
      */
     private static byte[] formatMessageForSigning(String message) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
-            bos.write(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
-            byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
-            VarInt size = VarInt.of(messageBytes.length);
-            bos.write(size.serialize());
-            bos.write(messageBytes);
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
+        ByteBuffer buf = ByteBuffer.allocate(Buffers.lengthPrefixedBytesSize(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES) +
+                Buffers.lengthPrefixedBytesSize(messageBytes));
+        Buffers.writeLengthPrefixedBytes(buf, BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
+        Buffers.writeLengthPrefixedBytes(buf, messageBytes);
+        return buf.array();
     }
 }
