@@ -280,14 +280,13 @@ public class Block implements Message {
 
     @Override
     public int messageSize() {
-        int size = HEADER_SIZE;
-        if (!isHeaderOnly()) {
-            size += VarInt.sizeOf(transactions.size()) +
-                    transactions.stream()
-                            .mapToInt(Transaction::messageSize)
-                            .sum();
-        }
-        return size;
+        return isHeaderOnly()
+                ? HEADER_SIZE
+                : HEADER_SIZE
+                    + VarInt.sizeOf(transactions.size())
+                    + transactions.stream()
+                        .mapToInt(Transaction::messageSize)
+                        .sum();
     }
 
     private void writeHeader(ByteBuffer buf) throws BufferOverflowException {
