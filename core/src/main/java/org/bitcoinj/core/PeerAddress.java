@@ -346,7 +346,7 @@ public class PeerAddress {
             } else if (addr == null && hostname != null && hostname.toLowerCase(Locale.ROOT).endsWith(".onion")) {
                 byte[] onionAddress = TorUtils.decodeOnionUrl(hostname);
                 if (onionAddress.length == 10 || onionAddress.length == 32) {
-                    size += VarInt.sizeOf(onionAddress.length) + onionAddress.length;
+                    size += Buffers.lengthPrefixedBytesSize(onionAddress);
                 } else {
                     throw new IllegalStateException();
                 }

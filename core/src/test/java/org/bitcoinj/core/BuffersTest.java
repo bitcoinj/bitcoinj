@@ -38,7 +38,7 @@ public class BuffersTest {
     @Test
     @Parameters(method = "randomBytes")
     public void readAndWrite(byte[] bytes) {
-        ByteBuffer buf = ByteBuffer.allocate(VarInt.sizeOf(bytes.length) + bytes.length);
+        ByteBuffer buf = ByteBuffer.allocate(Buffers.lengthPrefixedBytesSize(bytes));
         Buffers.writeLengthPrefixedBytes(buf, bytes);
         assertFalse(buf.hasRemaining());
         ((Buffer) buf).rewind();

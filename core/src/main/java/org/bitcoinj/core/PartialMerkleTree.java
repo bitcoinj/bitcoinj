@@ -157,7 +157,7 @@ public class PartialMerkleTree {
         int size = Integer.BYTES; // transactionCount
         size += VarInt.sizeOf(hashes.size());
         size += hashes.size() * Sha256Hash.LENGTH;
-        size += VarInt.sizeOf(matchedChildBits.length) + matchedChildBits.length;
+        size += Buffers.lengthPrefixedBytesSize(matchedChildBits);
         return size;
     }
 

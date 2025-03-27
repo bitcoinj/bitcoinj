@@ -214,7 +214,7 @@ public class TransactionInput {
      */
     public int messageSize() {
         int size = TransactionOutPoint.BYTES;
-        size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        size += Buffers.lengthPrefixedBytesSize(scriptBytes);
         size += 4; // sequence
         return size;
     }

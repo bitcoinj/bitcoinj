@@ -174,7 +174,7 @@ public class TransactionWitness {
     public int messageSize() {
         int size = VarInt.sizeOf(pushes.size());
         for (byte[] push : pushes)
-            size += VarInt.sizeOf(push.length) + push.length;
+            size += Buffers.lengthPrefixedBytesSize(push);
         return size;
     }
 

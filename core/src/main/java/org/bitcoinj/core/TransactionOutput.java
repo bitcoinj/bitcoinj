@@ -156,7 +156,7 @@ public class TransactionOutput {
      */
     public int messageSize() {
         int size = Coin.BYTES; // value
-        size += VarInt.sizeOf(scriptBytes.length) + scriptBytes.length;
+        size += Buffers.lengthPrefixedBytesSize(scriptBytes);
         return size;
     }
 

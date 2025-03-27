@@ -74,6 +74,17 @@ public class Buffers {
     }
 
     /**
+     * Determines the number of bytes written by {@link #writeLengthPrefixedBytes(ByteBuffer, byte[])}. A typical
+     * usage is for allocating a buffer of the right size.
+     *
+     * @param bytes bytes that are about to be written
+     * @return number of bytes required in the buffer, including length
+     */
+    public static int lengthPrefixedBytesSize(byte[] bytes) {
+        return VarInt.sizeOf(bytes.length) + bytes.length;
+    }
+
+    /**
      * First read a {@link VarInt} from the buffer and use it to determine the number of bytes to read. Then read
      * that many bytes and interpret it as an UTF-8 encoded string to be returned. This construct is frequently used
      * by Bitcoin protocols.
@@ -98,6 +109,18 @@ public class Buffers {
     public static ByteBuffer writeLengthPrefixedString(ByteBuffer buf, String str) throws BufferOverflowException {
         byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
         return writeLengthPrefixedBytes(buf, bytes);
+    }
+
+    /**
+     * Determines the number of bytes written by {@link #writeLengthPrefixedString(ByteBuffer, String)}. A typical
+     * usage is for allocating a buffer of the right size.
+     *
+     * @param str string that is about to be written
+     * @return number of bytes required in the buffer, including length
+     */
+    public static int lengthPrefixedStringSize(String str) {
+        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        return lengthPrefixedBytesSize(bytes);
     }
 
     /**
