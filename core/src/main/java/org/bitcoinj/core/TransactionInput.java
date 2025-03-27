@@ -213,10 +213,9 @@ public class TransactionInput {
      * @return size of the serialized message in bytes
      */
     public int messageSize() {
-        int size = TransactionOutPoint.BYTES;
-        size += Buffers.lengthPrefixedBytesSize(scriptBytes);
-        size += 4; // sequence
-        return size;
+        return TransactionOutPoint.BYTES +
+                Buffers.lengthPrefixedBytesSize(scriptBytes) +
+                4; // sequence
     }
 
     /**

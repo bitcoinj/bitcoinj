@@ -154,11 +154,10 @@ public class PartialMerkleTree {
      * @return size of the serialized message in bytes
      */
     public int messageSize() {
-        int size = Integer.BYTES; // transactionCount
-        size += VarInt.sizeOf(hashes.size());
-        size += hashes.size() * Sha256Hash.LENGTH;
-        size += Buffers.lengthPrefixedBytesSize(matchedChildBits);
-        return size;
+        return Integer.BYTES + // transactionCount
+                VarInt.sizeOf(hashes.size()) +
+                hashes.size() * Sha256Hash.LENGTH +
+                Buffers.lengthPrefixedBytesSize(matchedChildBits);
     }
 
     // Based on CPartialMerkleTree::TraverseAndBuild in Bitcoin Core.

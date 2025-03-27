@@ -278,10 +278,10 @@ public class Block extends BaseMessage {
         int size = HEADER_SIZE;
         List<Transaction> transactions = getTransactions();
         if (transactions != null) {
-            size += VarInt.sizeOf(transactions.size());
-            for (Transaction tx : transactions) {
-                size += tx.messageSize();
-            }
+            size += VarInt.sizeOf(transactions.size()) +
+                    transactions.stream()
+                            .mapToInt(Transaction::messageSize)
+                            .sum();
         }
         return size;
     }
