@@ -1415,66 +1415,64 @@ public class Transaction extends BaseMessage {
             int inputIndex,
             byte[] scriptCode,
             Coin prevValue,
-            byte sigHashType){
-        {
-            Sha256Hash hashPrevouts = Sha256Hash.ZERO_HASH;
-            Sha256Hash hashSequence = Sha256Hash.ZERO_HASH;
-            Sha256Hash hashOutputs = Sha256Hash.ZERO_HASH;
-            int basicSigHashType = sigHashType & 0x1f;
-            boolean anyoneCanPay = (sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value;
-            boolean signAll = (basicSigHashType != SigHash.SINGLE.value) && (basicSigHashType != SigHash.NONE.value);
+            byte sigHashType) {
+        Sha256Hash hashPrevouts = Sha256Hash.ZERO_HASH;
+        Sha256Hash hashSequence = Sha256Hash.ZERO_HASH;
+        Sha256Hash hashOutputs = Sha256Hash.ZERO_HASH;
+        int basicSigHashType = sigHashType & 0x1f;
+        boolean anyoneCanPay = (sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value;
+        boolean signAll = (basicSigHashType != SigHash.SINGLE.value) && (basicSigHashType != SigHash.NONE.value);
 
-            if (!anyoneCanPay) {
-                ByteBuffer bufHashPrevouts = ByteBuffer.allocate(this.inputs.size() * (Sha256Hash.LENGTH + 4));
-                for (TransactionInput input : this.inputs) {
-                    input.getOutpoint().hash().write(bufHashPrevouts);
-                    writeInt32LE(input.getOutpoint().index(), bufHashPrevouts);
-                }
-                hashPrevouts = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashPrevouts.array()));
+        if (!anyoneCanPay) {
+            ByteBuffer bufHashPrevouts = ByteBuffer.allocate(this.inputs.size() * (Sha256Hash.LENGTH + 4));
+            for (TransactionInput input : this.inputs) {
+                input.getOutpoint().hash().write(bufHashPrevouts);
+                writeInt32LE(input.getOutpoint().index(), bufHashPrevouts);
             }
-
-            if (!anyoneCanPay && signAll) {
-                ByteBuffer bufSequence = ByteBuffer.allocate(this.inputs.size() * 4);
-                for (TransactionInput input : this.inputs) {
-                    writeInt32LE(input.getSequenceNumber(), bufSequence);
-                }
-                hashSequence = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufSequence.array()));
-            }
-
-            if (signAll) {
-                ByteBuffer bufHashOutputs = ByteBuffer.allocate(this.outputs.stream().mapToInt(
-                        output -> Coin.BYTES + Buffers.lengthPrefixedBytesSize(output.getScriptBytes())
-                ).sum());
-                for (TransactionOutput output : this.outputs) {
-                    output.getValue().write(bufHashOutputs);
-                    Buffers.writeLengthPrefixedBytes(bufHashOutputs, output.getScriptBytes());
-                }
-                hashOutputs = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashOutputs.array()));
-            } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
-                TransactionOutput output = this.outputs.get(inputIndex);
-                byte[] scriptBytes = output.getScriptBytes();
-                ByteBuffer bufHashOutputs = ByteBuffer.allocate(Coin.BYTES +
-                        Buffers.lengthPrefixedBytesSize(scriptBytes));
-                output.getValue().write(bufHashOutputs);
-                Buffers.writeLengthPrefixedBytes(bufHashOutputs, scriptBytes);
-                hashOutputs = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashOutputs.array()));
-            }
-
-            ByteBuffer buf = ByteBuffer.allocate(4 + Sha256Hash.LENGTH * 3 + 4 +
-                    Buffers.lengthPrefixedBytesSize(scriptCode) + Coin.BYTES + 4 + Sha256Hash.LENGTH + 4 + 4);
-            writeInt32LE(version, buf);
-            hashPrevouts.write(buf);
-            hashSequence.write(buf);
-            inputs.get(inputIndex).getOutpoint().hash().write(buf);
-            writeInt32LE(inputs.get(inputIndex).getOutpoint().index(), buf);
-            Buffers.writeLengthPrefixedBytes(buf, scriptCode);
-            prevValue.write(buf);
-            writeInt32LE(inputs.get(inputIndex).getSequenceNumber(), buf);
-            hashOutputs.write(buf);
-            writeInt32LE(this.vLockTime.rawValue(), buf);
-            writeInt32LE(0x000000ff & sigHashType, buf);
-            return Sha256Hash.twiceOf(buf.array());
+            hashPrevouts = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashPrevouts.array()));
         }
+
+        if (!anyoneCanPay && signAll) {
+            ByteBuffer bufSequence = ByteBuffer.allocate(this.inputs.size() * 4);
+            for (TransactionInput input : this.inputs) {
+                writeInt32LE(input.getSequenceNumber(), bufSequence);
+            }
+            hashSequence = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufSequence.array()));
+        }
+
+        if (signAll) {
+            ByteBuffer bufHashOutputs = ByteBuffer.allocate(this.outputs.stream().mapToInt(
+                    output -> Coin.BYTES + Buffers.lengthPrefixedBytesSize(output.getScriptBytes())
+            ).sum());
+            for (TransactionOutput output : this.outputs) {
+                output.getValue().write(bufHashOutputs);
+                Buffers.writeLengthPrefixedBytes(bufHashOutputs, output.getScriptBytes());
+            }
+            hashOutputs = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashOutputs.array()));
+        } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
+            TransactionOutput output = this.outputs.get(inputIndex);
+            byte[] scriptBytes = output.getScriptBytes();
+            ByteBuffer bufHashOutputs = ByteBuffer.allocate(Coin.BYTES +
+                    Buffers.lengthPrefixedBytesSize(scriptBytes));
+            output.getValue().write(bufHashOutputs);
+            Buffers.writeLengthPrefixedBytes(bufHashOutputs, scriptBytes);
+            hashOutputs = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashOutputs.array()));
+        }
+
+        ByteBuffer buf = ByteBuffer.allocate(4 + Sha256Hash.LENGTH * 3 + 4 +
+                Buffers.lengthPrefixedBytesSize(scriptCode) + Coin.BYTES + 4 + Sha256Hash.LENGTH + 4 + 4);
+        writeInt32LE(version, buf);
+        hashPrevouts.write(buf);
+        hashSequence.write(buf);
+        inputs.get(inputIndex).getOutpoint().hash().write(buf);
+        writeInt32LE(inputs.get(inputIndex).getOutpoint().index(), buf);
+        Buffers.writeLengthPrefixedBytes(buf, scriptCode);
+        prevValue.write(buf);
+        writeInt32LE(inputs.get(inputIndex).getSequenceNumber(), buf);
+        hashOutputs.write(buf);
+        writeInt32LE(this.vLockTime.rawValue(), buf);
+        writeInt32LE(0x000000ff & sigHashType, buf);
+        return Sha256Hash.twiceOf(buf.array());
     }
 
     @Override
