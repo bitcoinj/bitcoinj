@@ -1249,7 +1249,7 @@ public class Transaction extends BaseMessage {
         //
         //   https://en.bitcoin.it/wiki/Contracts
 
-        try {
+        {
             // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
             // It would not be thread-safe to change the attributes of the transaction object itself.
             Transaction tx = Transaction.read(ByteBuffer.wrap(serialize()));
@@ -1318,18 +1318,15 @@ public class Transaction extends BaseMessage {
                 tx.inputs.add(input);
             }
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(tx.messageSize() + 4);
-            tx.bitcoinSerializeToStream(bos, false);
+            ByteBuffer buf = ByteBuffer.allocate(tx.messageSize() + 4);
+            buf.put(tx.serialize());
             // We also have to write a hash type (sigHashType is actually an unsigned char)
-            writeInt32LE(0x000000ff & sigHashType, bos);
+            writeInt32LE(0x000000ff & sigHashType, buf);
             // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
             // however then we would expect that it IS reversed.
-            Sha256Hash hash = Sha256Hash.twiceOf(bos.toByteArray());
-            bos.close();
+            Sha256Hash hash = Sha256Hash.twiceOf(buf.array());
 
             return hash;
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
         }
     }
 
