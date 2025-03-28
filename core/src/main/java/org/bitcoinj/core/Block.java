@@ -825,7 +825,7 @@ public class Block extends BaseMessage {
     private static final byte[] pubkeyForTesting = new ECKey().getPubKey();
 
     /**
-     * Returns a solved block that builds on top of this one. This exists for unit tests.
+     * Returns an unsolved block that builds on top of this one. This exists for unit tests.
      *
      * @param to      if not null, 50 coins are sent to the address
      * @param version version of the block to create
@@ -839,7 +839,7 @@ public class Block extends BaseMessage {
     }
 
     /**
-     * Returns a solved block that builds on top of this one. This exists for unit tests.
+     * Returns an unsolved block that builds on top of this one. This exists for unit tests.
      * In this variant you can specify a public key (pubkey) for use in generating coinbase blocks.
      *
      * @param to            if not null, 50 coins are sent to the address
@@ -879,12 +879,6 @@ public class Block extends BaseMessage {
             b.setTime(time().plusSeconds(1));
         else
             b.setTime(bitcoinTime);
-        b.solve();
-        try {
-            Block.verifyHeader(b);
-        } catch (VerificationException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        }
         if (b.getVersion() != version) {
             throw new RuntimeException();
         }
