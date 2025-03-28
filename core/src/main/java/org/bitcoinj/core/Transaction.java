@@ -1333,10 +1333,24 @@ public class Transaction extends BaseMessage {
         }
     }
 
+    /**
+     * @deprecated use {@link #calculateWitnessSignature(int, ECKey, Script, Coin, SigHash, boolean)}
+     */
+    @Deprecated
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
             byte[] scriptCode,
+            Coin value,
+            SigHash hashType,
+            boolean anyoneCanPay) {
+        return calculateWitnessSignature(inputIndex, key, Script.parse(scriptCode), value, hashType, anyoneCanPay);
+    }
+
+    public TransactionSignature calculateWitnessSignature(
+            int inputIndex,
+            ECKey key,
+            Script scriptCode,
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
@@ -1344,21 +1358,26 @@ public class Transaction extends BaseMessage {
         return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
     }
 
+    /**
+     * @deprecated use {@link #calculateWitnessSignature(int, ECKey, AesKey, Script, Coin, SigHash, boolean)}
+     */
+    @Deprecated
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
-            Script scriptCode,
+            @Nullable AesKey aesKey,
+            byte[] scriptCode,
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
-        return calculateWitnessSignature(inputIndex, key, scriptCode.program(), value, hashType, anyoneCanPay);
+        return calculateWitnessSignature(inputIndex, key, aesKey, Script.parse(scriptCode), value, hashType, anyoneCanPay);
     }
 
     public TransactionSignature calculateWitnessSignature(
             int inputIndex,
             ECKey key,
             @Nullable AesKey aesKey,
-            byte[] scriptCode,
+            Script scriptCode,
             Coin value,
             SigHash hashType,
             boolean anyoneCanPay) {
@@ -1366,25 +1385,17 @@ public class Transaction extends BaseMessage {
         return new TransactionSignature(key.sign(hash, aesKey), hashType, anyoneCanPay);
     }
 
-    public TransactionSignature calculateWitnessSignature(
-            int inputIndex,
-            ECKey key,
-            @Nullable AesKey aesKey,
-            Script scriptCode,
-            Coin value,
-            SigHash hashType,
-            boolean anyoneCanPay) {
-        return calculateWitnessSignature(inputIndex, key, aesKey, scriptCode.program(), value, hashType, anyoneCanPay);
-    }
-
+    /**
+     * @deprecated use {@link #hashForWitnessSignature(int, Script, Coin, SigHash, boolean)}
+     */
+    @Deprecated
     public synchronized Sha256Hash hashForWitnessSignature(
             int inputIndex,
             byte[] scriptCode,
             Coin prevValue,
             SigHash type,
             boolean anyoneCanPay) {
-        int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
-        return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
+        return hashForWitnessSignature(inputIndex, Script.parse(scriptCode), prevValue, type, anyoneCanPay);
     }
 
     /**
@@ -1408,12 +1419,25 @@ public class Transaction extends BaseMessage {
             Coin prevValue,
             SigHash type,
             boolean anyoneCanPay) {
-        return hashForWitnessSignature(inputIndex, scriptCode.program(), prevValue, type, anyoneCanPay);
+        int sigHash = TransactionSignature.calcSigHashValue(type, anyoneCanPay);
+        return hashForWitnessSignature(inputIndex, scriptCode, prevValue, (byte) sigHash);
+    }
+
+    /**
+     * @deprecated use {@link #hashForWitnessSignature(int, Script, Coin, SigHash, boolean)}
+     */
+    @Deprecated
+    public synchronized Sha256Hash hashForWitnessSignature(
+            int inputIndex,
+            byte[] scriptCode,
+            Coin prevValue,
+            byte sigHashType) {
+        return hashForWitnessSignature(inputIndex, Script.parse(scriptCode), prevValue, sigHashType);
     }
 
     public synchronized Sha256Hash hashForWitnessSignature(
             int inputIndex,
-            byte[] scriptCode,
+            Script script,
             Coin prevValue,
             byte sigHashType) {
         Sha256Hash hashPrevouts = Sha256Hash.ZERO_HASH;
@@ -1459,6 +1483,7 @@ public class Transaction extends BaseMessage {
             hashOutputs = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashOutputs.array()));
         }
 
+        byte[] scriptCode = script.program();
         ByteBuffer buf = ByteBuffer.allocate(4 + Sha256Hash.LENGTH * 3 + 4 +
                 Buffers.lengthPrefixedBytesSize(scriptCode) + Coin.BYTES + 4 + Sha256Hash.LENGTH + 4 + 4);
         writeInt32LE(version, buf);
