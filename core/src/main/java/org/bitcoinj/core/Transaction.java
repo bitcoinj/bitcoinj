@@ -1426,7 +1426,7 @@ public class Transaction extends BaseMessage {
             boolean signAll = (basicSigHashType != SigHash.SINGLE.value) && (basicSigHashType != SigHash.NONE.value);
 
             if (!anyoneCanPay) {
-                ByteArrayOutputStream bosHashPrevouts = new ByteArrayOutputStream(256);
+                ByteArrayOutputStream bosHashPrevouts = new ByteArrayOutputStream(this.inputs.size() * (Sha256Hash.LENGTH + 4));
                 for (TransactionInput input : this.inputs) {
                     bosHashPrevouts.write(input.getOutpoint().hash().serialize());
                     writeInt32LE(input.getOutpoint().index(), bosHashPrevouts);
@@ -1435,7 +1435,7 @@ public class Transaction extends BaseMessage {
             }
 
             if (!anyoneCanPay && signAll) {
-                ByteArrayOutputStream bosSequence = new ByteArrayOutputStream(256);
+                ByteArrayOutputStream bosSequence = new ByteArrayOutputStream(this.inputs.size() * 4);
                 for (TransactionInput input : this.inputs) {
                     writeInt32LE(input.getSequenceNumber(), bosSequence);
                 }
@@ -1443,7 +1443,9 @@ public class Transaction extends BaseMessage {
             }
 
             if (signAll) {
-                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
+                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(this.outputs.stream().mapToInt(
+                        output -> Coin.BYTES + Buffers.lengthPrefixedBytesSize(output.getScriptBytes())
+                ).sum());
                 for (TransactionOutput output : this.outputs) {
                     writeInt64LE(output.getValue().getValue(), bosHashOutputs);
                     byte[] scriptBytes = output.getScriptBytes();
@@ -1452,15 +1454,18 @@ public class Transaction extends BaseMessage {
                 }
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
-                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
-                writeInt64LE(this.outputs.get(inputIndex).getValue().getValue(), bosHashOutputs);
-                byte[] scriptBytes = this.outputs.get(inputIndex).getScriptBytes();
+                TransactionOutput output = this.outputs.get(inputIndex);
+                byte[] scriptBytes = output.getScriptBytes();
+                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(Coin.BYTES +
+                        Buffers.lengthPrefixedBytesSize(scriptBytes));
+                writeInt64LE(output.getValue().getValue(), bosHashOutputs);
                 bosHashOutputs.write(VarInt.of(scriptBytes.length).serialize());
                 bosHashOutputs.write(scriptBytes);
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             }
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(255); // just a guess at an average tx length
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(4 + Sha256Hash.LENGTH * 3 + 4 +
+                    Buffers.lengthPrefixedBytesSize(scriptCode) + Coin.BYTES + 4 + Sha256Hash.LENGTH + 4 + 4);
             writeInt32LE(version, bos);
             bos.write(hashPrevouts);
             bos.write(hashSequence);
