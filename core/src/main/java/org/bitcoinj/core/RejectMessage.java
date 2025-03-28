@@ -18,15 +18,12 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -123,16 +120,13 @@ public class RejectMessage extends BaseMessage {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        byte[] messageBytes = rejectedMessage.getBytes(StandardCharsets.UTF_8);
-        stream.write(VarInt.of(messageBytes.length).serialize());
-        stream.write(messageBytes);
-        stream.write(code.code);
-        byte[] reasonBytes = reason.getBytes(StandardCharsets.UTF_8);
-        stream.write(VarInt.of(reasonBytes.length).serialize());
-        stream.write(reasonBytes);
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        Buffers.writeLengthPrefixedString(buf, rejectedMessage);
+        buf.put(code.code);
+        Buffers.writeLengthPrefixedString(buf, reason);
         if ("block".equals(rejectedMessage) || "tx".equals(rejectedMessage))
-            stream.write(rejectedMessageHash.serialize());
+            rejectedMessageHash.write(buf);
+        return buf;
     }
 
     /**

@@ -1,6 +1,5 @@
 /*
- * Copyright 2012 Matt Corallo
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,6 @@ package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
@@ -27,8 +25,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -175,16 +172,13 @@ public class BloomFilter extends BaseMessage {
                 1; // nFlags
     }
 
-    /**
-     * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
-     */
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(VarInt.of(data.length).serialize());
-        stream.write(data);
-        ByteUtils.writeInt32LE(hashFuncs, stream);
-        ByteUtils.writeInt32LE(nTweak, stream);
-        stream.write(nFlags);
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        Buffers.writeLengthPrefixedBytes(buf, data);
+        ByteUtils.writeInt32LE(hashFuncs, buf);
+        ByteUtils.writeInt32LE(nTweak, buf);
+        buf.put(nFlags);
+        return buf;
     }
 
     private static int rotateLeft32(int x, int r) {

@@ -20,8 +20,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -65,13 +64,14 @@ public class AddressV2Message extends AddressMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (addresses == null)
-            return;
-        stream.write(VarInt.of(addresses.size()).serialize());
-        for (PeerAddress addr : addresses) {
-            stream.write(addr.serialize(2));
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        if (addresses != null) {
+            VarInt.of(addresses.size()).write(buf);
+            for (PeerAddress addr : addresses) {
+                addr.write(buf, 2);
+            }
         }
+        return buf;
     }
 
     @Override

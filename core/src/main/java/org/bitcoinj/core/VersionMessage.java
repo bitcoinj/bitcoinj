@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,16 @@
 package org.bitcoinj.core;
 
 import com.google.common.net.InetAddresses;
-import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
@@ -206,26 +203,25 @@ public class VersionMessage extends BaseMessage {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream buf) throws IOException {
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
         ByteUtils.writeInt32LE(clientVersion, buf);
-        buf.write(localServices.serialize());
+        localServices.write(buf);
         ByteUtils.writeInt64LE(time.getEpochSecond(), buf);
-        buf.write(receivingServices.serialize());
-        buf.write(PeerAddress.mapIntoIPv6(receivingAddr.getAddress().getAddress()));
+        receivingServices.write(buf);
+        buf.put(PeerAddress.mapIntoIPv6(receivingAddr.getAddress().getAddress()));
         ByteUtils.writeInt16BE(receivingAddr.getPort(), buf);
-        buf.write(new byte[NETADDR_BYTES]); // addr_from
+        buf.put(new byte[NETADDR_BYTES]); // addr_from
         // Next up is the "local host nonce", this is to detect the case of connecting
         // back to yourself. We don't care about this as we won't be accepting inbound
         // connections.
         ByteUtils.writeInt32LE(0, buf);
         ByteUtils.writeInt32LE(0, buf);
         // Now comes subVer.
-        byte[] subVerBytes = subVer.getBytes(StandardCharsets.UTF_8);
-        buf.write(VarInt.of(subVerBytes.length).serialize());
-        buf.write(subVerBytes);
+        Buffers.writeLengthPrefixedString(buf, subVer);
         // Size of known block chain.
         ByteUtils.writeInt32LE(bestHeight, buf);
-        buf.write(relayTxesBeforeFilter ? 1 : 0);
+        buf.put((byte) (relayTxesBeforeFilter ? 1 : 0));
+        return buf;
     }
 
     @Override

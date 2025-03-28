@@ -1217,22 +1217,22 @@ public class FullBlockTestGenerator {
             b64Original.solve();
             checkState(b64Original.block.messageSize() == Block.MAX_BLOCK_SIZE);
 
-            ByteArrayOutputStream stream = new ByteArrayOutputStream(b64Original.block.messageSize() + 8);
-            b64Original.block.writeHeader(stream);
+            ByteBuffer buf = ByteBuffer.allocate(b64Original.block.messageSize() + 8);
+            b64Original.block.writeHeader(buf);
 
             byte[] varIntBytes = new byte[9];
             varIntBytes[0] = (byte) 255;
             ByteUtils.writeInt64LE(b64Original.block.getTransactions().size(), varIntBytes, 1);
-            stream.write(varIntBytes);
+            buf.put(varIntBytes);
             checkState(VarInt.ofBytes(varIntBytes, 0).intValue() == b64Original.block.getTransactions().size());
 
             for (Transaction transaction : b64Original.block.getTransactions())
-                transaction.bitcoinSerializeToStream(stream);
-            b64 = params.getSerializer().makeBlock(ByteBuffer.wrap(stream.toByteArray()));
+                transaction.write(buf);
+            b64 = params.getSerializer().makeBlock(ByteBuffer.wrap(buf.array()));
 
             // The following checks are checking to ensure block serialization functions in the way needed for this test
             // If they fail, it is likely not an indication of error, but an indication that this test needs rewritten
-            checkState(stream.size() == b64Original.block.messageSize() + 8);
+            checkState(buf.capacity() == b64Original.block.messageSize() + 8);
             // This check fails because it was created for "retain mode" and the likely encoding is not "optimal".
             // We since removed this capability retain the original encoding, but could not rewrite this test data.
             // checkState(stream.size() == b64.messageSize());

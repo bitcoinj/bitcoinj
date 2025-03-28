@@ -25,10 +25,9 @@ import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.temporal.ChronoUnit;
@@ -241,7 +240,7 @@ public class BitcoinSerializerTest {
             public int messageSize() { return 0; }
 
             @Override
-            protected void bitcoinSerializeToStream(OutputStream stream) {}
+            public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException { return buf; }
         };
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ADDRESS_MESSAGE_BYTES.length);
         serializer.serialize(unknownMessage, bos);

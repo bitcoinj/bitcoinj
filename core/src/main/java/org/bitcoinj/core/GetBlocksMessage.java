@@ -1,6 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +20,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.ByteUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -92,19 +90,20 @@ public class GetBlocksMessage extends BaseMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
         // Version, for some reason.
-        ByteUtils.writeInt32LE(version, stream);
+        ByteUtils.writeInt32LE(version, buf);
         // Then a vector of block hashes. This is actually a "block locator", a set of block
         // identifiers that spans the entire chain with exponentially increasing gaps between
         // them, until we end up at the genesis block. See CBlockLocator::Set()
-        stream.write(VarInt.of(locator.size()).serialize());
+        VarInt.of(locator.size()).write(buf);
         for (Sha256Hash hash : locator.getHashes()) {
             // Have to reverse as wire format is little endian.
-            stream.write(hash.serialize());
+            hash.write(buf);
         }
         // Next, a block ID to stop at.
-        stream.write(stopHash.serialize());
+        stopHash.write(buf);
+        return buf;
     }
 
     @Override

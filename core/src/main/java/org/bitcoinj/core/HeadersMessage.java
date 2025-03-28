@@ -1,6 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +20,7 @@ import org.bitcoinj.base.VarInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -95,12 +93,13 @@ public class HeadersMessage extends BaseMessage {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(VarInt.of(blockHeaders.size()).serialize());
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        VarInt.of(blockHeaders.size()).write(buf);
         for (Block header : blockHeaders) {
-            header.cloneAsHeader().bitcoinSerializeToStream(stream);
-            stream.write(0);
+            header.cloneAsHeader().write(buf);
+            buf.put((byte) 0);
         }
+        return buf;
     }
 
     public List<Block> getBlockHeaders() {
