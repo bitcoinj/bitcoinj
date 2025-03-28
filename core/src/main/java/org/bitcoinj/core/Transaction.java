@@ -1417,7 +1417,6 @@ public class Transaction extends BaseMessage {
             byte[] scriptCode,
             Coin prevValue,
             byte sigHashType){
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(255); // just a guess at an average tx length
         try {
             byte[] hashPrevouts = new byte[32];
             byte[] hashSequence = new byte[32];
@@ -1460,6 +1459,8 @@ public class Transaction extends BaseMessage {
                 bosHashOutputs.write(scriptBytes);
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             }
+
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(255); // just a guess at an average tx length
             writeInt32LE(version, bos);
             bos.write(hashPrevouts);
             bos.write(hashSequence);
@@ -1472,11 +1473,10 @@ public class Transaction extends BaseMessage {
             bos.write(hashOutputs);
             writeInt32LE(this.vLockTime.rawValue(), bos);
             writeInt32LE(0x000000ff & sigHashType, bos);
+            return Sha256Hash.twiceOf(bos.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
-
-        return Sha256Hash.twiceOf(bos.toByteArray());
     }
 
     @Override
