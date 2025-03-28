@@ -40,7 +40,6 @@ import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.crypto.AesKey;
@@ -54,8 +53,6 @@ import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
-import org.bitcoinj.uri.BitcoinURI;
-import org.bitcoinj.uri.BitcoinURIParseException;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.DeterministicKeyChain;
@@ -83,7 +80,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -186,7 +182,7 @@ public class WalletTool implements Callable<Integer> {
     private String pubKeyStr;
     @CommandLine.Option(names = "--privkey", description = "Specifies a WIF-, hex- or base58-encoded private key.")
     private String privKeyStr;
-    @CommandLine.Option(names = "--addr", description ="Specifies a Bitcoin address, either segwit or legacy.")
+    @CommandLine.Option(names = "--addr", description = "Specifies a Bitcoin address, either segwit or legacy.")
     private String addrStr;
     @CommandLine.Option(names = "--peers", description = "Comma separated IP addresses/domain names for connections instead of peer discovery.")
     private String peersStr;
@@ -313,7 +309,7 @@ public class WalletTool implements Callable<Integer> {
         BALANCE
     }
 
-    public enum Filter  {
+    public enum Filter {
         NONE,
         SERVER, // bloom filter
     }
@@ -325,53 +321,78 @@ public class WalletTool implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException, BlockStoreException {
-        ActionEnum action;
-        try {
-            action = ActionEnum.valueOf(actionStr.toUpperCase().replace("-", "_"));
-        } catch (IllegalArgumentException e) {
-            System.err.println("Could not understand action name " + actionStr);
-            return 1;
-        }
+        ActionEnum action = validateAction(actionStr);
+        if (action == null) return 1;
 
-        if (debugLog) {
-            BriefLogFormatter.init();
-            log.info("Starting up ...");
-        } else {
-            // Disable logspam unless there is a flag.
-            java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
-            logger.setLevel(Level.SEVERE);
-        }
+        setupLogging();
         params = NetworkParameters.of(net);
-        String fileName = String.format("%s.chain", net);
-        if (chainFile == null) {
-            chainFile = new File(fileName);
-        }
+        setDefaultChainFile();
         Context.propagate(new Context());
 
-        if (conditionStr != null) {
-            condition = new Condition(conditionStr);
-        }
+        initializeCondition(conditionStr);
 
         if (action == ActionEnum.CREATE) {
             createWallet(net, walletFile);
             return 0;  // We're done.
         }
-        if (!walletFile.exists()) {
-            System.err.println("Specified wallet file " + walletFile + " does not exist. Try wallet-tool --wallet=" + walletFile + " create");
+        if (checkWalletExists() == 1) return 1;
+
+        Integer walletResult = initializeWallet(action);
+        if (walletResult != 0) return walletResult; //return on failure
+
+        Integer networkCheckResult = checkWalletNetwork();
+        if (networkCheckResult != 0) return networkCheckResult;//return on failure
+
+        Integer actionResult = processAction(action);
+        if (actionResult != 0) return actionResult; //return on failure
+
+        Integer walletConsistencyResult =  checkWalletConsistency();
+        if(walletConsistencyResult != 0) return walletConsistencyResult;
+        saveWallet(walletFile);
+
+        if (waitFor != null) {
+            Integer waitForResult = handleWaitForCondition();
+            if (waitForResult != 0) return waitForResult;
+        }
+        shutdown();
+
+        return 0;
+    }
+
+    private Integer handleWaitForCondition() {
+        try {
+            setup();
+        } catch (BlockStoreException e) {
+            throw new RuntimeException(e);
+        }
+        CompletableFuture<String> futureMessage = wait(waitFor, condition);
+        if (!peerGroup.isRunning()) peerGroup.startAsync();
+
+        System.out.println(futureMessage.join());
+        Integer walletConsistencyResult =  checkWalletConsistency();
+        if(walletConsistencyResult != 0) return walletConsistencyResult;
+        saveWallet(walletFile);
+        return 0; // Continue execution
+    }
+
+    private Integer checkWalletConsistency() {
+        if (!wallet.isConsistent()) {
+            System.err.println("************** WALLET IS INCONSISTENT *****************");
+            return 10;
+        }
+        return 0;
+    }
+
+    private Integer checkWalletNetwork() {
+        if (wallet.network() != net) {
+            System.err.println("Wallet does not match requested network: " +
+                    wallet.network() + " vs " + net);
             return 1;
         }
+        return 0;
+    }
 
-        if (action == ActionEnum.RAW_DUMP) {
-            // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
-            // useful mostly for investigating corrupted wallets.
-            try (FileInputStream stream = new FileInputStream(walletFile)) {
-                Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
-                proto = attemptHexConversion(proto);
-                System.out.println(proto.toString());
-                return 0;
-            }
-        }
-
+    private Integer initializeWallet(ActionEnum action) {
         boolean forceReset = action == ActionEnum.RESET
                 || (action == ActionEnum.SYNC
                 && force);
@@ -382,15 +403,67 @@ public class WalletTool implements Callable<Integer> {
             e.printStackTrace();
             return 1;
         }
-        if (wallet.network() != net) {
-            System.err.println("Wallet does not match requested network: " +
-                    wallet.network() + " vs " + net);
+        return 0;
+    }
+
+    private void setupLogging() {
+        if (debugLog) {
+            BriefLogFormatter.init();
+            log.info("Starting up ...");
+        } else {
+            // Disable logspam unless there is a flag.
+            java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
+            logger.setLevel(Level.SEVERE);
+        }
+    }
+
+    private ActionEnum validateAction(String actionStr) {
+        try {
+            return ActionEnum.valueOf(actionStr.toUpperCase().replace("-", "_"));
+        } catch (IllegalArgumentException e) {
+            System.err.println("Could not understand action name " + actionStr);
+            return null;
+        }
+    }
+
+    private void initializeCondition(String conditionStr) {
+        if (conditionStr != null) {
+            condition = new Condition(conditionStr);
+        }
+    }
+
+    private void setDefaultChainFile() {
+        if (chainFile == null) {
+            chainFile = new File(String.format("%s.chain", net));
+        }
+    }
+
+    private Integer checkWalletExists() {
+        if (walletFile == null) {
+            System.err.println("You must specify a wallet file to load.");
             return 1;
         }
+        if (!walletFile.exists()) {
+            System.err.println("Specified wallet file " + walletFile + " does not exist. Try wallet-tool --wallet=" + walletFile + " create");
+            return 1;
+        }
+        return 0;
+    }
 
+    private Coin parseFeePerVkb(String feePerKbString, String feePerByteString) {
+        if (feePerKbString != null) {
+            return parseCoin(feePerKbString);
+        } else if (feePerByteString != null) {
+            return Coin.valueOf(Long.parseLong(feePerByteString) * 1000);
+        }
+        return null;
+    }
+
+    private Integer processAction(ActionEnum action) throws BlockStoreException {
         // What should we do?
         switch (action) {
             case DUMP: dumpWallet(); break;
+            case RAW_DUMP: rawDumpWallet(); break;
             case ADD_KEY: addKey(); break;
             case ADD_ADDR: addAddr(); break;
             case DELETE_KEY: deleteKey(); break;
@@ -402,13 +475,8 @@ public class WalletTool implements Callable<Integer> {
                     System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
                     return 1;
                 } else if (outputsStr != null) {
-                    Coin feePerVkb;
-                    if (feePerVkbStr != null)
-                        feePerVkb = parseCoin(feePerVkbStr);
-                    else if (feeSatPerVbyteStr != null)
-                        feePerVkb = Coin.valueOf(Long.parseLong(feeSatPerVbyteStr) * 1000);
-                    else
-                        feePerVkb = null;
+                    Coin feePerVkb = parseFeePerVkb(feePerVkbStr, feeSatPerVbyteStr);
+
                     if (selectAddrStr != null && selectOutputStr != null) {
                         System.err.println("--select-addr and --select-output cannot be used together.");
                         return 1;
@@ -435,7 +503,7 @@ public class WalletTool implements Callable<Integer> {
                         Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
                         int selectIndex = Integer.parseInt(parts[1]);
                         coinSelector = CoinSelector.fromPredicate(candidate ->
-                             candidate.getIndex() == selectIndex && candidate.getParentTransactionHash().equals(selectTransactionHash)
+                                candidate.getIndex() == selectIndex && Objects.equals(candidate.getParentTransactionHash(), selectTransactionHash)
                         );
                     } else {
                         coinSelector = null;
@@ -452,28 +520,6 @@ public class WalletTool implements Callable<Integer> {
             case ROTATE: rotate(); break;
             case SET_CREATION_TIME: setCreationTime(); break;
         }
-
-        if (!wallet.isConsistent()) {
-            System.err.println("************** WALLET IS INCONSISTENT *****************");
-            return 10;
-        }
-
-        saveWallet(walletFile);
-
-        if (waitFor != null) {
-            setup();
-            CompletableFuture<String> futureMessage = wait(waitFor, condition);
-            if (!peerGroup.isRunning())
-                peerGroup.startAsync();
-            System.out.println(futureMessage.join());
-            if (!wallet.isConsistent()) {
-                System.err.println("************** WALLET IS INCONSISTENT *****************");
-                return 10;
-            }
-            saveWallet(walletFile);
-        }
-        shutdown();
-
         return 0;
     }
 
@@ -763,7 +809,7 @@ public class WalletTool implements Callable<Integer> {
 
             case WALLET_TX:
                 // Future will complete with a transaction ID string
-                Consumer<Transaction> txListener = tx ->  future.complete(tx.getTxId().toString());
+                Consumer<Transaction> txListener = tx -> future.complete(tx.getTxId().toString());
                 // Both listeners run in a peer thread
                 wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
                 wallet.addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
@@ -772,7 +818,7 @@ public class WalletTool implements Callable<Integer> {
             case BLOCK:
                 // Future will complete with a Block hash string
                 peerGroup.addBlocksDownloadedEventListener((peer, block, filteredBlock, blocksLeft) ->
-                    future.complete(block.getHashAsString())
+                        future.complete(block.getHashAsString())
                 );
                 break;
 
@@ -1090,13 +1136,25 @@ public class WalletTool implements Callable<Integer> {
                 final AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return; // Error message already printed.
-                printWallet( aesKey);
+                printWallet(aesKey);
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
                 return;
             }
         } else {
-            printWallet( null);
+            printWallet(null);
+        }
+    }
+
+    private void rawDumpWallet() {
+        // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
+        // useful mostly for investigating corrupted wallets.
+        try (FileInputStream stream = new FileInputStream(walletFile)) {
+            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
+            proto = attemptHexConversion(proto);
+            System.out.println(proto.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
