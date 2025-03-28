@@ -37,7 +37,7 @@ import java.util.Objects;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class FilteredBlock extends BaseMessage {
+public class FilteredBlock implements Message, StreamSerializedMessage {
     private final Block header;
 
     private final PartialMerkleTree merkleTree;
