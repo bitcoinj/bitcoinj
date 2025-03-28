@@ -71,7 +71,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Block extends BaseMessage {
+public class Block implements Message, StreamSerializedMessage {
     /**
      * Flags used to control which elements of block validation are done on
      * received blocks.
@@ -310,7 +310,7 @@ public class Block extends BaseMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         writeHeader(stream);
         writeTransactions(stream);
     }

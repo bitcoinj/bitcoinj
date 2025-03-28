@@ -91,7 +91,7 @@ import static org.bitcoinj.base.internal.ByteUtils.writeInt64LE;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Transaction extends BaseMessage {
+public class Transaction implements Message, StreamSerializedMessage {
     private static final Comparator<Transaction> SORT_TX_BY_ID = Comparator.comparing(Transaction::getTxId);
 
     /**
@@ -1506,7 +1506,7 @@ public class Transaction extends BaseMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         boolean useSegwit = hasWitnesses() && allowWitness(protocolVersion);
         bitcoinSerializeToStream(stream, useSegwit);
     }

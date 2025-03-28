@@ -55,7 +55,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class BloomFilter extends BaseMessage {
+public class BloomFilter implements Message, StreamSerializedMessage {
     /** The BLOOM_UPDATE_* constants control when the bloom filter is auto-updated by the peer using
         it as a filter, either never, for all outputs or only for P2PK outputs (default) */
     public enum BloomUpdate {
@@ -179,7 +179,7 @@ public class BloomFilter extends BaseMessage {
      * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
      */
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
         stream.write(VarInt.of(data.length).serialize());
         stream.write(data);
         ByteUtils.writeInt32LE(hashFuncs, stream);
