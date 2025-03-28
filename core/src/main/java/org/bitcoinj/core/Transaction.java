@@ -1249,85 +1249,83 @@ public class Transaction extends BaseMessage {
         //
         //   https://en.bitcoin.it/wiki/Contracts
 
-        {
-            // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
-            // It would not be thread-safe to change the attributes of the transaction object itself.
-            Transaction tx = Transaction.read(ByteBuffer.wrap(serialize()));
+        // Create a copy of this transaction to operate upon because we need make changes to the inputs and outputs.
+        // It would not be thread-safe to change the attributes of the transaction object itself.
+        Transaction tx = Transaction.read(ByteBuffer.wrap(serialize()));
 
-            // Clear input scripts in preparation for signing. If we're signing a fresh
-            // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
-            // EC math so we'll do it anyway.
-            for (int i = 0; i < tx.inputs.size(); i++) {
-                TransactionInput input = tx.getInput(i);
-                input = input.withoutScriptBytes();
-                input = input.withoutWitness();
-                tx.replaceInput(i, input);
-            }
-
-            // This step has no purpose beyond being synchronized with Bitcoin Core's bugs. OP_CODESEPARATOR
-            // is a legacy holdover from a previous, broken design of executing scripts that shipped in Bitcoin 0.1.
-            // It was seriously flawed and would have let anyone take anyone elses money. Later versions switched to
-            // the design we use today where scripts are executed independently but share a stack. This left the
-            // OP_CODESEPARATOR instruction having no purpose as it was only meant to be used internally, not actually
-            // ever put into scripts. Deleting OP_CODESEPARATOR is a step that should never be required but if we don't
-            // do it, we could split off the best chain.
-            connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
-
-            // Set the input to the script of its output. Bitcoin Core does this but the step has no obvious purpose as
-            // the signature covers the hash of the prevout transaction which obviously includes the output script
-            // already. Perhaps it felt safer to him in some way, or is another leftover from how the code was written.
-            TransactionInput input = tx.getInput(inputIndex);
-            input = input.withScriptBytes(connectedScript);
-            tx.replaceInput(inputIndex, input);
-
-            if ((sigHashType & 0x1f) == SigHash.NONE.value) {
-                // SIGHASH_NONE means no outputs are signed at all - the signature is effectively for a "blank cheque".
-                tx.outputs = new ArrayList<>(0);
-                // The signature isn't broken by new versions of the transaction issued by other parties.
-                for (int i = 0; i < tx.inputs.size(); i++)
-                    if (i != inputIndex)
-                        tx.replaceInput(i, tx.getInput(i).withSequence(0));
-            } else if ((sigHashType & 0x1f) == SigHash.SINGLE.value) {
-                // SIGHASH_SINGLE means only sign the output at the same index as the input (ie, my output).
-                if (inputIndex >= tx.outputs.size()) {
-                    // The input index is beyond the number of outputs, it's a buggy signature made by a broken
-                    // Bitcoin implementation. Bitcoin Core also contains a bug in handling this case:
-                    // any transaction output that is signed in this case will result in both the signed output
-                    // and any future outputs to this public key being steal-able by anyone who has
-                    // the resulting signature and the public key (both of which are part of the signed tx input).
-
-                    // Bitcoin Core's bug is that SignatureHash was supposed to return a hash and on this codepath it
-                    // actually returns the constant "1" to indicate an error, which is never checked for. Oops.
-                    return Sha256Hash.wrap("0100000000000000000000000000000000000000000000000000000000000000");
-                }
-                // In SIGHASH_SINGLE the outputs after the matching input index are deleted, and the outputs before
-                // that position are "nulled out". Unintuitively, the value in a "null" transaction is set to -1.
-                tx.outputs = new ArrayList<>(tx.outputs.subList(0, inputIndex + 1));
-                for (int i = 0; i < inputIndex; i++)
-                    tx.outputs.set(i, new TransactionOutput(tx, Coin.NEGATIVE_SATOSHI, new byte[] {}));
-                // The signature isn't broken by new versions of the transaction issued by other parties.
-                for (int i = 0; i < tx.inputs.size(); i++)
-                    if (i != inputIndex)
-                        tx.replaceInput(i, tx.getInput(i).withSequence(0));
-            }
-
-            if ((sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value) {
-                // SIGHASH_ANYONECANPAY means the signature in the input is not broken by changes/additions/removals
-                // of other inputs. For example, this is useful for building assurance contracts.
-                tx.inputs = new ArrayList<>();
-                tx.inputs.add(input);
-            }
-
-            ByteBuffer buf = ByteBuffer.allocate(tx.messageSize() + 4);
-            buf.put(tx.serialize());
-            // We also have to write a hash type (sigHashType is actually an unsigned char)
-            writeInt32LE(0x000000ff & sigHashType, buf);
-            // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
-            // however then we would expect that it IS reversed.
-            Sha256Hash hash = Sha256Hash.twiceOf(buf.array());
-
-            return hash;
+        // Clear input scripts in preparation for signing. If we're signing a fresh
+        // transaction that step isn't very helpful, but it doesn't add much cost relative to the actual
+        // EC math so we'll do it anyway.
+        for (int i = 0; i < tx.inputs.size(); i++) {
+            TransactionInput input = tx.getInput(i);
+            input = input.withoutScriptBytes();
+            input = input.withoutWitness();
+            tx.replaceInput(i, input);
         }
+
+        // This step has no purpose beyond being synchronized with Bitcoin Core's bugs. OP_CODESEPARATOR
+        // is a legacy holdover from a previous, broken design of executing scripts that shipped in Bitcoin 0.1.
+        // It was seriously flawed and would have let anyone take anyone elses money. Later versions switched to
+        // the design we use today where scripts are executed independently but share a stack. This left the
+        // OP_CODESEPARATOR instruction having no purpose as it was only meant to be used internally, not actually
+        // ever put into scripts. Deleting OP_CODESEPARATOR is a step that should never be required but if we don't
+        // do it, we could split off the best chain.
+        connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
+
+        // Set the input to the script of its output. Bitcoin Core does this but the step has no obvious purpose as
+        // the signature covers the hash of the prevout transaction which obviously includes the output script
+        // already. Perhaps it felt safer to him in some way, or is another leftover from how the code was written.
+        TransactionInput input = tx.getInput(inputIndex);
+        input = input.withScriptBytes(connectedScript);
+        tx.replaceInput(inputIndex, input);
+
+        if ((sigHashType & 0x1f) == SigHash.NONE.value) {
+            // SIGHASH_NONE means no outputs are signed at all - the signature is effectively for a "blank cheque".
+            tx.outputs = new ArrayList<>(0);
+            // The signature isn't broken by new versions of the transaction issued by other parties.
+            for (int i = 0; i < tx.inputs.size(); i++)
+                if (i != inputIndex)
+                    tx.replaceInput(i, tx.getInput(i).withSequence(0));
+        } else if ((sigHashType & 0x1f) == SigHash.SINGLE.value) {
+            // SIGHASH_SINGLE means only sign the output at the same index as the input (ie, my output).
+            if (inputIndex >= tx.outputs.size()) {
+                // The input index is beyond the number of outputs, it's a buggy signature made by a broken
+                // Bitcoin implementation. Bitcoin Core also contains a bug in handling this case:
+                // any transaction output that is signed in this case will result in both the signed output
+                // and any future outputs to this public key being steal-able by anyone who has
+                // the resulting signature and the public key (both of which are part of the signed tx input).
+
+                // Bitcoin Core's bug is that SignatureHash was supposed to return a hash and on this codepath it
+                // actually returns the constant "1" to indicate an error, which is never checked for. Oops.
+                return Sha256Hash.wrap("0100000000000000000000000000000000000000000000000000000000000000");
+            }
+            // In SIGHASH_SINGLE the outputs after the matching input index are deleted, and the outputs before
+            // that position are "nulled out". Unintuitively, the value in a "null" transaction is set to -1.
+            tx.outputs = new ArrayList<>(tx.outputs.subList(0, inputIndex + 1));
+            for (int i = 0; i < inputIndex; i++)
+                tx.outputs.set(i, new TransactionOutput(tx, Coin.NEGATIVE_SATOSHI, new byte[] {}));
+            // The signature isn't broken by new versions of the transaction issued by other parties.
+            for (int i = 0; i < tx.inputs.size(); i++)
+                if (i != inputIndex)
+                    tx.replaceInput(i, tx.getInput(i).withSequence(0));
+        }
+
+        if ((sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value) {
+            // SIGHASH_ANYONECANPAY means the signature in the input is not broken by changes/additions/removals
+            // of other inputs. For example, this is useful for building assurance contracts.
+            tx.inputs = new ArrayList<>();
+            tx.inputs.add(input);
+        }
+
+        ByteBuffer buf = ByteBuffer.allocate(tx.messageSize() + 4);
+        buf.put(tx.serialize());
+        // We also have to write a hash type (sigHashType is actually an unsigned char)
+        writeInt32LE(0x000000ff & sigHashType, buf);
+        // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
+        // however then we would expect that it IS reversed.
+        Sha256Hash hash = Sha256Hash.twiceOf(buf.array());
+
+        return hash;
     }
 
     public TransactionSignature calculateWitnessSignature(
