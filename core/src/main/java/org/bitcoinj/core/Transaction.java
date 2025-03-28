@@ -51,7 +51,6 @@ import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -1444,10 +1443,7 @@ public class Transaction extends BaseMessage {
             if (signAll) {
                 ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
                 for (TransactionOutput output : this.outputs) {
-                    writeInt64LE(
-                            BigInteger.valueOf(output.getValue().getValue()),
-                            bosHashOutputs
-                    );
+                    writeInt64LE(output.getValue().getValue(), bosHashOutputs);
                     byte[] scriptBytes = output.getScriptBytes();
                     bosHashOutputs.write(VarInt.of(scriptBytes.length).serialize());
                     bosHashOutputs.write(scriptBytes);
@@ -1455,10 +1451,7 @@ public class Transaction extends BaseMessage {
                 hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
             } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
                 ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(256);
-                writeInt64LE(
-                        BigInteger.valueOf(this.outputs.get(inputIndex).getValue().getValue()),
-                        bosHashOutputs
-                );
+                writeInt64LE(this.outputs.get(inputIndex).getValue().getValue(), bosHashOutputs);
                 byte[] scriptBytes = this.outputs.get(inputIndex).getScriptBytes();
                 bosHashOutputs.write(VarInt.of(scriptBytes.length).serialize());
                 bosHashOutputs.write(scriptBytes);
@@ -1471,7 +1464,7 @@ public class Transaction extends BaseMessage {
             writeInt32LE(inputs.get(inputIndex).getOutpoint().index(), bos);
             bos.write(VarInt.of(scriptCode.length).serialize());
             bos.write(scriptCode);
-            writeInt64LE(BigInteger.valueOf(prevValue.getValue()), bos);
+            writeInt64LE(prevValue.getValue(), bos);
             writeInt32LE(inputs.get(inputIndex).getSequenceNumber(), bos);
             bos.write(hashOutputs);
             writeInt32LE(this.vLockTime.rawValue(), bos);

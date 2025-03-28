@@ -327,28 +327,6 @@ public class ByteUtils {
     }
 
     /**
-     * Write a 64-bit integer to a given output stream in little-endian format.
-     * <p>
-     * The value is expected as an unsigned {@link BigInteger}.
-     *
-     * @param val    value to be written
-     * @param stream stream to be written into
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeInt64LE(BigInteger val, OutputStream stream) throws IOException {
-        byte[] bytes = val.toByteArray();
-        if (bytes.length > 8) {
-            throw new RuntimeException("Input too large to encode into a uint64");
-        }
-        bytes = reverseBytes(bytes);
-        stream.write(bytes);
-        if (bytes.length < 8) {
-            for (int i = 0; i < 8 - bytes.length; i++)
-                stream.write(0);
-        }
-    }
-
-    /**
      * Read 2 bytes from the buffer as unsigned 16-bit integer in little endian format.
      * @param buf buffer to be read from
      * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer
