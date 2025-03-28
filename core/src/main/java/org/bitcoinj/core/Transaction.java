@@ -357,6 +357,16 @@ public class Transaction extends BaseMessage {
     }
 
     /**
+     * Determines if segwit serialization should be used for this transaction, based on whether it has any witnesses
+     * and on protocol version.
+     *
+     * @return {@code true} if segwit serialization should be used, {@code false} otherwise
+     */
+    private boolean useSegwitSerialization() {
+        return hasWitnesses() && allowWitness(protocolVersion);
+    }
+
+    /**
      * Returns the witness transaction ID (aka witness ID) as per BIP144. For transactions without witness, this is the
      * same as {@link #getTxId()}.
      *
@@ -1478,9 +1488,9 @@ public class Transaction extends BaseMessage {
 
     @Override
     public int messageSize() {
-        boolean useSegwit = hasWitnesses() && allowWitness(protocolVersion);
+        boolean useSegwitSerialization = useSegwitSerialization();
         int size = 4; // version
-        if (useSegwit)
+        if (useSegwitSerialization)
             size += 2; // marker, flag
         size += VarInt.sizeOf(inputs.size()) +
                 inputs.stream()
@@ -1490,7 +1500,7 @@ public class Transaction extends BaseMessage {
                 outputs.stream()
                         .mapToInt(TransactionOutput::messageSize)
                         .sum();
-        if (useSegwit)
+        if (useSegwitSerialization)
             size += inputs.stream()
                     .mapToInt(in -> in.getWitness().messageSize())
                     .sum();
@@ -1500,8 +1510,7 @@ public class Transaction extends BaseMessage {
 
     @Override
     protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        boolean useSegwit = hasWitnesses() && allowWitness(protocolVersion);
-        bitcoinSerializeToStream(stream, useSegwit);
+        bitcoinSerializeToStream(stream, useSegwitSerialization());
     }
 
     /**
@@ -1509,11 +1518,11 @@ public class Transaction extends BaseMessage {
      * <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if segwit is
      * desired.
      */
-    protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwit) throws IOException {
+    protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwitSerialization) throws IOException {
         // version
         writeInt32LE(version, stream);
         // marker, flag
-        if (useSegwit) {
+        if (useSegwitSerialization) {
             stream.write(0);
             stream.write(1);
         }
@@ -1526,7 +1535,7 @@ public class Transaction extends BaseMessage {
         for (TransactionOutput out : outputs)
             stream.write(out.serialize());
         // script_witnesses
-        if (useSegwit) {
+        if (useSegwitSerialization) {
             for (TransactionInput in : inputs)
                 stream.write(in.getWitness().serialize());
         }

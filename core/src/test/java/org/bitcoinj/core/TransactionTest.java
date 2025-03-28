@@ -727,11 +727,11 @@ public class TransactionTest {
         }
 
         @Override
-        protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwit) throws IOException {
+        protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwitSerialization) throws IOException {
             // version
             writeInt32LE(getVersion(), stream);
             // marker, flag
-            if (useSegwit) {
+            if (useSegwitSerialization) {
                 stream.write(0);
                 stream.write(1);
             }
@@ -746,7 +746,7 @@ public class TransactionTest {
             for (TransactionOutput out : getOutputs())
                 stream.write(out.serialize());
             // script_witnisses
-            if (useSegwit) {
+            if (useSegwitSerialization) {
                 for (TransactionInput in : getInputs()) {
                     TransactionWitness witness = in.getWitness();
                     long pushCount = hackWitnessPushCountSize ? Integer.MAX_VALUE : witness.getPushCount();
