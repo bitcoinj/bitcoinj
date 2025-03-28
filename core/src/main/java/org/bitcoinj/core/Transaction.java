@@ -72,7 +72,6 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.core.ProtocolVersion.WITNESS_VERSION;
 import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
-import static org.bitcoinj.base.internal.ByteUtils.writeInt64LE;
 
 /**
  * <p>A transaction represents the movement of coins from some addresses to some other addresses. It can also represent
@@ -1417,70 +1416,64 @@ public class Transaction extends BaseMessage {
             byte[] scriptCode,
             Coin prevValue,
             byte sigHashType){
-        try {
-            byte[] hashPrevouts = new byte[32];
-            byte[] hashSequence = new byte[32];
-            byte[] hashOutputs = new byte[32];
+        {
+            Sha256Hash hashPrevouts = Sha256Hash.ZERO_HASH;
+            Sha256Hash hashSequence = Sha256Hash.ZERO_HASH;
+            Sha256Hash hashOutputs = Sha256Hash.ZERO_HASH;
             int basicSigHashType = sigHashType & 0x1f;
             boolean anyoneCanPay = (sigHashType & SigHash.ANYONECANPAY.value) == SigHash.ANYONECANPAY.value;
             boolean signAll = (basicSigHashType != SigHash.SINGLE.value) && (basicSigHashType != SigHash.NONE.value);
 
             if (!anyoneCanPay) {
-                ByteArrayOutputStream bosHashPrevouts = new ByteArrayOutputStream(this.inputs.size() * (Sha256Hash.LENGTH + 4));
+                ByteBuffer bufHashPrevouts = ByteBuffer.allocate(this.inputs.size() * (Sha256Hash.LENGTH + 4));
                 for (TransactionInput input : this.inputs) {
-                    bosHashPrevouts.write(input.getOutpoint().hash().serialize());
-                    writeInt32LE(input.getOutpoint().index(), bosHashPrevouts);
+                    input.getOutpoint().hash().write(bufHashPrevouts);
+                    writeInt32LE(input.getOutpoint().index(), bufHashPrevouts);
                 }
-                hashPrevouts = Sha256Hash.hashTwice(bosHashPrevouts.toByteArray());
+                hashPrevouts = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashPrevouts.array()));
             }
 
             if (!anyoneCanPay && signAll) {
-                ByteArrayOutputStream bosSequence = new ByteArrayOutputStream(this.inputs.size() * 4);
+                ByteBuffer bufSequence = ByteBuffer.allocate(this.inputs.size() * 4);
                 for (TransactionInput input : this.inputs) {
-                    writeInt32LE(input.getSequenceNumber(), bosSequence);
+                    writeInt32LE(input.getSequenceNumber(), bufSequence);
                 }
-                hashSequence = Sha256Hash.hashTwice(bosSequence.toByteArray());
+                hashSequence = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufSequence.array()));
             }
 
             if (signAll) {
-                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(this.outputs.stream().mapToInt(
+                ByteBuffer bufHashOutputs = ByteBuffer.allocate(this.outputs.stream().mapToInt(
                         output -> Coin.BYTES + Buffers.lengthPrefixedBytesSize(output.getScriptBytes())
                 ).sum());
                 for (TransactionOutput output : this.outputs) {
-                    writeInt64LE(output.getValue().getValue(), bosHashOutputs);
-                    byte[] scriptBytes = output.getScriptBytes();
-                    bosHashOutputs.write(VarInt.of(scriptBytes.length).serialize());
-                    bosHashOutputs.write(scriptBytes);
+                    output.getValue().write(bufHashOutputs);
+                    Buffers.writeLengthPrefixedBytes(bufHashOutputs, output.getScriptBytes());
                 }
-                hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
+                hashOutputs = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashOutputs.array()));
             } else if (basicSigHashType == SigHash.SINGLE.value && inputIndex < outputs.size()) {
                 TransactionOutput output = this.outputs.get(inputIndex);
                 byte[] scriptBytes = output.getScriptBytes();
-                ByteArrayOutputStream bosHashOutputs = new ByteArrayOutputStream(Coin.BYTES +
+                ByteBuffer bufHashOutputs = ByteBuffer.allocate(Coin.BYTES +
                         Buffers.lengthPrefixedBytesSize(scriptBytes));
-                writeInt64LE(output.getValue().getValue(), bosHashOutputs);
-                bosHashOutputs.write(VarInt.of(scriptBytes.length).serialize());
-                bosHashOutputs.write(scriptBytes);
-                hashOutputs = Sha256Hash.hashTwice(bosHashOutputs.toByteArray());
+                output.getValue().write(bufHashOutputs);
+                Buffers.writeLengthPrefixedBytes(bufHashOutputs, scriptBytes);
+                hashOutputs = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bufHashOutputs.array()));
             }
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(4 + Sha256Hash.LENGTH * 3 + 4 +
+            ByteBuffer buf = ByteBuffer.allocate(4 + Sha256Hash.LENGTH * 3 + 4 +
                     Buffers.lengthPrefixedBytesSize(scriptCode) + Coin.BYTES + 4 + Sha256Hash.LENGTH + 4 + 4);
-            writeInt32LE(version, bos);
-            bos.write(hashPrevouts);
-            bos.write(hashSequence);
-            bos.write(inputs.get(inputIndex).getOutpoint().hash().serialize());
-            writeInt32LE(inputs.get(inputIndex).getOutpoint().index(), bos);
-            bos.write(VarInt.of(scriptCode.length).serialize());
-            bos.write(scriptCode);
-            writeInt64LE(prevValue.getValue(), bos);
-            writeInt32LE(inputs.get(inputIndex).getSequenceNumber(), bos);
-            bos.write(hashOutputs);
-            writeInt32LE(this.vLockTime.rawValue(), bos);
-            writeInt32LE(0x000000ff & sigHashType, bos);
-            return Sha256Hash.twiceOf(bos.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+            writeInt32LE(version, buf);
+            hashPrevouts.write(buf);
+            hashSequence.write(buf);
+            inputs.get(inputIndex).getOutpoint().hash().write(buf);
+            writeInt32LE(inputs.get(inputIndex).getOutpoint().index(), buf);
+            Buffers.writeLengthPrefixedBytes(buf, scriptCode);
+            prevValue.write(buf);
+            writeInt32LE(inputs.get(inputIndex).getSequenceNumber(), buf);
+            hashOutputs.write(buf);
+            writeInt32LE(this.vLockTime.rawValue(), buf);
+            writeInt32LE(0x000000ff & sigHashType, buf);
+            return Sha256Hash.twiceOf(buf.array());
         }
     }
 
