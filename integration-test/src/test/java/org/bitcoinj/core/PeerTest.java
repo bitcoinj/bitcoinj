@@ -38,7 +38,6 @@ import org.junit.runners.Parameterized;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -829,20 +828,15 @@ public class PeerTest extends TestWithNetworkConnections {
         // Now write some bogus truncated message.
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         List<InventoryItem> items = new ArrayList<>();
+        // Add some hashes.
         items.add(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 1 })));
         items.add(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 2 })));
         items.add(new InventoryItem(InventoryItem.Type.TRANSACTION, Sha256Hash.of(new byte[] { 3 })));
         serializer.serialize("inv", new InventoryMessage(items) {
             @Override
-            public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-                // Add some hashes.
-
-                // Write out a copy that's truncated in the middle.
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                super.bitcoinSerializeToStream(bos);
-                byte[] bits = bos.toByteArray();
-                bits = Arrays.copyOf(bits, bits.length / 2);
-                stream.write(bits);
+            public int messageSize() {
+                // Truncate in the middle.
+                return super.messageSize() / 2;
             }
         }.serialize(), out);
         writeTarget.writeTarget.writeBytes(out.toByteArray());

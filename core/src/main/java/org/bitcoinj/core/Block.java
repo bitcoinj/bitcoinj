@@ -36,10 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -287,32 +285,33 @@ public class Block extends BaseMessage {
     }
 
     // default for testing
-    void writeHeader(OutputStream stream) throws IOException {
-        ByteUtils.writeInt32LE(version, stream);
-        stream.write(prevBlockHash.serialize());
-        stream.write(getMerkleRoot().serialize());
-        ByteUtils.writeInt32LE(time.getEpochSecond(), stream);
-        ByteUtils.writeInt32LE(difficultyTarget.compact(), stream);
-        ByteUtils.writeInt32LE(nonce, stream);
+    void writeHeader(ByteBuffer buf) throws BufferOverflowException {
+        ByteUtils.writeInt32LE(version, buf);
+        prevBlockHash.write(buf);
+        getMerkleRoot().write(buf);
+        ByteUtils.writeInt32LE(time.getEpochSecond(), buf);
+        ByteUtils.writeInt32LE(difficultyTarget.compact(), buf);
+        ByteUtils.writeInt32LE(nonce, buf);
     }
 
-    private void writeTransactions(OutputStream stream) throws IOException {
+    private void writeTransactions(ByteBuffer buf) throws BufferOverflowException {
         // check for no transaction conditions first
         // must be a more efficient way to do this but I'm tired atm.
         if (transactions == null) {
             return;
         }
 
-        stream.write(VarInt.of(transactions.size()).serialize());
+        VarInt.of(transactions.size()).write(buf);
         for (Transaction tx : transactions) {
-            tx.bitcoinSerializeToStream(stream);
+            tx.write(buf);
         }
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        writeHeader(stream);
-        writeTransactions(stream);
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        writeHeader(buf);
+        writeTransactions(buf);
+        return buf;
     }
 
     protected void unCache() {
@@ -339,13 +338,9 @@ public class Block extends BaseMessage {
      * resulting bytes.
      */
     private Sha256Hash calculateHash() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(HEADER_SIZE);
-            writeHeader(bos);
-            return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(bos.toByteArray()));
-        } catch (IOException e) {
-            throw new RuntimeException(e); // Cannot happen.
-        }
+        ByteBuffer buf = ByteBuffer.allocate(HEADER_SIZE);
+        writeHeader(buf);
+        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf.array()));
     }
 
     /**

@@ -16,9 +16,8 @@
 
 package org.bitcoinj.core;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
 
 /**
  * A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
@@ -37,18 +36,15 @@ public abstract class BaseMessage implements Message {
      */
     @Override
     public final byte[] serialize() {
-        // No cached array available so serialize parts by stream.
-        ByteArrayOutputStream stream = new ByteArrayOutputStream(100); // initial size just a guess
-        try {
-            bitcoinSerializeToStream(stream);
-        } catch (IOException e) {
-            // Cannot happen, we are serializing to a memory stream.
-        }
-        return stream.toByteArray();
+        return write(ByteBuffer.allocate(messageSize())).array();
     }
 
     /**
-     * Serializes this message to the provided stream. If you just want the raw bytes use {@link #serialize()}.
+     * Write this message into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the message doesn't fit the remaining buffer
      */
-    protected abstract void bitcoinSerializeToStream(OutputStream stream) throws IOException;
+    public abstract ByteBuffer write(ByteBuffer buf) throws BufferOverflowException;
 }

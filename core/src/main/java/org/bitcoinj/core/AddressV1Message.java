@@ -1,6 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
- * Copyright 2014 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +20,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -64,13 +62,14 @@ public class AddressV1Message extends AddressMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        if (addresses == null)
-            return;
-        stream.write(VarInt.of(addresses.size()).serialize());
-        for (PeerAddress addr : addresses) {
-            stream.write(addr.serialize(1));
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        if (addresses != null) {
+            VarInt.of(addresses.size()).write(buf);
+            for (PeerAddress addr : addresses) {
+                addr.write(buf, 1);
+            }
         }
+        return buf;
     }
 
     @Override

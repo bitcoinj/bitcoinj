@@ -48,10 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.RoundingMode;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -335,13 +333,9 @@ public class Transaction extends BaseMessage {
             if (!hasWitnesses() && cachedWTxId != null) {
                 cachedTxId = cachedWTxId;
             } else {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                try {
-                    bitcoinSerializeToStream(baos, false);
-                } catch (IOException e) {
-                    throw new RuntimeException(e); // cannot happen
-                }
-                cachedTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
+                ByteBuffer buf = ByteBuffer.allocate(messageSize(false));
+                write(buf, false);
+                cachedTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf.array()));
             }
         }
         return cachedTxId;
@@ -376,13 +370,9 @@ public class Transaction extends BaseMessage {
             if (!hasWitnesses() && cachedTxId != null) {
                 cachedWTxId = cachedTxId;
             } else {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                try {
-                    bitcoinSerializeToStream(baos, hasWitnesses());
-                } catch (IOException e) {
-                    throw new RuntimeException(e); // cannot happen
-                }
-                cachedWTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(baos.toByteArray()));
+                ByteBuffer buf = ByteBuffer.allocate(messageSize(hasWitnesses()));
+                write(buf, hasWitnesses());
+                cachedWTxId = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(buf.array()));
             }
         }
         return cachedWTxId;
@@ -1318,7 +1308,7 @@ public class Transaction extends BaseMessage {
         }
 
         ByteBuffer buf = ByteBuffer.allocate(tx.messageSize() + 4);
-        buf.put(tx.serialize());
+        tx.write(buf, false);
         // We also have to write a hash type (sigHashType is actually an unsigned char)
         writeInt32LE(0x000000ff & sigHashType, buf);
         // Note that this is NOT reversed to ensure it will be signed correctly. If it were to be printed out
@@ -1496,8 +1486,9 @@ public class Transaction extends BaseMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        bitcoinSerializeToStream(stream, useSegwitSerialization());
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        write(buf, useSegwitSerialization());
+        return buf;
     }
 
     /**
@@ -1505,29 +1496,29 @@ public class Transaction extends BaseMessage {
      * <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if segwit is
      * desired.
      */
-    protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwitSerialization) throws IOException {
+    protected void write(ByteBuffer buf, boolean useSegwitSerialization) throws BufferOverflowException {
         // version
-        writeInt32LE(version, stream);
+        writeInt32LE(version, buf);
         // marker, flag
         if (useSegwitSerialization) {
-            stream.write(0);
-            stream.write(1);
+            buf.put((byte) 0);
+            buf.put((byte) 1);
         }
         // txin_count, txins
-        stream.write(VarInt.of(inputs.size()).serialize());
+        VarInt.of(inputs.size()).write(buf);
         for (TransactionInput in : inputs)
-            stream.write(in.serialize());
+            in.write(buf);
         // txout_count, txouts
-        stream.write(VarInt.of(outputs.size()).serialize());
+        VarInt.of(outputs.size()).write(buf);
         for (TransactionOutput out : outputs)
-            stream.write(out.serialize());
+            out.write(buf);
         // script_witnesses
         if (useSegwitSerialization) {
             for (TransactionInput in : inputs)
-                stream.write(in.getWitness().serialize());
+                in.getWitness().write(buf);
         }
         // lock_time
-        writeInt32LE(vLockTime.rawValue(), stream);
+        writeInt32LE(vLockTime.rawValue(), buf);
     }
 
     /**

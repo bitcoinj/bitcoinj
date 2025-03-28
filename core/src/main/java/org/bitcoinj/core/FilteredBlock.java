@@ -1,6 +1,5 @@
 /*
- * Copyright 2012 Matt Corallo
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +19,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.Buffers;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -74,12 +72,13 @@ public class FilteredBlock extends BaseMessage {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
         if (header.getTransactions() == null)
-            header.bitcoinSerializeToStream(stream);
+            header.write(buf);
         else
-            header.cloneAsHeader().bitcoinSerializeToStream(stream);
-        stream.write(merkleTree.serialize());
+            header.cloneAsHeader().write(buf);
+        merkleTree.write(buf);
+        return buf;
     }
 
     /**
