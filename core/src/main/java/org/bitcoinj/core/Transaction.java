@@ -399,16 +399,9 @@ public class Transaction extends BaseMessage {
     public int getWeight() {
         if (!hasWitnesses())
             return this.messageSize() * 4;
-        try (final ByteArrayOutputStream stream = new ByteArrayOutputStream(255)) { // just a guess at an average tx length
-            bitcoinSerializeToStream(stream, false);
-            final int baseSize = stream.size();
-            stream.reset();
-            bitcoinSerializeToStream(stream, true);
-            final int totalSize = stream.size();
-            return baseSize * 3 + totalSize;
-        } catch (IOException e) {
-            throw new RuntimeException(e); // cannot happen
-        }
+        int baseSize = messageSize(false);
+        int totalSize = messageSize(true);
+        return baseSize * 3 + totalSize;
     }
 
     /** Gets the virtual transaction size as defined in BIP141. */
@@ -1488,7 +1481,10 @@ public class Transaction extends BaseMessage {
 
     @Override
     public int messageSize() {
-        boolean useSegwitSerialization = useSegwitSerialization();
+        return messageSize(useSegwitSerialization());
+    }
+
+    private int messageSize(boolean useSegwitSerialization) {
         int size = 4; // version
         if (useSegwitSerialization)
             size += 2; // marker, flag
