@@ -1318,7 +1318,7 @@ public class Transaction extends BaseMessage {
                 tx.inputs.add(input);
             }
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(255); // just a guess at an average tx length
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(tx.messageSize() + 4);
             tx.bitcoinSerializeToStream(bos, false);
             // We also have to write a hash type (sigHashType is actually an unsigned char)
             writeInt32LE(0x000000ff & sigHashType, bos);
