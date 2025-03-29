@@ -73,7 +73,7 @@ public class FilteredBlock implements Message {
 
     @Override
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-        if (header.getTransactions() == null)
+        if (header.isHeaderOnly())
             header.write(buf);
         else
             header.cloneAsHeader().write(buf);

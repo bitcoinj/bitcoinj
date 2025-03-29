@@ -934,7 +934,7 @@ public class Peer extends PeerSocketHandler {
     protected void processBlock(Block m) {
         if (log.isDebugEnabled())
             log.debug("{}: Received broadcast block {}", getAddress(), m.getHashAsString());
-        if (m.getTransactions() != null) {
+        if (!m.isHeaderOnly()) {
             m.getTransactions().forEach(tx ->
                 tx.getConfidence().maybeSetSourceToNetwork()
             );

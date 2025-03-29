@@ -129,7 +129,7 @@ public class Block implements Message {
 
     // If null, it means this object holds only the headers.
     // For testing only
-    @Nullable List<Transaction> transactions;
+    @Nullable final List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
@@ -282,8 +282,7 @@ public class Block implements Message {
     @Override
     public int messageSize() {
         int size = HEADER_SIZE;
-        List<Transaction> transactions = getTransactions();
-        if (transactions != null) {
+        if (!isHeaderOnly()) {
             size += VarInt.sizeOf(transactions.size()) +
                     transactions.stream()
                             .mapToInt(Transaction::messageSize)
@@ -303,12 +302,7 @@ public class Block implements Message {
     }
 
     private void writeTransactions(ByteBuffer buf) throws BufferOverflowException {
-        // check for no transaction conditions first
-        // must be a more efficient way to do this but I'm tired atm.
-        if (transactions == null) {
-            return;
-        }
-
+        checkState(!isHeaderOnly());
         VarInt.of(transactions.size()).write(buf);
         for (Transaction tx : transactions) {
             tx.write(buf);
@@ -318,7 +312,8 @@ public class Block implements Message {
     @Override
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
         writeHeader(buf);
-        writeTransactions(buf);
+        if (!isHeaderOnly())
+            writeTransactions(buf);
         return buf;
     }
 
@@ -406,7 +401,7 @@ public class Block implements Message {
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
-        s.append(" block: \n");
+        s.append(" block" + (isHeaderOnly() ? " (header-only)" : "") + ": \n");
         s.append("   hash: ").append(getHashAsString()).append('\n');
         s.append("   version: ").append(version);
         String bips = InternalUtils.commaJoin(isBIP34() ? "BIP34" : null, isBIP66() ? "BIP66" : null, isBIP65() ? "BIP65" : null);
@@ -417,7 +412,7 @@ public class Block implements Message {
         s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time)).append(")\n");
         s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
-        if (transactions != null && transactions.size() > 0) {
+        if (hasTransactions()) {
             s.append("   merkle root: ").append(getMerkleRoot()).append("\n");
             s.append("   witness root: ").append(getWitnessRoot()).append("\n");
             s.append("   with ").append(transactions.size()).append(" transaction(s):\n");
@@ -503,7 +498,7 @@ public class Block implements Message {
      * @return sum of SigOps
      */
     public int sigOpCount() {
-        Objects.requireNonNull(transactions);
+        checkState(!isHeaderOnly());
         return transactions.stream().mapToInt(Transaction::getSigOpCount).sum();
     }
 
@@ -684,10 +679,8 @@ public class Block implements Message {
 
     /** Adds a transaction to this block. The nonce and merkle root are invalid after this. */
     public void addTransaction(Transaction t) {
+        checkState(!isHeaderOnly());
         unCacheTransactions();
-        if (transactions == null) {
-            transactions = new ArrayList<>();
-        }
         if (transactions.isEmpty() && !t.isCoinBase())
             throw new RuntimeException("Attempted to add a non-coinbase transaction as the first transaction: " + t);
         else if (!transactions.isEmpty() && t.isCoinBase())
@@ -702,7 +695,8 @@ public class Block implements Message {
     @VisibleForTesting
     void replaceTransactions(List<Transaction> transactions) {
         unCacheTransactions();
-        this.transactions = new ArrayList<>(transactions);
+        this.transactions.clear();
+        this.transactions.addAll(transactions);
     }
 
     /**
@@ -805,7 +799,7 @@ public class Block implements Message {
     /** Returns an unmodifiable list of transactions held in this block, or null if this object represents just a header. */
     @Nullable
     public List<Transaction> getTransactions() {
-        return transactions == null ? null : Collections.unmodifiableList(transactions);
+        return isHeaderOnly() ? null : Collections.unmodifiableList(transactions);
     }
 
     /**
@@ -816,7 +810,7 @@ public class Block implements Message {
      * @throws IndexOutOfBoundsException if the given index is out of bounds
      */
     public Transaction transaction(int index) {
-        Objects.requireNonNull(transactions);
+        checkState(!isHeaderOnly());
         return transactions.get(index);
     }
 
@@ -832,6 +826,7 @@ public class Block implements Message {
      */
     // For testing only
     void addCoinbaseTransaction(byte[] pubKeyTo, Coin value, final int height) {
+        checkState(!isHeaderOnly());
         checkState(transactions.isEmpty(), () -> "block must not contain transactions");
         Transaction coinbase = new Transaction();
         final ScriptBuilder inputBuilder = new ScriptBuilder();
@@ -995,13 +990,21 @@ public class Block implements Message {
     }
 
     /**
+     * Return whether this block is purely a header.
+     *
+     * @return {@code true} if block is purely a header, {@code false} otherwise
+     */
+    public boolean isHeaderOnly() {
+        return this.transactions == null;
+    }
+
+    /**
      * Return whether this block contains any transactions.
-     * 
-     * @return  true if the block contains transactions, false otherwise (is
-     * purely a header).
+     *
+     * @return {@code true}  if the block contains transactions, {@code false} otherwise
      */
     public boolean hasTransactions() {
-        return (this.transactions != null) && !this.transactions.isEmpty();
+        return this.transactions != null && !this.transactions.isEmpty();
     }
 
     /**
