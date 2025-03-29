@@ -322,7 +322,6 @@ public class BlockChainTest {
         t2.addOutput(valueOf(2, 0), somebodyElse);
         b1.addTransaction(t1);
         b1.addTransaction(t2);
-        b1.solve();
         testNetChain.add(b1);
         assertEquals(Coin.ZERO, testNetWallet.getBalance());
     }
