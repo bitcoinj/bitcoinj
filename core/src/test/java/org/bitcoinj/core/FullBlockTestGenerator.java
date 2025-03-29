@@ -953,7 +953,6 @@ public class FullBlockTestGenerator {
         // A block with no txn
         Block b46 = new Block(Block.BLOCK_VERSION_GENESIS);
         {
-            b46.transactions = new ArrayList<>();
             b46.setDifficultyTarget(b44.difficultyTarget());
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
