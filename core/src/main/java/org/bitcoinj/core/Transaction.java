@@ -87,7 +87,7 @@ import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Transaction extends BaseMessage {
+public class Transaction implements Message {
     private static final Comparator<Transaction> SORT_TX_BY_ID = Comparator.comparing(Transaction::getTxId);
 
     /**
