@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * <p>
  * Instances of this class are immutable.
  */
-public class RejectMessage extends BaseMessage {
+public class RejectMessage implements Message {
     public enum RejectCode {
         /** The message was not able to be parsed */
         MALFORMED((byte) 0x01),

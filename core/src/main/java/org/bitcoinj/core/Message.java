@@ -16,6 +16,9 @@
 
 package org.bitcoinj.core;
 
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+
 /**
  * A Message is a data structure that can be serialized/deserialized using the Bitcoin serialization format.
  * Classes that can be serialized to the blockchain or P2P protocol should implement this interface.
@@ -35,9 +38,20 @@ public interface Message {
     int messageSize();
 
     /**
+     * Write this message into the given buffer.
+     *
+     * @param buf buffer to write into
+     * @return the buffer
+     * @throws BufferOverflowException if the message doesn't fit the remaining buffer
+     */
+    ByteBuffer write(ByteBuffer buf) throws BufferOverflowException;
+
+    /**
      * Serialize this message to a byte array that conforms to the Bitcoin wire protocol.
      *
      * @return serialized data in Bitcoin protocol format
      */
-    byte[] serialize();
+    default byte[] serialize() {
+        return write(ByteBuffer.allocate(messageSize())).array();
+    }
 }

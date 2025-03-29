@@ -35,7 +35,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * 
  * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
  */
-public abstract class ListMessage extends BaseMessage {
+public abstract class ListMessage implements Message {
 
     // For some reason the compiler complains if this is inside InventoryItem
     protected final List<InventoryItem> items;

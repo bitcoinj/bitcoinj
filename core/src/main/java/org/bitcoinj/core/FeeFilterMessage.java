@@ -32,7 +32,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * <p>
  * Instances of this class are immutable.
  */
-public class FeeFilterMessage extends BaseMessage {
+public class FeeFilterMessage implements Message {
     private final Coin feeRate;
 
     /**

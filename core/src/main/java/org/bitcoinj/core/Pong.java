@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
  * <p>
  * Instances of this class are immutable.
  */
-public class Pong extends BaseMessage {
+public class Pong implements Message {
     private final long nonce;
 
     /**
