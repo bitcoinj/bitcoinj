@@ -335,10 +335,7 @@ public class WalletTool implements Callable<Integer> {
 
         setupLogging(debugLog);
         params = NetworkParameters.of(net);
-        String fileName = String.format("%s.chain", net);
-        if (chainFile == null) {
-            chainFile = new File(fileName);
-        }
+        setDefaultChainFile(net);
         Context.propagate(new Context());
 
         if (conditionStr != null) {
@@ -468,6 +465,12 @@ public class WalletTool implements Callable<Integer> {
         shutdown();
 
         return 0;
+    }
+
+    private void setDefaultChainFile(BitcoinNetwork net) {
+        if (chainFile == null) {
+            chainFile = new File(String.format("%s.chain", net));
+        }
     }
 
     private void setupLogging(boolean debugLog){
