@@ -330,19 +330,9 @@ public class WalletTool implements Callable<Integer> {
             return 1;
         }
 
-        if (debugLog) {
-            BriefLogFormatter.init();
-            log.info("Starting up ...");
-        } else {
-            // Disable logspam unless there is a flag.
-            java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
-            logger.setLevel(Level.SEVERE);
-        }
+        setupLogging(debugLog);
         params = NetworkParameters.of(net);
-        String fileName = String.format("%s.chain", net);
-        if (chainFile == null) {
-            chainFile = new File(fileName);
-        }
+        setDefaultChainFile(net);
         Context.propagate(new Context());
 
         if (conditionStr != null) {
@@ -472,6 +462,23 @@ public class WalletTool implements Callable<Integer> {
         shutdown();
 
         return 0;
+    }
+
+    private void setDefaultChainFile(BitcoinNetwork net) {
+        if (chainFile == null) {
+            chainFile = new File(String.format("%s.chain", net));
+        }
+    }
+
+    private void setupLogging(boolean debugLog){
+        if (debugLog) {
+            BriefLogFormatter.init();
+            log.info("Starting up ...");
+        } else {
+            // Disable logspam unless there is a flag.
+            java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
+            logger.setLevel(Level.SEVERE);
+        }
     }
 
     private static Protos.Wallet attemptHexConversion(Protos.Wallet proto) {
