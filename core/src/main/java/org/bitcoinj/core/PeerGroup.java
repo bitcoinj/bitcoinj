@@ -1878,9 +1878,8 @@ public class PeerGroup implements TransactionBroadcaster {
         public synchronized void onBlocksDownloaded(Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
             blocksInLastSecond++;
             bytesInLastSecond += Block.HEADER_SIZE;
-            List<Transaction> blockTransactions = block.getTransactions();
             // This whole area of the type hierarchy is a mess.
-            int txCount = (blockTransactions != null ? countAndMeasureSize(blockTransactions) : 0) +
+            int txCount = (!block.isHeaderOnly() ? countAndMeasureSize(block.getTransactions()) : 0) +
                           (filteredBlock != null ? countAndMeasureSize(filteredBlock.getAssociatedTransactions().values()) : 0);
             txnsInLastSecond = txnsInLastSecond + txCount;
             if (filteredBlock != null)

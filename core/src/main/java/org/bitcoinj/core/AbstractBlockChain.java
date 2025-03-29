@@ -142,8 +142,8 @@ public abstract class AbstractBlockChain {
         final Map<Sha256Hash, Transaction> filteredTxn;
         OrphanBlock(Block block, @Nullable List<Sha256Hash> filteredTxHashes, @Nullable Map<Sha256Hash, Transaction> filteredTxn) {
             final boolean filtered = filteredTxHashes != null && filteredTxn != null;
-            checkArgument((block.getTransactions() == null && filtered)
-                                        || (block.getTransactions() != null && !filtered));
+            checkArgument((block.isHeaderOnly() && filtered)
+                                        || (!block.isHeaderOnly() && !filtered));
             this.block = block;
             this.filteredTxHashes = filteredTxHashes;
             this.filteredTxn = filteredTxn;
@@ -502,7 +502,7 @@ public abstract class AbstractBlockChain {
                 throw new VerificationException("Difficulty target is out of range: " + target);
 
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
-            if (shouldVerifyTransactions() && block.getTransactions() == null)
+            if (shouldVerifyTransactions() && block.isHeaderOnly())
                 throw new VerificationException("Got a block header while running in full-block mode");
 
             // Check for already-seen block, but only for full pruned mode, where the DB is
@@ -625,7 +625,7 @@ public abstract class AbstractBlockChain {
             if (shouldVerifyTransactions())
                 txOutChanges = connectTransactions(storedPrev.getHeight() + 1, block);
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,
-                    block.getTransactions() == null ? block : block.cloneAsHeader(), txOutChanges);
+                    block.isHeaderOnly() ? block : block.cloneAsHeader(), txOutChanges);
             versionTally.add(block.version());
             setChainHead(newStoredBlock);
             if (log.isDebugEnabled())
@@ -668,7 +668,7 @@ public abstract class AbstractBlockChain {
             // We may not have any transactions if we received only a header, which can happen during fast catchup.
             // If we do, send them to the wallet but state that they are on a side chain so it knows not to try and
             // spend them until they become activated.
-            if (block.getTransactions() != null || filtered) {
+            if (!block.isHeaderOnly() || filtered) {
                 informListenersForNewBlock(block, NewBlockType.SIDE_CHAIN, filteredTxHashList, filteredTxn, newBlock);
             }
             
@@ -742,7 +742,7 @@ public abstract class AbstractBlockChain {
                                                          StoredBlock newStoredBlock, boolean first,
                                                          TransactionReceivedInBlockListener listener,
                                                          Set<Sha256Hash> falsePositives) throws VerificationException {
-        if (block.getTransactions() != null) {
+        if (!block.isHeaderOnly()) {
             // If this is not the first wallet, ask for the transactions to be duplicated before being given
             // to the wallet when relevant. This ensures that if we have two connected wallets and a tx that
             // is relevant to both of them, they don't end up accidentally sharing the same object (which can

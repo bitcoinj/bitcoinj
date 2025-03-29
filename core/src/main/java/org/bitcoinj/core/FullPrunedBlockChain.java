@@ -46,6 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
@@ -199,8 +200,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     protected TransactionOutputChanges connectTransactions(int height, Block block)
             throws VerificationException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
-        if (block.getTransactions() == null)
-            throw new RuntimeException("connectTransactions called with Block that didn't have transactions!");
+        checkArgument(!block.isHeaderOnly(), () -> "block is header-only");
         if (!params.passesCheckpoint(height, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + height);
 
