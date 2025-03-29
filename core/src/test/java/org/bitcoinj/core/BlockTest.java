@@ -38,17 +38,16 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -310,30 +309,20 @@ public class BlockTest {
         assertTrue(block370661.isBIP65());
     }
 
-    @Test
+    @Test(expected = BufferUnderflowException.class)
     public void parseBlockWithHugeDeclaredTransactionsSize() {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Block block = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.ofEpochSecond(1),
-                Difficulty.EASIEST_DIFFICULTY_TARGET, 1, new ArrayList<Transaction>()) {
-            @Override
-            protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-                ByteUtils.writeInt32LE(getVersion(), stream);
-                stream.write(getPrevBlockHash().serialize());
-                stream.write(getMerkleRoot().serialize());
-                ByteUtils.writeInt32LE(time().getEpochSecond(), stream);
-                ByteUtils.writeInt32LE(difficultyTarget().compact(), stream);
-                ByteUtils.writeInt32LE(getNonce(), stream);
+        Block header = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH,
+                Difficulty.EASIEST_DIFFICULTY_TARGET, 0, null);
+        VarInt huge = VarInt.of(Integer.MAX_VALUE);
+        // construct block with HUGE transaction count
+        ByteBuffer buf = ByteBuffer.allocate(Block.HEADER_SIZE + huge.getSizeInBytes());
+        buf.put(header.serialize()); // just a block header
+        huge.write(buf); // HUGE transaction count
+        checkState(!buf.hasRemaining());
+        ((Buffer) buf).rewind();
 
-                stream.write(VarInt.of(Integer.MAX_VALUE).serialize());
-            }
-        };
-        byte[] serializedBlock = block.serialize();
-        try {
-            TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(serializedBlock));
-            fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
-        } catch (BufferUnderflowException e) {
-            //Expected, do nothing
-        }
+        // make sure this safely throws BufferUnderflowException rather than running out of memory
+        Block.read(buf);
     }
 
     @Test
