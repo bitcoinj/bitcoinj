@@ -18,8 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.internal.ByteUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Random;
@@ -29,7 +28,7 @@ import java.util.Random;
  * <p>
  * Instances of this class are immutable.
  */
-public class Ping extends BaseMessage {
+public class Ping implements Message {
     private final long nonce;
 
     /**
@@ -75,8 +74,9 @@ public class Ping extends BaseMessage {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        ByteUtils.writeInt64LE(nonce, stream);
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        ByteUtils.writeInt64LE(nonce, buf);
+        return buf;
     }
 
     /** @deprecated returns true */

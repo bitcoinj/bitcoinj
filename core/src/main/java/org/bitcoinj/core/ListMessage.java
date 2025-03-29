@@ -1,6 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
- * Copyright 2015 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +21,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.ByteUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -37,7 +35,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * 
  * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
  */
-public abstract class ListMessage extends BaseMessage {
+public abstract class ListMessage implements Message {
 
     // For some reason the compiler complains if this is inside InventoryItem
     protected final List<InventoryItem> items;
@@ -83,14 +81,15 @@ public abstract class ListMessage extends BaseMessage {
     }
 
     @Override
-    public void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(VarInt.of(items.size()).serialize());
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        VarInt.of(items.size()).write(buf);
         for (InventoryItem i : items) {
             // Write out the type code.
-            ByteUtils.writeInt32LE(i.type.code, stream);
+            ByteUtils.writeInt32LE(i.type.code, buf);
             // And now the hash.
-            stream.write(i.hash.serialize());
+            i.hash.write(buf);
         }
+        return buf;
     }
 
     @Override

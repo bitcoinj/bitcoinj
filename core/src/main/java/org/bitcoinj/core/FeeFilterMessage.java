@@ -18,8 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
@@ -33,7 +32,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * <p>
  * Instances of this class are immutable.
  */
-public class FeeFilterMessage extends BaseMessage {
+public class FeeFilterMessage implements Message {
     private final Coin feeRate;
 
     /**
@@ -69,8 +68,9 @@ public class FeeFilterMessage extends BaseMessage {
     }
 
     @Override
-    protected void bitcoinSerializeToStream(OutputStream stream) throws IOException {
-        stream.write(feeRate.serialize());
+    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        feeRate.write(buf);
+        return buf;
     }
 
     /**
