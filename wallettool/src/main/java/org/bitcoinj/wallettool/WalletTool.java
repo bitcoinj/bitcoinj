@@ -182,7 +182,7 @@ public class WalletTool implements Callable<Integer> {
     private String pubKeyStr;
     @CommandLine.Option(names = "--privkey", description = "Specifies a WIF-, hex- or base58-encoded private key.")
     private String privKeyStr;
-    @CommandLine.Option(names = "--addr", description ="Specifies a Bitcoin address, either segwit or legacy.")
+    @CommandLine.Option(names = "--addr", description = "Specifies a Bitcoin address, either segwit or legacy.")
     private String addrStr;
     @CommandLine.Option(names = "--peers", description = "Comma separated IP addresses/domain names for connections instead of peer discovery.")
     private String peersStr;
@@ -232,6 +232,7 @@ public class WalletTool implements Callable<Integer> {
             // Less than, greater than, less than or equal, greater than or equal.
             EQUAL, LT, GT, LTE, GTE
         }
+
         Type type;
         String value;
 
@@ -309,7 +310,7 @@ public class WalletTool implements Callable<Integer> {
         BALANCE
     }
 
-    public enum Filter  {
+    public enum Filter {
         NONE,
         SERVER, // bloom filter
     }
@@ -747,7 +748,8 @@ public class WalletTool implements Callable<Integer> {
 
     /**
      * Wait for a condition to be satisfied
-     * @param waitFor condition type to wait for
+     *
+     * @param waitFor   condition type to wait for
      * @param condition balance condition to wait for
      * @return A (future) human-readable message (txId, block hash, or balance) to display when wait is complete
      */
@@ -759,7 +761,7 @@ public class WalletTool implements Callable<Integer> {
 
             case WALLET_TX:
                 // Future will complete with a transaction ID string
-                Consumer<Transaction> txListener = tx ->  future.complete(tx.getTxId().toString());
+                Consumer<Transaction> txListener = tx -> future.complete(tx.getTxId().toString());
                 // Both listeners run in a peer thread
                 wallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
                 wallet.addCoinsSentEventListener((wallet, tx, prevBalance, newBalance) -> txListener.accept(tx));
@@ -1086,13 +1088,13 @@ public class WalletTool implements Callable<Integer> {
                 final AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return; // Error message already printed.
-                printWallet( aesKey);
+                printWallet(aesKey);
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
                 return;
             }
         } else {
-            printWallet( null);
+            printWallet(null);
         }
     }
 
