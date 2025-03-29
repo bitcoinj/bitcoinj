@@ -39,9 +39,8 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -59,6 +58,8 @@ import java.util.stream.Stream;
 
 import org.bitcoinj.base.internal.ByteUtils;
 import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
+import static org.bitcoinj.core.ProtocolVersion.WITNESS_VERSION;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
@@ -66,7 +67,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Just check the Transaction.verify() method. Most methods that have complicated logic in Transaction are tested
@@ -669,100 +669,62 @@ public class TransactionTest {
         return size -> (R[]) arrayCreator.apply(size);
     }
 
-    @Test
+    @Test(expected = BufferUnderflowException.class)
     public void parseTransactionWithHugeDeclaredInputsSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(true, false, false);
-        byte[] serializedTx = tx.serialize();
-        try {
-            Transaction.read(ByteBuffer.wrap(serializedTx));
-            fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
-        } catch (BufferUnderflowException e) {
-            //Expected, do nothing
-        }
+        VarInt zero = VarInt.of(0);
+        VarInt huge = VarInt.of(Integer.MAX_VALUE);
+        // construct non-segwit transaction with HUGE txin count
+        ByteBuffer buf = ByteBuffer.allocate(4 + huge.getSizeInBytes() + zero.getSizeInBytes() + 4);
+        writeInt32LE(1, buf); // version
+        huge.write(buf); // HUGE txin count, txins intentionally missing
+        zero.write(buf); // txout count, no txouts
+        writeInt32LE(0, buf); // lock_time
+        checkState(!buf.hasRemaining());
+        ((Buffer) buf).rewind();
+
+        // make sure this safely throws BufferUnderflowException rather than running out of memory
+        Transaction.read(buf);
     }
 
-    @Test
+    @Test(expected = BufferUnderflowException.class)
     public void parseTransactionWithHugeDeclaredOutputsSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(false, true, false);
-        byte[] serializedTx = tx.serialize();
-        try {
-            Transaction.read(ByteBuffer.wrap(serializedTx));
-            fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
-        } catch (BufferUnderflowException e) {
-            //Expected, do nothing
-        }
+        VarInt zero = VarInt.of(0);
+        VarInt huge = VarInt.of(Integer.MAX_VALUE);
+        // construct non-segwit transaction with HUGE txout count
+        ByteBuffer buf = ByteBuffer.allocate(4 + zero.getSizeInBytes() + huge.getSizeInBytes() + 4);
+        writeInt32LE(1, buf); // version
+        zero.write(buf); // txin count, no txins
+        huge.write(buf); // HUGE txout count, txouts intentionally missing
+        writeInt32LE(0, buf); // lock_time
+        checkState(!buf.hasRemaining());
+        ((Buffer) buf).rewind();
+
+        // make sure this safely throws BufferUnderflowException rather than running out of memory
+        Transaction.read(buf);
     }
 
-    @Test
+    @Test(expected = BufferUnderflowException.class)
     public void parseTransactionWithHugeDeclaredWitnessPushCountSize() {
-        Transaction tx = new HugeDeclaredSizeTransaction(false, false, true);
-        byte[] serializedTx = tx.serialize();
-        try {
-            Transaction.read(ByteBuffer.wrap(serializedTx));
-            fail("We expect BufferUnderflowException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
-        } catch (BufferUnderflowException e) {
-            //Expected, do nothing
-        }
-    }
+        VarInt zero = VarInt.of(0);
+        VarInt one = VarInt.of(1);
+        VarInt huge = VarInt.of(Integer.MAX_VALUE);
+        TransactionInput in = new TransactionInput(null, new byte[0], TransactionOutPoint.UNCONNECTED);
+        // construct segwit transaction with one input and its witness with HUGE push count
+        ByteBuffer buf = ByteBuffer.allocate(4 + 2 +
+                one.getSizeInBytes() + in.messageSize() + zero.getSizeInBytes() + huge.getSizeInBytes() + 4);
+        writeInt32LE(1, buf); // version
+        buf.put((byte) 0); // marker
+        buf.put((byte) 1);// flag
+        one.write(buf); // txin count
+        in.write(buf); // txin
+        zero.write(buf); // txout count, no txouts
+        huge.write(buf); // HUGE witness pushes count, pushes intentionally missing
+        writeInt32LE(0, buf); // lock_time
+        checkState(!buf.hasRemaining());
+        ((Buffer) buf).rewind();
 
-    private static class HugeDeclaredSizeTransaction extends Transaction {
-
-        private boolean hackInputsSize;
-        private boolean hackOutputsSize;
-        private boolean hackWitnessPushCountSize;
-
-        public HugeDeclaredSizeTransaction(boolean hackInputsSize, boolean hackOutputsSize, boolean hackWitnessPushCountSize) {
-            super();
-            Transaction inputTx = new Transaction();
-            inputTx.addOutput(Coin.FIFTY_COINS, new ECKey());
-            this.addInput(inputTx.getOutput(0));
-            this.getInput(0).disconnect();
-            TransactionWitness witness = TransactionWitness.of(new byte[] { 0 });
-            this.replaceInput(0, this.getInput(0).withWitness(witness));
-            this.addOutput(Coin.COIN, new ECKey());
-
-            this.hackInputsSize = hackInputsSize;
-            this.hackOutputsSize = hackOutputsSize;
-            this.hackWitnessPushCountSize = hackWitnessPushCountSize;
-        }
-
-        @Override
-        protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwitSerialization) throws IOException {
-            // version
-            writeInt32LE(getVersion(), stream);
-            // marker, flag
-            if (useSegwitSerialization) {
-                stream.write(0);
-                stream.write(1);
-            }
-            // txin_count, txins
-            long inputsSize = hackInputsSize ? Integer.MAX_VALUE : getInputs().size();
-            stream.write(VarInt.of(inputsSize).serialize());
-            for (TransactionInput in : getInputs())
-                stream.write(in.serialize());
-            // txout_count, txouts
-            long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : getOutputs().size();
-            stream.write(VarInt.of(outputsSize).serialize());
-            for (TransactionOutput out : getOutputs())
-                stream.write(out.serialize());
-            // script_witnisses
-            if (useSegwitSerialization) {
-                for (TransactionInput in : getInputs()) {
-                    TransactionWitness witness = in.getWitness();
-                    long pushCount = hackWitnessPushCountSize ? Integer.MAX_VALUE : witness.getPushCount();
-                    stream.write(VarInt.of(pushCount).serialize());
-                    for (int i = 0; i < witness.getPushCount(); i++) {
-                        byte[] push = witness.getPush(i);
-                        stream.write(VarInt.of(push.length).serialize());
-                        stream.write(push);
-                    }
-
-                    stream.write(in.getWitness().serialize());
-                }
-            }
-            // lock_time
-            writeInt32LE(lockTime().rawValue(), stream);
-        }
+        // make sure this safely throws BufferUnderflowException rather than running out of memory
+        Transaction.read(buf, WITNESS_VERSION.intValue());
     }
 
     @Test
