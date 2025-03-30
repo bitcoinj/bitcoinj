@@ -166,7 +166,7 @@ public class BitcoindComparisonTool {
                     Block it = blockList.hashHeaderMap.get(currentBlock.block.getHash());
                     while (it != null) {
                         headers.addFirst(it);
-                        it = blockList.hashHeaderMap.get(it.getPrevBlockHash());
+                        it = blockList.hashHeaderMap.get(it.prevBlockHash());
                     }
                     LinkedList<Block> sendHeaders = new LinkedList<>();
                     boolean found = false;
@@ -174,7 +174,7 @@ public class BitcoindComparisonTool {
                         for (Block b : headers) {
                             if (found) {
                                 sendHeaders.addLast(b);
-                                log.info("Sending header (" + b.getPrevBlockHash() + ") -> " + b.getHash());
+                                log.info("Sending header (" + b.prevBlockHash() + ") -> " + b.getHash());
                                 if (b.getHash().equals(((GetHeadersMessage) m).getStopHash()))
                                     break;
                             } else if (b.getHash().equals(hash)) {

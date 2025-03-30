@@ -166,7 +166,7 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
                 throw new VerificationException(
                         "Difficulty transition point but we did not find a way back to the last transition point. Not found: " + hash);
             }
-            hash = cursor.getHeader().getPrevBlockHash();
+            hash = cursor.getHeader().prevBlockHash();
         }
         checkState(cursor != null && isDifficultyTransitionPoint(cursor.getHeight() - 1), () ->
                 "didn't arrive at a transition point");

@@ -121,7 +121,7 @@ public class Block implements Message {
 
     // Fields defined as part of the protocol format.
     private final long version;
-    private Sha256Hash prevBlockHash;
+    private final Sha256Hash prevBlockHash;
     private Sha256Hash merkleRoot, witnessRoot;
     private Instant time;
     private Difficulty difficultyTarget; // "nBits"
@@ -180,9 +180,17 @@ public class Block implements Message {
     /** Special case constructor, used for unit tests. */
     // For testing only
     Block(long setVersion) {
-        // Set up a few basic things. We are not complete after this though.
         this(setVersion,
-                TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS), // convert to Bitcoin time)
+                Sha256Hash.ZERO_HASH); // prev block
+    }
+
+    /** Special case constructor, used for unit tests. */
+    // For testing only
+    Block(long setVersion, Sha256Hash prevBlockHash) {
+        this(setVersion,
+                prevBlockHash,
+                Sha256Hash.ZERO_HASH, // merkle root
+                TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS), // convert to Bitcoin time
                 Difficulty.ofCompact(0x1d07fff8L),
                 0,
                 Collections.emptyList());
@@ -405,7 +413,7 @@ public class Block implements Message {
         if (!bips.isEmpty())
             s.append(" (").append(bips).append(')');
         s.append('\n');
-        s.append("   previous block: ").append(getPrevBlockHash()).append("\n");
+        s.append("   previous block: ").append(prevBlockHash()).append("\n");
         s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time)).append(")\n");
         s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
@@ -696,16 +704,17 @@ public class Block implements Message {
 
     /**
      * Returns the hash of the previous block in the chain, as defined by the block header.
+     *
+     * @return hash of the previous block
      */
-    public Sha256Hash getPrevBlockHash() {
+    public Sha256Hash prevBlockHash() {
         return prevBlockHash;
     }
 
-    // For testing only
-    void setPrevBlockHash(Sha256Hash prevBlockHash) {
-        unCacheHeader();
-        this.prevBlockHash = prevBlockHash;
-        this.hash = null;
+    /** @deprecated use {@link #prevBlockHash()} */
+    @Deprecated
+    public Sha256Hash getPrevBlockHash() {
+        return prevBlockHash();
     }
 
     /**
@@ -849,7 +858,7 @@ public class Block implements Message {
     // For testing only
     Block createNextBlock(@Nullable Address to, long version, @Nullable TransactionOutPoint prevOut, Instant time,
                           byte[] pubKey, Coin coinbaseValue, int height) {
-        Block b = new Block(version);
+        Block b = new Block(version, this.getHash());
         b.setDifficultyTarget(difficultyTarget);
         b.addCoinbaseTransaction(pubKey, coinbaseValue, height);
 
@@ -867,7 +876,6 @@ public class Block implements Message {
             b.addTransaction(t);
         }
 
-        b.setPrevBlockHash(getHash());
         // Don't let timestamp go backwards
         Instant bitcoinTime = time.truncatedTo(ChronoUnit.SECONDS);
         if (time().compareTo(bitcoinTime) >= 0)

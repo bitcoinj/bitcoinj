@@ -903,7 +903,7 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out14 = spendableOutputs.poll();
 
         // A valid block created exactly like b44 to make sure the creation itself works
-        Block b44 = new Block(Block.BLOCK_VERSION_GENESIS);
+        Block b44 = new Block(Block.BLOCK_VERSION_GENESIS, b43.getHash());
         byte[] outScriptBytes = ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).program();
         {
             b44.setDifficultyTarget(b43.block.difficultyTarget());
@@ -918,7 +918,6 @@ public class FullBlockTestGenerator {
             addOnlyInputToTransaction(t, out14);
             b44.addTransaction(t);
 
-            b44.setPrevBlockHash(b43.getHash());
             b44.setTime(b43.block.time().plusSeconds(1));
         }
         b44.solve();
@@ -927,7 +926,7 @@ public class FullBlockTestGenerator {
         TransactionOutPointWithValue out15 = spendableOutputs.poll();
 
         // A block with a non-coinbase as the first tx
-        Block b45 = new Block(Block.BLOCK_VERSION_GENESIS);
+        Block b45 = new Block(Block.BLOCK_VERSION_GENESIS, b44.getHash());
         {
             b45.setDifficultyTarget(b44.difficultyTarget());
             //b45.addCoinbaseTransaction(pubKey, coinbaseValue);
@@ -946,20 +945,18 @@ public class FullBlockTestGenerator {
                 throw new RuntimeException("addTransaction doesn't properly check for adding a non-coinbase as first tx");
             b45.addTransaction(t, false);
 
-            b45.setPrevBlockHash(b44.getHash());
             b45.setTime(b44.time().plusSeconds(1));
         }
         b45.solve();
         blocks.add(new BlockAndValidity(b45, false, true, b44.getHash(), chainHeadHeight + 15, "b45"));
 
         // A block with no txn
-        Block b46 = new Block(Block.BLOCK_VERSION_GENESIS);
+        Block b46 = new Block(Block.BLOCK_VERSION_GENESIS, b44.getHash());
         {
             b46.transactions = new ArrayList<>();
             b46.setDifficultyTarget(b44.difficultyTarget());
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
-            b46.setPrevBlockHash(b44.getHash());
             b46.setTime(b44.time().plusSeconds(1));
         }
         b46.solve();
@@ -1855,7 +1852,7 @@ public class FullBlockTestGenerator {
         public BlockAndValidity(NewBlock block, boolean connects, boolean throwsException, Sha256Hash hashChainTipAfterBlock, int heightAfterBlock, String blockName) {
             this(block.block, connects, throwsException, hashChainTipAfterBlock, heightAfterBlock, blockName);
             coinbaseBlockMap.put(block.getCoinbaseOutput().outpoint.hash(), block.getHash());
-            Integer blockHeight = blockToHeightMap.get(block.block.getPrevBlockHash());
+            Integer blockHeight = blockToHeightMap.get(block.block.prevBlockHash());
             if (blockHeight != null) {
                 blockHeight++;
                 for (Transaction t : block.block.getTransactions())

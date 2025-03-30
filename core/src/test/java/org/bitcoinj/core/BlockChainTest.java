@@ -218,13 +218,12 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(getBlock1()));
         Block b2 = getBlock2();
         assertTrue(testNetChain.add(b2));
-        Block bad = new Block(Block.BLOCK_VERSION_GENESIS);
+        Block bad = new Block(Block.BLOCK_VERSION_GENESIS, b2.getHash());
         // Merkle root can be anything here, doesn't matter.
         bad.setMerkleRoot(Sha256Hash.wrap("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
         // Nonce was just some number that made the hash < difficulty limit set below, it can be anything.
         bad.setNonce(140548933);
         bad.setTime(Instant.ofEpochSecond(1279242649));
-        bad.setPrevBlockHash(b2.getHash());
         // We're going to make this block so easy 50% of solutions will pass, and check it gets rejected for having a
         // bad difficulty target. Unfortunately the encoding mechanism means we cannot make one that accepts all
         // solutions.
