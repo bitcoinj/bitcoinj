@@ -47,8 +47,24 @@ import java.util.stream.Stream;
  * concisely create HDPath objects (especially when statically imported.)
  */
 public class HDPath extends AbstractList<ChildNumber> {
-    private static final char PREFIX_PRIVATE = 'm';
-    private static final char PREFIX_PUBLIC = 'M';
+    private enum Prefix {
+        PRIVATE('m'),
+        PUBLIC('M');
+
+        private final char symbol;
+
+        Prefix(char symbol) {
+            this.symbol = symbol;
+        }
+
+        public Character symbol() {
+            return this.symbol;
+        }
+
+        public String toString() {
+            return symbol().toString();
+        }
+    }
     private static final char SEPARATOR = '/';
     private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split("/"))
             .map(String::trim)
@@ -175,9 +191,9 @@ public class HDPath extends AbstractList<ChildNumber> {
         boolean hasPrivateKey = false;
         if (!parsedNodes.isEmpty()) {
             final String firstNode = parsedNodes.get(0);
-            if (firstNode.equals(Character.toString(PREFIX_PRIVATE)))
+            if (firstNode.equals(Prefix.PRIVATE.toString()))
                 hasPrivateKey = true;
-            if (hasPrivateKey || firstNode.equals(Character.toString(PREFIX_PUBLIC)))
+            if (hasPrivateKey || firstNode.equals(Prefix.PUBLIC.toString()))
                 parsedNodes.remove(0);
         }
 
@@ -291,7 +307,7 @@ public class HDPath extends AbstractList<ChildNumber> {
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
-        b.append(hasPrivateKey ? HDPath.PREFIX_PRIVATE : HDPath.PREFIX_PUBLIC);
+        b.append(hasPrivateKey ? Prefix.PRIVATE : Prefix.PUBLIC);
         for (ChildNumber segment : unmodifiableList) {
             b.append(HDPath.SEPARATOR);
             b.append(segment.toString());
