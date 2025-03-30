@@ -1879,7 +1879,7 @@ public class PeerGroup implements TransactionBroadcaster {
             blocksInLastSecond++;
             bytesInLastSecond += Block.HEADER_SIZE;
             // This whole area of the type hierarchy is a mess.
-            int txCount = (!block.isHeaderOnly() ? countAndMeasureSize(block.getTransactions()) : 0) +
+            int txCount = (!block.isHeaderOnly() ? countAndMeasureSize(block.transactions()) : 0) +
                           (filteredBlock != null ? countAndMeasureSize(filteredBlock.getAssociatedTransactions().values()) : 0);
             txnsInLastSecond = txnsInLastSecond + txCount;
             if (filteredBlock != null)

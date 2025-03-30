@@ -98,8 +98,7 @@ public class BlockFileLoaderTest {
         BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
 
         long transactionCount = loader.stream()
-                .map(Block::getTransactions)
-                .filter(Objects::nonNull)
+                .map(Block::transactions)
                 .mapToLong(Collection::size)
                 .sum();
 
