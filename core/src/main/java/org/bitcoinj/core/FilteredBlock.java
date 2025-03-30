@@ -76,7 +76,7 @@ public class FilteredBlock implements Message {
         if (header.isHeaderOnly())
             header.write(buf);
         else
-            header.cloneAsHeader().write(buf);
+            header.asHeader().write(buf);
         merkleTree.write(buf);
         return buf;
     }
@@ -101,7 +101,7 @@ public class FilteredBlock implements Message {
      * Gets a copy of the block header
      */
     public Block getBlockHeader() {
-        return header.cloneAsHeader();
+        return header.asHeader();
     }
     
     /** Gets the hash of the block represented in this Filtered Block */

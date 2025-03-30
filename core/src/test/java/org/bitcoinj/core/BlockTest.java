@@ -146,7 +146,7 @@ public class BlockTest {
 
     @Test
     public void testHeaderParse() {
-        Block header = block700000.cloneAsHeader();
+        Block header = block700000.asHeader();
         Block reparsed = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(header.serialize()));
         assertEquals(reparsed, header);
     }

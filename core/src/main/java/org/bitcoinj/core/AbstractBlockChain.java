@@ -625,7 +625,7 @@ public abstract class AbstractBlockChain {
             if (shouldVerifyTransactions())
                 txOutChanges = connectTransactions(storedPrev.getHeight() + 1, block);
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,
-                    block.isHeaderOnly() ? block : block.cloneAsHeader(), txOutChanges);
+                    block.isHeaderOnly() ? block : block.asHeader(), txOutChanges);
             versionTally.add(block.version());
             setChainHead(newStoredBlock);
             if (log.isDebugEnabled())
@@ -843,7 +843,7 @@ public abstract class AbstractBlockChain {
                     txOutChanges = connectTransactions(cursor);
                 else
                     txOutChanges = connectTransactions(newChainHead.getHeight(), block);
-                storedNewHead = addToBlockStore(storedNewHead, cursorBlock.cloneAsHeader(), txOutChanges);
+                storedNewHead = addToBlockStore(storedNewHead, cursorBlock.asHeader(), txOutChanges);
             }
         } else {
             // (Finally) write block to block store

@@ -291,8 +291,7 @@ public class Block implements Message {
         return size;
     }
 
-    // default for testing
-    void writeHeader(ByteBuffer buf) throws BufferOverflowException {
+    private void writeHeader(ByteBuffer buf) throws BufferOverflowException {
         ByteUtils.writeInt32LE(version, buf);
         prevHash.write(buf);
         getMerkleRoot().write(buf);
@@ -385,13 +384,20 @@ public class Block implements Message {
     }
 
     /**
-     * Returns a copy of the block, but without any transactions.
+     * Returns a copy of just the block header.
+     *
      * @return new, header-only {@code Block}
      */
-    public Block cloneAsHeader() {
+    public Block asHeader() {
         Block block = new Block(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, null);
         block.hash = getHash();
         return block;
+    }
+
+    /** @deprecated use {@link #asHeader()} */
+    @Deprecated
+    public Block cloneAsHeader() {
+        return asHeader();
     }
 
     /**

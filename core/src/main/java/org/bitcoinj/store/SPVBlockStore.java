@@ -210,7 +210,7 @@ public class SPVBlockStore implements BlockStore {
         } finally {
             lock.unlock();
         }
-        StoredBlock storedGenesis = new StoredBlock(genesisBlock.cloneAsHeader(), genesisBlock.getWork(), 0);
+        StoredBlock storedGenesis = new StoredBlock(genesisBlock.asHeader(), genesisBlock.getWork(), 0);
         put(storedGenesis);
         setChainHead(storedGenesis);
     }

@@ -342,7 +342,7 @@ public class BloomFilter implements Message {
             }
         }
         PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(bits, txHashes);
-        FilteredBlock filteredBlock = new FilteredBlock(block.cloneAsHeader(), pmt);
+        FilteredBlock filteredBlock = new FilteredBlock(block.asHeader(), pmt);
         for (Transaction transaction : matched)
             filteredBlock.provideTransaction(transaction);
         return filteredBlock;

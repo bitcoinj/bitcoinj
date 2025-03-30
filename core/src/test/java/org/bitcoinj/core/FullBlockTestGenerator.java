@@ -1183,7 +1183,7 @@ public class FullBlockTestGenerator {
             checkState(b64Original.block.messageSize() == Block.MAX_BLOCK_SIZE);
 
             ByteBuffer buf = ByteBuffer.allocate(b64Original.block.messageSize() + 8);
-            b64Original.block.writeHeader(buf);
+            b64Original.block.asHeader().write(buf);
 
             byte[] varIntBytes = new byte[9];
             varIntBytes[0] = (byte) 255;
@@ -1793,7 +1793,7 @@ public class FullBlockTestGenerator {
             this.heightAfterBlock = heightAfterBlock;
 
             // Keep track of the set of blocks indexed by hash
-            hashHeaderMap.put(block.getHash(), block.cloneAsHeader());
+            hashHeaderMap.put(block.getHash(), block.asHeader());
 
             // Double-check that we are always marking any given block at the same height
             Integer height = blockToHeightMap.get(hashChainTipAfterBlock);
