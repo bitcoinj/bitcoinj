@@ -142,7 +142,7 @@ public class HDPathTest {
 
             String generatedStrPath = path.toString();
 
-            assertEquals(generatedStrPath, expectedStrPath);
+            assertEquals(expectedStrPath, generatedStrPath);
         }
     }
 
@@ -179,7 +179,7 @@ public class HDPathTest {
             boolean expectedHasPrivateKey = (Boolean) tv[i + 2];
 
             HDPath path = HDPath.parsePath(strPath);
-            assertEquals(path, expectedPath);
+            assertEquals(expectedPath, path);
             assertEquals(expectedHasPrivateKey, path.hasPrivateKey());
         }
     }
