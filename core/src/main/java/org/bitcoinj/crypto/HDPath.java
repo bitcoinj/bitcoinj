@@ -180,12 +180,11 @@ public class HDPath extends AbstractList<ChildNumber> {
             if (hasPrivateKey || firstNode.equals(Character.toString(PREFIX_PUBLIC)))
                 parsedNodes.remove(0);
         }
-        List<ChildNumber> nodes = new ArrayList<>(parsedNodes.size());
 
-        for (String n : parsedNodes) {
-            if (n.isEmpty()) continue;
-            nodes.add(ChildNumber.parse(n));
-        }
+        List<ChildNumber> nodes = parsedNodes.stream()
+                .filter(n -> !n.isEmpty())
+                .map(ChildNumber::parse)
+                .collect(StreamUtils.toUnmodifiableList());
 
         return new HDPath(hasPrivateKey, nodes);
     }
