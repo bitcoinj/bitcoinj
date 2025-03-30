@@ -73,9 +73,10 @@ public class ChildNumber implements Comparable<ChildNumber> {
      */
     public static ChildNumber parse(String str) {
         boolean isHard = str.endsWith("H");
-        if (isHard) str = str.substring(0, str.length() - 1);
-        int nodeNumber = Integer.parseInt(str.trim());
-        return new ChildNumber(nodeNumber, isHard);
+        String nodeNumber = isHard ?
+                str.substring(0, str.length() - 1) :
+                str;
+        return new ChildNumber(Integer.parseInt(nodeNumber.trim()), isHard);
     }
 
     /** Returns the uint32 encoded form of the path element, including the most significant bit. */
