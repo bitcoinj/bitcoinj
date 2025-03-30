@@ -19,7 +19,9 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Contains minimal data necessary to disconnect/connect the transactions
@@ -27,31 +29,36 @@ import java.util.List;
  * transactions (if the inputs for the block have not been tested to work)
  * or the set of transaction outputs created/destroyed when the block is
  * connected.
+ * <p>
+ * Instances of this class are shallowly immutable.
  */
-public class StoredUndoableBlock {
+public final class StoredUndoableBlock {
     
-    Sha256Hash blockHash;
+    private final Sha256Hash blockHash;
     
     // Only one of either txOutChanges or transactions will be set
-    private TransactionOutputChanges txOutChanges;
-    private List<Transaction> transactions;
+    @Nullable
+    private final TransactionOutputChanges txOutChanges;
+    @Nullable
+    private final List<Transaction> transactions;
     
     public StoredUndoableBlock(Sha256Hash hash, TransactionOutputChanges txOutChanges) {
-        this.blockHash = hash;
+        this.blockHash = Objects.requireNonNull(hash);
         this.transactions = null;
-        this.txOutChanges = txOutChanges;
+        this.txOutChanges = Objects.requireNonNull(txOutChanges);
     }
     
     public StoredUndoableBlock(Sha256Hash hash, List<Transaction> transactions) {
-        this.blockHash = hash;
+        this.blockHash = Objects.requireNonNull(hash);
         this.txOutChanges = null;
-        this.transactions = transactions;
+        this.transactions = Objects.requireNonNull(transactions);
     }
     
     /**
      * Get the transaction output changes if they have been calculated, otherwise null.
      * Only one of this and getTransactions() will return a non-null value.
      */
+    @Nullable
     public TransactionOutputChanges getTxOutChanges() {
         return txOutChanges;
     }
@@ -60,6 +67,7 @@ public class StoredUndoableBlock {
      * Get the full list of transactions if it is stored, otherwise null.
      * Only one of this and getTxOutChanges() will return a non-null value.
      */
+    @Nullable
     public List<Transaction> getTransactions() {
         return transactions;
     }
