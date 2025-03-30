@@ -36,11 +36,6 @@ public class MockAltNetworkParams extends NetworkParameters {
     }
 
     @Override
-    public void checkDifficultyTransitions(StoredBlock storedPrev, Block next, BlockStore blockStore) throws VerificationException, BlockStoreException {
-
-    }
-
-    @Override
     public Block getGenesisBlock() {
         return null;
     }
