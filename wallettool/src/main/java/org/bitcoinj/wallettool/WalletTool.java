@@ -332,7 +332,11 @@ public class WalletTool implements Callable<Integer> {
 
         setupLogging(debugLog);
         params = NetworkParameters.of(net);
-        setDefaultChainFile(net);
+
+        if(chainFile == null){
+            chainFile = getDefaultChainFile(net);
+        }
+        getDefaultChainFile(net);
         Context.propagate(new Context());
 
         if (conditionStr != null) {
@@ -464,13 +468,11 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private void setDefaultChainFile(BitcoinNetwork net) {
-        if (chainFile == null) {
-            chainFile = new File(String.format("%s.chain", net));
-        }
+    private static File getDefaultChainFile(BitcoinNetwork net) {
+            return new File(String.format("%s.chain", net));
     }
 
-    private void setupLogging(boolean debugLog){
+    private static void setupLogging(boolean debugLog){
         if (debugLog) {
             BriefLogFormatter.init();
             log.info("Starting up ...");
