@@ -974,7 +974,7 @@ public class FullBlockTestGenerator {
             Transaction coinbase = new Transaction();
             coinbase.addInput(TransactionInput.coinbaseInput(coinbase, new byte[]{(byte) 0xff, 110, 1}));
             coinbase.addOutput(new TransactionOutput(coinbase, SATOSHI, outScriptBytes));
-            List<Transaction> transactions = new ArrayList<>(b51.block.getTransactions());
+            List<Transaction> transactions = new ArrayList<>(b51.block.transactions());
             transactions.add(coinbase);
             b51.block.replaceTransactions(transactions);
         }

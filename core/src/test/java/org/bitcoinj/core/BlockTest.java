@@ -130,7 +130,7 @@ public class BlockTest {
     @Test
     public void testBadTransactions() {
         // Re-arrange so the coinbase transaction is not first.
-        List<Transaction> transactions = new ArrayList<>(block700000.getTransactions());
+        List<Transaction> transactions = new ArrayList<>(block700000.transactions());
         Transaction tx1 = transactions.get(0);
         Transaction tx2 = transactions.get(1);
         transactions.set(0, tx2);
@@ -217,8 +217,7 @@ public class BlockTest {
         assertEquals(Coin.ZERO, wallet.getBalance());
 
         // Give the wallet the first transaction in the block - this is the coinbase tx.
-        List<Transaction> transactions = block169482.getTransactions();
-        assertNotNull(transactions);
+        List<Transaction> transactions = block169482.transactions();
         wallet.receiveFromBlock(transactions.get(0), storedBlock, NewBlockType.BEST_CHAIN, 0);
 
         // Coinbase transaction should have been received successfully but be unavailable to spend (too young).

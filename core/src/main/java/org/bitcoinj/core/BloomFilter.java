@@ -329,7 +329,7 @@ public class BloomFilter implements Message {
      * filtered block already has the matched transactions associated with it.
      */
     public synchronized FilteredBlock applyAndUpdate(Block block) {
-        List<Transaction> txns = block.getTransactions();
+        List<Transaction> txns = block.transactions();
         List<Sha256Hash> txHashes = new ArrayList<>(txns.size());
         List<Transaction> matched = new ArrayList<>();
         byte[] bits = new byte[(int) Math.ceil(txns.size() / 8.0)];

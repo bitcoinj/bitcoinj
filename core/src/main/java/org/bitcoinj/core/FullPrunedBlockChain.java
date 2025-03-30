@@ -107,7 +107,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     protected StoredBlock addToBlockStore(StoredBlock storedPrev, Block block)
             throws BlockStoreException, VerificationException {
         StoredBlock newBlock = storedPrev.build(block);
-        blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.getTransactions()));
+        blockStore.put(newBlock, new StoredUndoableBlock(newBlock.getHeader().getHash(), block.transactions()));
         return newBlock;
     }
 
@@ -219,7 +219,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 // BIP30 violator blocks are ones that contain a duplicated transaction. They are all in the
                 // checkpoints list and we therefore only check non-checkpoints for duplicated transactions here. See the
                 // BIP30 document for more details on this: https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
-                for (Transaction tx : block.getTransactions()) {
+                for (Transaction tx : block.transactions()) {
                     final Set<VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
                     Sha256Hash hash = tx.getTxId();
                     // If we already have unspent outputs for this hash, we saw the tx already. Either the block is
@@ -232,7 +232,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             }
             Coin totalFees = Coin.ZERO;
             Coin coinbaseValue = null;
-            for (final Transaction tx : block.getTransactions()) {
+            for (final Transaction tx : block.transactions()) {
                 boolean isCoinBase = tx.isCoinBase();
                 Coin valueIn = Coin.ZERO;
                 Coin valueOut = Coin.ZERO;
