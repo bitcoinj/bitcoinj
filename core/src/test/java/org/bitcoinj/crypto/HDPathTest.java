@@ -32,7 +32,7 @@ public class HDPathTest {
     @Test
     public void testPrimaryConstructor() {
         HDPath path = new HDPath(true, Collections.emptyList());
-        assertTrue("Has private key returns false incorrectly", path.hasPrivateKey);
+        assertTrue("Has private key returns false incorrectly", path.hasPrivateKey());
         assertEquals("Path not empty", path.size(), 0);
     }
 
@@ -180,7 +180,7 @@ public class HDPathTest {
 
             HDPath path = HDPath.parsePath(strPath);
             assertEquals(path, expectedPath);
-            assertEquals(path.hasPrivateKey, expectedHasPrivateKey);
+            assertEquals(expectedHasPrivateKey, path.hasPrivateKey());
         }
     }
 }

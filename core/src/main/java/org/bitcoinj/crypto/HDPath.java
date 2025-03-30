@@ -53,8 +53,8 @@ public class HDPath extends AbstractList<ChildNumber> {
     private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split("/"))
             .map(String::trim)
             .collect(Collectors.toList());
-    protected final boolean hasPrivateKey;
-    protected final List<ChildNumber> unmodifiableList;
+    private final boolean hasPrivateKey;
+    private final List<ChildNumber> unmodifiableList;
 
     /** Partial path with BIP44 purpose */
     public static final HDPath BIP44_PARENT = m(ChildNumber.PURPOSE_BIP44);
