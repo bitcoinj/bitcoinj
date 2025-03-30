@@ -73,8 +73,8 @@ public class ChildNumber implements Comparable<ChildNumber> {
      */
     public static ChildNumber parse(String str) {
         boolean isHard = str.endsWith("H");
-        if (isHard) str = str.substring(0, str.length() - 1).trim();
-        int nodeNumber = Integer.parseInt(str);
+        if (isHard) str = str.substring(0, str.length() - 1);
+        int nodeNumber = Integer.parseInt(str.trim());
         return new ChildNumber(nodeNumber, isHard);
     }
 
