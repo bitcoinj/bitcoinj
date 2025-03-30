@@ -697,9 +697,19 @@ public class Block implements Message {
         hash = null;
     }
 
-    /** Returns the version of the block data structure as defined by the Bitcoin protocol. */
-    public long getVersion() {
+    /**
+     * Returns the version of the block data structure.
+     *
+     * @return version of the block
+     */
+    public long version() {
         return version;
+    }
+
+    /** @deprecated use {@link #version()} */
+    @Deprecated
+    public long getVersion() {
+        return version();
     }
 
     /**
@@ -882,7 +892,7 @@ public class Block implements Message {
             b.setTime(time().plusSeconds(1));
         else
             b.setTime(bitcoinTime);
-        if (b.getVersion() != version) {
+        if (b.version() != version) {
             throw new RuntimeException();
         }
         return b;

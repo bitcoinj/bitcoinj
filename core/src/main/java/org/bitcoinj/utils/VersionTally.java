@@ -103,13 +103,13 @@ public class VersionTally {
         final Stack<Long> versions = new Stack<>();
 
         // We don't know how many blocks back we can go, so load what we can first
-        versions.push(versionBlock.getHeader().getVersion());
+        versions.push(versionBlock.getHeader().version());
         for (int headOffset = 0; headOffset < versionWindow.length; headOffset++) {
             versionBlock = versionBlock.getPrev(blockStore);
             if (null == versionBlock) {
                 break;
             }
-            versions.push(versionBlock.getHeader().getVersion());
+            versions.push(versionBlock.getHeader().version());
         }
 
         // Replay the versions into the tally

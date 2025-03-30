@@ -608,12 +608,12 @@ public abstract class AbstractBlockChain {
             // NOTE: This requires 1,000 blocks since the last checkpoint (on main
             // net, less on test) in order to be applied. It is also limited to
             // stopping addition of new v2/3 blocks to the tip of the chain.
-            if (block.getVersion() == Block.BLOCK_VERSION_BIP34
-                || block.getVersion() == Block.BLOCK_VERSION_BIP66) {
-                final Integer count = versionTally.getCountAtOrAbove(block.getVersion() + 1);
+            if (block.version() == Block.BLOCK_VERSION_BIP34
+                || block.version() == Block.BLOCK_VERSION_BIP66) {
+                final Integer count = versionTally.getCountAtOrAbove(block.version() + 1);
                 if (count != null
                     && count >= params.getMajorityRejectBlockOutdated()) {
-                    throw new VerificationException.BlockVersionOutOfDate(block.getVersion());
+                    throw new VerificationException.BlockVersionOutOfDate(block.version());
                 }
             }
 
@@ -623,7 +623,7 @@ public abstract class AbstractBlockChain {
                 txOutChanges = connectTransactions(storedPrev.getHeight() + 1, block);
             StoredBlock newStoredBlock = addToBlockStore(storedPrev,
                     block.getTransactions() == null ? block : block.cloneAsHeader(), txOutChanges);
-            versionTally.add(block.getVersion());
+            versionTally.add(block.version());
             setChainHead(newStoredBlock);
             if (log.isDebugEnabled())
                 log.debug("Chain is now {} blocks high, running listeners", newStoredBlock.getHeight());

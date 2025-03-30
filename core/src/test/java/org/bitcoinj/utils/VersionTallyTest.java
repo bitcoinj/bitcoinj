@@ -116,7 +116,7 @@ public class VersionTallyTest {
         StoredBlock chainHead = null;
         for (int height = 0; height < TESTNET.getMajorityWindow(); height++) {
             chainHead = FakeTxBuilder.createFakeBlock(blockStore, 2, time, height).storedBlock;
-            assertEquals(2, chainHead.getHeader().getVersion());
+            assertEquals(2, chainHead.getHeader().version());
             time = time.plus(1, ChronoUnit.MINUTES);
         }
 
