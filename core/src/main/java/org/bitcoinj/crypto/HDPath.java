@@ -165,10 +165,10 @@ public class HDPath extends AbstractList<ChildNumber> {
 
     /**
      * Create an HDPath from a path string. The path string is a human-friendly representation of the deterministic path. For example:
-     *
-     * "44H / 0H / 0H / 1 / 1"
-     *
-     * Where a letter "H" means hardened key. Spaces are ignored.
+     * <p>
+     * {@code 44H / 0H / 0H / 1 / 1}
+     * <p>
+     * Where a letter {@code H} means hardened key. Spaces are ignored.
      */
     public static HDPath parsePath(@Nonnull String path) {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
