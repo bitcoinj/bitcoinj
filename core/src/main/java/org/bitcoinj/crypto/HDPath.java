@@ -50,6 +50,8 @@ public class HDPath extends AbstractList<ChildNumber> {
     private static final char PREFIX_PRIVATE = 'm';
     private static final char PREFIX_PUBLIC = 'M';
     private static final char SEPARATOR = '/';
+    private static final String PREFIX_PRIVATE_STRING = Character.toString(PREFIX_PRIVATE);
+    private static final String PREFIX_PUBLIC_STRING = Character.toString(PREFIX_PUBLIC);
     private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split("/"))
             .map(String::trim)
             .collect(Collectors.toList());
@@ -172,13 +174,13 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public static HDPath parsePath(@Nonnull String path) {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
-        boolean hasPrivateKey = false;
-        if (!parsedNodes.isEmpty()) {
-            final String firstNode = parsedNodes.get(0);
-            if (firstNode.equals(Character.toString(PREFIX_PRIVATE)))
-                hasPrivateKey = true;
-            if (hasPrivateKey || firstNode.equals(Character.toString(PREFIX_PUBLIC)))
-                parsedNodes.remove(0);
+
+        String prefix = parsedNodes.isEmpty() ? "" : parsedNodes.get(0);
+        // If the first node is 'm', this path represents a private key
+        boolean hasPrivateKey = PREFIX_PRIVATE_STRING.equals(prefix);
+        // If the first node is 'm' or 'M', skip it when building the path
+        if (hasPrivateKey || PREFIX_PUBLIC_STRING.equals(prefix)) {
+            parsedNodes.remove(0);
         }
 
         List<ChildNumber> nodes = parsedNodes.stream()
