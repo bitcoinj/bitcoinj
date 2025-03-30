@@ -38,7 +38,7 @@ public class MemoryBlockStore implements BlockStore {
 
     public MemoryBlockStore(Block genesisBlock) {
         try {
-            Block genesisHeader = genesisBlock.cloneAsHeader();
+            Block genesisHeader = genesisBlock.asHeader();
             StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
             put(storedGenesis);
             setChainHead(storedGenesis);

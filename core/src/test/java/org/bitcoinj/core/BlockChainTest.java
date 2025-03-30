@@ -134,10 +134,10 @@ public class BlockChainTest {
         assertTrue(testNetChain.add(b1));
         // Unconnected but stored. The head of the chain is still b1.
         assertFalse(testNetChain.add(b3));
-        assertEquals(testNetChain.getChainHead().getHeader(), b1.cloneAsHeader());
+        assertEquals(testNetChain.getChainHead().getHeader(), b1.asHeader());
         // Add in the middle block.
         assertTrue(testNetChain.add(b2));
-        assertEquals(testNetChain.getChainHead().getHeader(), b3.cloneAsHeader());
+        assertEquals(testNetChain.getChainHead().getHeader(), b3.asHeader());
     }
 
     // adds 2015 (interval-1) intermediate blocks between the transition points
@@ -483,23 +483,23 @@ public class BlockChainTest {
         Block b2 = b1.createNextBlock(coinbaseTo);
         // Add block 1, no frills.
         assertTrue(testNetChain.add(b1));
-        assertEquals(b1.cloneAsHeader(), testNetChain.getChainHead().getHeader());
+        assertEquals(b1.asHeader(), testNetChain.getChainHead().getHeader());
         assertEquals(1, testNetChain.getBestChainHeight());
         assertEquals(1, testNetWallet.getLastBlockSeenHeight());
         // Add block 2 while wallet is disconnected, to simulate crash.
         testNetChain.removeWallet(testNetWallet);
         assertTrue(testNetChain.add(b2));
-        assertEquals(b2.cloneAsHeader(), testNetChain.getChainHead().getHeader());
+        assertEquals(b2.asHeader(), testNetChain.getChainHead().getHeader());
         assertEquals(2, testNetChain.getBestChainHeight());
         assertEquals(1, testNetWallet.getLastBlockSeenHeight());
         // Add wallet back. This will detect the height mismatch and repair the damage done.
         testNetChain.addWallet(testNetWallet);
-        assertEquals(b1.cloneAsHeader(), testNetChain.getChainHead().getHeader());
+        assertEquals(b1.asHeader(), testNetChain.getChainHead().getHeader());
         assertEquals(1, testNetChain.getBestChainHeight());
         assertEquals(1, testNetWallet.getLastBlockSeenHeight());
         // Now add block 2 correctly.
         assertTrue(testNetChain.add(b2));
-        assertEquals(b2.cloneAsHeader(), testNetChain.getChainHead().getHeader());
+        assertEquals(b2.asHeader(), testNetChain.getChainHead().getHeader());
         assertEquals(2, testNetChain.getBestChainHeight());
         assertEquals(2, testNetWallet.getLastBlockSeenHeight());
     }

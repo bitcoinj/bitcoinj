@@ -96,7 +96,7 @@ public class HeadersMessage implements Message {
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
         VarInt.of(blockHeaders.size()).write(buf);
         for (Block header : blockHeaders) {
-            header.cloneAsHeader().write(buf);
+            header.asHeader().write(buf);
             buf.put((byte) 0);
         }
         return buf;
