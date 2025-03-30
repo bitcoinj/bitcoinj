@@ -128,8 +128,8 @@ public class Block implements Message {
     private long nonce;
 
     // If null, it means this object holds only the headers.
-    // For testing only
-    @Nullable final List<Transaction> transactions;
+    @Nullable
+    private final List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
