@@ -23,6 +23,7 @@ import junitparams.Parameters;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.TestBlocks;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
@@ -2836,7 +2837,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(CENT, request.tx.getOutput(0).getValue());
 
         // Add an unsendable value
-        block = new StoredBlock(block.getHeader().createNextBlock(OTHER_ADDRESS), BigInteger.ONE, 3);
+        block = new StoredBlock(TestBlocks.createNextBlock(block.getHeader(), OTHER_ADDRESS), BigInteger.ONE, 3);
         Coin dustThresholdMinusOne = new TransactionOutput(null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue().subtract(SATOSHI);
         tx = createFakeTx(TESTNET, dustThresholdMinusOne, myAddress);
         wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);

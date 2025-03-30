@@ -103,7 +103,7 @@ class NewBlock {
     }
     // Wrappers to make it more block-like
     public Sha256Hash getHash() { return block.getHash(); }
-    public void solve() { block.solve(); }
+    public void solve() { TestBlocks.solve(block); }
     public void addTransaction(Transaction tx) { block.addTransaction(tx); }
 
     public TransactionOutPointWithValue getCoinbaseOutput() {
@@ -212,16 +212,16 @@ public class FullBlockTestGenerator {
         Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<>();
 
         int chainHeadHeight = 1;
-        Block chainHead = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
-        chainHead.solve();
+        Block chainHead = TestBlocks.createNextBlockWithCoinbase(params.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
+        TestBlocks.solve(chainHead);
         blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
                 new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
                 FIFTY_COINS, chainHead.getTransactions().get(0).getOutput(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
-            chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
+            chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
             chainHeadHeight++;
-            chainHead.solve();
+            TestBlocks.solve(chainHead);
             blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
                     new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
@@ -907,7 +907,7 @@ public class FullBlockTestGenerator {
         byte[] outScriptBytes = ScriptBuilder.createP2PKOutputScript(ECKey.fromPublicOnly(coinbaseOutKeyPubKey)).program();
         {
             b44.setDifficultyTarget(b43.block.difficultyTarget());
-            b44.addCoinbaseTransaction(coinbaseOutKeyPubKey, ZERO, chainHeadHeight + 15);
+            TestBlocks.addCoinbaseTransaction(b44, coinbaseOutKeyPubKey, ZERO, chainHeadHeight + 15);
 
             Transaction t = new Transaction();
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
@@ -921,7 +921,7 @@ public class FullBlockTestGenerator {
             b44.setPrevBlockHash(b43.getHash());
             b44.setTime(b43.block.time().plusSeconds(1));
         }
-        b44.solve();
+        TestBlocks.solve(b44);
         blocks.add(new BlockAndValidity(b44, true, false, b44.getHash(), chainHeadHeight + 15, "b44"));
 
         TransactionOutPointWithValue out15 = spendableOutputs.poll();
@@ -949,7 +949,7 @@ public class FullBlockTestGenerator {
             b45.setPrevBlockHash(b44.getHash());
             b45.setTime(b44.time().plusSeconds(1));
         }
-        b45.solve();
+        TestBlocks.solve(b45);
         blocks.add(new BlockAndValidity(b45, false, true, b44.getHash(), chainHeadHeight + 15, "b45"));
 
         // A block with no txn
@@ -962,7 +962,7 @@ public class FullBlockTestGenerator {
             b46.setPrevBlockHash(b44.getHash());
             b46.setTime(b44.time().plusSeconds(1));
         }
-        b46.solve();
+        TestBlocks.solve(b46);
         blocks.add(new BlockAndValidity(b46, false, true, b44.getHash(), chainHeadHeight + 15, "b46"));
 
         // A block with invalid work
@@ -1773,7 +1773,7 @@ public class FullBlockTestGenerator {
         Coin coinbaseValue = FIFTY_COINS.shiftRight(nextBlockHeight / params.getSubsidyDecreaseBlockCount())
                 .add((prevOut != null ? prevOut.value.subtract(SATOSHI) : ZERO))
                 .add(additionalCoinbaseValue == null ? ZERO : additionalCoinbaseValue);
-        Block block = baseBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, coinbaseValue, nextBlockHeight);
+        Block block = TestBlocks.createNextBlockWithCoinbase(baseBlock, Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, coinbaseValue, nextBlockHeight);
         Transaction t = new Transaction();
         if (prevOut != null) {
             // Entirely invalid scriptPubKey to ensure we aren't pre-verifying too much
@@ -1782,7 +1782,7 @@ public class FullBlockTestGenerator {
             t.addOutput(new TransactionOutput(t, SATOSHI, new byte[] {OP_1}));
             addOnlyInputToTransaction(t, prevOut);
             block.addTransaction(t);
-            block.solve();
+            TestBlocks.solve(block);
         }
         return new NewBlock(block, prevOut == null ? null : new TransactionOutPointWithValue(t, 1));
     }

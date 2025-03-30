@@ -21,10 +21,11 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.TestBlocks;
 
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
- * {@link Block#solve()} by setting difficulty to the easiest possible.
+ * {@link TestBlocks#solve(Block)} by setting difficulty to the easiest possible.
  */
 public class UnitTestParams extends BitcoinNetworkParams {
     public static final int UNITNET_MAJORITY_WINDOW = 8;

@@ -26,6 +26,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.TestBlocks;
 import org.bitcoinj.core.BlockTest;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
@@ -268,11 +269,11 @@ public class WalletProtobufSerializerTest {
         myWallet.addCoinsReceivedEventListener((wallet, tx, prevBalance, newBalance) -> txns.add(tx));
 
         // Start by building two blocks on top of the genesis block.
-        Block b1 = TESTNET.getGenesisBlock().createNextBlock(myAddress);
+        Block b1 = TestBlocks.createNextBlock(TESTNET.getGenesisBlock(), myAddress);
         BigInteger work1 = b1.getWork();
         assertTrue(work1.signum() > 0);
 
-        Block b2 = b1.createNextBlock(myAddress);
+        Block b2 = TestBlocks.createNextBlock(b1, myAddress);
         BigInteger work2 = b2.getWork();
         assertTrue(work2.signum() > 0);
 
@@ -377,7 +378,7 @@ public class WalletProtobufSerializerTest {
     public void coinbaseTxns() throws Exception {
         // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        Block b = TESTNET.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
+        Block b = TestBlocks.createNextBlockWithCoinbase(TESTNET.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
         Transaction coinbase = b.getTransactions().get(0);
         assertTrue(coinbase.isCoinBase());
         BlockChain chain = new BlockChain(BitcoinNetwork.TESTNET, myWallet, new MemoryBlockStore(TESTNET.getGenesisBlock()));

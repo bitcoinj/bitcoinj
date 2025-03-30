@@ -127,9 +127,9 @@ public class BlockChainTest {
     @Test
     public void unconnectedBlocks() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        Block b1 = TESTNET.getGenesisBlock().createNextBlock(coinbaseTo);
-        Block b2 = b1.createNextBlock(coinbaseTo);
-        Block b3 = b2.createNextBlock(coinbaseTo);
+        Block b1 = TestBlocks.createNextBlock(TESTNET.getGenesisBlock(), coinbaseTo);
+        Block b2 = TestBlocks.createNextBlock(b1, coinbaseTo);
+        Block b3 = TestBlocks.createNextBlock(b2, coinbaseTo);
         // Connected.
         assertTrue(testNetChain.add(b1));
         // Unconnected but stored. The head of the chain is still b1.
@@ -149,7 +149,7 @@ public class BlockChainTest {
         Instant newTime = prev.time().plus(spacing);
         for (int i = 1; i < interval; i++) {
             newTime = newTime.plus(spacing);
-            Block newBlock = prev.createNextBlock(null, 1, newTime, epoch * interval + i);
+            Block newBlock = TestBlocks.createNextBlock(prev, null, 1, newTime, epoch * interval + i);
             assertTrue(chain.add(newBlock));
             prev = newBlock;
         }
@@ -159,7 +159,7 @@ public class BlockChainTest {
         int interval = chain.params.interval;
         Block prev = chain.getChainHead().getHeader();
         Instant newTime = prev.time().plus(spacing);
-        Block newBlock = prev.createNextBlock(null, 1, newTime, epoch * interval);
+        Block newBlock = TestBlocks.createNextBlock(prev, null, 1, newTime, epoch * interval);
         assertTrue(chain.add(newBlock));
     }
 
@@ -208,7 +208,7 @@ public class BlockChainTest {
         // genesis block is already there
         Block prev = chain.getChainHead().getHeader();
         Instant newTime = prev.time().plus(Duration.ofMinutes(10));
-        Block newBlock = prev.createNextBlock(null, 1, newTime, 1);
+        Block newBlock = TestBlocks.createNextBlock(prev, null, 1, newTime, 1);
         newBlock.setDifficultyTarget(Difficulty.ofCompact(newBlock.difficultyTarget().compact() + 10));
         assertTrue(chain.add(newBlock));
     }
@@ -293,9 +293,9 @@ public class BlockChainTest {
     public void duplicates() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
         // Adding a block twice should not have any effect, in particular it should not send the block to the wallet.
-        Block b1 = TESTNET.getGenesisBlock().createNextBlock(coinbaseTo);
-        Block b2 = b1.createNextBlock(coinbaseTo);
-        Block b3 = b2.createNextBlock(coinbaseTo);
+        Block b1 = TestBlocks.createNextBlock(TESTNET.getGenesisBlock(), coinbaseTo);
+        Block b2 = TestBlocks.createNextBlock(b1, coinbaseTo);
+        Block b3 = TestBlocks.createNextBlock(b2, coinbaseTo);
         assertTrue(testNetChain.add(b1));
         assertEquals(b1, testNetChain.getChainHead().getHeader());
         assertTrue(testNetChain.add(b2));
@@ -312,7 +312,7 @@ public class BlockChainTest {
         // Covers issue 166 in which transactions that depend on each other inside a block were not always being
         // considered relevant.
         Address somebodyElse = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        Block b1 = TESTNET.getGenesisBlock().createNextBlock(somebodyElse);
+        Block b1 = TestBlocks.createNextBlock(TESTNET.getGenesisBlock(), somebodyElse);
         ECKey key = testNetWallet.freshReceiveKey();
         Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         // Create a tx that gives us some coins, and another that spends it to someone else in the same block.
@@ -340,7 +340,7 @@ public class BlockChainTest {
         Address addressToSendTo = receiveKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
-        Block b1 = TESTNET.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, testNetWallet.currentReceiveKey().getPubKey(), height++);
+        Block b1 = TestBlocks.createNextBlockWithCoinbase(TESTNET.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, testNetWallet.currentReceiveKey().getPubKey(), height++);
         testNetChain.add(b1);
         final Transaction coinbaseTransaction = b1.getTransactions().get(0);
 
@@ -480,8 +480,8 @@ public class BlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
         // This test simulates an issue on Android, that causes the VM to crash while receiving a block, so that the
         // block store is persisted but the wallet is not.
-        Block b1 = TESTNET.getGenesisBlock().createNextBlock(coinbaseTo);
-        Block b2 = b1.createNextBlock(coinbaseTo);
+        Block b1 = TestBlocks.createNextBlock(TESTNET.getGenesisBlock(), coinbaseTo);
+        Block b2 = TestBlocks.createNextBlock(b1, coinbaseTo);
         // Add block 1, no frills.
         assertTrue(testNetChain.add(b1));
         assertEquals(b1.cloneAsHeader(), testNetChain.getChainHead().getHeader());

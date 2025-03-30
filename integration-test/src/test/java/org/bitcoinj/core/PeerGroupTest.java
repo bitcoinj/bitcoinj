@@ -311,7 +311,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Set up a little block chain. We heard about b1 but not b2 (it is pending download). b3 is solved whilst we
         // are downloading the chain.
         Block b1 = FakeTxBuilder.createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS).block;
-        b1.solve();
+        TestBlocks.solve(b1);
         blockChain.add(b1);
         Block b2 = FakeTxBuilder.makeTestBlock(b1);
         Block b3 = FakeTxBuilder.makeTestBlock(b2);
@@ -813,7 +813,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         for (ECKey key1 : keys) {
             Address addr = key1.toAddress(ScriptType.P2PKH, UNITTEST.network());
             Block next = FakeTxBuilder.makeTestBlock(prev, FakeTxBuilder.createFakeTx(UNITTEST.network(), Coin.FIFTY_COINS, addr));
-            next.solve();
+            TestBlocks.solve(next);
             expectedBalance = expectedBalance.add(next.getTransactions().get(1).getOutput(0).getValue());
             blocks.add(next);
             prev = next;
