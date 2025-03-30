@@ -75,17 +75,6 @@ public class HDPath extends AbstractList<ChildNumber> {
     }
 
     /**
-     * Constructs a path for a public key.
-     *
-     * @param list List of children in the path
-     * @deprecated Use {@link HDPath#M(List)} or {@link HDPath#m(List)} instead
-     */
-    @Deprecated
-    public HDPath(List<ChildNumber> list) {
-        this(false, list);
-    }
-
-    /**
      * Returns a path for a public or private key.
      *
      * @param hasPrivateKey Whether it is a path to a private key or not
