@@ -184,10 +184,7 @@ public class HDPath extends AbstractList<ChildNumber> {
 
         for (String n : parsedNodes) {
             if (n.isEmpty()) continue;
-            boolean isHard = n.endsWith("H");
-            if (isHard) n = n.substring(0, n.length() - 1).trim();
-            int nodeNumber = Integer.parseInt(n);
-            nodes.add(new ChildNumber(nodeNumber, isHard));
+            nodes.add(ChildNumber.parse(n));
         }
 
         return new HDPath(hasPrivateKey, nodes);
