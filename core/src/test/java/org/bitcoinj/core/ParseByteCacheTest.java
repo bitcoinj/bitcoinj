@@ -164,7 +164,6 @@ public class ParseByteCacheTest {
         serDeser(serializer, b1, bos.toByteArray(), null, null);
         
         // retrieve a value from a child
-        b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
             Transaction tx1 = b1.getTransactions().get(0);
             
@@ -189,7 +188,6 @@ public class ParseByteCacheTest {
         // retrieve a value from a child and header
         b1.difficultyTarget();
 
-        b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
             Transaction tx1 = b1.getTransactions().get(0);
         }
@@ -213,7 +211,6 @@ public class ParseByteCacheTest {
         bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // retrieve a value from a child of a child
-        b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
             Transaction tx1 = b1.getTransactions().get(0);
             
@@ -230,7 +227,6 @@ public class ParseByteCacheTest {
         bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // add an input
-        b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
             Transaction tx1 = b1.getTransactions().get(0);
             
@@ -259,7 +255,6 @@ public class ParseByteCacheTest {
         Block bRef2 = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // reparent an input
-        b1.getTransactions();
         if (b1.getTransactions().size() > 0) {
             Transaction tx1 = b1.getTransactions().get(0);
             Transaction tx2 = b2.getTransactions().get(0);
