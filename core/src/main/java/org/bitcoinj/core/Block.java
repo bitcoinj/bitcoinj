@@ -121,7 +121,7 @@ public class Block implements Message {
 
     // Fields defined as part of the protocol format.
     private final long version;
-    private final Sha256Hash prevBlockHash;
+    private final Sha256Hash prevHash; // previous block
     private Sha256Hash merkleRoot, witnessRoot;
     private Instant time;
     private Difficulty difficultyTarget; // "nBits"
@@ -145,7 +145,7 @@ public class Block implements Message {
         // header
         payload.mark();
         long version = ByteUtils.readUint32(payload);
-        Sha256Hash prevBlockHash = Sha256Hash.read(payload);
+        Sha256Hash prevHash = Sha256Hash.read(payload);
         Sha256Hash merkleRoot = Sha256Hash.read(payload);
         Instant time = Instant.ofEpochSecond(ByteUtils.readUint32(payload));
         Difficulty difficultyTarget = Difficulty.ofCompact(ByteUtils.readUint32(payload));
@@ -156,7 +156,7 @@ public class Block implements Message {
         List<Transaction> transactions = payload.hasRemaining() ? // otherwise this message is just a header
                 readTransactions(payload) :
                 null;
-        Block block = new Block(version, prevBlockHash, merkleRoot, time, difficultyTarget, nonce, transactions);
+        Block block = new Block(version, prevHash, merkleRoot, time, difficultyTarget, nonce, transactions);
         block.hash = hash;
         return block;
     }
@@ -186,9 +186,9 @@ public class Block implements Message {
 
     /** Special case constructor, used for unit tests. */
     // For testing only
-    Block(long setVersion, Sha256Hash prevBlockHash) {
+    Block(long setVersion, Sha256Hash prevHash) {
         this(setVersion,
-                prevBlockHash,
+                prevHash,
                 Sha256Hash.ZERO_HASH, // merkle root
                 TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS), // convert to Bitcoin time
                 Difficulty.ofCompact(0x1d07fff8L),
@@ -209,25 +209,25 @@ public class Block implements Message {
         this.time = time;
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
-        this.prevBlockHash = Sha256Hash.ZERO_HASH;
+        this.prevHash = Sha256Hash.ZERO_HASH;
         this.transactions = new ArrayList<>(Objects.requireNonNull(transactions));
     }
 
     /**
      * Construct a block initialized with all the given fields.
      * @param version This should usually be set to 1 or 2, depending on if the height is in the coinbase input.
-     * @param prevBlockHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
+     * @param prevHash Reference to previous block in the chain or {@link Sha256Hash#ZERO_HASH} if genesis.
      * @param merkleRoot The root of the merkle tree formed by the transactions.
      * @param time time when the block was mined.
      * @param difficultyTarget Number which this block hashes lower than.
      * @param nonce Arbitrary number to make the block hash lower than the target.
      * @param transactions List of transactions including the coinbase, or {@code null} for header-only blocks
      */
-    public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
+    public Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
                  Difficulty difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
         super();
         this.version = version;
-        this.prevBlockHash = prevBlockHash;
+        this.prevHash = prevHash;
         this.merkleRoot = merkleRoot;
         this.time = time;
         this.difficultyTarget = difficultyTarget;
@@ -239,9 +239,9 @@ public class Block implements Message {
 
     /** @deprecated use {@link #Block(long, Sha256Hash, Sha256Hash, Instant, Difficulty, long, List)} */
     @Deprecated
-    public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
+    public Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
                  long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
-        this(version, prevBlockHash, merkleRoot, time, Difficulty.ofCompact(difficultyTarget), nonce, transactions);
+        this(version, prevHash, merkleRoot, time, Difficulty.ofCompact(difficultyTarget), nonce, transactions);
     }
 
     public static Block createGenesis(Instant time, Difficulty difficultyTarget) {
@@ -295,7 +295,7 @@ public class Block implements Message {
     // default for testing
     void writeHeader(ByteBuffer buf) throws BufferOverflowException {
         ByteUtils.writeInt32LE(version, buf);
-        prevBlockHash.write(buf);
+        prevHash.write(buf);
         getMerkleRoot().write(buf);
         ByteUtils.writeInt32LE(time.getEpochSecond(), buf);
         ByteUtils.writeInt32LE(difficultyTarget.compact(), buf);
@@ -394,7 +394,7 @@ public class Block implements Message {
      * @return new, header-only {@code Block}
      */
     public Block cloneAsHeader() {
-        Block block = new Block(version, prevBlockHash, getMerkleRoot(), time, difficultyTarget, nonce, null);
+        Block block = new Block(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, null);
         block.hash = getHash();
         return block;
     }
@@ -413,7 +413,7 @@ public class Block implements Message {
         if (!bips.isEmpty())
             s.append(" (").append(bips).append(')');
         s.append('\n');
-        s.append("   previous block: ").append(prevBlockHash()).append("\n");
+        s.append("   previous block: ").append(prevHash()).append("\n");
         s.append("   time: ").append(time).append(" (").append(TimeUtils.dateTimeFormat(time)).append(")\n");
         s.append("   difficulty target (nBits): ").append(difficultyTarget).append("\n");
         s.append("   nonce: ").append(nonce).append("\n");
@@ -707,14 +707,14 @@ public class Block implements Message {
      *
      * @return hash of the previous block
      */
-    public Sha256Hash prevBlockHash() {
-        return prevBlockHash;
+    public Sha256Hash prevHash() {
+        return prevHash;
     }
 
-    /** @deprecated use {@link #prevBlockHash()} */
+    /** @deprecated use {@link #prevHash()} */
     @Deprecated
     public Sha256Hash getPrevBlockHash() {
-        return prevBlockHash();
+        return prevHash();
     }
 
     /**

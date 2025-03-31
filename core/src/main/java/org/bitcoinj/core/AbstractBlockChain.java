@@ -518,7 +518,7 @@ public abstract class AbstractBlockChain {
             // article here for more details: https://bitcoinj.github.io/security-model
             try {
                 Block.verifyHeader(block);
-                storedPrev = getStoredBlockInCurrentScope(block.prevBlockHash());
+                storedPrev = getStoredBlockInCurrentScope(block.prevHash());
                 if (storedPrev != null) {
                     height = storedPrev.getHeight() + 1;
                 } else {
@@ -541,7 +541,7 @@ public abstract class AbstractBlockChain {
                 // have more blocks.
                 checkState(tryConnecting, () ->
                         "bug in tryConnectingOrphans");
-                log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.prevBlockHash());
+                log.warn("Block does not connect: {} prev {}", block.getHashAsString(), block.prevHash());
                 orphanBlocks.put(block.getHash(), new OrphanBlock(block, filteredTxHashList, filteredTxn));
                 if (tryConnecting)
                     tryConnectingOrphans();
@@ -979,7 +979,7 @@ public abstract class AbstractBlockChain {
             while (iter.hasNext()) {
                 OrphanBlock orphanBlock = iter.next();
                 // Look up the blocks previous.
-                StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.prevBlockHash());
+                StoredBlock prev = getStoredBlockInCurrentScope(orphanBlock.block.prevHash());
                 if (prev == null) {
                     // This is still an unconnected/orphan block.
                     if (log.isDebugEnabled())
@@ -1027,7 +1027,7 @@ public abstract class AbstractBlockChain {
             if (cursor == null)
                 return null;
             OrphanBlock tmp;
-            while ((tmp = orphanBlocks.get(cursor.block.prevBlockHash())) != null) {
+            while ((tmp = orphanBlocks.get(cursor.block.prevHash())) != null) {
                 cursor = tmp;
             }
             return cursor.block;

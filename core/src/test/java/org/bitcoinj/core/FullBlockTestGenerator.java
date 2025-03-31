@@ -1852,7 +1852,7 @@ public class FullBlockTestGenerator {
         public BlockAndValidity(NewBlock block, boolean connects, boolean throwsException, Sha256Hash hashChainTipAfterBlock, int heightAfterBlock, String blockName) {
             this(block.block, connects, throwsException, hashChainTipAfterBlock, heightAfterBlock, blockName);
             coinbaseBlockMap.put(block.getCoinbaseOutput().outpoint.hash(), block.getHash());
-            Integer blockHeight = blockToHeightMap.get(block.block.prevBlockHash());
+            Integer blockHeight = blockToHeightMap.get(block.block.prevHash());
             if (blockHeight != null) {
                 blockHeight++;
                 for (Transaction t : block.block.getTransactions())

@@ -830,7 +830,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertNotEquals(epoch, wallet.getKeyChainGroupCombinedKeyLookaheadEpochs());
         // 4th block was end of the lookahead zone and thus was discarded, so we got 3 blocks worth of money (50 each).
         assertEquals(Coin.FIFTY_COINS.multiply(3), wallet.getBalance());
-        assertEquals(exhaustionPoint.prevBlockHash(), blockChain.getChainHead().getHeader().getHash());
+        assertEquals(exhaustionPoint.prevHash(), blockChain.getChainHead().getHeader().getHash());
 
         // Await the new filter.
         peerGroup.waitForJobQueue();
