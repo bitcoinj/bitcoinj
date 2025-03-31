@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -55,6 +56,22 @@ public class HDPath extends AbstractList<ChildNumber> {
 
         Prefix(char symbol) {
             this.symbol = symbol;
+        }
+
+        static Optional<Prefix> of(char c) {
+            Optional<Prefix>  prefix;
+            switch (c) {
+                case 'm': prefix = Optional.of(Prefix.PRIVATE); break;
+                case 'M': prefix = Optional.of(Prefix.PUBLIC); break;
+                default: prefix = Optional.empty();
+            }
+            return prefix;
+        }
+
+        static Optional<Prefix> of(String string) {
+            return string.length() == 1
+                    ? Prefix.of(string.charAt(0))
+                    : Optional.empty();
         }
 
         public Character symbol() {
@@ -88,6 +105,16 @@ public class HDPath extends AbstractList<ChildNumber> {
     public HDPath(boolean hasPrivateKey, List<ChildNumber> list) {
         this.hasPrivateKey = hasPrivateKey;
         this.unmodifiableList = Collections.unmodifiableList(list);
+    }
+
+    /**
+     * Constructs a path for a public or private key.
+     *
+     * @param prefix 'M' or 'm'
+     * @param list List of children in the path
+     */
+    private HDPath(Prefix prefix, List<ChildNumber> list) {
+        this(prefix == Prefix.PRIVATE, list);
     }
 
     /**
@@ -188,21 +215,17 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public static HDPath parsePath(@Nonnull String path) {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
-        boolean hasPrivateKey = false;
-        if (!parsedNodes.isEmpty()) {
-            final String firstNode = parsedNodes.get(0);
-            if (firstNode.equals(Prefix.PRIVATE.toString()))
-                hasPrivateKey = true;
-            if (hasPrivateKey || firstNode.equals(Prefix.PUBLIC.toString()))
-                parsedNodes.remove(0);
-        }
+        Optional<Prefix> prefix = parsedNodes.isEmpty()
+                ? Optional.empty() :
+                Prefix.of(parsedNodes.get(0));
 
         List<ChildNumber> nodes = parsedNodes.stream()
+                .skip(prefix.isPresent() ? 1 : 0)   // skip prefix, if present
                 .filter(n -> !n.isEmpty())
                 .map(ChildNumber::parse)
                 .collect(StreamUtils.toUnmodifiableList());
 
-        return new HDPath(hasPrivateKey, nodes);
+        return new HDPath(prefix.orElse(Prefix.PUBLIC), nodes);
     }
 
     /**
