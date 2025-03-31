@@ -341,7 +341,7 @@ public class BlockChainTest {
         // Create a block, sending the coinbase to the coinbaseTo address (which is in the wallet).
         Block b1 = TESTNET.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, testNetWallet.currentReceiveKey().getPubKey(), height++);
         testNetChain.add(b1);
-        final Transaction coinbaseTransaction = b1.getTransactions().get(0);
+        final Transaction coinbaseTransaction = b1.transaction(0);
 
         // Check a transaction has been received.
         assertNotNull(coinbaseTransaction);

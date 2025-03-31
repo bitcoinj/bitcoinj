@@ -808,6 +808,18 @@ public class Block implements Message {
         return transactions == null ? null : Collections.unmodifiableList(transactions);
     }
 
+    /**
+     * Gets the transaction at the given index.
+     *
+     * @param index index of the transaction to get
+     * @return transaction
+     * @throws IndexOutOfBoundsException if the given index is out of bounds
+     */
+    public Transaction transaction(int index) {
+        Objects.requireNonNull(transactions);
+        return transactions.get(index);
+    }
+
     // ///////////////////////////////////////////////////////////////////////////////////////////////
     // Unit testing related methods.
 
