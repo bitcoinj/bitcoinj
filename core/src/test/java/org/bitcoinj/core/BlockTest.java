@@ -239,7 +239,7 @@ public class BlockTest {
             assertFalse(tx.hasWitnesses());
 
         // Nevertheless, there is a witness commitment (but no witness reserved).
-        Transaction coinbase = block481815.getTransactions().get(0);
+        Transaction coinbase = block481815.transaction(0);
         assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90", coinbase.getTxId().toString());
         assertEquals("919a0df2253172a55bebcb9002dbe775b8511f84955b282ca6dae826fdd94f90",
                 coinbase.getWTxId().toString());
@@ -257,7 +257,7 @@ public class BlockTest {
         assertEquals("0a02ddb2f86a14051294f8d98dd6959dd12bf3d016ca816c3db9b32d3e24fc2d",
                 block481829.getWitnessRoot().toString());
 
-        Transaction coinbase = block481829.getTransactions().get(0);
+        Transaction coinbase = block481829.transaction(0);
         assertEquals("9c1ab453283035800c43eb6461eb46682b81be110a0cb89ee923882a5fd9daa4", coinbase.getTxId().toString());
         assertEquals("2bbda73aa4e561e7f849703994cc5e563e4bcf103fb0f6fef5ae44c95c7b83a6",
                 coinbase.getWTxId().toString());

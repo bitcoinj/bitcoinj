@@ -125,7 +125,7 @@ public class ChainSplitTest {
         Block b7 = b1.createNextBlock(coinsTo);
         assertTrue(chain.add(b7));
         Block b8 = b1.createNextBlock(coinsTo);
-        final Transaction t = b7.getTransactions().get(1);
+        final Transaction t = b7.transaction(1);
         final Sha256Hash tHash = t.getTxId();
         b8.addTransaction(t);
         assertTrue(chain.add(roundtrip(b8)));
@@ -247,12 +247,12 @@ public class ChainSplitTest {
         // Test the standard case in which a block containing identical transactions appears on a side chain.
         Block b1 = TESTNET.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
-        final Transaction t = b1.transactions.get(1);
+        final Transaction t = b1.transaction(1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
         // genesis -> b1
         //         -> b2
         Block b2 = TESTNET.getGenesisBlock().createNextBlock(coinsTo);
-        Transaction b2coinbase = b2.transactions.get(0);
+        Transaction b2coinbase = b2.transaction(0);
         b2.replaceTransactions(Arrays.asList(b2coinbase, t));
         chain.add(roundtrip(b2));
         assertEquals(FIFTY_COINS, wallet.getBalance());
@@ -282,7 +282,7 @@ public class ChainSplitTest {
         // genesis -> b1 -> b3
         //         -> b2
         Block b3 = b1.createNextBlock(someOtherGuy);
-        b3.addTransaction(b2.transactions.get(1));
+        b3.addTransaction(b2.transaction(1));
         chain.add(roundtrip(b3));
         assertEquals(FIFTY_COINS, wallet.getBalance());
     }

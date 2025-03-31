@@ -165,7 +165,7 @@ public class ParseByteCacheTest {
         
         // retrieve a value from a child
         if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+            Transaction tx1 = b1.transaction(0);
             
             // does it still match ref block?
             serDeser(serializer, b1, bos.toByteArray(), null, null);
@@ -189,7 +189,7 @@ public class ParseByteCacheTest {
         b1.difficultyTarget();
 
         if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+            Transaction tx1 = b1.transaction(0);
         }
         // does it still match ref block?
         serDeser(serializer, b1, bos.toByteArray(), null, null);
@@ -212,7 +212,7 @@ public class ParseByteCacheTest {
         
         // retrieve a value from a child of a child
         if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+            Transaction tx1 = b1.transaction(0);
             
             TransactionInput tin = tx1.getInput(0);
 
@@ -228,12 +228,12 @@ public class ParseByteCacheTest {
         
         // add an input
         if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+            Transaction tx1 = b1.transaction(0);
             
             if (tx1.getInputs().size() > 0) {
                 tx1.addInput(tx1.getInput(0));
                 // replicate on reference tx
-                bRef.getTransactions().get(0).addInput(bRef.getTransactions().get(0).getInput(0));
+                bRef.transaction(0).addInput(bRef.transaction(0).getInput(0));
                 
                 bos.reset();
                 serializerRef.serialize(bRef, bos);
@@ -256,16 +256,16 @@ public class ParseByteCacheTest {
         
         // reparent an input
         if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
-            Transaction tx2 = b2.getTransactions().get(0);
+            Transaction tx1 = b1.transaction(0);
+            Transaction tx2 = b2.transaction(0);
             
             if (tx1.getInputs().size() > 0) {
                 TransactionInput fromTx1 = tx1.getInput(0);
                 tx2.addInput(fromTx1);
                 
                 // replicate on reference tx
-                TransactionInput fromTxRef = bRef.getTransactions().get(0).getInput(0);
-                bRef2.getTransactions().get(0).addInput(fromTxRef);
+                TransactionInput fromTxRef = bRef.transaction(0).getInput(0);
+                bRef2.transaction(0).addInput(fromTxRef);
                 
                 bos.reset();
                 serializerRef.serialize(bRef2, bos);
