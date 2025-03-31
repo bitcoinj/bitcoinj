@@ -58,6 +58,13 @@ public class HDPath extends AbstractList<ChildNumber> {
             this.symbol = symbol;
         }
 
+        /**
+         * @return {@link #PUBLIC}, the default prefix used when one is not specified.
+         */
+        static Prefix unspecified() {
+            return Prefix.PUBLIC;
+        }
+
         static Optional<Prefix> of(char c) {
             Optional<Prefix> prefix;
             switch (c) {
@@ -223,7 +230,7 @@ public class HDPath extends AbstractList<ChildNumber> {
                 .map(ChildNumber::parse)
                 .collect(StreamUtils.toUnmodifiableList());
 
-        return new HDPath(prefix.orElse(Prefix.PUBLIC), nodes);
+        return new HDPath(prefix.orElse(Prefix.unspecified()), nodes);
     }
 
     /**
