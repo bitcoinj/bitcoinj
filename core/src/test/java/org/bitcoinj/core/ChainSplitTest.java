@@ -43,6 +43,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -252,9 +253,7 @@ public class ChainSplitTest {
         //         -> b2
         Block b2 = TESTNET.getGenesisBlock().createNextBlock(coinsTo);
         Transaction b2coinbase = b2.transactions.get(0);
-        b2.transactions.clear();
-        b2.addTransaction(b2coinbase);
-        b2.addTransaction(t);
+        b2.replaceTransactions(Arrays.asList(b2coinbase, t));
         chain.add(roundtrip(b2));
         assertEquals(FIFTY_COINS, wallet.getBalance());
         assertTrue(wallet.isConsistent());

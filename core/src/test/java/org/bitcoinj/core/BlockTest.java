@@ -43,7 +43,7 @@ import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -130,10 +130,12 @@ public class BlockTest {
     @Test
     public void testBadTransactions() {
         // Re-arrange so the coinbase transaction is not first.
-        Transaction tx1 = block700000.transactions.get(0);
-        Transaction tx2 = block700000.transactions.get(1);
-        block700000.transactions.set(0, tx2);
-        block700000.transactions.set(1, tx1);
+        List<Transaction> transactions = new ArrayList<>(block700000.getTransactions());
+        Transaction tx1 = transactions.get(0);
+        Transaction tx2 = transactions.get(1);
+        transactions.set(0, tx2);
+        transactions.set(1, tx1);
+        block700000.replaceTransactions(transactions);
         try {
             Block.verify(TESTNET, block700000, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
             fail();

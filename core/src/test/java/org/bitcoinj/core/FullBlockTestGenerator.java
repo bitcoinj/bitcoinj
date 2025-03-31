@@ -943,7 +943,7 @@ public class FullBlockTestGenerator {
             } catch (RuntimeException e) { } // Should happen
             if (b45.getTransactions().size() > 0)
                 throw new RuntimeException("addTransaction doesn't properly check for adding a non-coinbase as first tx");
-            b45.addTransaction(t, false);
+            b45.replaceTransactions(Arrays.asList(t));
 
             b45.setTime(b44.time().plusSeconds(1));
         }
@@ -953,7 +953,6 @@ public class FullBlockTestGenerator {
         // A block with no txn
         Block b46 = new Block(Block.BLOCK_VERSION_GENESIS, b44.getHash());
         {
-            b46.transactions = new ArrayList<>();
             b46.setDifficultyTarget(b44.difficultyTarget());
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
@@ -1010,7 +1009,9 @@ public class FullBlockTestGenerator {
             Transaction coinbase = new Transaction();
             coinbase.addInput(TransactionInput.coinbaseInput(coinbase, new byte[]{(byte) 0xff, 110, 1}));
             coinbase.addOutput(new TransactionOutput(coinbase, SATOSHI, outScriptBytes));
-            b51.block.addTransaction(coinbase, false);
+            List<Transaction> transactions = new ArrayList<>(b51.block.getTransactions());
+            transactions.add(coinbase);
+            b51.block.replaceTransactions(transactions);
         }
         b51.solve();
         blocks.add(new BlockAndValidity(b51, false, true, b44.getHash(), chainHeadHeight + 15, "b51"));
