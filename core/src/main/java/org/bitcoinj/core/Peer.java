@@ -487,8 +487,6 @@ public class Peer extends PeerSocketHandler {
             processVersionMessage((VersionMessage) m);
         } else if (m instanceof VersionAck) {
             processVersionAck((VersionAck) m);
-        } else if (m instanceof RejectMessage) {
-            log.error("{} {}: Received {}", this, getPeerVersionMessage().subVer, m);
         } else if (m instanceof SendHeadersMessage) {
             // We ignore this message, because we don't announce new blocks.
         } else if (m instanceof FeeFilterMessage) {

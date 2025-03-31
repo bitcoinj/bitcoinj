@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Double.longBitsToDouble;
@@ -52,7 +51,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(value = Parameterized.class)
 public class TransactionBroadcastTest extends TestWithPeerGroup {
@@ -133,27 +131,6 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         final AtomicLong p = new AtomicLong();
         broadcast.setProgressCallback(atomicCallback(p), Threading.SAME_THREAD);
         assertEquals(1.0, p.get(), 0.01);
-    }
-
-    @Test
-    public void rejectHandling() throws Exception {
-        InboundMessageQueuer[] channels = { connectPeer(0), connectPeer(1), connectPeer(2), connectPeer(3), connectPeer(4) };
-        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
-        TransactionBroadcast broadcast = new TransactionBroadcast(peerGroup, tx);
-        CompletableFuture<TransactionBroadcast> future = broadcast.broadcastAndAwaitRelay();
-        // 0 and 3 are randomly selected to receive the broadcast.
-        assertEquals(tx, outbound(channels[1]));
-        assertEquals(tx, outbound(channels[2]));
-        assertEquals(tx, outbound(channels[4]));
-        RejectMessage reject = new RejectMessage(RejectMessage.RejectCode.DUST, tx.getTxId(), "tx", "dust");
-        inbound(channels[1], reject);
-        inbound(channels[4], reject);
-        try {
-            future.get();
-            fail();
-        } catch (ExecutionException e) {
-            assertEquals(RejectedTransactionException.class, e.getCause().getClass());
-        }
     }
 
     @Test

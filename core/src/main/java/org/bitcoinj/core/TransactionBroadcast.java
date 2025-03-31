@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
-import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
@@ -30,9 +29,7 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -44,8 +41,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * Represents a single transaction broadcast that we are performing. A broadcast occurs after a new transaction is created
  * (typically by a {@link Wallet}) and needs to be sent to the network. A broadcast can succeed or fail. A success is
  * defined as seeing the transaction be announced by peers via inv messages, thus indicating their acceptance. A failure
- * is defined as not reaching acceptance within a timeout period, or getting an explicit reject message from a peer
- * indicating that the transaction was not acceptable.
+ * is defined as not reaching acceptance within a timeout period.
  * <p>
  * This class temporarily implements {@link Wallet.SendResult} to allow migration away from that deprecated interface.
  */
@@ -66,9 +62,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
     /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
     @VisibleForTesting
     public static Random random = new Random();
-    
-    // Tracks which nodes sent us a reject message about this broadcast, if any. Useful for debugging.
-    private final Map<Peer, RejectMessage> rejects = Collections.synchronizedMap(new HashMap<Peer, RejectMessage>());
 
     TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
         this.peerGroup = peerGroup;
@@ -126,26 +119,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
         this.dropPeersAfterBroadcast = dropPeersAfterBroadcast;
     }
 
-    private final PreMessageReceivedEventListener rejectionListener = new PreMessageReceivedEventListener() {
-        @Override
-        public Message onPreMessageReceived(Peer peer, Message m) {
-            if (m instanceof RejectMessage) {
-                RejectMessage rejectMessage = (RejectMessage)m;
-                if (tx.getTxId().equals(rejectMessage.getRejectedObjectHash())) {
-                    rejects.put(peer, rejectMessage);
-                    int size = rejects.size();
-                    long threshold = Math.round(numWaitingFor / 2.0);
-                    if (size > threshold) {
-                        log.warn("Threshold for considering broadcast rejected has been reached ({}/{})", size, threshold);
-                        seenFuture.completeExceptionally(new RejectedTransactionException(tx, rejectMessage));
-                        peerGroup.removePreMessageReceivedEventListener(this);
-                    }
-                }
-            }
-            return m;
-        }
-    };
-
     // TODO: Should this method be moved into the PeerGroup?
     /**
      * Broadcast this transaction to the proper calculated number of peers. Returns a future that completes when the message
@@ -168,7 +141,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
      * will complete exceptionally if <i>any</i> of the peer broadcasts fails.
      */
     public CompletableFuture<TransactionBroadcast> broadcastOnly() {
-        peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, rejectionListener);
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
         final Context context = Context.get();
         return peerGroup.waitForPeers(minConnections).thenComposeAsync( peerList /* not used */ -> {
@@ -306,7 +278,7 @@ public class TransactionBroadcast implements Wallet.SendResult {
         @Override
         public void onConfidenceChanged(TransactionConfidence conf, ChangeReason reason) {
             // The number of peers that announced this tx has gone up.
-            int numSeenPeers = conf.numBroadcastPeers() + rejects.size();
+            int numSeenPeers = conf.numBroadcastPeers();
             boolean mined = tx.getAppearsInHashes() != null;
             log.info("broadcastTransaction: {}:  TX {} seen by {} peers{}", reason, tx.getTxId(),
                     numSeenPeers, mined ? " and mined" : "");
@@ -329,7 +301,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
                 // We're done! It's important that the PeerGroup lock is not held (by this thread) at this
                 // point to avoid triggering inversions when the Future completes.
                 log.info("broadcastTransaction: {} complete", tx.getTxId());
-                peerGroup.removePreMessageReceivedEventListener(rejectionListener);
                 conf.removeEventListener(this);
                 seenFuture.complete(TransactionBroadcast.this);  // RE-ENTRANCY POINT
             }

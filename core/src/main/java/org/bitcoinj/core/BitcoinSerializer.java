@@ -75,7 +75,6 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(FilteredBlock.class, "merkleblock");
         names.put(NotFoundMessage.class, "notfound");
         names.put(MemoryPoolMessage.class, "mempool");
-        names.put(RejectMessage.class, "reject");
         names.put(SendHeadersMessage.class, "sendheaders");
         names.put(FeeFilterMessage.class, "feefilter");
     }
@@ -255,8 +254,6 @@ public class BitcoinSerializer extends MessageSerializer {
             return NotFoundMessage.read(payload);
         } else if (command.equals("mempool")) {
             return new MemoryPoolMessage();
-        } else if (command.equals("reject")) {
-            return RejectMessage.read(payload);
         } else if (command.equals("sendheaders")) {
             check(!payload.hasRemaining(), ProtocolException::new);
             return new SendHeadersMessage();
