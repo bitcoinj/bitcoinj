@@ -18,6 +18,7 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -506,7 +507,7 @@ public class DeterministicKey extends ECKey {
             ser.putInt(pub ? params.getBip32HeaderP2WPKHpub() : params.getBip32HeaderP2WPKHpriv());
         else
             throw new IllegalStateException(outputScriptType.toString());
-        ser.put((byte) getDepth());
+        ser.put(UnsignedBytes.checkedCast(getDepth()));
         ser.putInt(getParentFingerprint());
         ser.putInt(getChildNumber().i());
         ser.put(getChainCode());
@@ -656,7 +657,7 @@ public class DeterministicKey extends ECKey {
         final boolean priv = header == params.getBip32HeaderP2PKHpriv() || header == params.getBip32HeaderP2WPKHpriv();
         if (!(pub || priv))
             throw new IllegalArgumentException("Unknown header bytes: " + toBase58(serializedKey).substring(0, 4));
-        int depth = buffer.get() & 0xFF; // convert signed byte to positive int since depth cannot be negative
+        int depth = Byte.toUnsignedInt(buffer.get()); // convert signed byte to positive int since depth cannot be negative
         final int parentFingerprint = buffer.getInt();
         final int i = buffer.getInt();
         final ChildNumber childNumber = new ChildNumber(i);
