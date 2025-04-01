@@ -64,8 +64,20 @@ public class DeterministicKey extends ECKey {
     /** 32 bytes */
     private final byte[] chainCode;
 
-    /** Constructs a key from its components. This is not normally something you should use. */
+    /**
+     * @deprecated Use {@link #DeterministicKey(HDPath, byte[], LazyECPoint, BigInteger, DeterministicKey)}
+     */
+    @Deprecated
     public DeterministicKey(List<ChildNumber> childNumberPath,
+                            byte[] chainCode,
+                            LazyECPoint publicAsPoint,
+                            @Nullable BigInteger priv,
+                            @Nullable DeterministicKey parent) {
+        this(HDPath.M(childNumberPath), chainCode, publicAsPoint, priv, parent);
+    }
+
+    /** Constructs a key from its components. This is not normally something you should use. */
+    public DeterministicKey(HDPath hdPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
@@ -73,19 +85,32 @@ public class DeterministicKey extends ECKey {
         super(priv, publicAsPoint.compress());
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
+        this.childNumberPath = hdPath;
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
     }
 
+    /**
+     * @deprecated use {@link DeterministicKey#DeterministicKey(HDPath, byte[], ECPoint, boolean, BigInteger, DeterministicKey)}
+     */
+    @Deprecated
     public DeterministicKey(List<ChildNumber> childNumberPath,
                             byte[] chainCode,
                             ECPoint publicAsPoint,
                             boolean compressed,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(childNumberPath, chainCode, new LazyECPoint(publicAsPoint, compressed), priv, parent);
+        this(HDPath.M(childNumberPath), chainCode, publicAsPoint, compressed, priv, parent);
+    }
+
+    public DeterministicKey(HDPath hdPath,
+                            byte[] chainCode,
+                            ECPoint publicAsPoint,
+                            boolean compressed,
+                            @Nullable BigInteger priv,
+                            @Nullable DeterministicKey parent) {
+        this(hdPath, chainCode, new LazyECPoint(publicAsPoint, compressed), priv, parent);
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
@@ -102,14 +127,27 @@ public class DeterministicKey extends ECKey {
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
     }
 
-    /** Constructs a key from its components. This is not normally something you should use. */
+    /**
+     * @deprecated use {@link DeterministicKey#DeterministicKey(HDPath, byte[], KeyCrypter, LazyECPoint, EncryptedData, DeterministicKey)}
+     */
+    @Deprecated
     public DeterministicKey(List<ChildNumber> childNumberPath,
                             byte[] chainCode,
                             KeyCrypter crypter,
                             LazyECPoint pub,
                             EncryptedData priv,
                             @Nullable DeterministicKey parent) {
-        this(childNumberPath, chainCode, pub, null, parent);
+        this(HDPath.M(childNumberPath), chainCode, crypter, pub, priv, parent);
+    }
+
+    /** Constructs a key from its components. This is not normally something you should use. */
+    public DeterministicKey(HDPath hdPath,
+                            byte[] chainCode,
+                            KeyCrypter crypter,
+                            LazyECPoint pub,
+                            EncryptedData priv,
+                            @Nullable DeterministicKey parent) {
+        this(hdPath, chainCode, pub, null, parent);
         this.encryptedPrivateKey = Objects.requireNonNull(priv);
         this.keyCrypter = Objects.requireNonNull(crypter);
     }
@@ -134,7 +172,22 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
+    @Deprecated
     public DeterministicKey(List<ChildNumber> childNumberPath,
+                            byte[] chainCode,
+                            LazyECPoint publicAsPoint,
+                            @Nullable DeterministicKey parent,
+                            int depth,
+                            int parentFingerprint) {
+        this(HDPath.M(childNumberPath), chainCode, publicAsPoint, parent, depth, parentFingerprint);
+    }
+
+    /**
+     * Constructs a key from its components, including its public key data and possibly-redundant
+     * information about its parent key.  Invoked when deserializing, but otherwise not something that
+     * you normally should use.
+     */
+    public DeterministicKey(HDPath hdPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
                             @Nullable DeterministicKey parent,
@@ -143,10 +196,23 @@ public class DeterministicKey extends ECKey {
         super(null, publicAsPoint.compress());
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
+        this.childNumberPath = hdPath;
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
         this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
+    }
+
+    /**
+     * @deprecated use {@link DeterministicKey#DeterministicKey(HDPath, byte[], BigInteger, DeterministicKey, int, int)}
+     */
+    @Deprecated
+    public DeterministicKey(List<ChildNumber> childNumberPath,
+                            byte[] chainCode,
+                            BigInteger priv,
+                            @Nullable DeterministicKey parent,
+                            int depth,
+                            int parentFingerprint) {
+        this(HDPath.M(childNumberPath), chainCode, priv, parent, depth, parentFingerprint);
     }
 
     /**
@@ -154,7 +220,7 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath hdPath,
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent,
@@ -163,7 +229,7 @@ public class DeterministicKey extends ECKey {
         super(priv, ECKey.publicPointFromPrivate(priv), true);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
+        this.childNumberPath = hdPath;
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
         this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
