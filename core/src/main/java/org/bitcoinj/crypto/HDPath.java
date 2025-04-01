@@ -16,6 +16,7 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.internal.Preconditions;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 
@@ -103,6 +104,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param list List of children in the path
      */
     public HDPath(boolean hasPrivateKey, List<ChildNumber> list) {
+        Preconditions.checkArgument(list.size() < 256, () -> "HDPath length must be <= 255");
         this.hasPrivateKey = hasPrivateKey;
         this.unmodifiableList = Collections.unmodifiableList(list);
     }
