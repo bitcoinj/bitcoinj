@@ -48,7 +48,7 @@ import java.util.stream.Stream;
  * concisely create HDPath objects (especially when statically imported.)
  */
 public class HDPath extends AbstractList<ChildNumber> {
-    private enum Prefix {
+    public enum Prefix {
         PRIVATE('m'),
         PUBLIC('M');
 
@@ -120,6 +120,16 @@ public class HDPath extends AbstractList<ChildNumber> {
     /**
      * Returns a path for a public or private key.
      *
+     * @param prefix Indicates if it is a path to a public or private key
+     * @param list List of children in the path
+     */
+    public static HDPath of(Prefix prefix, List<ChildNumber> list) {
+        return new HDPath(prefix, list);
+    }
+
+    /**
+     * Returns a path for a public or private key.
+     *
      * @param hasPrivateKey Whether it is a path to a private key or not
      * @param list List of children in the path
      */
@@ -144,7 +154,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param list List of children in the path
      */
     public static HDPath M(List<ChildNumber> list) {
-        return HDPath.of(false, list);
+        return HDPath.of(Prefix.PUBLIC, list);
     }
 
     /**
@@ -178,7 +188,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param list List of children in the path
      */
     public static HDPath m(List<ChildNumber> list) {
-        return HDPath.of(true, list);
+        return HDPath.of(Prefix.PRIVATE, list);
     }
 
     /**
@@ -223,7 +233,16 @@ public class HDPath extends AbstractList<ChildNumber> {
                 .map(ChildNumber::parse)
                 .collect(StreamUtils.toUnmodifiableList());
 
-        return new HDPath(prefix.orElse(Prefix.PUBLIC), nodes);
+        return HDPath.of(prefix.orElse(Prefix.PUBLIC), nodes);
+    }
+
+    /**
+     * Return the correct prefix for this path.
+     *
+     * @return prefix
+     */
+    public Prefix prefix() {
+        return hasPrivateKey ? Prefix.PRIVATE : Prefix.PUBLIC;
     }
 
     /**
@@ -328,7 +347,7 @@ public class HDPath extends AbstractList<ChildNumber> {
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
-        b.append(hasPrivateKey ? Prefix.PRIVATE : Prefix.PUBLIC);
+        b.append(this.prefix());
         for (ChildNumber segment : unmodifiableList) {
             b.append(HDPath.SEPARATOR);
             b.append(segment.toString());
