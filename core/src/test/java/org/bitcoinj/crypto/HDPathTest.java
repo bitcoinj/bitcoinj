@@ -278,7 +278,6 @@ public class HDPathTest {
     }
 
     @Test
-    @Ignore("Ignored until we have a correct implementation of equals that compares the prefix")
     public void equals_not_M_m() {
         assertNotEquals(HDPath.M(), HDPath.m());
     }
