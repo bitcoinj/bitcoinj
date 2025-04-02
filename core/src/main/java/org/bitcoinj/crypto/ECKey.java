@@ -145,7 +145,7 @@ public class ECKey implements EncryptableItem {
      */
     static final BigInteger HALF_CURVE_ORDER;
 
-    private static final SecureRandom secureRandom;
+    private static final SecureRandom SECURE_RANDOM;
 
     static {
         // Tell Bouncy Castle to precompute data that's needed during secp256k1 calculations.
@@ -153,7 +153,7 @@ public class ECKey implements EncryptableItem {
         CURVE = new ECDomainParameters(CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(),
                 CURVE_PARAMS.getH());
         HALF_CURVE_ORDER = CURVE_PARAMS.getN().shiftRight(1);
-        secureRandom = new SecureRandom();
+        SECURE_RANDOM = new SecureRandom();
     }
 
     // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
@@ -174,7 +174,7 @@ public class ECKey implements EncryptableItem {
      * (32 for the co-ordinate and 1 byte to represent the y bit).
      */
     public ECKey() {
-        this(secureRandom);
+        this(SECURE_RANDOM);
     }
 
     /**
