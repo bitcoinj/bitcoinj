@@ -220,7 +220,7 @@ public class ECKey implements EncryptableItem {
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    protected ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
+    private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
         this(priv, new LazyECPoint(Objects.requireNonNull(pub), compressed));
     }
 
