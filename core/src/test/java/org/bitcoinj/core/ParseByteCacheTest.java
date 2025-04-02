@@ -89,7 +89,7 @@ public class ParseByteCacheTest {
         tx1.addInput(prevOut);
         
         Transaction tx2 = createFakeTx(TESTNET.network(), COIN,
-                new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+                ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
 
         Block b1 = createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS, tx1, tx2).block;
 

@@ -96,7 +96,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
         try {
             if (hashToKeys.isEmpty()) {
                 checkState(keyCrypter == null);   // We will refuse to encrypt an empty key chain.
-                final ECKey key = new ECKey();
+                final ECKey key = ECKey.random();
                 importKeyLocked(key);
                 queueOnKeysAdded(Collections.singletonList(key));
             }
@@ -116,7 +116,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
 
                 List<ECKey> keys = new ArrayList<>();
                 for (int i = 0; i < numberOfKeys - hashToKeys.size(); i++) {
-                    keys.add(new ECKey());
+                    keys.add(ECKey.random());
                 }
 
                 List<ECKey> immutableKeys = Collections.unmodifiableList(keys);

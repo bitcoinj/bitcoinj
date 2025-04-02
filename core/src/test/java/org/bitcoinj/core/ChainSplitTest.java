@@ -78,7 +78,7 @@ public class ChainSplitTest {
         chain = new BlockChain(BitcoinNetwork.TESTNET, wallet, blockStore);
         coinsTo = key1.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         coinsTo2 = key2.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        someOtherGuy = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        someOtherGuy = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
     }
 
     @Test
@@ -185,7 +185,7 @@ public class ChainSplitTest {
         Block b1 = TESTNET.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
-        Address dest = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address dest = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction spend = wallet.createSend(dest, valueOf(10, 0));
         wallet.commitTx(spend);
         // Waiting for confirmation ... make it eligible for selection.
@@ -218,7 +218,7 @@ public class ChainSplitTest {
         Block b1 = TESTNET.getGenesisBlock().createNextBlock(coinsTo);
         chain.add(b1);
         assertEquals(FIFTY_COINS, wallet.getBalance());
-        Address dest = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address dest = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction spend = wallet.createSend(dest, FIFTY_COINS);
         // We do NOT confirm the spend here. That means it's not considered to be pending because createSend is
         // stateless. For our purposes it is as if some other program with our keys created the tx.
@@ -303,19 +303,19 @@ public class ChainSplitTest {
         chain.add(b1);
 
         Transaction t1 = wallet.createSend(someOtherGuy, valueOf(10, 0));
-        Address yetAnotherGuy = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address yetAnotherGuy = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction t2 = wallet.createSend(yetAnotherGuy, valueOf(20, 0));
         wallet.commitTx(t1);
         // Receive t1 as confirmed by the network.
-        Block b2 = b1.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b2 = b1.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         b2.addTransaction(t1);
         chain.add(roundtrip(b2));
 
         // Now we make a double spend become active after a re-org.
-        Block b3 = b1.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b3 = b1.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         b3.addTransaction(t2);
         chain.add(roundtrip(b3));  // Side chain.
-        Block b4 = b3.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b4 = b3.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         chain.add(b4);  // New best chain.
         Threading.waitForUserCode();
         // Should have seen a double spend.
@@ -341,11 +341,11 @@ public class ChainSplitTest {
         chain.add(b1);
 
         Transaction t1 = Objects.requireNonNull(wallet.createSend(someOtherGuy, valueOf(10, 0)));
-        Address yetAnotherGuy = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address yetAnotherGuy = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction t2 = Objects.requireNonNull(wallet.createSend(yetAnotherGuy, valueOf(20, 0)));
         wallet.commitTx(t1);
         // t1 is still pending ...
-        Block b2 = b1.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b2 = b1.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         chain.add(b2);
         assertEquals(ZERO, wallet.getBalance());
         assertEquals(valueOf(40, 0), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
@@ -353,10 +353,10 @@ public class ChainSplitTest {
         // Now we make a double spend become active after a re-org.
         // genesis -> b1 -> b2 [t1 pending]
         //              \-> b3 (t2) -> b4
-        Block b3 = b1.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b3 = b1.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         b3.addTransaction(t2);
         chain.add(roundtrip(b3));  // Side chain.
-        Block b4 = b3.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b4 = b3.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         chain.add(b4);  // New best chain.
         Threading.waitForUserCode();
         // Should have seen a double spend against the pending pool.
@@ -367,9 +367,9 @@ public class ChainSplitTest {
         assertEquals(valueOf(30, 0), wallet.getBalance());
 
         // ... and back to our own parallel universe.
-        Block b5 = b2.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b5 = b2.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         chain.add(b5);
-        Block b6 = b5.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        Block b6 = b5.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         chain.add(b6);
         // genesis -> b1 -> b2 -> b5 -> b6 [t1 still dead]
         //              \-> b3 [t2 resurrected and now pending] -> b4
@@ -510,9 +510,9 @@ public class ChainSplitTest {
         chain.add(b1);
 
         // Send a couple of payments one after the other (so the second depends on the change output of the first).
-        Transaction t2 = Objects.requireNonNull(wallet.createSend(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), CENT, true));
+        Transaction t2 = Objects.requireNonNull(wallet.createSend(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), CENT, true));
         wallet.commitTx(t2);
-        Transaction t3 = Objects.requireNonNull(wallet.createSend(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), CENT, true));
+        Transaction t3 = Objects.requireNonNull(wallet.createSend(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), CENT, true));
         wallet.commitTx(t3);
         chain.add(FakeTxBuilder.makeTestBlock(b1, t2, t3));
 
@@ -528,7 +528,7 @@ public class ChainSplitTest {
         chain.add(b2);
         chain.add(b3);
 
-        // And verify that the balance is as expected. Because new ECKey() is non-deterministic, if the order
+        // And verify that the balance is as expected. Because ECKey.random() is non-deterministic, if the order
         // isn't being stored correctly this should fail 50% of the time.
         assertEquals(coins0point98, wallet.getBalance());
     }
@@ -575,7 +575,7 @@ public class ChainSplitTest {
             chain.add(firstTip);
         }
         // ... and spend.
-        Transaction fodder = wallet.createSend(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), FIFTY_COINS);
+        Transaction fodder = wallet.createSend(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET), FIFTY_COINS);
         wallet.commitTx(fodder);
         final AtomicBoolean fodderIsDead = new AtomicBoolean(false);
         fodder.getConfidence().addEventListener(Threading.SAME_THREAD, (confidence, reason) -> fodderIsDead.set(confidence.getConfidenceType() == ConfidenceType.DEAD));

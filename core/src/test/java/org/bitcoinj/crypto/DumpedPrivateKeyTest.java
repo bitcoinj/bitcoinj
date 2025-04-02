@@ -83,7 +83,7 @@ public class DumpedPrivateKeyTest {
 
     @Test
     public void roundtripBase58_getKey() {
-        ECKey k = new ECKey().decompress();
+        ECKey k = ECKey.random().decompress();
         assertFalse(k.isCompressed());
         assertEquals(k.getPrivKey(),
                 DumpedPrivateKey.fromBase58((Network) null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());
@@ -91,7 +91,7 @@ public class DumpedPrivateKeyTest {
 
     @Test
     public void roundtripBase58_compressed_getKey() {
-        ECKey k = new ECKey();
+        ECKey k = ECKey.random();
         assertTrue(k.isCompressed());
         assertEquals(k.getPrivKey(),
                 DumpedPrivateKey.fromBase58((Network) null, k.getPrivateKeyAsWiF(MAINNET)).getKey().getPrivKey());

@@ -161,7 +161,7 @@ public class FakeTxBuilder {
         Transaction t = new Transaction();
         TransactionOutput outputToMe = new TransactionOutput(t, value, to);
         t.addOutput(outputToMe);
-        TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), new ECKey());
+        TransactionOutput change = new TransactionOutput(t, valueOf(1, 11), ECKey.random());
         t.addOutput(change);
         // Make a previous tx simply to send us sufficient coins. This prev tx is not really valid but it doesn't
         // matter for our purposes.
@@ -333,6 +333,6 @@ public class FakeTxBuilder {
     }
 
     private static ECKey randomKey() {
-        return new ECKey();
+        return ECKey.random();
     }
 }

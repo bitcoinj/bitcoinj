@@ -109,7 +109,7 @@ public class KeyChainGroupTest {
         assertEquals(numKeys, group.numKeys());
         assertEquals(2 * numKeys, group.getBloomFilterElementCount());
 
-        ECKey i1 = new ECKey();
+        ECKey i1 = ECKey.random();
         group.importKeys(i1);
         numKeys++;
         assertEquals(numKeys, group.numKeys());
@@ -136,7 +136,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void imports() {
-        ECKey key1 = new ECKey();
+        ECKey key1 = ECKey.random();
         int numKeys = group.numKeys();
         assertFalse(group.removeImportedKey(key1));
         assertEquals(1, group.importKeys(Collections.singletonList(key1)));
@@ -149,8 +149,8 @@ public class KeyChainGroupTest {
     public void findKey() {
         ECKey a = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         ECKey b = group.freshKey(KeyChain.KeyPurpose.CHANGE);
-        ECKey c = new ECKey();
-        ECKey d = new ECKey();   // Not imported.
+        ECKey c = ECKey.random();
+        ECKey d = ECKey.random();   // Not imported.
         group.importKeys(c);
         assertTrue(group.hasKey(a));
         assertTrue(group.hasKey(b));
@@ -191,7 +191,7 @@ public class KeyChainGroupTest {
         assertEquals(now, group.earliestKeyCreationTime());
         Instant yesterday = now.minus(1, ChronoUnit.DAYS);
         TimeUtils.setMockClock(yesterday);
-        ECKey b = new ECKey();
+        ECKey b = ECKey.random();
 
         assertFalse(group.isEncrypted());
         try {
@@ -223,7 +223,7 @@ public class KeyChainGroupTest {
             // Ignored.
         }
         if (withImported) {
-            ECKey c = new ECKey();
+            ECKey c = ECKey.random();
             try {
                 group.importKeys(c);
                 fail();
@@ -268,7 +268,7 @@ public class KeyChainGroupTest {
     @Test
     public void bloom() {
         ECKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        ECKey key2 = new ECKey();
+        ECKey key2 = ECKey.random();
         BloomFilter filter = group.getBloomFilter(group.getBloomFilterElementCount(), LOW_FALSE_POSITIVE_RATE, new Random().nextInt());
         assertTrue(filter.contains(key1.getPubKeyHash()));
         assertTrue(filter.contains(key1.getPubKey()));
@@ -298,7 +298,7 @@ public class KeyChainGroupTest {
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // Check that all keys are assumed to be created at the same instant the seed is.
         assertEquals(now, group.earliestKeyCreationTime());
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         Instant yesterday = now.minus(1, ChronoUnit.DAYS);
         key.setCreationTime(yesterday);
         group.importKeys(key);
@@ -314,11 +314,11 @@ public class KeyChainGroupTest {
         group.addEventListener(listener, Threading.SAME_THREAD);
         ECKey key = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals(key, ran.getAndSet(null));
-        ECKey key2 = new ECKey();
+        ECKey key2 = ECKey.random();
         group.importKeys(key2);
         assertEquals(key2, ran.getAndSet(null));
         group.removeEventListener(listener);
-        ECKey key3 = new ECKey();
+        ECKey key3 = ECKey.random();
         group.importKeys(key3);
         assertNull(ran.get());
     }
@@ -334,7 +334,7 @@ public class KeyChainGroupTest {
         group.getBloomFilterElementCount();
         List<Protos.Key> protoKeys1 = group.serializeToProtobuf();
         assertEquals(initialKeys + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 1, protoKeys1.size());
-        group.importKeys(new ECKey());
+        group.importKeys(ECKey.random());
         List<Protos.Key> protoKeys2 = group.serializeToProtobuf();
         assertEquals(initialKeys + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 2, protoKeys2.size());
 
@@ -408,7 +408,7 @@ public class KeyChainGroupTest {
     public void deterministicUpgradeRequired() {
         // Check that if we try to use HD features in a KCG that only has random keys, we get an exception.
         group = KeyChainGroup.builder(BitcoinNetwork.MAINNET).build();
-        group.importKeys(new ECKey(), new ECKey());
+        group.importKeys(ECKey.random(), ECKey.random());
         assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2PKH, null));
         assertTrue(group.isDeterministicUpgradeRequired(ScriptType.P2WPKH, null));
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);   // throws
@@ -476,7 +476,7 @@ public class KeyChainGroupTest {
                         "xpub69bjfJ91ikC5ghsqsVDHNq2dRGaV2HHVx7Y9LXi27LN9BWWAXPTQr4u8U3wAtap8bLdHdkqPpAcZmhMS5SnrMQC4ccaoBccFhh315P4UYzo",
                         BitcoinNetwork.MAINNET)).outputScriptType(ScriptType.P2PKH).build())
                 .build();
-        final ECKey watchingKey = ECKey.fromPublicOnly(new ECKey());
+        final ECKey watchingKey = ECKey.fromPublicOnly(ECKey.random());
         group.importKeys(watchingKey);
         assertTrue(group.isWatching());
     }

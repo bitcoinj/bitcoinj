@@ -836,7 +836,7 @@ public class Block implements Message {
     private static final byte[] EMPTY_BYTES = new byte[32];
 
     // It's pretty weak to have this around at runtime: fix later.
-    private static final byte[] pubkeyForTesting = new ECKey().getPubKey();
+    private static final byte[] pubkeyForTesting = ECKey.random().getPubKey();
 
     /**
      * Returns an unsolved block that builds on top of this one. This exists for unit tests.

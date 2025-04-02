@@ -63,11 +63,11 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void testMultiSigOutputToString() throws Exception {
         sendMoneyToWallet(AbstractBlockChain.NewBlockType.BEST_CHAIN, Coin.COIN);
-        ECKey myKey = new ECKey();
+        ECKey myKey = ECKey.random();
         this.wallet.importKey(myKey);
 
         // Simulate another signatory
-        ECKey otherKey = new ECKey();
+        ECKey otherKey = ECKey.random();
 
         // Create multi-sig transaction
         Transaction multiSigTransaction = new Transaction();

@@ -176,7 +176,7 @@ public class FullBlockTestGenerator {
 
     public FullBlockTestGenerator(NetworkParameters params) {
         this.params = params;
-        coinbaseOutKey = new ECKey();
+        coinbaseOutKey = ECKey.random();
         coinbaseOutKeyPubKey = coinbaseOutKey.getPubKey();
         TimeUtils.setMockClock();
     }

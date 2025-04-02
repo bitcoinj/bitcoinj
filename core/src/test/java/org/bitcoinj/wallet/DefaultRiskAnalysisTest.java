@@ -57,7 +57,7 @@ public class DefaultRiskAnalysisTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
     private Wallet wallet;
     private final int TIMESTAMP = 1384190189;
-    private static final ECKey key1 = new ECKey();
+    private static final ECKey key1 = ECKey.random();
     private final List<Transaction> NO_DEPS = Collections.emptyList();
 
     @Before
@@ -134,7 +134,7 @@ public class DefaultRiskAnalysisTest {
         tx1.setLockTime(TIMESTAMP + 86400);
         Transaction tx2 = new Transaction();
         tx2.addInput(output);
-        tx2.addOutput(COIN, new ECKey());
+        tx2.addOutput(COIN, ECKey.random());
 
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx2, Collections.singletonList(tx1));
         assertEquals(RiskAnalysis.Result.NON_FINAL, analysis.analyze());
@@ -229,7 +229,7 @@ public class DefaultRiskAnalysisTest {
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKOutputScript(key1));
         // 1-of-2 multisig output.
-        List<ECKey> keys = Arrays.asList(key1, new ECKey());
+        List<ECKey> keys = Arrays.asList(key1, ECKey.random());
         tx.addOutput(Coin.CENT, ScriptBuilder.createMultiSigOutputScript(1, keys));
         // 2-of-2 multisig output.
         tx.addOutput(Coin.CENT, ScriptBuilder.createMultiSigOutputScript(2, keys));

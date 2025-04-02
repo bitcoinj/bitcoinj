@@ -112,8 +112,8 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
     @Test
     public void createFilteredBlock() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
-        ECKey key1 = new ECKey();
-        ECKey key2 = new ECKey();
+        ECKey key1 = ECKey.random();
+        ECKey key2 = ECKey.random();
         Transaction tx1 = FakeTxBuilder.createFakeTx(Coin.COIN,  key1);
         Transaction tx2 = FakeTxBuilder.createFakeTx(TESTNET.network(), Coin.FIFTY_COINS, key2.toAddress(ScriptType.P2PKH,
                 BitcoinNetwork.TESTNET));

@@ -531,7 +531,7 @@ public class PeerTest extends TestWithNetworkConnections {
     public void recursiveDependencyDownload() throws Exception {
         connect();
         // Check that we can download all dependencies of an unconfirmed relevant transaction from the mempool.
-        ECKey to = new ECKey();
+        ECKey to = ECKey.random();
 
         final Transaction[] onTx = new Transaction[1];
         peer.addOnTransactionBroadcastListener(Threading.SAME_THREAD, (peer1, t) -> onTx[0] = t);
@@ -544,12 +544,12 @@ public class PeerTest extends TestWithNetworkConnections {
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
         Transaction t2 = createFakeTx(COIN, to);
         Sha256Hash t5hash = t2.getInput(0).getOutpoint().hash();
-        Transaction t4 = createFakeTx(COIN, new ECKey());
+        Transaction t4 = createFakeTx(COIN, ECKey.random());
         Sha256Hash t6hash = t4.getInput(0).getOutpoint().hash();
-        t4.addOutput(COIN, new ECKey());
+        t4.addOutput(COIN, ECKey.random());
         Transaction t3 = new Transaction();
         t3.addInput(t4.getOutput(0));
-        t3.addOutput(COIN, new ECKey());
+        t3.addOutput(COIN, ECKey.random());
         Transaction t1 = new Transaction();
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
@@ -628,15 +628,15 @@ public class PeerTest extends TestWithNetworkConnections {
         Sha256Hash t4hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
         Transaction t3 = new Transaction();
         t3.addInput(new TransactionInput(t3, new byte[]{}, new TransactionOutPoint(0, t4hash)));
-        t3.addOutput(COIN, new ECKey());
+        t3.addOutput(COIN, ECKey.random());
         t3 = roundTripTransaction(t3);
         Transaction t2 = new Transaction();
         t2.addInput(t3.getOutput(0));
-        t2.addOutput(COIN, new ECKey());
+        t2.addOutput(COIN, ECKey.random());
         t2 = roundTripTransaction(t2);
         Transaction t1 = new Transaction();
         t1.addInput(t2.getOutput(0));
-        t1.addOutput(COIN, new ECKey());
+        t1.addOutput(COIN, ECKey.random());
         t1 = roundTripTransaction(t1);
 
         // Announce the first one. Wait for it to be downloaded.
@@ -730,7 +730,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.of("abc".getBytes(StandardCharsets.UTF_8));
         t2.addInput(new TransactionInput(t2, new byte[] {}, new TransactionOutPoint(0, t3), 0xDEADBEEF));
-        t2.addOutput(COIN, new ECKey());
+        t2.addOutput(COIN, ECKey.random());
         Transaction t1 = new Transaction();
         t1.addInput(t2.getOutput(0));
         t1.addOutput(COIN, key);  // Make it relevant.
@@ -800,7 +800,7 @@ public class PeerTest extends TestWithNetworkConnections {
         connect();
         Transaction t1 = new Transaction();
         t1.addInput(new TransactionInput(t1, new byte[0], TransactionOutPoint.UNCONNECTED));
-        t1.addOutput(COIN, new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
+        t1.addOutput(COIN, ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET));
         Transaction t2 = new Transaction();
         t2.addInput(t1.getOutput(0));
         t2.addOutput(COIN, wallet.currentChangeAddress());
