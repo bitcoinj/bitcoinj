@@ -26,10 +26,13 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * A wrapper around a SECP256K1 ECPoint that delays decoding of the point for as long as possible. This is useful because point
- * encode/decode in Bouncy Castle is quite slow especially on Dalvik, as it often involves decompression/recompression.
+ * A wrapper around a SECP256K1 ECPoint that delays decoding of the point for as long as possible. This is useful
+ * because point encode/decode in Bouncy Castle is quite slow especially on Dalvik, as it often involves
+ * decompression/recompression.
+ * <p>
+ * Apart from the lazy field {@link #point}, instances of this class are immutable.
  */
-public class LazyECPoint {
+public final class LazyECPoint {
     private static final ECCurve curve = ECKey.CURVE.getCurve();
 
     // bits will be null if LazyECPoint is constructed from an (already decoded) point
