@@ -25,8 +25,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static org.bitcoinj.base.internal.Preconditions.checkArgument;
-
 /**
  * A wrapper around a SECP256K1 ECPoint that delays decoding of the point for as long as possible. This is useful because point
  * encode/decode in Bouncy Castle is quite slow especially on Dalvik, as it often involves decompression/recompression.
@@ -50,21 +48,6 @@ public class LazyECPoint {
      * @param bits  public key bytes
      */
     public LazyECPoint(byte[] bits) {
-        this.bits = bits;
-        this.compressed = ECKey.isPubKeyCompressed(bits);
-    }
-
-    /**
-     * Construct a LazyECPoint from a public key. Due to the delayed decoding of the point the validation of the
-     * public key is delayed too, e.g. until a getter is called.
-     *
-     * @param curve a curve the point is on
-     * @param bits  public key bytes
-     * @deprecated Use {@link LazyECPoint#LazyECPoint(byte[])}
-     */
-    @Deprecated
-    public LazyECPoint(ECCurve curve, byte[] bits) {
-        checkArgument(LazyECPoint.curve.equals(curve), () -> "Curve must be SECP256K1");
         this.bits = bits;
         this.compressed = ECKey.isPubKeyCompressed(bits);
     }
