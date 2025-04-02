@@ -162,7 +162,7 @@ public class ECKey implements EncryptableItem {
 
     // Creation time of the key, or null if the key was deserialized from a version that did
     // not have this field.
-    @Nullable protected Instant creationTime = null;
+    @Nullable private Instant creationTime = null;
 
     protected KeyCrypter keyCrypter;
     protected EncryptedData encryptedPrivateKey;
