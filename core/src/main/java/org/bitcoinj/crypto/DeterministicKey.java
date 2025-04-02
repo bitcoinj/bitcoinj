@@ -59,7 +59,7 @@ public class DeterministicKey extends ECKey {
     private final DeterministicKey parent;
     private final HDPath childNumberPath;
     private final int depth;
-    private int parentFingerprint; // 0 if this key is root node of key hierarchy
+    private final int parentFingerprint; // 0 if this key is root node of key hierarchy
 
     /** 32 bytes */
     private final byte[] chainCode;
@@ -136,11 +136,12 @@ public class DeterministicKey extends ECKey {
      */
     public DeterministicKey(List<ChildNumber> childNumberPath,
                             byte[] chainCode,
-                            LazyECPoint publicAsPoint,
+                            @Nullable BigInteger priv,
+                            LazyECPoint pub,
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(null, publicAsPoint.compress());
+        super(priv, pub);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
@@ -149,27 +150,6 @@ public class DeterministicKey extends ECKey {
         this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
     }
 
-    /**
-     * Constructs a key from its components, including its private key data and possibly-redundant
-     * information about its parent key.  Invoked when deserializing, but otherwise not something that
-     * you normally should use.
-     */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
-                            byte[] chainCode,
-                            BigInteger priv,
-                            @Nullable DeterministicKey parent,
-                            int depth,
-                            int parentFingerprint) {
-        super(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true));
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
-    }
-
-    
     /** Clones the key */
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
         super(keyToClone.priv, keyToClone.pub);
@@ -278,9 +258,7 @@ public class DeterministicKey extends ECKey {
      * private key at all.</p>
      */
     public DeterministicKey dropParent() {
-        DeterministicKey key = new DeterministicKey(getPath(), getChainCode(), pub, priv, null);
-        key.parentFingerprint = parentFingerprint;
-        return key;
+        return new DeterministicKey(childNumberPath, chainCode, priv, pub, null, depth, parentFingerprint);
     }
 
     static byte[] addChecksum(byte[] input) {
@@ -620,11 +598,16 @@ public class DeterministicKey extends ECKey {
         buffer.get(data);
         checkArgument(!buffer.hasRemaining(), () ->
                 "found unexpected data in key");
+        BigInteger privKey;
+        LazyECPoint pubKey;
         if (pub) {
-            return new DeterministicKey(path, chainCode, new LazyECPoint(data), parent, depth, parentFingerprint);
+            privKey = null;
+            pubKey = new LazyECPoint(data).compress();
         } else {
-            return new DeterministicKey(path, chainCode, ByteUtils.bytesToBigInteger(data), parent, depth, parentFingerprint);
+            privKey = ByteUtils.bytesToBigInteger(data);
+            pubKey = new LazyECPoint(ECKey.publicPointFromPrivate(privKey), true);
         }
+        return new DeterministicKey(path, chainCode, privKey, pubKey, parent, depth, parentFingerprint);
     }
 
     /**
