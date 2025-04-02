@@ -80,7 +80,7 @@ public class ECKeyTest {
         // Check that we never generate an S value that is larger than half the curve order. This avoids a malleability
         // issue that can allow someone to change a transaction [hash] without invalidating the signature.
         final byte ITERATIONS = 10;
-        final ECKey key = new ECKey();
+        final ECKey key = ECKey.random();
 
         Function<Byte, ECKey.ECDSASignature> signer = b -> key.sign(Sha256Hash.of(new byte[]{b}));
         Function<Byte, CompletableFuture<ECKey.ECDSASignature>> asyncSigner = b -> CompletableFuture.supplyAsync(() -> signer.apply(b));
@@ -177,7 +177,7 @@ public class ECKeyTest {
         assertTrue(decodedKey.verify(message, roundtripKey.sign(Sha256Hash.wrap(message)).encodeToDER()));
 
         // Verify bytewise equivalence of public keys (i.e. compression state is preserved)
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         ECKey key2 = ECKey.fromASN1(key.toASN1());
         assertArrayEquals(key.getPubKey(), key2.getPubKey());
     }
@@ -247,7 +247,7 @@ public class ECKeyTest {
     public void base58Encoding_stress() {
         // Replace the loop bound with 1000 to get some keys with leading zero byte
         for (int i = 0 ; i < 20 ; i++) {
-            ECKey key = new ECKey();
+            ECKey key = ECKey.random();
             ECKey key1 = DumpedPrivateKey.fromBase58(TESTNET,
                     key.getPrivateKeyEncoded(TESTNET).toString()).getKey();
             assertEquals(ByteUtils.formatHex(key.getPrivKeyBytes()),
@@ -257,7 +257,7 @@ public class ECKeyTest {
 
     @Test
     public void signTextMessage() throws Exception {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         String message = "聡中本";
         String signatureBase64 = key.signMessage(message);
         log.info("Message signed with " + key.toAddress(ScriptType.P2PKH, MAINNET) + ": " + signatureBase64);
@@ -317,7 +317,7 @@ public class ECKeyTest {
 
     @Test
     public void findRecoveryId() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         String message = "Hello World!";
         Sha256Hash hash = Sha256Hash.of(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
@@ -350,7 +350,7 @@ public class ECKeyTest {
 
     @Test
     public void keyRecoveryWithFindRecoveryId() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         String message = "Hello World!";
         Sha256Hash hash = Sha256Hash.of(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
@@ -363,7 +363,7 @@ public class ECKeyTest {
 
     @Test
     public void keyRecovery() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         String message = "Hello World!";
         Sha256Hash hash = Sha256Hash.of(message.getBytes());
         ECKey.ECDSASignature sig = key.sign(hash);
@@ -383,7 +383,7 @@ public class ECKeyTest {
     @Test
     public void testUnencryptedCreate() {
         TimeUtils.setMockClock();
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         Optional<Instant> time = key.getCreationTime();
         assertTrue(time.isPresent());
         assertFalse(key.isEncrypted());
@@ -399,7 +399,7 @@ public class ECKeyTest {
 
     @Test
     public void testEncryptedCreate() {
-        ECKey unencryptedKey = new ECKey();
+        ECKey unencryptedKey = ECKey.random();
         byte[] originalPrivateKeyBytes = Objects.requireNonNull(unencryptedKey.getPrivKeyBytes());
         log.info("Original private key = " + ByteUtils.formatHex(originalPrivateKeyBytes));
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(unencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
@@ -413,7 +413,7 @@ public class ECKeyTest {
 
     @Test
     public void testEncryptionIsReversible() {
-        ECKey originalUnencryptedKey = new ECKey();
+        ECKey originalUnencryptedKey = ECKey.random();
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(originalUnencryptedKey.getPrivKeyBytes(), keyCrypter.deriveKey(PASSWORD1));
         ECKey encryptedKey = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, originalUnencryptedKey.getPubKey());
 
@@ -458,7 +458,7 @@ public class ECKeyTest {
 
     @Test
     public void keyRecoveryWithEncryptedKey() {
-        ECKey unencryptedKey = new ECKey();
+        ECKey unencryptedKey = ECKey.random();
         AesKey aesKey =  keyCrypter.deriveKey(PASSWORD1);
         ECKey encryptedKey = unencryptedKey.encrypt(keyCrypter, aesKey);
 
@@ -480,7 +480,7 @@ public class ECKeyTest {
 
     @Test
     public void roundTripDumpedPrivKey() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         assertTrue(key.isCompressed());
         String base58 = key.getPrivateKeyEncoded(TESTNET).toString();
         ECKey key2 = DumpedPrivateKey.fromBase58(TESTNET, base58).getKey();
@@ -491,8 +491,8 @@ public class ECKeyTest {
 
     @Test
     public void clear() {
-        ECKey unencryptedKey = new ECKey();
-        ECKey encryptedKey = (new ECKey()).encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
+        ECKey unencryptedKey = ECKey.random();
+        ECKey encryptedKey = ECKey.random().encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
 
         checkSomeBytesAreNonZero(unencryptedKey.getPrivKeyBytes());
 
@@ -555,7 +555,7 @@ public class ECKeyTest {
     public void testCreatedSigAndPubkeyAreCanonical() {
         // Tests that we will not generate non-canonical pubkeys or signatures
         // We dump failed data to error log because this test is not expected to be deterministic
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         if (!ECKey.isPubKeyCanonical(key.getPubKey())) {
             log.error(ByteUtils.formatHex(key.getPubKey()));
             fail();
@@ -600,7 +600,7 @@ public class ECKeyTest {
 
     @Test
     public void testPublicKeysAreEqual() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         ECKey pubKey1 = ECKey.fromPublicOnly(key);
         assertTrue(pubKey1.isCompressed());
         ECKey pubKey2 = pubKey1.decompress();

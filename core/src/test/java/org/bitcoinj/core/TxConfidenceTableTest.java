@@ -54,8 +54,8 @@ public class TxConfidenceTableTest {
         Context.propagate(context);
         table = context.getConfidenceTable();
 
-        Address to = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        Address change = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address change = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
         tx1 = FakeTxBuilder.createFakeTxWithChangeAddress(COIN, to, change);
         tx2 = FakeTxBuilder.createFakeTxWithChangeAddress(COIN, to, change);

@@ -76,7 +76,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class TransactionTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
-    private static final Address ADDRESS = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+    private static final Address ADDRESS = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
 
     @Before
     public void setUp() {
@@ -206,12 +206,12 @@ public class TransactionTest {
 
     @Test
     public void addSignedInput_P2PKH() {
-        final Address toAddr = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        final Address toAddr = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
         final Coin outAmount = Coin.ofSat(91234);
 
-        ECKey fromKey = new ECKey();
+        ECKey fromKey = ECKey.random();
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
         TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
@@ -229,12 +229,12 @@ public class TransactionTest {
 
     @Test
     public void addSignedInput_P2WPKH() {
-        final Address toAddr = new ECKey().toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
+        final Address toAddr = ECKey.random().toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         final Sha256Hash utxo_id = Sha256Hash.wrap("81b4c832d70cb56ff957589752eb4125a4cab78a25a8fc52d6a09e5bd4404d48");
         final Coin inAmount = Coin.ofSat(91234);
         final Coin outAmount = Coin.ofSat(91234);
 
-        ECKey fromKey = new ECKey();
+        ECKey fromKey = ECKey.random();
         Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
         TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
@@ -556,7 +556,7 @@ public class TransactionTest {
 
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         TransactionOutput fakeOutput = FakeTxBuilder.createFakeTx(TESTNET.network(), Coin.COIN, addr).getOutput(0);
 
@@ -623,7 +623,7 @@ public class TransactionTest {
     public void testHashForSignatureThreadSafety() throws Exception {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Block genesis = TESTNET.getGenesisBlock();
-        Block block1 = genesis.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET),
+        Block block1 = genesis.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
 
         final Transaction tx = block1.getTransactions().get(1);

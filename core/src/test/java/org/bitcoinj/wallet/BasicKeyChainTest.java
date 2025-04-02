@@ -71,9 +71,9 @@ public class BasicKeyChainTest {
     public void importKeys() {
         Instant now = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         TimeUtils.setMockClock(now);
-        final ECKey key1 = new ECKey();
+        final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
-        final ECKey key2 = new ECKey();
+        final ECKey key2 = ECKey.random();
         final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
 
         // Import two keys, check the event is correct.
@@ -83,7 +83,7 @@ public class BasicKeyChainTest {
         assertArrayEquals(keys.toArray(), onKeysAdded.get().toArray());
         assertEquals(now, chain.earliestKeyCreationTime());
         // Check we ignore duplicates.
-        final ECKey newKey = new ECKey();
+        final ECKey newKey = ECKey.random();
         keys.add(newKey);
         assertEquals(1, chain.importKeys(keys));
         assertTrue(onKeysAddedRan.getAndSet(false));
@@ -101,7 +101,7 @@ public class BasicKeyChainTest {
 
     @Test
     public void removeKey() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         chain.importKeys(key);
         assertEquals(1, chain.numKeys());
         assertTrue(chain.removeKey(key));
@@ -126,14 +126,14 @@ public class BasicKeyChainTest {
 
     @Test(expected = IllegalStateException.class)
     public void checkPasswordNotEncrypted() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey());
+        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain.checkPassword("test");
     }
 
     @Test(expected = IllegalStateException.class)
     public void doubleEncryptFails() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey());
+        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain = chain.toEncrypted("foo");
         chain.toEncrypted("foo");
@@ -141,8 +141,8 @@ public class BasicKeyChainTest {
 
     @Test
     public void encryptDecrypt() {
-        final ECKey key1 = new ECKey();
-        chain.importKeys(key1, new ECKey());
+        final ECKey key1 = ECKey.random();
+        chain.importKeys(key1, ECKey.random());
         final String PASSWORD = "foobar";
         chain = chain.toEncrypted(PASSWORD);
         final KeyCrypter keyCrypter = chain.getKeyCrypter();
@@ -159,7 +159,7 @@ public class BasicKeyChainTest {
 
         try {
             // Don't allow import of an unencrypted key.
-            chain.importKeys(new ECKey());
+            chain.importKeys(ECKey.random());
             fail();
         } catch (KeyCrypterException e) {
         }
@@ -178,7 +178,7 @@ public class BasicKeyChainTest {
 
     @Test(expected = KeyCrypterException.class)
     public void cannotImportEncryptedKey() {
-        final ECKey key1 = new ECKey();
+        final ECKey key1 = ECKey.random();
         chain.importKeys(Collections.singletonList(key1));
         chain = chain.toEncrypted("foobar");
         ECKey encryptedKey = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -192,7 +192,7 @@ public class BasicKeyChainTest {
     public void cannotMixParams() {
         chain = chain.toEncrypted("foobar");
         KeyCrypterScrypt scrypter = new KeyCrypterScrypt(2);    // Some bogus params.
-        ECKey key1 = new ECKey().encrypt(scrypter, scrypter.deriveKey("other stuff"));
+        ECKey key1 = ECKey.random().encrypt(scrypter, scrypter.deriveKey("other stuff"));
         chain.importKeys(key1);
     }
 
@@ -200,9 +200,9 @@ public class BasicKeyChainTest {
     public void serializationUnencrypted() throws UnreadableWalletException {
         TimeUtils.setMockClock();
         Instant now = TimeUtils.currentTime();
-        final ECKey key1 = new ECKey();
+        final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofSeconds(5000));
-        final ECKey key2 = new ECKey();
+        final ECKey key2 = ECKey.random();
         chain.importKeys(Arrays.asList(key1, key2));
         List<Protos.Key> keys = chain.serializeToProtobuf();
         assertEquals(2, keys.size());
@@ -222,7 +222,7 @@ public class BasicKeyChainTest {
 
     @Test
     public void serializationEncrypted() throws UnreadableWalletException {
-        ECKey key1 = new ECKey();
+        ECKey key1 = ECKey.random();
         chain.importKeys(key1);
         chain = chain.toEncrypted("foo bar");
         key1 = chain.getKeys().get(0);
@@ -238,7 +238,7 @@ public class BasicKeyChainTest {
 
     @Test
     public void watching() throws UnreadableWalletException {
-        ECKey key1 = new ECKey();
+        ECKey key1 = ECKey.random();
         ECKey pub = ECKey.fromPublicOnly(key1);
         chain.importKeys(pub);
         assertEquals(1, chain.numKeys());
@@ -253,8 +253,8 @@ public class BasicKeyChainTest {
 
     @Test
     public void bloom() {
-        ECKey key1 = new ECKey();
-        ECKey key2 = new ECKey();
+        ECKey key1 = ECKey.random();
+        ECKey key2 = ECKey.random();
         chain.importKeys(key1, key2);
         assertEquals(2, chain.numKeys());
         assertEquals(4, chain.numBloomFilterEntries());
@@ -267,7 +267,7 @@ public class BasicKeyChainTest {
         final int COUNT = 10000;
         int falsePositives = 0;
         for (int i = 0; i < COUNT; i++) {
-            ECKey key = new ECKey();
+            ECKey key = ECKey.random();
             if (filter.contains(key.getPubKey()))
                 falsePositives++;
         }
@@ -280,9 +280,9 @@ public class BasicKeyChainTest {
     public void keysBeforeAndAfter() {
         TimeUtils.setMockClock();
         Instant now = TimeUtils.currentTime();
-        final ECKey key1 = new ECKey();
+        final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
-        final ECKey key2 = new ECKey();
+        final ECKey key2 = ECKey.random();
         final List<ECKey> keys = Lists.newArrayList(key1, key2);
         assertEquals(2, chain.importKeys(keys));
 

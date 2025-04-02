@@ -35,7 +35,7 @@ import java.io.File;
 @Disabled
 public class ForwardingServiceTest {
     static final BitcoinNetwork network = BitcoinNetwork.TESTNET;
-    static final Address forwardingAddress = new ECKey().toAddress(ScriptType.P2WPKH, network);
+    static final Address forwardingAddress = ECKey.random().toAddress(ScriptType.P2WPKH, network);
     static final String[] args = new String[] { forwardingAddress.toString(), network.toString() };
 
     @BeforeEach

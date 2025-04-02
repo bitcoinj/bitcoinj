@@ -104,8 +104,8 @@ public class WalletProtobufSerializerTest {
     @Before
     public void setUp() {
         BriefLogFormatter.initVerbose();
-        myWatchedKey = new ECKey();
-        myKey = new ECKey();
+        myWatchedKey = ECKey.random();
+        myKey = ECKey.random();
         myKey.setCreationTime(Instant.ofEpochSecond(123456789L));
         myAddress = myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         myWallet = new Wallet(BitcoinNetwork.TESTNET, KeyChainGroup.builder(BitcoinNetwork.TESTNET).fromRandom(ScriptType.P2PKH).build());
@@ -202,7 +202,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testKeys() throws Exception {
         for (int i = 0 ; i < 20 ; i++) {
-            myKey = new ECKey();
+            myKey = ECKey.random();
             myAddress = myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
             myWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
             myWallet.importKey(myKey);

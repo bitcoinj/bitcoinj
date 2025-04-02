@@ -63,7 +63,7 @@ public class TransactionInputTest {
         Transaction tx1 = FakeTxBuilder.createFakeTxWithoutChangeAddress(Coin.COIN, a);
         w.receivePending(tx1, null);
         Transaction tx2 = new Transaction();
-        tx2.addOutput(Coin.valueOf(99000000), new ECKey());
+        tx2.addOutput(Coin.valueOf(99000000), ECKey.random());
         SendRequest req = SendRequest.forTx(tx2);
         req.allowUnconfirmed();
         w.completeTx(req);
@@ -103,7 +103,7 @@ public class TransactionInputTest {
         });
 
         Transaction tx2 = new Transaction();
-        tx2.addOutput(Coin.valueOf(99000000), new ECKey());
+        tx2.addOutput(Coin.valueOf(99000000), ECKey.random());
         w.completeTx(SendRequest.forTx(tx2));
 
         TransactionInput txInToDisconnect = tx2.getInput(0);

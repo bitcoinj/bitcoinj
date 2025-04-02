@@ -138,8 +138,8 @@ public class WalletTest extends TestWithWallet {
     private static final CharSequence PASSWORD1 = "my helicopter contains eels";
     private static final CharSequence WRONG_PASSWORD = "nothing noone nobody nowhere";
 
-    private final Address OTHER_ADDRESS = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
-    private final Address OTHER_SEGWIT_ADDRESS = new ECKey().toAddress(ScriptType.P2WPKH, TESTNET);
+    private final Address OTHER_ADDRESS = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
+    private final Address OTHER_SEGWIT_ADDRESS = ECKey.random().toAddress(ScriptType.P2WPKH, TESTNET);
 
     @Before
     @Override
@@ -157,7 +157,7 @@ public class WalletTest extends TestWithWallet {
     public void createBasic() {
         Wallet wallet = Wallet.createBasic(TESTNET);
         assertEquals(0, wallet.getKeyChainGroupSize());
-        wallet.importKey(new ECKey());
+        wallet.importKey(ECKey.random());
         assertEquals(1, wallet.getKeyChainGroupSize());
     }
 
@@ -796,7 +796,7 @@ public class WalletTest extends TestWithWallet {
         // Create a send to a merchant of all our coins.
         Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(2, 90));
         // Create a double spend of just the first one.
-        Address BAD_GUY = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address BAD_GUY = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         Transaction send2 = wallet.createSend(BAD_GUY, COIN);
         send2 = TESTNET_PARAMS.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send2.serialize()));
         // Broadcast send1, it's now pending.
@@ -878,7 +878,7 @@ public class WalletTest extends TestWithWallet {
         // Create a send to a merchant.
         Transaction send1 = wallet.createSend(OTHER_ADDRESS, valueOf(0, 50));
         // Create a double spend.
-        Address BAD_GUY = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address BAD_GUY = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         Transaction send2 = wallet.createSend(BAD_GUY, valueOf(0, 50));
         send2 = TESTNET_PARAMS.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(send2.serialize()));
         // Broadcast send1.
@@ -1362,7 +1362,7 @@ public class WalletTest extends TestWithWallet {
         Coin nanos = COIN;
 
         // Create two transactions that share the same input tx.
-        Address badGuy = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address badGuy = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         Transaction doubleSpentTx = new Transaction();
         TransactionOutput doubleSpentOut = new TransactionOutput(doubleSpentTx, nanos, badGuy);
         doubleSpentTx.addOutput(doubleSpentOut);
@@ -1592,7 +1592,7 @@ public class WalletTest extends TestWithWallet {
     @Test
     public void watchingScripts() {
         // Verify that pending transactions to watched addresses are relevant
-        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         Coin value = valueOf(5, 0);
         Transaction t1 = createFakeTx(TESTNET, value, watchedAddress);
@@ -1602,7 +1602,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test(expected = InsufficientMoneyException.class)
     public void watchingScriptsConfirmed() throws Exception {
-        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, CENT, watchedAddress);
         assertEquals(CENT, wallet.getBalance());
@@ -1615,7 +1615,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsSentFrom() {
         int baseElements = wallet.getBloomFilterElementCount();
 
-        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         assertEquals(baseElements + 1, wallet.getBloomFilterElementCount());
 
@@ -1635,7 +1635,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void watchingScriptsBloomFilter() {
-        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         Transaction t1 = createFakeTx(TESTNET, CENT, watchedAddress);
         TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
         wallet.addWatchedAddress(watchedAddress);
@@ -1649,7 +1649,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void getWatchedAddresses() {
-        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         List<Address> watchedAddresses = wallet.getWatchedAddresses();
         assertEquals(1, watchedAddresses.size());
@@ -1660,7 +1660,7 @@ public class WalletTest extends TestWithWallet {
     public void removeWatchedAddresses() {
         List<Address> addressesForRemoval = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+            Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
             addressesForRemoval.add(watchedAddress);
             wallet.addWatchedAddress(watchedAddress);
         }
@@ -1672,7 +1672,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void removeWatchedAddress() {
-        Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+        Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         wallet.addWatchedAddress(watchedAddress);
         wallet.removeWatchedAddress(watchedAddress);
         assertFalse(wallet.isAddressWatched(watchedAddress));
@@ -1682,7 +1682,7 @@ public class WalletTest extends TestWithWallet {
     public void removeScriptsBloomFilter() {
         List<Address> addressesForRemoval = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            Address watchedAddress = new ECKey().toAddress(ScriptType.P2PKH, TESTNET);
+            Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
             addressesForRemoval.add(watchedAddress);
             wallet.addWatchedAddress(watchedAddress);
         }
@@ -1776,7 +1776,7 @@ public class WalletTest extends TestWithWallet {
         // Now we shutdown auto-saving and expect wallet changes to remain unsaved, even "important" changes.
         wallet.shutdownAutosaveAndWait();
         results[0] = results[1] = null;
-        ECKey key2 = new ECKey();
+        ECKey key2 = ECKey.random();
         wallet.importKey(key2);
         assertEquals(hash5, Sha256Hash.of(f)); // File has NOT changed.
         sendMoneyToWallet(BlockChain.NewBlockType.BEST_CHAIN, valueOf(5, 0), key2);
@@ -1807,7 +1807,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(2, wallet.getTransactions(true).size());
 
         // Now try to the spend the output.
-        ECKey k3 = new ECKey();
+        ECKey k3 = ECKey.random();
         Coin v3 = valueOf(0, 25);
         Transaction t3 = new Transaction();
         t3.addOutput(v3, k3.toAddress(ScriptType.P2PKH, TESTNET));
@@ -1996,7 +1996,7 @@ public class WalletTest extends TestWithWallet {
         Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
-        ECKey key1 = new ECKey();
+        ECKey key1 = ECKey.random();
         encryptedWallet.importKey(key1);
     }
 
@@ -2006,7 +2006,7 @@ public class WalletTest extends TestWithWallet {
         encryptedWallet.encrypt(PASSWORD1);
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
 
-        ECKey key1 = new ECKey();
+        ECKey key1 = ECKey.random();
         key1 = key1.encrypt(keyCrypter, keyCrypter.deriveKey("PASSWORD!"));
         wallet.importKey(key1);
     }
@@ -2021,7 +2021,7 @@ public class WalletTest extends TestWithWallet {
         // Try added an ECKey that was encrypted with a differenct ScryptParameters (i.e. a non-homogenous key).
         // This is not allowed as the ScryptParameters is stored at the Wallet level.
         KeyCrypter keyCrypterDifferent = new KeyCrypterScrypt();
-        ECKey ecKeyDifferent = new ECKey();
+        ECKey ecKeyDifferent = ECKey.random();
         ecKeyDifferent = ecKeyDifferent.encrypt(keyCrypterDifferent, aesKey);
         encryptedWallet.importKey(ecKeyDifferent);
     }
@@ -2031,7 +2031,7 @@ public class WalletTest extends TestWithWallet {
         Wallet encryptedWallet = Wallet.createDeterministic(TESTNET, ScriptType.P2PKH);
         encryptedWallet.encrypt(PASSWORD1);
 
-        final ECKey key = new ECKey();
+        final ECKey key = ECKey.random();
         encryptedWallet.importKeysAndEncrypt(Collections.singletonList(key), PASSWORD1);
         assertEquals(1, encryptedWallet.getImportedKeys().size());
         assertEquals(key.getPubKeyPoint(), encryptedWallet.getImportedKeys().get(0).getPubKeyPoint());
@@ -2193,7 +2193,7 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void sendRequestP2PKTest() {
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
         SendRequest req = SendRequest.to(key, SATOSHI.multiply(12));
         assertArrayEquals(key.getPubKey(),
                 ScriptPattern.extractKeyFromP2PK(req.tx.getOutput(0).getScriptPubKey()));
@@ -2878,9 +2878,9 @@ public class WalletTest extends TestWithWallet {
         // Watch out for wallet-initiated broadcasts.
         MockTransactionBroadcaster broadcaster = new MockTransactionBroadcaster(wallet);
         // Send three cents to two different random keys, then add a key and mark the initial keys as compromised.
-        ECKey key1 = new ECKey();
+        ECKey key1 = ECKey.random();
         key1.setCreationTime(TimeUtils.currentTime().minusSeconds(86400 * 2));
-        ECKey key2 = new ECKey();
+        ECKey key2 = ECKey.random();
         key2.setCreationTime(TimeUtils.currentTime().minusSeconds(86400));
         wallet.importKey(key1);
         wallet.importKey(key2);
@@ -3063,7 +3063,7 @@ public class WalletTest extends TestWithWallet {
     @SuppressWarnings("ConstantConditions")
     public void completeTxPartiallySigned(Wallet.MissingSigsMode missSigMode, byte[] expectedSig) throws Exception {
         // Check the wallet will write dummy scriptSigs for inputs that we have only pubkeys for without the privkey.
-        ECKey priv = new ECKey();
+        ECKey priv = ECKey.random();
         ECKey pub = ECKey.fromPublicOnly(priv);
         wallet.importKey(pub);
         ECKey priv2 = wallet.freshReceiveKey();
@@ -3388,7 +3388,7 @@ public class WalletTest extends TestWithWallet {
         Wallet wallet = new Wallet(TESTNET, kcg);
 
         // Set up one key from each chain.
-        ECKey importedKey = new ECKey();
+        ECKey importedKey = ECKey.random();
         wallet.importKey(importedKey);
         ECKey p2pkhKey = p2pkhChain.getKey(KeyPurpose.RECEIVE_FUNDS);
         ECKey p2wpkhKey = p2wpkhChain.getKey(KeyPurpose.RECEIVE_FUNDS);

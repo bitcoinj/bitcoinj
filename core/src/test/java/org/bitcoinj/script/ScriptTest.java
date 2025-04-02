@@ -109,14 +109,14 @@ public class ScriptTest {
 
     @Test
     public void testMultiSig() {
-        List<ECKey> keys = Lists.newArrayList(new ECKey(), new ECKey(), new ECKey());
+        List<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random(), ECKey.random());
         assertTrue(ScriptPattern.isSentToMultisig(ScriptBuilder.createMultiSigOutputScript(2, keys)));
         Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
         assertTrue(ScriptPattern.isSentToMultisig(script));
         List<ECKey> pubkeys = new ArrayList<>(3);
         for (ECKey key : keys) pubkeys.add(ECKey.fromPublicOnly(key));
         assertEquals(script.getPubKeys(), pubkeys);
-        assertFalse(ScriptPattern.isSentToMultisig(ScriptBuilder.createP2PKOutputScript(new ECKey())));
+        assertFalse(ScriptPattern.isSentToMultisig(ScriptBuilder.createP2PKOutputScript(ECKey.random())));
         try {
             // Fail if we ask for more signatures than keys.
             Script.createMultiSigOutputScript(4, keys);
@@ -193,7 +193,7 @@ public class ScriptTest {
     @Test
     public void createAndUpdateEmptyInputScript() {
         TransactionSignature dummySig = TransactionSignature.dummy();
-        ECKey key = new ECKey();
+        ECKey key = ECKey.random();
 
         // P2PK
         Script inputScript = ScriptBuilder.createInputScript(dummySig);
@@ -209,7 +209,7 @@ public class ScriptTest {
         assertThat(inputScript.chunks().get(1).data, equalTo(key.getPubKey()));
 
         // P2SH
-        ECKey key2 = new ECKey();
+        ECKey key2 = ECKey.random();
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key, key2));
         inputScript = ScriptBuilder.createP2SHMultiSigInputScript(Arrays.asList(dummySig, dummySig), multisigScript);
         assertThat(inputScript.chunks().get(0).opcode, equalTo(OP_0));
@@ -468,7 +468,7 @@ public class ScriptTest {
     @Test
     public void getToAddress() {
         // P2PK
-        ECKey toKey = new ECKey();
+        ECKey toKey = ECKey.random();
         Address toAddress = toKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         assertEquals(toAddress, ScriptBuilder.createP2PKOutputScript(toKey).getToAddress(BitcoinNetwork.TESTNET, true));
         // pay to pubkey hash
@@ -492,6 +492,6 @@ public class ScriptTest {
 
     @Test(expected = ScriptException.class)
     public void getToAddressNoPubKey() {
-        ScriptBuilder.createP2PKOutputScript(new ECKey()).getToAddress(BitcoinNetwork.TESTNET, false);
+        ScriptBuilder.createP2PKOutputScript(ECKey.random()).getToAddress(BitcoinNetwork.TESTNET, false);
     }
 }

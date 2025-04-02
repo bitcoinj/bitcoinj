@@ -61,7 +61,7 @@ public class GenerateLowSTests {
         final Network network = BitcoinNetwork.MAINNET;
         final LocalTransactionSigner signer = new LocalTransactionSigner();
         final SecureRandom secureRandom = SecureRandom.getInstanceStrong();
-        final ECKey key = new ECKey(secureRandom);
+        final ECKey key = ECKey.random(secureRandom);
         final KeyBag bag = new KeyBag() {
             @Override
             public ECKey findKeyFromPubKeyHash(byte[] pubkeyHash, ScriptType scriptType) {
@@ -89,7 +89,7 @@ public class GenerateLowSTests {
 
         inputTransaction.addOutput(output);
         outputTransaction.addInput(output);
-        outputTransaction.addOutput(Coin.ZERO, new ECKey(secureRandom).toAddress(ScriptType.P2PKH, network));
+        outputTransaction.addOutput(Coin.ZERO, ECKey.random(secureRandom).toAddress(ScriptType.P2PKH, network));
 
         addOutputs(outputTransaction, bag);
 

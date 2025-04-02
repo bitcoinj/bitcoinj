@@ -310,7 +310,7 @@ public class BlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
         // Covers issue 166 in which transactions that depend on each other inside a block were not always being
         // considered relevant.
-        Address somebodyElse = new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+        Address somebodyElse = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Block b1 = TESTNET.getGenesisBlock().createNextBlock(somebodyElse);
         ECKey key = testNetWallet.freshReceiveKey();
         Address addr = key.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
@@ -361,7 +361,7 @@ public class BlockChainTest {
         // Check that the coinbase is unavailable to spend for the next spendableCoinbaseDepth - 2 blocks.
         for (int i = 0; i < TESTNET.getSpendableCoinbaseDepth() - 2; i++) {
             // Non relevant tx - just for fake block creation.
-            Transaction tx2 = createFakeTx(TESTNET.network(), COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
+            Transaction tx2 = createFakeTx(TESTNET.network(), COIN, ECKey.random().toAddress(ScriptType.P2PKH, TESTNET.network()));
 
             Block b2 = createFakeBlock(testNetStore, height++, tx2).block;
             testNetChain.add(b2);
@@ -382,7 +382,7 @@ public class BlockChainTest {
         }
 
         // Give it one more block - should now be able to spend coinbase transaction. Non relevant tx.
-        Transaction tx3 = createFakeTx(TESTNET.network(), COIN, new ECKey().toAddress(ScriptType.P2PKH, TESTNET.network()));
+        Transaction tx3 = createFakeTx(TESTNET.network(), COIN, ECKey.random().toAddress(ScriptType.P2PKH, TESTNET.network()));
         Block b3 = createFakeBlock(testNetStore, height++, tx3).block;
         testNetChain.add(b3);
 
