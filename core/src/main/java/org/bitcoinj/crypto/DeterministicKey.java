@@ -172,7 +172,7 @@ public class DeterministicKey extends ECKey {
     
     /** Clones the key */
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        super(keyToClone.priv, keyToClone.pub.get(), keyToClone.pub.isCompressed());
+        super(keyToClone.priv, keyToClone.pub);
         this.parent = newParent;
         this.childNumberPath = keyToClone.childNumberPath;
         this.chainCode = keyToClone.chainCode;
