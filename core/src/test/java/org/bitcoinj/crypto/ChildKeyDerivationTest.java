@@ -142,26 +142,26 @@ public class ChildKeyDerivationTest {
             DeterministicKey ekpub_1_IN_4095 = HDKeyDerivation.deriveChildKey(ekpub_1_IN, 4095);
             assertEquals("M/1/1/4095", ekpub_1_IN_4095.getPath().toString());
 
-            assertEquals(hexEncodePub(ekprv.withoutPrivateKey().dropParent()), hexEncodePub(ekpub));
-            assertEquals(hexEncodePub(ekprv_0.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0));
-            assertEquals(hexEncodePub(ekprv_1.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_1));
-            assertEquals(hexEncodePub(ekprv_0_IN.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0_IN));
-            assertEquals(hexEncodePub(ekprv_0_IN_0.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0_IN_0));
-            assertEquals(hexEncodePub(ekprv_0_IN_1.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0_IN_1));
-            assertEquals(hexEncodePub(ekprv_0_IN_2.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0_IN_2));
-            assertEquals(hexEncodePub(ekprv_0_EX_0.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0_EX_0));
-            assertEquals(hexEncodePub(ekprv_0_EX_1.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0_EX_1));
-            assertEquals(hexEncodePub(ekprv_0_EX_2.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_0_EX_2));
-            assertEquals(hexEncodePub(ekprv_1_IN.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_1_IN));
-            assertEquals(hexEncodePub(ekprv_1_IN_4095.withoutPrivateKey().dropParent()), hexEncodePub(ekpub_1_IN_4095));
+            assertEquals(hexEncodePub(ekprv.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub));
+            assertEquals(hexEncodePub(ekprv_0.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0));
+            assertEquals(hexEncodePub(ekprv_1.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_1));
+            assertEquals(hexEncodePub(ekprv_0_IN.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0_IN));
+            assertEquals(hexEncodePub(ekprv_0_IN_0.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0_IN_0));
+            assertEquals(hexEncodePub(ekprv_0_IN_1.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0_IN_1));
+            assertEquals(hexEncodePub(ekprv_0_IN_2.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0_IN_2));
+            assertEquals(hexEncodePub(ekprv_0_EX_0.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0_EX_0));
+            assertEquals(hexEncodePub(ekprv_0_EX_1.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0_EX_1));
+            assertEquals(hexEncodePub(ekprv_0_EX_2.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_0_EX_2));
+            assertEquals(hexEncodePub(ekprv_1_IN.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_1_IN));
+            assertEquals(hexEncodePub(ekprv_1_IN_4095.withoutPrivateKey().withoutParent()), hexEncodePub(ekpub_1_IN_4095));
         }
     }
 
     @Test
     public void inverseEqualsNormal() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("Wired / Aug 13th 2014 / Snowden: I Left the NSA Clues, But They Couldn't Find Them".getBytes());
-        HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.withoutPrivateKey().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
-        HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.withoutPrivateKey().dropParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
+        HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.withoutPrivateKey().withoutParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
+        HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.withoutPrivateKey().withoutParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
         assertArrayEquals(key2.keyBytes, key3.keyBytes);
         assertArrayEquals(key2.chainCode, key3.chainCode);
     }
@@ -214,7 +214,7 @@ public class ChildKeyDerivationTest {
 
         // pubkey2 got its cached private key bytes (if any) dropped, and now it'll lose its parent too, so now it
         // becomes a true pubkey-only object.
-        DeterministicKey pubkey2 = key2.dropParent();
+        DeterministicKey pubkey2 = key2.withoutParent();
         assertEquals(1, pubkey2.getDepth());
 
         DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(pubkey2, ChildNumber.ZERO);

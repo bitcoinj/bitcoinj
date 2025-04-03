@@ -345,7 +345,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             ScriptType outputScriptType) {
         if (isWatching)
             checkArgument(key.isPubKeyOnly(), () ->
-                    "private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first");
+                    "private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().withoutParent() on it first");
         else
             checkArgument(key.hasPrivKey(), () ->
                     "private subtrees are required");

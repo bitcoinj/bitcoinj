@@ -448,7 +448,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey key4 = bip44chain.getKey(KeyChain.KeyPurpose.CHANGE);
 
         DeterministicKey watchingKey = bip44chain.getWatchingKey();
-        watchingKey = watchingKey.withoutPrivateKey().dropParent();
+        watchingKey = watchingKey.withoutPrivateKey().withoutParent();
         watchingKey.setCreationTime(Instant.ofEpochSecond(100000));
         chain = DeterministicKeyChain.builder().watch(watchingKey).outputScriptType(bip44chain.getOutputScriptType())
                 .build();
@@ -656,7 +656,7 @@ public class DeterministicKeyChainTest {
 
         //Simulate Wallet.fromMasterKey(params, coinLevelKey, 0)
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(coinLevelKey, new ChildNumber(0, true));
-        accountKey = accountKey.dropParent();
+        accountKey = accountKey.withoutParent();
         accountKey.setCreationTime(watchingKey.getCreationTime().get());
         KeyChainGroup group = KeyChainGroup.builder(network).addChain(DeterministicKeyChain.builder().spend(accountKey)
                 .outputScriptType(bip44chain.getOutputScriptType()).build()).build();
@@ -714,7 +714,7 @@ public class DeterministicKeyChainTest {
     @Test(expected = IllegalStateException.class)
     public void watchingCannotEncrypt() {
         final DeterministicKey accountKey = chain.getKeyByPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH);
-        chain = DeterministicKeyChain.builder().watch(accountKey.withoutPrivateKey().dropParent())
+        chain = DeterministicKeyChain.builder().watch(accountKey.withoutPrivateKey().withoutParent())
                 .outputScriptType(chain.getOutputScriptType()).build();
         assertEquals(DeterministicKeyChain.ACCOUNT_ZERO_PATH, chain.getAccountPath());
         chain = chain.toEncrypted("this doesn't make any sense");
@@ -746,7 +746,7 @@ public class DeterministicKeyChainTest {
         DeterministicKey[] keys = new DeterministicKey[100];
         for (int i = 0; i < keys.length; i++)
             keys[i] = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        chain = DeterministicKeyChain.builder().watch(chain.getWatchingKey().withoutPrivateKey().dropParent())
+        chain = DeterministicKeyChain.builder().watch(chain.getWatchingKey().withoutPrivateKey().withoutParent())
                 .outputScriptType(chain.getOutputScriptType()).build();
         int e = chain.numBloomFilterEntries();
         BloomFilter filter = chain.getFilter(e, 0.001, 1);
