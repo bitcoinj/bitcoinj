@@ -60,7 +60,7 @@ public class DeterministicKey extends ECKey {
     private final DeterministicKey parent;
     private final HDPath childNumberPath;
     private final int depth;
-    private int parentFingerprint; // 0 if this key is root node of key hierarchy
+    private final int parentFingerprint; // 0 if this key is root node of key hierarchy
 
     /** 32 bytes */
     private final byte[] chainCode;
@@ -140,13 +140,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(null, publicAsPoint.compress());
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this(childNumberPath, chainCode, publicAsPoint, null, parent, depth, parentFingerprint);
     }
 
     /**
@@ -160,7 +154,17 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true));
+        this(childNumberPath, chainCode, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), priv, parent, depth, parentFingerprint);
+    }
+
+    private DeterministicKey(List<ChildNumber> childNumberPath,
+                             byte[] chainCode,
+                             LazyECPoint pub,
+                             @Nullable BigInteger priv,
+                             @Nullable DeterministicKey parent,
+                             int depth,
+                             int parentFingerprint) {
+        super(priv, pub);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
         this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
@@ -278,8 +282,7 @@ public class DeterministicKey extends ECKey {
      * private key at all.</p>
      */
     public DeterministicKey dropParent() {
-        DeterministicKey key = new DeterministicKey(getPath(), getChainCode(), pub, priv, null);
-        key.parentFingerprint = parentFingerprint;
+        DeterministicKey key = new DeterministicKey(getPath(), getChainCode(), pub, priv, null, depth, parentFingerprint);
         return key;
     }
 
