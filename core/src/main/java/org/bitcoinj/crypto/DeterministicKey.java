@@ -287,9 +287,8 @@ public class DeterministicKey extends ECKey {
      * private key at all.</p>
      */
     public DeterministicKey dropParent() {
-        DeterministicKey key = new DeterministicKey(getPath(), getChainCode(), pub, priv, null);
-        key.parentFingerprint = parentFingerprint;
-        return key;
+        return new DeterministicKey(priv, pub, depth, null, parentFingerprint, chainCode, childNumberPath,
+                encryptedPrivateKey, keyCrypter);
     }
 
     static byte[] addChecksum(byte[] input) {

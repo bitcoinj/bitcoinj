@@ -200,20 +200,26 @@ public class ChildKeyDerivationTest {
     public void pubOnlyDerivation() {
         DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
         assertFalse(key1.isPubKeyOnly());
+        assertEquals(0,key1.getDepth());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
         assertFalse(key2.isPubKeyOnly());
+        assertEquals(1, key2.getDepth());
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO);
         assertFalse(key3.isPubKeyOnly());
+        assertEquals(2, key3.getDepth());
 
         key2 = key2.dropPrivateBytes();
         assertFalse(key2.isPubKeyOnly());   // still got private key bytes from the parents!
+        assertEquals(1, key2.getDepth());
 
         // pubkey2 got its cached private key bytes (if any) dropped, and now it'll lose its parent too, so now it
         // becomes a true pubkey-only object.
         DeterministicKey pubkey2 = key2.dropParent();
+        assertEquals(1, pubkey2.getDepth());
 
         DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(pubkey2, ChildNumber.ZERO);
         assertTrue(pubkey3.isPubKeyOnly());
+        assertEquals(2, pubkey3.getDepth());
         assertEquals(key3.getPubKeyPoint(), pubkey3.getPubKeyPoint());
     }
 
