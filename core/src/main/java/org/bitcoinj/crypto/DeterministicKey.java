@@ -56,6 +56,7 @@ public class DeterministicKey extends ECKey {
         return cn1.compareTo(cn2);
     };
 
+    @Nullable
     private final DeterministicKey parent;
     private final HDPath childNumberPath;
     private final int depth;
