@@ -235,8 +235,7 @@ public class BlockTest {
                 block481815.getMerkleRoot().toString());
 
         // This block has no witnesses.
-        for (Transaction tx : block481815.getTransactions())
-            assertFalse(tx.hasWitnesses());
+        block481815.forEachTransaction(tx -> assertFalse(tx.hasWitnesses()));
 
         // Nevertheless, there is a witness commitment (but no witness reserved).
         Transaction coinbase = block481815.transaction(0);

@@ -50,6 +50,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
@@ -818,6 +819,16 @@ public class Block implements Message {
     public Transaction transaction(int index) {
         Objects.requireNonNull(transactions);
         return transactions.get(index);
+    }
+
+    /**
+     * Performs the given action for each transaction in this block.
+     *
+     * @param action action to be performed for each transaction
+     */
+    public void forEachTransaction(Consumer<Transaction> action) {
+        Objects.requireNonNull(transactions);
+        transactions.forEach(action);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////

@@ -1191,8 +1191,7 @@ public class FullBlockTestGenerator {
             buf.put(varIntBytes);
             checkState(VarInt.ofBytes(varIntBytes, 0).intValue() == b64Original.block.getTransactions().size());
 
-            for (Transaction transaction : b64Original.block.getTransactions())
-                transaction.write(buf);
+            b64Original.block.forEachTransaction(t -> t.write(buf));
             b64 = params.getSerializer().makeBlock(ByteBuffer.wrap(buf.array()));
 
             // The following checks are checking to ensure block serialization functions in the way needed for this test
@@ -1808,13 +1807,13 @@ public class FullBlockTestGenerator {
             coinbaseBlockMap.put(block.getCoinbaseOutput().outpoint.hash(), block.getHash());
             Integer blockHeight = blockToHeightMap.get(block.block.prevHash());
             if (blockHeight != null) {
-                blockHeight++;
-                for (Transaction t : block.block.getTransactions())
-                    for (TransactionInput in : t.getInputs()) {
+                block.block.forEachTransaction(tx -> {
+                    for (TransactionInput in : tx.getInputs()) {
                         Sha256Hash blockSpendingHash = coinbaseBlockMap.get(in.getOutpoint().hash());
                         checkState(blockSpendingHash == null || blockToHeightMap.get(blockSpendingHash) == null ||
-                                blockToHeightMap.get(blockSpendingHash) == blockHeight - params.getSpendableCoinbaseDepth());
+                                blockToHeightMap.get(blockSpendingHash) == blockHeight + 1 - params.getSpendableCoinbaseDepth());
                     }
+                });
             }
         }
 
