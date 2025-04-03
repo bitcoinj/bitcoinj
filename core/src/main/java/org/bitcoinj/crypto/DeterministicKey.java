@@ -71,13 +71,8 @@ public class DeterministicKey extends ECKey {
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        super(priv, publicAsPoint.compress());
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = parent == null ? 0 : parent.depth + 1;
-        this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
+        this(priv, publicAsPoint.compress(), parent == null ? 0 : parent.depth + 1, parent,
+                parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath), null, null);
     }
 
     public DeterministicKey(List<ChildNumber> childNumberPath,
@@ -94,13 +89,8 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        super(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true));
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = Objects.requireNonNull(hdPath);
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = parent == null ? 0 : parent.depth + 1;
-        this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
+        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), parent == null ? 0 : parent.depth + 1,
+                parent, parent != null ? parent.getFingerprint() : 0, chainCode, hdPath, null, null);
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
@@ -108,11 +98,11 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             KeyCrypter crypter,
                             LazyECPoint pub,
-                            EncryptedData priv,
+                            EncryptedData encryptedPrivateKey,
                             @Nullable DeterministicKey parent) {
-        this(childNumberPath, chainCode, pub, null, parent);
-        this.encryptedPrivateKey = Objects.requireNonNull(priv);
-        this.keyCrypter = Objects.requireNonNull(crypter);
+        this(null, pub.compress(), parent == null ? 0 : parent.depth + 1, parent,
+                parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath),
+                Objects.requireNonNull(encryptedPrivateKey), Objects.requireNonNull(crypter));
     }
 
     /**
@@ -140,13 +130,8 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(null, publicAsPoint.compress());
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this(null, publicAsPoint.compress(), depth, parent, parentFingerprint, chainCode, HDPath.M(childNumberPath),
+                null, null);
     }
 
     /**
@@ -160,25 +145,45 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true));
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), depth, parent, parentFingerprint,
+                chainCode, HDPath.M(childNumberPath), null, null);
     }
 
-    
     /** Clones the key */
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        super(keyToClone.priv, keyToClone.pub);
-        this.parent = newParent;
-        this.childNumberPath = keyToClone.childNumberPath;
-        this.chainCode = keyToClone.chainCode;
-        this.encryptedPrivateKey = keyToClone.encryptedPrivateKey;
-        this.depth = this.childNumberPath.size();
-        this.parentFingerprint = this.parent.getFingerprint();
+        this(keyToClone.priv, keyToClone.pub, keyToClone.childNumberPath.size(), newParent,
+                newParent.getFingerprint(), keyToClone.chainCode, keyToClone.childNumberPath, null, null);
+    }
+
+    /**
+     * Canonical constructor.
+     *
+     * @param priv                private key, or {@code null} if public key only
+     * @param pub                 public key, corresponding to private key (if present)
+     * @param depth               depth of this key in the path, {@code 0} means master key
+     * @param parent              parent deterministic key, or {@code null} if unknown or this is master key
+     * @param parentFingerprint   4 byte fingerprint of parent key, or {0} if parent unknown or this is master key
+     * @param chainCode           32 bytes of chain code
+     * @param hdPath              path leading up to this key
+     * @param encryptedPrivateKey private key in encrypted form
+     * @param keyCrypter          crypter to use for decrypting the private key
+     */
+    private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
+                             int parentFingerprint, byte[] chainCode, HDPath hdPath,
+                             @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
+        super(priv, pub);
+        checkArgument(chainCode.length == 32);
+        checkArgument(priv == null || encryptedPrivateKey == null, () ->
+                "priv and encryptedPrivateKey can't be set together");
+        checkArgument((encryptedPrivateKey == null) == (keyCrypter == null), () ->
+                "encryptedPrivateKey and keyCrypter must be set together");
+        this.depth = depth;
+        this.parent = parent;
+        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
+        this.childNumberPath = Objects.requireNonNull(hdPath);
+        this.encryptedPrivateKey = encryptedPrivateKey;
+        this.keyCrypter = keyCrypter;
     }
 
     /**
