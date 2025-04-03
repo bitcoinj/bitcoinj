@@ -155,7 +155,6 @@ public class BitcoinSerializerTest {
         // http://blockexplorer.com/b/1
         Block block = headersMessage.getBlockHeaders().get(0);
         assertEquals("00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048", block.getHashAsString());
-        assertNotNull(block.transactions);
         assertEquals("0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098", ByteUtils.formatHex(block.getMerkleRoot().getBytes()));
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

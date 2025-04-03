@@ -153,7 +153,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         rollingBlock.solve();
         chain.add(rollingBlock);
-        TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
+        TransactionOutput spendableOutput = rollingBlock.transactions().get(0).getOutput(0);
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = rollingBlock.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
             rollingBlock.solve();
@@ -196,7 +196,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         rollingBlock.solve();
         chain.add(rollingBlock);
-        TransactionOutput spendableOutput = rollingBlock.getTransactions().get(0).getOutput(0);
+        TransactionOutput spendableOutput = rollingBlock.transactions().get(0).getOutput(0);
         TransactionOutPoint transactionOutPoint = spendableOutput.getOutPointFor();
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
@@ -272,7 +272,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         rollingBlock.solve();
         chain.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
+        Transaction transaction = rollingBlock.transactions().get(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
         TransactionOutPoint spendableOutputPoint = spendableOutput.getOutPointFor();
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
@@ -326,7 +326,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Block rollingBlock = PARAMS.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
         rollingBlock.solve();
         chain.add(rollingBlock);
-        Transaction transaction = rollingBlock.getTransactions().get(0);
+        Transaction transaction = rollingBlock.transactions().get(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
         TransactionOutPoint spendableOutPoint = new TransactionOutPoint(0, transaction.getTxId());
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();

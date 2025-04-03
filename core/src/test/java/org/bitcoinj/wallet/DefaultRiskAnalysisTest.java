@@ -82,7 +82,7 @@ public class DefaultRiskAnalysisTest {
     public void nonFinal() {
         // Verify that just having a lock time in the future is not enough to be considered risky (it's still final).
         Transaction tx = new Transaction();
-        TransactionInput input = tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        TransactionInput input = tx.addInput(MAINNET.getGenesisBlock().transactions().get(0).getOutput(0));
         tx.addOutput(COIN, key1);
         tx.setLockTime(TIMESTAMP + 86400);
         DefaultRiskAnalysis analysis = DefaultRiskAnalysis.FACTORY.create(wallet, tx, NO_DEPS);
@@ -105,7 +105,7 @@ public class DefaultRiskAnalysisTest {
     public void selfCreatedAreNotRisky() {
         Transaction tx = new Transaction();
         TransactionInput input =
-                tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0)).withSequence(1);
+                tx.addInput(MAINNET.getGenesisBlock().transactions().get(0).getOutput(0)).withSequence(1);
         tx.replaceInput(0, input);
         tx.addOutput(COIN, key1);
         tx.setLockTime(TIMESTAMP + 86400);
@@ -128,7 +128,7 @@ public class DefaultRiskAnalysisTest {
         // Final tx has a dependency that is non-final.
         Transaction tx1 = new Transaction();
         TransactionInput input1 =
-                tx1.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0)).withSequence(1);
+                tx1.addInput(MAINNET.getGenesisBlock().transactions().get(0).getOutput(0)).withSequence(1);
         tx1.replaceInput(0, input1);
         TransactionOutput output = tx1.addOutput(COIN, key1);
         tx1.setLockTime(TIMESTAMP + 86400);
@@ -144,17 +144,17 @@ public class DefaultRiskAnalysisTest {
     @Test
     public void nonStandardDust() {
         Transaction standardTx = new Transaction();
-        standardTx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        standardTx.addInput(MAINNET.getGenesisBlock().transactions().get(0).getOutput(0));
         standardTx.addOutput(COIN, key1);
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, standardTx, NO_DEPS).analyze());
 
         Transaction dustTx = new Transaction();
-        dustTx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        dustTx.addInput(MAINNET.getGenesisBlock().transactions().get(0).getOutput(0));
         dustTx.addOutput(Coin.SATOSHI, key1); // 1 Satoshi
         assertEquals(RiskAnalysis.Result.NON_STANDARD, DefaultRiskAnalysis.FACTORY.create(wallet, dustTx, NO_DEPS).analyze());
 
         Transaction edgeCaseTx = new Transaction();
-        edgeCaseTx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        edgeCaseTx.addInput(MAINNET.getGenesisBlock().transactions().get(0).getOutput(0));
         Coin dustThreshold = new TransactionOutput(null, Coin.COIN, key1).getMinNonDustValue();
         edgeCaseTx.addOutput(dustThreshold, key1);
         assertEquals(RiskAnalysis.Result.OK, DefaultRiskAnalysis.FACTORY.create(wallet, edgeCaseTx, NO_DEPS).analyze());
@@ -222,7 +222,7 @@ public class DefaultRiskAnalysisTest {
     @Test
     public void standardOutputs() {
         Transaction tx = new Transaction();
-        tx.addInput(MAINNET.getGenesisBlock().getTransactions().get(0).getOutput(0));
+        tx.addInput(MAINNET.getGenesisBlock().transactions().get(0).getOutput(0));
         // A pay to address output
         tx.addOutput(Coin.CENT, ScriptBuilder.createP2PKHOutputScript(key1));
         // A P2PK output
