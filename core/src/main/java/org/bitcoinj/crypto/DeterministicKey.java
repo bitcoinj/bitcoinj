@@ -700,6 +700,7 @@ public class DeterministicKey extends ECKey {
         helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
         helper.add("chainCode", ByteUtils.formatHex(chainCode));
         helper.add("path", getPathAsString());
+        helper.add("depth", depth);
         Optional<Instant> creationTime = this.getCreationTime();
         if (!creationTime.isPresent())
             helper.add("creationTimeSeconds", "unknown");
