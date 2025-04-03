@@ -116,12 +116,11 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Return the fingerprint of this key's parent as an int value, or zero if this key is the
+     * Return the fingerprint of a key's parent as an int value, or zero if the key is the
      * root node of the key hierarchy.  Raise an exception if the arguments are inconsistent.
      * This method exists to avoid code repetition in the constructors.
      */
-    private int ascertainParentFingerprint(int parentFingerprint)
-    throws IllegalArgumentException {
+    private static int ascertainParentFingerprint(@Nullable DeterministicKey parent, int parentFingerprint) throws IllegalArgumentException {
         if (parentFingerprint != 0) {
             if (parent != null)
                 checkArgument(parent.getFingerprint() == parentFingerprint, () ->
@@ -147,7 +146,7 @@ public class DeterministicKey extends ECKey {
         this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
+        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
     }
 
     /**
@@ -167,7 +166,7 @@ public class DeterministicKey extends ECKey {
         this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
+        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
     }
 
     
