@@ -439,9 +439,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         basicKeyChain.importKey(rootKey);
 
         for (HDPath path : getAccountPath().ancestors()) {
-            encryptNonLeaf(aesKey, chain, rootKey, path);
+            DeterministicKey parent = this.getKeyByPath(path.parent());
+            encryptNonLeaf(aesKey, chain, parent, path);
         }
-        DeterministicKey account = encryptNonLeaf(aesKey, chain, rootKey, getAccountPath());
+        DeterministicKey accountParent = this.getKeyByPath(getAccountPath().parent());
+        DeterministicKey account = encryptNonLeaf(aesKey, chain, accountParent, getAccountPath());
         externalParentKey = encryptNonLeaf(aesKey, chain, account, getAccountPath().extend(EXTERNAL_SUBPATH));
         internalParentKey = encryptNonLeaf(aesKey, chain, account, getAccountPath().extend(INTERNAL_SUBPATH));
 
