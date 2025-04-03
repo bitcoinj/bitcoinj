@@ -624,9 +624,9 @@ public class TransactionTest {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Block genesis = TESTNET.getGenesisBlock();
         Block block1 = genesis.createNextBlock(ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET),
-                    genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
+                    genesis.transaction(0).getOutput(0).getOutPointFor());
 
-        final Transaction tx = block1.getTransactions().get(1);
+        final Transaction tx = block1.transaction(1);
         final Sha256Hash txHash = tx.getTxId();
         final String txNormalizedHash = tx.hashForSignature(
                 0,
