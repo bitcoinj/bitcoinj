@@ -149,7 +149,8 @@ public class DeterministicKey extends ECKey {
                 chainCode, HDPath.M(childNumberPath), null, null);
     }
 
-    /** Clones the key */
+    /** @deprecated use {@link #withParent(DeterministicKey)} */
+    @Deprecated
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
         this(keyToClone.priv, keyToClone.pub, keyToClone.childNumberPath.size(), newParent,
                 newParent.getFingerprint(), keyToClone.chainCode, keyToClone.childNumberPath, null, null);
@@ -286,6 +287,19 @@ public class DeterministicKey extends ECKey {
     @Deprecated
     public DeterministicKey dropPrivateBytes() {
         return withoutPrivateKey();
+    }
+
+    /**
+     * Returns the same key with another parent and parent fingerprint. The depth is derived from the parent by
+     * incrementing.
+     *
+     * @param parent new parent
+     * @return key with another parent, parent fingerprint and depth derived from parent
+     */
+    public DeterministicKey withParent(DeterministicKey parent) {
+        Objects.requireNonNull(parent);
+        return new DeterministicKey(this.priv, this.pub, parent.getDepth() + 1, parent, parent.getFingerprint(),
+                this.chainCode, this.childNumberPath, this.encryptedPrivateKey, this.keyCrypter);
     }
 
     /**

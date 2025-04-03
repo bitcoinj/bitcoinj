@@ -552,7 +552,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // Clone key to new hierarchy.
     private static DeterministicKey cloneKey(DeterministicHierarchy hierarchy, DeterministicKey key) {
         DeterministicKey parent = hierarchy.get(Objects.requireNonNull(key.getParent()).getPath(), false, false);
-        return new DeterministicKey(key.withoutPrivateKey(), parent);
+        return key.withoutPrivateKey().withParent(parent);
     }
 
     private void checkForBitFlip(DeterministicKey k) {
