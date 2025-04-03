@@ -73,7 +73,7 @@ public class DeterministicKey extends ECKey {
         super(priv, publicAsPoint.compress());
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
+        this.childNumberPath = makeHDPath(Objects.requireNonNull(childNumberPath), priv);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = parent == null ? 0 : parent.depth + 1;
         this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
@@ -167,12 +167,19 @@ public class DeterministicKey extends ECKey {
         super(priv, pub);
         checkArgument(chainCode.length == 32);
         this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
+        this.childNumberPath = makeHDPath(Objects.requireNonNull(childNumberPath), priv);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.depth = depth;
         this.parentFingerprint = ascertainParentFingerprint(parentFingerprint);
     }
 
+    // If we don't already have an HDPath, this method will create
+    // and return an HDPath.M or HDPath.m as appropriate based on whether `priv` is non-null
+    private static HDPath makeHDPath(List<ChildNumber> childNumberPath, @Nullable BigInteger priv) {
+        return childNumberPath instanceof HDPath
+                ? (HDPath) childNumberPath
+                : HDPath.of(priv != null ? HDPath.Prefix.PRIVATE : HDPath.Prefix.PUBLIC, childNumberPath);
+    }
     
     /** Clones the key */
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
