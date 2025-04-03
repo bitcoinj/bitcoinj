@@ -157,6 +157,10 @@ public class DeterministicKey extends ECKey {
 
     /**
      * Canonical constructor.
+     * <p>
+     * Note on keys with an unusually large depth: due to a restriction of the serialization format, keys with a depth
+     * greater than 255 cannot be serialized to Base58. This affects methods {@link #serializePubB58(Network)} and
+     * {@link #serializePrivB58(Network)}, but not ProtoBuf-serialization or key derivation in itself.
      *
      * @param priv                private key, or {@code null} if public key only
      * @param pub                 public key, corresponding to private key (if present)
