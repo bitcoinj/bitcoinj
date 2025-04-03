@@ -762,12 +762,13 @@ public class DeterministicKey extends ECKey {
         DeterministicKey other = (DeterministicKey) o;
         return super.equals(other)
                 && Arrays.equals(this.chainCode, other.chainCode)
-                && Objects.equals(this.childNumberPath, other.childNumberPath);
+                && Objects.equals(this.childNumberPath, other.childNumberPath)
+                && Objects.equals(this.depth, other.depth);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), Arrays.hashCode(chainCode), childNumberPath);
+        return Objects.hash(super.hashCode(), Arrays.hashCode(chainCode), childNumberPath, depth);
     }
 
     @Override
