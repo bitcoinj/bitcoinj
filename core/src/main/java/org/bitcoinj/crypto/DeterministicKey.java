@@ -60,7 +60,7 @@ public class DeterministicKey extends ECKey {
     private final DeterministicKey parent;
     private final HDPath childNumberPath;
     private final int depth;
-    private int parentFingerprint; // 0 if this key is root node of key hierarchy
+    private final int parentFingerprint; // 0 if this key is root node of key hierarchy
 
     /** 32 bytes */
     private final byte[] chainCode;
