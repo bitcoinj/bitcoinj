@@ -50,6 +50,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -830,6 +831,16 @@ public class Block implements Message {
     public Transaction transaction(int index) {
         checkState(!isHeaderOnly());
         return transactions.get(index);
+    }
+
+    /**
+     * Performs the given action for each transaction in this block.
+     *
+     * @param action action to be performed for each transaction
+     */
+    public void forEachTransaction(Consumer<Transaction> action) {
+        checkState(!isHeaderOnly());
+        transactions.forEach(action);
     }
 
     /**
