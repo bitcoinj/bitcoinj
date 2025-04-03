@@ -497,14 +497,19 @@ public class Block implements Message {
                     TimeUtils.dateTimeFormat(allowedTime), allowedTime.toEpochMilli()));
     }
 
+    /**
+     * Sums up all SigOps in all transactions of this block.
+     *
+     * @return sum of SigOps
+     */
+    public int sigOpCount() {
+        return transactions.stream().mapToInt(Transaction::getSigOpCount).sum();
+    }
+
     private void checkSigOps() throws VerificationException {
         // Check there aren't too many signature verifications in the block. This is an anti-DoS measure, see the
         // comments for MAX_BLOCK_SIGOPS.
-        int sigOps = 0;
-        for (Transaction tx : transactions) {
-            sigOps += tx.getSigOpCount();
-        }
-        if (sigOps > MAX_BLOCK_SIGOPS)
+        if (sigOpCount() > MAX_BLOCK_SIGOPS)
             throw new VerificationException("Block had too many Signature Operations");
     }
 
@@ -800,6 +805,17 @@ public class Block implements Message {
     @Nullable
     public List<Transaction> getTransactions() {
         return transactions == null ? null : Collections.unmodifiableList(transactions);
+    }
+
+    /**
+     * Gets the transaction at the given index.
+     *
+     * @param index index of the transaction to get
+     * @return transaction
+     * @throws IndexOutOfBoundsException if the given index is out of bounds
+     */
+    public Transaction transaction(int index) {
+        return transactions.get(index);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////
