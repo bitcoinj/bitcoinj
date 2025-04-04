@@ -105,7 +105,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public HDPath(boolean hasPrivateKey, List<ChildNumber> list) {
         this.hasPrivateKey = hasPrivateKey;
-        this.unmodifiableList = Collections.unmodifiableList(Objects.requireNonNull(list));
+        this.unmodifiableList = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
     }
 
     /**
