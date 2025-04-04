@@ -83,8 +83,8 @@ public class HDPath extends AbstractList<ChildNumber> {
             return symbol().toString();
         }
     }
-    private static final char SEPARATOR = '/';
-    private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split("/"))
+    private static final String SEPARATOR = "/";
+    private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split(SEPARATOR))
             .map(String::trim)
             .collect(Collectors.toList());
     private final boolean hasPrivateKey;
