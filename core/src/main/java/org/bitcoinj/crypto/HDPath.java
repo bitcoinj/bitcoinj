@@ -88,7 +88,7 @@ public class HDPath extends AbstractList<ChildNumber> {
             .map(String::trim)
             .collect(Collectors.toList());
     private final boolean hasPrivateKey;
-    private final List<ChildNumber> unmodifiableList;
+    private final List<ChildNumber> childNumbers;
 
     /** Partial path with BIP44 purpose */
     public static final HDPath BIP44_PARENT = m(ChildNumber.PURPOSE_BIP44);
@@ -105,7 +105,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      */
     public HDPath(boolean hasPrivateKey, List<ChildNumber> list) {
         this.hasPrivateKey = hasPrivateKey;
-        this.unmodifiableList = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
+        this.childNumbers = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
     }
 
     /**
@@ -263,7 +263,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @return A new immutable path
      */
     public HDPath extend(ChildNumber child1, ChildNumber... children) {
-        List<ChildNumber> mutable = new ArrayList<>(this.unmodifiableList); // Mutable copy
+        List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
         mutable.add(child1);
         mutable.addAll(Arrays.asList(children));
         return new HDPath(this.hasPrivateKey, mutable);
@@ -276,7 +276,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @return A new immutable path
      */
     public HDPath extend(HDPath path2) {
-        List<ChildNumber> mutable = new ArrayList<>(this.unmodifiableList); // Mutable copy
+        List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
         mutable.addAll(path2);
         return new HDPath(this.hasPrivateKey, mutable);
     }
@@ -296,7 +296,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @return an unmodifiable list of {@code ChildNumber}
      */
     public List<ChildNumber> list() {
-        return unmodifiableList;
+        return childNumbers;
     }
 
     /**
@@ -309,8 +309,8 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @return parent path (which can be empty -- see above)
      */
     public HDPath parent() {
-        return unmodifiableList.size() > 1 ?
-                HDPath.of(hasPrivateKey, unmodifiableList.subList(0, unmodifiableList.size() - 1)) :
+        return childNumbers.size() > 1 ?
+                HDPath.of(hasPrivateKey, childNumbers.subList(0, childNumbers.size() - 1)) :
                 HDPath.of(hasPrivateKey, Collections.emptyList());
     }
 
@@ -328,28 +328,28 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @return unmodifiable list of ancestors
      */
     public List<HDPath> ancestors(boolean includeSelf) {
-        int endExclusive =  unmodifiableList.size() + (includeSelf ? 1 : 0);
+        int endExclusive =  childNumbers.size() + (includeSelf ? 1 : 0);
         return IntStream.range(1, endExclusive)
-                .mapToObj(i -> unmodifiableList.subList(0, i))
+                .mapToObj(i -> childNumbers.subList(0, i))
                 .map(l -> HDPath.of(hasPrivateKey, l))
                 .collect(StreamUtils.toUnmodifiableList());
     }
 
     @Override
     public ChildNumber get(int index) {
-        return unmodifiableList.get(index);
+        return childNumbers.get(index);
     }
 
     @Override
     public int size() {
-        return unmodifiableList.size();
+        return childNumbers.size();
     }
 
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append(this.prefix());
-        for (ChildNumber child : unmodifiableList) {
+        for (ChildNumber child : childNumbers) {
             b.append(SEPARATOR);
             b.append(child);
         }
