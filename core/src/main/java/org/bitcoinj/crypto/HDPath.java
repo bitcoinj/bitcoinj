@@ -102,7 +102,9 @@ public class HDPath extends AbstractList<ChildNumber> {
      *
      * @param hasPrivateKey Whether it is a path to a private key or not
      * @param list List of children in the path
+     * @deprecated Use {@link HDPath#of(Prefix, List)} or another static constructor
      */
+    @Deprecated
     public HDPath(boolean hasPrivateKey, List<ChildNumber> list) {
         this.hasPrivateKey = hasPrivateKey;
         this.childNumbers = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
