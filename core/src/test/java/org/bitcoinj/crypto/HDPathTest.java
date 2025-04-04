@@ -31,14 +31,14 @@ import static org.junit.Assert.assertTrue;
 public class HDPathTest {
     @Test
     public void testPrimaryConstructor() {
-        HDPath path = HDPath.m(Collections.emptyList());
+        HDPath.HDFullPath path = HDPath.m();
         assertTrue("Has private key returns false incorrectly", path.hasPrivateKey());
         assertEquals("Path not empty", 0, path.size());
     }
 
     @Test
     public void testExtendVarargs() {
-        HDPath basePath = HDPath.m(Collections.emptyList());
+        HDPath.HDFullPath  basePath = HDPath.m();
 
         assertTrue(basePath.hasPrivateKey());
         assertEquals("m",  basePath.toString());
@@ -178,7 +178,7 @@ public class HDPathTest {
             List<ChildNumber> expectedPath = (List<ChildNumber>) tv[i + 1];
             boolean expectedHasPrivateKey = (Boolean) tv[i + 2];
 
-            HDPath path = HDPath.parsePath(strPath);
+            HDPath.HDFullPath path = HDPath.parsePath(strPath);
             assertEquals(expectedPath, path);
             assertEquals(expectedHasPrivateKey, path.hasPrivateKey());
         }
