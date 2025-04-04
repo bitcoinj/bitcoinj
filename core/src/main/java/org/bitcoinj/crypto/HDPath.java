@@ -349,9 +349,9 @@ public class HDPath extends AbstractList<ChildNumber> {
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append(this.prefix());
-        for (ChildNumber segment : unmodifiableList) {
-            b.append(HDPath.SEPARATOR);
-            b.append(segment.toString());
+        for (ChildNumber child : unmodifiableList) {
+            b.append(SEPARATOR);
+            b.append(child);
         }
         return b.toString();
     }
