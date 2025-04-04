@@ -136,14 +136,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // a payment request that can generate lots of addresses independently.
     // The account path may be overridden by subclasses.
     // m / 0'
-    public static final HDPath ACCOUNT_ZERO_PATH = HDPath.M(ChildNumber.ZERO_HARDENED);
+    public static final HDPath.HDPartialPath ACCOUNT_ZERO_PATH = HDPath.partial(ChildNumber.ZERO_HARDENED);
     // m / 1'
-    public static final HDPath ACCOUNT_ONE_PATH = HDPath.M(ChildNumber.ONE_HARDENED);
+    public static final HDPath.HDPartialPath ACCOUNT_ONE_PATH = HDPath.partial(ChildNumber.ONE_HARDENED);
     // m / 44' / 0' / 0'
-    public static final HDPath BIP44_ACCOUNT_ZERO_PATH = HDPath.M(new ChildNumber(44, true))
+    public static final HDPath.HDPartialPath BIP44_ACCOUNT_ZERO_PATH = HDPath.partial(new ChildNumber(44, true))
                         .extend(ChildNumber.ZERO_HARDENED, ChildNumber.ZERO_HARDENED);
-    public static final HDPath EXTERNAL_SUBPATH = HDPath.M(ChildNumber.ZERO);
-    public static final HDPath INTERNAL_SUBPATH = HDPath.M(ChildNumber.ONE);
+    public static final HDPath.HDPartialPath EXTERNAL_SUBPATH = HDPath.partial(ChildNumber.ZERO);
+    public static final HDPath.HDPartialPath INTERNAL_SUBPATH = HDPath.partial(ChildNumber.ONE);
 
     // We try to ensure we have at least this many keys ready and waiting to be handed out via getKey().
     // See docs for getLookaheadSize() for more info on what this is for. The -1 value means it hasn't been calculated
