@@ -90,11 +90,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     protected final List<ChildNumber> childNumbers;
 
     /** Partial path with BIP44 purpose */
-    public static final HDPath BIP44_PARENT = m(ChildNumber.PURPOSE_BIP44);
+    public static final HDPartialPath BIP44_PARENT = partial(ChildNumber.PURPOSE_BIP44);
     /** Partial path with BIP84 purpose */
-    public static final HDPath BIP84_PARENT = m(ChildNumber.PURPOSE_BIP84);
+    public static final HDPartialPath BIP84_PARENT = partial(ChildNumber.PURPOSE_BIP84);
     /** Partial path with BIP86 purpose */
-    public static final HDPath BIP86_PARENT = m(ChildNumber.PURPOSE_BIP86);
+    public static final HDPartialPath BIP86_PARENT = partial(ChildNumber.PURPOSE_BIP86);
 
     public static class HDFullPath extends HDPath {
         private final boolean hasPrivateKey;
@@ -137,8 +137,56 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         public boolean hasPrivateKey() {
             return hasPrivateKey;
         }
+
+        @Override
+        public HDFullPath extend(ChildNumber child1, ChildNumber... children) {
+            return new HDFullPath(this.hasPrivateKey, extendInternal(child1, children));
+        }
+
+        @Override
+        public HDFullPath extend(HDPath.HDPartialPath partialPath) {
+            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath));
+        }
+
+        @Override
+        public HDFullPath extend(List<ChildNumber> partialPath) {
+            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath));
+        }
+
+        @Override
+        public HDFullPath parent() {
+            return new HDFullPath(this.hasPrivateKey, parentInternal());
+        }
     }
 
+    public static class HDPartialPath extends HDPath {
+
+        private HDPartialPath(List<ChildNumber> list) {
+            super(list);
+        }
+
+        @Override
+        public HDPartialPath extend(ChildNumber child1, ChildNumber... children) {
+            return new HDPartialPath(extendInternal(child1, children));
+        }
+
+        @Override
+        public HDPartialPath extend(HDPath.HDPartialPath partialPath) {
+            return new HDPartialPath(extendInternal(partialPath));
+        }
+
+        @Override
+        public HDPartialPath extend(List<ChildNumber> partialPath) {
+            return new HDPartialPath(extendInternal(partialPath));
+        }
+
+        @Override
+        public HDPartialPath parent() {
+            return new HDPartialPath(parentInternal());
+        }
+    }
+
+    // Canonical superclass constructor
     private HDPath(List<ChildNumber> list) {
         this.childNumbers = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
     }
@@ -168,10 +216,37 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * @param integerList A list of integers (what we use in ProtoBuf for an HDPath)
      * @return a deserialized HDPath (hasPrivateKey is false/unknown)
      */
-    public static HDFullPath deserialize(List<Integer> integerList) {
-        return integerList.stream()
+    public static HDPartialPath deserialize(List<Integer> integerList) {
+        return HDPath.partial(integerList.stream()
                 .map(ChildNumber::new)
-                .collect(Collectors.collectingAndThen(Collectors.toList(), HDPath::M));
+                .collect(StreamUtils.toUnmodifiableList()));
+    }
+
+    /**
+     * Returns a partial path.
+     *
+     * @param list list of children
+     */
+    public static HDPartialPath partial(List<ChildNumber> list) {
+        return new HDPartialPath(list);
+    }
+
+    /**
+     * Returns a partial path.
+     *
+     * @param childNumber Single child in path
+     */
+    public static HDPartialPath partial(ChildNumber childNumber) {
+        return partial(Collections.singletonList(childNumber));
+    }
+
+    /**
+     * Returns a partial path.
+     *
+     * @param children Children in the path
+     */
+    public static HDPartialPath partial(ChildNumber... children) {
+        return partial(Arrays.asList(children));
     }
 
     /**
@@ -262,7 +337,6 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         return HDPath.of(prefix.orElse(Prefix.PUBLIC), nodes);
     }
 
-
     /**
      * Extend the path by appending additional ChildNumber objects.
      *
@@ -270,11 +344,13 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * @param children zero or more additional children to append
      * @return A new immutable path
      */
-    public HDFullPath extend(ChildNumber child1, ChildNumber... children) {
+    public abstract HDPath extend(ChildNumber child1, ChildNumber... children);
+
+    protected List<ChildNumber> extendInternal(ChildNumber child1, ChildNumber... children) {
         List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
         mutable.add(child1);
         mutable.addAll(Arrays.asList(children));
-        return new HDFullPath(((HDFullPath) this).hasPrivateKey, mutable);
+        return mutable;
     }
 
     /**
@@ -283,20 +359,20 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * @param path2 the relative path to append
      * @return A new immutable path
      */
-    public HDFullPath extend(HDPath path2) {
+    public abstract HDPath extend(HDPath.HDPartialPath path2);
+
+    /**
+     * Extend the path by appending a relative path.
+     *
+     * @param path2 the relative path to append
+     * @return A new immutable path
+     */
+    public abstract HDPath extend(List<ChildNumber> path2);
+
+    protected List<ChildNumber> extendInternal(List<ChildNumber> children) {
         List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
-        mutable.addAll(path2);
-        return new HDFullPath(((HDFullPath) this).hasPrivateKey, mutable);
-    }
-
-    /**
-     * Extend the path by appending a relative path.
-     *
-     * @param path2 the relative path to append
-     * @return A new immutable path
-     */
-    public HDFullPath extend(List<ChildNumber> path2) {
-        return this.extend(HDPath.M(path2));
+        mutable.addAll(children);
+        return mutable;
     }
 
     /**
@@ -316,11 +392,12 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * {@link HDPath#isEmpty()} before or after using {@code HDPath#parent()}
      * @return parent path (which can be empty -- see above)
      */
-    public HDFullPath parent() {
-        HDFullPath childNumbers1 = childNumbers.size() > 1 ?
-                HDPath.of(((HDFullPath) this).hasPrivateKey, childNumbers.subList(0, childNumbers.size() - 1)) :
-                HDPath.of(((HDFullPath) this).hasPrivateKey, Collections.emptyList());
-        return childNumbers1;
+    public abstract HDPath parent();
+
+    protected List<ChildNumber> parentInternal() {
+        return childNumbers.size() > 1 ?
+                childNumbers.subList(0, childNumbers.size() - 1) :
+                Collections.emptyList();
     }
 
     /**
