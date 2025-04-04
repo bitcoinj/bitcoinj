@@ -1540,7 +1540,7 @@ public class WalletTest extends TestWithWallet {
     public void isWatching() {
         assertFalse(wallet.isWatching());
         Wallet watchingWallet = Wallet.fromWatchingKey(TESTNET,
-                wallet.getWatchingKey().dropPrivateBytes().dropParent(), ScriptType.P2PKH);
+                wallet.getWatchingKey().withoutPrivateKey().dropParent(), ScriptType.P2PKH);
         assertTrue(watchingWallet.isWatching());
         wallet.encrypt(PASSWORD1);
         assertFalse(wallet.isWatching());
@@ -3054,7 +3054,7 @@ public class WalletTest extends TestWithWallet {
             TransactionInput input = req.tx.getInput(i).withoutScriptBytes();
             req.tx.replaceInput(i, input);
         }
-        Wallet watching = Wallet.fromWatchingKey(TESTNET, wallet.getWatchingKey().dropParent().dropPrivateBytes(),
+        Wallet watching = Wallet.fromWatchingKey(TESTNET, wallet.getWatchingKey().dropParent().withoutPrivateKey(),
                 ScriptType.P2PKH);
         watching.freshReceiveKey();
         watching.completeTx(SendRequest.forTx(req.tx));
@@ -3518,7 +3518,7 @@ public class WalletTest extends TestWithWallet {
                 .random(new SecureRandom())
                 .accountPath(accountPath)
                 .build();
-        DeterministicKey watchingKey = keyChain.getWatchingKey().dropPrivateBytes().dropParent();
+        DeterministicKey watchingKey = keyChain.getWatchingKey().withoutPrivateKey().dropParent();
 
         Wallet wallet7 = Wallet.fromWatchingKey(TESTNET, watchingKey, ScriptType.P2WPKH);
         assertEquals(TESTNET, wallet7.network());
