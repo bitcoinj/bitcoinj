@@ -26,7 +26,7 @@ public class DeterministicKeyTest {
     public void serialize_maxDepth() {
         DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(new byte[16]);
         DeterministicHierarchy dh = new DeterministicHierarchy(masterPrivateKey);
-        HDPath path = new HDPath(false, Collections.nCopies(255, ChildNumber.ZERO)); // max
+        HDPath path = HDPath.M(Collections.nCopies(255, ChildNumber.ZERO)); // max
         DeterministicKey ehkey = dh.get(path, false, true);
 
         ehkey.serialize(BitcoinNetwork.MAINNET, false);
@@ -36,7 +36,7 @@ public class DeterministicKeyTest {
     public void serialize_depthOverflow_throws() {
         DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(new byte[16]);
         DeterministicHierarchy dh = new DeterministicHierarchy(masterPrivateKey);
-        HDPath path = new HDPath(false, Collections.nCopies(256, ChildNumber.ZERO)); // exceeds
+        HDPath path = HDPath.M(Collections.nCopies(256, ChildNumber.ZERO)); // exceeds
         DeterministicKey ehkey = dh.get(path, false, true);
 
         ehkey.serialize(BitcoinNetwork.MAINNET, false);
