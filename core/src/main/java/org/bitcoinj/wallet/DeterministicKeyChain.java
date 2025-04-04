@@ -345,7 +345,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             ScriptType outputScriptType) {
         if (isWatching)
             checkArgument(key.isPubKeyOnly(), () ->
-                    "private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().dropParent() on it first");
+                    "private subtrees not currently supported for watching keys: if you got this key from DKC.getWatchingKey() then use .dropPrivate().withoutParent() on it first");
         else
             checkArgument(key.hasPrivKey(), () ->
                     "private subtrees are required");
@@ -552,7 +552,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // Clone key to new hierarchy.
     private static DeterministicKey cloneKey(DeterministicHierarchy hierarchy, DeterministicKey key) {
         DeterministicKey parent = hierarchy.get(Objects.requireNonNull(key.getParent()).getPath(), false, false);
-        return new DeterministicKey(key.dropPrivateBytes(), parent);
+        return key.dropPrivateBytes().withParent(parent);
     }
 
     private void checkForBitFlip(DeterministicKey k) {

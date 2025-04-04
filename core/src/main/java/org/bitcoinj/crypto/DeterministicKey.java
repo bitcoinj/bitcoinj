@@ -27,6 +27,8 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -48,6 +50,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * one of these, you can call {@link HDKeyDerivation#createMasterPrivateKey(byte[])}.
  */
 public class DeterministicKey extends ECKey {
+    private static final Logger log = LoggerFactory.getLogger(DeterministicKey.class);
 
     /** Sorts deterministic keys in the order of their child number. That's <i>usually</i> the order used to derive them. */
     public static final Comparator<ECKey> CHILDNUM_ORDER = (k1, k2) -> {
@@ -71,13 +74,8 @@ public class DeterministicKey extends ECKey {
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        super(priv, publicAsPoint.compress());
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = parent == null ? 0 : parent.depth + 1;
-        this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
+        this(priv, publicAsPoint.compress(), parent == null ? 0 : parent.depth + 1, parent,
+                parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath), null, null);
     }
 
     public DeterministicKey(List<ChildNumber> childNumberPath,
@@ -94,13 +92,8 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        super(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true));
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = Objects.requireNonNull(hdPath);
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = parent == null ? 0 : parent.depth + 1;
-        this.parentFingerprint = (parent != null) ? parent.getFingerprint() : 0;
+        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), parent == null ? 0 : parent.depth + 1,
+                parent, parent != null ? parent.getFingerprint() : 0, chainCode, hdPath, null, null);
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
@@ -108,11 +101,11 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             KeyCrypter crypter,
                             LazyECPoint pub,
-                            EncryptedData priv,
+                            EncryptedData encryptedPrivateKey,
                             @Nullable DeterministicKey parent) {
-        this(childNumberPath, chainCode, pub, null, parent);
-        this.encryptedPrivateKey = Objects.requireNonNull(priv);
-        this.keyCrypter = Objects.requireNonNull(crypter);
+        this(null, pub.compress(), parent == null ? 0 : parent.depth + 1, parent,
+                parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath),
+                Objects.requireNonNull(encryptedPrivateKey), Objects.requireNonNull(crypter));
     }
 
     /**
@@ -140,13 +133,8 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(null, publicAsPoint.compress());
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this(null, publicAsPoint.compress(), depth, parent, parentFingerprint, chainCode, HDPath.M(childNumberPath),
+                null, null);
     }
 
     /**
@@ -160,25 +148,45 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        super(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true));
-        checkArgument(chainCode.length == 32);
-        this.parent = parent;
-        this.childNumberPath = HDPath.M(Objects.requireNonNull(childNumberPath));
-        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.depth = depth;
-        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), depth, parent, parentFingerprint,
+                chainCode, HDPath.m(childNumberPath), null, null);
     }
 
-    
-    /** Clones the key */
-    public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        super(keyToClone.priv, keyToClone.pub);
-        this.parent = newParent;
-        this.childNumberPath = keyToClone.childNumberPath;
-        this.chainCode = keyToClone.chainCode;
-        this.encryptedPrivateKey = keyToClone.encryptedPrivateKey;
-        this.depth = this.childNumberPath.size();
-        this.parentFingerprint = this.parent.getFingerprint();
+    /**
+     * Canonical constructor.
+     * <p>
+     * Warning: while key derivation works fine for depths greater than 255, you will not  be able to serialize such
+     * keys via {@link #serializePubB58(Network)} or {@link #serializePrivB58(Network)} due to the depth being crammed
+     * into a byte.
+     *
+     * @param priv                private key, or {@code null} if public key only
+     * @param pub                 public key, corresponding to private key (if present)
+     * @param depth               depth of this key in the path, {@code 0} means master key
+     * @param parent              parent deterministic key, or {@code null} if unknown or this is master key
+     * @param parentFingerprint   4 byte fingerprint of parent key, or {0} if parent unknown or this is master key
+     * @param chainCode           32 bytes of chain code
+     * @param hdPath              path leading up to this key
+     * @param encryptedPrivateKey private key in encrypted form
+     * @param keyCrypter          crypter to use for decrypting the private key
+     */
+    private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
+                             int parentFingerprint, byte[] chainCode, HDPath hdPath,
+                             @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
+        super(priv, pub);
+        checkArgument(chainCode.length == 32);
+        checkArgument(priv == null || encryptedPrivateKey == null, () ->
+                "priv and encryptedPrivateKey can't be set together");
+        checkArgument((encryptedPrivateKey == null) == (keyCrypter == null), () ->
+                "encryptedPrivateKey and keyCrypter must be set together");
+        if (depth > 255)
+            log.warn("deterministic key with depth " + depth + " will not be Base58-serializable");
+        this.depth = depth;
+        this.parent = parent;
+        this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
+        this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
+        this.childNumberPath = Objects.requireNonNull(hdPath);
+        this.encryptedPrivateKey = encryptedPrivateKey;
+        this.keyCrypter = keyCrypter;
     }
 
     /**
@@ -260,7 +268,7 @@ public class DeterministicKey extends ECKey {
      * memory: the private key can always be very efficiently rederived from a parent that a private key, so storing
      * all the private keys in RAM is a poor tradeoff especially on constrained devices. This means that the returned
      * key may still be usable for signing and so on, so don't expect it to be a true pubkey-only object! If you want
-     * that then you should follow this call with a call to {@link #dropParent()}.
+     * that then you should follow this call with a call to {@link #withoutParent()}.
      */
     public DeterministicKey dropPrivateBytes() {
         if (isPubKeyOnly())
@@ -270,17 +278,34 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
+     * Returns the same key with another parent and parent fingerprint.
+     *
+     * @param parent new parent
+     * @return key with another parent and parent fingerprint
+     */
+    public DeterministicKey withParent(DeterministicKey parent) {
+        Objects.requireNonNull(parent);
+        return new DeterministicKey(this.priv, this.pub, this.depth, parent, parent.getFingerprint(), this.chainCode,
+                this.childNumberPath, this.encryptedPrivateKey, this.keyCrypter);
+    }
+
+    /**
      * <p>Returns the same key with the parent pointer removed (it still knows its own path and the parent fingerprint).</p>
      *
      * <p>If this key doesn't have private key bytes stored/cached itself, but could rederive them from the parent, then
-     * the new key returned by this method won't be able to do that. Thus, using dropPrivateBytes().dropParent() on a
+     * the new key returned by this method won't be able to do that. Thus, using dropPrivateBytes().withoutParent() on a
      * regular DeterministicKey will yield a new DeterministicKey that cannot sign or do other things involving the
      * private key at all.</p>
      */
+    public DeterministicKey withoutParent() {
+        return new DeterministicKey(priv, pub, depth, null, parentFingerprint, chainCode, childNumberPath,
+                encryptedPrivateKey, keyCrypter);
+    }
+
+    /** @deprecated use {@link #withoutParent()} */
+    @Deprecated
     public DeterministicKey dropParent() {
-        DeterministicKey key = new DeterministicKey(getPath(), getChainCode(), pub, priv, null);
-        key.parentFingerprint = parentFingerprint;
-        return key;
+        return withoutParent();
     }
 
     static byte[] addChecksum(byte[] input) {

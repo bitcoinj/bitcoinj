@@ -471,7 +471,7 @@ public class Wallet extends BaseTaggableObject
     public static Wallet fromMasterKey(Network network, DeterministicKey masterKey,
                                        ScriptType outputScriptType, ChildNumber accountNumber) {
         DeterministicKey accountKey = HDKeyDerivation.deriveChildKey(masterKey, accountNumber);
-        accountKey = accountKey.dropParent();   // Drop the parent private key, so it won't be used or saved.
+        accountKey = accountKey.withoutParent();   // Drop the parent private key, so it won't be used or saved.
         Optional<Instant> creationTime = masterKey.getCreationTime();
         if (creationTime.isPresent())
             accountKey.setCreationTime(creationTime.get());
