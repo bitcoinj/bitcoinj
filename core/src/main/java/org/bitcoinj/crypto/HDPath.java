@@ -48,7 +48,7 @@ import java.util.stream.Stream;
  * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
  * concisely create HDPath objects (especially when statically imported.)
  */
-public class HDPath extends AbstractList<ChildNumber> {
+public abstract class HDPath extends AbstractList<ChildNumber> {
     public enum Prefix {
         PRIVATE('m'),
         PUBLIC('M');
@@ -87,8 +87,7 @@ public class HDPath extends AbstractList<ChildNumber> {
     private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split(SEPARATOR))
             .map(String::trim)
             .collect(Collectors.toList());
-    private final boolean hasPrivateKey;
-    private final List<ChildNumber> childNumbers;
+    protected final List<ChildNumber> childNumbers;
 
     /** Partial path with BIP44 purpose */
     public static final HDPath BIP44_PARENT = m(ChildNumber.PURPOSE_BIP44);
@@ -97,27 +96,51 @@ public class HDPath extends AbstractList<ChildNumber> {
     /** Partial path with BIP86 purpose */
     public static final HDPath BIP86_PARENT = m(ChildNumber.PURPOSE_BIP86);
 
-    /**
-     * Constructs a path for a public or private key. Should probably be a private constructor.
-     *
-     * @param hasPrivateKey Whether it is a path to a private key or not
-     * @param list List of children in the path
-     * @deprecated Use {@link HDPath#of(Prefix, List)} or another static constructor
-     */
-    @Deprecated
-    public HDPath(boolean hasPrivateKey, List<ChildNumber> list) {
-        this.hasPrivateKey = hasPrivateKey;
-        this.childNumbers = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
+    public static class HDFullPath extends HDPath {
+        private final boolean hasPrivateKey;
+
+        /**
+         * Constructs a path for a public or private key. Should probably be a private constructor.
+         *
+         * @param hasPrivateKey Whether it is a path to a private key or not
+         * @param list          List of children in the path
+         */
+        public HDFullPath(boolean hasPrivateKey, List<ChildNumber> list) {
+            super(list);
+            this.hasPrivateKey = hasPrivateKey;
+        }
+
+        /**
+         * Constructs a path for a public or private key. Should probably be a private constructor.
+         *
+         * @param prefix 'M' or 'm'
+         * @param list   List of children in the path
+         */
+        public HDFullPath(Prefix prefix, List<ChildNumber> list) {
+            this(prefix == Prefix.PRIVATE, list);
+        }
+
+        /**
+         * Return the correct prefix for this path.
+         *
+         * @return prefix
+         */
+        public Prefix prefix() {
+            return hasPrivateKey ? Prefix.PRIVATE : Prefix.PUBLIC;
+        }
+
+        /**
+         * Is this a path to a private key?
+         *
+         * @return true if yes, false if no or a partial path
+         */
+        public boolean hasPrivateKey() {
+            return hasPrivateKey;
+        }
     }
 
-    /**
-     * Constructs a path for a public or private key.
-     *
-     * @param prefix 'M' or 'm'
-     * @param list List of children in the path
-     */
-    private HDPath(Prefix prefix, List<ChildNumber> list) {
-        this(prefix == Prefix.PRIVATE, list);
+    private HDPath(List<ChildNumber> list) {
+        this.childNumbers = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
     }
 
     /**
@@ -126,8 +149,8 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param prefix Indicates if it is a path to a public or private key
      * @param list List of children in the path
      */
-    public static HDPath of(Prefix prefix, List<ChildNumber> list) {
-        return new HDPath(prefix, list);
+    public static HDFullPath of(Prefix prefix, List<ChildNumber> list) {
+        return new HDFullPath(prefix, list);
     }
 
     /**
@@ -136,8 +159,8 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param hasPrivateKey Whether it is a path to a private key or not
      * @param list List of children in the path
      */
-    private static HDPath of(boolean hasPrivateKey, List<ChildNumber> list) {
-        return new HDPath(hasPrivateKey, list);
+    private static HDFullPath of(boolean hasPrivateKey, List<ChildNumber> list) {
+        return new HDFullPath(hasPrivateKey, list);
     }
 
     /**
@@ -145,7 +168,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param integerList A list of integers (what we use in ProtoBuf for an HDPath)
      * @return a deserialized HDPath (hasPrivateKey is false/unknown)
      */
-    public static HDPath deserialize(List<Integer> integerList) {
+    public static HDFullPath deserialize(List<Integer> integerList) {
         return integerList.stream()
                 .map(ChildNumber::new)
                 .collect(Collectors.collectingAndThen(Collectors.toList(), HDPath::M));
@@ -156,14 +179,14 @@ public class HDPath extends AbstractList<ChildNumber> {
      *
      * @param list List of children in the path
      */
-    public static HDPath M(List<ChildNumber> list) {
+    public static HDFullPath M(List<ChildNumber> list) {
         return HDPath.of(Prefix.PUBLIC, list);
     }
 
     /**
      * Returns an empty path for a public key.
      */
-    public static HDPath M() {
+    public static HDFullPath M() {
         return HDPath.M(Collections.emptyList());
     }
 
@@ -172,7 +195,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      *
      * @param childNumber Single child in path
      */
-    public static HDPath M(ChildNumber childNumber) {
+    public static HDFullPath M(ChildNumber childNumber) {
         return HDPath.M(Collections.singletonList(childNumber));
     }
 
@@ -181,7 +204,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      *
      * @param children Children in the path
      */
-    public static HDPath M(ChildNumber... children) {
+    public static HDFullPath M(ChildNumber... children) {
         return HDPath.M(Arrays.asList(children));
     }
 
@@ -190,14 +213,14 @@ public class HDPath extends AbstractList<ChildNumber> {
      *
      * @param list List of children in the path
      */
-    public static HDPath m(List<ChildNumber> list) {
+    public static HDFullPath m(List<ChildNumber> list) {
         return HDPath.of(Prefix.PRIVATE, list);
     }
 
     /**
      * Returns an empty path for a private key.
      */
-    public static HDPath m() {
+    public static HDFullPath m() {
         return HDPath.m(Collections.emptyList());
     }
 
@@ -206,7 +229,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      *
      * @param childNumber Single child in path
      */
-    public static HDPath m(ChildNumber childNumber) {
+    public static HDFullPath m(ChildNumber childNumber) {
         return HDPath.m(Collections.singletonList(childNumber));
     }
 
@@ -215,7 +238,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      *
      * @param children Children in the path
      */
-    public static HDPath m(ChildNumber... children) {
+    public static HDFullPath m(ChildNumber... children) {
         return HDPath.m(Arrays.asList(children));
     }
 
@@ -226,7 +249,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * <p>
      * Where a letter {@code H} means hardened key. Spaces are ignored.
      */
-    public static HDPath parsePath(@Nonnull String path) {
+    public static HDFullPath parsePath(@Nonnull String path) {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
         Optional<Prefix> prefix = parsedNodes.isEmpty() ? Optional.empty() : Prefix.of(parsedNodes.get(0));
 
@@ -239,23 +262,6 @@ public class HDPath extends AbstractList<ChildNumber> {
         return HDPath.of(prefix.orElse(Prefix.PUBLIC), nodes);
     }
 
-    /**
-     * Return the correct prefix for this path.
-     *
-     * @return prefix
-     */
-    public Prefix prefix() {
-        return hasPrivateKey ? Prefix.PRIVATE : Prefix.PUBLIC;
-    }
-
-    /**
-     * Is this a path to a private key?
-     *
-     * @return true if yes, false if no or a partial path
-     */
-    public boolean hasPrivateKey() {
-        return hasPrivateKey;
-    }
 
     /**
      * Extend the path by appending additional ChildNumber objects.
@@ -264,11 +270,11 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param children zero or more additional children to append
      * @return A new immutable path
      */
-    public HDPath extend(ChildNumber child1, ChildNumber... children) {
+    public HDFullPath extend(ChildNumber child1, ChildNumber... children) {
         List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
         mutable.add(child1);
         mutable.addAll(Arrays.asList(children));
-        return new HDPath(this.hasPrivateKey, mutable);
+        return new HDFullPath(((HDFullPath) this).hasPrivateKey, mutable);
     }
 
     /**
@@ -277,10 +283,10 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param path2 the relative path to append
      * @return A new immutable path
      */
-    public HDPath extend(HDPath path2) {
+    public HDFullPath extend(HDPath path2) {
         List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
         mutable.addAll(path2);
-        return new HDPath(this.hasPrivateKey, mutable);
+        return new HDFullPath(((HDFullPath) this).hasPrivateKey, mutable);
     }
 
     /**
@@ -289,7 +295,7 @@ public class HDPath extends AbstractList<ChildNumber> {
      * @param path2 the relative path to append
      * @return A new immutable path
      */
-    public HDPath extend(List<ChildNumber> path2) {
+    public HDFullPath extend(List<ChildNumber> path2) {
         return this.extend(HDPath.M(path2));
     }
 
@@ -310,10 +316,11 @@ public class HDPath extends AbstractList<ChildNumber> {
      * {@link HDPath#isEmpty()} before or after using {@code HDPath#parent()}
      * @return parent path (which can be empty -- see above)
      */
-    public HDPath parent() {
-        return childNumbers.size() > 1 ?
-                HDPath.of(hasPrivateKey, childNumbers.subList(0, childNumbers.size() - 1)) :
-                HDPath.of(hasPrivateKey, Collections.emptyList());
+    public HDFullPath parent() {
+        HDFullPath childNumbers1 = childNumbers.size() > 1 ?
+                HDPath.of(((HDFullPath) this).hasPrivateKey, childNumbers.subList(0, childNumbers.size() - 1)) :
+                HDPath.of(((HDFullPath) this).hasPrivateKey, Collections.emptyList());
+        return childNumbers1;
     }
 
     /**
@@ -333,7 +340,7 @@ public class HDPath extends AbstractList<ChildNumber> {
         int endExclusive =  childNumbers.size() + (includeSelf ? 1 : 0);
         return IntStream.range(1, endExclusive)
                 .mapToObj(i -> childNumbers.subList(0, i))
-                .map(l -> HDPath.of(hasPrivateKey, l))
+                .map(l -> HDPath.of(((HDFullPath) this).hasPrivateKey, l))
                 .collect(StreamUtils.toUnmodifiableList());
     }
 
@@ -350,7 +357,7 @@ public class HDPath extends AbstractList<ChildNumber> {
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
-        b.append(this.prefix());
+        b.append(((HDFullPath) this).prefix());
         for (ChildNumber child : childNumbers) {
             b.append(SEPARATOR);
             b.append(child);
