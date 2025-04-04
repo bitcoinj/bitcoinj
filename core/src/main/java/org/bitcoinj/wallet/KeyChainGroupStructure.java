@@ -54,7 +54,7 @@ public interface KeyChainGroupStructure {
      * @param network network/coin type
      * @return The HD Path: purpose / coinType / accountIndex
      */
-    HDPath accountPathFor(ScriptType outputScriptType, Network network);
+    HDPath.HDPartialPath accountPathFor(ScriptType outputScriptType, Network network);
 
     /**
      * Original <b>bitcoinj</b> {@link KeyChainGroupStructure} implementation. Based on BIP32 "Wallet structure".
@@ -89,7 +89,7 @@ public interface KeyChainGroupStructure {
      * @param scriptType script/address type
      * @return An HDPath with a BIP44 "purpose" entry
      */
-    static HDPath purpose(ScriptType scriptType) {
+    static HDPath.HDPartialPath purpose(ScriptType scriptType) {
         if (scriptType == null || scriptType == ScriptType.P2PKH) {
             return HDPath.BIP44_PARENT;
         } else if (scriptType == ScriptType.P2WPKH) {
