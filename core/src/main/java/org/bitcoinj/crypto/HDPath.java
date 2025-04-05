@@ -432,6 +432,20 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HDPath other = (HDPath) o;
+        return Objects.equals(this.hasPrivateKey, other.hasPrivateKey) &&
+                Objects.equals(this.unmodifiableList, other.unmodifiableList);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.hasPrivateKey, this.unmodifiableList);
+    }
+
+    @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append(((HDFullPath) this).prefix());
