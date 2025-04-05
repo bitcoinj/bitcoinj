@@ -18,12 +18,14 @@ package org.bitcoinj.crypto;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -211,7 +213,13 @@ public class HDPathTest {
             assertEquals(((HDPath.HDFullPath) tv.path).hasPrivateKey() ,((HDPath.HDFullPath) path).hasPrivateKey());
         }
     }
-    
+
+    @Test
+    @Ignore("Ignored until we have a correct implementation of equals that compares the prefix")
+    public void equals_not_M_m() {
+        assertNotEquals(HDPath.M(), HDPath.m());
+    }
+
     // This should/will be a record
     public static class PathVector {
         final String pathString;
