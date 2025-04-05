@@ -432,6 +432,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     }
 
     @Override
+    public boolean isEmpty() {
+        return childNumbers.isEmpty();
+    }
+
+    @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append(((HDFullPath) this).prefix());
