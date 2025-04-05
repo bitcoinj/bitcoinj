@@ -432,6 +432,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     }
 
     @Override
+    public boolean isEmpty() {
+        return childNumbers.isEmpty();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if ((o == null) || !(o instanceof HDPath)) return false;
