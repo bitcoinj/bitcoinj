@@ -56,7 +56,7 @@ public class WalletAccountPathTest {
 
     @MethodSource("walletStructureParams")
     @ParameterizedTest(name = "path {1} generated for {2}, {3}")
-    void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath.HDFullPath expectedPath, ScriptType scriptType,
+    void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath expectedPath, ScriptType scriptType,
                                   BitcoinNetwork network) throws IOException, UnreadableWalletException {
         // When we create a wallet with parameterized structure, network, and scriptType
         Wallet wallet = createWallet(walletFile, network, structure, scriptType);

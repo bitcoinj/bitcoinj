@@ -17,13 +17,12 @@
 package org.bitcoinj.signers;
 
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.Wallet;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,7 +50,7 @@ public interface TransactionSigner {
          * same derivation path and we need to store only one key path per input. As TransactionInput is mutable, inputs
          * are identified by their scriptPubKeys (keys in this map).
          */
-        public final Map<Script, List<ChildNumber>> keyPaths;
+        public final Map<Script, HDPath> keyPaths;
 
         public ProposedTransaction(Transaction partialTx) {
             this.partialTx = partialTx;
