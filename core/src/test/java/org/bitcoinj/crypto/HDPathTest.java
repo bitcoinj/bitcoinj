@@ -16,7 +16,10 @@
 
 package org.bitcoinj.crypto;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
@@ -26,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Michael Sean Gilligan
  */
+@RunWith(JUnitParamsRunner.class)
 public class HDPathTest {
     @Test
     public void testPrimaryConstructor() {
@@ -116,69 +120,83 @@ public class HDPathTest {
         assertEquals(0, empty3.size());
     }
 
-    @Test
-    public void testFormatPath() {
-        Object[] tv = {
-                "M/44H/0H/0H/1/1",
-                HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
-                        new ChildNumber(1, false), new ChildNumber(1, false)),
-
-                "M/7H/3/3/1H",
-                HDPath.M(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
-                        new ChildNumber(1, true)),
-
-                "M/1H/2H/3H",
-                HDPath.M(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
-
-                "M/1/2/3",
-                HDPath.M(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+    private PathVector[] formatTestVectors() {
+        return new PathVector[] {
+                new PathVector (
+                        "M/44H/0H/0H/1/1",
+                        HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                                new ChildNumber(1, false), new ChildNumber(1, false))
+                ),
+                new PathVector (
+                        "M/7H/3/3/1H",
+                        HDPath.M(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                                new ChildNumber(1, true))
+                ),
+                new PathVector (
+                        "M/1H/2H/3H",
+                        HDPath.M(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true))
+                ),
+                new PathVector (
+                        "M/1/2/3",
+                        HDPath.M(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+                )
         };
-
-        for (int i = 0; i < tv.length; i += 2) {
-            String expectedStrPath = (String) tv[i];
-            HDPath path = (HDPath) tv[i + 1];
-
-            String generatedStrPath = path.toString();
-
-            assertEquals(expectedStrPath, generatedStrPath);
-        }
     }
 
     @Test
-    public void testParsePath() {
-        Object[] tv = {
+    @Parameters(method = "formatTestVectors")
+    public void testFormatPath(PathVector tv) {
+        String generatedStrPath = tv.path.toString();
+        assertEquals(tv.pathString, generatedStrPath);
+    }
+
+    private PathVector[] parseTestVectors() {
+        return new PathVector[] {
+            new PathVector (
                 "M / 44H / 0H / 0H / 1 / 1",
                 HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
-                        new ChildNumber(1, false), new ChildNumber(1, false)),
-                false,
+                    new ChildNumber(1, false), new ChildNumber(1, false))
+            ),
 
+            new PathVector (
                 "M/7H/3/3/1H/",
                 HDPath.M(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
-                        new ChildNumber(1, true)),
-                false,
+                    new ChildNumber(1, true))
+            ),
 
+            new PathVector (
                 "m/7H/3/3/1H/",
                 HDPath.m(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
-                        new ChildNumber(1, true)),
-                true,
+                    new ChildNumber(1, true))
+            ),
 
+            new PathVector (
                 "1 H / 2 H / 3 H /",
-                HDPath.partial(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
-                false,
+                HDPath.partial(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true))
+            ),
 
+            new PathVector (
                 "1 / 2 / 3 /",
-                HDPath.partial(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false)),
-                false
+                HDPath.partial(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+            )
         };
+    }
 
-        for (int i = 0; i < tv.length; i += 3) {
-            String strPath = (String) tv[i];
-            HDPath expectedPath = (HDPath) tv[i + 1];
-            boolean expectedHasPrivateKey = (Boolean) tv[i + 2];
+    @Test
+    @Parameters(method = "parseTestVectors")
+    public void testParsePath(PathVector tv) {
+        HDPath.HDFullPath path = HDPath.parsePath(tv.pathString);
+        assertEquals(tv.path, path);
+    }
+    
+    // This should/will be a record
+    public static class PathVector {
+        final String pathString;
+        final HDPath path;
 
-            HDPath.HDFullPath path = HDPath.parsePath(strPath);
-            assertEquals(expectedPath, path);
-            assertEquals(expectedHasPrivateKey, path.hasPrivateKey());
+        private PathVector(String pathString, HDPath path) {
+            this.pathString = pathString;
+            this.path = path;
         }
     }
 }
