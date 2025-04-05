@@ -120,7 +120,7 @@ public class HDPathTest {
         assertEquals(0, empty3.size());
     }
 
-    private PathVector[] formatTestVectors() {
+    private PathVector[] toStringTestVectors() {
         return new PathVector[] {
                 new PathVector (
                         "M/44H/0H/0H/1/1",
@@ -144,8 +144,8 @@ public class HDPathTest {
     }
 
     @Test
-    @Parameters(method = "formatTestVectors")
-    public void testFormatPath(PathVector tv) {
+    @Parameters(method = "toStringTestVectors")
+    public void testToString(PathVector tv) {
         String generatedStrPath = tv.path.toString();
         assertEquals(tv.pathString, generatedStrPath);
     }
