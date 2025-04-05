@@ -201,7 +201,7 @@ public class HDPathTest {
     }
 
     @Test
-    @Parameters(method = "parseTestVectors")
+    @Parameters(method = "toStringTestVectors, parseTestVectors")
     public void testParsePath(PathVector tv) {
         HDPath.HDFullPath path = HDPath.parsePath(tv.pathString);
         assertEquals(tv.path, path);
