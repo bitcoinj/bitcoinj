@@ -18,8 +18,6 @@ package org.bitcoinj.crypto;
 
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -165,17 +163,17 @@ public class HDPathTest {
                 true,
 
                 "1 H / 2 H / 3 H /",
-                Arrays.asList(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
+                HDPath.partial(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true)),
                 false,
 
                 "1 / 2 / 3 /",
-                Arrays.asList(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false)),
+                HDPath.partial(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false)),
                 false
         };
 
         for (int i = 0; i < tv.length; i += 3) {
             String strPath = (String) tv[i];
-            List<ChildNumber> expectedPath = (List<ChildNumber>) tv[i + 1];
+            HDPath expectedPath = (HDPath) tv[i + 1];
             boolean expectedHasPrivateKey = (Boolean) tv[i + 2];
 
             HDPath.HDFullPath path = HDPath.parsePath(strPath);
