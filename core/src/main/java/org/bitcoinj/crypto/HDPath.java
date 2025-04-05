@@ -432,6 +432,19 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if ((o == null) || !(o instanceof HDPath)) return false;
+        HDPath other = (HDPath) o;
+        return Objects.equals(this.childNumbers, other.childNumbers);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.childNumbers);
+    }
+
+    @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
         if (this instanceof HDFullPath) {

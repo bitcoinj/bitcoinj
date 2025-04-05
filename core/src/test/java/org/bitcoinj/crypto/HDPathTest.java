@@ -18,12 +18,14 @@ package org.bitcoinj.crypto;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -205,6 +207,12 @@ public class HDPathTest {
     public void testParsePath(PathVector tv) {
         HDPath.HDFullPath path = HDPath.parsePath(tv.pathString);
         assertEquals(tv.path, path);
+    }
+
+    @Test
+    @Ignore("Ignored until we have a correct implementation of equals that compares the prefix")
+    public void equals_not_M_m() {
+        assertNotEquals(HDPath.M(), HDPath.m());
     }
 
     // This should be a record
