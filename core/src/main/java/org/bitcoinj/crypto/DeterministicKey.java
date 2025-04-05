@@ -265,24 +265,34 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Returns the same key with the private bytes removed. May return the same instance. The purpose of this is to save
+     * Returns the same key with the private keys (cleartext and encrypted) removed. May return the same instance.
+     * <p>
+     * The purpose of this is to save
      * memory: the private key can always be very efficiently rederived from a parent that a private key, so storing
      * all the private keys in RAM is a poor tradeoff especially on constrained devices. This means that the returned
      * key may still be usable for signing and so on, so don't expect it to be a true pubkey-only object! If you want
      * that then you should follow this call with a call to {@link #dropParent()}.
+     *
+     * @return this key without private key
      */
+    public DeterministicKey withoutPrivateKey() {
+        return priv == null && encryptedPrivateKey == null && keyCrypter == null ?
+                this :
+                new DeterministicKey(null, pub, depth, parent, parentFingerprint, chainCode, childNumberPath,
+                        null, null);
+    }
+
+    /** @deprecated use {@link #withoutPrivateKey()} */
+    @Deprecated
     public DeterministicKey dropPrivateBytes() {
-        if (isPubKeyOnly())
-            return this;
-        else
-            return new DeterministicKey(getPath(), getChainCode(), pub, null, parent);
+        return withoutPrivateKey();
     }
 
     /**
      * <p>Returns the same key with the parent pointer removed (it still knows its own path and the parent fingerprint).</p>
      *
      * <p>If this key doesn't have private key bytes stored/cached itself, but could rederive them from the parent, then
-     * the new key returned by this method won't be able to do that. Thus, using dropPrivateBytes().dropParent() on a
+     * the new key returned by this method won't be able to do that. Thus, using withoutPrivateKey().dropParent() on a
      * regular DeterministicKey will yield a new DeterministicKey that cannot sign or do other things involving the
      * private key at all.</p>
      */

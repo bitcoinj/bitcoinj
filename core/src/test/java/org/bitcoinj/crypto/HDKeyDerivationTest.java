@@ -75,7 +75,7 @@ public class HDKeyDerivationTest {
     @Test
     public void testDeriveFromPublicParent() {
         DeterministicKey parent = new DeterministicKey(HDPath.M(), new byte[32], BigInteger.TEN,
-                null).dropPrivateBytes();
+                null).withoutPrivateKey();
         assertTrue(parent.isPubKeyOnly());
         assertFalse(parent.isEncrypted());
 

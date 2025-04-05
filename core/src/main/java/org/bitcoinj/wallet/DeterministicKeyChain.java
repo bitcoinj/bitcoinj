@@ -552,7 +552,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     // Clone key to new hierarchy.
     private static DeterministicKey cloneKey(DeterministicHierarchy hierarchy, DeterministicKey key) {
         DeterministicKey parent = hierarchy.get(Objects.requireNonNull(key.getParent()).getPath(), false, false);
-        return new DeterministicKey(key.dropPrivateBytes(), parent);
+        return new DeterministicKey(key.withoutPrivateKey(), parent);
     }
 
     private void checkForBitFlip(DeterministicKey k) {
@@ -1254,7 +1254,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         Stopwatch watch = Stopwatch.start();
         List<DeterministicKey> result = HDKeyDerivation.generate(parent, numChildren)
                 .limit(limit)
-                .map(DeterministicKey::dropPrivateBytes)
+                .map(DeterministicKey::withoutPrivateKey)
                 .collect(StreamUtils.toUnmodifiableList());
         log.info("Took {}", watch);
         return result;
