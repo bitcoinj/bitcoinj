@@ -434,7 +434,9 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
-        b.append(((HDFullPath) this).prefix());
+        if (this instanceof HDFullPath) {
+            b.append(((HDFullPath) this).prefix());
+        }
         for (ChildNumber child : childNumbers) {
             b.append(SEPARATOR);
             b.append(child);

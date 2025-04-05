@@ -139,6 +139,24 @@ public class HDPathTest {
                 new PathVector (
                         "M/1/2/3",
                         HDPath.M(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+                ),
+                new PathVector (
+                        "/44H/0H/0H/1/1",
+                        HDPath.partial(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                                new ChildNumber(1, false), new ChildNumber(1, false))
+                ),
+                new PathVector (
+                        "/7H/3/3/1H",
+                        HDPath.partial(new ChildNumber(7, true), new ChildNumber(3, false), new ChildNumber(3, false),
+                                new ChildNumber(1, true))
+                ),
+                new PathVector (
+                        "/1H/2H/3H",
+                        HDPath.partial(new ChildNumber(1, true), new ChildNumber(2, true), new ChildNumber(3, true))
+                ),
+                new PathVector (
+                        "/1/2/3",
+                        HDPath.partial(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
                 )
         };
     }
