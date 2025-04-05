@@ -205,8 +205,13 @@ public class HDPathTest {
     @Test
     @Parameters(method = "toStringTestVectors, parseTestVectors")
     public void testParsePath(PathVector tv) {
-        HDPath.HDFullPath path = HDPath.parsePath(tv.pathString);
+        HDPath path = HDPath.parsePath(tv.pathString);
         assertEquals(tv.path, path);
+        // TODO: This is a reminder to FULLY implement (including hasPrivateKey) equals and hashCode on HDPath and subclasses
+        // Until equals and hashCode are FULLY implemented let's test `hasPrivateKey()` manually
+        if (path instanceof HDPath.HDFullPath) {
+            assertEquals(((HDPath.HDFullPath) tv.path).hasPrivateKey() ,((HDPath.HDFullPath) path).hasPrivateKey());
+        }
     }
 
     @Test
