@@ -60,12 +60,10 @@ public class MissingSigResolutionSigner implements TransactionSigner {
         if (missingSigsMode == Wallet.MissingSigsMode.USE_OP_ZERO)
             return true;
 
-        int numInputs = propTx.partialTx.getInputs().size();
         byte[] dummySig = TransactionSignature.dummy().encodeToBitcoin();
-        for (int i = 0; i < numInputs; i++) {
-            TransactionInput txIn = propTx.partialTx.getInput(i);
+        for (TransactionInput txIn : propTx.partialTx.getInputs()) {
             if (txIn.getConnectedOutput() == null) {
-                log.warn("Missing connected output, assuming input {} is already signed.", i);
+                log.warn("Missing connected output, assuming input {} is already signed.", txIn.getIndex());
                 continue;
             }
 
