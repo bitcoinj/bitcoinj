@@ -19,11 +19,7 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.base.internal.ByteArray;
 
 /**
- *  Wrapper for a {@code byte[]}  containing an AES Key. This is a replacement for Bouncy Castle's {@code KeyParameter} which
- *  was used for this purpose in previous versions of <b>bitcoinj</b>. Unfortunately, this created a Gradle _API_ dependency
- *  on Bouncy Castle when that wasn't strictly necessary.
- *  <p>
- *  We have made this change without deprecation because it affected many method signatures and because updating is a trivial change.
+ *  Wrapper for a {@code byte[]} containing an AES Key.
  */
 public class AesKey extends ByteArray {
     /**
