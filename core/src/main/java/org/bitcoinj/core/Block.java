@@ -50,7 +50,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Sha256Hash.hashTwice;
@@ -818,6 +820,17 @@ public class Block implements Message {
     public Transaction transaction(int index) {
         checkState(!isHeaderOnly());
         return transactions.get(index);
+    }
+
+    /**
+     * Find transactions matching a predicate.
+     *
+     * @param predicate test that returns {@code true} for a match
+     */
+    public Stream<Transaction> findTransactions(Predicate<Transaction> predicate) {
+        return transactions != null
+                ? transactions.stream().filter(predicate)
+                : Stream.empty();
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////////////

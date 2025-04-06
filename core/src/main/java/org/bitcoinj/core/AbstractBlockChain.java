@@ -56,6 +56,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -592,9 +593,12 @@ public abstract class AbstractBlockChain {
         if (!params.passesCheckpoint(storedPrev.getHeight() + 1, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + (storedPrev.getHeight() + 1));
         if (shouldVerifyTransactions()) {
-            for (Transaction tx : block.getTransactions())
-                if (!tx.isFinal(storedPrev.getHeight() + 1, block.time()))
-                   throw new VerificationException("Block contains non-final transaction");
+            Predicate<Transaction> isNonFinal = tx -> !tx.isFinal(storedPrev.getHeight() + 1, block.time());
+            boolean containsNonFinal = block
+                    .findTransactions(isNonFinal)
+                    .findAny()
+                    .isPresent();
+            if (containsNonFinal) throw new VerificationException("Block contains non-final transaction");
         }
         
         StoredBlock head = getChainHead();
