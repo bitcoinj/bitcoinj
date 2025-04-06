@@ -112,7 +112,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
  * can usually ignore the compressed/uncompressed distinction.</p>
  */
-public class ECKey implements EncryptableItem {
+public class ECKey implements EncryptableItem, Secp256k1PubKey {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
     // Note: this can be replaced with Arrays.compareUnsigned(a, b) once we require Java 9
     private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = ByteUtils.arrayUnsignedComparator();
@@ -454,6 +454,16 @@ public class ECKey implements EncryptableItem {
      */
     public boolean isCompressed() {
         return pub.isCompressed();
+    }
+
+    @Override
+    public java.security.spec.ECPoint getW() {
+        return pub.getW();
+    }
+
+    @Override
+    public byte[] getEncoded() {
+        return getPubKey();
     }
 
     /**

@@ -32,7 +32,7 @@ import java.util.Objects;
  * <p>
  * Apart from the lazy field {@link #point}, instances of this class are immutable.
  */
-public final class LazyECPoint {
+public final class LazyECPoint implements Secp256k1PubKey {
     private static final ECCurve curve = ECKey.CURVE.getCurve();
 
     // bits will be null if LazyECPoint is constructed from an (already decoded) point
@@ -83,12 +83,26 @@ public final class LazyECPoint {
         return !compressed ? this : new LazyECPoint(get(), false);
     }
 
+    /**
+     * @return Bouncy Castle ECPoint
+     */
     public ECPoint get() {
         if (point == null)
             point = curve.decodePoint(bits);
         return point;
     }
 
+    /**
+     * @return Java ECPoint
+     */
+    @Override
+    public java.security.spec.ECPoint getW() {
+        return new java.security.spec.ECPoint(
+                get().normalize().getAffineXCoord().toBigInteger(),
+                get().normalize().getAffineYCoord().toBigInteger());
+    }
+
+    @Override
     public byte[] getEncoded() {
         if (bits != null)
             return Arrays.copyOf(bits, bits.length);
