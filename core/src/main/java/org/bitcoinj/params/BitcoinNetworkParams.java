@@ -68,20 +68,14 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      * Return network parameters for a network id
      * @param id the network id
      * @return the network parameters for the given string ID or NULL if not recognized
+     * @deprecated Use {@link BitcoinNetwork#fromIdString(String)} and/or {@link BitcoinNetworkParams#of(BitcoinNetwork)}
      */
+    @Deprecated
     @Nullable
     public static BitcoinNetworkParams fromID(String id) {
-        if (id.equals(BitcoinNetwork.ID_MAINNET)) {
-            return MainNetParams.get();
-        } else if (id.equals(BitcoinNetwork.ID_TESTNET)) {
-            return TestNet3Params.get();
-        } else if (id.equals(BitcoinNetwork.ID_SIGNET)) {
-            return SigNetParams.get();
-        } else if (id.equals(BitcoinNetwork.ID_REGTEST)) {
-            return RegTestParams.get();
-        } else {
-            return null;
-        }
+        return BitcoinNetwork.fromIdString(id)
+                .map(BitcoinNetworkParams::of)
+                .orElse(null);
     }
 
     /**
