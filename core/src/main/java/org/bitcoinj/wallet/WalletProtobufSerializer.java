@@ -25,7 +25,6 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.core.LockTime;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Services;
@@ -102,10 +101,6 @@ public class WalletProtobufSerializer {
     @FunctionalInterface
     public interface WalletFactory {
         Wallet create(Network network, KeyChainGroup keyChainGroup);
-        @Deprecated
-        default Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup) {
-            return create(params.network(), keyChainGroup);
-        }
         WalletFactory DEFAULT = Wallet::new;
     }
 
