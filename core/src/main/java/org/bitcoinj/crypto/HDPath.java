@@ -157,6 +157,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         public HDFullPath parent() {
             return new HDFullPath(this.hasPrivateKey, parentInternal());
         }
+
+        @Override
+        public HDPartialPath asPartial() {
+            return new HDPartialPath(this.childNumbers);
+        }
     }
 
     public static class HDPartialPath extends HDPath {
@@ -183,6 +188,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         @Override
         public HDPartialPath parent() {
             return new HDPartialPath(parentInternal());
+        }
+
+        @Override
+        public HDPartialPath asPartial() {
+            return this;
         }
     }
 
@@ -401,6 +411,12 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
                 childNumbers.subList(0, childNumbers.size() - 1) :
                 Collections.emptyList();
     }
+
+    /**
+     * Convert to a partial path, if necessary
+     * @return New or existing partial path
+     */
+    abstract public HDPartialPath asPartial();
 
     /**
      * Return a list of all ancestors of this path

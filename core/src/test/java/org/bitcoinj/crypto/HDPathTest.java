@@ -215,6 +215,13 @@ public class HDPathTest {
     }
 
     @Test
+    @Parameters(method = "toStringTestVectors, parseTestVectors")
+    public void testAsPartial(PathVector tv) {
+        HDPath.HDPartialPath partialPath = tv.path.asPartial();
+        assertEquals(tv.path.childNumbers, partialPath.childNumbers);
+    }
+
+    @Test
     @Ignore("Ignored until we have a correct implementation of equals that compares the prefix")
     public void equals_not_M_m() {
         assertNotEquals(HDPath.M(), HDPath.m());
