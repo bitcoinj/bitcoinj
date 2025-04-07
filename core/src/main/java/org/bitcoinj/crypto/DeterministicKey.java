@@ -58,7 +58,7 @@ public class DeterministicKey extends ECKey {
 
     @Nullable
     private final DeterministicKey parent;
-    private final HDPath childNumberPath;
+    private final HDPath.HDPartialPath childNumberPath;
     private final int depth;
     private final int parentFingerprint; // 0 if this key is root node of key hierarchy
 
@@ -186,18 +186,26 @@ public class DeterministicKey extends ECKey {
         this.parent = parent;
         this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.childNumberPath = Objects.requireNonNull(hdPath);
+        this.childNumberPath = Objects.requireNonNull(hdPath).asPartial();
         this.encryptedPrivateKey = encryptedPrivateKey;
         this.keyCrypter = keyCrypter;
     }
 
     /**
-     * Returns the path through some {@link DeterministicHierarchy} which reaches this keys position in the tree.
-     * A path can be written as 0/1/0 which means the first child of the root, the second child of that node, then
+     * Returns the {@link HDPath.HDFullPath} through the {@link DeterministicHierarchy} to this key's position in the tree.
+     * A path can be written as {@code M/0/1/0} which means the first child of the root, the second child of that node, then
      * the first child of that node.
+     * @return A full path starting with {@code 'm'} or {@code 'M'} depending upon whether ths private key is available.
      */
-    public HDPath getPath() {
-        return childNumberPath;
+    public HDPath.HDFullPath getPath() {
+        return childNumberPath.asFull(prefix());
+    }
+
+    /**
+     * @return The prefix {@code 'm'} or {@code 'M'} for this key's HD path.
+     */
+    private HDPath.Prefix prefix() {
+        return isWatching() ? HDPath.Prefix.PUBLIC : HDPath.Prefix.PRIVATE;
     }
 
     /**
