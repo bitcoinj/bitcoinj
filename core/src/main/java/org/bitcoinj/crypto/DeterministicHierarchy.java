@@ -40,7 +40,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * is a list of {@link ChildNumber}s.</p>
  */
 public class DeterministicHierarchy {
-    private final Map<HDPath, DeterministicKey> keys = new HashMap<>();
+    private final Map<HDPath.HDPartialPath, DeterministicKey> keys = new HashMap<>();
     private final HDPath rootPath;
     // Keep track of how many child keys each node has. This is kind of weak.
     private final Map<HDPath, ChildNumber> lastChildNumbers = new HashMap<>();
@@ -67,7 +67,7 @@ public class DeterministicHierarchy {
      * inserted in order.
      */
     public final void putKey(DeterministicKey key) {
-        HDPath path = key.getPath();
+        HDPath.HDPartialPath path = key.getPath().asPartial();
         // Update our tracking of what the next child in each branch of the tree should be. Just assume that keys are
         // inserted in order here.
         final DeterministicKey parent = key.getParent();
@@ -94,19 +94,20 @@ public class DeterministicHierarchy {
      * @throws IllegalArgumentException if create is false and the path was not found.
      */
     public DeterministicKey get(List<ChildNumber> path, boolean relativePath, boolean create) {
-        HDPath inputPath = HDPath.M(path);
-        HDPath absolutePath = relativePath
-                ? rootPath.extend(path)
-                : inputPath;
-        if (!keys.containsKey(absolutePath)) {
+        // Searches must be done on partial paths (full paths but without m or M)
+        HDPath.HDPartialPath partialPath = HDPath.partial(path);    // absolute or relative keyless path
+        HDPath.HDPartialPath searchPath = relativePath              // absolute path for search/create
+                ? rootPath.asPartial().extend(partialPath)
+                : partialPath;
+        if (!keys.containsKey(searchPath)) {
             if (!create)
                 throw new IllegalArgumentException(String.format(Locale.US, "No key found for %s path %s.",
-                    relativePath ? "relative" : "absolute", inputPath.toString()));
-            checkArgument(!absolutePath.isEmpty(), () -> "can't derive the master key: nothing to derive from");
-            DeterministicKey parent = get(absolutePath.subList(0, absolutePath.size() - 1), false, true);
-            putKey(HDKeyDerivation.deriveChildKey(parent, absolutePath.get(absolutePath.size() - 1)));
+                    relativePath ? "relative" : "absolute", partialPath));
+            checkArgument(!searchPath.isEmpty(), () -> "can't derive the master key: nothing to derive from");
+            DeterministicKey parent = get(searchPath.subList(0, searchPath.size() - 1), false, true);
+            putKey(HDKeyDerivation.deriveChildKey(parent, searchPath.get(searchPath.size() - 1)));
         }
-        return keys.get(absolutePath);
+        return keys.get(searchPath);
     }
 
     /**
