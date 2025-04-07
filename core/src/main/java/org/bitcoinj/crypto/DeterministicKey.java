@@ -152,7 +152,7 @@ public class DeterministicKey extends ECKey {
     /** @deprecated use {@link #withParent(DeterministicKey)} */
     @Deprecated
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        this(keyToClone.priv, keyToClone.pub, keyToClone.childNumberPath.size(), newParent,
+        this(keyToClone.priv == null ? null : keyToClone.priv.getS(), keyToClone.pub, keyToClone.childNumberPath.size(), newParent,
                 newParent.getFingerprint(), keyToClone.chainCode, keyToClone.childNumberPath, null, null);
     }
 
@@ -306,7 +306,7 @@ public class DeterministicKey extends ECKey {
      */
     public DeterministicKey withParent(DeterministicKey parent) {
         Objects.requireNonNull(parent);
-        return new DeterministicKey(this.priv, this.pub, parent.getDepth() + 1, parent, parent.getFingerprint(),
+        return new DeterministicKey(priv == null ? null : priv.getS(), this.pub, parent.getDepth() + 1, parent, parent.getFingerprint(),
                 this.chainCode, this.childNumberPath, this.encryptedPrivateKey, this.keyCrypter);
     }
 
@@ -321,7 +321,7 @@ public class DeterministicKey extends ECKey {
      * @return this key without parent pointer
      */
     public DeterministicKey withoutParent() {
-        return new DeterministicKey(priv, pub, depth, null, parentFingerprint, chainCode, childNumberPath,
+        return new DeterministicKey(priv == null ? null : priv.getS(), pub, depth, null, parentFingerprint, chainCode, childNumberPath,
                 encryptedPrivateKey, keyCrypter);
     }
 
@@ -489,7 +489,7 @@ public class DeterministicKey extends ECKey {
         DeterministicKey cursor = findParentWithPrivKey();
         if (cursor == null)
             return null;
-        return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
+        return derivePrivateKeyDownwards(cursor, cursor.priv.getS().toByteArray());
     }
 
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
@@ -506,7 +506,8 @@ public class DeterministicKey extends ECKey {
         // catch it.
         if (!downCursor.pub.equals(pub))
             throw new KeyCrypterException.PublicPrivateMismatch("Could not decrypt bytes");
-        return Objects.requireNonNull(downCursor.priv);
+        Objects.requireNonNull(downCursor.priv);
+        return downCursor.priv.getS();
     }
 
     /**

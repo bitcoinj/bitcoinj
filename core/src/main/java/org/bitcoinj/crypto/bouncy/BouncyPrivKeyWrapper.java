@@ -18,7 +18,9 @@ package org.bitcoinj.crypto.bouncy;
 import org.bitcoinj.crypto.Secp256k1PrivKey;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1FieldElement;
 
+import javax.annotation.Nullable;
 import java.math.BigInteger;
+import java.util.Objects;
 
 /**
  * Experimental Secp256k1PrivKey wrapper for a Bouncy Castle Private Key stored
@@ -28,21 +30,45 @@ public class BouncyPrivKeyWrapper implements Secp256k1PrivKey {
     private final BigInteger privKey;
 
     public BouncyPrivKeyWrapper(BigInteger privKey) {
+        Objects.requireNonNull(privKey);
         this.privKey = privKey;
     }
 
-    public BouncyPrivKeyWrapper(SecP256K1FieldElement privKey) {
-        this.privKey = privKey.toBigInteger();
+//    public BouncyPrivKeyWrapper(SecP256K1FieldElement privKey) {
+//        Objects.requireNonNull(privKey);
+//        this.privKey = privKey.toBigInteger();
+//    }
+
+    public static BouncyPrivKeyWrapper of(BigInteger privKey) {
+        return new BouncyPrivKeyWrapper(privKey);
+    }
+
+    @Nullable
+    public static BouncyPrivKeyWrapper ofNullable(@Nullable BigInteger privKey) {
+        return privKey != null ? new BouncyPrivKeyWrapper(privKey) : null;
     }
 
     @Override
     public byte[] getEncoded() {
-        SecP256K1FieldElement fe = new SecP256K1FieldElement(privKey);
-        return fe.getEncoded();
+        throw new UnsupportedOperationException();
+//        SecP256K1FieldElement fe = new SecP256K1FieldElement(privKey);
+//        return fe.getEncoded();
     }
 
     @Override
     public BigInteger getS() {
         return privKey;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        BouncyPrivKeyWrapper that = (BouncyPrivKeyWrapper) o;
+        return Objects.equals(privKey, that.privKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(privKey);
     }
 }

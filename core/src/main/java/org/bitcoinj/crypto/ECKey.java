@@ -158,7 +158,7 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
     }
 
     // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
-    @Nullable protected final BigInteger priv;  // A field element.
+    @Nullable protected final Secp256k1PrivKey priv;  // A field element.
     protected final LazyECPoint pub;
 
     // Creation time of the key, or null if the key was deserialized from a version that did
@@ -216,7 +216,7 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
         AsymmetricCipherKeyPair keypair = generator.generateKeyPair();
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
-        priv = privParams.getD();
+        priv = new BouncyPrivKeyWrapper(privParams.getD());
         pub = new LazyECPoint(pubParams.getQ(), true);
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
@@ -235,7 +235,7 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
             checkArgument(!priv.equals(BigInteger.ZERO));
             checkArgument(!priv.equals(BigInteger.ONE));
         }
-        this.priv = priv;
+        this.priv = BouncyPrivKeyWrapper.ofNullable(priv);
         this.pub = Objects.requireNonNull(pub);
     }
 
@@ -329,7 +329,7 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
         if (!pub.isCompressed())
             return this;
         else
-            return new ECKey(priv, new LazyECPoint(pub.get(), false));
+            return new ECKey(priv == null ? null : priv.getS(), new LazyECPoint(pub.get(), false));
     }
 
     /**
@@ -447,7 +447,7 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
     public BigInteger getPrivKey() {
         if (priv == null)
             throw new MissingPrivateKeyException();
-        return priv;
+        return priv.getS();
     }
 
     /**
@@ -455,9 +455,7 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
      * @return Private key if present
      */
     public Optional<Secp256k1PrivKey> getPrivateKey() {
-        return priv != null
-                ? Optional.of(new BouncyPrivKeyWrapper(priv))
-                : Optional.empty();
+        return Optional.ofNullable(priv);
     }
 
     /**
@@ -467,12 +465,12 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
         return pub.isCompressed();
     }
 
-    @Override
+    //@Override
     public java.security.spec.ECPoint getW() {
         return pub.getW();
     }
 
-    @Override
+    //@Override
     public byte[] getEncoded() {
         return getPubKey();
     }
@@ -645,7 +643,7 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
             if (priv == null)
                 throw new MissingPrivateKeyException();
         }
-        return doSign(input, priv);
+        return doSign(input, priv.getS());
     }
 
     protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
