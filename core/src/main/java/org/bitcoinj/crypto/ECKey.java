@@ -1340,7 +1340,6 @@ public class ECKey implements EncryptableItem {
         ECKey other = (ECKey) o;
         return Objects.equals(this.priv, other.priv)
                 && Objects.equals(this.pub, other.pub)
-                && Objects.equals(this.compressed, other.compressed)
                 && Objects.equals(this.creationTime, other.creationTime)
                 && Objects.equals(this.keyCrypter, other.keyCrypter)
                 && Objects.equals(this.encryptedPrivateKey, other.encryptedPrivateKey);
