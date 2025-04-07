@@ -334,7 +334,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * <p>
      * Where a letter {@code H} means hardened key. Spaces are ignored.
      */
-    public static HDFullPath parsePath(@Nonnull String path) {
+    public static HDPath parsePath(@Nonnull String path) {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
         Optional<Prefix> prefix = parsedNodes.isEmpty() ? Optional.empty() : Prefix.of(parsedNodes.get(0));
 
@@ -344,7 +344,9 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
                 .map(ChildNumber::parse)
                 .collect(StreamUtils.toUnmodifiableList());
 
-        return HDPath.of(prefix.orElse(Prefix.PUBLIC), nodes);
+        return prefix.isPresent()
+            ? HDPath.of(prefix.get(), nodes)
+            : new HDPath.HDPartialPath(nodes);
     }
 
     /**
