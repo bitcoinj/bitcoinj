@@ -75,6 +75,11 @@ public class DeterministicKey extends ECKey {
                 parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath), null, null);
     }
 
+    /**
+     * @deprecated Avoid using Bouncy Castle {@link ECPoint}, if possible. Otherwise, construct a {@link LazyECPoint}
+     * from the Bouncy {@code ECPoint}
+     */
+    @Deprecated
     public DeterministicKey(List<ChildNumber> childNumberPath,
                             byte[] chainCode,
                             ECPoint publicAsPoint,
