@@ -221,6 +221,26 @@ public class HDPathTest {
     }
 
     @Test
+    @Parameters(method = "toStringTestVectors, parseTestVectors")
+    public void testFullPathConversions(PathVector tv) {
+        if (tv.path instanceof HDPath.HDFullPath) {
+            // If test vector is full path, test roundtrip
+            HDPath.Prefix prefix = ((HDPath.HDFullPath) tv.path).prefix();
+            HDPath.HDPartialPath partialPath = tv.path.asPartial();
+            assertEquals(tv.path.childNumbers, partialPath.childNumbers);
+            HDPath.HDFullPath roundTripPath = partialPath.asFull(prefix);
+            assertEquals(tv.path, roundTripPath);
+        } else {
+            // If test vector is partial path, test conversion to public and private
+            HDPath.HDPartialPath partialPath = (HDPath.HDPartialPath) tv.path;
+            HDPath.HDFullPath expectedPublic = HDPath.M(partialPath.childNumbers);
+            HDPath.HDFullPath expectedPrivate = HDPath.m(partialPath.childNumbers);
+            assertEquals(expectedPublic, partialPath.asPublic());
+            assertEquals(expectedPrivate, partialPath.asPrivate());
+        }
+    }
+
+    @Test
     @Ignore("Ignored until we have a correct implementation of equals that compares the prefix")
     public void equals_not_M_m() {
         assertNotEquals(HDPath.M(), HDPath.m());

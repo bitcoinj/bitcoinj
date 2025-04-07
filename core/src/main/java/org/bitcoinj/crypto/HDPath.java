@@ -194,6 +194,18 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         public HDPartialPath asPartial() {
             return this;
         }
+
+        public HDFullPath asFull(Prefix prefix) {
+            return new HDFullPath(prefix, this.list());
+        }
+
+        public HDFullPath asPublic() {
+            return asFull(Prefix.PUBLIC);
+        }
+
+        public HDFullPath asPrivate() {
+            return asFull(Prefix.PRIVATE);
+        }
     }
 
     // Canonical superclass constructor
