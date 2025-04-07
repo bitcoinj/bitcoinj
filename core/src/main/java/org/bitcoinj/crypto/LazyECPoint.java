@@ -137,115 +137,156 @@ public final class LazyECPoint implements ECPublicKey {
             return get().getEncoded(compressed);
     }
 
-    // Delegated methods.
-
-    public ECPoint getDetachedPoint() {
-        return get().getDetachedPoint();
-    }
-
-    public boolean isInfinity() {
-        return get().isInfinity();
-    }
-
-    public ECPoint timesPow2(int e) {
-        return get().timesPow2(e);
-    }
-
-    public ECFieldElement getYCoord() {
-        return get().getYCoord();
-    }
-
-    public ECFieldElement[] getZCoords() {
-        return get().getZCoords();
-    }
-
-    public boolean isNormalized() {
-        return get().isNormalized();
-    }
-
-    public boolean isCompressed() {
+    // package-private
+    boolean isCompressedInternal() {
         return compressed;
     }
 
-    public ECPoint multiply(BigInteger k) {
-        return get().multiply(k);
-    }
-
-    public ECPoint subtract(ECPoint b) {
-        return get().subtract(b);
-    }
-
-    public boolean isValid() {
-        return get().isValid();
-    }
-
-    public ECPoint scaleY(ECFieldElement scale) {
-        return get().scaleY(scale);
-    }
-
-    public ECFieldElement getXCoord() {
-        return get().getXCoord();
-    }
-
-    public ECPoint scaleX(ECFieldElement scale) {
-        return get().scaleX(scale);
-    }
-
-    public boolean equals(ECPoint other) {
-        return get().equals(other);
-    }
-
-    public ECPoint negate() {
-        return get().negate();
-    }
-
-    public ECPoint threeTimes() {
-        return get().threeTimes();
-    }
-
-    public ECFieldElement getZCoord(int index) {
-        return get().getZCoord(index);
-    }
-
-    public byte[] getEncoded(boolean compressed) {
-        if (compressed == isCompressed() && bits != null)
+    // package-private
+    byte[] getEncodedInternal(boolean compressed) {
+        if (compressed == isCompressedInternal() && bits != null)
             return Arrays.copyOf(bits, bits.length);
         else
             return get().getEncoded(compressed);
     }
 
+    // Delegated methods.
+    // These are deprecated now as we are migrating away from using the Bouncy Castle API directly.
+
+    @Deprecated
+    public ECPoint getDetachedPoint() {
+        return get().getDetachedPoint();
+    }
+
+    @Deprecated
+    public boolean isInfinity() {
+        return get().isInfinity();
+    }
+
+    @Deprecated
+    public ECPoint timesPow2(int e) {
+        return get().timesPow2(e);
+    }
+
+    @Deprecated
+    public ECFieldElement getYCoord() {
+        return get().getYCoord();
+    }
+
+    @Deprecated
+    public ECFieldElement[] getZCoords() {
+        return get().getZCoords();
+    }
+
+    @Deprecated
+    public boolean isNormalized() {
+        return get().isNormalized();
+    }
+
+    @Deprecated
+    public boolean isCompressed() {
+        return isCompressedInternal() ;
+    }
+
+    @Deprecated
+    public ECPoint multiply(BigInteger k) {
+        return get().multiply(k);
+    }
+
+    @Deprecated
+    public ECPoint subtract(ECPoint b) {
+        return get().subtract(b);
+    }
+
+    @Deprecated
+    public boolean isValid() {
+        return get().isValid();
+    }
+
+    @Deprecated
+    public ECPoint scaleY(ECFieldElement scale) {
+        return get().scaleY(scale);
+    }
+
+    @Deprecated
+    public ECFieldElement getXCoord() {
+        return get().getXCoord();
+    }
+
+    @Deprecated
+    public ECPoint scaleX(ECFieldElement scale) {
+        return get().scaleX(scale);
+    }
+
+    @Deprecated
+    public boolean equals(ECPoint other) {
+        return get().equals(other);
+    }
+
+    @Deprecated
+    public ECPoint negate() {
+        return get().negate();
+    }
+
+    @Deprecated
+    public ECPoint threeTimes() {
+        return get().threeTimes();
+    }
+
+    @Deprecated
+    public ECFieldElement getZCoord(int index) {
+        return get().getZCoord(index);
+    }
+
+    @Deprecated
+    public byte[] getEncoded(boolean compressed) {
+        if (compressed == isCompressedInternal() && bits != null)
+            return Arrays.copyOf(bits, bits.length);
+        else
+            return get().getEncoded(compressed);
+    }
+
+    @Deprecated
     public ECPoint add(ECPoint b) {
         return get().add(b);
     }
 
+    @Deprecated
     public ECPoint twicePlus(ECPoint b) {
         return get().twicePlus(b);
     }
 
+    @Deprecated
     public ECCurve getCurve() {
         return get().getCurve();
     }
 
+    @Deprecated
     public ECPoint normalize() {
         return get().normalize();
     }
 
+    @Deprecated
     public ECFieldElement getY() {
         return this.normalize().getYCoord();
     }
 
+    @Deprecated
     public ECPoint twice() {
         return get().twice();
     }
 
+    @Deprecated
     public ECFieldElement getAffineYCoord() {
         return get().getAffineYCoord();
     }
 
+    @Deprecated
     public ECFieldElement getAffineXCoord() {
         return get().getAffineXCoord();
     }
 
+    @Deprecated
     public ECFieldElement getX() {
         return this.normalize().getXCoord();
     }
@@ -263,6 +304,6 @@ public final class LazyECPoint implements ECPublicKey {
     }
 
     private byte[] getCanonicalEncoding() {
-        return getEncoded(true);
+        return getEncodedInternal(true);
     }
 }
