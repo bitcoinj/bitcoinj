@@ -64,11 +64,11 @@ public class HDPathTest {
 
     @Test
     public void testParent() {
-        HDPath path1 = HDPath.parsePath("m/0H/1H");
+        HDPath path1 = HDPath.parsePath("M/0H/1H");
 
-        assertEquals(HDPath.parsePath("m/0H"), path1.parent());
+        assertEquals(HDPath.parsePath("M/0H"), path1.parent());
 
-        HDPath path2 = HDPath.parsePath("m/0H");
+        HDPath path2 = HDPath.parsePath("M/0H");
 
         assertEquals(HDPath.parsePath(""), path2.parent());
 
@@ -221,7 +221,6 @@ public class HDPathTest {
     }
 
     @Test
-    @Ignore("Ignored until we have a correct implementation of equals that compares the prefix")
     public void equals_not_M_m() {
         assertNotEquals(HDPath.M(), HDPath.m());
     }
