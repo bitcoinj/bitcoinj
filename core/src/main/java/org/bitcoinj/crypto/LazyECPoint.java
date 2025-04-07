@@ -32,7 +32,6 @@ import java.util.Objects;
 public final class LazyECPoint {
     private static final ECCurve curve = ECKey.CURVE.getCurve();
 
-    private final boolean compressed;
     private final ECPoint point;
 
     /**
@@ -43,7 +42,6 @@ public final class LazyECPoint {
      */
     public LazyECPoint(byte[] bits) {
         this.point = curve.decodePoint(bits);
-        this.compressed = ECKey.isPubKeyCompressed(bits);
     }
 
     /**
@@ -54,35 +52,6 @@ public final class LazyECPoint {
      */
     public LazyECPoint(ECPoint point) {
         this.point = Objects.requireNonNull(point).normalize();
-        this.compressed = true;
-    }
-
-    /**
-     * Construct a LazyECPoint from an already decoded point.
-     *
-     * @param point      the wrapped point
-     * @param compressed true if the represented public key is compressed
-     */
-    @Deprecated
-    LazyECPoint(ECPoint point, boolean compressed) {
-        this.point = Objects.requireNonNull(point).normalize();
-        this.compressed = compressed;
-    }
-
-    /**
-     * Returns a compressed version of this elliptic curve point. Returns the same point if it's already compressed.
-     * See the {@link ECKey} class docs for a discussion of point compression.
-     */
-    public LazyECPoint compress() {
-        return compressed ? this : new LazyECPoint(get());
-    }
-
-    /**
-     * Returns a decompressed version of this elliptic curve point. Returns the same point if it's already compressed.
-     * See the {@link ECKey} class docs for a discussion of point compression.
-     */
-    public LazyECPoint decompress() {
-        return !compressed ? this : new LazyECPoint(get(), false);
     }
 
     public ECPoint get() {
@@ -90,12 +59,11 @@ public final class LazyECPoint {
     }
 
     public byte[] getEncoded() {
-        return get().getEncoded(compressed);
+        return get().getEncoded(true);
     }
 
-    // package-private
-    boolean isCompressedInternal() {
-        return compressed;
+    public byte[] getEncoded(boolean compressed) {
+        return get().getEncoded(compressed);
     }
 
     // package-private

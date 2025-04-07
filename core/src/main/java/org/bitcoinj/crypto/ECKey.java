@@ -159,6 +159,7 @@ public class ECKey implements EncryptableItem {
     // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
     @Nullable protected final BigInteger priv;  // A field element.
     protected final LazyECPoint pub;
+    protected final boolean compressed;
 
     // Creation time of the key, or null if the key was deserialized from a version that did
     // not have this field.
@@ -217,10 +218,16 @@ public class ECKey implements EncryptableItem {
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
         pub = new LazyECPoint(pubParams.getQ());
+        compressed = true;
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
     
     protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
+        this(priv, pub, true);
+    }
+
+    // Future canonical constructor (once we move remembering compressed setting to ECKey)
+    public ECKey(@Nullable BigInteger priv, LazyECPoint pub, boolean compressed) {
         if (priv != null) {
             checkArgument(priv.bitLength() <= 32 * 8, () ->
                     "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
@@ -232,16 +239,13 @@ public class ECKey implements EncryptableItem {
         }
         this.priv = priv;
         this.pub = Objects.requireNonNull(pub);
-    }
-
-    // Future canonical constructor (once we move remembering compressed setting to ECKey)
-    public ECKey(@Nullable BigInteger priv, LazyECPoint pub, boolean compressed) {
-        this(priv, compressed ? pub.compress() : pub.decompress());
+        this.compressed = compressed;
     }
 
     // Copy constructor
     protected ECKey(ECKey key) {
-        this(key.priv, key.pub, key.isCompressed());
+        this(key.priv, key.pub, key.compressed);
+        this.creationTime = key.creationTime;
     }
 
     /**
@@ -354,10 +358,10 @@ public class ECKey implements EncryptableItem {
      * never need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
      */
     public ECKey decompress() {
-        if (!pub.isCompressedInternal())
+        if (!this.compressed)
             return this;
         else
-            return new ECKey(priv, pub.decompress());
+            return new ECKey(priv, pub, false);
     }
 
     /**
@@ -449,7 +453,7 @@ public class ECKey implements EncryptableItem {
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
-            pubKeyHash = CryptoUtils.sha256hash160(this.pub.getEncoded());
+            pubKeyHash = CryptoUtils.sha256hash160(this.pub.getEncoded(compressed));
         return pubKeyHash;
     }
 
@@ -458,7 +462,7 @@ public class ECKey implements EncryptableItem {
      * as the pubKeyHash/address.
      */
     public byte[] getPubKey() {
-        return pub.getEncoded();
+        return pub.getEncoded(compressed);
     }
 
     /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
@@ -486,7 +490,7 @@ public class ECKey implements EncryptableItem {
      * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33 bytes, not 64.
      */
     public boolean isCompressed() {
-        return pub.isCompressedInternal();
+        return compressed;
     }
 
     /**
@@ -1336,6 +1340,7 @@ public class ECKey implements EncryptableItem {
         ECKey other = (ECKey) o;
         return Objects.equals(this.priv, other.priv)
                 && Objects.equals(this.pub, other.pub)
+                && Objects.equals(this.compressed, other.compressed)
                 && Objects.equals(this.creationTime, other.creationTime)
                 && Objects.equals(this.keyCrypter, other.keyCrypter)
                 && Objects.equals(this.encryptedPrivateKey, other.encryptedPrivateKey);
@@ -1364,7 +1369,7 @@ public class ECKey implements EncryptableItem {
     }
 
     public String getPublicKeyAsHex() {
-        return ByteUtils.formatHex(pub.getEncoded());
+        return ByteUtils.formatHex(pub.getEncoded(compressed));
     }
 
 

@@ -128,7 +128,7 @@ public class DeterministicKey extends ECKey {
                             LazyECPoint pub,
                             EncryptedData encryptedPrivateKey,
                             @Nullable DeterministicKey parent) {
-        this(new ECKey(null, pub, pub.isCompressedInternal()), parent == null ? 0 : parent.depth + 1, parent,
+        this(new ECKey(null, pub, true), parent == null ? 0 : parent.depth + 1, parent,
                 parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath),
                 Objects.requireNonNull(encryptedPrivateKey), Objects.requireNonNull(crypter));
     }
@@ -158,7 +158,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        this(new ECKey(null, publicAsPoint, publicAsPoint.isCompressedInternal()), depth, parent, parentFingerprint, chainCode, HDPath.M(childNumberPath),
+        this(new ECKey(null, publicAsPoint, true), depth, parent, parentFingerprint, chainCode, HDPath.M(childNumberPath),
                 null, null);
     }
 
@@ -173,7 +173,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        this(new ECKey(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv))), depth, parent, parentFingerprint,
+        this(new ECKey(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv)), true), depth, parent, parentFingerprint,
                 chainCode, HDPath.M(childNumberPath), null, null);
     }
 
@@ -204,7 +204,7 @@ public class DeterministicKey extends ECKey {
     private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
                              int parentFingerprint, byte[] chainCode, HDPath hdPath,
                              @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
-        this(new ECKey(priv, pub, pub.isCompressedInternal()), depth, parent, parentFingerprint, chainCode, hdPath, encryptedPrivateKey, keyCrypter);
+        this(new ECKey(priv, pub, true), depth, parent, parentFingerprint, chainCode, hdPath, encryptedPrivateKey, keyCrypter);
     }
 
     // NEW CANONICAL CONSTRUCTOR
@@ -742,7 +742,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
+        helper.add("pub", ByteUtils.formatHex(pub.getEncoded(compressed)));
         helper.add("chainCode", ByteUtils.formatHex(chainCode));
         helper.add("path", getPathAsString());
         helper.add("depth", depth);
