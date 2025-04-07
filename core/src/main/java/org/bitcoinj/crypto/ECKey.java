@@ -328,7 +328,7 @@ public class ECKey implements EncryptableItem {
         if (!pub.isCompressedInternal())
             return this;
         else
-            return new ECKey(priv, new LazyECPoint(pub.get(), false));
+            return new ECKey(priv, pub.decompress());
     }
 
     /**
