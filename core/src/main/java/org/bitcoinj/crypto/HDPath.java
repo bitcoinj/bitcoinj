@@ -424,6 +424,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
                 Collections.emptyList();
     }
 
+    // TODO: Consider removing this method from here and HDPartialPath to encourage better use of types
     /**
      * Convert to a partial path, if necessary
      * @return New or existing partial path
