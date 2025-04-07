@@ -29,6 +29,7 @@ import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.crypto.bouncy.BouncyPrivKeyWrapper;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.crypto.utils.MessageVerifyUtils;
 import org.bitcoinj.protobuf.wallet.Protos;
@@ -447,6 +448,16 @@ public class ECKey implements EncryptableItem, Secp256k1PubKey {
         if (priv == null)
             throw new MissingPrivateKeyException();
         return priv;
+    }
+
+    /**
+     * Get the private key as a {@link Secp256k1PrivKey}
+     * @return Private key if present
+     */
+    public Optional<Secp256k1PrivKey> getPrivateKey() {
+        return priv != null
+                ? Optional.of(new BouncyPrivKeyWrapper(priv))
+                : Optional.empty();
     }
 
     /**
