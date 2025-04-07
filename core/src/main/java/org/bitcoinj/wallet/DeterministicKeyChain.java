@@ -887,7 +887,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key);
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
                 // Deserialize the public key and path.
-                LazyECPoint pubkey = new LazyECPoint(key.getPublicKey().toByteArray());
+                ECKey pubkey = ECKey.fromPublicOnly(key.getPublicKey().toByteArray());
                 // Deserialize the path through the tree.
                 final HDPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())
@@ -909,12 +909,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (chain == null) {
                     // If this has a private key but no seed, then all we know is the spending key H
                     if (seed == null && key.hasSecretBytes()) {
-                        DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, ByteUtils.bytesToBigInteger(key.getSecretBytes().toByteArray()), null);
+                        BigInteger privKey = ByteUtils.bytesToBigInteger(key.getSecretBytes().toByteArray());
+                        ECKey ecPrivKey = new ECKey(privKey, pubkey.getPubKeyLazyPoint(), pubkey.isCompressed());
+                        DeterministicKey accountKey = new DeterministicKey(ecPrivKey, path, chainCode, null);
                         accountKey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
                         chain = factory.makeSpendingKeyChain(accountKey, outputScriptType);
                         isSpendingKey = true;
                     } else if (seed == null) {
-                        DeterministicKey accountKey = new DeterministicKey(path, chainCode, pubkey, null, null);
+                        DeterministicKey accountKey = new DeterministicKey(pubkey, path, chainCode, null);
                         accountKey.setCreationTime(Instant.ofEpochMilli(key.getCreationTimestamp()));
                         chain = factory.makeWatchingKeyChain(accountKey,
                                 outputScriptType);
@@ -937,18 +939,19 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (key.hasSecretBytes()) {
                     // Not encrypted: private key is available.
                     final BigInteger priv = ByteUtils.bytesToBigInteger(key.getSecretBytes().toByteArray());
-                    detkey = new DeterministicKey(path, chainCode, pubkey, priv, parent);
+                    ECKey ecPrivKey = new ECKey(priv, pubkey.getPubKeyLazyPoint(), pubkey.isCompressed());
+                    detkey = new DeterministicKey(ecPrivKey, path, chainCode, parent);
                 } else {
                     if (key.hasEncryptedData()) {
                         Protos.EncryptedData proto = key.getEncryptedData();
                         EncryptedData data = new EncryptedData(proto.getInitialisationVector().toByteArray(),
                                 proto.getEncryptedPrivateKey().toByteArray());
                         Objects.requireNonNull(crypter, "Encountered an encrypted key but no key crypter provided");
-                        detkey = new DeterministicKey(path, chainCode, crypter, pubkey, data, parent);
+                        detkey = new DeterministicKey(path, chainCode, crypter, pubkey.getPubKeyLazyPoint(), data, parent);
                     } else {
                         // No secret key bytes and key is not encrypted: either a watching key or private key bytes
                         // will be rederived on the fly from the parent.
-                        detkey = new DeterministicKey(path, chainCode, pubkey, null, parent);
+                        detkey = new DeterministicKey(path, chainCode, pubkey.getPubKeyLazyPoint(), null, parent);
                     }
                 }
                 if (key.hasCreationTimestamp())

@@ -157,7 +157,7 @@ public class ECKeyTest {
         // Now re-encode and decode the ASN.1 to see if it is equivalent (it does not produce the exact same byte
         // sequence, some integers are padded now).
         ECKey roundtripKey =
-            ECKey.fromPrivateAndPrecalculatedPublic(decodedKey.getPrivKey(), decodedKey.getPubKeyPoint(), decodedKey.isCompressed());
+            ECKey.fromPrivateAndPrecalculatedPublic(decodedKey.getPrivKey(), decodedKey);
 
         for (ECKey key : new ECKey[] {decodedKey, roundtripKey}) {
             byte[] message = reverseBytes(ByteUtils.parseHex(

@@ -63,7 +63,8 @@ public final class LazyECPoint {
      * @param point      the wrapped point
      * @param compressed true if the represented public key is compressed
      */
-    public LazyECPoint(ECPoint point, boolean compressed) {
+    @Deprecated
+    LazyECPoint(ECPoint point, boolean compressed) {
         this.point = Objects.requireNonNull(point).normalize();
         this.compressed = compressed;
     }

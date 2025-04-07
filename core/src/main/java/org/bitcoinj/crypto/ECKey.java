@@ -219,11 +219,7 @@ public class ECKey implements EncryptableItem {
         pub = new LazyECPoint(pubParams.getQ());
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
-
-    private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
-        this(priv, new LazyECPoint(Objects.requireNonNull(pub), compressed));
-    }
-
+    
     protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         if (priv != null) {
             checkArgument(priv.bitLength() <= 32 * 8, () ->
@@ -236,6 +232,16 @@ public class ECKey implements EncryptableItem {
         }
         this.priv = priv;
         this.pub = Objects.requireNonNull(pub);
+    }
+
+    // Future canonical constructor (once we move remembering compressed setting to ECKey)
+    public ECKey(@Nullable BigInteger priv, LazyECPoint pub, boolean compressed) {
+        this(priv, compressed ? pub.compress() : pub.decompress());
+    }
+
+    // Copy constructor
+    protected ECKey(ECKey key) {
+        this(key.priv, key.pub, key.isCompressed());
     }
 
     /**
@@ -260,7 +266,7 @@ public class ECKey implements EncryptableItem {
      */
     public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicPointFromPrivate(privKey);
-        return new ECKey(privKey, new LazyECPoint(point, compressed));
+        return new ECKey(privKey, new LazyECPoint(point), compressed);
     }
 
     /**
@@ -284,9 +290,26 @@ public class ECKey implements EncryptableItem {
      * generator point by the private key. This is used to speed things up when you know you have the right values
      * already.
      * @param compressed Determines whether the resulting ECKey will use a compressed encoding for the public key.
+     * @deprecated use {@link ECKey#fromPrivateAndPrecalculatedPublic(BigInteger, ECKey)}
      */
+    @Deprecated
     public static ECKey fromPrivateAndPrecalculatedPublic(BigInteger priv, ECPoint pub, boolean compressed) {
+        return new ECKey(priv, new LazyECPoint(Objects.requireNonNull(pub)), compressed);
+    }
+
+    public static ECKey fromPrivateAndPrecalculatedPublic(BigInteger priv, LazyECPoint pub, boolean compressed) {
         return new ECKey(priv, pub, compressed);
+    }
+
+    /**
+     * Creates an ECKey that simply trusts the caller to ensure that point is really the result of multiplying the
+     * generator point by the private key. This is used to speed things up when you know you have the right values
+     * already.
+     * @param priv private key
+     * @param pub ECKey to get the public key point and compression setting from
+     */
+    public static ECKey fromPrivateAndPrecalculatedPublic(BigInteger priv, ECKey pub) {
+        return new ECKey(priv, new LazyECPoint(pub.getPubKeyPoint()), pub.isCompressed());
     }
 
     /**
@@ -297,15 +320,17 @@ public class ECKey implements EncryptableItem {
     public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
         Objects.requireNonNull(priv);
         Objects.requireNonNull(pub);
-        return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(pub));
+        return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(pub), ECKey.isPubKeyCompressed(pub));
     }
 
     /**
      * Creates an ECKey that cannot be used for signing, only verifying signatures, from the given point.
      * @param compressed Determines whether the resulting ECKey will use a compressed encoding for the public key.
+     * @deprecated use {@link ECKey#fromPublicOnly(LazyECPoint, boolean)} )}
      */
+    @Deprecated
     public static ECKey fromPublicOnly(ECPoint pub, boolean compressed) {
-        return new ECKey(null, pub, compressed);
+        return fromPublicOnly(new LazyECPoint(Objects.requireNonNull(pub)), compressed);
     }
 
     /**
@@ -313,11 +338,15 @@ public class ECKey implements EncryptableItem {
      * The compression state of pub will be preserved.
      */
     public static ECKey fromPublicOnly(byte[] pub) {
-        return new ECKey(null, new LazyECPoint(pub));
+        return fromPublicOnly(new LazyECPoint(pub), ECKey.isPubKeyCompressed(pub));
     }
 
     public static ECKey fromPublicOnly(ECKey key) {
-        return fromPublicOnly(key.getPubKeyPoint(), key.isCompressed());
+        return fromPublicOnly(new LazyECPoint(key.getPubKeyPoint()), key.isCompressed());
+    }
+
+    public static ECKey fromPublicOnly(LazyECPoint point, boolean compressed) {
+        return new ECKey(null, point, compressed);
     }
 
     /**
@@ -435,6 +464,10 @@ public class ECKey implements EncryptableItem {
     /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
     public ECPoint getPubKeyPoint() {
         return pub.get();
+    }
+
+    public LazyECPoint getPubKeyLazyPoint() {
+        return pub;
     }
 
     /**
@@ -1064,7 +1097,7 @@ public class ECKey implements EncryptableItem {
         BigInteger srInv = rInv.multiply(sig.s).mod(n);
         BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
         ECPoint q = ECAlgorithms.sumOfTwoMultiplies(CURVE.getG(), eInvrInv, R, srInv);
-        return ECKey.fromPublicOnly(q, compressed);
+        return new ECKey(null, new LazyECPoint(q), compressed);
     }
 
     /**
