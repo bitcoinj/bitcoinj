@@ -19,7 +19,6 @@ package org.bitcoinj.crypto;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -33,14 +32,8 @@ import java.util.Objects;
 public final class LazyECPoint {
     private static final ECCurve curve = ECKey.CURVE.getCurve();
 
-    // bits will be null if LazyECPoint is constructed from an (already decoded) point
-    @Nullable
-    private final byte[] bits;
     private final boolean compressed;
-
-    // This field is lazy - once set it won't change again. However, it can be set after construction.
-    @Nullable
-    private ECPoint point;
+    private final ECPoint point;
 
     /**
      * Construct a LazyECPoint from a public key. Due to the delayed decoding of the point the validation of the
@@ -49,7 +42,7 @@ public final class LazyECPoint {
      * @param bits  public key bytes
      */
     public LazyECPoint(byte[] bits) {
-        this.bits = bits;
+        this.point = curve.decodePoint(bits);
         this.compressed = ECKey.isPubKeyCompressed(bits);
     }
 
@@ -62,7 +55,6 @@ public final class LazyECPoint {
     public LazyECPoint(ECPoint point, boolean compressed) {
         this.point = Objects.requireNonNull(point).normalize();
         this.compressed = compressed;
-        this.bits = null;
     }
 
     /**
@@ -82,16 +74,11 @@ public final class LazyECPoint {
     }
 
     public ECPoint get() {
-        if (point == null)
-            point = curve.decodePoint(bits);
         return point;
     }
 
     public byte[] getEncoded() {
-        if (bits != null)
-            return Arrays.copyOf(bits, bits.length);
-        else
-            return get().getEncoded(compressed);
+        return get().getEncoded(compressed);
     }
 
     // package-private
@@ -101,10 +88,7 @@ public final class LazyECPoint {
 
     // package-private
     byte[] getEncodedInternal(boolean compressed) {
-        if (compressed == isCompressedInternal() && bits != null)
-            return Arrays.copyOf(bits, bits.length);
-        else
-            return get().getEncoded(compressed);
+        return get().getEncoded(compressed);
     }
 
     @Override
