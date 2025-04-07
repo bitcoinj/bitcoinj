@@ -89,7 +89,7 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), parent == null ? 0 : parent.depth + 1,
+        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv)), parent == null ? 0 : parent.depth + 1,
                 parent, parent != null ? parent.getFingerprint() : 0, chainCode, hdPath, null, null);
     }
 
@@ -145,7 +145,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), depth, parent, parentFingerprint,
+        this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv)), depth, parent, parentFingerprint,
                 chainCode, HDPath.M(childNumberPath), null, null);
     }
 

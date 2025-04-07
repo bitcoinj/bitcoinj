@@ -157,7 +157,7 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
                 passFactorBytes = Sha256Hash.hashTwice(hashBytes);
             }
             BigInteger passFactor = ByteUtils.bytesToBigInteger(passFactorBytes);
-            ECKey k = ECKey.fromPrivate(passFactor, true);
+            ECKey k = ECKey.fromPrivate(passFactor);
 
             byte[] salt = ByteUtils.concat(addressHash, ownerEntropy);
             checkState(salt.length == 12);

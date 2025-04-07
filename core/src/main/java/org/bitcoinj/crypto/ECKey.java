@@ -216,7 +216,7 @@ public class ECKey implements EncryptableItem {
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
-        pub = new LazyECPoint(pubParams.getQ(), true);
+        pub = new LazyECPoint(pubParams.getQ());
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 

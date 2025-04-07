@@ -47,6 +47,17 @@ public final class LazyECPoint {
     }
 
     /**
+     * Construct a compressed LazyECPoint from an already decoded point.
+     * <p>
+     * Compressed format is preferred.
+     * @param point      the wrapped point
+     */
+    public LazyECPoint(ECPoint point) {
+        this.point = Objects.requireNonNull(point).normalize();
+        this.compressed = true;
+    }
+
+    /**
      * Construct a LazyECPoint from an already decoded point.
      *
      * @param point      the wrapped point
@@ -62,7 +73,7 @@ public final class LazyECPoint {
      * See the {@link ECKey} class docs for a discussion of point compression.
      */
     public LazyECPoint compress() {
-        return compressed ? this : new LazyECPoint(get(), true);
+        return compressed ? this : new LazyECPoint(get());
     }
 
     /**
