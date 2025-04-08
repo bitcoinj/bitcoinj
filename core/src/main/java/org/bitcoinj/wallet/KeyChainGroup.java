@@ -28,6 +28,7 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.script.Script;
@@ -134,16 +135,16 @@ public class KeyChainGroup implements KeyBag {
             if (outputScriptType == ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network).asPrivate()).build();
                 this.chains.clear();
                 this.chains.add(chain);
             } else if (outputScriptType == ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network).asPrivate()).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
                         .outputScriptType(ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, network)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, network).asPrivate()).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -164,19 +165,20 @@ public class KeyChainGroup implements KeyBag {
          * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
          */
         public Builder fromKey(DeterministicKey accountKey, ScriptType outputScriptType) {
+            HDPath.Prefix prefix = accountKey.getPath().prefix();
             if (outputScriptType == ScriptType.P2PKH) {
                 DeterministicKeyChain chain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network).asFull(prefix)).build();
                 this.chains.clear();
                 this.chains.add(chain);
             } else if (outputScriptType == ScriptType.P2WPKH) {
                 DeterministicKeyChain fallbackChain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(ScriptType.P2PKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2PKH, network).asFull(prefix)).build();
                 DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().spend(accountKey)
                         .outputScriptType(ScriptType.P2WPKH)
-                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, network)).build();
+                        .accountPath(structure.accountPathFor(ScriptType.P2WPKH, network).asFull(prefix)).build();
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
@@ -1003,7 +1005,7 @@ public class KeyChainGroup implements KeyBag {
             log.info("Upgrading from P2PKH to P2WPKH deterministic keychain. Using seed: {}", seed);
             DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed)
                     .outputScriptType(ScriptType.P2WPKH)
-                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.MAINNET)).build();
+                    .accountPath(structure.accountPathFor(ScriptType.P2WPKH, BitcoinNetwork.MAINNET).asPrivate()).build();
             if (seedWasEncrypted)
                 chain = chain.toEncrypted(Objects.requireNonNull(keyCrypter), aesKey);
             addAndActivateHDChain(chain);

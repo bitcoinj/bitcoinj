@@ -70,7 +70,7 @@ public class HDPathTest {
 
         HDPath path2 = HDPath.parsePath("m/0H");
 
-        assertEquals(HDPath.parsePath(""), path2.parent());
+        assertEquals(HDPath.parsePath("m"), path2.parent());
 
         HDPath path3 = HDPath.parsePath("");
 
@@ -78,10 +78,27 @@ public class HDPathTest {
     }
 
     @Test
+    public void testAncestorByIndex() {
+        HDPath path1 = HDPath.parsePath("m/0H/1H");
+
+        assertEquals(HDPath.parsePath("m/0H"), path1.ancestorByIndex(0));
+        assertEquals(HDPath.parsePath("m/0H/1H"), path1.ancestorByIndex(1));
+    }
+
+    @Test
+    public void testAncestorByDepth() {
+        HDPath path1 = HDPath.parsePath("m/0H/1H");
+
+        assertEquals(HDPath.parsePath("m/"), ((HDPath.HDFullPath) path1).ancestorByDepth(0));
+        assertEquals(HDPath.parsePath("m/0H"),  ((HDPath.HDFullPath) path1).ancestorByDepth(1));
+        assertEquals(HDPath.parsePath("m/0H/1H"),  ((HDPath.HDFullPath) path1).ancestorByDepth(2));
+    }
+
+    @Test
     public void testAncestors() {
         HDPath path = HDPath.parsePath("m/0H/1H/0H/1/0");
 
-        List<HDPath> ancestors = path.ancestors();
+        List<HDPath.HDFullPath> ancestors = path.ancestors();
 
         assertEquals(4, ancestors.size());
         assertEquals(HDPath.parsePath("m/0H"),              ancestors.get(0));
@@ -90,7 +107,7 @@ public class HDPathTest {
         assertEquals(HDPath.parsePath("m/0H/1H/0H/1"),      ancestors.get(3));
 
 
-        List<HDPath> ancestorsWithSelf = path.ancestors(true);
+        List<HDPath.HDFullPath> ancestorsWithSelf = path.ancestors(true);
 
         assertEquals(5, ancestorsWithSelf.size());
         assertEquals(HDPath.parsePath("m/0H"),              ancestorsWithSelf.get(0));
@@ -101,11 +118,11 @@ public class HDPathTest {
 
         HDPath rootPath = HDPath.parsePath("m/0H");
 
-        List<HDPath> empty = rootPath.ancestors();
+        List<HDPath.HDFullPath> empty = rootPath.ancestors();
 
         assertEquals(0, empty.size());
 
-        List<HDPath> self = rootPath.ancestors(true);
+        List<HDPath.HDFullPath> self = rootPath.ancestors(true);
 
         assertEquals(1, self.size());
         assertEquals(rootPath, self.get(0));
@@ -113,11 +130,11 @@ public class HDPathTest {
 
         HDPath emptyPath = HDPath.m();
 
-        List<HDPath> empty2 = emptyPath.ancestors();
+        List<HDPath.HDFullPath> empty2 = emptyPath.ancestors();
 
         assertEquals(0, empty2.size());
 
-        List<HDPath> empty3 = emptyPath.ancestors(true);
+        List<HDPath.HDFullPath> empty3 = emptyPath.ancestors(true);
 
         assertEquals(0, empty3.size());
     }

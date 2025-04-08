@@ -17,13 +17,10 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.signers.CustomTransactionSigner;
 import org.bitcoinj.wallet.DeterministicKeyChain;
-
-import java.util.List;
 
 /**
  * <p>Transaction signer which uses provided keychain to get signing keys from. It relies on previous signer to provide
@@ -43,9 +40,8 @@ public class KeyChainTransactionSigner extends CustomTransactionSigner {
     }
 
     @Override
-    protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
-        HDPath keyPath = HDPath.M(derivationPath);
-        DeterministicKey key = keyChain.getKeyByPath(keyPath, true);
+    protected SignatureAndKey getSignature(Sha256Hash sighash, HDPath derivationPath) {
+        DeterministicKey key = keyChain.getKeyByPath(derivationPath, true);
         return new SignatureAndKey(key.sign(sighash), key.withoutPrivateKey().withoutParent());
     }
 }

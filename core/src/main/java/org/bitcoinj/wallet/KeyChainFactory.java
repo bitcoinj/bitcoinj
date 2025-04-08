@@ -18,11 +18,9 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
-
-import java.util.List;
 
 import static org.bitcoinj.base.internal.Preconditions.check;
 
@@ -39,12 +37,12 @@ public interface KeyChainFactory {
      * @param accountPath      account path to generate receiving addresses on
      */
     DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter,
-                                       ScriptType outputScriptType, List<ChildNumber> accountPath);
+                                       ScriptType outputScriptType, HDPath.HDFullPath accountPath);
 
-    /** @deprecated use {@link #makeKeyChain(DeterministicSeed, KeyCrypter, ScriptType, List)} */
+    /** @deprecated use {@link #makeKeyChain(DeterministicSeed, KeyCrypter, ScriptType, HDPath.HDFullPath )} */
     @Deprecated
     default DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter, boolean isMarried,
-                                               ScriptType outputScriptType, List<ChildNumber> accountPath) {
+                                               ScriptType outputScriptType, HDPath.HDFullPath  accountPath) {
         check(!isMarried, () -> { throw new UnsupportedOperationException("married wallets not supported"); });
         return makeKeyChain(seed, crypter, outputScriptType, accountPath);
     }
