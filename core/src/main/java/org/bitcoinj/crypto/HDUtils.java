@@ -48,10 +48,6 @@ public final class HDUtils {
         return hmacSha512(createHmacSha512Digest(key), data);
     }
 
-    static byte[] toCompressed(byte[] uncompressedPoint) {
-        return ECKey.CURVE.getCurve().decodePoint(uncompressedPoint).getEncoded(true);
-    }
-
     static byte[] longTo4ByteArray(long n) {
         byte[] bytes = Arrays.copyOfRange(ByteBuffer.allocate(8).putLong(n).array(), 4, 8);
         assert bytes.length == 4 : bytes.length;

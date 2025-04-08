@@ -105,7 +105,7 @@ public class ChildKeyDerivationTest {
 
             //////////////////////////////////////////////////////////////////////////
             // Repeat the above with PUBLIC key
-            DeterministicKey ekpub = HDKeyDerivation.createMasterPubKeyFromBytes(HDUtils.toCompressed(pub), chain);
+            DeterministicKey ekpub = HDKeyDerivation.createMasterPubKeyFromBytes(toCompressed(pub), chain);
             assertEquals("M", ekpub.getPath().toString());
 
             // Create two accounts
@@ -323,5 +323,9 @@ public class ChildKeyDerivationTest {
 
     private static String hexEncodePub(DeterministicKey pubKey) {
         return ByteUtils.formatHex(pubKey.getPubKey());
+    }
+
+    private static byte[] toCompressed(byte[] uncompressedPoint) {
+        return ECKey.CURVE.getCurve().decodePoint(uncompressedPoint).getEncoded(true);
     }
 }
