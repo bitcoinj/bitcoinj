@@ -41,7 +41,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  */
 public class DeterministicHierarchy {
     private final Map<HDPath.HDPartialPath, DeterministicKey> keys = new HashMap<>();
-    private final HDPath rootPath;
+    private final HDPath.HDFullPath rootPath;
     // Keep track of how many child keys each node has. This is kind of weak.
     private final Map<HDPath, ChildNumber> lastChildNumbers = new HashMap<>();
 
@@ -93,9 +93,9 @@ public class DeterministicHierarchy {
      * @return next newly created key using the child derivation function
      * @throws IllegalArgumentException if create is false and the path was not found.
      */
-    public DeterministicKey get(List<ChildNumber> path, boolean relativePath, boolean create) {
+    public DeterministicKey get(HDPath path, boolean relativePath, boolean create) {
         // Searches must be done on partial paths (full paths but without m or M)
-        HDPath.HDPartialPath partialPath = HDPath.partial(path);    // absolute or relative keyless path
+        HDPath.HDPartialPath partialPath = path.asPartial();    // absolute or relative keyless path
         HDPath.HDPartialPath searchPath = relativePath              // absolute path for search/create
                 ? rootPath.asPartial().extend(partialPath)
                 : partialPath;
@@ -104,8 +104,11 @@ public class DeterministicHierarchy {
                 throw new IllegalArgumentException(String.format(Locale.US, "No key found for %s path %s.",
                     relativePath ? "relative" : "absolute", partialPath));
             checkArgument(!searchPath.isEmpty(), () -> "can't derive the master key: nothing to derive from");
-            DeterministicKey parent = get(searchPath.subList(0, searchPath.size() - 1), false, true);
-            putKey(HDKeyDerivation.deriveChildKey(parent, searchPath.get(searchPath.size() - 1)));
+            DeterministicKey parent = get(searchPath.parent(), false, true);
+            if (parent != null) {
+                DeterministicKey keyToAdd = HDKeyDerivation.deriveChildKey(parent, searchPath.get(searchPath.size() - 1));
+                putKey(keyToAdd);
+            }
         }
         return keys.get(searchPath);
     }
@@ -121,7 +124,7 @@ public class DeterministicHierarchy {
      * @return next newly created key using the child derivation function
      * @throws IllegalArgumentException if the parent doesn't exist and createParent is false.
      */
-    public DeterministicKey deriveNextChild(List<ChildNumber> parentPath, boolean relative, boolean createParent, boolean privateDerivation) {
+    public DeterministicKey deriveNextChild(HDPath parentPath, boolean relative, boolean createParent, boolean privateDerivation) {
         DeterministicKey parent = get(parentPath, relative, createParent);
         int nAttempts = 0;
         while (nAttempts++ < HDKeyDerivation.MAX_CHILD_DERIVATION_ATTEMPTS) {
@@ -158,7 +161,7 @@ public class DeterministicHierarchy {
      * @return the requested key.
      * @throws IllegalArgumentException if the parent doesn't exist and createParent is false.
      */
-    public DeterministicKey deriveChild(List<ChildNumber> parentPath, boolean relative, boolean createParent, ChildNumber createChildNumber) {
+    public DeterministicKey deriveChild(HDPath.HDFullPath parentPath, boolean relative, boolean createParent, ChildNumber createChildNumber) {
         return deriveChild(get(parentPath, relative, createParent), createChildNumber);
     }
 

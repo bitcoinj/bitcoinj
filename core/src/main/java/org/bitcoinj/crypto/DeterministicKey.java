@@ -58,7 +58,7 @@ public class DeterministicKey extends ECKey {
 
     @Nullable
     private final DeterministicKey parent;
-    private final HDPath childNumberPath;
+    private final HDPath.HDFullPath childNumberPath;
     private final int depth;
     private final int parentFingerprint; // 0 if this key is root node of key hierarchy
 
@@ -66,7 +66,7 @@ public class DeterministicKey extends ECKey {
     private final byte[] chainCode;
 
     /** Constructs a key from its components. This is not normally something you should use. */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath.HDFullPath childNumberPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
@@ -75,7 +75,7 @@ public class DeterministicKey extends ECKey {
                 parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath), null, null);
     }
 
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath.HDFullPath childNumberPath,
                             byte[] chainCode,
                             ECPoint publicAsPoint,
                             boolean compressed,
@@ -85,7 +85,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
-    public DeterministicKey(HDPath hdPath,
+    public DeterministicKey(HDPath.HDFullPath hdPath,
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
@@ -94,7 +94,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath.HDFullPath childNumberPath,
                             byte[] chainCode,
                             KeyCrypter crypter,
                             LazyECPoint pub,
@@ -124,7 +124,7 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath childNumberPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
                             @Nullable DeterministicKey parent,
@@ -139,7 +139,7 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath childNumberPath,
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent,
@@ -174,7 +174,7 @@ public class DeterministicKey extends ECKey {
      * @param keyCrypter          crypter to use for decrypting the private key
      */
     private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
-                             int parentFingerprint, byte[] chainCode, HDPath hdPath,
+                             int parentFingerprint, byte[] chainCode, HDPath.HDFullPath hdPath,
                              @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
         super(priv, pub);
         checkArgument(chainCode.length == 32);
@@ -196,7 +196,7 @@ public class DeterministicKey extends ECKey {
      * A path can be written as 0/1/0 which means the first child of the root, the second child of that node, then
      * the first child of that node.
      */
-    public HDPath getPath() {
+    public HDPath.HDFullPath getPath() {
         return childNumberPath;
     }
 
@@ -487,9 +487,9 @@ public class DeterministicKey extends ECKey {
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
                 cursor.pub, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
-        // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
-        // our path with the length of the parents path.
-        List<ChildNumber> path = childNumberPath.subList(cursor.getPath().size(), childNumberPath.size());
+        // Now we have to re-derive the keys along the path back to ourselves. That path can be found by just truncating
+        // our path with the length of the parent's path.
+        List<ChildNumber> path = childNumberPath.list().subList(cursor.getPath().size(), childNumberPath.size());
         for (ChildNumber num : path) {
             downCursor = HDKeyDerivation.deriveChildKey(downCursor, num);
         }

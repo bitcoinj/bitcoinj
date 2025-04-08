@@ -203,7 +203,7 @@ public class WalletTest extends TestWithWallet {
         KeyChainGroup keyChainGroup = KeyChainGroup.builder(TESTNET)
                 .addChain(DeterministicKeyChain.builder().seed(DeterministicSeed.ofEntropy(ENTROPY, "", Instant.ofEpochSecond(1389353062L)))
                         .outputScriptType(ScriptType.P2WPKH)
-                        .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).build())
+                        .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH.asPrivate()).build())
                 .build();
         Wallet encryptedWallet = new Wallet(TESTNET, keyChainGroup);
         encryptedWallet = roundTrip(encryptedWallet);
@@ -3510,10 +3510,10 @@ public class WalletTest extends TestWithWallet {
         Wallet wallet5 = Wallet.fromSeed(TESTNET, DeterministicSeed.ofEntropy(new byte[20], ""), ScriptType.P2WPKH, KeyChainGroupStructure.BIP43);
         assertEquals(TESTNET, wallet5.network());
 
-        Wallet wallet6 = Wallet.fromSeed(TESTNET, DeterministicSeed.ofEntropy(new byte[20], ""), ScriptType.P2WPKH, HDPath.BIP44_PARENT);
+        Wallet wallet6 = Wallet.fromSeed(TESTNET, DeterministicSeed.ofEntropy(new byte[20], ""), ScriptType.P2WPKH, HDPath.BIP44_PARENT.asPrivate());
         assertEquals(TESTNET, wallet6.network());
 
-        HDPath accountPath = KeyChainGroupStructure.BIP43.accountPathFor(ScriptType.P2WPKH, TESTNET);
+        HDPath.HDFullPath accountPath = KeyChainGroupStructure.BIP43.accountPathFor(ScriptType.P2WPKH, TESTNET).asPrivate();
         DeterministicKeyChain keyChain = DeterministicKeyChain.builder()
                 .random(new SecureRandom())
                 .accountPath(accountPath)

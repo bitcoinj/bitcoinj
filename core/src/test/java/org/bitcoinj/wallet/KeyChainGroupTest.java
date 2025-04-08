@@ -387,17 +387,17 @@ public class KeyChainGroupTest {
     public void addAndActivateHDChain_freshCurrentAddress() {
         DeterministicSeed seed = DeterministicSeed.ofEntropy(ENTROPY, "");
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().seed(seed)
-                .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).outputScriptType(ScriptType.P2PKH).build();
+                .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH.asPrivate()).outputScriptType(ScriptType.P2PKH).build();
         group = KeyChainGroup.builder(BitcoinNetwork.MAINNET).addChain(chain1).build();
         assertEquals("1M5T5k9yKtGWRtWYMjQtGx3K2sshrABzCT", group.currentAddress(KeyPurpose.RECEIVE_FUNDS).toString());
 
         final DeterministicKeyChain chain2 = DeterministicKeyChain.builder().seed(seed)
-                .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).outputScriptType(ScriptType.P2PKH).build();
+                .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH.asPrivate()).outputScriptType(ScriptType.P2PKH).build();
         group.addAndActivateHDChain(chain2);
         assertEquals("1JLnjJEXcyByAaW6sqSxNvGiiSEWRhdvPb", group.currentAddress(KeyPurpose.RECEIVE_FUNDS).toString());
 
         final DeterministicKeyChain chain3 = DeterministicKeyChain.builder().seed(seed)
-                .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH).outputScriptType(ScriptType.P2WPKH)
+                .accountPath(DeterministicKeyChain.BIP44_ACCOUNT_ZERO_PATH.asPrivate()).outputScriptType(ScriptType.P2WPKH)
                 .build();
         group.addAndActivateHDChain(chain3);
         assertEquals("bc1q5fa84aghxd6uzk5g2ywkppmzlut5d77vg8cd20",
@@ -503,7 +503,7 @@ public class KeyChainGroupTest {
     public void segwitKeyChainGroup() throws Exception {
         group = KeyChainGroup.builder(BitcoinNetwork.MAINNET).lookaheadSize(LOOKAHEAD_SIZE)
                 .addChain(DeterministicKeyChain.builder().entropy(ENTROPY, TimeUtils.currentTime()).outputScriptType(ScriptType.P2WPKH)
-                        .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH).build())
+                        .accountPath(DeterministicKeyChain.ACCOUNT_ONE_PATH.asPrivate()).build())
                 .build();
         assertEquals(ScriptType.P2WPKH, group.getActiveKeyChain().getOutputScriptType());
         assertEquals("bc1qhcurdec849thpjjp3e27atvya43gy2snrechd9",
