@@ -21,9 +21,6 @@ import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 /**
  * Static utilities used in BIP 32 Hierarchical Deterministic Wallets (HDW).
  */
@@ -46,11 +43,5 @@ public final class HDUtils {
 
     public static byte[] hmacSha512(byte[] key, byte[] data) {
         return hmacSha512(createHmacSha512Digest(key), data);
-    }
-
-    static byte[] longTo4ByteArray(long n) {
-        byte[] bytes = Arrays.copyOfRange(ByteBuffer.allocate(8).putLong(n).array(), 4, 8);
-        assert bytes.length == 4 : bytes.length;
-        return bytes;
     }
 }
