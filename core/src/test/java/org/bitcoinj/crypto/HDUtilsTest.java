@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import org.bitcoinj.base.internal.ByteUtils;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 public class HDUtilsTest {
     @Test
@@ -115,11 +114,5 @@ public class HDUtilsTest {
 
     private static byte[] getBytes(String[] hmacTestVectors, int i) {
         return ByteUtils.parseHex(hmacTestVectors[i]);
-    }
-
-    @Test
-    public void testLongToByteArray() {
-        byte[] bytes = HDUtils.longTo4ByteArray(1026);
-        assertEquals("00000402", ByteUtils.formatHex(bytes));
     }
 }
