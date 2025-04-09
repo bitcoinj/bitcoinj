@@ -447,7 +447,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         int endExclusive =  childNumbers.size() + (includeSelf ? 1 : 0);
         return IntStream.range(1, endExclusive)
                 .mapToObj(this::subListInternal)
-                .map(l -> HDPath.of(((HDFullPath) this).hasPrivateKey, l))
+                .map(this::cloneWithPath)
                 .collect(StreamUtils.toUnmodifiableList());
     }
 
@@ -457,6 +457,18 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      */
     private List<ChildNumber> subListInternal(int toIndex) {
         return childNumbers.subList(0, toIndex);
+    }
+
+    /**
+     * Return a new {@code HDPath} of the same type with a new path list. If path is a {@code HDFullPath},
+     * preserve the {@code hasPrivateKey} value.
+     * @param newPath the new path list
+     * @return new HDPath of same type
+     */
+    private HDPath cloneWithPath(List<ChildNumber> newPath) {
+        return this instanceof HDFullPath
+                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, newPath)
+                : new HDPartialPath(newPath);
     }
 
     @Override
