@@ -70,7 +70,7 @@ public class HDPathTest {
 
         HDPath path2 = HDPath.parsePath("m/0H");
 
-        assertEquals(HDPath.parsePath(""), path2.parent());
+        assertEquals(HDPath.parsePath("m"), path2.parent());
 
         HDPath path3 = HDPath.parsePath("");
 
