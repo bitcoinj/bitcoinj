@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+
 /**
  * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path.
  * The {@code hasPrivateKey} {@code boolean} is used for rendering to {@code String}
@@ -444,11 +446,24 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * @return unmodifiable list of ancestors
      */
     public List<HDPath> ancestors(boolean includeSelf) {
-        int endExclusive =  childNumbers.size() + (includeSelf ? 1 : 0);
-        return IntStream.range(1, endExclusive)
-                .mapToObj(this::subListInternal)
-                .map(this::cloneWithPath)
+        int endExclusive = childNumbers.size() + (includeSelf ? 0 : -1);
+        return IntStream.range(0, endExclusive)
+                .mapToObj(this::ancestorByIndex)
                 .collect(StreamUtils.toUnmodifiableList());
+    }
+
+    /**
+     * Return an indexed ancestor, where {@code index} 0 is the ancestor containing
+     * the first {@code ChildNumber} and {@code index} of {@code size() - 1} will
+     * return <i>self</i>.
+     * @param index ancestor index
+     * @return ancestor
+     */
+    public HDPath ancestorByIndex(int index) {
+        checkArgument(index >= 0 && index < childNumbers.size(), () ->
+                String.format("Index %s out of bounds (0, %s)", index, childNumbers.size() - 1));
+        List<ChildNumber> subList = subListInternal(index + 1);
+        return cloneWithPath(subList);
     }
 
     /**
