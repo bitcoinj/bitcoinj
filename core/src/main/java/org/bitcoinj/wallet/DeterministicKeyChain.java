@@ -128,7 +128,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Nullable private DeterministicKey rootKey;
     @Nullable private final DeterministicSeed seed;
     private final ScriptType outputScriptType;
-    private final HDPath accountPath;
+    private final HDPath.HDPartialPath accountPath;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
@@ -196,7 +196,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected ScriptType outputScriptType = ScriptType.P2PKH;
         protected DeterministicKey watchingKey = null;
         protected DeterministicKey spendingKey = null;
-        protected HDPath accountPath = null;
+        protected HDPath.HDPartialPath accountPath = null;
 
         protected Builder() {
         }
@@ -287,10 +287,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         /**
          * Use an account path other than the default {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH}.
          */
-        public T accountPath(List<ChildNumber> accountPath) {
+        public T accountPath(HDPath accountPath) {
             checkState(watchingKey == null, () ->
                     "either watch or accountPath");
-            this.accountPath = HDPath.M(Objects.requireNonNull(accountPath));
+            this.accountPath = Objects.requireNonNull(accountPath.asPartial());
             return self();
         }
 
@@ -376,11 +376,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * </p>
      */
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
-                                    ScriptType outputScriptType, List<ChildNumber> accountPath) {
+                                    ScriptType outputScriptType, HDPath.HDPartialPath accountPath) {
         checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH, () ->
                 "only P2PKH or P2WPKH allowed");
         this.outputScriptType = outputScriptType != null ? outputScriptType : ScriptType.P2PKH;
-        this.accountPath = HDPath.M(accountPath);
+        this.accountPath = accountPath;
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
@@ -406,7 +406,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * For use in encryption when {@link #toEncrypted(KeyCrypter, AesKey)} is called, so that
      * subclasses can override that method and create an instance of the right class.
      *
-     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, List, ScriptType)}
+     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, HDPath.HDPartialPath, ScriptType)}
      */
     protected DeterministicKeyChain(KeyCrypter crypter, AesKey aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
@@ -415,7 +415,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
         checkArgument(!chain.rootKey.isEncrypted(), () ->
                 "chain already encrypted");
-        this.accountPath = chain.getAccountPath();
+        this.accountPath = chain.getAccountPath().asPartial();
         this.outputScriptType = chain.outputScriptType;
 
         this.issuedExternalKeys = chain.issuedExternalKeys;
@@ -450,8 +450,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    public HDPath getAccountPath() {
+    public HDPath.HDPartialPath getAccountPath() {
         return accountPath;
+    }
+
+    public HDPath.HDFullPath accountFullPath() {
+        boolean hasPrivateKey = !getWatchingKey().isWatching();
+        return accountPath.asFull(hasPrivateKey ? HDPath.Prefix.PRIVATE : HDPath.Prefix.PUBLIC);
     }
 
     public ScriptType getOutputScriptType() {
@@ -459,7 +464,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     private DeterministicKey encryptNonLeaf(AesKey aesKey, DeterministicKeyChain chain,
-                                            DeterministicKey parent, List<ChildNumber> path) {
+                                            DeterministicKey parent, HDPath path) {
         DeterministicKey key = chain.hierarchy.get(path, false, false);
         key = key.encrypt(Objects.requireNonNull(basicKeyChain.getKeyCrypter()), aesKey, parent);
         putKey(key);
@@ -654,12 +659,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
-    protected DeterministicKey getKeyByPath(List<ChildNumber> path) {
+    protected DeterministicKey getKeyByPath(HDPath path) {
         return getKeyByPath(path, false);
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy, optionally creating it */
-    public DeterministicKey getKeyByPath(List<ChildNumber> path, boolean create) {
+    public DeterministicKey getKeyByPath(HDPath path, boolean create) {
         return hierarchy.get(path, false, create);
     }
 
@@ -1050,7 +1055,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
         DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
-        DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed, getAccountPath(), outputScriptType);
+        DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed, getAccountPath().asPartial(), outputScriptType);
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
             throw new KeyCrypterException.PublicPrivateMismatch("Provided AES key is wrong");
@@ -1074,7 +1079,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Subclasses should override this to create an instance of the subclass instead of a plain DKC.
      * This is used in encryption/decryption.
      */
-    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, List<ChildNumber> accountPath,
+    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, HDPath.HDPartialPath accountPath,
             ScriptType outputScriptType) {
         return new DeterministicKeyChain(seed, null, outputScriptType, accountPath);
     }

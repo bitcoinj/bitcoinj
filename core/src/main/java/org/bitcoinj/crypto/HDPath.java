@@ -50,7 +50,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
  * concisely create HDPath objects (especially when statically imported.)
  */
-public abstract class HDPath extends AbstractList<ChildNumber> {
+public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
     public enum Prefix {
         PRIVATE('m'),
         PUBLIC('M');
@@ -506,17 +506,14 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
                 : new HDPartialPath(Collections.emptyList());
     }
 
-    @Override
     public ChildNumber get(int index) {
         return childNumbers.get(index);
     }
 
-    @Override
     public int size() {
         return childNumbers.size();
     }
 
-    @Override
     public boolean isEmpty() {
         return childNumbers.isEmpty();
     }

@@ -44,7 +44,7 @@ public class WalletLoadTest {
         String mnemonic = wallet.getKeyChainSeed().getMnemonicString();
         assertEquals(testWalletMnemonic, mnemonic, "unexpected mnemonic");
 
-        HDPath accountPath = wallet.getActiveKeyChain().getAccountPath();
-        assertEquals(HDPath.parsePath("M/0H"), accountPath);
+        HDPath accountPath = wallet.getActiveKeyChain().accountFullPath();
+        assertEquals(HDPath.parsePath("m/0H"), accountPath);
     }
 }

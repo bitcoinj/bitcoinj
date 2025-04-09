@@ -23,6 +23,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
@@ -38,7 +39,7 @@ import java.util.Objects;
 /**
  * <p>This signer may be used as a template for creating custom multisig transaction signers.</p>
  * <p>
- * Concrete implementations have to implement {@link #getSignature(Sha256Hash, List)}
+ * Concrete implementations have to implement {@link #getSignature(Sha256Hash, HDPath)}
  * method returning a signature and a public key of the keypair used to created that signature.
  * It's up to custom implementation where to locate signatures: it may be a network connection,
  * some local API or something else.
@@ -99,7 +100,7 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
         return true;
     }
 
-    protected abstract SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath);
+    protected abstract SignatureAndKey getSignature(Sha256Hash sighash, HDPath derivationPath);
 
     public static class SignatureAndKey {
         public final ECKey.ECDSASignature sig;

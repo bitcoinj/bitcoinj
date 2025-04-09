@@ -43,9 +43,8 @@ public class KeyChainTransactionSigner extends CustomTransactionSigner {
     }
 
     @Override
-    protected SignatureAndKey getSignature(Sha256Hash sighash, List<ChildNumber> derivationPath) {
-        HDPath keyPath = HDPath.M(derivationPath);
-        DeterministicKey key = keyChain.getKeyByPath(keyPath, true);
+    protected SignatureAndKey getSignature(Sha256Hash sighash, HDPath derivationPath) {
+        DeterministicKey key = keyChain.getKeyByPath(derivationPath, true);
         return new SignatureAndKey(key.sign(sighash), key.withoutPrivateKey().withoutParent());
     }
 }

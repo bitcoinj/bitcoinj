@@ -66,16 +66,16 @@ public class DeterministicKey extends ECKey {
     private final byte[] chainCode;
 
     /** Constructs a key from its components. This is not normally something you should use. */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath.HDPartialPath childNumberPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
         this(priv, publicAsPoint.compress(), parent == null ? 0 : parent.depth + 1, parent,
-                parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath), null, null);
+                parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath, null, null);
     }
 
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath.HDPartialPath childNumberPath,
                             byte[] chainCode,
                             ECPoint publicAsPoint,
                             boolean compressed,
@@ -94,14 +94,14 @@ public class DeterministicKey extends ECKey {
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath.HDPartialPath childNumberPath,
                             byte[] chainCode,
                             KeyCrypter crypter,
                             LazyECPoint pub,
                             EncryptedData encryptedPrivateKey,
                             @Nullable DeterministicKey parent) {
         this(null, pub.compress(), parent == null ? 0 : parent.depth + 1, parent,
-                parent != null ? parent.getFingerprint() : 0, chainCode, HDPath.M(childNumberPath),
+                parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath,
                 Objects.requireNonNull(encryptedPrivateKey), Objects.requireNonNull(crypter));
     }
 
@@ -124,13 +124,13 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath childNumberPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        this(null, publicAsPoint.compress(), depth, parent, parentFingerprint, chainCode, HDPath.M(childNumberPath),
+        this(null, publicAsPoint.compress(), depth, parent, parentFingerprint, chainCode, childNumberPath,
                 null, null);
     }
 
@@ -139,14 +139,14 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
-    public DeterministicKey(List<ChildNumber> childNumberPath,
+    public DeterministicKey(HDPath childNumberPath,
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
         this(priv, new LazyECPoint(ECKey.publicPointFromPrivate(priv), true), depth, parent, parentFingerprint,
-                chainCode, HDPath.M(childNumberPath), null, null);
+                chainCode, childNumberPath, null, null);
     }
 
     /** @deprecated use {@link #withParent(DeterministicKey)} */
@@ -213,7 +213,7 @@ public class DeterministicKey extends ECKey {
     /**
      * @return The prefix {@code 'm'} or {@code 'M'} for this key's HD path.
      */
-    private HDPath.Prefix prefix() {
+    public HDPath.Prefix prefix() {
         return isWatching() ? HDPath.Prefix.PUBLIC : HDPath.Prefix.PRIVATE;
     }
 
