@@ -53,6 +53,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -845,7 +846,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        HDPath accountPath = HDPath.M();
+        HDPath.HDPartialPath accountPath = HDPath.partial(Collections.emptyList());
         ScriptType outputScriptType = ScriptType.P2PKH;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
@@ -1001,8 +1002,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         chains.add(chain);
     }
 
-    private static HDPath deserializeAccountPath(List<Integer> integerList) {
-        HDPath path = HDPath.deserialize(integerList);
+    private static HDPath.HDPartialPath deserializeAccountPath(List<Integer> integerList) {
+        HDPath.HDPartialPath path = HDPath.deserialize(integerList);
         return path.isEmpty() ? ACCOUNT_ZERO_PATH : path;
     }
 
