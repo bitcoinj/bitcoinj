@@ -96,6 +96,25 @@ public class HDPathTest {
     }
 
     @Test
+    public void testAncestorByDepth() {
+        HDPath path1 = HDPath.parsePath("m/0H/1H");
+
+        assertEquals(HDPath.parsePath("m/"), path1.ancestorByDepth(0));
+        assertEquals(HDPath.parsePath("m/0H"), path1.ancestorByDepth(1));
+        assertEquals(HDPath.parsePath("m/0H/1H"), path1.ancestorByDepth(2));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAncestorByDepthTooSmall() {
+        HDPath.parsePath("m/0H/1H").ancestorByIndex(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAncestorByDepthTooBig() {
+        HDPath.parsePath("m/0H/1H").ancestorByIndex(3);
+    }
+
+    @Test
     public void testAncestors() {
         HDPath path = HDPath.parsePath("m/0H/1H/0H/1/0");
 

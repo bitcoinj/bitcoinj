@@ -161,6 +161,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         }
 
         @Override
+        public HDFullPath ancestorByDepth(int depth) {
+            return (HDFullPath) super.ancestorByDepth(depth);
+        }
+
+        @Override
         public HDPartialPath asPartial() {
             return new HDPartialPath(this.childNumbers);
         }
@@ -190,6 +195,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         @Override
         public HDPartialPath parent() {
             return new HDPartialPath(parentInternal());
+        }
+
+        @Override
+        public HDPartialPath ancestorByDepth(int depth) {
+            return (HDPartialPath) super.ancestorByDepth(depth);
         }
 
         @Override
@@ -467,6 +477,21 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     }
 
     /**
+     * Return an ancestor <i>by depth</i>. {@code depth} 0 will return the ancestor representing
+     * a root key which will have an empty child list, e.g. {@code "m/"}.  A depth {@code index} of {@code size()} will
+     * return <i>self</i>. For {@code depth >= 1}, {@code ancestorByDepth(depth) == ancestorByIndex(depth - 1)}.
+     * @param depth depth of ancestor to return
+     * @return ancestor
+     */
+    public HDPath ancestorByDepth(int depth) {
+        checkArgument(depth >= 0 && depth <= childNumbers.size(), () ->
+                String.format("Depth %s out of bounds (0, %s)", depth, childNumbers.size()));
+        return depth == 0
+                ? cloneEmpty()
+                : this.ancestorByIndex(depth - 1);
+    }
+
+    /**
      * @param toIndex high endpoint (exclusive) of the subList
      * @return sublist from 0 to {@code toIndex}, exclusive
      */
@@ -484,6 +509,17 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         return this instanceof HDFullPath
                 ? new HDFullPath(((HDFullPath) this).hasPrivateKey, newPath)
                 : new HDPartialPath(newPath);
+    }
+
+    /**
+     * Return a new HDPath of the same type with an empty child list. If path is a {@code HDFullPath},
+     * preserve the {@code hasPrivateKey} value.
+     * @return  new HDPath of same type with empty child list
+     */
+    private HDPath cloneEmpty() {
+        return this instanceof HDFullPath
+                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, Collections.emptyList())
+                : new HDPartialPath(Collections.emptyList());
     }
 
     @Override
