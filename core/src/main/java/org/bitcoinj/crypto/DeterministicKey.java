@@ -192,12 +192,21 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
+     * Returns an {@link HDPath.HDPartialPath} to this key's position in the tree. It is <i>almost</i> a full path
+     * that is missing only the prefix.
+     * @return The path to the key without the `m` or `M` prefix.
+     */
+    public HDPath.HDPartialPath getPath() {
+        return childNumberPath;
+    }
+
+    /**
      * Returns the {@link HDPath.HDFullPath} through the {@link DeterministicHierarchy} to this key's position in the tree.
      * A path can be written as {@code M/0/1/0} which means the first child of the root, the second child of that node, then
      * the first child of that node.
      * @return A full path starting with {@code 'm'} or {@code 'M'} depending upon whether ths private key is available.
      */
-    public HDPath.HDFullPath getPath() {
+    public HDPath.HDFullPath fullPath() {
         return childNumberPath.asFull(prefix());
     }
 
@@ -212,7 +221,7 @@ public class DeterministicKey extends ECKey {
      * Returns the path of this key as a human-readable string starting with M or m to indicate the master key.
      */
     public String getPathAsString() {
-        return getPath().toString();
+        return fullPath().toString();
     }
 
     /**
