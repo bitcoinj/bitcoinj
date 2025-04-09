@@ -155,13 +155,13 @@ public class HDKeyDerivationTest {
                                                         .limit(1)
                                                         .collect(Collectors.toList());
         assertEquals(1, keys1.size());
-        assertEquals(HDPath.m(CHILD_NUMBER), keys1.get(0).getPath());
+        assertEquals(HDPath.m(CHILD_NUMBER), keys1.get(0).fullPath());
 
         List<DeterministicKey> keys2 = HDKeyDerivation.generate(parent, CHILD_NUMBER.num())
                                                         .limit(2)
                                                         .collect(Collectors.toList());
         assertEquals(2, keys2.size());
-        assertEquals(HDPath.parsePath("m/1"), keys2.get(0).getPath());
-        assertEquals(HDPath.parsePath("m/2"), keys2.get(1).getPath());
+        assertEquals(HDPath.parsePath("m/1"), keys2.get(0).fullPath());
+        assertEquals(HDPath.parsePath("m/2"), keys2.get(1).fullPath());
     }
 }
