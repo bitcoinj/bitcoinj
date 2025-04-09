@@ -145,7 +145,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
 
         @Override
         public HDFullPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath));
+            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath.childNumbers));
         }
 
         @Override
@@ -177,7 +177,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
 
         @Override
         public HDPartialPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDPartialPath(extendInternal(partialPath));
+            return new HDPartialPath(extendInternal(partialPath.childNumbers));
         }
 
         @Override
