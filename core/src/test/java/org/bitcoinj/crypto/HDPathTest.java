@@ -70,11 +70,28 @@ public class HDPathTest {
 
         HDPath path2 = HDPath.parsePath("m/0H");
 
-        assertEquals(HDPath.parsePath(""), path2.parent());
+        assertEquals(HDPath.parsePath("m"), path2.parent());
 
         HDPath path3 = HDPath.parsePath("");
 
         assertEquals(HDPath.parsePath(""), path3.parent());
+    }
+
+    @Test
+    public void testAncestorByIndex() {
+        HDPath path1 = HDPath.parsePath("m/0H/1H");
+
+        assertEquals(HDPath.parsePath("m/0H"), path1.ancestorByIndex(0));
+        assertEquals(HDPath.parsePath("m/0H/1H"), path1.ancestorByIndex(1));
+    }
+
+    @Test
+    public void testAncestorByDepth() {
+        HDPath path1 = HDPath.parsePath("m/0H/1H");
+
+        assertEquals(HDPath.parsePath("m/"), path1.ancestorByDepth(0));
+        assertEquals(HDPath.parsePath("m/0H"),  path1.ancestorByDepth(1));
+        assertEquals(HDPath.parsePath("m/0H/1H"),  path1.ancestorByDepth(2));
     }
 
     @Test
@@ -217,7 +234,7 @@ public class HDPathTest {
     @Parameters(method = "toStringTestVectors, parseTestVectors")
     public void testAsPartial(PathVector tv) {
         HDPath.HDPartialPath partialPath = tv.path.asPartial();
-        assertEquals(tv.path.childNumbers, partialPath.childNumbers);
+        assertEquals(tv.path.list(), partialPath.list());
     }
 
     @Test
@@ -227,14 +244,14 @@ public class HDPathTest {
             // If test vector is full path, test roundtrip
             HDPath.Prefix prefix = ((HDPath.HDFullPath) tv.path).prefix();
             HDPath.HDPartialPath partialPath = tv.path.asPartial();
-            assertEquals(tv.path.childNumbers, partialPath.childNumbers);
+            assertEquals(tv.path.list(), partialPath.list());
             HDPath.HDFullPath roundTripPath = partialPath.asFull(prefix);
             assertEquals(tv.path, roundTripPath);
         } else {
             // If test vector is partial path, test conversion to public and private
             HDPath.HDPartialPath partialPath = (HDPath.HDPartialPath) tv.path;
-            HDPath.HDFullPath expectedPublic = HDPath.M(partialPath.childNumbers);
-            HDPath.HDFullPath expectedPrivate = HDPath.m(partialPath.childNumbers);
+            HDPath.HDFullPath expectedPublic = HDPath.M(partialPath.list());
+            HDPath.HDFullPath expectedPrivate = HDPath.m(partialPath.list());
             assertEquals(expectedPublic, partialPath.asPublic());
             assertEquals(expectedPrivate, partialPath.asPrivate());
         }

@@ -90,7 +90,7 @@ public final class HDKeyDerivation {
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
-        return new DeterministicKey(HDPath.M(), chainCode, new LazyECPoint(pubKeyBytes), null, null);
+        return new DeterministicKey(HDPath.partial(), chainCode, new LazyECPoint(pubKeyBytes), null, null);
     }
 
     /**

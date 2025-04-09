@@ -62,20 +62,20 @@ public class WalletAccountPathTest {
         Wallet wallet = createWallet(walletFile, network, structure, scriptType);
 
         // Then the account path is as expected
-        assertEquals(expectedPath, wallet.getActiveKeyChain().getAccountPath());
+        assertEquals(expectedPath, wallet.getActiveKeyChain().accountFullPath());
     }
 
     private static Stream<Arguments> walletStructureParams() {
         return Stream.of(
             // Note: For BIP32 wallets the Network does not affect the path
-            Arguments.of(BIP32, "M/0H", P2PKH, MAINNET),
-            Arguments.of(BIP32, "M/0H", P2PKH, TESTNET),
-            Arguments.of(BIP32, "M/1H", P2WPKH, MAINNET),
-            Arguments.of(BIP32, "M/1H", P2WPKH, TESTNET),
-            Arguments.of(BIP43, "M/44H/0H/0H", P2PKH, MAINNET),
-            Arguments.of(BIP43, "M/44H/1H/0H", P2PKH, TESTNET),
-            Arguments.of(BIP43, "M/84H/0H/0H", P2WPKH, MAINNET),
-            Arguments.of(BIP43, "M/84H/1H/0H", P2WPKH, TESTNET)
+            Arguments.of(BIP32, "m/0H", P2PKH, MAINNET),
+            Arguments.of(BIP32, "m/0H", P2PKH, TESTNET),
+            Arguments.of(BIP32, "m/1H", P2WPKH, MAINNET),
+            Arguments.of(BIP32, "m/1H", P2WPKH, TESTNET),
+            Arguments.of(BIP43, "m/44H/0H/0H", P2PKH, MAINNET),
+            Arguments.of(BIP43, "m/44H/1H/0H", P2PKH, TESTNET),
+            Arguments.of(BIP43, "m/84H/0H/0H", P2WPKH, MAINNET),
+            Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, TESTNET)
         );
     }
 
