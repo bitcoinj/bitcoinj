@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+
 /**
  * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path.
  * The {@code hasPrivateKey} {@code boolean} is used for rendering to {@code String}
@@ -145,7 +147,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
 
         @Override
         public HDFullPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath));
+            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath.childNumbers));
         }
 
         @Override
@@ -159,8 +161,27 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         }
 
         @Override
+        public HDFullPath ancestorByDepth(int depth) {
+            return (HDFullPath) super.ancestorByDepth(depth);
+        }
+
+        @Override
         public HDPartialPath asPartial() {
             return new HDPartialPath(this.childNumbers);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if ((o == null) || getClass() != o.getClass()) return false;
+            HDFullPath other = (HDFullPath) o;
+            return Objects.equals(this.hasPrivateKey, other.hasPrivateKey) &&
+                    super.equals(other);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.hasPrivateKey, super.hashCode());
         }
     }
 
@@ -177,7 +198,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
 
         @Override
         public HDPartialPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDPartialPath(extendInternal(partialPath));
+            return new HDPartialPath(extendInternal(partialPath.childNumbers));
         }
 
         @Override
@@ -188,6 +209,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         @Override
         public HDPartialPath parent() {
             return new HDPartialPath(parentInternal());
+        }
+
+        @Override
+        public HDPartialPath ancestorByDepth(int depth) {
+            return (HDPartialPath) super.ancestorByDepth(depth);
         }
 
         @Override
@@ -234,9 +260,9 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     }
 
     /**
-     * Deserialize a list of integers into an HDPath (internal use only)
+     * Deserialize a list of integers into an HDPartialPath (internal use only)
      * @param integerList A list of integers (what we use in ProtoBuf for an HDPath)
-     * @return a deserialized HDPath (hasPrivateKey is false/unknown)
+     * @return a deserialized HDPartialPath
      */
     public static HDPartialPath deserialize(List<Integer> integerList) {
         return HDPath.partial(integerList.stream()
@@ -420,7 +446,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
 
     protected List<ChildNumber> parentInternal() {
         return childNumbers.size() > 1 ?
-                childNumbers.subList(0, childNumbers.size() - 1) :
+                subListInternal(childNumbers.size() - 1) :
                 Collections.emptyList();
     }
 
@@ -444,11 +470,40 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * @return unmodifiable list of ancestors
      */
     public List<HDPath> ancestors(boolean includeSelf) {
-        int endExclusive =  childNumbers.size() + (includeSelf ? 1 : 0);
-        return IntStream.range(1, endExclusive)
-                .mapToObj(i -> childNumbers.subList(0, i))
-                .map(l -> HDPath.of(((HDFullPath) this).hasPrivateKey, l))
+        int endExclusive =  childNumbers.size() + (includeSelf ? 0 : -1);
+        return IntStream.range(0, endExclusive)
+                .mapToObj(this::ancestorByIndex)
                 .collect(StreamUtils.toUnmodifiableList());
+    }
+
+    public HDPath ancestorByIndex(int index) {
+        checkArgument(index >= 0 && index < childNumbers.size(), () -> String.format("Index %s out of bounds (0, %s)", index, childNumbers.size() - 1));
+        List<ChildNumber> subList = subListInternal(index + 1);
+        return cloneWithPath(subList);
+    }
+
+    // Depth of 0, returns empty path, Depth of d returns ancestorByIndex(d-1)
+    public HDPath ancestorByDepth(int depth) {
+        checkArgument(depth >= 0 && depth <= childNumbers.size(), () -> String.format("Depth %s out of bounds (0, %s)", depth, childNumbers.size()));
+        return depth == 0
+                ? cloneEmpty()
+                : this.ancestorByIndex(depth - 1);
+    }
+
+    private List<ChildNumber> subListInternal(int to) {
+        return childNumbers.subList(0, to);
+    }
+
+    private HDPath cloneWithPath(List<ChildNumber> newPath) {
+        return this instanceof HDFullPath
+                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, newPath)
+                : new HDPartialPath(newPath);
+    }
+
+    private HDPath cloneEmpty() {
+        return this instanceof HDFullPath
+                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, Collections.emptyList())
+                : new HDPartialPath(Collections.emptyList());
     }
 
     @Override
@@ -469,7 +524,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if ((o == null) || !(o instanceof HDPath)) return false;
+        if ((o == null) || getClass() != o.getClass()) return false;
         HDPath other = (HDPath) o;
         return Objects.equals(this.childNumbers, other.childNumbers);
     }

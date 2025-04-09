@@ -53,6 +53,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -391,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 rootKey.clearCreationTime();
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            for (HDPath path : getAccountPath().ancestors(true)) {
+            for (HDPath path : getAccountPath().asPartial().ancestors(true)) {
                 basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
             initializeHierarchyUnencrypted();
@@ -789,7 +790,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
-            for (ChildNumber childNumber : getAccountPath()) {
+            for (ChildNumber childNumber : getAccountPath().list()) {
                 mnemonicEntry.addAccountPath(childNumber.i());
             }
             entries.add(mnemonicEntry.build());
@@ -801,7 +802,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKey().toBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            for (ChildNumber num : key.getPath())
+            for (ChildNumber num : key.getPath().list())
                 detKey.addPath(num.i());
             if (key.equals(externalParentKey)) {
                 detKey.setIssuedSubkeys(issuedExternalKeys);
@@ -845,7 +846,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        HDPath accountPath = HDPath.M();
+        HDPath.HDPartialPath accountPath = HDPath.partial(Collections.emptyList());
         ScriptType outputScriptType = ScriptType.P2PKH;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
@@ -889,7 +890,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // Deserialize the public key and path.
                 LazyECPoint pubkey = new LazyECPoint(key.getPublicKey().toByteArray());
                 // Deserialize the path through the tree.
-                final HDPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
+                final HDPath.HDPartialPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())
                     outputScriptType = ScriptType.valueOf(key.getOutputScriptType().name());
                 // Possibly create the chain, if we didn't already do so yet.
@@ -1001,8 +1002,8 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         chains.add(chain);
     }
 
-    private static HDPath deserializeAccountPath(List<Integer> integerList) {
-        HDPath path = HDPath.deserialize(integerList);
+    private static HDPath.HDPartialPath deserializeAccountPath(List<Integer> integerList) {
+        HDPath.HDPartialPath path = HDPath.deserialize(integerList);
         return path.isEmpty() ? ACCOUNT_ZERO_PATH : path;
     }
 

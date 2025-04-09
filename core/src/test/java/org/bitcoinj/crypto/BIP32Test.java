@@ -178,7 +178,7 @@ public class BIP32Test {
             log.info("{}", tc.name);
             assertEquals(tc.name, String.format(Locale.US, "Test%d %s", testCase + 1, tc.path));
             int depth = tc.path.size() - 1;
-            DeterministicKey ehkey = dh.deriveChild(tc.path.subList(0, depth), false, true, tc.path.get(depth));
+            DeterministicKey ehkey = dh.deriveChild(tc.path.ancestorByDepth(depth), false, true, tc.path.get(depth));
             assertEquals(testEncode(tc.priv), testEncode(ehkey.serializePrivB58(MAINNET)));
             assertEquals(testEncode(tc.pub), testEncode(ehkey.serializePubB58(MAINNET)));
         }

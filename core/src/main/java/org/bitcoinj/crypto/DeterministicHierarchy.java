@@ -104,7 +104,7 @@ public class DeterministicHierarchy {
                 throw new IllegalArgumentException(String.format(Locale.US, "No key found for %s path %s.",
                     relativePath ? "relative" : "absolute", partialPath));
             checkArgument(!searchPath.isEmpty(), () -> "can't derive the master key: nothing to derive from");
-            DeterministicKey parent = get(searchPath.subList(0, searchPath.size() - 1), false, true);
+            DeterministicKey parent = get(searchPath.parent(), false, true);
             putKey(HDKeyDerivation.deriveChildKey(parent, searchPath.get(searchPath.size() - 1)));
         }
         return keys.get(searchPath);

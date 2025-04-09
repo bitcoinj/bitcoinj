@@ -58,7 +58,7 @@ public class DeterministicKey extends ECKey {
 
     @Nullable
     private final DeterministicKey parent;
-    private final HDPath childNumberPath;
+    private final HDPath.HDPartialPath childNumberPath;
     private final int depth;
     private final int parentFingerprint; // 0 if this key is root node of key hierarchy
 
@@ -186,25 +186,42 @@ public class DeterministicKey extends ECKey {
         this.parent = parent;
         this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
-        this.childNumberPath = Objects.requireNonNull(hdPath);
+        this.childNumberPath = Objects.requireNonNull(hdPath).asPartial();
         this.encryptedPrivateKey = encryptedPrivateKey;
         this.keyCrypter = keyCrypter;
     }
 
     /**
-     * Returns the path through some {@link DeterministicHierarchy} which reaches this keys position in the tree.
-     * A path can be written as 0/1/0 which means the first child of the root, the second child of that node, then
-     * the first child of that node.
+     * Returns an {@link HDPath.HDPartialPath} to this key's position in the tree. It is <i>almost</i> a full path
+     * that is missing only the prefix.
+     * @return The path to the key without the `m` or `M` prefix.
      */
-    public HDPath getPath() {
+    public HDPath.HDPartialPath getPath() {
         return childNumberPath;
+    }
+
+    /**
+     * Returns the {@link HDPath.HDFullPath} through the {@link DeterministicHierarchy} to this key's position in the tree.
+     * A path can be written as {@code M/0/1/0} which means the first child of the root, the second child of that node, then
+     * the first child of that node.
+     * @return A full path starting with {@code 'm'} or {@code 'M'} depending upon whether ths private key is available.
+     */
+    public HDPath.HDFullPath fullPath() {
+        return childNumberPath.asFull(prefix());
+    }
+
+    /**
+     * @return The prefix {@code 'm'} or {@code 'M'} for this key's HD path.
+     */
+    private HDPath.Prefix prefix() {
+        return isWatching() ? HDPath.Prefix.PUBLIC : HDPath.Prefix.PRIVATE;
     }
 
     /**
      * Returns the path of this key as a human-readable string starting with M or m to indicate the master key.
      */
     public String getPathAsString() {
-        return getPath().toString();
+        return fullPath().toString();
     }
 
     /**
@@ -487,9 +504,9 @@ public class DeterministicKey extends ECKey {
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
                 cursor.pub, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
-        // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
-        // our path with the length of the parents path.
-        List<ChildNumber> path = childNumberPath.subList(cursor.getPath().size(), childNumberPath.size());
+        // Now we have to re-derive the keys along the path back to ourselves. That path can be found by just truncating
+        // our path with the length of the parent's path.
+        List<ChildNumber> path = childNumberPath.list().subList(cursor.getPath().size(), childNumberPath.size());
         for (ChildNumber num : path) {
             downCursor = HDKeyDerivation.deriveChildKey(downCursor, num);
         }
