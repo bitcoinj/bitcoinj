@@ -78,6 +78,24 @@ public class HDPathTest {
     }
 
     @Test
+    public void testAncestorByIndex() {
+        HDPath path1 = HDPath.parsePath("m/0H/1H");
+
+        assertEquals(HDPath.parsePath("m/0H"), path1.ancestorByIndex(0));
+        assertEquals(HDPath.parsePath("m/0H/1H"), path1.ancestorByIndex(1));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAncestorByIndexTooSmall() {
+        HDPath.parsePath("m/0H/1H").ancestorByIndex(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAncestorByIndexTooBig() {
+        HDPath.parsePath("m/0H/1H").ancestorByIndex(2);
+    }
+
+    @Test
     public void testAncestors() {
         HDPath path = HDPath.parsePath("m/0H/1H/0H/1/0");
 
