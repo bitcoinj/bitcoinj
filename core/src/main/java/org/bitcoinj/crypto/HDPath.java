@@ -246,9 +246,9 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     }
 
     /**
-     * Deserialize a list of integers into an HDPath (internal use only)
+     * Deserialize a list of integers into an HDPartialPath (internal use only)
      * @param integerList A list of integers (what we use in ProtoBuf for an HDPath)
-     * @return a deserialized HDPath (hasPrivateKey is false/unknown)
+     * @return a deserialized HDPartialPath
      */
     public static HDPartialPath deserialize(List<Integer> integerList) {
         return HDPath.partial(integerList.stream()
