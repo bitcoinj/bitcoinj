@@ -420,7 +420,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
 
     protected List<ChildNumber> parentInternal() {
         return childNumbers.size() > 1 ?
-                childNumbers.subList(0, childNumbers.size() - 1) :
+                subListInternal(childNumbers.size() - 1) :
                 Collections.emptyList();
     }
 
@@ -446,9 +446,17 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     public List<HDPath> ancestors(boolean includeSelf) {
         int endExclusive =  childNumbers.size() + (includeSelf ? 1 : 0);
         return IntStream.range(1, endExclusive)
-                .mapToObj(i -> childNumbers.subList(0, i))
+                .mapToObj(this::subListInternal)
                 .map(l -> HDPath.of(((HDFullPath) this).hasPrivateKey, l))
                 .collect(StreamUtils.toUnmodifiableList());
+    }
+
+    /**
+     * @param toIndex high endpoint (exclusive) of the subList
+     * @return sublist from 0 to {@code toIndex}, exclusive
+     */
+    private List<ChildNumber> subListInternal(int toIndex) {
+        return childNumbers.subList(0, toIndex);
     }
 
     @Override
