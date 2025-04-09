@@ -3513,7 +3513,7 @@ public class WalletTest extends TestWithWallet {
         Wallet wallet6 = Wallet.fromSeed(TESTNET, DeterministicSeed.ofEntropy(new byte[20], ""), ScriptType.P2WPKH, HDPath.BIP44_PARENT);
         assertEquals(TESTNET, wallet6.network());
 
-        HDPath accountPath = KeyChainGroupStructure.BIP43.accountPathFor(ScriptType.P2WPKH, TESTNET);
+        HDPath.HDPartialPath accountPath = KeyChainGroupStructure.BIP43.accountPathFor(ScriptType.P2WPKH, TESTNET);
         DeterministicKeyChain keyChain = DeterministicKeyChain.builder()
                 .random(new SecureRandom())
                 .accountPath(accountPath)
