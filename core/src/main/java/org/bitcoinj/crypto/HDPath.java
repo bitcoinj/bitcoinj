@@ -20,8 +20,6 @@ import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 
 import javax.annotation.Nonnull;
-import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -160,12 +158,12 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
 
         @Override
         public HDFullPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath.list()));
+            return new HDFullPath(this.hasPrivateKey, extendArray(partialPath.children));
         }
 
         @Override
         public HDFullPath extend(List<ChildNumber> partialPath) {
-            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath));
+            return new HDFullPath(this.hasPrivateKey, extendArray(HDPath.childrenAsArray(partialPath)));
         }
 
         @Override
@@ -180,7 +178,7 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
 
         @Override
         public HDPartialPath asPartial() {
-            return new HDPartialPath(this.list());
+            return new HDPartialPath(this.children);
         }
 
         @Override
@@ -215,12 +213,12 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
 
         @Override
         public HDPartialPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDPartialPath(extendInternal(partialPath.list()));
+            return new HDPartialPath(extendArray(partialPath.children));
         }
 
         @Override
         public HDPartialPath extend(List<ChildNumber> partialPath) {
-            return new HDPartialPath(extendInternal(partialPath));
+            return new HDPartialPath(extendArray(HDPath.childrenAsArray(partialPath)));
         }
 
         @Override
@@ -417,23 +415,6 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
             : new HDPath.HDPartialPath(nodes);
     }
 
-    // return mutable array
-    private ArrayList<ChildNumber> children() {
-        ArrayList<ChildNumber> list = new ArrayList<>(children.length);
-        for (int child : children) {
-            list.add(new ChildNumber(child));
-        }
-        return list;
-    }
-
-    List<ChildNumber> childNumbers() {
-        ArrayList<ChildNumber> list = new ArrayList<>(children.length);
-        for (int child : children) {
-            list.add(new ChildNumber(child));
-        }
-        return list;
-    }
-
     /**
      * Extend the path by appending additional ChildNumber objects.
      *
@@ -443,11 +424,14 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
      */
     public abstract HDPath extend(ChildNumber child1, ChildNumber... children);
 
-    protected List<ChildNumber> extendInternal(ChildNumber child1, ChildNumber... children) {
-        List<ChildNumber> mutable = children(); // Mutable copy
-        mutable.add(child1);
-        mutable.addAll(Arrays.asList(children));
-        return mutable;
+    protected int[] extendInternal(ChildNumber child1, ChildNumber[] addon) {
+        int[] result = new int[children.length + 1 + addon.length];
+        System.arraycopy(children, 0, result, 0, children.length);
+        result[children.length] = child1.i();
+        for (int i = 0; i < addon.length; i++) {
+            result[children.length + 1 + i] = addon[i].i();
+        }
+        return result;
     }
 
     /**
@@ -466,10 +450,11 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
      */
     public abstract HDPath extend(List<ChildNumber> path2);
 
-    protected List<ChildNumber> extendInternal(List<ChildNumber> children) {
-        List<ChildNumber> mutable = children(); // Mutable copy
-        mutable.addAll(children);
-        return mutable;
+    protected int[] extendArray(int[] addon) {
+        int[] result = new int[children.length + addon.length];
+        System.arraycopy(children, 0, result, 0, children.length);
+        System.arraycopy(addon, 0, result, children.length, addon.length);
+        return result;
     }
 
     /**
@@ -477,7 +462,11 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
      * @return an unmodifiable list of {@code ChildNumber}
      */
     public List<ChildNumber> list() {
-        return Collections.unmodifiableList(children());
+        ChildNumber[] out = new ChildNumber[children.length];
+        for (int i = 0; i < children.length; i++) {
+            out[i] = new ChildNumber(children[i]);
+        }
+        return Collections.unmodifiableList(Arrays.asList(out));
     }
 
     /**
@@ -534,7 +523,7 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
 
     public HDPath ancestorByIndex(int index) {
         checkArgument(index >= 0 && index < children.length, () -> String.format("Index %s out of bounds (0, %s)", index, children.length - 1));
-        List<ChildNumber> subList = subListInternal(index + 1);
+        int[] subList = subListInternal(index + 1);
         return cloneWithPath(subList);
     }
 
@@ -545,12 +534,14 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
                 ? cloneEmpty()
                 : this.ancestorByIndex(depth - 1);
     }
-
-    private List<ChildNumber> subListInternal(int to) {
-        return list().subList(0, to);
+    
+    private int[] subListInternal(int to) {
+        int[] result = new int[to];
+        System.arraycopy(children, 0, result, 0, to);
+        return result;
     }
-
-    private HDPath cloneWithPath(List<ChildNumber> newPath) {
+    
+    private HDPath cloneWithPath(int[] newPath) {
         return this instanceof HDFullPath
                 ? new HDFullPath(((HDFullPath) this).hasPrivateKey, newPath)
                 : new HDPartialPath(newPath);
@@ -558,8 +549,8 @@ public abstract class HDPath /* extends AbstractList<ChildNumber> */ {
 
     private HDPath cloneEmpty() {
         return this instanceof HDFullPath
-                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, Collections.emptyList())
-                : new HDPartialPath(Collections.emptyList());
+                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, new int[0])
+                : new HDPartialPath(new int[0]);
     }
 
     public ChildNumber get(int index) {
