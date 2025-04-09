@@ -87,7 +87,7 @@ public abstract class HDPath {
     private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split(SEPARATOR))
             .map(String::trim)
             .collect(Collectors.toList());
-    protected final List<ChildNumber> childNumbers;
+    int[] children;
 
     /** Partial path with BIP44 purpose */
     public static final HDPartialPath BIP44_PARENT = partial(ChildNumber.PURPOSE_BIP44);
@@ -110,6 +110,11 @@ public abstract class HDPath {
             this.hasPrivateKey = hasPrivateKey;
         }
 
+        private HDFullPath(boolean hasPrivateKey, int[] array) {
+            super(array);
+            this.hasPrivateKey = hasPrivateKey;
+        }
+
         /**
          * Constructs a path for a public or private key. Should probably be a private constructor.
          *
@@ -117,7 +122,13 @@ public abstract class HDPath {
          * @param list   List of children in the path
          */
         public HDFullPath(Prefix prefix, List<ChildNumber> list) {
-            this(prefix == Prefix.PRIVATE, list);
+            super(list);
+            this.hasPrivateKey = prefix == Prefix.PRIVATE;
+        }
+
+        private HDFullPath(Prefix prefix, int[] array) {
+            super(array);
+            this.hasPrivateKey = prefix == Prefix.PRIVATE;
         }
 
         /**
@@ -145,7 +156,7 @@ public abstract class HDPath {
 
         @Override
         public HDFullPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath.childNumbers));
+            return new HDFullPath(this.hasPrivateKey, extendInternal(partialPath.list()));
         }
 
         @Override
@@ -165,7 +176,7 @@ public abstract class HDPath {
 
         @Override
         public HDPartialPath asPartial() {
-            return new HDPartialPath(this.childNumbers);
+            return new HDPartialPath(this.list());
         }
 
         @Override
@@ -189,6 +200,10 @@ public abstract class HDPath {
             super(list);
         }
 
+        private HDPartialPath(int[] list) {
+            super(list);
+        }
+
         @Override
         public HDPartialPath extend(ChildNumber child1, ChildNumber... children) {
             return new HDPartialPath(extendInternal(child1, children));
@@ -196,7 +211,7 @@ public abstract class HDPath {
 
         @Override
         public HDPartialPath extend(HDPath.HDPartialPath partialPath) {
-            return new HDPartialPath(extendInternal(partialPath.childNumbers));
+            return new HDPartialPath(extendInternal(partialPath.list()));
         }
 
         @Override
@@ -220,7 +235,7 @@ public abstract class HDPath {
         }
 
         public HDFullPath asFull(Prefix prefix) {
-            return new HDFullPath(prefix, this.list());
+            return new HDFullPath(prefix, this.children);
         }
 
         public HDFullPath asPublic() {
@@ -232,9 +247,22 @@ public abstract class HDPath {
         }
     }
 
-    // Canonical superclass constructor
     private HDPath(List<ChildNumber> list) {
-        this.childNumbers = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(list)));
+        this(childrenAsArray(list));
+    }
+
+    private static int[] childrenAsArray(List<ChildNumber> list) {
+        int[] array = new int[list.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = list.get(i).i();
+        }
+        return array;
+    }
+
+    // Canonical superclass constructor
+    private HDPath(int[] childNumbers) {
+        children = new int[childNumbers.length];
+        System.arraycopy(childNumbers, 0, children, 0, childNumbers.length);
     }
 
     /**
@@ -385,6 +413,23 @@ public abstract class HDPath {
             : new HDPath.HDPartialPath(nodes);
     }
 
+    // return mutable array
+    private ArrayList<ChildNumber> children() {
+        ArrayList<ChildNumber> list = new ArrayList<>(children.length);
+        for (int child : children) {
+            list.add(new ChildNumber(child));
+        }
+        return list;
+    }
+
+    List<ChildNumber> childNumbers() {
+        ArrayList<ChildNumber> list = new ArrayList<>(children.length);
+        for (int child : children) {
+            list.add(new ChildNumber(child));
+        }
+        return list;
+    }
+
     /**
      * Extend the path by appending additional ChildNumber objects.
      *
@@ -395,7 +440,7 @@ public abstract class HDPath {
     public abstract HDPath extend(ChildNumber child1, ChildNumber... children);
 
     protected List<ChildNumber> extendInternal(ChildNumber child1, ChildNumber... children) {
-        List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
+        List<ChildNumber> mutable = children(); // Mutable copy
         mutable.add(child1);
         mutable.addAll(Arrays.asList(children));
         return mutable;
@@ -418,7 +463,7 @@ public abstract class HDPath {
     public abstract HDPath extend(List<ChildNumber> path2);
 
     protected List<ChildNumber> extendInternal(List<ChildNumber> children) {
-        List<ChildNumber> mutable = new ArrayList<>(this.childNumbers); // Mutable copy
+        List<ChildNumber> mutable = children(); // Mutable copy
         mutable.addAll(children);
         return mutable;
     }
@@ -428,7 +473,7 @@ public abstract class HDPath {
      * @return an unmodifiable list of {@code ChildNumber}
      */
     public List<ChildNumber> list() {
-        return childNumbers;
+        return Collections.unmodifiableList(children());
     }
 
     /**
@@ -442,10 +487,19 @@ public abstract class HDPath {
      */
     public abstract HDPath parent();
 
-    protected List<ChildNumber> parentInternal() {
-        return childNumbers.size() > 1 ?
-                subListInternal(childNumbers.size() - 1) :
-                Collections.emptyList();
+    protected int[] parentInternal() {
+        return children.length > 1 ?
+                shorten(children):
+                new int[0];
+    }
+
+    private int[] shorten(int[] in) {
+        int[] out = new int[in.length - 1];
+
+        // Copy elements from input to result
+        System.arraycopy(in, 0, out, 0, out.length);
+
+        return out;
     }
 
     /**
@@ -468,7 +522,7 @@ public abstract class HDPath {
      * @return unmodifiable list of ancestors
      */
     public List<HDPath> ancestors(boolean includeSelf) {
-        int endExclusive = childNumbers.size() + (includeSelf ? 0 : -1);
+        int endExclusive = children.length + (includeSelf ? 0 : -1);
         return IntStream.range(0, endExclusive)
                 .mapToObj(this::ancestorByIndex)
                 .collect(StreamUtils.toUnmodifiableList());
@@ -482,8 +536,8 @@ public abstract class HDPath {
      * @return ancestor
      */
     public HDPath ancestorByIndex(int index) {
-        checkArgument(index >= 0 && index < childNumbers.size(), () ->
-                String.format("Index %s out of bounds (0, %s)", index, childNumbers.size() - 1));
+        checkArgument(index >= 0 && index < children.length, () ->
+                String.format("Index %s out of bounds (0, %s)", index, children.length - 1));
         List<ChildNumber> subList = subListInternal(index + 1);
         return cloneWithPath(subList);
     }
@@ -496,8 +550,8 @@ public abstract class HDPath {
      * @return ancestor
      */
     public HDPath ancestorByDepth(int depth) {
-        checkArgument(depth >= 0 && depth <= childNumbers.size(), () ->
-                String.format("Depth %s out of bounds (0, %s)", depth, childNumbers.size()));
+        checkArgument(depth >= 0 && depth <= children.length, () ->
+                String.format("Depth %s out of bounds (0, %s)", depth, children.length));
         return depth == 0
                 ? cloneEmpty()
                 : this.ancestorByIndex(depth - 1);
@@ -508,7 +562,7 @@ public abstract class HDPath {
      * @return sublist from 0 to {@code toIndex}, exclusive
      */
     private List<ChildNumber> subListInternal(int toIndex) {
-        return childNumbers.subList(0, toIndex);
+        return list().subList(0, toIndex);
     }
 
     /**
@@ -535,15 +589,15 @@ public abstract class HDPath {
     }
 
     public ChildNumber get(int index) {
-        return childNumbers.get(index);
+        return new ChildNumber(children[index]);
     }
 
     public int size() {
-        return childNumbers.size();
+        return children.length;
     }
 
     public boolean isEmpty() {
-        return childNumbers.isEmpty();
+        return children.length == 0;
     }
 
     @Override
@@ -551,12 +605,12 @@ public abstract class HDPath {
         if (this == o) return true;
         if ((o == null) || getClass() != o.getClass()) return false;
         HDPath other = (HDPath) o;
-        return Objects.equals(this.childNumbers, other.childNumbers);
+        return Arrays.equals(this.children, other.children);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.childNumbers);
+        return Arrays.hashCode(this.children);
     }
 
     @Override
@@ -565,9 +619,9 @@ public abstract class HDPath {
         if (this instanceof HDFullPath) {
             b.append(((HDFullPath) this).prefix());
         }
-        for (ChildNumber child : childNumbers) {
+        for (int child : children) {
             b.append(SEPARATOR);
-            b.append(child);
+            b.append(new ChildNumber(child));
         }
         return b.toString();
     }
