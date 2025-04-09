@@ -790,7 +790,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
-            for (ChildNumber childNumber : getAccountPath()) {
+            for (ChildNumber childNumber : getAccountPath().list()) {
                 mnemonicEntry.addAccountPath(childNumber.i());
             }
             entries.add(mnemonicEntry.build());
@@ -802,7 +802,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKey().toBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            for (ChildNumber num : key.getPath())
+            for (ChildNumber num : key.getPath().list())
                 detKey.addPath(num.i());
             if (key.equals(externalParentKey)) {
                 detKey.setIssuedSubkeys(issuedExternalKeys);
