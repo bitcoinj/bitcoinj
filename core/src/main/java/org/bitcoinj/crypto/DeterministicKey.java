@@ -495,9 +495,9 @@ public class DeterministicKey extends ECKey {
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
                 cursor.pub, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
-        // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
-        // our path with the length of the parents path.
-        List<ChildNumber> path = childNumberPath.subList(cursor.getPath().size(), childNumberPath.size());
+        // Now we have to re-derive the keys along the path back to ourselves. That path can be found by just truncating
+        // our path with the length of the parent's path.
+        List<ChildNumber> path = childNumberPath.list().subList(cursor.getPath().size(), childNumberPath.size());
         for (ChildNumber num : path) {
             downCursor = HDKeyDerivation.deriveChildKey(downCursor, num);
         }
