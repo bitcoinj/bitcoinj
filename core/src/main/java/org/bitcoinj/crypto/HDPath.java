@@ -169,6 +169,20 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         public HDPartialPath asPartial() {
             return new HDPartialPath(this.childNumbers);
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if ((o == null) || getClass() != o.getClass()) return false;
+            HDFullPath other = (HDFullPath) o;
+            return Objects.equals(this.hasPrivateKey, other.hasPrivateKey) &&
+                    super.equals(other);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.hasPrivateKey, super.hashCode());
+        }
     }
 
     public static class HDPartialPath extends HDPath {
@@ -510,7 +524,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if ((o == null) || !(o instanceof HDPath)) return false;
+        if ((o == null) || getClass() != o.getClass()) return false;
         HDPath other = (HDPath) o;
         return Objects.equals(this.childNumbers, other.childNumbers);
     }
