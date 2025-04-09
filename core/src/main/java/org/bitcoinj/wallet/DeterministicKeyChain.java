@@ -392,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 rootKey.clearCreationTime();
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            for (HDPath path : getAccountPath().ancestors(true)) {
+            for (HDPath path : getAccountPath().asPartial().ancestors(true)) {
                 basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
             initializeHierarchyUnencrypted();
@@ -890,7 +890,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // Deserialize the public key and path.
                 LazyECPoint pubkey = new LazyECPoint(key.getPublicKey().toByteArray());
                 // Deserialize the path through the tree.
-                final HDPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
+                final HDPath.HDPartialPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())
                     outputScriptType = ScriptType.valueOf(key.getOutputScriptType().name());
                 // Possibly create the chain, if we didn't already do so yet.
