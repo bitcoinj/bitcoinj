@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+
 /**
  * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path.
  * The {@code hasPrivateKey} {@code boolean} is used for rendering to {@code String}
@@ -159,6 +161,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         }
 
         @Override
+        public HDFullPath ancestorByDepth(int depth) {
+            return (HDFullPath) super.ancestorByDepth(depth);
+        }
+
+        @Override
         public HDPartialPath asPartial() {
             return new HDPartialPath(this.childNumbers);
         }
@@ -188,6 +195,11 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
         @Override
         public HDPartialPath parent() {
             return new HDPartialPath(parentInternal());
+        }
+
+        @Override
+        public HDPartialPath ancestorByDepth(int depth) {
+            return (HDPartialPath) super.ancestorByDepth(depth);
         }
 
         @Override
@@ -420,7 +432,7 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
 
     protected List<ChildNumber> parentInternal() {
         return childNumbers.size() > 1 ?
-                childNumbers.subList(0, childNumbers.size() - 1) :
+                subListInternal(childNumbers.size() - 1) :
                 Collections.emptyList();
     }
 
@@ -444,11 +456,40 @@ public abstract class HDPath extends AbstractList<ChildNumber> {
      * @return unmodifiable list of ancestors
      */
     public List<HDPath> ancestors(boolean includeSelf) {
-        int endExclusive =  childNumbers.size() + (includeSelf ? 1 : 0);
-        return IntStream.range(1, endExclusive)
-                .mapToObj(i -> childNumbers.subList(0, i))
-                .map(l -> HDPath.of(((HDFullPath) this).hasPrivateKey, l))
+        int endExclusive =  childNumbers.size() + (includeSelf ? 0 : -1);
+        return IntStream.range(0, endExclusive)
+                .mapToObj(this::ancestorByIndex)
                 .collect(StreamUtils.toUnmodifiableList());
+    }
+
+    public HDPath ancestorByIndex(int index) {
+        checkArgument(index >= 0 && index < childNumbers.size(), () -> String.format("Index %s out of bounds (0, %s)", index, childNumbers.size() - 1));
+        List<ChildNumber> subList = subListInternal(index + 1);
+        return cloneWithPath(subList);
+    }
+
+    // Depth of 0, returns empty path, Depth of d returns ancestorByIndex(d-1)
+    public HDPath ancestorByDepth(int depth) {
+        checkArgument(depth >= 0 && depth <= childNumbers.size(), () -> String.format("Depth %s out of bounds (0, %s)", depth, childNumbers.size()));
+        return depth == 0
+                ? cloneEmpty()
+                : this.ancestorByIndex(depth - 1);
+    }
+
+    private List<ChildNumber> subListInternal(int to) {
+        return childNumbers.subList(0, to);
+    }
+
+    private HDPath cloneWithPath(List<ChildNumber> newPath) {
+        return this instanceof HDFullPath
+                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, newPath)
+                : new HDPartialPath(newPath);
+    }
+
+    private HDPath cloneEmpty() {
+        return this instanceof HDFullPath
+                ? new HDFullPath(((HDFullPath) this).hasPrivateKey, Collections.emptyList())
+                : new HDPartialPath(Collections.emptyList());
     }
 
     @Override
