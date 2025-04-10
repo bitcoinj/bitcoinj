@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.crypto;
+package org.bitcoinj.crypto.internal;
 
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.junit.Test;
 
 import org.bitcoinj.base.internal.ByteUtils;
 import static org.junit.Assert.assertArrayEquals;
 
-public class HDUtilsTest {
+public class CryptoUtilsTest {
     @Test
     public void testHmac() {
         String[] tv = {
@@ -108,7 +109,7 @@ public class HDUtilsTest {
         };
 
         for (int i = 0; i < tv.length; i += 3) {
-            assertArrayEquals("Case " + i, getBytes(tv, i + 2), HDUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)));
+            assertArrayEquals("Case " + i, getBytes(tv, i + 2), CryptoUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)));
         }
     }
 
