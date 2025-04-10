@@ -325,7 +325,7 @@ public class ECKey implements EncryptableItem {
      * never need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
      */
     public ECKey decompress() {
-        if (!pub.isCompressed())
+        if (!pub.isCompressedInternal())
             return this;
         else
             return new ECKey(priv, new LazyECPoint(pub.get(), false));
@@ -453,7 +453,7 @@ public class ECKey implements EncryptableItem {
      * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33 bytes, not 64.
      */
     public boolean isCompressed() {
-        return pub.isCompressed();
+        return pub.isCompressedInternal();
     }
 
     /**
