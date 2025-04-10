@@ -18,6 +18,7 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
 import java.math.BigInteger;
@@ -63,7 +64,7 @@ public final class HDKeyDerivation {
         checkArgument(seed.length > 8, () ->
                 "seed is too short and could be brute forced");
         // Calculate I = HMAC-SHA512(key="Bitcoin seed", msg=S)
-        byte[] i = HDUtils.hmacSha512(HDUtils.createHmacSha512Digest("Bitcoin seed".getBytes()), seed);
+        byte[] i = CryptoUtils.hmacSha512(CryptoUtils.createHmacSha512Digest("Bitcoin seed".getBytes()), seed);
         // Split I into two 32-byte sequences, Il and Ir.
         // Use Il as master secret key, and Ir as master chain code.
         checkState(i.length == 64, () ->
@@ -168,7 +169,7 @@ public final class HDKeyDerivation {
             data.put(parentPublicKey);
         }
         data.putInt(childNumber.i());
-        byte[] i = HDUtils.hmacSha512(parent.getChainCode(), data.array());
+        byte[] i = CryptoUtils.hmacSha512(parent.getChainCode(), data.array());
         checkState(i.length == 64, () ->
                 "" + i.length);
         byte[] il = Arrays.copyOfRange(i, 0, 32);
@@ -202,7 +203,7 @@ public final class HDKeyDerivation {
         ByteBuffer data = ByteBuffer.allocate(37);
         data.put(parentPublicKey);
         data.putInt(childNumber.i());
-        byte[] i = HDUtils.hmacSha512(parent.getChainCode(), data.array());
+        byte[] i = CryptoUtils.hmacSha512(parent.getChainCode(), data.array());
         checkState(i.length == 64, () ->
                 "" + i.length);
         byte[] il = Arrays.copyOfRange(i, 0, 32);
