@@ -16,12 +16,14 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
+import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -32,7 +34,7 @@ import java.util.Objects;
  * <p>
  * Apart from the lazy field {@link #point}, instances of this class are immutable.
  */
-public final class LazyECPoint {
+public final class LazyECPoint implements ECPublicKey {
     private static final ECCurve curve = ECKey.CURVE.getCurve();
 
     // bits will be null if LazyECPoint is constructed from an (already decoded) point
@@ -87,6 +89,45 @@ public final class LazyECPoint {
         if (point == null)
             point = curve.decodePoint(bits);
         return point;
+    }
+
+    /**
+     * @return String representing the algorithm used with this key.
+     */
+    @Override
+    public String getAlgorithm() {
+        return "Secp256k1";
+    }
+
+    /**
+     * @return String representing encoded format of this key.
+     */
+    @Override
+    public String getFormat() {
+        return "SEC";
+    }
+
+    /**
+     * Convert from internal Bouncy Castle {@link ECPoint} to return
+     * a {@code java.security.spec.ECPoint}.
+     * @return Java Cryptography ECPoint instance
+     */
+    @Override
+    public java.security.spec.ECPoint getW() {
+        ECPoint bcPoint = get();
+        return bcPoint.isInfinity()
+                ? java.security.spec.ECPoint.POINT_INFINITY
+                : new java.security.spec.ECPoint(
+                    bcPoint.normalize().getAffineXCoord().toBigInteger(),
+                    bcPoint.normalize().getAffineYCoord().toBigInteger());
+    }
+
+    /**
+     * @return Java Cryptography type with Elliptic Curve parameters
+     */
+    @Override
+    public java.security.spec.ECParameterSpec getParams() {
+        return Secp256k1Constants.EC_PARAMS;
     }
 
     public byte[] getEncoded() {
