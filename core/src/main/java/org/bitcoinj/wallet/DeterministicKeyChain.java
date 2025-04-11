@@ -392,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 rootKey.clearCreationTime();
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            for (HDPath path : getAccountPath().ancestors(true)) {
+            for (HDPath path : getAccountPath().asPartial().ancestors(true)) {
                 basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
             initializeHierarchyUnencrypted();
@@ -790,7 +790,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             Protos.Key.Builder mnemonicEntry = BasicKeyChain.serializeEncryptableItem(seed);
             mnemonicEntry.setType(Protos.Key.Type.DETERMINISTIC_MNEMONIC);
             serializeSeedEncryptableItem(seed, mnemonicEntry);
-            for (ChildNumber childNumber : getAccountPath()) {
+            for (ChildNumber childNumber : getAccountPath().list()) {
                 mnemonicEntry.addAccountPath(childNumber.i());
             }
             entries.add(mnemonicEntry.build());
@@ -802,7 +802,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKey().toBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            for (ChildNumber num : key.getPath())
+            for (ChildNumber num : key.getPath().list())
                 detKey.addPath(num.i());
             if (key.equals(externalParentKey)) {
                 detKey.setIssuedSubkeys(issuedExternalKeys);
@@ -890,7 +890,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 // Deserialize the public key and path.
                 LazyECPoint pubkey = new LazyECPoint(key.getPublicKey().toByteArray());
                 // Deserialize the path through the tree.
-                final HDPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
+                final HDPath.HDPartialPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())
                     outputScriptType = ScriptType.valueOf(key.getOutputScriptType().name());
                 // Possibly create the chain, if we didn't already do so yet.
