@@ -96,7 +96,7 @@ public class LocalTransactionSigner implements TransactionSigner {
             // Married keys all have the same derivation path, so we can safely just take first one here.
             ECKey pubKey = redeemData.keys.get(0);
             if (pubKey instanceof DeterministicKey)
-                propTx.keyPaths.put(scriptPubKey, (((DeterministicKey) pubKey).getPath()));
+                propTx.keyPaths.put(scriptPubKey, (((DeterministicKey) pubKey).partialPath()));
 
             // locate private key in redeem data. For P2PKH and P2PK inputs RedeemData will always contain
             // only one key (with private bytes). For P2SH inputs RedeemData will contain multiple keys, one of which MAY

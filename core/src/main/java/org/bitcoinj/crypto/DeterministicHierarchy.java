@@ -59,7 +59,7 @@ public class DeterministicHierarchy {
      */
     public DeterministicHierarchy(DeterministicKey rootKey) {
         putKey(rootKey);
-        rootPath = rootKey.getPath();
+        rootPath = rootKey.partialPath();
     }
 
     /**
@@ -67,12 +67,12 @@ public class DeterministicHierarchy {
      * inserted in order.
      */
     public final void putKey(DeterministicKey key) {
-        HDPath.HDPartialPath path = key.getPath().asPartial();
+        HDPath.HDPartialPath path = key.partialPath();
         // Update our tracking of what the next child in each branch of the tree should be. Just assume that keys are
         // inserted in order here.
         final DeterministicKey parent = key.getParent();
         if (parent != null)
-            lastChildNumbers.put(parent.getPath(), key.getChildNumber());
+            lastChildNumbers.put(parent.partialPath(), key.getChildNumber());
         keys.put(path, key);
     }
 
@@ -126,7 +126,7 @@ public class DeterministicHierarchy {
         int nAttempts = 0;
         while (nAttempts++ < HDKeyDerivation.MAX_CHILD_DERIVATION_ATTEMPTS) {
             try {
-                ChildNumber createChildNumber = getNextChildNumberToDerive(parent.getPath(), privateDerivation);
+                ChildNumber createChildNumber = getNextChildNumberToDerive(parent.partialPath(), privateDerivation);
                 return deriveChild(parent, createChildNumber);
             } catch (HDDerivationException ignore) { }
         }

@@ -192,12 +192,30 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
+     * @return A partial path (previously was {@link List<ChildNumber>})
+     * @deprecated Use {@link DeterministicKey#path()} or {@link DeterministicKey#partialPath()}
+     */
+    @Deprecated
+    public HDPath.HDPartialPath getPath() {
+        return childNumberPath;
+    }
+
+    /**
+     * Returns an {@link HDPath.HDPartialPath} to this key's position in the tree. It is <i>almost</i> a full path
+     * that is missing only the prefix.
+     * @return The path to the key without the {@code 'm'} or {@code 'M'} prefix.
+     */
+    public HDPath.HDPartialPath partialPath() {
+        return childNumberPath;
+    }
+
+    /**
      * Returns the {@link HDPath.HDFullPath} through the {@link DeterministicHierarchy} to this key's position in the tree.
      * A path can be written as {@code M/0/1/0} which means the first child of the root, the second child of that node, then
      * the first child of that node.
      * @return A full path starting with {@code 'm'} or {@code 'M'} depending upon whether ths private key is available.
      */
-    public HDPath.HDFullPath getPath() {
+    public HDPath.HDFullPath path() {
         return childNumberPath.asFull(prefix());
     }
 
@@ -212,7 +230,7 @@ public class DeterministicKey extends ECKey {
      * Returns the path of this key as a human-readable string starting with M or m to indicate the master key.
      */
     public String getPathAsString() {
-        return getPath().toString();
+        return path().toString();
     }
 
     /**
@@ -224,7 +242,7 @@ public class DeterministicKey extends ECKey {
         return depth;
     }
 
-    /** Returns the last element of the path returned by {@link DeterministicKey#getPath()} */
+    /** Returns the last element of the path returned by {@link DeterministicKey#partialPath()} */
     public ChildNumber getChildNumber() {
         return childNumberPath.size() == 0 ? ChildNumber.ZERO : childNumberPath.get(childNumberPath.size() - 1);
     }
@@ -497,7 +515,7 @@ public class DeterministicKey extends ECKey {
                 cursor.pub, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
         // Now we have to rederive the keys along the path back to ourselves. That path can be found by just truncating
         // our path with the length of the parents path.
-        List<ChildNumber> path = childNumberPath.subList(cursor.getPath().size(), childNumberPath.size());
+        List<ChildNumber> path = childNumberPath.subList(cursor.partialPath().size(), childNumberPath.size());
         for (ChildNumber num : path) {
             downCursor = HDKeyDerivation.deriveChildKey(downCursor, num);
         }
@@ -650,7 +668,7 @@ public class DeterministicKey extends ECKey {
                 throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
             if (parent.getFingerprint() != parentFingerprint)
                 throw new IllegalArgumentException("Parent fingerprints don't match");
-            path = parent.getPath().extend(childNumber);
+            path = parent.partialPath().extend(childNumber);
             if (path.size() != depth)
                 throw new IllegalArgumentException("Depth does not match");
         } else {

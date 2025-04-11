@@ -151,7 +151,7 @@ public final class HDKeyDerivation {
     public static DeterministicKey deriveChildKeyFromPrivate(DeterministicKey parent, ChildNumber childNumber)
             throws HDDerivationException {
         RawKeyBytes rawKey = deriveChildKeyBytesFromPrivate(parent, childNumber);
-        return new DeterministicKey(parent.getPath().extend(childNumber), rawKey.chainCode,
+        return new DeterministicKey(parent.partialPath().extend(childNumber), rawKey.chainCode,
                 ByteUtils.bytesToBigInteger(rawKey.keyBytes), parent);
     }
 
@@ -190,7 +190,7 @@ public final class HDKeyDerivation {
     public static DeterministicKey deriveChildKeyFromPublic(DeterministicKey parent, ChildNumber childNumber,
             PublicDeriveMode mode) throws HDDerivationException {
         RawKeyBytes rawKey = deriveChildKeyBytesFromPublic(parent, childNumber, PublicDeriveMode.NORMAL);
-        return new DeterministicKey(parent.getPath().extend(childNumber), rawKey.chainCode,
+        return new DeterministicKey(parent.partialPath().extend(childNumber), rawKey.chainCode,
                 new LazyECPoint(rawKey.keyBytes), null, parent);
     }
 

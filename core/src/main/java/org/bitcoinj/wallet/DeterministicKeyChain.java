@@ -358,7 +358,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.rootKey = null;
         basicKeyChain.importKey(key);
         hierarchy = new DeterministicHierarchy(key);
-        this.accountPath = key.getPath();
+        this.accountPath = key.partialPath();
         this.outputScriptType = outputScriptType;
         initializeHierarchyUnencrypted();
         this.isFollowing = isFollowing;
@@ -524,7 +524,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             putKeys(lookahead);
             List<DeterministicKey> keys = new ArrayList<>(numberOfKeys);
             for (int i = 0; i < numberOfKeys; i++) {
-                HDPath path = parentKey.getPath().extend(new ChildNumber(index - numberOfKeys + i, false));
+                HDPath path = parentKey.partialPath().extend(new ChildNumber(index - numberOfKeys + i, false));
                 DeterministicKey k = hierarchy.get(path, false, false);
                 // Just a last minute sanity check before we hand the key out to the app for usage. This isn't inspired
                 // by any real problem reports from bitcoinj users, but I've heard of cases via the grapevine of
@@ -552,7 +552,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     // Clone key to new hierarchy.
     private static DeterministicKey cloneKey(DeterministicHierarchy hierarchy, DeterministicKey key) {
-        DeterministicKey parent = hierarchy.get(Objects.requireNonNull(key.getParent()).getPath(), false, false);
+        DeterministicKey parent = hierarchy.get(Objects.requireNonNull(key.getParent()).partialPath(), false, false);
         return key.withoutPrivateKey().withParent(parent);
     }
 
@@ -802,7 +802,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
             proto.setType(Protos.Key.Type.DETERMINISTIC_KEY);
             final Protos.DeterministicKey.Builder detKey = proto.getDeterministicKey().toBuilder();
             detKey.setChainCode(ByteString.copyFrom(key.getChainCode()));
-            for (ChildNumber num : key.getPath())
+            for (ChildNumber num : key.partialPath())
                 detKey.addPath(num.i());
             if (key.equals(externalParentKey)) {
                 detKey.setIssuedSubkeys(issuedExternalKeys);
@@ -1245,7 +1245,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     private List<DeterministicKey> maybeLookAhead(DeterministicKey parent, int issued, int lookaheadSize, int lookaheadThreshold) {
         checkState(lock.isHeldByCurrentThread());
-        final int numChildren = hierarchy.getNumChildren(parent.getPath());
+        final int numChildren = hierarchy.getNumChildren(parent.partialPath());
         final int needed = issued + lookaheadSize + lookaheadThreshold - numChildren;
         final int limit = (needed > lookaheadThreshold) ? needed : 0;
 
@@ -1322,12 +1322,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     private Predicate<DeterministicKey> filterKeys(boolean includeLookahead, boolean includeParents) {
         Predicate<DeterministicKey> keyFilter;
         if (!includeLookahead) {
-            int treeSize = internalParentKey.getPath().size();
+            int treeSize = internalParentKey.partialPath().size();
             keyFilter = key -> {
                 DeterministicKey parent = key.getParent();
                 return !(
                         (!includeParents && parent == null) ||
-                        (!includeParents && key.getPath().size() <= treeSize) ||
+                        (!includeParents && key.partialPath().size() <= treeSize) ||
                         (internalParentKey.equals(parent) && key.getChildNumber().i() >= issuedInternalKeys) ||
                         (externalParentKey.equals(parent) && key.getChildNumber().i() >= issuedExternalKeys)
                 );
@@ -1367,7 +1367,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * @return Unmodifiable list of keys
      */
     public List<DeterministicKey> getLeafKeys() {
-        return getKeys(key -> key.getPath().size() == getAccountPath().size() + 2);    // leaf keys only
+        return getKeys(key -> key.partialPath().size() == getAccountPath().size() + 2);    // leaf keys only
     }
 
     /*package*/ static void serializeSeedEncryptableItem(DeterministicSeed seed, Protos.Key.Builder proto) {
