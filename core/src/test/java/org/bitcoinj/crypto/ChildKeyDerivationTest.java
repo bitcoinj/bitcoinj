@@ -224,16 +224,25 @@ public class ChildKeyDerivationTest {
     }
 
     @Test
-    public void testSerializationMainAndTestNetworks() {
-        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
-        String pub58 = key1.serializePubB58(MAINNET);
-        String priv58 = key1.serializePrivB58(MAINNET);
+    public void serializePubB58_deserializeB58() {
+        DeterministicKey key = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        key.clearCreationTime();
+
+        // mainnet
+        String pub58 = key.serializePubB58(MAINNET);
+        String priv58 = key.serializePrivB58(MAINNET);
         assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
         assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
-        pub58 = key1.serializePubB58(TESTNET);
-        priv58 = key1.serializePrivB58(TESTNET);
+        assertEquals(key, DeterministicKey.deserializeB58(priv58, MAINNET));
+        assertEquals(key.dropPrivateBytes(), DeterministicKey.deserializeB58(pub58, MAINNET));
+
+        // testnet
+        pub58 = key.serializePubB58(TESTNET);
+        priv58 = key.serializePrivB58(TESTNET);
         assertEquals("tpubD6NzVbkrYhZ4WuxgZMdpw1Hvi7MKg6YDjDMXVohmZCFfF17hXBPYpc56rCY1KXFMovN29ik37nZimQseiykRTBTJTZJmjENyv2k3R12BJ1M", pub58);
         assertEquals("tprv8ZgxMBicQKsPdSvtfhyEXbdp95qPWmMK9ukkDHfU8vTGQWrvtnZxe7TEg48Ui7HMsZKMj7CcQRg8YF1ydtFPZBxha5oLa3qeN3iwpYhHPVZ", priv58);
+        assertEquals(key, DeterministicKey.deserializeB58(priv58, TESTNET));
+        assertEquals(key.dropPrivateBytes(), DeterministicKey.deserializeB58(pub58, TESTNET));
     }
 
     @Test
