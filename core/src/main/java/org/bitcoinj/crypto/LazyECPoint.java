@@ -70,6 +70,21 @@ public final class LazyECPoint implements ECPublicKey {
     }
 
     /**
+     * Construct a LazyECPoint from a Java ECPoint.
+     *
+     * @param point      the wrapped point
+     */
+    LazyECPoint(java.security.spec.ECPoint point) {
+        this(toBouncy(point), true);
+    }
+
+    private static org.bouncycastle.math.ec.ECPoint toBouncy(java.security.spec.ECPoint point) {
+        return point == java.security.spec.ECPoint.POINT_INFINITY
+                ? curve.getInfinity()
+                : curve.createPoint(point.getAffineX(), point.getAffineY());
+    }
+
+    /**
      * Returns a compressed version of this elliptic curve point. Returns the same point if it's already compressed.
      * See the {@link ECKey} class docs for a discussion of point compression.
      */

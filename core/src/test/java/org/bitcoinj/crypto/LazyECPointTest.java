@@ -17,11 +17,10 @@ public class LazyECPointTest {
 
     @Test
     public void convertRandomPoint() {
-        LazyECPoint point = ECKey.random().pub;
-        ECPoint javaPoint = point.getW();
-        assertNotNull(javaPoint);
-        assertEquals(point.getAffineXCoord().toBigInteger(), javaPoint.getAffineX());
-        assertEquals(point.getAffineYCoord().toBigInteger(), javaPoint.getAffineY());
+        LazyECPoint p1 = ECKey.random().pub;
+        LazyECPoint p2 = new LazyECPoint(p1.getW());    // Round-trip conversion Bouncy -> JCA -> Bouncy
+        assertNotNull(p2);
+        assertEquals(p1, p2);
     }
 
     @Test
