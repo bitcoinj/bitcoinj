@@ -106,56 +106,6 @@ public class WalletTool implements Callable<Integer> {
     @Spec
     CommandSpec spec;
 
-    @CommandLine.Parameters(index = "0", description = "Action to perform. Valid values:%n" +
-            "  dump                 Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified. If the wallet is encrypted, also specify the --password option to dump the private keys and seed.%n" +
-            "                       If --dump-lookahead is present, also show pregenerated but not yet issued keys.%n" +
-            "  raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.%n" +
-            "  create               Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.%n" +
-            "                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.%n" +
-            "                       If --watchkey is present, it creates a watching wallet using the specified base58 xpub.%n" +
-            "                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for the wallet. See the set-creation-time action for the meaning of these flags.%n" +
-            "                       If --output-script-type is present, use that for deriving addresses.%n" +
-            "  add-key              Adds a new key to the wallet.%n" +
-            "                       If --date is specified, that's the creation date.%n" +
-            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
-            "                       If --privkey is specified, use as a WIF-, hex- or base58-encoded private key.%n" +
-            "                       Don't specify --pubkey in that case, it will be derived automatically.%n" +
-            "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.%n" +
-            "  add-addr             Requires --addr to be specified, and adds it as a watching address.%n" +
-            "  delete-key           Removes the key specified by --pubkey or --addr from the wallet.%n" +
-            "  current-receive-addr Prints the current receive address, deriving one if needed. Addresses derived with this action are%n" +
-            "                       independent of addresses derived with the add-key action.%n" +
-            "  sync                 Sync the wallet with the latest block chain (download new transactions).%n" +
-            "                       If the chain file does not exist or if --force is present, this will RESET the wallet.%n" +
-            "  reset                Deletes all transactions from the wallet, for if you want to replay the chain.%n" +
-            "  send                 Creates and broadcasts a transaction from the given wallet.%n" +
-            "                       Requires either --output or --payment-request to be specified.%n" +
-            "                       If --output is specified, a transaction is created from the provided output from this wallet and broadcasted, e.g.:%n" +
-            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245%n" +
-            "                       You can repeat --output=address:value multiple times.%n" +
-            "                       There is a magic value ALL which empties the wallet to that address, e.g.:%n" +
-            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL%n" +
-            "                       The output destination can also be a native segwit address.%n" +
-            "                       If the output destination starts with 04 and is 65 or 33 bytes long it will be treated as a public key instead of an address and the send will use%n" +
-            "                       <key> CHECKSIG as the script.%n" +
-            "                       Other options include:%n" +
-            "                         --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below%n" +
-            "                         --select-addr or --select-output to select specific outputs%n" +
-            "                         --locktime=1234  sets the lock time to block 1234%n" +
-            "                         --locktime=2013/01/01  sets the lock time to 1st Jan 2013%n" +
-            "                         --allow-unconfirmed will let you create spends of pending non-change outputs.%n" +
-            "                         --no-pki disables pki verification for payment requests.%n" +
-            "  encrypt              Requires --password and uses it to encrypt the wallet in place.%n" +
-            "  decrypt              Requires --password and uses it to decrypt the wallet in place.%n" +
-            "  upgrade              Upgrade basic or deterministic wallets to deterministic wallets of the given script type.%n" +
-            "                       If --output-script-type is present, use that as the upgrade target.%n" +
-            "  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it.%n" +
-            "                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree%n" +
-            "                       will be created from a new random seed.%n" +
-            "  set-creation-time    Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidently have been created \"in the future\". Currently, watching wallets are not supported.%n" +
-            "                       If --date is specified, that's the creation date.%n" +
-            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
-            "                       If you omit both options, the creation time is being cleared (set to 0).%n")
     private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private BitcoinNetwork net = BitcoinNetwork.MAINNET;
@@ -332,14 +282,8 @@ public class WalletTool implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException, BlockStoreException {
-        ActionEnum action;
-        try {
-            action = ActionEnum.valueOf(actionStr.toUpperCase().replace("-", "_"));
-        } catch (IllegalArgumentException e) {
-            System.err.println("Could not understand action name " + actionStr);
+            System.err.println("Could not understand action name " + spec.name() + ", please try one of the following:");
             return 1;
-        }
-        return 0;
     }
 
     private int executionStrategy(ParseResult parseResult) {
@@ -858,6 +802,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
+    @CommandLine.Command(name = "create" , description="Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.")
     private Integer createWallet(Network network, File walletFile) throws IOException {
         KeyChainGroupStructure keyChainGroupStructure = KeyChainGroupStructure.BIP32;
 
@@ -1040,12 +985,14 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
+    @CommandLine.Command(name = "current-receive-addr" , description="Prints the current receive address, deriving one if needed. Addresses derived with this action are independent of addresses derived with the add-key action")
     private Integer currentReceiveAddr() {
         Address address = wallet.currentReceiveAddress();
         System.out.println(address);
         return 0;
     }
 
+    @CommandLine.Command(name = "dump" , description="Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified.")
     private Integer dumpWallet() throws BlockStoreException {
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
