@@ -66,6 +66,9 @@ import org.bitcoinj.wallet.WalletProtobufSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.ParseResult;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -99,6 +102,10 @@ import static org.bitcoinj.base.Coin.parseCoin;
  */
 @CommandLine.Command(name = "wallet-tool", usageHelpAutoWidth = true, sortOptions = false, description = "Print and manipulate wallets.")
 public class WalletTool implements Callable<Integer> {
+
+    @Spec
+    CommandSpec spec;
+
     @CommandLine.Parameters(index = "0", description = "Action to perform. Valid values:%n" +
             "  dump                 Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified. If the wallet is encrypted, also specify the --password option to dump the private keys and seed.%n" +
             "                       If --dump-lookahead is present, also show pregenerated but not yet issued keys.%n" +
@@ -316,7 +323,10 @@ public class WalletTool implements Callable<Integer> {
     }
 
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new WalletTool()).execute(args);
+        WalletTool walletTool = new WalletTool();
+        int exitCode = new CommandLine(walletTool)
+                .setExecutionStrategy(walletTool::executionStrategy)
+                .execute(args);
         System.exit(exitCode);
     }
 
@@ -329,6 +339,17 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("Could not understand action name " + actionStr);
             return 1;
         }
+        return 0;
+    }
+
+    private int executionStrategy(ParseResult parseResult) {
+        init(); // Custom initialization logic before subcommand execution
+        int commandResult = new CommandLine.RunLast().execute(parseResult);
+        return handleCleanup(commandResult);
+    }
+
+    private void init() {
+        CommandSpec currentSpec = spec;
 
         if (debugLog) {
             BriefLogFormatter.init();
@@ -348,77 +369,65 @@ public class WalletTool implements Callable<Integer> {
         if (conditionStr != null) {
             condition = new Condition(conditionStr);
         }
-
-        if (action == ActionEnum.CREATE) {
-            createWallet(net, walletFile);
-            return 0;  // We're done.
+        if(!"create".equals(currentSpec.name())){
+            if (!walletFile.exists()) {
+                System.err.println("Specified wallet file " + walletFile + " does not exist. Try wallet-tool --wallet=" + walletFile + " create");
+                System.exit(1);
+            }
+            if(!"raw-dump".equals(currentSpec.name())){
+                boolean forceReset = currentSpec.name().equals("reset")
+                        || (currentSpec.name().equals("sync")
+                        && force);
+                try {
+                    wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, ignoreMandatoryExtensions);
+                } catch (UnreadableWalletException e) {
+                    System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+                if (wallet.network() != net) {
+                    System.err.println("Wallet does not match requested network: " +
+                            wallet.network() + " vs " + net);
+                    System.exit(1);
+                }
+            }
         }
-        if (!walletFile.exists()) {
-            System.err.println("Specified wallet file " + walletFile + " does not exist. Try wallet-tool --wallet=" + walletFile + " create");
-            return 1;
-        }
+    }
 
-        if (action == ActionEnum.RAW_DUMP) {
-            // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
-            // useful mostly for investigating corrupted wallets.
-            return rawDumpWallet();
-        }
-
-        boolean forceReset = action == ActionEnum.RESET
-                || (action == ActionEnum.SYNC
-                && force);
+    private int handleCleanup(int commandResult) {
         try {
-            wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, ignoreMandatoryExtensions);
-        } catch (UnreadableWalletException e) {
-            System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
+            return cleanup(commandResult); // Delegate to the existing cleanup logic
+        } catch (BlockStoreException e) {
+            System.err.println("Error during cleanup: " + e.getMessage());
             e.printStackTrace();
-            return 1;
+            return 1; // Return error status code
         }
-        if (wallet.network() != net) {
-            System.err.println("Wallet does not match requested network: " +
-                    wallet.network() + " vs " + net);
-            return 1;
-        }
+    }
 
-        // What should we do?
-        switch (action) {
-            case DUMP: dumpWallet(); break;
-            case ADD_KEY: addKey(); break;
-            case ADD_ADDR: addAddr(); break;
-            case DELETE_KEY: deleteKey(); break;
-            case CURRENT_RECEIVE_ADDR: currentReceiveAddr(); break;
-            case RESET: reset(); break;
-            case SYNC: syncChain(); break;
-            case SEND: send(); break;
-            case ENCRYPT: encrypt(); break;
-            case DECRYPT: decrypt(); break;
-            case UPGRADE: upgrade(); break;
-            case ROTATE: rotate(); break;
-            case SET_CREATION_TIME: setCreationTime(); break;
-        }
-
-        if (!wallet.isConsistent()) {
-            System.err.println("************** WALLET IS INCONSISTENT *****************");
-            return 10;
-        }
-
-        saveWallet(walletFile);
-
-        if (waitFor != null) {
-            setup();
-            CompletableFuture<String> futureMessage = wait(waitFor, condition);
-            if (!peerGroup.isRunning())
-                peerGroup.startAsync();
-            System.out.println(futureMessage.join());
+    private Integer cleanup(Integer subcommandStatusCode) throws BlockStoreException {
+        //check it runs on only the right spec
+        if(!"create".equals(spec.name()) && !"raw-dump".equals(spec.name())){
             if (!wallet.isConsistent()) {
                 System.err.println("************** WALLET IS INCONSISTENT *****************");
                 return 10;
             }
             saveWallet(walletFile);
-        }
-        shutdown();
 
-        return 0;
+            if (waitFor != null) {
+                setup();
+                CompletableFuture<String> futureMessage = wait(waitFor, condition);
+                if (!peerGroup.isRunning())
+                    peerGroup.startAsync();
+                System.out.println(futureMessage.join());
+                if (!wallet.isConsistent()) {
+                    System.err.println("************** WALLET IS INCONSISTENT *****************");
+                    return 10;
+                }
+                saveWallet(walletFile);
+            }
+            shutdown();
+        }
+        return subcommandStatusCode;
     }
 
     private static Protos.Wallet attemptHexConversion(Protos.Wallet proto) {
