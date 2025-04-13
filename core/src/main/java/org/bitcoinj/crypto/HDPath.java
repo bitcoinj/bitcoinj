@@ -34,13 +34,11 @@ import java.util.stream.Stream;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
- * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path.
- * The {@code hasPrivateKey} {@code boolean} is used for rendering to {@code String}
- * but (at present) not much else. It defaults to {@code false} which is the preferred setting for a relative path.
+ * HD Key derivation path. {@code HDPath} can be used to represent a full path or a relative path. For a full path
+ * including the {@code 'm'} or {@code 'M'} prefix, use {@link HDFullPath}. For a partial path
+ * use {@link HDPartialPath}. {@code HDPath} is immutable.
  * <p>
- * {@code HDPath} is immutable and uses the {@code Collections.UnmodifiableList} type internally.
- * <p>
- * It implements {@code java.util.List<ChildNumber>} to ease migration
+ * {@code HDPath} implements {@code java.util.List<ChildNumber>} to ease migration
  * from the previous implementation. When an {@code HDPath} is returned you can treat it as a {@code List<ChildNumber>}
  * where necessary in your code. Although it is recommended to use the {@code HDPath} type for clarity and for
  * access to {@code HDPath}-specific functionality.
@@ -48,7 +46,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * Note that it is possible for {@code HDPath} to be an empty list.
  * <p>
  * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
- * concisely create HDPath objects (especially when statically imported.)
+ * concisely create {@link HDFullPath} objects (especially when statically imported.)
  */
 public abstract class HDPath extends AbstractList<ChildNumber> {
     public enum Prefix {
