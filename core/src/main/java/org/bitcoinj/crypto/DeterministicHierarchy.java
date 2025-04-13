@@ -95,7 +95,7 @@ public class DeterministicHierarchy {
      */
     public DeterministicKey get(HDPath path, boolean relativePath, boolean create) {
         // Searches must be done on partial paths (full paths but without m or M)
-        HDPath.HDPartialPath partialPath = HDPath.partial(path);    // absolute or relative keyless path
+        HDPath.HDPartialPath partialPath = path.asPartial();        // absolute or relative keyless path
         HDPath.HDPartialPath searchPath = relativePath              // absolute path for search/create
                 ? rootPath.asPartial().extend(partialPath)
                 : partialPath;
