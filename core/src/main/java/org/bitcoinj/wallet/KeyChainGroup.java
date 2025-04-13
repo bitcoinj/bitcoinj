@@ -1047,7 +1047,7 @@ public class KeyChainGroup implements KeyBag {
         // kinds of KeyPurpose are introduced.
         if (activeChain.getIssuedExternalKeys() > 0) {
             DeterministicKey currentExternalKey = activeChain.getKeyByPath(
-                    activeChain.getAccountPath()
+                    activeChain.accountFullPath()
                             .extend(DeterministicKeyChain.EXTERNAL_SUBPATH)
                             .extend(new ChildNumber(activeChain.getIssuedExternalKeys() - 1)));
             currentKeys.put(KeyChain.KeyPurpose.RECEIVE_FUNDS, currentExternalKey);
@@ -1055,7 +1055,7 @@ public class KeyChainGroup implements KeyBag {
 
         if (activeChain.getIssuedInternalKeys() > 0) {
             DeterministicKey currentInternalKey = activeChain.getKeyByPath(
-                    activeChain.getAccountPath()
+                    activeChain.accountFullPath()
                             .extend(DeterministicKeyChain.INTERNAL_SUBPATH)
                             .extend(new ChildNumber(activeChain.getIssuedInternalKeys() - 1)));
             currentKeys.put(KeyChain.KeyPurpose.CHANGE, currentInternalKey);
