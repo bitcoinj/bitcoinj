@@ -287,10 +287,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         /**
          * Use an account path other than the default {@link DeterministicKeyChain#ACCOUNT_ZERO_PATH}.
          */
-        public T accountPath(List<ChildNumber> accountPath) {
+        public T accountPath(HDPath accountPath) {
             checkState(watchingKey == null, () ->
                     "either watch or accountPath");
-            this.accountPath = HDPath.partial(Objects.requireNonNull(accountPath));
+            this.accountPath = Objects.requireNonNull(accountPath.asPartial());
             return self();
         }
 
@@ -376,11 +376,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * </p>
      */
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
-                                    ScriptType outputScriptType, List<ChildNumber> accountPath) {
+                                    ScriptType outputScriptType, HDPath.HDPartialPath accountPath) {
         checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH, () ->
                 "only P2PKH or P2WPKH allowed");
         this.outputScriptType = outputScriptType != null ? outputScriptType : ScriptType.P2PKH;
-        this.accountPath = HDPath.partial(accountPath);
+        this.accountPath = accountPath;
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
@@ -392,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 rootKey.clearCreationTime();
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            for (HDPath path : accountPartialPath().asPartial().ancestors(true)) {
+            for (HDPath path : getAccountPath().asPartial().ancestors(true)) {
                 basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
             initializeHierarchyUnencrypted();
@@ -406,7 +406,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * For use in encryption when {@link #toEncrypted(KeyCrypter, AesKey)} is called, so that
      * subclasses can override that method and create an instance of the right class.
      *
-     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, List, ScriptType)}
+     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, HDPath.HDPartialPath, ScriptType)}
      */
     protected DeterministicKeyChain(KeyCrypter crypter, AesKey aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
@@ -474,7 +474,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     private DeterministicKey encryptNonLeaf(AesKey aesKey, DeterministicKeyChain chain,
-                                            DeterministicKey parent, List<ChildNumber> path) {
+                                            DeterministicKey parent, HDPath path) {
         DeterministicKey key = chain.hierarchy.get(path, false, false);
         key = key.encrypt(Objects.requireNonNull(basicKeyChain.getKeyCrypter()), aesKey, parent);
         putKey(key);
@@ -669,12 +669,12 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
-    protected DeterministicKey getKeyByPath(List<ChildNumber> path) {
+    protected DeterministicKey getKeyByPath(HDPath path) {
         return getKeyByPath(path, false);
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy, optionally creating it */
-    public DeterministicKey getKeyByPath(List<ChildNumber> path, boolean create) {
+    public DeterministicKey getKeyByPath(HDPath path, boolean create) {
         return hierarchy.get(path, false, create);
     }
 
@@ -1089,7 +1089,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Subclasses should override this to create an instance of the subclass instead of a plain DKC.
      * This is used in encryption/decryption.
      */
-    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, List<ChildNumber> accountPath,
+    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, HDPath.HDPartialPath accountPath,
             ScriptType outputScriptType) {
         return new DeterministicKeyChain(seed, null, outputScriptType, accountPath);
     }
