@@ -2956,7 +2956,7 @@ public class WalletTest extends TestWithWallet {
         int numIssuedExternal = activeKeyChain.getIssuedExternalKeys();
         DeterministicKey rootKey = wallet.getActiveKeyChain().getRootKey();
         DeterministicKey watchingKey = activeKeyChain.getWatchingKey();
-        HDPath accountPath = activeKeyChain.getAccountPath();
+        HDPath.HDFullPath accountPath = activeKeyChain.accountFullPath();
         ScriptType outputScriptType = activeKeyChain.getOutputScriptType();
 
         Protos.Wallet protos = new WalletProtobufSerializer().walletToProto(wallet);
@@ -2969,7 +2969,7 @@ public class WalletTest extends TestWithWallet {
         assertEquals(numIssuedExternal, roundTrippedActiveKeyChain.getIssuedExternalKeys());
         assertEquals(rootKey, roundTrippedWallet.getActiveKeyChain().getRootKey());
         assertEquals(watchingKey, roundTrippedActiveKeyChain.getWatchingKey());
-        assertEquals(accountPath, roundTrippedActiveKeyChain.getAccountPath());
+        assertEquals(accountPath, roundTrippedActiveKeyChain.accountFullPath());
         assertEquals(outputScriptType, roundTrippedActiveKeyChain.getOutputScriptType());
         return roundTrippedWallet;
     }
