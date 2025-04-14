@@ -18,11 +18,9 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
-
-import java.util.List;
 
 /**
  * Factory interface for creation keychains while de-serializing a wallet.
@@ -37,7 +35,7 @@ public interface KeyChainFactory {
      * @param accountPath      account path to generate receiving addresses on
      */
     DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter,
-                                       ScriptType outputScriptType, List<ChildNumber> accountPath);
+                                       ScriptType outputScriptType, HDPath.HDPartialPath accountPath);
 
     /**
      * Make a watching keychain.
