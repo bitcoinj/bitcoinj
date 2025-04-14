@@ -102,7 +102,7 @@ public class KeyChainGroupTest {
     public void freshCurrentKeys() {
         int numKeys = ((group.getLookaheadSize() + group.getLookaheadThreshold()) * 2)   // * 2 because of internal/external
                 + 1  // keys issued
-                + group.getActiveKeyChain().getAccountPath().size() + 2  /* account key + int/ext parent keys */;
+                + group.getActiveKeyChain().accountFullPath().size() + 2  /* account key + int/ext parent keys */;
         assertEquals(numKeys, group.numKeys());
         assertEquals(2 * numKeys, group.getBloomFilterElementCount());
         ECKey r1 = group.currentKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -325,7 +325,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void serialization() throws Exception {
-        int initialKeys = INITIAL_KEYS + group.getActiveKeyChain().getAccountPath().size() - 1;
+        int initialKeys = INITIAL_KEYS + group.getActiveKeyChain().accountFullPath().size() - 1;
         assertEquals(initialKeys + 1 /* for the seed */, group.serializeToProtobuf().size());
         group = KeyChainGroup.fromProtobufUnencrypted(BitcoinNetwork.MAINNET, group.serializeToProtobuf());
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);

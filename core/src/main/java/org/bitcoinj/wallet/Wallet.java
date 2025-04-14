@@ -71,6 +71,7 @@ import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicHierarchy;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDKeyDerivation;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
@@ -377,7 +378,7 @@ public class Wallet extends BaseTaggableObject
      * @return an instance of a wallet from a deterministic seed.
      */
     public static Wallet fromSeed(Network network, DeterministicSeed seed, ScriptType outputScriptType,
-            List<ChildNumber> accountPath) {
+            HDPath accountPath) {
         DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).outputScriptType(outputScriptType)
                 .accountPath(accountPath).build();
         return new Wallet(network, KeyChainGroup.builder(network).addChain(chain).build());
@@ -1330,7 +1331,7 @@ public class Wallet extends BaseTaggableObject
      * Returns a key for the given HD path, assuming it's already been derived. You normally shouldn't use this:
      * use currentReceiveKey/freshReceiveKey instead.
      */
-    public DeterministicKey getKeyByPath(List<ChildNumber> path) {
+    public DeterministicKey getKeyByPath(HDPath path) {
         keyChainGroupLock.lock();
         try {
             return keyChainGroup.getActiveKeyChain().getKeyByPath(path, false);
