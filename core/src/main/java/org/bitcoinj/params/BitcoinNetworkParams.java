@@ -18,29 +18,16 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.DifficultyTransitions;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.BlockStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalUnit;
-
-import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Parameters for Bitcoin-like networks.
