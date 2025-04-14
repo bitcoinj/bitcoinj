@@ -25,7 +25,6 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.core.LockTime;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Services;
@@ -38,7 +37,6 @@ import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.utils.ExchangeRate;
@@ -103,10 +101,6 @@ public class WalletProtobufSerializer {
     @FunctionalInterface
     public interface WalletFactory {
         Wallet create(Network network, KeyChainGroup keyChainGroup);
-        @Deprecated
-        default Wallet create(NetworkParameters params, KeyChainGroup keyChainGroup) {
-            return create(params.network(), keyChainGroup);
-        }
         WalletFactory DEFAULT = Wallet::new;
     }
 
@@ -847,8 +841,8 @@ public class WalletProtobufSerializer {
             final int field = WireFormat.getTagFieldNumber(tag);
             if (field != 1) // network_identifier
                 return false;
-            final String network = cis.readString();
-            return BitcoinNetworkParams.fromID(network) != null;
+            final String networkId = cis.readString();
+            return BitcoinNetwork.fromIdString(networkId).isPresent();
         } catch (IOException x) {
             return false;
         }
