@@ -20,6 +20,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
 
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.List;
 public class DefaultKeyChainFactory implements KeyChainFactory {
     @Override
     public DeterministicKeyChain makeKeyChain(DeterministicSeed seed, KeyCrypter crypter,
-                                              ScriptType outputScriptType, List<ChildNumber> accountPath) {
+                                              ScriptType outputScriptType, HDPath.HDPartialPath accountPath) {
         return new DeterministicKeyChain(seed, crypter, outputScriptType, accountPath);
     }
 
