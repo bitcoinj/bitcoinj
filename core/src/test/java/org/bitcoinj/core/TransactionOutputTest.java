@@ -30,6 +30,7 @@ import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +45,6 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnitParamsRunner.class)
@@ -80,7 +80,7 @@ public class TransactionOutputTest extends TestWithWallet {
         this.wallet.completeTx(req);
         TransactionOutput multiSigTransactionOutput = multiSigTransaction.getOutput(0);
 
-        assertThat(multiSigTransactionOutput.toString(), CoreMatchers.containsString("CHECKMULTISIG"));
+        MatcherAssert.assertThat(multiSigTransactionOutput.toString(), CoreMatchers.containsString("CHECKMULTISIG"));
     }
 
     @Test
