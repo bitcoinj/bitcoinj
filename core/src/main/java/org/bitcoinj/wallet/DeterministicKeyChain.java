@@ -128,7 +128,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
     @Nullable private DeterministicKey rootKey;
     @Nullable private final DeterministicSeed seed;
     private final ScriptType outputScriptType;
-    private final HDPath accountPath;
+    private final HDPath.HDPartialPath accountPath;
 
     // Paths through the key tree. External keys are ones that are communicated to other parties. Internal keys are
     // keys created for change addresses, coinbases, mixing, etc - anything that isn't communicated. The distinction
@@ -380,7 +380,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH, () ->
                 "only P2PKH or P2WPKH allowed");
         this.outputScriptType = outputScriptType != null ? outputScriptType : ScriptType.P2PKH;
-        this.accountPath = HDPath.M(accountPath);
+        this.accountPath = HDPath.partial(accountPath);
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
         if (!seed.isEncrypted()) {
@@ -450,7 +450,11 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         }
     }
 
-    public HDPath getAccountPath() {
+    /**
+     * Return {@link HDPath.HDPartialPath}. Recommended for internal use only.
+     * @return path without prefix
+     */
+    public HDPath.HDPartialPath getAccountPath() {
         return accountPath;
     }
 
@@ -460,7 +464,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     public HDPath.HDFullPath accountFullPath() {
         boolean hasPrivateKey = !getWatchingKey().isWatching();
-        return accountPath.asPartial().asFull(hasPrivateKey ? HDPath.Prefix.PRIVATE : HDPath.Prefix.PUBLIC);
+        return accountPath.asFull(hasPrivateKey ? HDPath.Prefix.PRIVATE : HDPath.Prefix.PUBLIC);
     }
 
     public ScriptType getOutputScriptType() {
