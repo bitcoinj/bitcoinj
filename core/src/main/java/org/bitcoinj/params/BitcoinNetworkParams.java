@@ -24,8 +24,6 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.DifficultyTransitions;
 import org.bitcoinj.core.NetworkParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
@@ -37,8 +35,6 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      * Block reward halving interval (number of blocks)
      */
     public static final int REWARD_HALVING_INTERVAL = 210_000;
-
-    private static final Logger log = LoggerFactory.getLogger(BitcoinNetworkParams.class);
 
     /** lazy-initialized by the first call to {@link NetworkParameters#getGenesisBlock()} */
     protected Block genesisBlock;
