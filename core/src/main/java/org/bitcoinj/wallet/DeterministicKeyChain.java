@@ -454,6 +454,15 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return accountPath;
     }
 
+    /**
+     * Return {@link HDPath.HDFullPath} with correct prefix based upon the type of the account key.
+     * @return full path
+     */
+    public HDPath.HDFullPath accountFullPath() {
+        boolean hasPrivateKey = !getWatchingKey().isWatching();
+        return accountPath.asPartial().asFull(hasPrivateKey ? HDPath.Prefix.PRIVATE : HDPath.Prefix.PUBLIC);
+    }
+
     public ScriptType getOutputScriptType() {
         return outputScriptType;
     }
