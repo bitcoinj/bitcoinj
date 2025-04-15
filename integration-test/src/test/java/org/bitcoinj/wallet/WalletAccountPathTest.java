@@ -25,12 +25,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.FieldSource;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.stream.Stream;
+import java.util.List;
 
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
@@ -54,7 +54,7 @@ public class WalletAccountPathTest {
         walletFile = new File(tempDir, "test.wallet");
     }
 
-    @MethodSource("walletStructureParams")
+    @FieldSource("walletStructureParams")
     @ParameterizedTest(name = "path {1} generated for {2}, {3}")
     void walletStructurePathTest2(KeyChainGroupStructure structure, HDPath expectedPath, ScriptType scriptType,
                                   BitcoinNetwork network) throws IOException, UnreadableWalletException {
@@ -65,8 +65,7 @@ public class WalletAccountPathTest {
         assertEquals(expectedPath, wallet.getActiveKeyChain().accountFullPath());
     }
 
-    private static Stream<Arguments> walletStructureParams() {
-        return Stream.of(
+    static final List<Arguments> walletStructureParams = List.of(
             // Note: For BIP32 wallets the Network does not affect the path
             Arguments.of(BIP32, "m/0H", P2PKH, MAINNET),
             Arguments.of(BIP32, "m/0H", P2PKH, TESTNET),
@@ -77,7 +76,6 @@ public class WalletAccountPathTest {
             Arguments.of(BIP43, "m/84H/0H/0H", P2WPKH, MAINNET),
             Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, TESTNET)
         );
-    }
 
     // Create a wallet, save it to a file, then reload from a file
     private static Wallet createWallet(File walletFile, Network network, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
