@@ -361,12 +361,7 @@ public class WalletTool implements Callable<Integer> {
         if (action == ActionEnum.RAW_DUMP) {
             // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
             // useful mostly for investigating corrupted wallets.
-            try (FileInputStream stream = new FileInputStream(walletFile)) {
-                Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
-                proto = attemptHexConversion(proto);
-                System.out.println(proto.toString());
-                return 0;
-            }
+            return rawDumpWallet(walletFile);
         }
 
         boolean forceReset = action == ActionEnum.RESET
@@ -394,55 +389,7 @@ public class WalletTool implements Callable<Integer> {
             case CURRENT_RECEIVE_ADDR: currentReceiveAddr(); break;
             case RESET: reset(); break;
             case SYNC: syncChain(); break;
-            case SEND:
-                if (feePerVkbStr != null && feeSatPerVbyteStr != null) {
-                    System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
-                    return 1;
-                } else if (outputsStr != null) {
-                    Coin feePerVkb;
-                    if (feePerVkbStr != null)
-                        feePerVkb = parseCoin(feePerVkbStr);
-                    else if (feeSatPerVbyteStr != null)
-                        feePerVkb = Coin.valueOf(Long.parseLong(feeSatPerVbyteStr) * 1000);
-                    else
-                        feePerVkb = null;
-                    if (selectAddrStr != null && selectOutputStr != null) {
-                        System.err.println("--select-addr and --select-output cannot be used together.");
-                        return 1;
-                    }
-                    CoinSelector coinSelector;
-                    if (selectAddrStr != null) {
-                        Address selectAddr;
-                        try {
-                            selectAddr = wallet.parseAddress(selectAddrStr);
-                        } catch (AddressFormatException x) {
-                            System.err.println("Could not parse given address, or wrong network: " + selectAddrStr);
-                            return 1;
-                        }
-                        final Address validSelectAddr = selectAddr;
-                        coinSelector = CoinSelector.fromPredicate(candidate -> {
-                            try {
-                                return candidate.getScriptPubKey().getToAddress(net).equals(validSelectAddr);
-                            } catch (ScriptException x) {
-                                return false;
-                            }
-                        });
-                    } else if (selectOutputStr != null) {
-                        String[] parts = selectOutputStr.split(":", 2);
-                        Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
-                        int selectIndex = Integer.parseInt(parts[1]);
-                        coinSelector = CoinSelector.fromPredicate(candidate ->
-                             candidate.getIndex() == selectIndex && candidate.getParentTransactionHash().equals(selectTransactionHash)
-                        );
-                    } else {
-                        coinSelector = null;
-                    }
-                    send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);
-                } else {
-                    System.err.println("You must specify at least one --output=addr:value.");
-                    return 1;
-                }
-                break;
+            case SEND: send(); break;
             case ENCRYPT: encrypt(); break;
             case DECRYPT: decrypt(); break;
             case UPGRADE: upgrade(); break;
@@ -1096,6 +1043,66 @@ public class WalletTool implements Callable<Integer> {
         } else {
             printWallet(null);
         }
+    }
+
+    private static int rawDumpWallet(File walletFile) throws IOException {
+        try (FileInputStream stream = new FileInputStream(walletFile)) {
+            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
+            proto = attemptHexConversion(proto);
+            System.out.println(proto.toString());
+            return 0;
+        }
+    }
+
+    private int send(){
+        if (feePerVkbStr != null && feeSatPerVbyteStr != null) {
+            System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
+            return 1;
+        } else if (outputsStr != null) {
+            Coin feePerVkb;
+            if (feePerVkbStr != null)
+                feePerVkb = parseCoin(feePerVkbStr);
+            else if (feeSatPerVbyteStr != null)
+                feePerVkb = Coin.valueOf(Long.parseLong(feeSatPerVbyteStr) * 1000);
+            else
+                feePerVkb = null;
+            if (selectAddrStr != null && selectOutputStr != null) {
+                System.err.println("--select-addr and --select-output cannot be used together.");
+                return 1;
+            }
+            CoinSelector coinSelector;
+            if (selectAddrStr != null) {
+                Address selectAddr;
+                try {
+                    selectAddr = wallet.parseAddress(selectAddrStr);
+                } catch (AddressFormatException x) {
+                    System.err.println("Could not parse given address, or wrong network: " + selectAddrStr);
+                    return 1;
+                }
+                final Address validSelectAddr = selectAddr;
+                coinSelector = CoinSelector.fromPredicate(candidate -> {
+                    try {
+                        return candidate.getScriptPubKey().getToAddress(net).equals(validSelectAddr);
+                    } catch (ScriptException x) {
+                        return false;
+                    }
+                });
+            } else if (selectOutputStr != null) {
+                String[] parts = selectOutputStr.split(":", 2);
+                Sha256Hash selectTransactionHash = Sha256Hash.wrap(parts[0]);
+                int selectIndex = Integer.parseInt(parts[1]);
+                coinSelector = CoinSelector.fromPredicate(candidate ->
+                        candidate.getIndex() == selectIndex && candidate.getParentTransactionHash().equals(selectTransactionHash)
+                );
+            } else {
+                coinSelector = null;
+            }
+            send(coinSelector, outputsStr, feePerVkb, lockTimeStr, allowUnconfirmed);
+        } else {
+            System.err.println("You must specify at least one --output=addr:value.");
+            return 1;
+        }
+        return 0;
     }
 
     private void printWallet(@Nullable AesKey aesKey) {
