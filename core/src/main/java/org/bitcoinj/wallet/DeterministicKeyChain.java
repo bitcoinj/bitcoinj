@@ -196,7 +196,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         protected ScriptType outputScriptType = ScriptType.P2PKH;
         protected DeterministicKey watchingKey = null;
         protected DeterministicKey spendingKey = null;
-        protected HDPath accountPath = null;
+        protected HDPath.HDPartialPath accountPath = null;
 
         protected Builder() {
         }
@@ -290,7 +290,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         public T accountPath(List<ChildNumber> accountPath) {
             checkState(watchingKey == null, () ->
                     "either watch or accountPath");
-            this.accountPath = HDPath.M(Objects.requireNonNull(accountPath));
+            this.accountPath = HDPath.partial(Objects.requireNonNull(accountPath));
             return self();
         }
 
