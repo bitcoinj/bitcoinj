@@ -107,7 +107,7 @@ class NewBlock {
     public void addTransaction(Transaction tx) { block.addTransaction(tx); }
 
     public TransactionOutPointWithValue getCoinbaseOutput() {
-        return new TransactionOutPointWithValue(block.getTransactions().get(0), 0);
+        return new TransactionOutPointWithValue(block.transaction(0), 0);
     }
 
     public TransactionOutPointWithValue getSpendableOutput() {
@@ -216,16 +216,16 @@ public class FullBlockTestGenerator {
         chainHead.solve();
         blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), 1, "Initial Block"));
         spendableOutputs.offer(new TransactionOutPointWithValue(
-                new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
-                FIFTY_COINS, chainHead.getTransactions().get(0).getOutput(0).getScriptPubKey()));
+                new TransactionOutPoint(0, chainHead.transaction(0).getTxId()),
+                FIFTY_COINS, chainHead.transaction(0).getOutput(0).getScriptPubKey()));
         for (int i = 1; i < params.getSpendableCoinbaseDepth(); i++) {
             chainHead = chainHead.createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
             chainHeadHeight++;
             chainHead.solve();
             blocks.add(new BlockAndValidity(chainHead, true, false, chainHead.getHash(), i+1, "Initial Block chain output generation"));
             spendableOutputs.offer(new TransactionOutPointWithValue(
-                    new TransactionOutPoint(0, chainHead.getTransactions().get(0).getTxId()),
-                    FIFTY_COINS, chainHead.getTransactions().get(0).getOutput(0).getScriptPubKey()));
+                    new TransactionOutPoint(0, chainHead.transaction(0).getTxId()),
+                    FIFTY_COINS, chainHead.transaction(0).getOutput(0).getScriptPubKey()));
         }
 
         // Start by building a couple of blocks on top of the genesis block.
@@ -342,9 +342,7 @@ public class FullBlockTestGenerator {
         //
         NewBlock b15 = createNextBlock(b13, chainHeadHeight + 6, out5, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b15.block.getTransactions())
-                sigOps += tx.getSigOpCount();
+            int sigOps = b15.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
@@ -352,9 +350,7 @@ public class FullBlockTestGenerator {
             addOnlyInputToTransaction(tx, b15);
             b15.addTransaction(tx);
 
-            sigOps = 0;
-            for (Transaction tx2 : b15.block.getTransactions())
-                sigOps += tx2.getSigOpCount();
+            sigOps = b15.block.sigOpCount();
             checkState(sigOps == Block.MAX_BLOCK_SIGOPS);
         }
         b15.solve();
@@ -366,10 +362,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b16 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b16.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b16.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
@@ -377,9 +370,7 @@ public class FullBlockTestGenerator {
             addOnlyInputToTransaction(tx, b16);
             b16.addTransaction(tx);
 
-            sigOps = 0;
-            for (Transaction tx2 : b16.block.getTransactions())
-                sigOps += tx2.getSigOpCount();
+            sigOps = b16.block.sigOpCount();
             checkState(sigOps == Block.MAX_BLOCK_SIGOPS + 1);
         }
         b16.solve();
@@ -486,7 +477,7 @@ public class FullBlockTestGenerator {
         //
         NewBlock b26 = createNextBlock(b15, chainHeadHeight + 7, out6, null);
         // 1 is too small, but we already generate every other block with 2, so that is tested
-        b26.block.getTransactions().get(0).replaceInput(0, b26.block.getTransactions().get(0).getInput(0).withoutScriptBytes());
+        b26.block.transaction(0).replaceInput(0, b26.block.transaction(0).getInput(0).withoutScriptBytes());
         b26.block.setMerkleRoot(null);
         b26.solve();
         blocks.add(new BlockAndValidity(b26, false, true, b23.getHash(), chainHeadHeight + 7, "b26"));
@@ -499,7 +490,7 @@ public class FullBlockTestGenerator {
         {
             byte[] coinbase = new byte[101];
             Arrays.fill(coinbase, (byte)0);
-            b28.block.getTransactions().get(0).replaceInput(0, b28.block.getTransactions().get(0).getInput(0).withScriptBytes(coinbase));
+            b28.block.transaction(0).replaceInput(0, b28.block.transaction(0).getInput(0).withScriptBytes(coinbase));
         }
         b28.block.setMerkleRoot(null);
         b28.solve();
@@ -513,7 +504,7 @@ public class FullBlockTestGenerator {
         {
             byte[] coinbase = new byte[100];
             Arrays.fill(coinbase, (byte)0);
-            b30.block.getTransactions().get(0).replaceInput(0, b30.block.getTransactions().get(0).getInput(0).withScriptBytes(coinbase));
+            b30.block.transaction(0).replaceInput(0, b30.block.transaction(0).getInput(0).withScriptBytes(coinbase));
         }
         b30.block.setMerkleRoot(null);
         b30.solve();
@@ -531,10 +522,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b31 = createNextBlock(b30, chainHeadHeight + 9, out8, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b31.block.transactions) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b31.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIG);
@@ -551,10 +539,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b32 = createNextBlock(b31, chainHeadHeight + 10, out9, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b32.block.transactions) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b32.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20 + (Block.MAX_BLOCK_SIGOPS - sigOps)%20 + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIG);
@@ -569,10 +554,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b33 = createNextBlock(b31, chainHeadHeight + 10, out9, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b33.block.transactions) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b33.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIGVERIFY);
@@ -589,10 +571,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b34 = createNextBlock(b33, chainHeadHeight + 11, out10, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b34.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b34.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[(Block.MAX_BLOCK_SIGOPS - sigOps)/20 + (Block.MAX_BLOCK_SIGOPS - sigOps)%20 + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKMULTISIGVERIFY);
@@ -607,10 +586,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b35 = createNextBlock(b33, chainHeadHeight + 11, out10, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b35.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b35.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps];
             Arrays.fill(outputScript, (byte) OP_CHECKSIGVERIFY);
@@ -627,10 +603,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b36 = createNextBlock(b35, chainHeadHeight + 12, out11, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b36.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b36.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKSIGVERIFY);
@@ -745,15 +718,11 @@ public class FullBlockTestGenerator {
 
         NewBlock b40 = createNextBlock(b39, chainHeadHeight + 13, out12, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b40.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
-
+            int sigOps = b40.block.sigOpCount();
             int numTxes = (Block.MAX_BLOCK_SIGOPS - sigOps) / b39sigOpsPerOutput;
             checkState(numTxes <= b39numP2SHOutputs);
 
-            TransactionOutPoint lastOutPoint = new TransactionOutPoint(1, b40.block.getTransactions().get(1).getTxId());
+            TransactionOutPoint lastOutPoint = new TransactionOutPoint(1, b40.block.transaction(1).getTxId());
 
             byte[] scriptSig = null;
             for (int i = 1; i <= numTxes; i++) {
@@ -762,7 +731,7 @@ public class FullBlockTestGenerator {
                 tx.addInput(new TransactionInput(tx, new byte[]{OP_1}, lastOutPoint));
 
                 TransactionInput input = new TransactionInput(tx, new byte[]{},
-                        new TransactionOutPoint(0, b39.block.getTransactions().get(i).getTxId()));
+                        new TransactionOutPoint(0, b39.block.transaction(i).getTxId()));
                 tx.addInput(input);
                 int inputIndex = tx.getInputs().size() - 1;
 
@@ -810,17 +779,13 @@ public class FullBlockTestGenerator {
         if (runBarelyExpensiveTests) {
             b41 = createNextBlock(b39, chainHeadHeight + 13, out12, null);
             {
-                int sigOps = 0;
-                for (Transaction tx : b41.block.getTransactions()) {
-                    sigOps += tx.getSigOpCount();
-                }
-
+                int sigOps = b41.block.sigOpCount();
                 int numTxes = (Block.MAX_BLOCK_SIGOPS - sigOps)
                         / b39sigOpsPerOutput;
                 checkState(numTxes <= b39numP2SHOutputs);
 
                 TransactionOutPoint lastOutPoint = new TransactionOutPoint(
-                        1, b41.block.getTransactions().get(1).getTxId());
+                        1, b41.block.transaction(1).getTxId());
 
                 byte[] scriptSig = null;
                 for (int i = 1; i <= numTxes; i++) {
@@ -830,7 +795,7 @@ public class FullBlockTestGenerator {
                     tx.addInput(new TransactionInput(tx, new byte[] { OP_1 }, lastOutPoint));
 
                     TransactionInput input = new TransactionInput(tx, new byte[] {},
-                            new TransactionOutPoint(0, b39.block.getTransactions().get(i).getTxId()));
+                            new TransactionOutPoint(0, b39.block.transaction(i).getTxId()));
                     tx.addInput(input);
                     int inputIndex = tx.getInputs().size() - 1;
 
@@ -1165,9 +1130,9 @@ public class FullBlockTestGenerator {
 
         NewBlock b61 = createNextBlock(b60, chainHeadHeight + 19, out18, null);
         {
-            b61.block.getTransactions().get(0).replaceInput(0, b61.block.getTransactions().get(0).getInput(0).withScriptBytes(b60.block.getTransactions().get(0).getInput(0).getScriptBytes()));
+            b61.block.transaction(0).replaceInput(0, b61.block.transaction(0).getInput(0).withScriptBytes(b60.block.transaction(0).getInput(0).getScriptBytes()));
             b61.block.unCache();
-            checkState(b61.block.getTransactions().get(0).equals(b60.block.getTransactions().get(0)));
+            checkState(b61.block.transaction(0).equals(b60.block.transaction(0)));
         }
         b61.solve();
         blocks.add(new BlockAndValidity(b61, false, true, b60.getHash(), chainHeadHeight + 18, "b61"));
@@ -1194,9 +1159,9 @@ public class FullBlockTestGenerator {
         //
         NewBlock b63 = createNextBlock(b60, chainHeadHeight + 19, null, null);
         {
-            b63.block.getTransactions().get(0).setLockTime(0xffffffffL);
-            b63.block.getTransactions().get(0).replaceInput(0, b63.block.getTransactions().get(0).getInput(0).withSequence(0xdeadbeefL));
-            checkState(!b63.block.getTransactions().get(0).isFinal(chainHeadHeight + 17, b63.block.time()));
+            b63.block.transaction(0).setLockTime(0xffffffffL);
+            b63.block.transaction(0).replaceInput(0, b63.block.transaction(0).getInput(0).withSequence(0xdeadbeefL));
+            checkState(!b63.block.transaction(0).isFinal(chainHeadHeight + 17, b63.block.time()));
         }
         b63.solve();
         blocks.add(new BlockAndValidity(b63, false, true, b60.getHash(), chainHeadHeight + 18, "b63"));
@@ -1359,7 +1324,7 @@ public class FullBlockTestGenerator {
         b72.solve();
 
         Block b71 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b72.block.serialize()));
-        b71.addTransaction(b72.block.getTransactions().get(2));
+        b71.addTransaction(b72.block.transaction(2));
         checkState(b71.getHash().equals(b72.getHash()));
         blocks.add(new BlockAndValidity(b71, false, true, b69.getHash(), chainHeadHeight + 21, "b71"));
         blocks.add(new BlockAndValidity(b72, true, false, b72.getHash(), chainHeadHeight + 22, "b72"));
@@ -1373,10 +1338,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b73 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b73.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b73.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5 + 1];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
@@ -1392,10 +1354,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b74 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b74.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b74.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
@@ -1414,10 +1373,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b75 = createNextBlock(b72, chainHeadHeight + 23, out22, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b75.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b75.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 42];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
@@ -1439,10 +1395,7 @@ public class FullBlockTestGenerator {
 
         NewBlock b76 = createNextBlock(b75, chainHeadHeight + 24, out23, null);
         {
-            int sigOps = 0;
-            for (Transaction tx : b76.block.getTransactions()) {
-                sigOps += tx.getSigOpCount();
-            }
+            int sigOps = b76.block.sigOpCount();
             Transaction tx = new Transaction();
             byte[] outputScript = new byte[Block.MAX_BLOCK_SIGOPS - sigOps + Script.MAX_SCRIPT_ELEMENT_SIZE + 1 + 5];
             Arrays.fill(outputScript, (byte) OP_CHECKSIG);
@@ -1676,7 +1629,7 @@ public class FullBlockTestGenerator {
             checkArgument(blockStorageFile != null);
 
             NewBlock lastBlock = b1001;
-            TransactionOutPoint lastOutput = new TransactionOutPoint(1, b1001.block.getTransactions().get(1).getTxId());
+            TransactionOutPoint lastOutput = new TransactionOutPoint(1, b1001.block.transaction(1).getTxId());
             int blockCountAfter1001;
             int nextHeight = heightAfter1001;
 
