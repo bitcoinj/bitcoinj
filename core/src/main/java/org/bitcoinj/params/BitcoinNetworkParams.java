@@ -29,8 +29,6 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -49,8 +47,6 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      * Block reward halving interval (number of blocks)
      */
     public static final int REWARD_HALVING_INTERVAL = 210_000;
-
-    private static final Logger log = LoggerFactory.getLogger(BitcoinNetworkParams.class);
 
     /** lazy-initialized by the first call to {@link NetworkParameters#getGenesisBlock()} */
     protected Block genesisBlock;
