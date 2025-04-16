@@ -164,8 +164,8 @@ public class ParseByteCacheTest {
         serDeser(serializer, b1, bos.toByteArray(), null, null);
         
         // retrieve a value from a child
-        if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+        if (b1.transactions().size() > 0) {
+            Transaction tx1 = b1.transactions().get(0);
             
             // does it still match ref block?
             serDeser(serializer, b1, bos.toByteArray(), null, null);
@@ -188,8 +188,8 @@ public class ParseByteCacheTest {
         // retrieve a value from a child and header
         b1.difficultyTarget();
 
-        if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+        if (b1.transactions().size() > 0) {
+            Transaction tx1 = b1.transactions().get(0);
         }
         // does it still match ref block?
         serDeser(serializer, b1, bos.toByteArray(), null, null);
@@ -211,8 +211,8 @@ public class ParseByteCacheTest {
         bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // retrieve a value from a child of a child
-        if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+        if (b1.transactions().size() > 0) {
+            Transaction tx1 = b1.transactions().get(0);
             
             TransactionInput tin = tx1.getInput(0);
 
@@ -227,13 +227,13 @@ public class ParseByteCacheTest {
         bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // add an input
-        if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
+        if (b1.transactions().size() > 0) {
+            Transaction tx1 = b1.transactions().get(0);
             
             if (tx1.getInputs().size() > 0) {
                 tx1.addInput(tx1.getInput(0));
                 // replicate on reference tx
-                bRef.getTransactions().get(0).addInput(bRef.getTransactions().get(0).getInput(0));
+                bRef.transactions().get(0).addInput(bRef.transactions().get(0).getInput(0));
                 
                 bos.reset();
                 serializerRef.serialize(bRef, bos);
@@ -255,17 +255,17 @@ public class ParseByteCacheTest {
         Block bRef2 = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
         
         // reparent an input
-        if (b1.getTransactions().size() > 0) {
-            Transaction tx1 = b1.getTransactions().get(0);
-            Transaction tx2 = b2.getTransactions().get(0);
+        if (b1.transactions().size() > 0) {
+            Transaction tx1 = b1.transactions().get(0);
+            Transaction tx2 = b2.transactions().get(0);
             
             if (tx1.getInputs().size() > 0) {
                 TransactionInput fromTx1 = tx1.getInput(0);
                 tx2.addInput(fromTx1);
                 
                 // replicate on reference tx
-                TransactionInput fromTxRef = bRef.getTransactions().get(0).getInput(0);
-                bRef2.getTransactions().get(0).addInput(fromTxRef);
+                TransactionInput fromTxRef = bRef.transactions().get(0).getInput(0);
+                bRef2.transactions().get(0).addInput(fromTxRef);
                 
                 bos.reset();
                 serializerRef.serialize(bRef2, bos);

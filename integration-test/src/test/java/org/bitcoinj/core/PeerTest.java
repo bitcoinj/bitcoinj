@@ -411,7 +411,7 @@ public class PeerTest extends TestWithNetworkConnections {
         blockChain.add(b1);
         Block b2 = makeTestBlock(b1);
         Transaction t = new Transaction();
-        t.addInput(b1.getTransactions().get(0).getOutput(0));
+        t.addInput(b1.transactions().get(0).getOutput(0));
         t.addOutput(new TransactionOutput(t, Coin.ZERO, new byte[Block.MAX_BLOCK_SIZE - 1000]));
         b2.addTransaction(t);
 
@@ -459,8 +459,8 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(getheaders.getLocator(), expectedLocator);
         assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
         // Now send all the headers.
-        HeadersMessage headers = new HeadersMessage(b2.cloneAsHeader(),
-                b3.cloneAsHeader(), b4.cloneAsHeader());
+        HeadersMessage headers = new HeadersMessage(b2.asHeader(),
+                b3.asHeader(), b4.asHeader());
         // We expect to be asked for b3 and b4 again, but this time, with a body.
         expectedLocator = BlockLocator.ofBlocks(
                 b2,

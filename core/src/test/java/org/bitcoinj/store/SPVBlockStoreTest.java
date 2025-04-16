@@ -79,7 +79,7 @@ public class SPVBlockStoreTest {
         assertEquals(0, genesis.getHeight());
 
         // Build a new block.
-        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
+        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).asHeader());
         store.put(b1);
         store.setChainHead(b1);
         store.close();
@@ -128,9 +128,9 @@ public class SPVBlockStoreTest {
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
         final StoredBlock block0 = store.getChainHead();
-        final StoredBlock block1 = block0.build(block0.getHeader().createNextBlock(to).cloneAsHeader());
+        final StoredBlock block1 = block0.build(block0.getHeader().createNextBlock(to).asHeader());
         store.put(block1);
-        final StoredBlock block2 = block1.build(block1.getHeader().createNextBlock(to).cloneAsHeader());
+        final StoredBlock block2 = block1.build(block1.getHeader().createNextBlock(to).asHeader());
         store.put(block2);
         store.setChainHead(block2);
         store.close();
@@ -183,7 +183,7 @@ public class SPVBlockStoreTest {
         // Build a new block.
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         StoredBlock genesis = store.getChainHead();
-        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).cloneAsHeader());
+        StoredBlock b1 = genesis.build(genesis.getHeader().createNextBlock(to).asHeader());
         store.put(b1);
         store.setChainHead(b1);
         assertEquals(b1.getHeader().getHash(), store.getChainHead().getHeader().getHash());
@@ -213,7 +213,7 @@ public class SPVBlockStoreTest {
                 SPVBlockStore.FILE_PROLOGUE_BYTES + SPVBlockStore.RECORD_SIZE_V1 * 3);
         buffer.put(SPVBlockStore.HEADER_MAGIC_V1); // header magic
         Block genesisBlock = TESTNET.getGenesisBlock();
-        StoredBlock storedGenesisBlock = new StoredBlock(genesisBlock.cloneAsHeader(), genesisBlock.getWork(), 0);
+        StoredBlock storedGenesisBlock = new StoredBlock(genesisBlock.asHeader(), genesisBlock.getWork(), 0);
         Sha256Hash genesisHash = storedGenesisBlock.getHeader().getHash();
         ((Buffer) buffer).position(SPVBlockStore.FILE_PROLOGUE_BYTES);
         buffer.put(genesisHash.getBytes());

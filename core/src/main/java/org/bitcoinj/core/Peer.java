@@ -932,13 +932,12 @@ public class Peer extends PeerSocketHandler {
     }
 
     protected void processBlock(Block m) {
+        checkArgument(!m.isHeaderOnly(), () -> "block is header-only");
         if (log.isDebugEnabled())
             log.debug("{}: Received broadcast block {}", getAddress(), m.getHashAsString());
-        if (m.getTransactions() != null) {
-            m.getTransactions().forEach(tx ->
-                tx.getConfidence().maybeSetSourceToNetwork()
-            );
-        }
+        m.transactions().forEach(tx ->
+            tx.getConfidence().maybeSetSourceToNetwork()
+        );
         // Was this block requested by getBlock()?
         if (maybeHandleRequestedData(m, m.getHash())) return;
         if (blockChain == null) {

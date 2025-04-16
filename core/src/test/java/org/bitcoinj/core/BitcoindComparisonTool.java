@@ -227,7 +227,7 @@ public class BitcoindComparisonTool {
                     try {
                         Block b = blocks.next();
                         Block oldBlockWithSameHash = preloadedBlocks.put(b.getHash(), b);
-                        if (oldBlockWithSameHash != null && oldBlockWithSameHash.getTransactions().size() != b.getTransactions().size())
+                        if (oldBlockWithSameHash != null && oldBlockWithSameHash.transactions().size() != b.transactions().size())
                             blocksRequested.remove(b.getHash());
                         nextBlock = preloadedBlocks.get(block.blockHash);
                     } catch (NoSuchElementException e) {
