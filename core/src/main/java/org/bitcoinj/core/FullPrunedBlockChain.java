@@ -171,23 +171,6 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         }
     }
 
-    /**
-     * Get the address from the {@link Script} if it exists otherwise return empty string "".
-     *
-     * @param script The script.
-     * @return The address.
-     */
-    private String getScriptAddress(@Nullable Script script) {
-        String address = "";
-        try {
-            if (script != null) {
-                address = script.getToAddress(params.network(), true).toString();
-            }
-        } catch (Exception e) {
-        }
-        return address;
-    }
-
     @Override
     protected TransactionOutputChanges connectTransactions(int height, Block block)
             throws VerificationException, BlockStoreException {
@@ -270,8 +253,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                             out.getIndex(),
                             out.getValue(),
                             height, isCoinBase,
-                            script,
-                            getScriptAddress(script));
+                            script);
                     blockStore.addUnspentTransactionOutput(newOut);
                     txOutsCreated.add(newOut);
                 }
@@ -394,8 +376,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                 out.getValue(),
                                 newBlock.getHeight(),
                                 isCoinBase,
-                                script,
-                                getScriptAddress(script));
+                                script);
                         blockStore.addUnspentTransactionOutput(newOut);
                         txOutsCreated.add(newOut);
                     }

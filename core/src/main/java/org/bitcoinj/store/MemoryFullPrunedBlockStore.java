@@ -29,6 +29,8 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptPattern;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -372,9 +374,13 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         for (UTXO output : outputsList) {
             for (ECKey key : keys) {
                 // TODO switch to pubKeyHash in order to support native segwit addresses
-                Address address = key.toAddress(ScriptType.P2PKH, network);
-                if (output.getAddress().equals(address.toString())) {
-                    foundOutputs.add(output);
+                Script script = output.getScript();
+                if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script)) {
+                    Address outputAddress = script.getToAddress(network, true);
+                    Address keyAddress = key.toAddress(ScriptType.P2PKH, network);
+                    if (outputAddress.equals(keyAddress)) {
+                        foundOutputs.add(output);
+                    }
                 }
             }
         }
