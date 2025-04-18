@@ -1510,24 +1510,24 @@ public class FullBlockTestGenerator {
             Transaction tx2 = new Transaction();
             tx2.addOutput(new TransactionOutput(tx2, ZERO, new byte[]{OP_RETURN}));
             tx2.addOutput(new TransactionOutput(tx2, ZERO, new byte[]{OP_RETURN}));
-            tx2.addInput(new TransactionInput(tx2, new byte[]{OP_TRUE}, new TransactionOutPoint(1, b84tx1)));
+            tx2.addInput(new TransactionInput(tx2, new byte[]{OP_TRUE}, TransactionOutPoint.from(b84tx1, 1)));
             b84.addTransaction(tx2);
 
             Transaction tx3 = new Transaction();
             tx3.addOutput(new TransactionOutput(tx3, ZERO, new byte[]{OP_RETURN}));
             tx3.addOutput(new TransactionOutput(tx3, ZERO, new byte[]{OP_TRUE}));
-            tx3.addInput(new TransactionInput(tx3, new byte[]{OP_TRUE}, new TransactionOutPoint(2, b84tx1)));
+            tx3.addInput(new TransactionInput(tx3, new byte[]{OP_TRUE}, TransactionOutPoint.from(b84tx1, 2)));
             b84.addTransaction(tx3);
 
             Transaction tx4 = new Transaction();
             tx4.addOutput(new TransactionOutput(tx4, ZERO, new byte[]{OP_TRUE}));
             tx4.addOutput(new TransactionOutput(tx4, ZERO, new byte[]{OP_RETURN}));
-            tx4.addInput(new TransactionInput(tx4, new byte[]{OP_TRUE}, new TransactionOutPoint(3, b84tx1)));
+            tx4.addInput(new TransactionInput(tx4, new byte[]{OP_TRUE}, TransactionOutPoint.from(b84tx1, 3)));
             b84.addTransaction(tx4);
 
             Transaction tx5 = new Transaction();
             tx5.addOutput(new TransactionOutput(tx5, ZERO, new byte[]{OP_RETURN}));
-            tx5.addInput(new TransactionInput(tx5, new byte[]{OP_TRUE}, new TransactionOutPoint(4, b84tx1)));
+            tx5.addInput(new TransactionInput(tx5, new byte[]{OP_TRUE}, TransactionOutPoint.from(b84tx1, 4)));
             b84.addTransaction(tx5);
         }
         b84.solve();
@@ -1552,7 +1552,7 @@ public class FullBlockTestGenerator {
         {
             Transaction tx = new Transaction();
             tx.addOutput(new TransactionOutput(tx, ZERO, new byte[] {OP_TRUE}));
-            tx.addInput(new TransactionInput(tx, new byte[]{OP_TRUE}, new TransactionOutPoint(0, b84tx1)));
+            tx.addInput(new TransactionInput(tx, new byte[]{OP_TRUE}, TransactionOutPoint.from(b84tx1, 0)));
             b89.addTransaction(tx);
             b89.solve();
         }
