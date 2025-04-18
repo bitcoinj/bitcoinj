@@ -2722,7 +2722,7 @@ public class WalletTest extends TestWithWallet {
 
         // However, if there is no connected output, we connect it
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, tx3.getTxId())));
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, TransactionOutPoint.of(tx3.getTxId(), 0)));
         // Now completeTx will find the matching UTXO from the wallet and add its value to the unconnected input
         request3.shuffleOutputs = false;
         wallet.completeTx(request3);
@@ -2753,7 +2753,7 @@ public class WalletTest extends TestWithWallet {
 
         // SendRequest using that output as an unconnected input
         SendRequest request = SendRequest.to(OTHER_ADDRESS, COIN);
-        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, new TransactionOutPoint(0, tx.getTxId())));
+        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, TransactionOutPoint.of(tx.getTxId(), 0)));
 
         // Complete the transaction
         wallet.completeTx(request);

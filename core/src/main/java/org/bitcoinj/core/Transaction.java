@@ -903,7 +903,7 @@ public class Transaction implements Message {
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
         TransactionInput input = addInput(new TransactionInput(this, script.program(),
-                new TransactionOutPoint(outputIndex, spendTxHash)));
+                TransactionOutPoint.of(spendTxHash, outputIndex)));
         invalidateCachedTxIds();
         return input;
     }
