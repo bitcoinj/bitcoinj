@@ -1637,7 +1637,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsBloomFilter() {
         Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         Transaction t1 = createFakeTx(TESTNET, CENT, watchedAddress);
-        TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
+        TransactionOutPoint outPoint = TransactionOutPoint.from(t1, 0);
         wallet.addWatchedAddress(watchedAddress);
 
         // Note that this has a 1e-12 chance of failing this unit test due to a false positive
@@ -1691,7 +1691,7 @@ public class WalletTest extends TestWithWallet {
 
         for (Address addr : addressesForRemoval) {
             Transaction t1 = createFakeTx(TESTNET, CENT, addr);
-            TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
+            TransactionOutPoint outPoint = TransactionOutPoint.from(t1, 0);
 
             // Note that this has a 1e-12 chance of failing this unit test due to a false positive
             assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
@@ -2721,7 +2721,7 @@ public class WalletTest extends TestWithWallet {
 
         // However, if there is no connected output, we connect it
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, tx3.getTxId())));
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, TransactionOutPoint.of(tx3.getTxId(), 0)));
         // Now completeTx will find the matching UTXO from the wallet and add its value to the unconnected input
         request3.shuffleOutputs = false;
         wallet.completeTx(request3);
@@ -2752,7 +2752,7 @@ public class WalletTest extends TestWithWallet {
 
         // SendRequest using that output as an unconnected input
         SendRequest request = SendRequest.to(OTHER_ADDRESS, COIN);
-        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, new TransactionOutPoint(0, tx.getTxId())));
+        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, TransactionOutPoint.of(tx.getTxId(), 0)));
 
         // Complete the transaction
         wallet.completeTx(request);

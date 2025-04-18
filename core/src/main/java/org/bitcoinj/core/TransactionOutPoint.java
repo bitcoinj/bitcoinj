@@ -47,7 +47,7 @@ public class TransactionOutPoint {
 
     /** Special outpoint that normally marks a coinbase input. It's also used as a test dummy. */
     public static final TransactionOutPoint UNCONNECTED =
-            new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
+            TransactionOutPoint.of(Sha256Hash.ZERO_HASH, ByteUtils.MAX_UNSIGNED_INTEGER);
 
     /** Hash of the transaction to which we refer. */
     private final Sha256Hash hash;
@@ -70,19 +70,44 @@ public class TransactionOutPoint {
     public static TransactionOutPoint read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         Sha256Hash hash = Sha256Hash.read(payload);
         long index = ByteUtils.readUint32(payload);
-        return new TransactionOutPoint(index, hash);
+        return TransactionOutPoint.of(hash, index);
     }
 
+    /**
+     * @deprecated Use {@link TransactionOutPoint#from(Transaction, long)}
+     */
+    @Deprecated
     public TransactionOutPoint(long index, Transaction fromTx) {
         this(fromTx.getTxId(), index, fromTx, null);
     }
 
+    @Deprecated
     public TransactionOutPoint(long index, Sha256Hash hash) {
         this(hash, index, null, null);
     }
 
+    private TransactionOutPoint(Sha256Hash hash, long index) {
+        this(hash, index, null, null);
+    }
+
+    /**
+     * @deprecated Use {@link TransactionOutPoint#from(TransactionOutput)}
+     */
+    @Deprecated
     public TransactionOutPoint(TransactionOutput connectedOutput) {
         this(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null, connectedOutput);
+    }
+
+    public static TransactionOutPoint of(Sha256Hash hash, long index) {
+        return new TransactionOutPoint(hash, index);
+    }
+
+    public static TransactionOutPoint from(Transaction fromTx, long index) {
+        return new TransactionOutPoint (fromTx.getTxId(), index, fromTx, null);
+    }
+
+    public static TransactionOutPoint from(TransactionOutput connectedOutput) {
+        return new TransactionOutPoint(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null, connectedOutput);
     }
 
     private TransactionOutPoint(Sha256Hash hash, long index, @Nullable Transaction fromTx,
