@@ -4590,7 +4590,7 @@ public class Wallet extends BaseTaggableObject
                                         (!excludeImmatureCoinbases || isTransactionMature(output.getParentTransaction())))
                     .collect(StreamUtils.toUnmodifiableList());
             } else {
-                candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
+                candidates = calculateAllSpendCandidatesFromUTXOProviderInternal(excludeImmatureCoinbases);
             }
             return candidates;
         } finally {
@@ -4632,13 +4632,18 @@ public class Wallet extends BaseTaggableObject
      * Returns the spendable candidates from the {@link UTXOProvider} based on keys that the wallet contains.
      * @return The list of candidates.
      */
+    @Deprecated
     protected List<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
+        return calculateAllSpendCandidatesFromUTXOProviderInternal(excludeImmatureCoinbases);
+    }
+
+    private List<TransactionOutput> calculateAllSpendCandidatesFromUTXOProviderInternal(boolean excludeImmatureCoinbases) {
         checkState(lock.isHeldByCurrentThread());
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         List<TransactionOutput> candidates = new LinkedList<>();
         try {
             int chainHeight = utxoProvider.getChainHeadHeight();
-            for (UTXO output : getStoredOutputsFromUTXOProvider()) {
+            for (UTXO output : getStoredOutputsFromUTXOProviderInternal()) {
                 boolean coinbase = output.isCoinbase();
                 int depth = chainHeight - output.getHeight() + 1; // the current depth of the output (1 = same as head).
                 // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
@@ -4675,7 +4680,12 @@ public class Wallet extends BaseTaggableObject
      * wallet contains.
      * @return The list of stored outputs.
      */
+    @Deprecated
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
+        return getStoredOutputsFromUTXOProviderInternal();
+    }
+
+    private List<UTXO> getStoredOutputsFromUTXOProviderInternal() throws UTXOProviderException {
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
@@ -4697,7 +4707,9 @@ public class Wallet extends BaseTaggableObject
     /**
      * Get the {@link UTXOProvider}.
      * @return The UTXO provider.
+     * @deprecated Use a UTXOProvider separate from the wallet if you want to search an external source for UTXOs.
      */
+    @Deprecated
     @Nullable public UTXOProvider getUTXOProvider() {
         lock.lock();
         try {
@@ -4715,8 +4727,15 @@ public class Wallet extends BaseTaggableObject
      *
      * <p>Note that the associated provider must be reattached after a wallet is loaded from disk.
      * The association is not serialized.</p>
+     * @deprecated Use a UTXOProvider separate from the wallet if you want to search an external source for UTXOs.
      */
+    @Deprecated
     public void setUTXOProvider(@Nullable UTXOProvider provider) {
+        setUTXOProviderInternal(provider);
+    }
+
+    @VisibleForTesting
+    public void setUTXOProviderInternal(@Nullable UTXOProvider provider) {
         lock.lock();
         try {
             checkArgument(provider == null || provider.network() == network);
