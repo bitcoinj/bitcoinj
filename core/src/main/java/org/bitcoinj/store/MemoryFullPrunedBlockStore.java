@@ -41,60 +41,6 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Used as a key for memory map (to avoid having to think about NetworkParameters,
- * which is required for {@link TransactionOutPoint}
- */
-class StoredTransactionOutPoint {
-
-    /** Hash of the transaction to which we refer. */
-    Sha256Hash hash;
-    /** Which output of that transaction we are talking about. */
-    long index;
-    
-    StoredTransactionOutPoint(Sha256Hash hash, long index) {
-        this.hash = hash;
-        this.index = index;
-    }
-    
-    StoredTransactionOutPoint(UTXO out) {
-        this.hash = out.getHash();
-        this.index = out.getIndex();
-    }
-    
-    /**
-     * The hash of the transaction to which we refer
-     */
-    Sha256Hash getHash() {
-        return hash;
-    }
-    
-    /**
-     * The index of the output in transaction to which we refer
-     */
-    long getIndex() {
-        return index;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getIndex(), getHash());
-    }
-    
-    @Override
-    public String toString() {
-        return "Stored transaction out point: " + hash + ":" + index;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        StoredTransactionOutPoint other = (StoredTransactionOutPoint) o;
-        return getIndex() == other.getIndex() && Objects.equals(getHash(), other.getHash());
-    }
-}
-
-/**
  * A HashMap<KeyType, ValueType> that is DB transaction-aware
  * This class is not thread-safe.
  */
@@ -257,7 +203,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock> fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
-    private TransactionalHashMap<StoredTransactionOutPoint, UTXO> transactionOutputMap;
+    private TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private int fullStoreDepth;
@@ -366,19 +312,19 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Nullable
     public synchronized UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        return transactionOutputMap.get(new StoredTransactionOutPoint(hash, index));
+        return transactionOutputMap.get(new TransactionOutPoint(index, hash));
     }
 
     @Override
     public synchronized void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        transactionOutputMap.put(new StoredTransactionOutPoint(out), out);
+        transactionOutputMap.put(new TransactionOutPoint(out.getIndex(), out.getHash()), out);
     }
 
     @Override
     public synchronized void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        if (transactionOutputMap.remove(new StoredTransactionOutPoint(out)) == null)
+        if (transactionOutputMap.remove(new TransactionOutPoint(out.getIndex(), out.getHash())) == null)
             throw new BlockStoreException("Tried to remove a UTXO from MemoryFullPrunedBlockStore that it didn't have!");
     }
 
