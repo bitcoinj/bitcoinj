@@ -75,6 +75,8 @@ public class TransactionOutPoint {
         return new TransactionOutPoint(index, hash);
     }
 
+    /** @deprecated use {@link TransactionOutPoint#from(Transaction, long)} */
+    @Deprecated
     public TransactionOutPoint(long index, Transaction fromTx) {
         this(fromTx.getTxId(), index, fromTx, null);
     }
@@ -83,8 +85,30 @@ public class TransactionOutPoint {
         this(hash, index, null, null);
     }
 
+    /** @deprecated use {@link TransactionOutPoint#from(TransactionOutput)} */
+    @Deprecated
     public TransactionOutPoint(TransactionOutput connectedOutput) {
         this(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null, connectedOutput);
+    }
+
+    /**
+     * Create a {@code TransactionOutPoint} <i>from</i> an existing {@link Transaction}.
+     * @param fromTx transaction the new outpoint will reference (and be "connected to")
+     * @param index index of the transaction output the new outpoint will reference
+     * @return a new transaction outpoint
+     */
+    public static TransactionOutPoint from(Transaction fromTx, long index) {
+        return new TransactionOutPoint (fromTx.getTxId(), index, fromTx, null);
+    }
+
+    /**
+     * Create a {@code TransactionOutPoint} <i>from</i> an existing {@link TransactionOutput}.
+     * @param connectedOutput transaction output the new outpoint will reference (and be "connected to")
+     * @return a new transaction outpoint
+     */
+    public static TransactionOutPoint from(TransactionOutput connectedOutput) {
+        return new TransactionOutPoint(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null,
+                connectedOutput);
     }
 
     private TransactionOutPoint(Sha256Hash hash, long index, @Nullable Transaction fromTx,
