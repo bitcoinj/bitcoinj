@@ -302,7 +302,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
         UTXO output = outputs.get(0);
-        assertEquals("The address is not equal", address.toString(), output.getAddress());
+        assertEquals("The address is not equal", address, output.getScript().getToAddress(PARAMS.network(), true));
         assertEquals("The amount is not equal", totalAmount, output.getValue());
 
         outputs = null;
