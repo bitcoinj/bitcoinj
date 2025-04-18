@@ -217,7 +217,7 @@ public class TransactionOutPoint {
      * @return outpoint with fromTx set
      */
     public TransactionOutPoint connectTransaction(Transaction transaction) {
-        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), connectedOutput);
+        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), getConnectedOutput());
     }
 
     /**
@@ -225,7 +225,7 @@ public class TransactionOutPoint {
      * @return outpoint with removed fromTx
      */
     public TransactionOutPoint disconnectTransaction() {
-        return new TransactionOutPoint(hash, index, null, connectedOutput);
+        return new TransactionOutPoint(hash, index, null, getConnectedOutput());
     }
 
     @Override
