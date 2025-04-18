@@ -165,8 +165,8 @@ public class TransactionInput {
         this(parentTransaction,
                 null, EMPTY_ARRAY,
                 output.getParentTransaction() != null ?
-                        new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
-                        new TransactionOutPoint(output),
+                        TransactionOutPoint.from(output.getParentTransaction(), output.getIndex()) :
+                        TransactionOutPoint.from(output),
                 NO_SEQUENCE,
                 output.getValue(),
                 null);
