@@ -213,7 +213,7 @@ public class TransactionOutPoint {
      * @return outpoint with removed connectedOutput
      */
     public TransactionOutPoint disconnectOutput() {
-        return new TransactionOutPoint(hash, index, fromTx, null);
+        return new TransactionOutPoint(hash, index, null, null);
     }
 
     /**
