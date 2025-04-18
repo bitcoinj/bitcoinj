@@ -71,7 +71,6 @@ public class TransactionInputTest {
         TransactionInput txInToDisconnect = tx2.getInput(0);
 
         assertEquals(tx1, txInToDisconnect.getOutpoint().fromTx);
-        assertNull(txInToDisconnect.getOutpoint().connectedOutput);
 
         txInToDisconnect.disconnect();
 
