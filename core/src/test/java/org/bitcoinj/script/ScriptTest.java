@@ -342,13 +342,9 @@ public class ScriptTest {
     private Map<TransactionOutPoint, Script> parseScriptPubKeys(List<ScriptPubKeyEntry> inputs) throws IOException {
         Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
         for (ScriptPubKeyEntry input : inputs) {
-            String hash = input.hash;
-            long index = input.index;
-            if (index == -1)
-                index = ByteUtils.MAX_UNSIGNED_INTEGER;
-            String script = input.script;
-            Sha256Hash sha256Hash = Sha256Hash.wrap(ByteUtils.parseHex(hash));
-            scriptPubKeys.put(TransactionOutPoint.of(sha256Hash, index), parseScriptString(script));
+            Sha256Hash hash = Sha256Hash.wrap(ByteUtils.parseHex(input.hash));
+            long index = input.index == -1 ? ByteUtils.MAX_UNSIGNED_INTEGER : input.index;
+            scriptPubKeys.put(TransactionOutPoint.of(hash, index), parseScriptString(input.script));
         }
         return scriptPubKeys;
     }
