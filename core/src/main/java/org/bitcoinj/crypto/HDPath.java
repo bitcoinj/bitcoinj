@@ -36,12 +36,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * including the {@code 'm'} or {@code 'M'} prefix, use {@link HDFullPath}. For a partial path
  * use {@link HDPartialPath}. {@code HDPath} is immutable.
  * <p>
- * {@code HDPath} implements {@code java.util.List<ChildNumber>} to ease migration
- * from the previous implementation. When an {@code HDPath} is returned you can treat it as a {@code List<ChildNumber>}
- * where necessary in your code. Although it is recommended to use the {@code HDPath} type for clarity and for
- * access to {@code HDPath}-specific functionality.
- * <p>
- * Note that it is possible for {@code HDPath} to be an empty list.
+ * Note that it is possible for {@code HDPath} to be an empty path.
  * <p>
  * Take note of the overloaded factory methods {@link HDPath#M()} and {@link HDPath#m()}. These can be used to very
  * concisely create {@link HDFullPath} objects (especially when statically imported.)
