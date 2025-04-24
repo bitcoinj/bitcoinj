@@ -811,6 +811,16 @@ public class Block implements Message {
     }
 
     /**
+     * Returns the number of transactions in this block.
+     *
+     * @return number of transactions
+     */
+    public int transactionCount() {
+        checkState(!isHeaderOnly());
+        return transactions.size();
+    }
+
+    /**
      * Gets the transaction at the given index.
      *
      * @param index index of the transaction to get

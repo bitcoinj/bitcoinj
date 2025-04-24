@@ -230,7 +230,7 @@ public class BlockTest {
     public void testBlock481815_witnessCommitmentInCoinbase() throws Exception {
         Block block481815 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
                 ByteStreams.toByteArray(getClass().getResourceAsStream("block481815.dat"))));
-        assertEquals(2097, block481815.getTransactions().size());
+        assertEquals(2097, block481815.transactionCount());
         assertEquals("f115afa8134171a0a686bfbe9667b60ae6fb5f6a439e0265789babc315333262",
                 block481815.getMerkleRoot().toString());
 
@@ -251,7 +251,7 @@ public class BlockTest {
     public void testBlock481829_witnessTransactions() throws Exception {
         Block block481829 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
                 ByteStreams.toByteArray(getClass().getResourceAsStream("block481829.dat"))));
-        assertEquals(2020, block481829.getTransactions().size());
+        assertEquals(2020, block481829.transactionCount());
         assertEquals("f06f697be2cac7af7ed8cd0b0b81eaa1a39e444c6ebd3697e35ab34461b6c58d",
                 block481829.getMerkleRoot().toString());
         assertEquals("0a02ddb2f86a14051294f8d98dd6959dd12bf3d016ca816c3db9b32d3e24fc2d",
