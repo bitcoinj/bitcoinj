@@ -861,7 +861,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        HDPath.HDPartialPath accountPath = HDPath.partial(Collections.emptyList());
+        HDPath.HDPartialPath accountPath = HDPath.partial();
         ScriptType outputScriptType = ScriptType.P2PKH;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();
