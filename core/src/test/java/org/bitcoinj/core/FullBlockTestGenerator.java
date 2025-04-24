@@ -1187,9 +1187,9 @@ public class FullBlockTestGenerator {
 
             byte[] varIntBytes = new byte[9];
             varIntBytes[0] = (byte) 255;
-            ByteUtils.writeInt64LE(b64Original.block.getTransactions().size(), varIntBytes, 1);
+            ByteUtils.writeInt64LE(b64Original.block.transactionCount(), varIntBytes, 1);
             buf.put(varIntBytes);
-            checkState(VarInt.ofBytes(varIntBytes, 0).intValue() == b64Original.block.getTransactions().size());
+            checkState(VarInt.ofBytes(varIntBytes, 0).intValue() == b64Original.block.transactionCount());
 
             for (Transaction transaction : b64Original.block.getTransactions())
                 transaction.write(buf);

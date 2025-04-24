@@ -213,7 +213,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         if (scriptVerificationExecutor.isShutdown())
             scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<>(block.getTransactions().size());
+        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<>(block.transactionCount());
         try {
             if (!params.isCheckpoint(height)) {
                 // BIP30 violator blocks are ones that contain a duplicated transaction. They are all in the
