@@ -257,6 +257,14 @@ public abstract class HDPath {
         return array;
     }
 
+    private static int[] childrenAsArray(ChildNumber[] children) {
+        int[] array = new int[children.length];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = children[i].i();
+        }
+        return array;
+    }
+
     // Canonical superclass constructor
     private HDPath(int[] childNumbers) {
         children = new int[childNumbers.length];
@@ -318,7 +326,7 @@ public abstract class HDPath {
      * @param children Children in the path
      */
     public static HDPartialPath partial(ChildNumber... children) {
-        return partial(Arrays.asList(children));
+        return new HDPartialPath(childrenAsArray(children));
     }
 
     /**
@@ -352,7 +360,7 @@ public abstract class HDPath {
      * @param children Children in the path
      */
     public static HDFullPath M(ChildNumber... children) {
-        return HDPath.M(Arrays.asList(children));
+        return new HDFullPath(false, childrenAsArray(children));
     }
 
     /**
@@ -386,7 +394,7 @@ public abstract class HDPath {
      * @param children Children in the path
      */
     public static HDFullPath m(ChildNumber... children) {
-        return HDPath.m(Arrays.asList(children));
+        return new HDFullPath(true, childrenAsArray(children));
     }
 
     /**
