@@ -169,10 +169,6 @@ public class WalletTool implements Callable<Integer> {
     private String password = null;
     @CommandLine.Option(names = "--no-pki", description = "Disables pki verification for payment requests.")
     private boolean noPki = false;
-    @CommandLine.Option(names = "--dump-privkeys", description = "Private keys and seed are printed.")
-    private boolean dumpPrivKeys = false;
-    @CommandLine.Option(names = "--dump-lookahead", description = "Show pregenerated but not yet issued keys.")
-    private boolean dumpLookAhead = false;
     @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
     private boolean help;
 
@@ -348,7 +344,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private Integer cleanup(Integer subcommandStatusCode) throws BlockStoreException {
+    private int cleanup(Integer subcommandStatusCode) throws BlockStoreException {
         //check it runs on only the right spec
         if(!"create".equals(spec.name()) && !"raw-dump".equals(spec.name())){
             if (!wallet.isConsistent()) {
@@ -406,7 +402,7 @@ public class WalletTool implements Callable<Integer> {
         return ByteString.copyFrom(ByteUtils.formatHex(bytes.toByteArray()).getBytes());
     }
 
-    private Integer upgrade() {
+    private int upgrade() {
         DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
         ScriptType currentOutputScriptType = activeKeyChain != null ? activeKeyChain.getOutputScriptType() : null;
         if (!wallet.isDeterministicUpgradeRequired(outputScriptType)) {
@@ -427,7 +423,7 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private Integer rotate() throws BlockStoreException {
+    private int rotate() throws BlockStoreException {
         setup();
         peerGroup.start();
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
@@ -449,7 +445,7 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private Integer encrypt() {
+    private int encrypt() {
         if (password == null) {
             System.err.println("You must provide a --password");
             return 1;
@@ -462,7 +458,7 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private Integer decrypt() {
+    private int decrypt() {
         if (password == null) {
             System.err.println("You must provide a --password");
             return 1;
@@ -480,7 +476,7 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private Integer addAddr() {
+    private int addAddr() {
         if (addrStr == null) {
             System.err.println("You must specify an --addr to watch.");
             return 1;
@@ -706,7 +702,7 @@ public class WalletTool implements Callable<Integer> {
         return future;
     }
 
-    private Integer reset() {
+    private int reset() {
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
         saveWallet(walletFile);
@@ -764,7 +760,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private Integer syncChain() {
+    private int syncChain() {
         try {
             setup();
             int startTransactions = wallet.getTransactions(true).size();
@@ -803,7 +799,7 @@ public class WalletTool implements Callable<Integer> {
     }
 
     @CommandLine.Command(name = "create" , description="Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.")
-    private Integer createWallet(Network network, File walletFile) throws IOException {
+    private int createWallet(Network network, File walletFile) throws IOException {
         KeyChainGroupStructure keyChainGroupStructure = KeyChainGroupStructure.BIP32;
 
         if (walletFile.exists() && !force) {
@@ -861,7 +857,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private Integer addKey() {
+    private int addKey() {
         ECKey key;
         Optional<Instant> creationTime = getCreationTime();
         if (privKeyStr != null) {
@@ -956,7 +952,7 @@ public class WalletTool implements Callable<Integer> {
             return Optional.empty();
     }
 
-    private Integer deleteKey() {
+    private int deleteKey() {
         if (pubKeyStr == null && addrStr == null) {
             System.err.println("One of --pubkey or --addr must be specified.");
             return 1;
@@ -986,14 +982,16 @@ public class WalletTool implements Callable<Integer> {
     }
 
     @CommandLine.Command(name = "current-receive-addr" , description="Prints the current receive address, deriving one if needed. Addresses derived with this action are independent of addresses derived with the add-key action")
-    private Integer currentReceiveAddr() {
+    private int currentReceiveAddr() {
         Address address = wallet.currentReceiveAddress();
         System.out.println(address);
         return 0;
     }
 
     @CommandLine.Command(name = "dump" , description="Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified.")
-    private Integer dumpWallet() throws BlockStoreException {
+    private int dumpWallet(
+            @CommandLine.Option(names = "--dump-privkeys", description = "Displays wallet seed and private keys (password required for an encrypted wallet).") boolean dumpPrivKeys,
+            @CommandLine.Option(names = "--dump-lookahead", description = "Includes lookahead keys (pregenerated but unused).") boolean dumpLookAhead) throws BlockStoreException {
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
         if (chainFile.exists())
@@ -1004,18 +1002,18 @@ public class WalletTool implements Callable<Integer> {
                 final AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return 1; // Error message already printed.
-                printWallet(aesKey);
+                printWallet(aesKey, dumpLookAhead, dumpPrivKeys);
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
                 return 1;
             }
         } else {
-            printWallet(null);
+            printWallet(null, dumpLookAhead, dumpPrivKeys);
         }
         return 0;
     }
 
-    private Integer rawDumpWallet() throws IOException {
+    private static int rawDumpWallet(File walletFile) throws IOException {
         try (FileInputStream stream = new FileInputStream(walletFile)) {
             Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
             proto = attemptHexConversion(proto);
@@ -1075,11 +1073,11 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private void printWallet(@Nullable AesKey aesKey) {
+    private void printWallet(@Nullable AesKey aesKey, boolean dumpLookAhead, boolean dumpPrivKeys) throws BlockStoreException {
         System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, aesKey, true, true, chain));
     }
 
-    private Integer setCreationTime() {
+    private int setCreationTime() {
         Optional<Instant> creationTime = getCreationTime();
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
             DeterministicSeed seed = chain.getSeed();
