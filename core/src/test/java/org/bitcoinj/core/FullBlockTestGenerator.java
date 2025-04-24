@@ -906,7 +906,7 @@ public class FullBlockTestGenerator {
             try {
                 b45.addTransaction(t);
             } catch (RuntimeException e) { } // Should happen
-            if (b45.getTransactions().size() > 0)
+            if (b45.hasTransactions())
                 throw new RuntimeException("addTransaction doesn't properly check for adding a non-coinbase as first tx");
             b45.replaceTransactions(Arrays.asList(t));
 
