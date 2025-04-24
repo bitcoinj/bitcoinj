@@ -297,9 +297,9 @@ public abstract class HDPath {
      * @return a deserialized HDPartialPath
      */
     public static HDPartialPath deserialize(List<Integer> integerList) {
-        return HDPath.partial(integerList.stream()
-                .map(ChildNumber::new)
-                .collect(StreamUtils.toUnmodifiableList()));
+        return new HDPartialPath(integerList.stream()
+                .mapToInt(i -> i)
+                .toArray());
     }
 
     /**
@@ -308,7 +308,7 @@ public abstract class HDPath {
      * @param list list of children
      */
     public static HDPartialPath partial(List<ChildNumber> list) {
-        return new HDPartialPath(list);
+        return new HDPartialPath(childrenAsArray(list));
     }
 
     /**
@@ -317,7 +317,7 @@ public abstract class HDPath {
      * @param childNumber Single child in path
      */
     public static HDPartialPath partial(ChildNumber childNumber) {
-        return partial(Collections.singletonList(childNumber));
+        return new HDPartialPath(new int[]{childNumber.i()});
     }
 
     /**
@@ -342,7 +342,7 @@ public abstract class HDPath {
      * Returns an empty path for a public key.
      */
     public static HDFullPath M() {
-        return HDPath.M(Collections.emptyList());
+        return new HDFullPath(false, new int[0]);
     }
 
     /**
@@ -351,7 +351,7 @@ public abstract class HDPath {
      * @param childNumber Single child in path
      */
     public static HDFullPath M(ChildNumber childNumber) {
-        return HDPath.M(Collections.singletonList(childNumber));
+        return new HDFullPath(false, new int[]{childNumber.i()});
     }
 
     /**
@@ -376,7 +376,7 @@ public abstract class HDPath {
      * Returns an empty path for a private key.
      */
     public static HDFullPath m() {
-        return HDPath.m(Collections.emptyList());
+        return new HDFullPath(true, new int[0]);
     }
 
     /**
@@ -385,7 +385,7 @@ public abstract class HDPath {
      * @param childNumber Single child in path
      */
     public static HDFullPath m(ChildNumber childNumber) {
-        return HDPath.m(Collections.singletonList(childNumber));
+        return new HDFullPath(true, new int[]{childNumber.i()});
     }
 
     /**
@@ -408,14 +408,15 @@ public abstract class HDPath {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
         Optional<Prefix> prefix = parsedNodes.isEmpty() ? Optional.empty() : Prefix.of(parsedNodes.get(0));
 
-        List<ChildNumber> nodes = parsedNodes.stream()
+        int[] nodes = parsedNodes.stream()
                 .skip(prefix.isPresent() ? 1 : 0)  // skip prefix, if present
                 .filter(n -> !n.isEmpty())
                 .map(ChildNumber::parse)
-                .collect(StreamUtils.toUnmodifiableList());
+                .mapToInt(ChildNumber::i)
+                .toArray();
 
         return prefix.isPresent()
-            ? HDPath.of(prefix.get(), nodes)
+            ? new HDFullPath(prefix.get(), nodes)
             : new HDPath.HDPartialPath(nodes);
     }
 
