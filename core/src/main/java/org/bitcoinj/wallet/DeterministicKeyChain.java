@@ -392,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 rootKey.clearCreationTime();
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            for (HDPath path : getAccountPath().asPartial().ancestors(true)) {
+            for (HDPath path : accountPartialPath().ancestors(true)) {
                 basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
             initializeHierarchyUnencrypted();
