@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Sha256Hash;
 
 import java.nio.BufferUnderflowException;
@@ -25,12 +26,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * <p>Represents the "getdata" P2P network message, which requests the contents of blocks or transactions given their
- * hashes.</p>
- *
- * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
+ * Represents the "getdata" P2P network message, which requests the contents of blocks or transactions given their
+ * hashes.
  */
-public class GetDataMessage extends ListMessage {
+public class GetDataMessage implements ListMessage {
     private final List<InventoryItem> items;
 
     /**
@@ -41,7 +40,7 @@ public class GetDataMessage extends ListMessage {
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
     public static GetDataMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        return new GetDataMessage(readItems(payload));
+        return new GetDataMessage(ListMessage.readItems(payload));
     }
 
     GetDataMessage(List<InventoryItem> items) {
@@ -69,7 +68,26 @@ public class GetDataMessage extends ListMessage {
     }
 
     @Override
-    protected List<InventoryItem> items() {
+    public List<InventoryItem> items() {
         return items;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return items.equals(((GetDataMessage)o).items);
+    }
+
+    @Override
+    public int hashCode() {
+        return items.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
+        helper.addValue(items);
+        return helper.toString();
     }
 }
