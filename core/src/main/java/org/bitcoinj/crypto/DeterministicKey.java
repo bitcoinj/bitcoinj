@@ -653,7 +653,7 @@ public class DeterministicKey extends ECKey {
         final int parentFingerprint = buffer.getInt();
         final int i = buffer.getInt();
         final ChildNumber childNumber = new ChildNumber(i);
-        HDPath path;
+        HDPath.HDPartialPath path;
         if (parent != null) {
             if (parentFingerprint == 0)
                 throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
@@ -668,8 +668,8 @@ public class DeterministicKey extends ECKey {
                 // This can happen when deserializing an account key for a watching wallet.  In this case, we assume that
                 // the client wants to conceal the key's position in the hierarchy.  The path is truncated at the
                 // parent's node.
-                path = HDPath.M(childNumber);
-            else path = HDPath.M();
+                path = HDPath.partial(childNumber);
+            else path = HDPath.partial();
         }
         byte[] chainCode = new byte[32];
         buffer.get(chainCode);
