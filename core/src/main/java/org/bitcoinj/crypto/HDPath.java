@@ -21,7 +21,6 @@ import org.bitcoinj.base.internal.InternalUtils;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -444,11 +443,9 @@ public abstract class HDPath {
      * @return an unmodifiable list of {@code ChildNumber}
      */
     public List<ChildNumber> list() {
-        ChildNumber[] out = new ChildNumber[children.length];
-        for (int i = 0; i < children.length; i++) {
-            out[i] = new ChildNumber(children[i]);
-        }
-        return Collections.unmodifiableList(Arrays.asList(out));
+        return Arrays.stream(children)
+                .mapToObj(ChildNumber::new)
+                .collect(StreamUtils.toUnmodifiableList());
     }
 
     /**
