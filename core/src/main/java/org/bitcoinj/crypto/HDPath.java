@@ -85,7 +85,7 @@ public abstract class HDPath {
     private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split(SEPARATOR))
             .map(String::trim)
             .collect(Collectors.toList());
-    int[] children;
+    protected final int[] children;
 
     /** Partial path with BIP44 purpose */
     public static final HDPartialPath BIP44_PARENT = partial(ChildNumber.PURPOSE_BIP44);
