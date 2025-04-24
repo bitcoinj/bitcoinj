@@ -301,7 +301,7 @@ public abstract class HDPath {
      * @param children children in the path
      */
     public static HDFullPath M(List<ChildNumber> children) {
-        return HDPath.of(Prefix.PUBLIC, children);
+        return new HDFullPath(false, childrenAsArray(children));
     }
 
     /**
@@ -335,7 +335,7 @@ public abstract class HDPath {
      * @param children children in the path
      */
     public static HDFullPath m(List<ChildNumber> children) {
-        return HDPath.of(Prefix.PRIVATE, children);
+        return new HDFullPath(true, childrenAsArray(children));
     }
 
     /**
