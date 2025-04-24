@@ -123,7 +123,7 @@ public class DeterministicKeyChainTest {
     @Test
     public void deriveAccountOne() {
         final Instant secs = Instant.ofEpochSecond(1389353062L);
-        final HDPath accountOne = HDPath.M(ChildNumber.ONE);
+        final HDPath.HDPartialPath accountOne = HDPath.partial(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
