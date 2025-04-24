@@ -98,32 +98,22 @@ public abstract class HDPath {
         private final boolean hasPrivateKey;
 
         /**
-         * Constructs a path for a public or private key. Should probably be a private constructor.
+         * Constructs a path for a public or private key.
          *
          * @param hasPrivateKey Whether it is a path to a private key or not
-         * @param list          List of children in the path
+         * @param array         children in the path
          */
-        public HDFullPath(boolean hasPrivateKey, List<ChildNumber> list) {
-            super(list);
-            this.hasPrivateKey = hasPrivateKey;
-        }
-
         private HDFullPath(boolean hasPrivateKey, int[] array) {
             super(array);
             this.hasPrivateKey = hasPrivateKey;
         }
 
         /**
-         * Constructs a path for a public or private key. Should probably be a private constructor.
+         * Constructs a path for a public or private key.
          *
          * @param prefix 'M' or 'm'
-         * @param list   List of children in the path
+         * @param array children in the path
          */
-        public HDFullPath(Prefix prefix, List<ChildNumber> list) {
-            super(list);
-            this.hasPrivateKey = prefix == Prefix.PRIVATE;
-        }
-
         private HDFullPath(Prefix prefix, int[] array) {
             super(array);
             this.hasPrivateKey = prefix == Prefix.PRIVATE;
@@ -194,10 +184,6 @@ public abstract class HDPath {
 
     public static class HDPartialPath extends HDPath {
 
-        private HDPartialPath(List<ChildNumber> list) {
-            super(list);
-        }
-
         private HDPartialPath(int[] list) {
             super(list);
         }
@@ -245,10 +231,6 @@ public abstract class HDPath {
         }
     }
 
-    private HDPath(List<ChildNumber> list) {
-        this(childrenAsArray(list));
-    }
-
     private static int[] childrenAsArray(List<ChildNumber> list) {
         int[] array = new int[list.size()];
         for (int i = 0; i < array.length; i++) {
@@ -278,7 +260,7 @@ public abstract class HDPath {
      * @param list List of children in the path
      */
     public static HDFullPath of(Prefix prefix, List<ChildNumber> list) {
-        return new HDFullPath(prefix, list);
+        return new HDFullPath(prefix, childrenAsArray(list));
     }
 
     /**
@@ -288,7 +270,7 @@ public abstract class HDPath {
      * @param list List of children in the path
      */
     private static HDFullPath of(boolean hasPrivateKey, List<ChildNumber> list) {
-        return new HDFullPath(hasPrivateKey, list);
+        return new HDFullPath(hasPrivateKey, childrenAsArray(list));
     }
 
     /**
