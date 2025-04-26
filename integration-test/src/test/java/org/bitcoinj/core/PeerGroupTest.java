@@ -120,11 +120,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         connectedPeers = new LinkedBlockingQueue<>();
         disconnectedPeers = new LinkedBlockingQueue<>();
         preMessageReceivedListener = (peer, m) -> {
-            AtomicInteger messageCount = peerToMessageCount.get(peer);
-            if (messageCount == null) {
-                messageCount = new AtomicInteger(0);
-                peerToMessageCount.put(peer, messageCount);
-            }
+            AtomicInteger messageCount = peerToMessageCount.computeIfAbsent(peer, p -> new AtomicInteger(0));
             messageCount.incrementAndGet();
             // Just pass the message right through for further processing.
             return m;
