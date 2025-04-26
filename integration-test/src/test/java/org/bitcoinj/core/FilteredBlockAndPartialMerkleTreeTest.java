@@ -217,7 +217,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         for (Transaction tx : transactions) {
             assertEquals(ConfidenceType.BUILDING, tx.getConfidence().getConfidenceType());
             assertEquals(1, tx.getConfidence().getDepthInBlocks());
-            assertTrue(tx.getAppearsInHashes().keySet().contains(block.getHash()));
+            assertTrue(tx.getAppearsInHashes().containsKey(block.getHash()));
             assertEquals(1, tx.getAppearsInHashes().size());
         }
 
