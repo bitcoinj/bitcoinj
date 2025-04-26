@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.util;
+package org.bitcoinj.test.bitcoind;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
