@@ -22,11 +22,11 @@ import java.net.SocketAddress;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * <p>A generic interface for an object which keeps track of a set of open client connections, creates new ones and
- * ensures they are serviced properly.</p>
- *
- * <p>When the service is stopped via {@link com.google.common.util.concurrent.Service#stopAsync()}, all connections will be closed and
- * the appropriate connectionClosed() calls must be made.</p>
+ * A generic interface for an object which keeps track of a set of open client connections, creates new ones and
+ * ensures they are serviced properly.
+ * <p>
+ * When the service is stopped via {@link com.google.common.util.concurrent.Service#stopAsync()}, all connections will be closed and
+ * the appropriate connectionClosed() calls must be made.
  */
 public interface ClientConnectionManager extends Service {
     /**
