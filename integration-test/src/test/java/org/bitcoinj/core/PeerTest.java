@@ -211,8 +211,8 @@ public class PeerTest extends TestWithNetworkConnections {
                 b1,
                 TESTNET.getGenesisBlock());
 
-        assertEquals(getblocks.getLocator(), expectedLocator);
-        assertEquals(getblocks.getStopHash(), b3.getHash());
+        assertEquals(expectedLocator, getblocks.getLocator());
+        assertEquals(b3.getHash(), getblocks.getStopHash());
         assertNull(outbound(writeTarget));
     }
 
@@ -375,7 +375,7 @@ public class PeerTest extends TestWithNetworkConnections {
             TESTNET.getGenesisBlock());
 
         GetBlocksMessage message = (GetBlocksMessage) outbound(writeTarget);
-        assertEquals(message.getLocator(), expectedLocator);
+        assertEquals(expectedLocator, message.getLocator());
         assertEquals(Sha256Hash.ZERO_HASH, message.getStopHash());
     }
 
@@ -394,12 +394,12 @@ public class PeerTest extends TestWithNetworkConnections {
         assertFalse(resultFuture.isDone());
         // Peer asks for it.
         GetDataMessage message = (GetDataMessage) outbound(writeTarget);
-        assertEquals(message.getItems().get(0).hash, b3.getHash());
+        assertEquals(b3.getHash(), message.getItems().get(0).hash);
         assertFalse(resultFuture.isDone());
         // Peer receives it.
         inbound(writeTarget, b3);
         Block b = resultFuture.get();
-        assertEquals(b, b3);
+        assertEquals(b3, b);
     }
 
     @Test
@@ -420,12 +420,12 @@ public class PeerTest extends TestWithNetworkConnections {
         assertFalse(resultFuture.isDone());
         // Peer asks for it.
         GetDataMessage message = (GetDataMessage) outbound(writeTarget);
-        assertEquals(message.getItems().get(0).hash, b2.getHash());
+        assertEquals(b2.getHash(), message.getItems().get(0).hash);
         assertFalse(resultFuture.isDone());
         // Peer receives it.
         inbound(writeTarget, b2);
         Block b = resultFuture.get();
-        assertEquals(b, b2);
+        assertEquals(b2, b);
     }
 
     @Test
@@ -456,8 +456,8 @@ public class PeerTest extends TestWithNetworkConnections {
         BlockLocator expectedLocator = BlockLocator.ofBlocks(
                 b1,
                 TESTNET.getGenesisBlock());
-        assertEquals(getheaders.getLocator(), expectedLocator);
-        assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
+        assertEquals(expectedLocator, getheaders.getLocator());
+        assertEquals(Sha256Hash.ZERO_HASH, getheaders.getStopHash());
         // Now send all the headers.
         HeadersMessage headers = new HeadersMessage(b2.asHeader(),
                 b3.asHeader(), b4.asHeader());
