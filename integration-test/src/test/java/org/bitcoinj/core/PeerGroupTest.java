@@ -87,13 +87,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     private BlockingQueue<Peer> connectedPeers;
     private BlockingQueue<Peer> disconnectedPeers;
-    private PeerConnectedEventListener connectedListener = new PeerConnectedEventListener() {
+    private final PeerConnectedEventListener connectedListener = new PeerConnectedEventListener() {
         @Override
         public void onPeerConnected(Peer peer, int peerCount) {
             connectedPeers.add(peer);
         }
     };
-    private PeerDisconnectedEventListener disconnectedListener = new PeerDisconnectedEventListener() {
+    private final PeerDisconnectedEventListener disconnectedListener = new PeerDisconnectedEventListener() {
         @Override
         public void onPeerDisconnected(Peer peer, int peerCount) {
             disconnectedPeers.add(peer);
