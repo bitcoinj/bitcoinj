@@ -274,8 +274,7 @@ public class PeerTest extends TestWithNetworkConnections {
         InboundMessageQueuer writeTarget2 = connect(peer2, peerVersion);
 
         // Make a tx and advertise it to one of the peers.
-        Coin value = COIN;
-        Transaction tx = createFakeTx(TESTNET.network(), value, this.address);
+        Transaction tx = createFakeTx(TESTNET.network(), COIN, this.address);
         InventoryMessage inv = InventoryMessage.ofTransactions(tx);
 
         inbound(writeTarget, inv);
