@@ -495,7 +495,6 @@ public class PeerGroup implements TransactionBroadcaster {
      * if there aren't enough current connections to meet the new requested max size, some will be added.
      */
     public void setMaxConnections(int maxConnections) {
-        int adjustment;
         lock.lock();
         try {
             this.maxConnections = maxConnections;
@@ -504,7 +503,7 @@ public class PeerGroup implements TransactionBroadcaster {
             lock.unlock();
         }
         // We may now have too many or too few open connections. Add more or drop some to get to the right amount.
-        adjustment = maxConnections - channels.getConnectedClientCount();
+        int adjustment = maxConnections - channels.getConnectedClientCount();
         if (adjustment > 0)
             triggerConnections();
 
