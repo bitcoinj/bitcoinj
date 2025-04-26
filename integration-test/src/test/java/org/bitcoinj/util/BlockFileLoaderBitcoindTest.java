@@ -28,9 +28,9 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -38,10 +38,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * This is an integration test that REQUIRES a local Bitcoin Core installation
  */
-@Ignore("This requires a bitcoind installation AND takes a long time to run.")
+@Disabled("This requires a bitcoind installation AND takes a long time to run.")
 public class BlockFileLoaderBitcoindTest {
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Context.propagate(new Context());
     }
