@@ -164,9 +164,7 @@ public class DeterministicSeed implements EncryptableItem {
         this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, Objects.requireNonNull(passphrase))), mnemonicCode, creationTime);
     }
 
-    /** @deprecated use {@link #ofRandom(SecureRandom, int, String)} */
-    @Deprecated
-    public DeterministicSeed(SecureRandom random, int bits, String passphrase) {
+    private DeterministicSeed(SecureRandom random, int bits, String passphrase) {
         this(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
