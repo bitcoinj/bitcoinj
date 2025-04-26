@@ -52,7 +52,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -104,7 +103,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
-        return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
+        return List.of(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
                              new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
     }
 
@@ -180,7 +179,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 } else {
                     // Return a bogus address.
                     latch.countDown();
-                    return Arrays.asList(new InetSocketAddress("localhost", 1));
+                    return List.of(new InetSocketAddress("localhost", 1));
                 }
             }
 
@@ -872,11 +871,11 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void testMaxOfMostFreq() {
         assertEquals(0, PeerGroup.maxOfMostFreq(Collections.emptyList()));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(0, 0, 1)));
-        assertEquals(3, PeerGroup.maxOfMostFreq(Arrays.asList(1, 3, 1, 2, 2, 3, 3)));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2)));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(-1, 1, 1, 2, 2)));
-        assertEquals(1, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2, 1)));
-        assertEquals(-1, PeerGroup.maxOfMostFreq(Arrays.asList(-1, -1, 2, 2, -1)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(0, 0, 1)));
+        assertEquals(3, PeerGroup.maxOfMostFreq(List.of(1, 3, 1, 2, 2, 3, 3)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(1, 1, 2, 2)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(-1, 1, 1, 2, 2)));
+        assertEquals(1, PeerGroup.maxOfMostFreq(List.of(1, 1, 2, 2, 1)));
+        assertEquals(-1, PeerGroup.maxOfMostFreq(List.of(-1, -1, 2, 2, -1)));
     }
 }
