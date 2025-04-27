@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Network;
@@ -184,8 +183,7 @@ public abstract class AbstractBlockChain {
      * @param blockStore where to store blocks
      * @throws BlockStoreException if a failure occurs while storing a block
      */
-    @VisibleForTesting
-    public AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
+    AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
