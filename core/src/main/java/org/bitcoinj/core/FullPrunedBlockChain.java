@@ -87,7 +87,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     /**
      * Constructs a block chain connected to the given list of wallets and a store.
      */
-    public FullPrunedBlockChain(NetworkParameters params, List<Wallet> listeners,
+    private FullPrunedBlockChain(NetworkParameters params, List<Wallet> listeners,
                                 FullPrunedBlockStore blockStore) throws BlockStoreException {
         super(params, listeners, blockStore);
         this.blockStore = blockStore;
