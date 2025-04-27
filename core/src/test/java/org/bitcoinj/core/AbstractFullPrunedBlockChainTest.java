@@ -24,6 +24,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -62,8 +63,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
-    protected static NetworkParameters PARAMS;
-    private static final NetworkParameters MAINNET = MainNetParams.get();
+    protected static BitcoinNetworkParams PARAMS;
+    private static final BitcoinNetworkParams MAINNET = MainNetParams.get();
 
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
@@ -84,7 +85,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, false));
     }
 
-    public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
+    public abstract FullPrunedBlockStore createStore(BitcoinNetworkParams params, int blockCount)
         throws BlockStoreException;
 
     public abstract void resetStore(FullPrunedBlockStore store) throws BlockStoreException;

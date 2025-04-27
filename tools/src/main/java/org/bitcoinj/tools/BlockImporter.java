@@ -17,7 +17,6 @@
 package org.bitcoinj.tools;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.Network;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
@@ -45,7 +44,7 @@ public class BlockImporter {
         System.out.println("       Does full verification if the store supports it");
         checkArgument(args.length == 2 || args.length == 3);
 
-        Network network = BitcoinNetwork.fromString(args[1])
+        BitcoinNetwork network = BitcoinNetwork.fromString(args[1])
                 .orElseThrow(() -> new IllegalArgumentException("Unknown network: " + args[1]));
         NetworkParameters params = NetworkParameters.of(network);
 

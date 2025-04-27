@@ -16,6 +16,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MemoryFullPrunedBlockStore;
@@ -26,7 +27,7 @@ import org.bitcoinj.store.MemoryFullPrunedBlockStore;
 public class MemoryFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest
 {
     @Override
-    public FullPrunedBlockStore createStore(NetworkParameters params, int blockCount) throws BlockStoreException
+    public FullPrunedBlockStore createStore(BitcoinNetworkParams params, int blockCount) throws BlockStoreException
     {
         return new MemoryFullPrunedBlockStore(params, blockCount);
     }
