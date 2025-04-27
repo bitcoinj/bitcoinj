@@ -250,7 +250,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         
         store = createStore(MAINNET, 10);
         resetStore(store);
-        chain = new FullPrunedBlockChain(MAINNET, store);
+        chain = new FullPrunedBlockChain(MAINNET.network(), store);
         for (Block block : loader)
             chain.add(block);
         try {

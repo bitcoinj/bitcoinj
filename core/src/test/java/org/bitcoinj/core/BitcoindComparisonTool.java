@@ -84,7 +84,7 @@ public class BitcoindComparisonTool {
         try {
             FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
-            chain = new FullPrunedBlockChain(PARAMS, store);
+            chain = new FullPrunedBlockChain(PARAMS.network(), store);
         } catch (BlockStoreException e) {
             e.printStackTrace();
             System.exit(1);

@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.BitcoinNetworkParams;
@@ -82,6 +83,13 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      */
     public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(params, Collections.emptyList(), blockStore);
+    }
+
+    /**
+     * Constructs a block chain connected to the given store.
+     */
+    public FullPrunedBlockChain(BitcoinNetwork network, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(NetworkParameters.of(network), Collections.emptyList(), blockStore);
     }
 
     /**
