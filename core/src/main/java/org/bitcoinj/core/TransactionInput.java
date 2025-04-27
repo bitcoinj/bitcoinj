@@ -446,7 +446,7 @@ public class TransactionInput {
             return ConnectionResult.NO_SUCH_TX;
         TransactionOutput out = transaction.getOutput(outpoint);
         if (!out.isAvailableForSpending()) {
-            if (getParentTransaction().equals(outpoint.fromTx)) {
+            if (getParentTransaction().equals(outpoint.getFromTx())) {
                 // Already connected.
                 return ConnectionResult.SUCCESS;
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
@@ -475,9 +475,9 @@ public class TransactionInput {
      */
     public boolean disconnect() {
         TransactionOutput connectedOutput;
-        if (outpoint.fromTx != null) {
+        if (outpoint.getFromTx() != null) {
             // The outpoint is connected using a "standard" wallet, disconnect it.
-            connectedOutput = outpoint.fromTx.getOutput(outpoint);
+            connectedOutput = outpoint.getFromTx().getOutput(outpoint);
             outpoint = outpoint.disconnectTransaction();
         } else if (outpoint.connectedOutput != null) {
             // The outpoint is connected using a UTXO based wallet, disconnect it.
@@ -526,7 +526,7 @@ public class TransactionInput {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify() throws VerificationException {
-        final Transaction fromTx = getOutpoint().fromTx;
+        final Transaction fromTx = getOutpoint().getFromTx();
         Objects.requireNonNull(fromTx, "Not connected");
         final TransactionOutput output = fromTx.getOutput(outpoint);
         verify(output);
@@ -569,7 +569,7 @@ public class TransactionInput {
      */
     @Nullable
     public Transaction getConnectedTransaction() {
-        return getOutpoint().fromTx;
+        return getOutpoint().getFromTx();
     }
 
     /**
