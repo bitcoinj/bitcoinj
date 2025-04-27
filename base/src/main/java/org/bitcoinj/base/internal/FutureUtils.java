@@ -25,14 +25,9 @@ import java.util.stream.Collectors;
 
 /**
  * Utilities for {@link CompletableFuture}.
- * <p>
- * Note: When the <b>bitcoinj</b> migration to {@code CompletableFuture} is finished this class will
- * either be removed or its remaining methods changed to use generic {@code CompletableFuture}s.
  */
 public class FutureUtils {
     /**
-     * Note: When the migration to {@code CompletableFuture} is complete this routine will
-     * either be removed or changed to return a generic {@code CompletableFuture}.
      * @param stages A list of {@code CompletionStage}s all returning the same type
      * @param <T> the result type
      * @return A CompletableFuture that returns a list of result type
@@ -43,8 +38,6 @@ public class FutureUtils {
     }
 
     /**
-     * Note: When the migration to {@code CompletableFuture} is complete this routine will
-     * either be removed or changed to return a generic {@code CompletableFuture}.
      * @param stages A list of {@code CompletionStage}s all returning the same type
      * @param <T> the result type
      * @return A CompletableFuture that returns a list of result type
