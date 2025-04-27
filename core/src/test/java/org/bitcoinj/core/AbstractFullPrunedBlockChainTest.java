@@ -63,7 +63,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
-    protected static BitcoinNetworkParams PARAMS;
+    protected static UnitTestParams PARAMS;
     private static final BitcoinNetworkParams MAINNET = MainNetParams.get();
 
     protected FullPrunedBlockChain chain;

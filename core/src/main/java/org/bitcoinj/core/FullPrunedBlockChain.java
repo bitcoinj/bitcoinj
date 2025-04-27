@@ -21,6 +21,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.params.BitcoinNetworkParams;
+import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.script.ScriptPattern;
@@ -79,9 +80,9 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     }
 
     /**
-     * Constructs a block chain connected to the given store.
+     * Constructs a block chain connected to the given store. This constructor exists only for unit tests.
      */
-    public FullPrunedBlockChain(NetworkParameters params, FullPrunedBlockStore blockStore) throws BlockStoreException {
+    public FullPrunedBlockChain(UnitTestParams params, FullPrunedBlockStore blockStore) throws BlockStoreException {
         this(params, Collections.emptyList(), blockStore);
     }
 
