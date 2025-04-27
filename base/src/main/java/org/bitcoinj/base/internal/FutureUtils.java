@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.IntFunction;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -57,41 +56,6 @@ public class FutureUtils {
         CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(t);
         return future;
-    }
-
-    /**
-     * Subinterface of {@link Supplier} for Lambdas which throw exceptions.
-     * Can be used for two purposes:
-     * 1. To cast a lambda that throws an exception to a {@link Supplier} and
-     * automatically wrapping any exceptions with {@link RuntimeException}.
-     * 2. As a {@code FunctionalInterface} where a lambda that throws exceptions is
-     * expected or allowed.
-     *
-     * @param <T> the supplied type
-     */
-    @FunctionalInterface
-    public interface ThrowingSupplier<T> extends Supplier<T> {
-
-        /**
-         * Gets a result wrapping checked Exceptions with {@link RuntimeException}
-         * @return a result
-         */
-        @Override
-        default T get() {
-            try {
-                return getThrows();
-            } catch (final Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        /**
-         * Gets a result.
-         *
-         * @return a result
-         * @throws Exception Any checked Exception
-         */
-        T getThrows() throws Exception;
     }
 
     /**
