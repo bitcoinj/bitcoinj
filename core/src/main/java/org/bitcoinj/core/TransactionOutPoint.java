@@ -218,11 +218,11 @@ public class TransactionOutPoint {
     }
 
     /**
-     * Returns a copy of this outpoint, but with the connectedOutput removed.
-     * @return outpoint with removed connectedOutput
+     * Returns a copy of this outpoint, but without either {@code fromTx} or {@code connectedOutput}.
+     * @return outpoint with no connections
      */
     public TransactionOutPoint disconnectOutput() {
-        return new TransactionOutPoint(hash, index, fromTx, null);
+        return new TransactionOutPoint(hash, index, null, null);
     }
 
     /**
