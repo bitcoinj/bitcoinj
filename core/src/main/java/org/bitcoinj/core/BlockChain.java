@@ -17,9 +17,9 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
@@ -74,10 +74,16 @@ public class BlockChain extends AbstractBlockChain {
         this.blockStore = blockStore;
     }
 
-    @VisibleForTesting
-    public BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+    private BlockChain(NetworkParameters params, Wallet wallet, BlockStore blockStore) throws BlockStoreException {
         super(params, Collections.singletonList(wallet), blockStore);
         this.blockStore = blockStore;
+    }
+
+    /**
+     * Creates a Blockchain for unit testing.
+     */
+    public static BlockChain unitTestBlockChain(Wallet wallet, BlockStore blockStore) throws BlockStoreException {
+        return new BlockChain(UnitTestParams.get(), wallet, blockStore);
     }
 
     @Override

@@ -116,7 +116,7 @@ public class TestWithNetworkConnections {
             wallet = new Wallet(UNITTEST.network(), kcg);
             address = wallet.freshReceiveAddress(ScriptType.P2PKH);
         }
-        blockChain = new BlockChain(UNITTEST, wallet, blockStore);
+        blockChain = BlockChain.unitTestBlockChain(wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
