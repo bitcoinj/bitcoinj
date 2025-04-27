@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
@@ -243,7 +242,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     private void exceptionCaught(Exception e) {
         PeerAddress addr = getAddress();
         String s = addr == null ? "?" : addr.toString();
-        if (e instanceof ConnectException || e instanceof IOException) {
+        if (e instanceof IOException) {
             // Short message for network errors
             log.info(s + " - " + e.getMessage());
         } else {
