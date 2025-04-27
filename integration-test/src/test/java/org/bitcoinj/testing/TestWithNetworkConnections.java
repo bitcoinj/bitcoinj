@@ -18,6 +18,7 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BlockChain;
@@ -111,9 +112,9 @@ public class TestWithNetworkConnections {
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
             // Reduce the number of keys we need to work with to speed up these tests.
-            KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST.network()).lookaheadSize(4).lookaheadThreshold(2)
+            KeyChainGroup kcg = KeyChainGroup.builder(BitcoinNetwork.TESTNET).lookaheadSize(4).lookaheadThreshold(2)
                     .fromRandom(ScriptType.P2PKH).build();
-            wallet = new Wallet(UNITTEST.network(), kcg);
+            wallet = new Wallet(BitcoinNetwork.TESTNET, kcg);
             address = wallet.freshReceiveAddress(ScriptType.P2PKH);
         }
         blockChain = BlockChain.unitTestBlockChain(wallet, blockStore);
