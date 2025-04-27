@@ -506,8 +506,7 @@ public class PeerGroup implements TransactionBroadcaster {
         int adjustment = maxConnections - channels.getConnectedClientCount();
         if (adjustment > 0)
             triggerConnections();
-
-        if (adjustment < 0)
+        else if (adjustment < 0)
             channels.closeConnections(-adjustment);
     }
 
