@@ -75,8 +75,8 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
      * one from scratch, or you can deserialize a saved wallet from disk using
      * {@link Wallet#loadFromFile(File, WalletExtension...)}
      */
-    public FullPrunedBlockChain(NetworkParameters params, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
-        this(params, Collections.singletonList(wallet), blockStore);
+    public FullPrunedBlockChain(BitcoinNetwork network, Wallet wallet, FullPrunedBlockStore blockStore) throws BlockStoreException {
+        this(NetworkParameters.of(network), Collections.singletonList(wallet), blockStore);
     }
 
     /**
