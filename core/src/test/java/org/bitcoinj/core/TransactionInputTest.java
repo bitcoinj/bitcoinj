@@ -70,12 +70,12 @@ public class TransactionInputTest {
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
 
-        assertEquals(tx1, txInToDisconnect.getOutpoint().fromTx);
+        assertEquals(tx1, txInToDisconnect.getOutpoint().getFromTx());
         assertNull(txInToDisconnect.getOutpoint().connectedOutput);
 
         txInToDisconnect.disconnect();
 
-        assertNull(txInToDisconnect.getOutpoint().fromTx);
+        assertNull(txInToDisconnect.getOutpoint().getFromTx());
         assertNull(txInToDisconnect.getOutpoint().connectedOutput);
     }
 
@@ -108,12 +108,12 @@ public class TransactionInputTest {
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
 
-        assertNull(txInToDisconnect.getOutpoint().fromTx);
+        assertNull(txInToDisconnect.getOutpoint().getFromTx());
         assertEquals(utxo.getHash(), txInToDisconnect.getOutpoint().connectedOutput.getParentTransactionHash());
 
         txInToDisconnect.disconnect();
 
-        assertNull(txInToDisconnect.getOutpoint().fromTx);
+        assertNull(txInToDisconnect.getOutpoint().getFromTx());
         assertNull(txInToDisconnect.getOutpoint().connectedOutput);
     }
 
