@@ -503,11 +503,11 @@ public class PeerGroup implements TransactionBroadcaster {
             lock.unlock();
         }
         // We may now have too many or too few open connections. Add more or drop some to get to the right amount.
-        int adjustment = maxConnections - channels.getConnectedClientCount();
-        if (adjustment > 0)
+        int excessConnections = channels.getConnectedClientCount() - maxConnections;
+        if (excessConnections < 0)
             triggerConnections();
-        else if (adjustment < 0)
-            channels.closeConnections(-adjustment);
+        else if (excessConnections > 0)
+            channels.closeConnections(excessConnections);
     }
 
     /**
