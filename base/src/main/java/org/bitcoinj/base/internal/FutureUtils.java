@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -87,20 +88,19 @@ public class FutureUtils {
 
     // Convert a list of CompletionStage to an array of CompletableFuture
     private static <T> CompletableFuture<? extends T>[] listToArray( List<? extends CompletionStage<? extends T>> stages) {
-        // Convert List to Array
-        final CompletableFuture<? extends T>[] all = stages.stream()
-                .map(CompletionStage::toCompletableFuture)
-                .toArray(genericArray(CompletableFuture[]::new));
-        return all;
+        return listToArrayWithMapping(stages, CompletionStage::toCompletableFuture);
     }
 
     // Convert a list of CompletionStage to an array of CompletableFuture also mapping exceptions to null results
     private static <T> CompletableFuture<? extends T>[] listToArray2( List<? extends CompletionStage<? extends T>> stages) {
-        // Convert List to Array
-        final CompletableFuture<? extends T>[] all = stages.stream()
-                .map(s -> s.exceptionally(throwable -> null).toCompletableFuture())
+        return listToArrayWithMapping(stages, stage -> stage.exceptionally(throwable -> null).toCompletableFuture());
+    }
+
+    // Convert a list of CompletionStage to an array of CompletableFuture using a mapping function to transform each CompletionStage
+    private static <T> CompletableFuture<? extends T>[] listToArrayWithMapping(List<? extends CompletionStage<? extends T>> stages, Function<CompletionStage<? extends T>, CompletableFuture<? extends T>> mapper) {
+        return stages.stream()
+                .map(mapper::apply)
                 .toArray(genericArray(CompletableFuture[]::new));
-        return all;
     }
 
     // Transform a CompletableFuture returning Void to a CompletableFuture returning all results from an array of CompletableFuture
