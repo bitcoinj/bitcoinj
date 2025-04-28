@@ -104,7 +104,12 @@ public abstract class NetworkParameters {
     }
 
     /**
-     * @return Network enum for this network
+     * Return the {@link Network} type representing the same Bitcoin-like network that this {@link NetworkParameters}
+     * represents. For almost all purposes, {@link Network} or its Bitcoin-specific subtype {@link BitcoinNetwork} is
+     * preferable to using {@link NetworkParameters}/{@link BitcoinNetworkParams}. Note that the Bitcoin-specific
+     * {@link BitcoinNetworkParams} and its subclasses narrow this return type to {@link BitcoinNetwork}.
+     *
+     * @return preferred representation of network
      */
     public Network network() {
         return network;

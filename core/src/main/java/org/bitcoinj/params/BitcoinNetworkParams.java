@@ -18,6 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
@@ -87,6 +88,19 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
             default:
                 throw new IllegalArgumentException("Unknown network");
         }
+    }
+
+    /**
+     * Return the {@link BitcoinNetwork} type representing the same Bitcoin-like network that this
+     * {@link BitcoinNetworkParams} represents. For almost all purposes, using {@link BitcoinNetwork} is preferable
+     * to using {@link BitcoinNetworkParams}. Note that this override narrows the return type from the more general
+     * {@link Network}.
+     *
+     * @return Network enum for this network
+     */
+    @Override
+    public BitcoinNetwork network() {
+        return (BitcoinNetwork) network;
     }
 
     /**
