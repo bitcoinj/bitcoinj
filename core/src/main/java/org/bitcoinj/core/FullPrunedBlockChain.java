@@ -42,11 +42,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -163,7 +162,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
         @Nullable
         @Override
-        public VerificationException call() throws Exception {
+        public VerificationException call() {
             try {
                 ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
                 for (int index = 0; index < tx.getInputs().size(); index++) {
@@ -222,7 +221,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
         if (scriptVerificationExecutor.isShutdown())
             scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<>(block.transactionCount());
+        List<CompletableFuture<VerificationException>> listScriptVerificationResults = new ArrayList<>(block.transactionCount());
         try {
             if (!params.isCheckpoint(height)) {
                 // BIP30 violator blocks are ones that contain a duplicated transaction. They are all in the
@@ -306,14 +305,17 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                 if (!isCoinBase && runScripts) {
                     // Because correctlySpends modifies transactions, this must come after we are done with tx
-                    FutureTask<VerificationException> future = new FutureTask<>(new Verifier(tx, prevOutScripts, verifyFlags));
-                    scriptVerificationExecutor.execute(future);
+                    CompletableFuture<VerificationException> future = CompletableFuture.supplyAsync(() -> {
+                        Verifier v = new Verifier(tx, prevOutScripts, verifyFlags);
+                        return v.call();
+                    }, scriptVerificationExecutor);
                     listScriptVerificationResults.add(future);
                 }
             }
             if (params.network().exceedsMaxMoney(totalFees) || getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
                 throw new VerificationException("Transaction fees out of range");
-            for (Future<VerificationException> future : listScriptVerificationResults) {
+
+            for (CompletableFuture<VerificationException> future : listScriptVerificationResults) {
                 VerificationException e;
                 try {
                     e = future.get();
@@ -371,7 +373,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                 if (scriptVerificationExecutor.isShutdown())
                     scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-                List<Future<VerificationException>> listScriptVerificationResults = new ArrayList<>(transactions.size());
+                List<CompletableFuture<VerificationException>> listScriptVerificationResults = new ArrayList<>(transactions.size());
                 for (final Transaction tx : transactions) {
                     final Set<VerifyFlag> verifyFlags =
                         params.getTransactionVerificationFlags(newBlock.getHeader(), tx, getVersionTally(), Integer.SIZE);
@@ -433,15 +435,17 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                     if (!isCoinBase) {
                         // Because correctlySpends modifies transactions, this must come after we are done with tx
-                        FutureTask<VerificationException> future = new FutureTask<>(new Verifier(tx, prevOutScripts, verifyFlags));
-                        scriptVerificationExecutor.execute(future);
+                        CompletableFuture<VerificationException> future = CompletableFuture.supplyAsync(() -> {
+                            Verifier v = new Verifier(tx, prevOutScripts, verifyFlags);
+                            return v.call();
+                        }, scriptVerificationExecutor);
                         listScriptVerificationResults.add(future);
                     }
                 }
                 if (params.network().exceedsMaxMoney(totalFees) || getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
                     throw new VerificationException("Transaction fees out of range");
                 txOutChanges = new TransactionOutputChanges(txOutsCreated, txOutsSpent);
-                for (Future<VerificationException> future : listScriptVerificationResults) {
+                for (CompletableFuture<VerificationException> future : listScriptVerificationResults) {
                     VerificationException e;
                     try {
                         e = future.get();
