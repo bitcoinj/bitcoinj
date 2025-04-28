@@ -85,6 +85,7 @@ public class FutureUtils {
         return future;
     }
 
+    // Convert a list of CompletionStage to an array of CompletableFuture
     private static <T> CompletableFuture<? extends T>[] listToArray( List<? extends CompletionStage<? extends T>> stages) {
         // Convert List to Array
         final CompletableFuture<? extends T>[] all = stages.stream()
@@ -93,6 +94,7 @@ public class FutureUtils {
         return all;
     }
 
+    // Convert a list of CompletionStage to an array of CompletableFuture also mapping exceptions to null results
     private static <T> CompletableFuture<? extends T>[] listToArray2( List<? extends CompletionStage<? extends T>> stages) {
         // Convert List to Array
         final CompletableFuture<? extends T>[] all = stages.stream()
@@ -101,6 +103,7 @@ public class FutureUtils {
         return all;
     }
 
+    // Transform a CompletableFuture returning Void to a CompletableFuture returning all results from an array of CompletableFuture
     private static <T> CompletableFuture<List<T>>  transformToListResult(CompletableFuture<Void> allOf, CompletableFuture<? extends T>[] all) {
         return allOf.thenApply(ignored -> Arrays.stream(all)
                 .map(CompletableFuture::join)
