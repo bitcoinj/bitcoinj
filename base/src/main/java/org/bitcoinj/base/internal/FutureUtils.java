@@ -27,49 +27,19 @@ import java.util.stream.Collectors;
  */
 public class FutureUtils {
     /**
+     * Create a single {@link CompletableFuture} that completes with a {@code List} of {@link T}
+     * from a {@code List} of {@code CompletableFuture} that each completes with a {@link T}. If any
+     * of the input futures fails, the consolidated future will also fail.
      * @param stages A list of {@code CompletionStage}s all returning the same type
      * @param <T> the result type
      * @return A CompletableFuture that returns a list of result type
      */
     public static <T> CompletableFuture<List<T>> allAsList(
             List<? extends CompletionStage<? extends T>> stages) {
-        return FutureUtils.allAsCFList(stages);
-    }
-
-    /**
-     * @param stages A list of {@code CompletionStage}s all returning the same type
-     * @param <T> the result type
-     * @return A CompletableFuture that returns a list of result type
-     */
-    public static <T> CompletableFuture<List<T>> successfulAsList(
-            List<? extends CompletionStage<? extends T>> stages) {
-        return FutureUtils.successfulAsCFList(stages);
-    }
-
-    /**
-     * Can be replaced with {@code CompletableFuture.failedFuture(Throwable)} in Java 9+.
-     * @param t Exception that is causing the failure
-     * @return a failed future containing the specified exception
-     * @param <T> the future's return type
-     */
-    public static <T> CompletableFuture<T> failedFuture(Throwable t) {
-        CompletableFuture<T> future = new CompletableFuture<>();
-        future.completeExceptionally(t);
-        return future;
-    }
-
-    /**
-     * Thank you Apache-licensed Spotify https://github.com/spotify/completable-futures
-     * @param stages A list of {@code CompletionStage}s all returning the same type
-     * @param <T> the result type
-     * @return  A generic CompletableFuture that returns a list of result type
-     */
-    private static <T> CompletableFuture<List<T>> allAsCFList(
-            List<? extends CompletionStage<? extends T>> stages) {
         // Convert List to Array
         final CompletableFuture<? extends T>[] all = listToArray(stages);
 
-        // Use allOf on the Array
+        // Create a single future that completes when all futures in the array complete
         final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
 
         // If any of the components fails, fail the whole thing
@@ -83,16 +53,36 @@ public class FutureUtils {
         return transformToListResult(allOf, all);
     }
 
-    private static <T> CompletableFuture<List<T>> successfulAsCFList(
+    /**
+     * Create a single {@link CompletableFuture} that completes with a {@code List} of {@link T}
+     * from a {@code List} of {@code CompletableFuture} that each completes with a {@link T}. For each
+     * input future that fails a corresponding {@code null} result will be present in the returned list.
+     * @param stages A list of {@code CompletionStage}s all returning the same type
+     * @param <T> the result type
+     * @return A CompletableFuture that returns a list of result type
+     */
+    public static <T> CompletableFuture<List<T>> successfulAsList(
             List<? extends CompletionStage<? extends T>> stages) {
-        // Convert List to Array
+        // Convert List to Array and map exceptions to null results
         final CompletableFuture<? extends T>[] all = listToArray2(stages);
 
-        // Use allOf on the Array
+        // Create a single future that completes when all futures in the array complete
         final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
 
         // Transform allOf from Void to List<T>
         return transformToListResult(allOf, all);
+    }
+
+    /**
+     * Can be replaced with {@code CompletableFuture.failedFuture(Throwable)} in Java 9+.
+     * @param t Exception that is causing the failure
+     * @return a failed future containing the specified exception
+     * @param <T> the future's return type
+     */
+    public static <T> CompletableFuture<T> failedFuture(Throwable t) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        future.completeExceptionally(t);
+        return future;
     }
 
     private static <T> CompletableFuture<? extends T>[] listToArray( List<? extends CompletionStage<? extends T>> stages) {
