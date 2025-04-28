@@ -41,7 +41,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -146,34 +145,18 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors(), new ContextPropagatingThreadFactory("Script verification"));
 
-    /**
-     * A job submitted to the executor which verifies signatures.
-     */
-    private static class Verifier implements Callable<VerificationException> {
-        final Transaction tx;
-        final List<Script> prevOutScripts;
-        final Set<VerifyFlag> verifyFlags;
-
-        public Verifier(final Transaction tx, final List<Script> prevOutScripts, final Set<VerifyFlag> verifyFlags) {
-            this.tx = tx;
-            this.prevOutScripts = prevOutScripts;
-            this.verifyFlags = verifyFlags;
-        }
-
-        @Nullable
-        @Override
-        public VerificationException call() {
-            try {
-                ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
-                for (int index = 0; index < tx.getInputs().size(); index++) {
-                    tx.getInput(index).getScriptSig().correctlySpends(tx, index, null, null, prevOutIt.next(),
-                            verifyFlags);
-                }
-            } catch (VerificationException e) {
-                return e;
+    @Nullable
+    private VerificationException verify(Transaction tx, List<Script> prevOutScripts, Set<VerifyFlag> verifyFlags) {
+        try {
+            ListIterator<Script> prevOutIt = prevOutScripts.listIterator();
+            for (int index = 0; index < tx.getInputs().size(); index++) {
+                tx.getInput(index).getScriptSig().correctlySpends(tx, index, null, null, prevOutIt.next(),
+                        verifyFlags);
             }
-            return null;
+        } catch (VerificationException e) {
+            return e;
         }
+        return null;
     }
 
     /**
@@ -305,10 +288,10 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                 if (!isCoinBase && runScripts) {
                     // Because correctlySpends modifies transactions, this must come after we are done with tx
-                    CompletableFuture<VerificationException> future = CompletableFuture.supplyAsync(() -> {
-                        Verifier v = new Verifier(tx, prevOutScripts, verifyFlags);
-                        return v.call();
-                    }, scriptVerificationExecutor);
+                    CompletableFuture<VerificationException> future = CompletableFuture.supplyAsync(
+                            () -> verify(tx, prevOutScripts, verifyFlags),
+                            scriptVerificationExecutor
+                    );
                     listScriptVerificationResults.add(future);
                 }
             }
@@ -435,10 +418,10 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
 
                     if (!isCoinBase) {
                         // Because correctlySpends modifies transactions, this must come after we are done with tx
-                        CompletableFuture<VerificationException> future = CompletableFuture.supplyAsync(() -> {
-                            Verifier v = new Verifier(tx, prevOutScripts, verifyFlags);
-                            return v.call();
-                        }, scriptVerificationExecutor);
+                        CompletableFuture<VerificationException> future = CompletableFuture.supplyAsync(
+                            () -> verify(tx, prevOutScripts, verifyFlags),
+                                    scriptVerificationExecutor
+                        );
                         listScriptVerificationResults.add(future);
                     }
                 }
