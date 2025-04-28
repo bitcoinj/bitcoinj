@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -40,9 +41,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -298,19 +299,13 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             if (params.network().exceedsMaxMoney(totalFees) || getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
                 throw new VerificationException("Transaction fees out of range");
 
-            for (CompletableFuture<VerificationException> future : listScriptVerificationResults) {
-                VerificationException e;
-                try {
-                    e = future.get();
-                } catch (InterruptedException thrownE) {
-                    throw new RuntimeException(thrownE); // Shouldn't happen
-                } catch (ExecutionException thrownE) {
-                    log.error("Script.correctlySpends threw a non-normal exception: " + thrownE.getCause());
-                    throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.", thrownE);
+            List<VerificationException> verifications = FutureUtils.allAsList(listScriptVerificationResults).whenComplete((list, thrown) -> {
+                if (thrown != null) {
+                    log.error("Script.correctlySpends threw a non-normal exception: " + thrown.getCause());
+                    throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.", thrown);
                 }
-                if (e != null)
-                    throw e;
-            }
+            }).join();
+            verifications.stream().filter(Objects::nonNull).findAny().ifPresent(e -> { throw e; });
         } catch (VerificationException | BlockStoreException e) {
             scriptVerificationExecutor.shutdownNow();
             blockStore.abortDatabaseBatchWrite();
@@ -428,19 +423,13 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 if (params.network().exceedsMaxMoney(totalFees) || getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
                     throw new VerificationException("Transaction fees out of range");
                 txOutChanges = new TransactionOutputChanges(txOutsCreated, txOutsSpent);
-                for (CompletableFuture<VerificationException> future : listScriptVerificationResults) {
-                    VerificationException e;
-                    try {
-                        e = future.get();
-                    } catch (InterruptedException thrownE) {
-                        throw new RuntimeException(thrownE); // Shouldn't happen
-                    } catch (ExecutionException thrownE) {
-                        log.error("Script.correctlySpends threw a non-normal exception: " + thrownE.getCause());
-                        throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.", thrownE);
+                List<VerificationException> verifications = FutureUtils.allAsList(listScriptVerificationResults).whenComplete((list, thrown) -> {
+                    if (thrown != null) {
+                        log.error("Script.correctlySpends threw a non-normal exception: " + thrown.getCause());
+                        throw new VerificationException("Bug in Script.correctlySpends, likely script malformed in some new and interesting way.", thrown);
                     }
-                    if (e != null)
-                        throw e;
-                }
+                }).join();
+                verifications.stream().filter(Objects::nonNull).findAny().ifPresent(e -> { throw e; });
             } else {
                 txOutChanges = block.getTxOutChanges();
                 if (!params.isCheckpoint(newBlock.getHeight()))
