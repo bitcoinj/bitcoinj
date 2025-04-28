@@ -65,7 +65,7 @@ public class FutureUtils {
     public static <T> CompletableFuture<List<T>> successfulAsList(
             List<? extends CompletionStage<? extends T>> stages) {
         // Convert List to Array and map exceptions to null results
-        final CompletableFuture<? extends T>[] all = listToArray2(stages);
+        final CompletableFuture<? extends T>[] all = listToArrayExceptionToNull(stages);
 
         // Create a single future that completes when all futures in the array complete
         final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
@@ -92,7 +92,7 @@ public class FutureUtils {
     }
 
     // Convert a list of CompletionStage to an array of CompletableFuture also mapping exceptions to null results
-    private static <T> CompletableFuture<? extends T>[] listToArray2( List<? extends CompletionStage<? extends T>> stages) {
+    private static <T> CompletableFuture<? extends T>[] listToArrayExceptionToNull(List<? extends CompletionStage<? extends T>> stages) {
         return listToArrayWithMapping(stages, stage -> stage.exceptionally(throwable -> null).toCompletableFuture());
     }
 
