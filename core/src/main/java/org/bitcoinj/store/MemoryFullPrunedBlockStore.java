@@ -163,28 +163,28 @@ class TransactionalFullBlockMap {
         return mapValues.get(key);
     }
     
-    public void put(Sha256Hash uniqueKey, Integer multiKey, StoredUndoableBlock value) {
-        mapValues.put(uniqueKey, value);
-        Set<Sha256Hash> set = mapKeys.get(multiKey);
+    public void put(Sha256Hash hash, Integer height, StoredUndoableBlock block) {
+        mapValues.put(hash, block);
+        Set<Sha256Hash> set = mapKeys.get(height);
         if (set == null) {
             set = new HashSet<>();
-            set.add(uniqueKey);
-            mapKeys.put(multiKey, set);
+            set.add(hash);
+            mapKeys.put(height, set);
         }else{
-            set.add(uniqueKey);
+            set.add(hash);
         }
     }
     
     @Nullable
-    public StoredUndoableBlock removeByUniqueKey(Sha256Hash key) {
-        return mapValues.remove(key);
+    public StoredUndoableBlock removeByUniqueKey(Sha256Hash hash) {
+        return mapValues.remove(hash);
     }
     
-    public void removeByMultiKey(Integer key) {
-        Set<Sha256Hash> set = mapKeys.remove(key);
+    public void removeByMultiKey(Integer height) {
+        Set<Sha256Hash> set = mapKeys.remove(height);
         if (set != null)
-            for (Sha256Hash uniqueKey : set)
-                removeByUniqueKey(uniqueKey);
+            for (Sha256Hash hash : set)
+                removeByUniqueKey(hash);
     }
 }
 
