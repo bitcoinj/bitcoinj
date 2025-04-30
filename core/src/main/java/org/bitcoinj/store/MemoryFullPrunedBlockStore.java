@@ -206,7 +206,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     private TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
-    private int fullStoreDepth;
+    private final int fullStoreDepth;
     private final Network network;
     
     /**
