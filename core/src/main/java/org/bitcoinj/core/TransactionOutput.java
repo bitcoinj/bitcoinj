@@ -421,7 +421,7 @@ public class TransactionOutput {
      * Requires that this output is not detached.
      */
     public TransactionOutPoint getOutPointFor() {
-        return new TransactionOutPoint(getIndex(), getParentTransaction());
+        return TransactionOutPoint.from(getParentTransaction(), getIndex());
     }
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */
