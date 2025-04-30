@@ -175,16 +175,11 @@ class TransactionalFullBlockMap {
         }
     }
     
-    @Nullable
-    public StoredUndoableBlock removeByUniqueKey(Sha256Hash hash) {
-        return mapValues.remove(hash);
-    }
-    
     public void removeByMultiKey(Integer height) {
         Set<Sha256Hash> set = mapKeys.remove(height);
         if (set != null)
             for (Sha256Hash hash : set)
-                removeByUniqueKey(hash);
+                mapValues.remove(hash);
     }
 }
 
