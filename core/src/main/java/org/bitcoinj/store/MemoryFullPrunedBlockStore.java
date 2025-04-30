@@ -207,7 +207,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private int fullStoreDepth;
-    private NetworkParameters params;
+    private Network network;
     
     /**
      * Set up the MemoryFullPrunedBlockStore
@@ -228,7 +228,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
             setVerifiedChainHead(storedGenesisHeader);
-            this.params = params;
+            network = params.network();
         } catch (BlockStoreException | VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -359,7 +359,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public Network network() {
-        return params.network();
+        return network;
     }
 
     @Override
@@ -380,7 +380,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         for (UTXO output : outputsList) {
             for (ECKey key : keys) {
                 // TODO switch to pubKeyHash in order to support native segwit addresses
-                Address address = key.toAddress(ScriptType.P2PKH, params.network());
+                Address address = key.toAddress(ScriptType.P2PKH, network);
                 if (output.getAddress().equals(address.toString())) {
                     foundOutputs.add(output);
                 }
