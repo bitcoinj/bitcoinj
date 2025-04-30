@@ -163,7 +163,7 @@ class TransactionalFullBlockMap {
         return mapValues.get(key);
     }
     
-    public void put(Sha256Hash hash, Integer height, StoredUndoableBlock block) {
+    public void put(Sha256Hash hash, int height, StoredUndoableBlock block) {
         mapValues.put(hash, block);
         Set<Sha256Hash> set = mapKeys.get(height);
         if (set == null) {
@@ -175,7 +175,7 @@ class TransactionalFullBlockMap {
         }
     }
     
-    public void removeByHeight(Integer height) {
+    public void removeByHeight(int height) {
         Set<Sha256Hash> set = mapKeys.remove(height);
         if (set != null)
             for (Sha256Hash hash : set)
