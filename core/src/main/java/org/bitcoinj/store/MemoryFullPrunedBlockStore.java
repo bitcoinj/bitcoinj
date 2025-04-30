@@ -207,7 +207,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private int fullStoreDepth;
-    private Network network;
+    private final Network network;
     
     /**
      * Set up the MemoryFullPrunedBlockStore
