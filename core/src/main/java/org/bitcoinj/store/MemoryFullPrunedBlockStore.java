@@ -175,7 +175,7 @@ class TransactionalFullBlockMap {
         }
     }
     
-    public void removeByMultiKey(Integer height) {
+    public void removeByHeight(Integer height) {
         Set<Sha256Hash> set = mapKeys.remove(height);
         if (set != null)
             for (Sha256Hash hash : set)
@@ -291,7 +291,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             setChainHead(chainHead);
         // Potential leak here if not all blocks get setChainHead'd
         // Though the FullPrunedBlockStore allows for this, the current AbstractBlockChain will not do it.
-        fullBlockMap.removeByMultiKey(chainHead.getHeight() - fullStoreDepth);
+        fullBlockMap.removeByHeight(chainHead.getHeight() - fullStoreDepth);
     }
     
     @Override
