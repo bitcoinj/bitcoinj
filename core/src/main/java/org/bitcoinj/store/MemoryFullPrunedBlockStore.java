@@ -134,16 +134,14 @@ class TransactionalHashMap<KeyType, ValueType> {
 }
 
 /**
- * A Map with multiple key types that is DB per-thread-transaction-aware.
- * However, this class is not thread-safe.
- * @param <UniqueKeyType> is a key that must be unique per object
- * @param <MultiKeyType> is a key that can have multiple values
+ * A map of {@link Sha256Hash} to {@link StoredUndoableBlock} that is also indexed by a height {@link Integer} that
+ * is DB per-thread-transaction-aware. However, this class is not thread-safe.
  */
-class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
-    TransactionalHashMap<UniqueKeyType, ValueType> mapValues;
-    HashMap<MultiKeyType, Set<UniqueKeyType>> mapKeys;
+class TransactionalFullBlockMap {
+    TransactionalHashMap<Sha256Hash, StoredUndoableBlock> mapValues;
+    HashMap<Integer, Set<Sha256Hash>> mapKeys;
     
-    public TransactionalMultiKeyHashMap() {
+    public TransactionalFullBlockMap() {
         mapValues = new TransactionalHashMap<>();
         mapKeys = new HashMap<>();
     }
@@ -161,13 +159,13 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
     }
 
     @Nullable
-    public ValueType get(UniqueKeyType key) {
+    public StoredUndoableBlock get(Sha256Hash key) {
         return mapValues.get(key);
     }
     
-    public void put(UniqueKeyType uniqueKey, MultiKeyType multiKey, ValueType value) {
+    public void put(Sha256Hash uniqueKey, Integer multiKey, StoredUndoableBlock value) {
         mapValues.put(uniqueKey, value);
-        Set<UniqueKeyType> set = mapKeys.get(multiKey);
+        Set<Sha256Hash> set = mapKeys.get(multiKey);
         if (set == null) {
             set = new HashSet<>();
             set.add(uniqueKey);
@@ -178,14 +176,14 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
     }
     
     @Nullable
-    public ValueType removeByUniqueKey(UniqueKeyType key) {
+    public StoredUndoableBlock removeByUniqueKey(Sha256Hash key) {
         return mapValues.remove(key);
     }
     
-    public void removeByMultiKey(MultiKeyType key) {
-        Set<UniqueKeyType> set = mapKeys.remove(key);
+    public void removeByMultiKey(Integer key) {
+        Set<Sha256Hash> set = mapKeys.remove(key);
         if (set != null)
-            for (UniqueKeyType uniqueKey : set)
+            for (Sha256Hash uniqueKey : set)
                 removeByUniqueKey(uniqueKey);
     }
 }
@@ -201,7 +199,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         public StoredBlockAndWasUndoableFlag(StoredBlock block, boolean wasUndoable) { this.block = block; this.wasUndoable = wasUndoable; }
     }
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
-    private TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock> fullBlockMap;
+    private TransactionalFullBlockMap fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
     private TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
@@ -216,7 +214,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
      */
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
         blockMap = new TransactionalHashMap<>();
-        fullBlockMap = new TransactionalMultiKeyHashMap<>();
+        fullBlockMap = new TransactionalFullBlockMap();
         transactionOutputMap = new TransactionalHashMap<>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
