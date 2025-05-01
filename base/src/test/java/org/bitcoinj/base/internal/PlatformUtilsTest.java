@@ -29,6 +29,7 @@ public class PlatformUtilsTest {
     public void runtime() {
         // This test assumes it is run within a Java runtime for desktop computers.
         assertTrue(PlatformUtils.isOpenJDKRuntime() || PlatformUtils.isOracleJavaRuntime());
+        assertFalse(PlatformUtils.isGraalVMRuntime());
         assertFalse(PlatformUtils.isAndroidRuntime());
     }
 }

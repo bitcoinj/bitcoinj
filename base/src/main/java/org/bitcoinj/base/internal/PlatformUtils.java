@@ -27,7 +27,7 @@ import java.util.Locale;
 public class PlatformUtils {
     private static final Logger log = LoggerFactory.getLogger(PlatformUtils.class);
     public enum Runtime {
-        ANDROID, OPENJDK, ORACLE_JAVA
+        ANDROID, OPENJDK, ORACLE_JAVA, GRAALVM
     }
 
     public enum OS {
@@ -47,6 +47,8 @@ public class PlatformUtils {
             PlatformUtils.runtime = PlatformUtils.Runtime.OPENJDK;
         else if (runtimeProp.contains("java(tm) se"))
             PlatformUtils.runtime = PlatformUtils.Runtime.ORACLE_JAVA;
+        else if (runtimeProp.contains("graalvm"))
+            PlatformUtils.runtime = PlatformUtils.Runtime.GRAALVM;
         else
             log.info("Unknown java.runtime.name '{}'", runtimeProp);
 
@@ -73,6 +75,10 @@ public class PlatformUtils {
 
     public static boolean isOracleJavaRuntime() {
         return runtime == Runtime.ORACLE_JAVA;
+    }
+
+    public static boolean isGraalVMRuntime() {
+        return runtime == Runtime.GRAALVM;
     }
 
     public static boolean isLinux() {
