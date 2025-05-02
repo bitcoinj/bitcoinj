@@ -446,7 +446,7 @@ public class TransactionInput {
             return ConnectionResult.NO_SUCH_TX;
         TransactionOutput out = transaction.getOutput(outpoint);
         if (!out.isAvailableForSpending()) {
-            if (getParentTransaction().equals(outpoint.fromTx)) {
+            if (out.getParentTransaction().equals(outpoint.fromTx)) {
                 // Already connected.
                 return ConnectionResult.SUCCESS;
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
