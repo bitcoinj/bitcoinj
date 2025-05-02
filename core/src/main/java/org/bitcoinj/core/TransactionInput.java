@@ -83,7 +83,12 @@ public class TransactionInput {
     // The Script object obtained from parsing scriptBytes. Only filled in on demand and if the transaction is not
     // coinbase.
     private WeakReference<Script> scriptSig;
-    /** Value of the output connected to the input, if known. This field does not participate in equals()/hashCode(). */
+    /**
+     * Value of the output connected to the input, if known. {@code null} if unknown. This field does not participate in equals()/hashCode().
+     * <p>
+     * We are working to make this field {@code final} and eventually non-nullable. This will happen after we refactor
+     * the remaining semi-valid use-cases that require mutability and/or nullability.
+     */
     @Nullable
     private Coin value;
 
@@ -118,28 +123,42 @@ public class TransactionInput {
         return new TransactionInput(parentTransaction, scriptBytes, outpoint, sequence, null);
     }
 
+    /** internal use only, creating TransactionInput with `null` value is planned to be deprecated */
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint) {
         this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, null);
     }
 
+    /** internal use only, creating TransactionInput with `null` value is planned to be deprecated */
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint, long sequence) {
         this(parentTransaction, scriptBytes, outpoint, sequence, null);
     }
 
+    // The only internal use case that is using a nullable Coin value is addSignedInput, which logs a warning.
+    // TODO: Once PR #3070 or equivalent is merged, we can disable nullability on the value parameter.
+    /**
+     * internal use only, creating TransactionInput with `null` value is planned to be deprecated
+     * @param parentTransaction parent transaction, if available/connected
+     * @param scriptBytes script bytes or coinbase transaction data
+     * @param outpoint outpoint that this input spends
+     * @param value Input value. Using a {@code null} for {@code value} is to be deprecated.
+     */
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
                             TransactionOutPoint outpoint, @Nullable Coin value) {
         this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, value);
     }
 
-    /** internal use only */
+    /** internal use only, creating TransactionInput with `null` value is planned to be deprecated */
     private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
                              long sequence, @Nullable Coin value) {
         this(parentTransaction, null, scriptBytes, outpoint, sequence, value, null);
     }
 
-    /** internal use only */
+    // This is only called from WalletProtobufSerializer.readTransaction and the ProtoBuf field is market as `optional`
+    // I'm not sure how to migrate away from that. We'd need a migration path or a way to verify that no wallet
+    // has a serialized input with 
+    /** internal use only, creating TransactionInput with `null` value is planned to be deprecated */
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
                             long sequence, @Nullable Coin value, @Nullable TransactionWitness witness) {
         this(parentTransaction, null, scriptBytes, outpoint, sequence, value, witness);
