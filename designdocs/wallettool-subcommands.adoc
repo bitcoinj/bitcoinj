@@ -1,18 +1,83 @@
-= Wallettool Documentation
-:toc:
+= WalletTool Conversion to PicoCLI Subcommands
+:toc: left
+:toclevels: 4
+
 :toc-title: Table of Contents
 :sectnums:
+:sectnumlevels: 4
 
-[toc]
 
-== Wallettool: Migrate to subcommand
+== WalletTool: Migrate to subcommand
 
-This document aims to highlight some issues in wallettool module and
+This document aims to highlight some issues in WalletTool module and
 suggest how most of the issues can be solved and improved by migrating
-the use of `@parameter` as a way of calling various actions, to
-`Subcommands` as the first improvement step.
+the use of picocli's link:https://picocli.info/#_options_and_parameters[Parameter] as a way of calling various actions, to
+link:https://picocli.info/#_subcommands[Subcommands]
+ as the first improvement step.
 
-== Wallet-tool: Command
+=== Identified Problems
+The issues this migration aims to solve can be divided into 3. User Interface, Documentation, and Code Refactoring.
+
+==== User Interface
+currently the commandline print out for things like Help is difficult to read because there are lots of options mapped to wallet-tool command. This makes it difficult to tell which options go with which command/action. In addition, not all options need to be specified when there are default values for those options. If the option is not specified, we could use the defaults. This will help for a better user experience.
+
+==== Documentation
+Similar to the user interface, the documentation generated using link:https://picocli.info/#_generate_man_page_documentation[picocli-codegen] has several challenges:
+
+* Excessive global options are included, many of which are unnecessary.
+* Poor formatting of action descriptions in the `WalletTool` class makes it difficult to tell where one action's description ends and another begins.
+* Option descriptions are not tailored to specific commands, reducing clarity. For example:
+** The `--date` option could be described as "Wallet creation date" when used with the `create` command.
+** The same option could be described as "Date for key rotation (format: `YYYY-MM-DD`)" when used with the `rotate` command.
+Instead, a single generic description is applied to all commands, resulting in confusion.
+
+==== Code Structure Challenges
+The current implementation of `WalletTool` shares logic across multiple actions/commands, leading to several issues:
+
+* The use of `if` statements to determine preliminary steps for actions or commands creates tightly coupled logic, making the code harder to maintain and extend.
+* It is unclear which fields are required for a given action, as many fields are class-level variables and are directly accessed within methods.
+* The centralized handling of preliminary checks in a single `call()` method results in rigid execution flow, increasing the risk of breaking unrelated commands when changes are made.
+
+=== Proposed Solution
+A good start for addressing the issues from section 1.1 is to use subcommands to call the various actions in WalletTool class from command line. Below outlines how subcommands addresses the issues in known issues section
+
+==== Improved User Interface
+Implementing subcommands will enhance the clarity and usability of the command-line help. Each subcommand will have its own distinct options, which will be explicitly stated in the help output, providing clearer guidance when errors occur. Additionally, subcommands enable more flexible and organized presentation of information, giving finer control over how details are displayed to the user.
+
+==== Improved Documentation
+The use of subcommands allows for the personalization of options for each specific subcommand. This enables the proper formatting and organization of descriptions within the documentation. Additionally, the documentation will clearly associate each option with its corresponding subcommand, improving clarity and usability.
+
+==== Code Refactoring
+Refactoring the code to use subcommands can address the identified issues effectively by providing a more modular and extensible structure. Here's how:
+
+- **Decoupled Logic with Better Clarity**
+* Each subcommand would encapsulate its specific logic, eliminating the need for large `if` or `switch` structures to determine the preliminary steps for different actions.
+* This separation ensures that commands are isolated and independent, reducing the risk of unintended dependencies or side effects.
+
+- **Action-Specific Fields and Methods**
+* By restructuring the code into subcommands, the data and methods required for a specific action can be encapsulated within that subcommand.
+* This eliminates the problem of ambiguous field usage at the class level and makes the responsibility of each subcommand clearer and more self-contained.
+
+- **Improved Maintainability**
+* Each subcommand acts as a standalone unit with defined responsibilities, making the code easier to understand, maintain, and extend.
+* New commands can be added without affecting existing functionality, avoiding the need to modify a centralized `call()` method.
+
+- **Flexible and Modular Preliminary Checks**
+* Subcommands can handle their own preliminary checks, avoiding a rigid centralized execution flow.
+* This modularity reduces the likelihood of unrelated commands being affected when introducing changes and ensures that responsibilities are distributed cleanly across the system.
+
+- **Extensibility for Future Development**
+* Adding a new command becomes straightforward because it only requires creating a new subcommand and registering it, without altering existing logic.
+* This makes the codebase more adaptable to future requirements.
+
+By leveraging subcommands, the overall design becomes more robust, flexible, and easier to work with, effectively solving the identified challenges in the original implementation.
+
+
+
+
+== wallet-tool: Command
+
+Below shows the proposed format for the subcommand for WalletTool
 
 === *`wallet-tool`*
 
@@ -49,7 +114,7 @@ wallet-tool mywallet.wallet --net mainnet dump
 wallet-tool newwallet.wallet create
 ----
 
-== Wallettool: Subcommands
+== Wallet-tool: Subcommands
 === *`create`*
 
 *Description*: Creates a new wallet in the specified file. This command supports deterministic wallet seeds, watch-only wallets, and various configurations like timestamps and address derivation types. If `--seed` or `--watchkey` is combined with either `--date` or `--unixtime`, use that as a birthdate for the wallet.
