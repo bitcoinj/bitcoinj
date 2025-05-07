@@ -58,7 +58,7 @@ public class TransactionOutPoint {
     final Transaction fromTx;
 
     // The connected output.
-    final TransactionOutput connectedOutput;
+    private final TransactionOutput connectedOutput;
 
     /**
      * Deserialize this transaction outpoint from a given payload.
@@ -134,12 +134,7 @@ public class TransactionOutPoint {
      */
     @Nullable
     public TransactionOutput getConnectedOutput() {
-        if (fromTx != null) {
-            return fromTx.getOutput(index);
-        } else if (connectedOutput != null) {
-            return connectedOutput;
-        }
-        return null;
+        return (fromTx != null) ? fromTx.getOutput(index) : connectedOutput;
     }
 
     /**
@@ -213,7 +208,7 @@ public class TransactionOutPoint {
      * @return outpoint with removed connectedOutput
      */
     public TransactionOutPoint disconnectOutput() {
-        return new TransactionOutPoint(hash, index, fromTx, null);
+        return new TransactionOutPoint(hash, index, null, null);
     }
 
     /**
@@ -222,7 +217,7 @@ public class TransactionOutPoint {
      * @return outpoint with fromTx set
      */
     public TransactionOutPoint connectTransaction(Transaction transaction) {
-        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), connectedOutput);
+        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), getConnectedOutput());
     }
 
     /**
@@ -230,7 +225,7 @@ public class TransactionOutPoint {
      * @return outpoint with removed fromTx
      */
     public TransactionOutPoint disconnectTransaction() {
-        return new TransactionOutPoint(hash, index, null, connectedOutput);
+        return new TransactionOutPoint(hash, index, null, getConnectedOutput());
     }
 
     @Override
