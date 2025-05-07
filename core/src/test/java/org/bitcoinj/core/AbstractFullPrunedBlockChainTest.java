@@ -343,7 +343,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
-        wallet.setUTXOProvider(store);
+        wallet.setUTXOProviderInternal(store);
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(100000000);
 
