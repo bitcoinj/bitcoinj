@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.test.integration.wallet;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.HDPath;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
+import org.bitcoinj.wallet.UnreadableWalletException;
+import org.bitcoinj.wallet.Wallet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -80,7 +84,7 @@ public class WalletAccountPathTest {
     // Create a wallet, save it to a file, then reload from a file
     private static Wallet createWallet(File walletFile, Network network, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
         Context.propagate(new Context());
-        DeterministicSeed seed = new DeterministicSeed(testWalletMnemonic, null, "", Instant.now());
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic(testWalletMnemonic, "", Instant.now());
         Wallet wallet = Wallet.fromSeed(network, seed, outputScriptType, structure);
         wallet.saveToFile(walletFile);
         return Wallet.loadFromFile(walletFile);
