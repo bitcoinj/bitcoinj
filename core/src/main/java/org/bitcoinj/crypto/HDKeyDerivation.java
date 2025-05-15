@@ -87,7 +87,7 @@ public final class HDKeyDerivation {
         BigInteger priv = ByteUtils.bytesToBigInteger(privKeyBytes);
         assertNonZero(priv, "Generated master key is invalid.");
         assertLessThanN(priv, "Generated master key is invalid.");
-        return new DeterministicKey(HDPath.m(), chainCode, priv, null);
+        return new DeterministicKey(HDPath.partial(), chainCode, priv, null);
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
