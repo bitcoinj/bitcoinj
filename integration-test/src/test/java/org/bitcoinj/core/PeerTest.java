@@ -553,9 +553,9 @@ public class PeerTest extends TestWithNetworkConnections {
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
         Sha256Hash t7hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(t1, new byte[]{}, new TransactionOutPoint(0, t7hash)));
+        t1.addInput(new TransactionInput(t1, new byte[]{}, TransactionOutPoint.of(t7hash, 0)));
         Sha256Hash t8hash = Sha256Hash.wrap("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(t1, new byte[]{}, new TransactionOutPoint(1, t8hash)));
+        t1.addInput(new TransactionInput(t1, new byte[]{}, TransactionOutPoint.of(t8hash, 1)));
         t1.addOutput(COIN, to);
         t1 = roundTripTransaction(t1);
         t2 = roundTripTransaction(t2);
@@ -626,7 +626,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
         Sha256Hash t4hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
         Transaction t3 = new Transaction();
-        t3.addInput(new TransactionInput(t3, new byte[]{}, new TransactionOutPoint(0, t4hash)));
+        t3.addInput(new TransactionInput(t3, new byte[]{}, TransactionOutPoint.of(t4hash, 0)));
         t3.addOutput(COIN, ECKey.random());
         t3 = roundTripTransaction(t3);
         Transaction t2 = new Transaction();
@@ -728,7 +728,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.of("abc".getBytes(StandardCharsets.UTF_8));
-        t2.addInput(new TransactionInput(t2, new byte[] {}, new TransactionOutPoint(0, t3), 0xDEADBEEFL));
+        t2.addInput(new TransactionInput(t2, new byte[] {}, TransactionOutPoint.of(t3, 0), 0xDEADBEEFL));
         t2.addOutput(COIN, ECKey.random());
         Transaction t1 = new Transaction();
         t1.addInput(t2.getOutput(0));
