@@ -44,6 +44,8 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -69,14 +71,25 @@ public class TransactionInputTest {
         w.completeTx(req);
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
+        TransactionOutPoint txOutPoint = txInToDisconnect.getOutpoint();
 
-        assertEquals(tx1, txInToDisconnect.getOutpoint().getFromTx());
-        assertNull(txInToDisconnect.getOutpoint().connectedOutput);
+        // Before disconnect, txOutPoint getFromTx() references tx1 and
+        // connectedOutput is null
+        assertEquals(tx1, txOutPoint.getFromTx());
+        assertNull(txOutPoint.connectedOutput);
 
+        // Disconnect the input from tx1
         txInToDisconnect.disconnect();
+        TransactionOutPoint newTxOutPoint = txInToDisconnect.getOutpoint();
 
-        assertNull(txInToDisconnect.getOutpoint().getFromTx());
-        assertNull(txInToDisconnect.getOutpoint().connectedOutput);
+        // Since TransactionOutPoint is immutable, we expect a new TransactionOutPoint object, but since equals() only
+        // compares index and hash, equals will return true.
+        assertNotSame(txOutPoint, newTxOutPoint);
+        assertEquals(txOutPoint, newTxOutPoint);
+
+        // After disconnect, newTxOutPoint getFromTx() and connectedOutput are both null
+        assertNull(newTxOutPoint.getFromTx());
+        assertNull(newTxOutPoint.connectedOutput);
     }
 
     @Test
@@ -107,14 +120,27 @@ public class TransactionInputTest {
         w.completeTx(SendRequest.forTx(tx2));
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
+        TransactionOutPoint txOutPoint = txInToDisconnect.getOutpoint();
 
-        assertNull(txInToDisconnect.getOutpoint().getFromTx());
-        assertEquals(utxo.getHash(), txInToDisconnect.getOutpoint().connectedOutput.getParentTransactionHash());
+        // Before disconnect, txOutPoint getFromTx() returns null and
+        // getConnectedOutput() references the UTXO
+        assertNull(txOutPoint.getFromTx());
+        assertNotNull(txOutPoint.connectedOutput);
+        assertEquals(utxo.getHash(), txOutPoint.connectedOutput.getParentTransactionHash());
+        assertEquals(utxo.getIndex(), txOutPoint.connectedOutput.getIndex());
 
+        // Disconnect the input from its UTXO
         txInToDisconnect.disconnect();
+        TransactionOutPoint newTxOutPoint = txInToDisconnect.getOutpoint();
 
-        assertNull(txInToDisconnect.getOutpoint().getFromTx());
-        assertNull(txInToDisconnect.getOutpoint().connectedOutput);
+        // Since TransactionOutPoint is immutable, we expect a new TransactionOutPoint object, but since equals() only
+        // compares index and hash, equals will return true.
+        assertNotSame(txOutPoint, newTxOutPoint);
+        assertEquals(txOutPoint, newTxOutPoint);
+
+        // After disconnect, newTxOutPoint getFromTx() and connectedOutput are both null
+        assertNull(newTxOutPoint.getFromTx());
+        assertNull(newTxOutPoint.connectedOutput);
     }
 
     @Test
