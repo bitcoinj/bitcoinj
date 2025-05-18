@@ -58,7 +58,7 @@ public class TransactionOutPoint {
     private final Transaction fromTx;
 
     // The connected output.
-    final TransactionOutput connectedOutput;
+    private final TransactionOutput connectedOutput;
 
     /**
      * Deserialize this transaction outpoint from a given payload.
