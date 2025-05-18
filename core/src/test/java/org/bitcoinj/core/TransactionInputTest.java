@@ -74,9 +74,9 @@ public class TransactionInputTest {
         TransactionOutPoint txOutPoint = txInToDisconnect.getOutpoint();
 
         // Before disconnect, txOutPoint getFromTx() references tx1 and
-        // connectedOutput is null
+        // getConnectedOutput() references the correct indexed output of tx1
         assertEquals(tx1, txOutPoint.getFromTx());
-        assertNull(txOutPoint.connectedOutput);
+        assertEquals(tx1.getOutput(txOutPoint.index()), txOutPoint.getConnectedOutput());
 
         // Disconnect the input from tx1
         txInToDisconnect.disconnect();
@@ -87,9 +87,9 @@ public class TransactionInputTest {
         assertNotSame(txOutPoint, newTxOutPoint);
         assertEquals(txOutPoint, newTxOutPoint);
 
-        // After disconnect, newTxOutPoint getFromTx() and connectedOutput are both null
+        // After disconnect, newTxOutPoint getFromTx() and getConnectedOutput() are both null
         assertNull(newTxOutPoint.getFromTx());
-        assertNull(newTxOutPoint.connectedOutput);
+        assertNull(newTxOutPoint.getConnectedOutput());
     }
 
     @Test
@@ -125,9 +125,9 @@ public class TransactionInputTest {
         // Before disconnect, txOutPoint getFromTx() returns null and
         // getConnectedOutput() references the UTXO
         assertNull(txOutPoint.getFromTx());
-        assertNotNull(txOutPoint.connectedOutput);
-        assertEquals(utxo.getHash(), txOutPoint.connectedOutput.getParentTransactionHash());
-        assertEquals(utxo.getIndex(), txOutPoint.connectedOutput.getIndex());
+        assertNotNull(txOutPoint.getConnectedOutput());
+        assertEquals(utxo.getHash(), txOutPoint.getConnectedOutput().getParentTransactionHash());
+        assertEquals(utxo.getIndex(), txOutPoint.getConnectedOutput().getIndex());
 
         // Disconnect the input from its UTXO
         txInToDisconnect.disconnect();
@@ -138,9 +138,9 @@ public class TransactionInputTest {
         assertNotSame(txOutPoint, newTxOutPoint);
         assertEquals(txOutPoint, newTxOutPoint);
 
-        // After disconnect, newTxOutPoint getFromTx() and connectedOutput are both null
+        // After disconnect, newTxOutPoint getFromTx() and getConnectedOutput() are both null
         assertNull(newTxOutPoint.getFromTx());
-        assertNull(newTxOutPoint.connectedOutput);
+        assertNull(newTxOutPoint.getConnectedOutput());
     }
 
     @Test
