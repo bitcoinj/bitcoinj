@@ -258,16 +258,6 @@ public abstract class HDPath {
     }
 
     /**
-     * Returns a path for a public or private key.
-     *
-     * @param hasPrivateKey Whether it is a path to a private key or not
-     * @param children      children in the path
-     */
-    private static HDFullPath of(boolean hasPrivateKey, List<ChildNumber> children) {
-        return new HDFullPath(hasPrivateKey, childrenAsArray(children));
-    }
-
-    /**
      * Deserialize a list of integers into an HDPartialPath (internal use only)
      * @param children a list of integers (what we use in ProtoBuf for an HDPath)
      * @return a deserialized HDPartialPath
