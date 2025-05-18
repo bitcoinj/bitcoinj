@@ -474,21 +474,15 @@ public class TransactionInput {
      * @return true if the disconnection took place, false if it was not connected.
      */
     public boolean disconnect() {
-        TransactionOutput connectedOutput;
-        if (outpoint.getFromTx() != null) {
-            // The outpoint is connected using a "standard" wallet, disconnect it.
-            connectedOutput = outpoint.getFromTx().getOutput(outpoint);
-            outpoint = outpoint.disconnectTransaction();
-        } else if (outpoint.connectedOutput != null) {
-            // The outpoint is connected using a UTXO based wallet, disconnect it.
-            connectedOutput = outpoint.connectedOutput;
+        TransactionOutput connectedOutput = outpoint.getConnectedOutput();
+        if (connectedOutput != null) {
             outpoint = outpoint.disconnectOutput();
         } else {
             // The outpoint is not connected, do nothing.
             return false;
         }
 
-        if (connectedOutput != null && connectedOutput.getSpentBy() == this) {
+        if (connectedOutput.getSpentBy() == this) {
             // The outpoint was connected to an output, disconnect the output.
             connectedOutput.markAsUnspent();
             return true;
