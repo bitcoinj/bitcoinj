@@ -20,8 +20,6 @@ package org.bitcoinj.script;
 import org.bitcoinj.base.internal.ByteUtils;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
@@ -103,14 +101,6 @@ public class ScriptChunk {
 
         // can never be used, but implemented for completeness
         return opcode == OP_PUSHDATA4;
-    }
-
-    /**
-     * @deprecated Use {@link #toByteArray()}
-     */
-    @Deprecated
-    public void write(OutputStream stream) throws IOException {
-        stream.write(toByteArray());
     }
 
     private void write(ByteBuffer buf) {
