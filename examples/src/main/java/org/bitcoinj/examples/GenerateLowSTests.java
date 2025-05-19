@@ -103,7 +103,7 @@ public class GenerateLowSTests {
             EnumSet.of(Script.VerifyFlag.DERSIG, Script.VerifyFlag.P2SH));
 
         final Script scriptSig = input.getScriptSig();
-        final TransactionSignature signature = TransactionSignature.decodeFromBitcoin(scriptSig.chunks().get(0).data, true, false);
+        final TransactionSignature signature = TransactionSignature.decodeFromBitcoin(scriptSig.chunks().get(0).pushData(), true, false);
 
         // First output a conventional low-S transaction with the LOW_S flag, for the tx_valid.json set
         System.out.println("[\"A transaction with a low-S signature.\"],");
@@ -116,7 +116,7 @@ public class GenerateLowSTests {
 
         final BigInteger highS = HIGH_S_DIFFERENCE.subtract(signature.s);
         final TransactionSignature highSig = new TransactionSignature(signature.r, highS);
-        input = input.withScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(scriptSig.chunks().get(1).data).build());
+        input = input.withScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(scriptSig.chunks().get(1).pushData()).build());
         input.getScriptSig().correctlySpends(outputTransaction, 0, null, null, output.getScriptPubKey(),
             EnumSet.of(Script.VerifyFlag.P2SH));
 
@@ -162,12 +162,12 @@ public class GenerateLowSTests {
                 buf.append(" ");
             }
             if (chunk.isOpCode()) {
-                buf.append(getOpCodeName(chunk.opcode));
-            } else if (chunk.data != null) {
+                buf.append(chunk.opCodeName());
+            } else if (chunk.pushData() != null) {
                 // Data chunk
                 buf.append("0x")
-                    .append(Integer.toString(chunk.opcode, 16)).append(" 0x")
-                    .append(ByteUtils.formatHex(chunk.data));
+                    .append(chunk.opCodeHex()).append(" 0x")
+                    .append(ByteUtils.formatHex(chunk.pushData()));
             } else {
                 buf.append(chunk.toString());
             }
