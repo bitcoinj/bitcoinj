@@ -40,13 +40,13 @@ import static org.bitcoinj.script.ScriptOpCodes.getPushDataName;
  */
 public class ScriptChunk {
     /** Operation to be executed. Opcodes are defined in {@link ScriptOpCodes}. */
-    public final int opcode;
+    final int opcode;
     /**
      * For push operations, this is the vector to be pushed on the stack. For {@link ScriptOpCodes#OP_0}, the vector is
      * empty. Null for non-push operations.
      */
     @Nullable
-    public final byte[] data;
+    final byte[] data;
 
     public ScriptChunk(int opcode, @Nullable byte[] data) {
         this.opcode = opcode;
@@ -152,6 +152,39 @@ public class ScriptChunk {
         final int dataLength = data == null ? 0 : data.length;
 
         return opcodeLength + pushDataSizeLength + dataLength;
+    }
+
+    /**
+     * Get the name of the script's opcode as an int.
+     * @return opcode
+     */
+    public int opCode() {
+        return opcode;
+    }
+
+    /**
+     * Get the name of the script's opcode. See {@link ScriptOpCodes#getOpCodeName(int)}.
+     * @return opcode name
+     */
+    public String opCodeName() {
+        return ScriptOpCodes.getOpCodeName(opcode);
+    }
+
+    /**
+     * Get the scripts opcode as a hex-encoded string.
+     * @return opcode as a hex string
+     */
+    public String opCodeHex() {
+        return Integer.toString(opcode, 16) ;
+    }
+
+    /**
+     * Get the script's push data or {@code null} if there is none.
+     * @return push data or {@code null}
+     */
+    @Nullable
+    public byte[] pushData() {
+        return data;
     }
 
     @Override
