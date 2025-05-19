@@ -511,7 +511,7 @@ public class WalletTest extends TestWithWallet {
         List<ScriptChunk> scriptSigChunks = t2.getInput(0).getScriptSig().chunks();
         // check 'from address' -- in a unit test this is fine
         assertEquals(2, scriptSigChunks.size());
-        assertEquals(myAddress, LegacyAddress.fromPubKeyHash(TESTNET, CryptoUtils.sha256hash160(scriptSigChunks.get(1).data)));
+        assertEquals(myAddress, LegacyAddress.fromPubKeyHash(TESTNET, CryptoUtils.sha256hash160(scriptSigChunks.get(1).pushData())));
         assertEquals(TransactionConfidence.ConfidenceType.UNKNOWN, t2.getConfidence().getConfidenceType());
 
         // We have NOT proven that the signature is correct!
@@ -1534,7 +1534,7 @@ public class WalletTest extends TestWithWallet {
         assertNotNull(t2);
         // TODO: This code is messy, improve the Script class and fixinate!
         assertEquals(t2.toString(), 1, t2.getInput(0).getScriptSig().chunks().size());
-        assertTrue(t2.getInput(0).getScriptSig().chunks().get(0).data.length > 50);
+        assertTrue(t2.getInput(0).getScriptSig().chunks().get(0).pushData().length > 50);
     }
 
     @Test
@@ -3083,9 +3083,9 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < req.tx.getInputs().size(); i++) {
             TransactionInput input = req.tx.getInput(i);
             if (input.getConnectedOutput().getParentTransaction().equals(t1)) {
-                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).data);
+                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).pushData());
             } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
-                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).data);
+                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).pushData());
             } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
                 input.getScriptSig().correctlySpends(
                         req.tx, i, null, null, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
