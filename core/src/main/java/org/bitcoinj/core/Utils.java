@@ -17,8 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.slf4j.Logger;
@@ -26,27 +24,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * A collection of various utility methods that are helpful for working with the Bitcoin protocol.
  * To enable debug logging from the library, run with -Dbitcoinj.logging=true on your command line.
  */
 public class Utils {
-
-    /**
-     * Joiner for concatenating words with a space inbetween.
-     * @deprecated Use @link java.util.StringJoiner} or a direct Guava dependency
-     */
-    @Deprecated
-    public static final Joiner SPACE_JOINER = Joiner.on(" ");
-
-    /**
-     * Splitter for splitting words on whitespaces.
-     * @deprecated Use {@link java.lang.String#split(String)} or a direct Guava dependency
-     */
-    @Deprecated
-    public static final Splitter WHITESPACE_SPLITTER = Splitter.on(Pattern.compile("\\s+"));
 
     /**
      * Max initial size of variable length arrays and ArrayLists that could be attacked.
