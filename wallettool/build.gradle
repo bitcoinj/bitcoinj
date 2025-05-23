@@ -25,8 +25,7 @@ dependencies {
         compileOnly 'info.picocli:picocli-codegen:4.7.6'
     }
 
-    testImplementation platform("org.junit:junit-bom:5.12.2")
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter-api"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 
