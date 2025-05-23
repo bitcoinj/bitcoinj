@@ -232,7 +232,9 @@ public class TransactionOutPoint {
     /**
      * Returns a copy of this outpoint, but with fromTx removed.
      * @return outpoint with removed fromTx
+     * @deprecated use {@link #disconnectOutput()}
      */
+    @Deprecated
     public TransactionOutPoint disconnectTransaction() {
         return new TransactionOutPoint(hash, index, null, connectedOutput);
     }
