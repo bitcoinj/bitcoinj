@@ -55,9 +55,11 @@ public class TransactionOutPoint {
     private final long index;
 
     // This is not part of bitcoin serialization. It points to the connected transaction.
+    @Nullable
     private final Transaction fromTx;
 
     // The connected output.
+    @Nullable
     private final TransactionOutput connectedOutput;
 
     /**
