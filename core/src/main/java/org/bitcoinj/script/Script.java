@@ -503,26 +503,18 @@ public class Script {
     }
 
     public static byte[] createInputScript(byte[] signature, byte[] pubkey) {
-        try {
-            // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new ByteArrayOutputStream(signature.length + pubkey.length + 2);
-            writeBytes(bits, signature);
-            writeBytes(bits, pubkey);
-            return bits.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return new ScriptBuilder()
+                .data(signature)
+                .data(pubkey)
+                .build()
+                .program();
     }
 
     public static byte[] createInputScript(byte[] signature) {
-        try {
-            // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new ByteArrayOutputStream(signature.length + 2);
-            writeBytes(bits, signature);
-            return bits.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return new ScriptBuilder()
+                .data(signature)
+                .build()
+                .program();
     }
 
     /**
