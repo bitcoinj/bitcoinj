@@ -54,6 +54,8 @@ public class TransactionOutPoint {
     /** Which output of that transaction we are talking about. */
     private final long index;
 
+    // `fromTx` and `connectedOutput` can both be `null`, but they both can't be non-`null`.
+
     // This is not part of bitcoin serialization. It points to the connected transaction.
     @Nullable
     private final Transaction fromTx;
@@ -135,9 +137,7 @@ public class TransactionOutPoint {
         if (fromTx != null) {
             TransactionOutput outputFromTx = fromTx.getOutput(index);
             Objects.requireNonNull(outputFromTx);
-            if (connectedOutput != null) {
-                checkArgument(connectedOutput.equals(outputFromTx), () -> "mismatched connected output");
-            }
+            checkArgument(connectedOutput == null, () -> "Both fromTx and connectedOutput are non-null");
         }
         this.fromTx = fromTx;
         this.connectedOutput = connectedOutput;
@@ -267,7 +267,7 @@ public class TransactionOutPoint {
      * @return outpoint with fromTx set
      */
     public TransactionOutPoint connectTransaction(Transaction transaction) {
-        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), connectedOutput);
+        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), null);
     }
 
     /**
@@ -277,7 +277,7 @@ public class TransactionOutPoint {
      */
     @Deprecated
     public TransactionOutPoint disconnectTransaction() {
-        return new TransactionOutPoint(hash, index, null, connectedOutput);
+        return disconnectOutput();
     }
 
     @Override
