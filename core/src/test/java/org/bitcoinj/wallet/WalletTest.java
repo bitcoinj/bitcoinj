@@ -20,7 +20,6 @@ package org.bitcoinj.wallet;
 import com.google.common.collect.Lists;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.TestBlocks;
@@ -41,17 +40,15 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutPointReference;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
@@ -59,11 +56,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.signers.TransactionSigner;
-import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.testing.KeyChainTransactionSigner;
 import org.bitcoinj.testing.MockTransactionBroadcaster;
 import org.bitcoinj.testing.NopTransactionSigner;
 import org.bitcoinj.testing.TestWithWallet;
@@ -92,7 +85,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -714,7 +706,7 @@ public class WalletTest extends TestWithWallet {
         EasyMock.expect(to.isAvailableForSpending()).andReturn(true);
         EasyMock.expect(to.isMineOrWatched(wallet)).andReturn(true);
         EasyMock.expect(to.getSpentBy()).andReturn(
-                new TransactionInput(null, new byte[0], TransactionOutPoint.UNCONNECTED));
+                new TransactionInput(null, new byte[0], TransactionOutPointReference.UNCONNECTED));
 
         Transaction tx = FakeTxBuilder.createFakeTxWithoutChange(to);
 
@@ -1638,7 +1630,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsBloomFilter() {
         Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         Transaction t1 = createFakeTx(TESTNET, CENT, watchedAddress);
-        TransactionOutPoint outPoint = TransactionOutPoint.from(t1, 0);
+        TransactionOutPointReference outPoint = TransactionOutPointReference.from(t1, 0);
         wallet.addWatchedAddress(watchedAddress);
 
         // Note that this has a 1e-12 chance of failing this unit test due to a false positive
@@ -1692,7 +1684,7 @@ public class WalletTest extends TestWithWallet {
 
         for (Address addr : addressesForRemoval) {
             Transaction t1 = createFakeTx(TESTNET, CENT, addr);
-            TransactionOutPoint outPoint = TransactionOutPoint.from(t1, 0);
+            TransactionOutPointReference outPoint = TransactionOutPointReference.from(t1, 0);
 
             // Note that this has a 1e-12 chance of failing this unit test due to a false positive
             assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
@@ -2722,7 +2714,7 @@ public class WalletTest extends TestWithWallet {
 
         // However, if there is no connected output, we connect it
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, TransactionOutPoint.of(tx3.getTxId(), 0)));
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, TransactionOutPointReference.of(tx3.getTxId(), 0)));
         // Now completeTx will find the matching UTXO from the wallet and add its value to the unconnected input
         request3.shuffleOutputs = false;
         wallet.completeTx(request3);
@@ -2753,7 +2745,7 @@ public class WalletTest extends TestWithWallet {
 
         // SendRequest using that output as an unconnected input
         SendRequest request = SendRequest.to(OTHER_ADDRESS, COIN);
-        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, TransactionOutPoint.of(tx.getTxId(), 0)));
+        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, TransactionOutPointReference.of(tx.getTxId(), 0)));
 
         // Complete the transaction
         wallet.completeTx(request);

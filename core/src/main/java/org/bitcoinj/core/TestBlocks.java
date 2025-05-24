@@ -77,7 +77,7 @@ public class TestBlocks {
      * @return created block
      */
     static Block createNextBlock(Block prev, @Nullable Address to, long version,
-                                 @Nullable TransactionOutPoint prevOut, Instant time, byte[] pubKey,
+                                 @Nullable TransactionOutPointReference.TransactionOutPoint prevOut, Instant time, byte[] pubKey,
                                  Coin coinbaseValue, int height) {
         Block b = new Block(version, prev.getHash());
         b.setDifficultyTarget(prev.difficultyTarget());
@@ -90,7 +90,7 @@ public class TestBlocks {
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
             if (prevOut == null) {
-                prevOut = new TransactionOutPoint(0, nextTestOutPointHash());
+                prevOut = TransactionOutPointReference.TransactionOutPoint.of(nextTestOutPointHash(), 0);
             }
             input = new TransactionInput(t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
             t.addInput(input);
@@ -124,7 +124,7 @@ public class TestBlocks {
      * @param prevOut previous output to spend by the "50 coins transaction"
      * @return created block
      */
-    public static Block createNextBlock(Block prev, @Nullable Address to, TransactionOutPoint prevOut) {
+    public static Block createNextBlock(Block prev, @Nullable Address to, TransactionOutPointReference.TransactionOutPoint prevOut) {
         return createNextBlock(prev, to, Block.BLOCK_VERSION_GENESIS, prevOut, prev.time().plusSeconds(5), pubkeyForTesting,
                 FIFTY_COINS, Block.BLOCK_HEIGHT_UNKNOWN);
     }
@@ -159,7 +159,7 @@ public class TestBlocks {
      */
     public static Block createNextBlockWithCoinbase(Block prev, long version, byte[] pubKey, Coin coinbaseValue,
                                                     int height) {
-        return createNextBlock(prev, null, version, (TransactionOutPoint) null, TimeUtils.currentTime(), pubKey,
+        return createNextBlock(prev, null, version,null, TimeUtils.currentTime(), pubKey,
                 coinbaseValue, height);
     }
 
@@ -173,7 +173,7 @@ public class TestBlocks {
      * @return created block
      */
     static Block createNextBlockWithCoinbase(Block prev, long version, byte[] pubKey, int height) {
-        return createNextBlock(prev, null, version, (TransactionOutPoint) null, TimeUtils.currentTime(), pubKey,
+        return createNextBlock(prev, null, version,null, TimeUtils.currentTime(), pubKey,
                 FIFTY_COINS, height);
     }
 

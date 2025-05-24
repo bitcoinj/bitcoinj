@@ -42,25 +42,59 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class TransactionOutPoint {
+public abstract class TransactionOutPointReference {
     public static final int BYTES = 36;
 
     /** Special outpoint that normally marks a coinbase input. It's also used as a test dummy. */
     public static final TransactionOutPoint UNCONNECTED =
-            TransactionOutPoint.of(Sha256Hash.ZERO_HASH, ByteUtils.MAX_UNSIGNED_INTEGER);
+            TransactionOutPointReference.of(Sha256Hash.ZERO_HASH, ByteUtils.MAX_UNSIGNED_INTEGER);
 
     /** Hash of the transaction to which we refer. */
-    private final Sha256Hash hash;
+    protected final Sha256Hash hash;
     /** Which output of that transaction we are talking about. */
-    private final long index;
+    protected final long index;
 
-    // This is not part of bitcoin serialization. It points to the connected transaction.
-    @Nullable
-    private final Transaction fromTx;
+    public static class TransactionOutPoint extends TransactionOutPointReference {
+        public TransactionOutPoint(Sha256Hash hash, long index) {
+            super(hash, index);
+        }
+    }
 
-    // The connected output.
-    @Nullable
-    private final TransactionOutput connectedOutput;
+    public interface HasConnectedOutput {
+        TransactionOutput connectedOutput();
+    }
+
+    public static class TransactionConnectedOutPoint extends TransactionOutPointReference implements HasConnectedOutput {
+        private final Transaction fromTx;
+
+        public TransactionConnectedOutPoint(Sha256Hash hash, long index, Transaction fromTx) {
+            super(hash, index);
+            this.fromTx = fromTx;
+        }
+
+        public Transaction fromTx() {
+            return fromTx;
+        }
+
+        @Override
+        public TransactionOutput connectedOutput() {
+            return fromTx.getOutput(index);
+        }
+    }
+
+    public static class OutputConnectedOutPoint extends TransactionOutPointReference implements HasConnectedOutput {
+        private final TransactionOutput connectedOutput;
+
+        public OutputConnectedOutPoint(Sha256Hash hash, long index, TransactionOutput connectedOutput) {
+            super(hash, index);
+            this.connectedOutput = connectedOutput;
+        }
+
+        @Override
+        public TransactionOutput connectedOutput() {
+            return connectedOutput;
+        }
+    }
 
     /**
      * Deserialize this transaction outpoint from a given payload.
@@ -72,28 +106,14 @@ public class TransactionOutPoint {
     public static TransactionOutPoint read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         Sha256Hash hash = Sha256Hash.read(payload);
         long index = ByteUtils.readUint32(payload);
-        return TransactionOutPoint.of(hash, index);
+        return TransactionOutPointReference.of(hash, index);
     }
 
-    /** @deprecated use {@link TransactionOutPoint#from(Transaction, long)} */
-    @Deprecated
-    public TransactionOutPoint(long index, Transaction fromTx) {
-        this(fromTx.getTxId(), index, fromTx, null);
-    }
-
-    @Deprecated
-    public TransactionOutPoint(long index, Sha256Hash hash) {
-        this(hash, index, null, null);
-    }
-
-    private TransactionOutPoint(Sha256Hash hash, long index) {
-        this(hash, index, null, null);
-    }
-
-    /** @deprecated use {@link TransactionOutPoint#from(TransactionOutput)} */
-    @Deprecated
-    public TransactionOutPoint(TransactionOutput connectedOutput) {
-        this(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null, connectedOutput);
+    private TransactionOutPointReference(Sha256Hash hash, long index) {
+        this.hash = Objects.requireNonNull(hash);
+        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
+                "index out of range: " + index);
+        this.index = index;
     }
 
     /**
@@ -112,8 +132,8 @@ public class TransactionOutPoint {
      * @param index index of the transaction output the new outpoint will reference
      * @return a new transaction outpoint
      */
-    public static TransactionOutPoint from(Transaction fromTx, long index) {
-        return new TransactionOutPoint (fromTx.getTxId(), index, fromTx, null);
+    public static TransactionConnectedOutPoint from(Transaction fromTx, long index) {
+        return new TransactionConnectedOutPoint(fromTx.getTxId(), index, fromTx);
     }
 
     /**
@@ -121,26 +141,8 @@ public class TransactionOutPoint {
      * @param connectedOutput transaction output the new outpoint will reference (and be "connected to")
      * @return a new transaction outpoint
      */
-    public static TransactionOutPoint from(TransactionOutput connectedOutput) {
-        return new TransactionOutPoint(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null,
-                connectedOutput);
-    }
-
-    private TransactionOutPoint(Sha256Hash hash, long index, @Nullable Transaction fromTx,
-                                @Nullable TransactionOutput connectedOutput) {
-        this.hash = Objects.requireNonNull(hash);
-        checkArgument(index >= 0 && index <= ByteUtils.MAX_UNSIGNED_INTEGER, () ->
-                "index out of range: " + index);
-        this.index = index;
-        if (fromTx != null) {
-            TransactionOutput outputFromTx = fromTx.getOutput(index);
-            Objects.requireNonNull(outputFromTx);
-            if (connectedOutput != null) {
-                checkArgument(connectedOutput.equals(outputFromTx), () -> "mismatched connected output");
-            }
-        }
-        this.fromTx = fromTx;
-        this.connectedOutput = connectedOutput;
+    public static OutputConnectedOutPoint from(TransactionOutput connectedOutput) {
+        return new OutputConnectedOutPoint(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), connectedOutput);
     }
 
     /**
@@ -170,31 +172,46 @@ public class TransactionOutPoint {
      * sides in memory, and they have been linked together, this returns a pointer to the connected output, or {@code
      * null} if we don't have the output. In the latter case, {@link #hash()} and {@link #index()} could be used to
      * acquire the output elsewhere.
-     *
+     * @deprecated Use {@link OutputConnectedOutPoint#connectedOutput} (with typecheck if necessary)
      * @return output this outpoint points to, or {@code null} if we don't have the output
      */
+    @Deprecated
     @Nullable
     public TransactionOutput getConnectedOutput() {
-        return (fromTx != null) ? fromTx.getOutput(index) : connectedOutput;
+        if (this instanceof HasConnectedOutput) {
+            return ((HasConnectedOutput) this).connectedOutput();
+        } else {
+            return null;
+        }
     }
 
     /**
      * Return the connected {@link Transaction} if available.
      * @return connected transaction or {@code null} if not available
+     * @deprecated Use {@link TransactionConnectedOutPoint#fromTx} (with typecheck if necessary)
      */
+    @Deprecated
     @Nullable
     public Transaction getFromTx() {
-        return fromTx;
+        if (this instanceof TransactionConnectedOutPoint) {
+            return ((TransactionConnectedOutPoint) this).fromTx();
+        } else {
+            return null;
+        }
     }
 
     /**
      * Returns the pubkey script from the connected output.
-     * @throws java.lang.NullPointerException if there is no connected output.
+     * @throws java.lang.IllegalStateException if there is no connected output.
      */
     public byte[] getConnectedPubKeyScript() {
-        byte[] result = Objects.requireNonNull(getConnectedOutput()).getScriptBytes();
-        checkState(result.length > 0);
-        return result;
+        if (this instanceof HasConnectedOutput) {
+            byte[] result = ((HasConnectedOutput)this).connectedOutput().getScriptBytes();
+            checkState(result.length > 0);
+            return result;
+        } else {
+            throw new IllegalStateException();
+        }
     }
 
     /**
@@ -207,8 +224,10 @@ public class TransactionOutPoint {
      */
     @Nullable
     public ECKey getConnectedKey(KeyBag keyBag) throws ScriptException {
-        TransactionOutput connectedOutput = getConnectedOutput();
-        Objects.requireNonNull(connectedOutput, "Input is not connected so cannot retrieve key");
+        if (!(this instanceof HasConnectedOutput)) {
+            throw new NullPointerException("Input is not connected so cannot retrieve key");
+        }
+        TransactionOutput connectedOutput = ((HasConnectedOutput) this).connectedOutput();
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isP2PKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
@@ -233,8 +252,10 @@ public class TransactionOutPoint {
      */
     @Nullable
     public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
-        TransactionOutput connectedOutput = getConnectedOutput();
-        Objects.requireNonNull(connectedOutput, "Input is not connected so cannot retrieve key");
+        if (!(this instanceof HasConnectedOutput)) {
+            throw new NullPointerException("Input is not connected so cannot retrieve key");
+        }
+        TransactionOutput connectedOutput = ((HasConnectedOutput) this).connectedOutput();
         Script connectedScript = connectedOutput.getScriptPubKey();
         if (ScriptPattern.isP2PKH(connectedScript)) {
             byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
@@ -258,7 +279,7 @@ public class TransactionOutPoint {
      * @return outpoint with no connections
      */
     public TransactionOutPoint disconnectOutput() {
-        return new TransactionOutPoint(hash, index, null, null);
+        return new TransactionOutPoint(hash, index);
     }
 
     /**
@@ -266,8 +287,8 @@ public class TransactionOutPoint {
      * @param transaction transaction to set as fromTx
      * @return outpoint with fromTx set
      */
-    public TransactionOutPoint connectTransaction(Transaction transaction) {
-        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), connectedOutput);
+    public TransactionConnectedOutPoint connectTransaction(Transaction transaction) {
+        return new TransactionConnectedOutPoint(hash, index, Objects.requireNonNull(transaction));
     }
 
     /**
@@ -277,7 +298,7 @@ public class TransactionOutPoint {
      */
     @Deprecated
     public TransactionOutPoint disconnectTransaction() {
-        return new TransactionOutPoint(hash, index, null, connectedOutput);
+        return disconnectOutput();
     }
 
     @Override
@@ -302,8 +323,8 @@ public class TransactionOutPoint {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        TransactionOutPoint other = (TransactionOutPoint) o;
+        if (!(o instanceof TransactionOutPointReference)) return false;
+        TransactionOutPointReference other = (TransactionOutPointReference) o;
         return index == other.index && hash.equals(other.hash);
     }
 

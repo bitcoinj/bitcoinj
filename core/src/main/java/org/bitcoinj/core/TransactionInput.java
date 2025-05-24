@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
@@ -39,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * <p>A transfer of coins from one address to another creates a transaction in which the outputs
@@ -75,7 +75,7 @@ public class TransactionInput {
     // Allows for altering transactions after they were broadcast. Values below NO_SEQUENCE-1 mean it can be altered.
     private final long sequence;
     // Data needed to connect to the output of the transaction we're gathering coins from.
-    private TransactionOutPoint outpoint;
+    private TransactionOutPointReference outpoint;
     // The "script bytes" might not actually be a script. In coinbase transactions where new coins are minted there
     // is no input transaction, so instead the scriptBytes contains some extra stuff (like a rollover nonce) that we
     // don't care about much. The bytes are turned into a Script object (cached below) on demand via a getter.
@@ -99,7 +99,7 @@ public class TransactionInput {
         Objects.requireNonNull(parentTransaction);
         checkArgument(scriptBytes.length >= 2 && scriptBytes.length <= 100, () ->
                 "script must be between 2 and 100 bytes: " + scriptBytes.length);
-        return new TransactionInput(parentTransaction, scriptBytes, TransactionOutPoint.UNCONNECTED);
+        return new TransactionInput(parentTransaction, scriptBytes, TransactionOutPointReference.UNCONNECTED);
     }
 
     /**
@@ -112,42 +112,56 @@ public class TransactionInput {
      */
     public static TransactionInput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
         Objects.requireNonNull(parentTransaction);
-        TransactionOutPoint outpoint = TransactionOutPoint.read(payload);
+        TransactionOutPointReference.TransactionOutPoint outpoint = TransactionOutPointReference.read(payload);
         byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         long sequence = ByteUtils.readUint32(payload);
         return new TransactionInput(parentTransaction, scriptBytes, outpoint, sequence, null);
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-                            TransactionOutPoint outpoint) {
+                            TransactionOutPointReference outpoint) {
         this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, null);
     }
 
+    /** Disconnected transaction input constructor */
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-                            TransactionOutPoint outpoint, long sequence) {
+                            TransactionOutPointReference.TransactionOutPoint outpoint) {
+        this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, null);
+    }
+
+    /** Disconnected transaction input constructor */
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
+                            TransactionOutPointReference.TransactionOutPoint outpoint, long sequence) {
         this(parentTransaction, scriptBytes, outpoint, sequence, null);
     }
 
     public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes,
-                            TransactionOutPoint outpoint, @Nullable Coin value) {
+                            TransactionOutPointReference outpoint, @Nullable Coin value) {
         this(parentTransaction, scriptBytes, outpoint, NO_SEQUENCE, value);
     }
 
     /** internal use only */
-    private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
+    private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPointReference outpoint,
                              long sequence, @Nullable Coin value) {
         this(parentTransaction, null, scriptBytes, outpoint, sequence, value, null);
     }
 
+    /** Disconnected transaction input constructor */
+    private TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPointReference.TransactionOutPoint outpoint,
+                             long sequence, @Nullable Coin value) {
+        this(parentTransaction, null, scriptBytes, outpoint, sequence, value, null);
+    }
+
+    /* Disconnected transaction input constructor */
     /** internal use only */
-    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPoint outpoint,
+    public TransactionInput(@Nullable Transaction parentTransaction, byte[] scriptBytes, TransactionOutPointReference.TransactionOutPoint outpoint,
                             long sequence, @Nullable Coin value, @Nullable TransactionWitness witness) {
         this(parentTransaction, null, scriptBytes, outpoint, sequence, value, witness);
     }
 
     private TransactionInput(@Nullable Transaction parentTransaction, @Nullable Script scriptSig, byte[] scriptBytes,
-                            TransactionOutPoint outpoint, long sequence, @Nullable Coin value,
-                            @Nullable TransactionWitness witness) {
+                             TransactionOutPointReference outpoint, long sequence, @Nullable Coin value,
+                             @Nullable TransactionWitness witness) {
         checkArgument(value == null || value.signum() >= 0, () -> "value out of range: " + value);
         parent = parentTransaction;
         this.scriptSig = scriptSig != null ? new WeakReference<>(scriptSig) : null;
@@ -165,8 +179,8 @@ public class TransactionInput {
         this(parentTransaction,
                 null, EMPTY_ARRAY,
                 output.getParentTransaction() != null ?
-                        TransactionOutPoint.from(output.getParentTransaction(), output.getIndex()) :
-                        TransactionOutPoint.from(output),
+                        TransactionOutPointReference.from(output.getParentTransaction(), output.getIndex()) :
+                        TransactionOutPointReference.from(output),
                 NO_SEQUENCE,
                 output.getValue(),
                 null);
@@ -213,7 +227,7 @@ public class TransactionInput {
      * @return size of the serialized message in bytes
      */
     public int messageSize() {
-        return TransactionOutPoint.BYTES +
+        return TransactionOutPointReference.BYTES +
                 Buffers.lengthPrefixedBytesSize(scriptBytes) +
                 4; // sequence
     }
@@ -286,7 +300,7 @@ public class TransactionInput {
      * @return The previous output transaction reference, as an OutPoint structure.  This contains the 
      * data needed to connect to the output of the transaction we're gathering coins from.
      */
-    public TransactionOutPoint getOutpoint() {
+    public TransactionOutPointReference getOutpoint() {
         return outpoint;
     }
 
@@ -402,7 +416,7 @@ public class TransactionInput {
 
     /**
      * Alias for getOutpoint().getConnectedRedeemData(keyBag)
-     * @see TransactionOutPoint#getConnectedRedeemData(KeyBag)
+     * @see TransactionOutPointReference#getConnectedRedeemData(KeyBag)
      */
     @Nullable
     public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
@@ -446,7 +460,8 @@ public class TransactionInput {
             return ConnectionResult.NO_SUCH_TX;
         TransactionOutput out = transaction.getOutput(outpoint);
         if (!out.isAvailableForSpending()) {
-            if (getParentTransaction().equals(outpoint.getFromTx())) {
+            if (outpoint instanceof TransactionOutPointReference.TransactionConnectedOutPoint &&
+                    getParentTransaction().equals(((TransactionOutPointReference.TransactionConnectedOutPoint) outpoint).fromTx())) {
                 // Already connected.
                 return ConnectionResult.SUCCESS;
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
@@ -474,13 +489,13 @@ public class TransactionInput {
      * @return true if the disconnection took place, false if it was not connected.
      */
     public boolean disconnect() {
-        TransactionOutput connectedOutput = outpoint.getConnectedOutput();
-        if (connectedOutput != null) {
-            outpoint = outpoint.disconnectOutput();
-        } else {
+        if (!(outpoint instanceof TransactionOutPointReference.HasConnectedOutput)) {
             // The outpoint is not connected, do nothing.
             return false;
         }
+
+        TransactionOutput connectedOutput = ((TransactionOutPointReference.HasConnectedOutput) outpoint).connectedOutput();
+        outpoint = outpoint.disconnectOutput();
 
         if (connectedOutput.getSpentBy() == this) {
             // The outpoint was connected to an output, disconnect the output.
@@ -520,10 +535,14 @@ public class TransactionInput {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify() throws VerificationException {
-        final Transaction fromTx = getOutpoint().getFromTx();
-        Objects.requireNonNull(fromTx, "Not connected");
-        final TransactionOutput output = fromTx.getOutput(outpoint);
-        verify(output);
+        TransactionOutPointReference outPointRef = getOutpoint();
+        if (outPointRef instanceof TransactionOutPointReference.HasConnectedOutput) {
+            TransactionOutPointReference.HasConnectedOutput outPoint = (TransactionOutPointReference.TransactionConnectedOutPoint) outPointRef;
+            final TransactionOutput output = outPoint.connectedOutput();
+            verify(output);
+        } else {
+            throw new VerificationException("TransactionOutPointReference.TransactionConnectedOutPoint is not a TransactionOutPointReference");
+        }
     }
 
     /**
@@ -553,7 +572,12 @@ public class TransactionInput {
      */
     @Nullable
     public TransactionOutput getConnectedOutput() {
-        return getOutpoint().getConnectedOutput();
+        TransactionOutPointReference outPointRef = getOutpoint();
+        if (outPointRef instanceof TransactionOutPointReference.HasConnectedOutput) {
+            return ((TransactionOutPointReference.HasConnectedOutput) outPointRef).connectedOutput();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -563,7 +587,10 @@ public class TransactionInput {
      */
     @Nullable
     public Transaction getConnectedTransaction() {
-        return getOutpoint().getFromTx();
+        TransactionOutPointReference outPointRef = getOutpoint();
+        return (outPointRef instanceof TransactionOutPointReference.TransactionConnectedOutPoint)
+                ? ((TransactionOutPointReference.TransactionConnectedOutPoint) outPointRef).fromTx()
+                : null;
     }
 
     /**

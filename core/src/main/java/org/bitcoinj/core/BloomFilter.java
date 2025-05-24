@@ -265,7 +265,7 @@ public class BloomFilter implements Message {
     }
 
     /** Inserts the given transaction outpoint. */
-    public synchronized void insert(TransactionOutPoint outpoint) {
+    public synchronized void insert(TransactionOutPointReference outpoint) {
         insert(outpoint.serialize());
     }
 

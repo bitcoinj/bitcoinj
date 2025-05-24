@@ -776,10 +776,10 @@ public class Transaction implements Message {
                         s.append(in.getWitness());
                         s.append('\n');
                     }
-                    final TransactionOutPoint outpoint = in.getOutpoint();
-                    final TransactionOutput connectedOutput = outpoint.getConnectedOutput();
+                    final TransactionOutPointReference outpoint = in.getOutpoint();
                     s.append(indent).append("        ");
-                    if (connectedOutput != null) {
+                    if (outpoint instanceof TransactionOutPointReference.HasConnectedOutput) {
+                        final TransactionOutput connectedOutput = ((TransactionOutPointReference.HasConnectedOutput) outpoint).connectedOutput();
                         Script scriptPubKey = connectedOutput.getScriptPubKey();
                         ScriptType scriptType = scriptPubKey.getScriptType();
                         if (scriptType != null) {
@@ -903,7 +903,7 @@ public class Transaction implements Message {
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
         TransactionInput input = addInput(new TransactionInput(this, script.program(),
-                TransactionOutPoint.of(spendTxHash, outputIndex)));
+                TransactionOutPointReference.of(spendTxHash, outputIndex)));
         invalidateCachedTxIds();
         return input;
     }
@@ -923,7 +923,7 @@ public class Transaction implements Message {
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey,
+    public TransactionInput addSignedInput(TransactionOutPointReference prevOut, Script scriptPubKey, Coin amount, ECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), () ->
@@ -967,10 +967,10 @@ public class Transaction implements Message {
      * @param anyoneCanPay anyone-can-pay hashing
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)}
+     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPointReference, Script, Coin, ECKey, SigHash, boolean)}
      */
     @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
+    public TransactionInput addSignedInput(TransactionOutPointReference prevOut, Script scriptPubKey, ECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, null, sigKey, sigHash, anyoneCanPay);
     }
@@ -986,7 +986,7 @@ public class Transaction implements Message {
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
+    public TransactionInput addSignedInput(TransactionOutPointReference prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, amount, sigKey, SigHash.ALL, false);
     }
 
@@ -996,10 +996,10 @@ public class Transaction implements Message {
      * @param sigKey The signing key
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey)}
+     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPointReference, Script, Coin, ECKey)}
      */
     @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
+    public TransactionInput addSignedInput(TransactionOutPointReference prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, null, sigKey);
     }
 
@@ -1017,7 +1017,7 @@ public class Transaction implements Message {
     /**
      * Adds an input that points to the given output and contains a valid signature for it, calculated using the
      * signing key.
-     * @see Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)
+     * @see Transaction#addSignedInput(TransactionOutPointReference, Script, Coin, ECKey, SigHash, boolean)
      * @param output output to sign and use as input
      * @param sigKey The signing key
      * @param sigHash enum specifying how the transaction hash is calculated
@@ -1620,7 +1620,7 @@ public class Transaction implements Message {
      * @param outpoint outpoint referring to the output to get
      * @return output referred to by the given outpoint
      */
-    public TransactionOutput getOutput(TransactionOutPoint outpoint) {
+    public TransactionOutput getOutput(TransactionOutPointReference outpoint) {
         checkArgument(outpoint.hash().equals(this.getTxId()), () ->
                 "outpoint points to a different transaction");
         return getOutput(outpoint.index());
@@ -1856,7 +1856,7 @@ public class Transaction implements Message {
         if (tx.messageSize() > Block.MAX_BLOCK_SIZE)
             throw new VerificationException.LargerThanMaxBlockSize();
 
-        HashSet<TransactionOutPoint> outpoints = new HashSet<>();
+        HashSet<TransactionOutPointReference> outpoints = new HashSet<>();
         for (TransactionInput input : tx.inputs) {
             if (outpoints.contains(input.getOutpoint()))
                 throw new VerificationException.DuplicatedOutPoint();
