@@ -244,9 +244,9 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
         String s = addr == null ? "?" : addr.toString();
         if (e instanceof IOException) {
             // Short message for network errors
-            log.info(s + " - " + e.getMessage());
+            log.info("{} - {}", s, e.getMessage());
         } else {
-            log.warn(s + " - ", e);
+            log.warn("Exception communicating with Peer at {}", s, e);
             Thread.UncaughtExceptionHandler handler = Threading.uncaughtExceptionHandler;
             if (handler != null)
                 handler.uncaughtException(Thread.currentThread(), e);
