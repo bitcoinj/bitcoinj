@@ -71,25 +71,27 @@ public class TransactionInputTest {
         w.completeTx(req);
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
-        TransactionOutPoint txOutPoint = txInToDisconnect.getOutpoint();
+        TransactionOutPointReference txOutPointRef = txInToDisconnect.getOutpoint();
+        
+        assertTrue(txOutPointRef instanceof TransactionOutPointReference.TransactionConnectedOutPoint);
+        TransactionOutPointReference.TransactionConnectedOutPoint txOutPoint = (TransactionOutPointReference.TransactionConnectedOutPoint) txOutPointRef;
 
         // Before disconnect, txOutPoint getFromTx() references tx1 and
         // getConnectedOutput() references the correct indexed output of tx1
-        assertEquals(tx1, txOutPoint.getFromTx());
-        assertEquals(tx1.getOutput(txOutPoint.index()), txOutPoint.getConnectedOutput());
+        assertEquals(tx1, txOutPoint.fromTx());
+        assertEquals(tx1.getOutput(txOutPoint.index()), txOutPoint.connectedOutput());
 
         // Disconnect the input from tx1
         txInToDisconnect.disconnect();
-        TransactionOutPoint newTxOutPoint = txInToDisconnect.getOutpoint();
+        TransactionOutPointReference newTxOutPoint = txInToDisconnect.getOutpoint();
 
         // Since TransactionOutPoint is immutable, we expect a new TransactionOutPoint object, but since equals() only
         // compares index and hash, equals will return true.
         assertNotSame(txOutPoint, newTxOutPoint);
         assertEquals(txOutPoint, newTxOutPoint);
 
-        // After disconnect, newTxOutPoint getFromTx() and getConnectedOutput() are both null
-        assertNull(newTxOutPoint.getFromTx());
-        assertNull(newTxOutPoint.getConnectedOutput());
+        // After disconnect, newTxOutPoint is unconnected
+        assertTrue(newTxOutPoint instanceof TransactionOutPointReference.TransactionOutPoint);
     }
 
     @Test
@@ -120,27 +122,27 @@ public class TransactionInputTest {
         w.completeTx(SendRequest.forTx(tx2));
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
-        TransactionOutPoint txOutPoint = txInToDisconnect.getOutpoint();
+        TransactionOutPointReference txOutPointRef = txInToDisconnect.getOutpoint();
 
         // Before disconnect, txOutPoint getFromTx() returns null and
         // getConnectedOutput() references the UTXO
-        assertNull(txOutPoint.getFromTx());
-        assertNotNull(txOutPoint.getConnectedOutput());
-        assertEquals(utxo.getHash(), txOutPoint.getConnectedOutput().getParentTransactionHash());
-        assertEquals(utxo.getIndex(), txOutPoint.getConnectedOutput().getIndex());
+        assertTrue(txOutPointRef instanceof TransactionOutPointReference.OutputConnectedOutPoint);
+        TransactionOutPointReference.OutputConnectedOutPoint txOutPoint = (TransactionOutPointReference.OutputConnectedOutPoint) txOutPointRef;
+
+        assertEquals(utxo.getHash(), txOutPoint.connectedOutput().getParentTransactionHash());
+        assertEquals(utxo.getIndex(), txOutPoint.connectedOutput().getIndex());
 
         // Disconnect the input from its UTXO
         txInToDisconnect.disconnect();
-        TransactionOutPoint newTxOutPoint = txInToDisconnect.getOutpoint();
+        TransactionOutPointReference newTxOutPoint = txInToDisconnect.getOutpoint();
 
         // Since TransactionOutPoint is immutable, we expect a new TransactionOutPoint object, but since equals() only
         // compares index and hash, equals will return true.
         assertNotSame(txOutPoint, newTxOutPoint);
         assertEquals(txOutPoint, newTxOutPoint);
 
-        // After disconnect, newTxOutPoint getFromTx() and getConnectedOutput() are both null
-        assertNull(newTxOutPoint.getFromTx());
-        assertNull(newTxOutPoint.getConnectedOutput());
+        // After disconnect, newTxOutPoint is unconnected
+        assertTrue(newTxOutPoint instanceof TransactionOutPointReference.TransactionOutPoint);
     }
 
     @Test
@@ -167,13 +169,13 @@ public class TransactionInputTest {
         return Stream.generate(() -> {
             byte[] randomBytes = new byte[100];
             random.nextBytes(randomBytes);
-            return new TransactionInput(parent, randomBytes, TransactionOutPoint.UNCONNECTED,
+            return new TransactionInput(parent, randomBytes, TransactionOutPointReference.UNCONNECTED,
                     Coin.ofSat(Math.abs(random.nextLong())));
         }).limit(10).iterator();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void negativeValue() {
-        new TransactionInput(new Transaction(), new byte[0], TransactionOutPoint.UNCONNECTED, Coin.ofSat(-1));
+        new TransactionInput(new Transaction(), new byte[0], TransactionOutPointReference.UNCONNECTED, Coin.ofSat(-1));
     }
 }

@@ -198,7 +198,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         TestBlocks.solve(rollingBlock);
         chain.add(rollingBlock);
         TransactionOutput spendableOutput = rollingBlock.transaction(0).getOutput(0);
-        TransactionOutPoint transactionOutPoint = spendableOutput.getOutPointFor();
+        TransactionOutPointReference transactionOutPoint = spendableOutput.getOutPointFor();
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = TestBlocks.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
@@ -275,7 +275,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.transaction(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
-        TransactionOutPoint spendableOutputPoint = spendableOutput.getOutPointFor();
+        TransactionOutPointReference spendableOutputPoint = spendableOutput.getOutPointFor();
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = TestBlocks.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
@@ -329,7 +329,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.transaction(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
-        TransactionOutPoint spendableOutPoint = TransactionOutPoint.of(transaction.getTxId(), 0);
+        TransactionOutPointReference spendableOutPoint = TransactionOutPointReference.of(transaction.getTxId(), 0);
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = TestBlocks.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);

@@ -39,7 +39,6 @@ import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -47,7 +46,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Iterator;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -176,7 +174,7 @@ public class TransactionTest {
 
         // add fake transaction input
         TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().program(),
-                TransactionOutPoint.of(Sha256Hash.ZERO_HASH, 0));
+                TransactionOutPointReference.of(Sha256Hash.ZERO_HASH, 0));
         tx.addInput(input);
         length += input.messageSize();
 
@@ -214,7 +212,7 @@ public class TransactionTest {
         ECKey fromKey = ECKey.random();
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        TransactionOutPoint outPoint = TransactionOutPoint.of(utxo_id, 0);
+        TransactionOutPointReference outPoint = TransactionOutPointReference.of(utxo_id, 0);
         TransactionOutput output = new TransactionOutput(null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
@@ -237,7 +235,7 @@ public class TransactionTest {
         ECKey fromKey = ECKey.random();
         Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        TransactionOutPoint outPoint = TransactionOutPoint.of(utxo_id, 0);
+        TransactionOutPointReference outPoint = TransactionOutPointReference.of(utxo_id, 0);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 
@@ -509,7 +507,7 @@ public class TransactionTest {
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
         Transaction tx = FakeTxBuilder.createFakeTx(TESTNET.network());
-        TransactionInput ti = new TransactionInput(tx, new byte[0], TransactionOutPoint.UNCONNECTED) {
+        TransactionInput ti = new TransactionInput(tx, new byte[0], TransactionOutPointReference.UNCONNECTED) {
             @Override
             public Script getScriptSig() throws ScriptException {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "");
@@ -624,7 +622,7 @@ public class TransactionTest {
         Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
         Block genesis = TESTNET.getGenesisBlock();
         Block block1 = TestBlocks.createNextBlock(genesis, ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET),
-                    genesis.transaction(0).getOutput(0).getOutPointFor());
+                    genesis.transaction(0).getOutput(0).getOutPointFor().disconnectOutput());
 
         final Transaction tx = block1.transaction(1);
         final Sha256Hash txHash = tx.getTxId();
@@ -708,7 +706,7 @@ public class TransactionTest {
         VarInt zero = VarInt.of(0);
         VarInt one = VarInt.of(1);
         VarInt huge = VarInt.of(Integer.MAX_VALUE);
-        TransactionInput in = new TransactionInput(null, new byte[0], TransactionOutPoint.UNCONNECTED);
+        TransactionInput in = new TransactionInput(null, new byte[0], TransactionOutPointReference.UNCONNECTED);
         // construct segwit transaction with one input and its witness with HUGE push count
         ByteBuffer buf = ByteBuffer.allocate(4 + 2 +
                 one.getSizeInBytes() + in.messageSize() + zero.getSizeInBytes() + huge.getSizeInBytes() + 4);

@@ -22,7 +22,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
@@ -417,11 +416,12 @@ public class TransactionOutput {
     }
 
     /**
-     * Returns a new {@link TransactionOutPoint}, which is essentially a structure pointing to this output.
+     * Returns a new {@link TransactionOutPointReference}, which is essentially a structure pointing to this output.
      * Requires that this output is not detached.
      */
-    public TransactionOutPoint getOutPointFor() {
-        return TransactionOutPoint.from(getParentTransaction(), getIndex());
+    public TransactionOutPointReference.TransactionConnectedOutPoint getOutPointFor() {
+        checkState(parent != null);
+        return TransactionOutPointReference.from(getParentTransaction(), getIndex());
     }
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */

@@ -57,7 +57,7 @@ import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.core.TransactionConfidence.Listener;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutPointReference;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
@@ -2134,7 +2134,7 @@ public class Wallet extends BaseTaggableObject
         checkState(lock.isHeldByCurrentThread());
         if (tx.isCoinBase()) return new HashSet<>();
         // Compile a set of outpoints that are spent by tx.
-        HashSet<TransactionOutPoint> outpoints = new HashSet<>();
+        HashSet<TransactionOutPointReference> outpoints = new HashSet<>();
         for (TransactionInput input : tx.getInputs()) {
             outpoints.add(input.getOutpoint());
         }
@@ -2146,7 +2146,7 @@ public class Wallet extends BaseTaggableObject
             for (TransactionInput input : p.getInputs()) {
                 // This relies on the fact that TransactionOutPoint equality is defined at the protocol not object
                 // level - outpoints from two different inputs that point to the same output compare the same.
-                TransactionOutPoint outpoint = input.getOutpoint();
+                TransactionOutPointReference outpoint = input.getOutpoint();
                 if (outpoints.contains(outpoint)) {
                     // It does, it's a double spend against the candidates, which makes it relevant.
                     doubleSpendTxns.add(p);
@@ -4970,7 +4970,7 @@ public class Wallet extends BaseTaggableObject
 
     //region Bloom filtering
 
-    private final List<TransactionOutPoint> bloomOutPoints = new ArrayList<>();
+    private final List<TransactionOutPointReference> bloomOutPoints = new ArrayList<>();
     // Used to track whether we must automatically begin/end a filter calculation and calc outpoints/take the locks.
     private final AtomicInteger bloomFilterGuard = new AtomicInteger(0);
 
@@ -4989,7 +4989,7 @@ public class Wallet extends BaseTaggableObject
         bloomOutPoints.clear();
         // Search unspent, spent, and pending for all TransactionOutputs that are bloom filterable and
         // then collect a list of the corresponding TransactionOutPoints.
-        List<TransactionOutPoint> outPoints = Stream.of(unspent.values(), spent.values(), pending.values())
+        List<TransactionOutPointReference> outPoints = Stream.of(unspent.values(), spent.values(), pending.values())
                 .flatMap(Collection::stream)
                 .flatMap(tx -> tx.getOutputs().stream())
                 .filter(this::isTxOutputBloomFilterable)
@@ -5065,7 +5065,7 @@ public class Wallet extends BaseTaggableObject
                     }
                 }
             }
-            for (TransactionOutPoint point : bloomOutPoints)
+            for (TransactionOutPointReference point : bloomOutPoints)
                 filter.insert(point);
             return filter;
         } finally {
@@ -5618,7 +5618,7 @@ public class Wallet extends BaseTaggableObject
             // have already got stuck double spends in their wallet due to the Bloom-filtering block reordering
             // bug that was fixed in 0.10, thus, making a re-key transaction depend on those would cause it to
             // never confirm at all.
-            List<TransactionOutPoint> excluded = others.stream()
+            List<TransactionOutPointReference> excluded = others.stream()
                     .flatMap(tx -> tx.getInputs().stream())
                     .map(TransactionInput::getOutpoint)
                     .collect(StreamUtils.toUnmodifiableList());

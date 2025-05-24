@@ -25,7 +25,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutPointReference;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.VerificationException;
@@ -196,7 +196,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private TransactionalFullBlockMap fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
-    private TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
+    private TransactionalHashMap<TransactionOutPointReference.TransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private final int fullStoreDepth;
@@ -305,19 +305,19 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Nullable
     public synchronized UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        return transactionOutputMap.get(new TransactionOutPoint(index, hash));
+        return transactionOutputMap.get(TransactionOutPointReference.TransactionOutPoint.of(hash, index));
     }
 
     @Override
     public synchronized void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        transactionOutputMap.put(new TransactionOutPoint(out.getIndex(), out.getHash()), out);
+        transactionOutputMap.put(TransactionOutPointReference.TransactionOutPoint.of(out.getHash(), out.getIndex()), out);
     }
 
     @Override
     public synchronized void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        if (transactionOutputMap.remove(new TransactionOutPoint(out.getIndex(), out.getHash())) == null)
+        if (transactionOutputMap.remove(TransactionOutPointReference.TransactionOutPoint.of(out.getHash(), out.getIndex())) == null)
             throw new BlockStoreException("Tried to remove a UTXO from MemoryFullPrunedBlockStore that it didn't have!");
     }
 
