@@ -11,7 +11,7 @@ version = '0.18-SNAPSHOT'
 dependencies {
     api project(':bitcoinj-base')
     api 'org.bouncycastle:bcprov-jdk15to18:1.80'
-    api 'com.google.guava:guava:33.4.4-android'
+    api 'com.google.guava:guava:33.4.8-android'
     api 'com.google.protobuf:protobuf-javalite:4.30.2'
 
     implementation 'org.jspecify:jspecify:1.0.0'
@@ -25,20 +25,6 @@ dependencies {
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.18.1'
     testImplementation 'org.hamcrest:hamcrest-library:3.0'
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
-}
-
-// Prevent newer Gradle from switching to JRE version of Guava
-def gradleVersionTargetJVM = GradleVersion.version("7.0")
-if (GradleVersion.current() > gradleVersionTargetJVM) {
-    dependencies.constraints {
-        implementation("com.google.guava:guava") {
-            attributes {
-                attribute(
-                        TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-                        objects.named(TargetJvmEnvironment, TargetJvmEnvironment.ANDROID))
-            }
-        }
-    }
 }
 
 tasks.withType(JavaCompile) {
