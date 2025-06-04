@@ -9,7 +9,7 @@ version = '0.18-SNAPSHOT'
 
 dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.16'
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'org.jspecify:jspecify:1.0.0'
 
     testImplementation project(':bitcoinj-test-support')
     testImplementation 'junit:junit:4.13.2'
