@@ -164,10 +164,10 @@ public class ECKey implements EncryptableItem {
     // not have this field.
     @Nullable private Instant creationTime = null;
 
-    protected KeyCrypter keyCrypter;
-    protected EncryptedData encryptedPrivateKey;
+    @Nullable protected KeyCrypter keyCrypter;
+    @Nullable protected EncryptedData encryptedPrivateKey;
 
-    private byte[] pubKeyHash;
+    private byte @Nullable [] pubKeyHash;
 
     /**
      * Generates an entirely random, new keypair.
@@ -1176,6 +1176,7 @@ public class ECKey implements EncryptableItem {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         checkState(encryptedPrivateKey != null, () ->
                 "this key is not encrypted");
+        Objects.requireNonNull(encryptedPrivateKey);
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
         if (unencryptedPrivateKey.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -1248,7 +1249,7 @@ public class ECKey implements EncryptableItem {
     }
 
     @Override
-    public Protos.Wallet.@Nullable EncryptionType getEncryptionType() {
+    public Protos.Wallet.EncryptionType getEncryptionType() {
         return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
     }
 
