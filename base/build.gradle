@@ -8,6 +8,7 @@ plugins {
 version = '0.18-SNAPSHOT'
 
 dependencies {
+    api 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.16'
     implementation 'org.jspecify:jspecify:1.0.0'
 
