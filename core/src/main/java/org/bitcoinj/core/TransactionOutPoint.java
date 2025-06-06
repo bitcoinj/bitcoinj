@@ -28,7 +28,7 @@ import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;

@@ -24,7 +24,7 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;

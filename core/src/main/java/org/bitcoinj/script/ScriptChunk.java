@@ -19,7 +19,7 @@ package org.bitcoinj.script;
 
 import org.bitcoinj.base.internal.ByteUtils;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -47,10 +47,9 @@ public class ScriptChunk {
      * For push operations, this is the vector to be pushed on the stack. For {@link ScriptOpCodes#OP_0}, the vector is
      * empty. Null for non-push operations.
      */
-    @Nullable
-    public final byte[] data;
+    public final byte @Nullable [] data;
 
-    public ScriptChunk(int opcode, @Nullable byte[] data) {
+    public ScriptChunk(int opcode, byte @Nullable [] data) {
         this.opcode = opcode;
         this.data = data;
     }
