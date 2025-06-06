@@ -21,7 +21,6 @@ package org.bitcoinj.base;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
 
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -113,7 +112,7 @@ public class LegacyAddress implements Address {
      * @throws AddressFormatException              if the given base58 doesn't parse or the checksum is invalid
      * @throws AddressFormatException.WrongNetwork if the given address is valid but for a different chain (e.g. testnet vs mainnet)
      */
-    public static LegacyAddress fromBase58(String base58, @Nonnull Network network)
+    public static LegacyAddress fromBase58(String base58, Network network)
             throws AddressFormatException, AddressFormatException.WrongNetwork {
         byte[] versionAndDataBytes = Base58.decodeChecked(base58);
         int version = versionAndDataBytes[0] & 0xFF;
