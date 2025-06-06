@@ -1,6 +1,6 @@
 /*
  * Copyright by the original author or authors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-/**
- * Transaction signers know how to calculate signatures over transactions in different contexts, for example, using
- * local private keys or fetching them from remote servers. The {@link org.bitcoinj.wallet.Wallet} class uses these
- * when sending money.
- */
 @NullMarked
-package org.bitcoinj.signers;
+package org.bitcoinj.base.internal;
 
 import org.jspecify.annotations.NullMarked;

@@ -21,7 +21,7 @@ import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.BufferOverflowException;
