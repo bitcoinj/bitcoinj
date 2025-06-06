@@ -30,7 +30,7 @@ import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.VerificationException;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

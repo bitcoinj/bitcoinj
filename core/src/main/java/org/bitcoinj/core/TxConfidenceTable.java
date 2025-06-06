@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.utils.Threading;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
