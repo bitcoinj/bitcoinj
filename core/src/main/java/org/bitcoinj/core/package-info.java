@@ -21,4 +21,7 @@
  * If what you're doing can be described as basic bitcoin tasks, the code is probably found here.
  * To learn more please consult the documentation on the website.
  */
+@NullMarked
 package org.bitcoinj.core;
+
+import org.jspecify.annotations.NullMarked;
