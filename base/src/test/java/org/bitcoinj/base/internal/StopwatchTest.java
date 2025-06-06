@@ -36,7 +36,8 @@ public class StopwatchTest {
 
     @Test
     public void toString_() {
-        stopwatch.toString();
+        String string = stopwatch.toString();
+        assertEquals("0 ms", string);
     }
 
     @Test
