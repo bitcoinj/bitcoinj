@@ -312,9 +312,7 @@ public class WalletProtobufSerializer {
         }
 
         if (tx.hasConfidence()) {
-            TransactionConfidence confidence = tx.getConfidence();
-            Protos.TransactionConfidence.Builder confidenceBuilder = Protos.TransactionConfidence.newBuilder();
-            writeConfidence(txBuilder, confidence, confidenceBuilder);
+            writeConfidence(tx, txBuilder);
         }
 
         Protos.Transaction.Purpose purpose;
@@ -356,9 +354,17 @@ public class WalletProtobufSerializer {
         }
     }
 
-    private static void writeConfidence(Protos.Transaction.Builder txBuilder,
-                                        TransactionConfidence confidence,
-                                        Protos.TransactionConfidence.Builder confidenceBuilder) {
+    // Write transaction confidence to the txBuilder
+    private static void writeConfidence(Transaction tx,
+                                        Protos.Transaction.Builder txBuilder) {
+        TransactionConfidence confidence = tx.getConfidence();
+        Protos.TransactionConfidence.Builder confidenceBuilder = Protos.TransactionConfidence.newBuilder();
+
+        // Since there is at most one TransactionConfidence per transaction, we can "safely" synchronize on it, so that
+        // we read a consistent set of properties.
+        // This should probably be refactored for clarity/safety. We don't want TransactionConfidence to
+        // have a dependency on ProtoBuf, but we could create a record-like state data object that could be read
+        // with a single method and then use it to initialize the ProtoBuf Protos.TransactionConfidence object.
         synchronized (confidence) {
             confidenceBuilder.setType(Protos.TransactionConfidence.Type.forNumber(confidence.getConfidenceType().getValue()));
             if (confidence.getConfidenceType() == ConfidenceType.BUILDING) {
