@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'org.beryx.jlink' version '3.1.1'
+}
+
+application {
+    mainClass = 'org.bitcoinj.examples.peermonitor.PeerMonitorFx'
+    mainModule = "org.bitcoinj.examples.peermonitor"
+}
+
+javafx {
+    version = '21.0.1'
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+dependencies {
+    implementation project(':bitcoinj-core')
+    implementation 'info.picocli:picocli:4.7.6'
+    implementation 'org.slf4j:slf4j-jdk14:2.0.13'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['--release', '17'])
+    options.compilerArgs << '-Xlint:deprecation'
+}
+
+javadoc.options.encoding = 'UTF-8'
+
+jlink {
+    options = ['--add-modules', 'org.slf4j.jul']
+}
+
