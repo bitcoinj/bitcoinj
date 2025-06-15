@@ -957,7 +957,7 @@ public class KeyChainGroup implements KeyBag {
     }
 
     /**
-     * <p>This method will upgrade the wallet along the following path: {@code Basic --> P2PKH --> P2WPKH}</p>
+     * <p>This method will upgrade the wallet along the following path: {@code P2PKH --> P2WPKH}</p>
      * <p>It won't skip any steps in that upgrade path because the user might be restoring from a backup and
      * still expects money on the P2PKH chain.</p>
      * <p>It will extract and reuse the seed from the current wallet, so that a fresh backup isn't required
