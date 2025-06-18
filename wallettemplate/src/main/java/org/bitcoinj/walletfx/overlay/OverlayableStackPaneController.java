@@ -15,7 +15,7 @@
  */
 package org.bitcoinj.walletfx.overlay;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;

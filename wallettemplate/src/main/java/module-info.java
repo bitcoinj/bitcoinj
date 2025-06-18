@@ -20,7 +20,7 @@ module wallettemplate {
     requires javafx.controls;
     requires javafx.fxml;
 
-    requires jakarta.annotation;
+    requires org.jspecify;
 
     requires org.slf4j;
     requires com.google.zxing;
