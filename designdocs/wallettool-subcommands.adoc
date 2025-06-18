@@ -1,4 +1,4 @@
-= WalletTool Conversion to PicoCLI Subcommands
+= WalletTool Conversion to Picocli Subcommands
 :toc: left
 :toclevels: 4
 
