@@ -16,7 +16,7 @@
 
 package org.bitcoinj.walletfx.controls;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
