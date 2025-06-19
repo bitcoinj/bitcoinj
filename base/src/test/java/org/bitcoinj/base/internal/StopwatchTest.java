@@ -36,7 +36,8 @@ public class StopwatchTest {
 
     @Test
     public void toString_() {
-        stopwatch.toString();
+        String string = stopwatch.toString();
+        assertTrue(string.endsWith(" ms"));
     }
 
     @Test
@@ -45,7 +46,7 @@ public class StopwatchTest {
     }
 
     @Test
-    public void addSubstract() {
+    public void addSubtract() {
         Instant i1 = Instant.now();
         Instant i2 = i1.plus(stopwatch.stop());
         Instant i3 = i2.minus(stopwatch);
