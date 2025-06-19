@@ -26,7 +26,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.DifficultyTransitions;
 import org.bitcoinj.core.NetworkParameters;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Parameters for Bitcoin-like networks.

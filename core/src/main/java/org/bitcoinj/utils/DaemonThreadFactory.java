@@ -16,8 +16,8 @@
 
 package org.bitcoinj.utils;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -34,7 +34,7 @@ public class DaemonThreadFactory implements ThreadFactory {
     }
 
     @Override
-    public Thread newThread(@Nonnull Runnable runnable) {
+    public Thread newThread(@NonNull Runnable runnable) {
         Thread thread = Executors.defaultThreadFactory().newThread(runnable);
         thread.setDaemon(true);
         if (name != null)

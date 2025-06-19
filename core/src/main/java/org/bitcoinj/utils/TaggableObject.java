@@ -18,7 +18,7 @@ package org.bitcoinj.utils;
 
 import com.google.protobuf.ByteString;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Map;
 
 /**

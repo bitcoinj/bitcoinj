@@ -19,7 +19,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
