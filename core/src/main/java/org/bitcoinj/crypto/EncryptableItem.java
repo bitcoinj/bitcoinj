@@ -18,7 +18,7 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.protobuf.wallet.Protos;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.Optional;
 
