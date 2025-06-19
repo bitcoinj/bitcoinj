@@ -1257,8 +1257,7 @@ public class ECKey implements EncryptableItem {
      * to be derived (for the HD key case).
      */
     @Override
-    @Nullable
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         if (hasPrivKey())
             return getPrivKeyBytes();
         else

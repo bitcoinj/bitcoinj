@@ -45,10 +45,9 @@ public class ScriptChunk {
      * For push operations, this is the vector to be pushed on the stack. For {@link ScriptOpCodes#OP_0}, the vector is
      * empty. Null for non-push operations.
      */
-    @Nullable
-    final byte[] data;
+    final byte @Nullable [] data;
 
-    public ScriptChunk(int opcode, @Nullable byte[] data) {
+    public ScriptChunk(int opcode, byte @Nullable [] data) {
         this.opcode = opcode;
         this.data = data;
     }

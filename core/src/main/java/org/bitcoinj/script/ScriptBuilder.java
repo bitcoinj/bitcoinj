@@ -352,7 +352,7 @@ public class ScriptBuilder {
      * Create a program that satisfies an OP_CHECKMULTISIG program, using pre-encoded signatures. 
      * Optionally, appends the script program bytes if spending a P2SH output.
      */
-    public static Script createMultiSigInputScriptBytes(List<byte[]> signatures, @Nullable byte[] multisigProgramBytes) {
+    public static Script createMultiSigInputScriptBytes(List<byte[]> signatures, byte @Nullable [] multisigProgramBytes) {
         checkArgument(signatures.size() <= 16);
         ScriptBuilder builder = new ScriptBuilder();
         builder.smallNum(0);  // Work around a bug in CHECKMULTISIG that is now a required part of the protocol.
