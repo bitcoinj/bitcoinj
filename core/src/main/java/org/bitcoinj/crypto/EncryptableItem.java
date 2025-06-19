@@ -32,8 +32,7 @@ public interface EncryptableItem {
     boolean isEncrypted();
 
     /** Returns the raw bytes of the item, if not encrypted, or null if encrypted or the secret is missing. */
-    @Nullable
-    byte[] getSecretBytes();
+    byte @Nullable [] getSecretBytes();
 
     /** Returns the initialization vector and encrypted secret bytes, or null if not encrypted. */
     @Nullable

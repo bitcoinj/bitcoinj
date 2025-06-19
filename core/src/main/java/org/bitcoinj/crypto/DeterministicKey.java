@@ -387,9 +387,8 @@ public class DeterministicKey extends ECKey {
         return findParentWithPrivKey() != null;
     }
 
-    @Nullable
     @Override
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         return priv != null ? getPrivKeyBytes() : null;
     }
 
