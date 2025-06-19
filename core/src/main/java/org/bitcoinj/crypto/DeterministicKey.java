@@ -28,7 +28,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -387,9 +387,8 @@ public class DeterministicKey extends ECKey {
         return findParentWithPrivKey() != null;
     }
 
-    @Nullable
     @Override
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         return priv != null ? getPrivKeyBytes() : null;
     }
 
@@ -477,6 +476,7 @@ public class DeterministicKey extends ECKey {
         }
         if (cursor == null)
             throw new KeyCrypterException("Neither this key nor its parents have an encrypted private key");
+        Objects.requireNonNull(cursor.encryptedPrivateKey);
         byte[] parentalPrivateKeyBytes = keyCrypter.decrypt(cursor.encryptedPrivateKey, aesKey);
         if (parentalPrivateKeyBytes.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -484,6 +484,7 @@ public class DeterministicKey extends ECKey {
         return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
     }
 
+    @Nullable
     private DeterministicKey findParentWithPrivKey() {
         DeterministicKey cursor = this;
         while (cursor != null) {
@@ -496,7 +497,7 @@ public class DeterministicKey extends ECKey {
     @Nullable
     private BigInteger findOrDerivePrivateKey() {
         DeterministicKey cursor = findParentWithPrivKey();
-        if (cursor == null)
+        if (cursor == null || cursor.priv == null)
             return null;
         return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
     }
@@ -537,6 +538,7 @@ public class DeterministicKey extends ECKey {
         final BigInteger key = findOrDerivePrivateKey();
         checkState(key != null, () ->
                 "private key bytes not available");
+        Objects.requireNonNull(key);
         return key;
     }
 

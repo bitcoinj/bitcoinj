@@ -66,7 +66,7 @@ import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -164,10 +164,10 @@ public class ECKey implements EncryptableItem {
     // not have this field.
     @Nullable private Instant creationTime = null;
 
-    protected KeyCrypter keyCrypter;
-    protected EncryptedData encryptedPrivateKey;
+    @Nullable protected KeyCrypter keyCrypter;
+    @Nullable protected EncryptedData encryptedPrivateKey;
 
-    private byte[] pubKeyHash;
+    private byte @Nullable [] pubKeyHash;
 
     /**
      * Generates an entirely random, new keypair.
@@ -1176,6 +1176,7 @@ public class ECKey implements EncryptableItem {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         checkState(encryptedPrivateKey != null, () ->
                 "this key is not encrypted");
+        Objects.requireNonNull(encryptedPrivateKey);
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
         if (unencryptedPrivateKey.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -1247,7 +1248,6 @@ public class ECKey implements EncryptableItem {
         return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes.length > 0;
     }
 
-    @Nullable
     @Override
     public Protos.Wallet.EncryptionType getEncryptionType() {
         return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
@@ -1258,8 +1258,7 @@ public class ECKey implements EncryptableItem {
      * to be derived (for the HD key case).
      */
     @Override
-    @Nullable
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         if (hasPrivKey())
             return getPrivKeyBytes();
         else

@@ -1,15 +1,17 @@
 import org.gradle.util.GradleVersion
+import net.ltgt.gradle.errorprone.CheckSeverity
 
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id "net.ltgt.errorprone" version "4.2.0"
 }
 
 version = '0.18-SNAPSHOT'
 
 dependencies {
+    api 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.16'
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
     testImplementation project(':bitcoinj-test-support')
     testImplementation 'junit:junit:4.13.2'
@@ -18,12 +20,20 @@ dependencies {
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.18.1'
     testImplementation 'org.hamcrest:hamcrest-library:3.0'
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
+
+    annotationProcessor "com.uber.nullaway:nullaway:0.12.7"
+    testAnnotationProcessor "com.uber.nullaway:nullaway:0.12.7"
+    errorprone "com.google.errorprone:error_prone_core:2.38.0"
 }
 
 tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '8'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
+    options.errorprone {
+        check("NullAway", CheckSeverity.ERROR)
+        option("NullAway:OnlyNullMarked")
+    }
 }
 
 javadoc.options.encoding = 'UTF-8'
