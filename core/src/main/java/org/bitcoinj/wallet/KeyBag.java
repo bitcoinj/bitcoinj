@@ -19,7 +19,7 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.crypto.ECKey;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A KeyBag is simply an object that can map public keys, their 160-bit hashes and script hashes to ECKey

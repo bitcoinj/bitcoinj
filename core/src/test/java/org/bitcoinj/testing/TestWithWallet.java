@@ -37,7 +37,7 @@ import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.BeforeClass;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;

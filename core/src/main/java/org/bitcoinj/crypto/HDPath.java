@@ -19,7 +19,7 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -374,7 +374,7 @@ public abstract class HDPath {
      * <p>
      * Where a letter {@code H} means hardened key. Spaces are ignored.
      */
-    public static HDPath parsePath(@Nonnull String path) {
+    public static HDPath parsePath(@NonNull String path) {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
         Optional<Prefix> prefix = parsedNodes.isEmpty() ? Optional.empty() : Prefix.of(parsedNodes.get(0));
 
