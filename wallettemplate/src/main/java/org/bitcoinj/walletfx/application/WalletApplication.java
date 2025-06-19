@@ -17,7 +17,7 @@
 package org.bitcoinj.walletfx.application;
 
 import com.google.common.util.concurrent.Service;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
