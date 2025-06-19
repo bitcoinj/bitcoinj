@@ -18,7 +18,7 @@ boolean hasGraalVM = GradleVersion.current() >= graalVMMinVersion
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'info.picocli:picocli:4.7.6'
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-jdk14:2.0.16'
     if (hasAnnotationProcessor) {
         annotationProcessor 'info.picocli:picocli-codegen:4.7.6'

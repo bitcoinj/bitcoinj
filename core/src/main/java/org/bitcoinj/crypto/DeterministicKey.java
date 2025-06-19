@@ -28,7 +28,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -387,9 +387,8 @@ public class DeterministicKey extends ECKey {
         return findParentWithPrivKey() != null;
     }
 
-    @Nullable
     @Override
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         return priv != null ? getPrivKeyBytes() : null;
     }
 
