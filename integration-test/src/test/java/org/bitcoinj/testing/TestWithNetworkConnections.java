@@ -49,7 +49,7 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;

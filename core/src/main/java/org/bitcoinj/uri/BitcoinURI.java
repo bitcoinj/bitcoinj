@@ -23,8 +23,8 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Address;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -116,7 +116,7 @@ public class BitcoinURI {
      * @param network The network the URI is from
      * @throws BitcoinURIParseException If the input fails Bitcoin URI syntax and semantic checks.
      */
-    public static BitcoinURI of(String uri, @Nonnull Network network) throws BitcoinURIParseException {
+    public static BitcoinURI of(String uri, @NonNull Network network) throws BitcoinURIParseException {
         return new BitcoinURI(uri, Objects.requireNonNull(network));
     }
 

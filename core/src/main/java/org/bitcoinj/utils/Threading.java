@@ -22,7 +22,7 @@ import org.bitcoinj.base.internal.PlatformUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -80,8 +80,7 @@ public class Threading {
      * bitcoinj library code is run, setting it after you started network traffic and other forms of processing
      * may result in the change not taking effect.
      */
-    @Nullable
-    public static volatile Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
+    public static volatile Thread.@Nullable UncaughtExceptionHandler uncaughtExceptionHandler;
 
     public static class UserThread extends Thread implements Executor {
         private static final Logger log = LoggerFactory.getLogger(UserThread.class);

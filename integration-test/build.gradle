@@ -6,8 +6,8 @@ plugins {
 dependencies {
     implementation project(':bitcoinj-core')
     implementation project(':bitcoinj-examples')
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
+    testImplementation 'org.jspecify:jspecify:1.0.0'
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.11.4"

@@ -24,7 +24,7 @@ import org.bitcoinj.core.Peer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
