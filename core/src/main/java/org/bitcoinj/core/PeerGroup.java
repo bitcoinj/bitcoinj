@@ -19,7 +19,6 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Network;
@@ -1092,9 +1091,10 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     // For testing only
+    private static final Runnable NO_OP = () -> {};
     void waitForJobQueue() {
         try {
-            InternalUtils.getUninterruptibly(executor.submit(Runnables.doNothing()));
+            InternalUtils.getUninterruptibly(executor.submit(NO_OP));
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
