@@ -81,14 +81,14 @@ public class Threading {
      */
     public static volatile Thread.@Nullable UncaughtExceptionHandler uncaughtExceptionHandler;
 
-    public static class UserThread extends Thread implements Executor {
+    private static class UserThread extends Thread implements Executor {
         private static final Logger log = LoggerFactory.getLogger(UserThread.class);
         // 10,000 pending tasks is entirely arbitrary and may or may not be appropriate for the device we're
         // running on.
-        public static int WARNING_THRESHOLD = 10000;
+        private static final int WARNING_THRESHOLD = 10000;
         private final BlockingQueue<Runnable> tasks;
 
-        public UserThread() {
+        private UserThread() {
             super("bitcoinj user thread");
             setDaemon(true);
             tasks = new LinkedBlockingQueue<>();
