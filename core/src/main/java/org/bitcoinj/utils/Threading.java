@@ -156,6 +156,7 @@ public class Threading {
             return factory.newReentrantLock(name);
     }
 
+    @Deprecated
     public static void warnOnLockCycles() {
         setPolicy(CycleDetectingLockFactory.Policies.WARN);
     }
@@ -164,15 +165,17 @@ public class Threading {
         setPolicy(CycleDetectingLockFactory.Policies.THROW);
     }
 
+    @Deprecated
     public static void ignoreLockCycles() {
         setPolicy(CycleDetectingLockFactory.Policies.DISABLED);
     }
 
-    public static void setPolicy(CycleDetectingLockFactory.Policy policy) {
+    private static void setPolicy(CycleDetectingLockFactory.Policy policy) {
         Threading.policy = policy;
         factory = CycleDetectingLockFactory.newInstance(policy);
     }
 
+    @Deprecated
     public static CycleDetectingLockFactory.Policy getPolicy() {
         return policy;
     }
@@ -185,8 +188,7 @@ public class Threading {
 
     /** A caching thread pool that creates daemon threads, which won't keep the JVM alive waiting for more work. */
     public static ExecutorService THREAD_POOL = Executors.newCachedThreadPool(r -> {
-        Thread t = new Thread(r);
-        t.setName("Threading.THREAD_POOL worker");
+        Thread t = new Thread(r, "Threading.THREAD_POOL worker");
         t.setDaemon(true);
         return t;
     });
