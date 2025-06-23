@@ -67,7 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import org.jspecify.annotations.Nullable;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -140,7 +140,7 @@ public class WalletTool implements Callable<Integer> {
             "                         --no-pki disables pki verification for payment requests.%n" +
             "  encrypt              Requires --password and uses it to encrypt the wallet in place.%n" +
             "  decrypt              Requires --password and uses it to decrypt the wallet in place.%n" +
-            "  upgrade              Upgrade deterministic wallets to the given script type.%n" +
+            "  upgrade              Upgrade basic or deterministic wallets to deterministic wallets of the given script type.%n" +
             "                       If --output-script-type is present, use that as the upgrade target.%n" +
             "  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it.%n" +
             "                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree%n" +
@@ -453,28 +453,28 @@ public class WalletTool implements Callable<Integer> {
         return ByteString.copyFrom(ByteUtils.formatHex(bytes.toByteArray()).getBytes());
     }
 
-    private void upgrade() {
+    private int upgrade() {
         DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
-        if (activeKeyChain == null) {
-            System.err.println("Basic keychains cannot be upgraded.");
-            return;
-        }
-        ScriptType currentOutputScriptType = activeKeyChain.getOutputScriptType();
+        ScriptType currentOutputScriptType = activeKeyChain != null ? activeKeyChain.getOutputScriptType() : null;
         if (!wallet.isDeterministicUpgradeRequired(outputScriptType)) {
-            System.err.println("No upgrade from " + currentOutputScriptType + " to " + outputScriptType);
-            return;
+            System.err
+                    .println("No upgrade from " + (currentOutputScriptType != null ? currentOutputScriptType : "basic")
+                            + " to " + outputScriptType);
+            return 1;
         }
         AesKey aesKey = null;
         if (wallet.isEncrypted()) {
             aesKey = passwordToKey(true);
             if (aesKey == null)
-                return;
+                return 1;
         }
         wallet.upgradeToDeterministic(outputScriptType, aesKey);
-        System.out.println("Upgraded from " + currentOutputScriptType + " to " + outputScriptType);
+        System.out.println("Upgraded from " + (currentOutputScriptType != null ? currentOutputScriptType : "basic")
+                + " to " + outputScriptType);
+        return 0;
     }
 
-    private void rotate() throws BlockStoreException {
+    private int rotate() throws BlockStoreException {
         setup();
         peerGroup.start();
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
@@ -490,43 +490,47 @@ public class WalletTool implements Callable<Integer> {
         if (wallet.isEncrypted()) {
             aesKey = passwordToKey(true);
             if (aesKey == null)
-                return;
+                return 1;
         }
         wallet.doMaintenance(aesKey, true).join();
+        return 0;
     }
 
-    private void encrypt() {
+    private int encrypt() {
         if (password == null) {
             System.err.println("You must provide a --password");
-            return;
+            return 1;
         }
         if (wallet.isEncrypted()) {
             System.err.println("This wallet is already encrypted.");
-            return;
+            return 1;
         }
         wallet.encrypt(password);
+        return 0;
     }
 
-    private void decrypt() {
+    private int decrypt() {
         if (password == null) {
             System.err.println("You must provide a --password");
-            return;
+            return 1;
         }
         if (!wallet.isEncrypted()) {
             System.err.println("This wallet is not encrypted.");
-            return;
+            return 1;
         }
         try {
             wallet.decrypt(password);
         } catch (KeyCrypterException e) {
             System.err.println("Password incorrect.");
+            return 1;
         }
+        return 0;
     }
 
-    private void addAddr() {
+    private int addAddr() {
         if (addrStr == null) {
             System.err.println("You must specify an --addr to watch.");
-            return;
+            return 1;
         }
         try {
             Address address = LegacyAddress.fromBase58(addrStr, net);
@@ -537,6 +541,7 @@ public class WalletTool implements Callable<Integer> {
         } catch (AddressFormatException e) {
             System.err.println("Could not parse given address, or wrong network: " + addrStr);
         }
+        return 0;
     }
 
     private void send(CoinSelector coinSelector, List<String> outputs, Coin feePerVkb, String lockTimeStr,
@@ -748,10 +753,11 @@ public class WalletTool implements Callable<Integer> {
         return future;
     }
 
-    private void reset() {
+    private int reset() {
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
         saveWallet(walletFile);
+        return 0;
     }
 
     // Sets up all objects needed for network communication but does not bring up the peers.
@@ -805,7 +811,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void syncChain() {
+    private int syncChain() {
         try {
             setup();
             int startTransactions = wallet.getTransactions(true).size();
@@ -825,7 +831,9 @@ public class WalletTool implements Callable<Integer> {
         } catch (BlockStoreException e) {
             System.err.println("Error reading block chain file " + chainFile + ": " + e.getMessage());
             e.printStackTrace();
+            return 1;
         }
+        return 0;
     }
 
     private void shutdown() {
@@ -841,12 +849,12 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void createWallet(Network network, File walletFile) throws IOException {
+    private int createWallet(Network network, File walletFile) throws IOException {
         KeyChainGroupStructure keyChainGroupStructure = KeyChainGroupStructure.BIP32;
 
         if (walletFile.exists() && !force) {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
-            return;
+            return 1;
         }
         Instant creationTime = getCreationTime().orElse(MnemonicCode.BIP39_STANDARDISATION_TIME);
         if (seedStr != null) {
@@ -859,13 +867,13 @@ public class WalletTool implements Callable<Integer> {
                 seed.check();
             } catch (MnemonicException.MnemonicLengthException e) {
                 System.err.println("The seed did not have 12 words in, perhaps you need quotes around it?");
-                return;
+                return 1;
             } catch (MnemonicException.MnemonicWordException e) {
                 System.err.println("The seed contained an unrecognised word: " + e.badWord);
-                return;
+                return 1;
             } catch (MnemonicException.MnemonicChecksumException e) {
                 System.err.println("The seed did not pass checksumming, perhaps one of the words is wrong?");
-                return;
+                return 1;
             } catch (MnemonicException e) {
                 // not reached - all subclasses handled above
                 throw new RuntimeException(e);
@@ -879,6 +887,7 @@ public class WalletTool implements Callable<Integer> {
         if (password != null)
             wallet.encrypt(password);
         wallet.saveToFile(walletFile);
+        return 0;
     }
 
     private List<String> splitMnemonic(String seedStr) {
@@ -898,7 +907,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void addKey() {
+    private int addKey() {
         ECKey key;
         Optional<Instant> creationTime = getCreationTime();
         if (privKeyStr != null) {
@@ -909,7 +918,7 @@ public class WalletTool implements Callable<Integer> {
                 byte[] decode = parseAsHexOrBase58(privKeyStr);
                 if (decode == null) {
                     System.err.println("Could not understand --privkey as either WIF, hex or base58: " + privKeyStr);
-                    return;
+                    return 1;
                 }
                 key = ECKey.fromPrivate(ByteUtils.bytesToBigInteger(decode));
             }
@@ -924,23 +933,23 @@ public class WalletTool implements Callable<Integer> {
             creationTime.ifPresentOrElse(key::setCreationTime, key::clearCreationTime);
         } else {
             System.err.println("Either --privkey or --pubkey must be specified.");
-            return;
+            return 1;
         }
         if (wallet.hasKey(key)) {
             System.err.println("That key already exists in this wallet.");
-            return;
+            return 1;
         }
         try {
             if (wallet.isEncrypted()) {
                 AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
-                    return;   // Error message already printed.
+                    return 1;   // Error message already printed.
                 key = key.encrypt(Objects.requireNonNull(wallet.getKeyCrypter()), aesKey);
             }
         } catch (KeyCrypterException kce) {
             System.err.println("There was an encryption related error when adding the key. The error was '"
                     + kce.getMessage() + "'.");
-            return;
+            return 1;
         }
         if (!key.isCompressed())
             System.out.println("WARNING: Importing an uncompressed key");
@@ -949,6 +958,7 @@ public class WalletTool implements Callable<Integer> {
         if (key.isCompressed())
             System.out.print("," + key.toAddress(ScriptType.P2WPKH, net));
         System.out.println();
+        return 0;
     }
 
     @Nullable
@@ -992,10 +1002,10 @@ public class WalletTool implements Callable<Integer> {
             return Optional.empty();
     }
 
-    private void deleteKey() {
+    private int deleteKey() {
         if (pubKeyStr == null && addrStr == null) {
             System.err.println("One of --pubkey or --addr must be specified.");
-            return;
+            return 1;
         }
         ECKey key;
         if (pubKeyStr != null) {
@@ -1006,26 +1016,28 @@ public class WalletTool implements Callable<Integer> {
                 key = wallet.findKeyFromAddress(address);
             } catch (AddressFormatException e) {
                 System.err.println(addrStr + " does not parse as a Bitcoin address of the right network parameters.");
-                return;
+                return 1;
             }
         }
         if (key == null) {
             System.err.println("Wallet does not seem to contain that key.");
-            return;
+            return 1;
         }
         boolean removed = wallet.removeKey(key);
         if (removed)
             System.out.println("Key " + key + " was removed");
         else
             System.err.println("Key " + key + " could not be removed");
+        return 0;
     }
 
-    private void currentReceiveAddr() {
+    private int currentReceiveAddr() {
         Address address = wallet.currentReceiveAddress();
         System.out.println(address);
+        return 0;
     }
 
-    private void dumpWallet() throws BlockStoreException {
+    private int dumpWallet() throws BlockStoreException {
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
         if (chainFile.exists())
@@ -1035,15 +1047,16 @@ public class WalletTool implements Callable<Integer> {
             if (password != null) {
                 final AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
-                    return; // Error message already printed.
+                    return 1; // Error message already printed.
                 printWallet(aesKey);
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
-                return;
+                return 1;
             }
         } else {
             printWallet(null);
         }
+        return 0;
     }
 
     private static int rawDumpWallet(File walletFile) throws IOException {
@@ -1110,7 +1123,7 @@ public class WalletTool implements Callable<Integer> {
         System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, aesKey, true, true, chain));
     }
 
-    private void setCreationTime() {
+    private int setCreationTime() {
         Optional<Instant> creationTime = getCreationTime();
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
             DeterministicSeed seed = chain.getSeed();
@@ -1123,5 +1136,6 @@ public class WalletTool implements Callable<Integer> {
         System.out.println(creationTime
                 .map(time -> "Setting creation time to: " + TimeUtils.dateTimeFormat(time))
                 .orElse("Clearing creation time."));
+        return 0;
     }
 }
