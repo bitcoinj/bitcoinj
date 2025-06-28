@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Jeff McClure.
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.Network;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.wallet.DeterministicSeed;
 import org.junit.Test;
+
+import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 
@@ -34,12 +37,12 @@ public class DeterministicEntropyTest {
     @Test
     public void testIanColeman() throws Exception {
 
-        // Deliberately contains extra spaces to test that they are ignored.
-        String seedPhrase = " abandon abandon abandon abandon abandon abandon abandon   abandon abandon   abandon abandon about ";
+        String mnemonicWords = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
-        DeterministicKey key = DeterministicEntropy.getPrivateKey(seedPhrase, "");
-        assertEquals("73c5da0a", DeterministicEntropy.fingerprint(key));
-        assertEquals("73c5da0a", DeterministicEntropy.fingerprint(key.withoutPrivateKey()));
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic(mnemonicWords, "");
+        DeterministicKey key = HDKeyDerivation.createMasterPrivateKey(Objects.requireNonNull(seed.getSeedBytes()));
+
+        assertEquals("73c5da0a", Integer.toHexString(key.getFingerprint()));
 
         assertEquals("prosper short ramp prepare exchange stove life snack client enough purpose fold",
                 DeterministicEntropy.deriveBIP85Mnemonic(key, 12, 0));
@@ -63,7 +66,8 @@ public class DeterministicEntropyTest {
         String xprv = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         Network network = MainNetParams.get().network();
         DeterministicKey masterKey = DeterministicKey.deserializeB58(xprv, network);
-        assertEquals("627ef3a6", DeterministicEntropy.fingerprint(masterKey));
+        assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
+//        assertEquals("627ef3a6", DeterministicEntropy.fingerprint(masterKey));
 
         String childMnemonic = DeterministicEntropy.deriveBIP85Mnemonic(masterKey, 12, 0);
         assertEquals("girl mad pet galaxy egg matter matrix prison refuse sense ordinary nose",
@@ -79,7 +83,7 @@ public class DeterministicEntropyTest {
         String xprv = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         Network network = MainNetParams.get().network();
         DeterministicKey masterKey = DeterministicKey.deserializeB58(xprv, network);
-        assertEquals("627ef3a6", DeterministicEntropy.fingerprint(masterKey));
+        assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
 
         String childMnemonic = DeterministicEntropy.deriveBIP85Mnemonic(masterKey, 18, 0);
         assertEquals("near account window bike charge season chef number sketch tomorrow excuse sniff circle vital hockey outdoor supply token",
@@ -95,7 +99,7 @@ public class DeterministicEntropyTest {
         String xprv = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
         Network network = MainNetParams.get().network();
         DeterministicKey masterKey = DeterministicKey.deserializeB58(xprv, network);
-        assertEquals("627ef3a6", DeterministicEntropy.fingerprint(masterKey));
+        assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
 
         String childMnemonic = DeterministicEntropy.deriveBIP85Mnemonic(masterKey, 24, 0);
         assertEquals("puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano",

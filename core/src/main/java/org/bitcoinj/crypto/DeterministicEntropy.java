@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Jeff McClure.
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.internal.HexFormat;
-import org.bitcoinj.wallet.DeterministicSeed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -27,76 +28,24 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.bitcoinj.crypto.internal.CryptoUtils.sha256hash160;
-
 /**
  * Utility class for working with BIP-85, generating wallets, etc. (<a href="https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki">https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki</a>).
  * <p>
  * See test class org.bitcoinj.crypto.DeterministicEntropyTest for examples on how to use this class.
  */
 public class DeterministicEntropy {
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DeterministicEntropy.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeterministicEntropy.class);
 
     private DeterministicEntropy() {
     }
 
     /**
-     * Parse a BIP-39 mnemonic seed phrase into a list of words.
-     * @param seedPhrase Space-separated BIP-39 mnemonic seed phrase. Words must be valid BIP-39 English words.
-     * @return List of words parsed from {@code seedPhrase}.  Leading, trailing and extra spaces are removed.
-     */
-    public static List<String> parseSeedPhrase(String seedPhrase) {
-        return Arrays.asList(seedPhrase.trim().split("\\s+"));
-    }
-
-    /**
-     * Derive a DeterministicKey from a BIP-39 mnemonic seed phrase and passphrase.
-     * @param seedPhrase Space-separated BIP-39 mnemonic seed phrase. Words must be valid BIP-39 English words.
-     * @param passphrase BIP-39 passphrase for the BIP-39 mnemonic seed phrase.  Use empty string if there is no passphrase.
-     * @return DeterministicKey for the BIP-39 mnemonic seed phrase and passphrase combination.
-     * @throws MnemonicException if the mnemonic words are invalid
-     */
-    static public DeterministicKey getPrivateKey(String seedPhrase, String passphrase) throws MnemonicException {
-        return getPrivateKey(parseSeedPhrase(seedPhrase), passphrase);
-    }
-
-    /**
-     * Derive a DeterministicKey from a BIP-39 mnemonic seed phrase and passphrase.
-     * @param mnemonicWords BIP-39 mnemonic seed phrase words. Words must be valid BIP-39 English words.
-     * @param passphrase BIP-39 passphrase for the BIP-39 mnemonic seed phrase.  Use empty string if there is no passphrase.
-     * @return DeterministicKey for the BIP-39 mnemonic seed phrase and passphrase combination.
-     * @throws MnemonicException if the mnemonic words are invalid
-     */
-    static public DeterministicKey getPrivateKey(List<String> mnemonicWords, String passphrase) throws MnemonicException {
-        MnemonicCode.INSTANCE.check(mnemonicWords); // Validate the mnemonic words
-
-        // Create a DeterministicSeed from the mnemonic words with passphrase
-        DeterministicSeed seed = DeterministicSeed.ofMnemonic(mnemonicWords, passphrase);
-
-        // Derive the master private key from the seed
-        assert seed.getSeedBytes() != null;
-        return HDKeyDerivation.createMasterPrivateKey(seed.getSeedBytes());
-    }
-
-    /**
-     * Calculate the fingerprint of a {@code deterministicKey}.  This is a standard value that most Bitcoin wallets will show for a key.
-     * @param deterministicKey DeterministicKey to calculate the fingerprint for.
-     * @return Fingerprint as a 4-byte hex string.  Example: "73c5da0a" or "00000000"
-     */
-    public static String fingerprint(DeterministicKey deterministicKey) {
-        // Calculate the fingerprint (first 4 bytes of HASH160 of the master public key)
-        byte[] pubKeyBytes = deterministicKey.getPubKey();
-        byte[] hash160 = sha256hash160(pubKeyBytes);
-        byte[] fingerprintBytes = Arrays.copyOfRange(hash160, 0, 4);
-        return new HexFormat().formatHex(fingerprintBytes);
-    }
-
-    /**
      * Derive a BIP-85 key and return the corresponding BIP-39 mnemonic seed phrase.
+     *
      * @param masterPrivateKey DeterministicKey to derive from.
-     * @param language 0 for English, see BIP-39 for other languages <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
-     * @param wordCount 12, 18, or 24 for BIP-39 word counts.
-     * @param index 0 to 9999 for the index of the child key.
+     * @param language         0 for English, see BIP-39 for other languages <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
+     * @param wordCount        12, 18, or 24 for BIP-39 word counts.
+     * @param index            0 to 9999 for the index of the child key.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
     public static String deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int language, int wordCount, int index) {
@@ -106,9 +55,10 @@ public class DeterministicEntropy {
 
     /**
      * Derive a BIP-85 key and return the corresponding BIP-39 mnemonic seed phrase.
+     *
      * @param masterPrivateKey DeterministicKey to derive from.
-     * @param wordCount 12, 18, or 24 for BIP-39 word counts.
-     * @param index 0 to 9999 for the index of the child key.
+     * @param wordCount        12, 18, or 24 for BIP-39 word counts.
+     * @param index            0 to 9999 for the index of the child key.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
     public static String deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int wordCount, int index) {
@@ -118,8 +68,9 @@ public class DeterministicEntropy {
 
     /**
      * Derive the entropy for a BIP-85 derived key.
+     *
      * @param masterPrivateKey DeterministicKey to derive from.
-     * @param derivationPath path of derivation.
+     * @param derivationPath   path of derivation.
      * @return Entropy for the derived BIP-85 deterministic key.
      */
     public static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, int[] derivationPath) {
@@ -159,8 +110,9 @@ public class DeterministicEntropy {
 
     /**
      * Derive a BIP-39 mnemonic seed phrase for a BIP-85 derived key.
+     *
      * @param masterPrivateKey DeterministicKey to derive from.
-     * @param derivationPath path of derivation.  Example: {83696968, 39, 0, 12, 0} for BIP-39 English 12-word mnemonic, index 0.
+     * @param derivationPath   path of derivation.  Example: {83696968, 39, 0, 12, 0} for BIP-39 English 12-word mnemonic, index 0.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
     public static String deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int[] derivationPath) {
