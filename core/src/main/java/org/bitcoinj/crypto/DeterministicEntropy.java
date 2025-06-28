@@ -27,6 +27,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utility class for working with BIP-85, generating wallets, etc. (<a href="https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki">https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki</a>).
@@ -36,21 +38,55 @@ import java.util.List;
 public class DeterministicEntropy {
     private static final Logger logger = LoggerFactory.getLogger(DeterministicEntropy.class);
 
+    private static final int BIP85_PATH_ROOT = 83696968;
+    private static final int BIP39_APPLICATION_NUMBER = 39;
+
+    public enum Language {
+        English(0),
+        Japanese	(1),
+        Korean	(2),
+        Spanish	(3),
+        ChineseSimplified(4),
+        ChineseTraditional(5),
+        French(6),
+        Italian(7),
+        Czech(8),
+        Portuguese(9);
+
+        private final int intValue;
+
+        Language(int intValue) {
+            this.intValue = intValue;
+        }
+    }
+
     private DeterministicEntropy() {
     }
 
     /**
+     * Derive a BIP-39 mnemonic seed phrase for a BIP-85 derived key.
+     *
+     * @param masterPrivateKey DeterministicKey to derive from.
+     * @param hdPath           path of derivation.  Example: {83696968, 39, 0, 12, 0} for BIP-39 English 12-word mnemonic, index 0.
+     * @return Seed Phrase for the derived BIP-85 deterministic key.
+     */
+    public static List<String> deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, HDPath hdPath) {
+        // Convert entropy to BIP-39 mnemonic (12 words) using English wordlist
+        return MnemonicCode.INSTANCE.toMnemonic(deriveBIP85Entropy(masterPrivateKey, hdPath));
+    }
+
+    /**
      * Derive a BIP-85 key and return the corresponding BIP-39 mnemonic seed phrase.
      *
      * @param masterPrivateKey DeterministicKey to derive from.
-     * @param language         0 for English, see BIP-39 for other languages <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
+     * @param language         Language <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
      * @param wordCount        12, 18, or 24 for BIP-39 word counts.
      * @param index            0 to 9999 for the index of the child key.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
-    public static String deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int language, int wordCount, int index) {
-        int[] derivationPath = {83696968, 39, language, wordCount, index};
-        return deriveBIP85Mnemonic(masterPrivateKey, derivationPath);
+    public static List<String> deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, Language language, int wordCount, int index) {
+        List<ChildNumber> children = Stream.of(BIP85_PATH_ROOT, BIP39_APPLICATION_NUMBER, language.intValue, wordCount, index).map(ChildNumber::new).collect(Collectors.toList());
+        return deriveBIP85Mnemonic(masterPrivateKey, HDPath.of(HDPath.Prefix.PRIVATE, children));
     }
 
     /**
@@ -61,24 +97,37 @@ public class DeterministicEntropy {
      * @param index            0 to 9999 for the index of the child key.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
-    public static String deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int wordCount, int index) {
-        int[] derivationPath = {83696968, 39, 0, wordCount, index};
-        return deriveBIP85Mnemonic(masterPrivateKey, derivationPath);
+    public static List<String> deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int wordCount, int index) {
+        return deriveBIP85Mnemonic(masterPrivateKey, Language.English, wordCount, index);
     }
 
     /**
      * Derive the entropy for a BIP-85 derived key.
      *
      * @param masterPrivateKey DeterministicKey to derive from.
-     * @param derivationPath   path of derivation.
+     * @param hdPath           path of derivation.
      * @return Entropy for the derived BIP-85 deterministic key.
      */
-    public static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, int[] derivationPath) {
-        byte[] fullEntropy = deriveKey(masterPrivateKey, derivationPath);
+    public static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, HDPath hdPath) {
+        byte[] fullEntropy = deriveKey(masterPrivateKey, hdPath);
         byte[] entropy512Bits = generateBIP85Entropy(fullEntropy);
+        byte[] entropy = getBytes(hdPath, entropy512Bits);
+
+        if (logger.isDebugEnabled()) {
+            HexFormat hex = new HexFormat();
+            logger.debug("deriveBIP85Mnemonic() BIP-85 Child Private Key (hex): {}", hex.formatHex(fullEntropy));
+            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy (hex)a: {}", hex.formatHex(entropy));
+            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy 512bits (hex): {}", hex.formatHex(entropy512Bits));
+            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy full (hex): {}", hex.formatHex(fullEntropy));
+        }
+
+        return entropy;
+    }
+
+    private static byte[] getBytes(HDPath hdPath, byte[] entropy512Bits) {
         int newLength;
 
-        switch (derivationPath[3]) {
+        switch (hdPath.children[3]) {
             case 12:
                 newLength = 16;
                 break;
@@ -92,37 +141,15 @@ public class DeterministicEntropy {
                 break;
 
             default:
-                throw new IllegalArgumentException("Invalid word count: " + derivationPath[3]);
+                throw new IllegalArgumentException("Invalid word count: " + hdPath.children[3]);
         }
 
-        byte[] entropy = Arrays.copyOf(entropy512Bits, newLength); // 16 = 128 bits, 24 = 18 words, 32 = 256 bits for 24 words
-
-        if (logger.isDebugEnabled()) {
-            HexFormat hex = new HexFormat();
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Child Private Key (hex): {}", hex.formatHex(fullEntropy));
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy (hex)a: {}", hex.formatHex(entropy));
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy 512bits (hex): {}", hex.formatHex(entropy512Bits));
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy full (hex): {}", hex.formatHex(fullEntropy));
-        }
-
-        return entropy;
+        // 16 = 128 bits, 24 = 18 words, 32 = 256 bits for 24 words
+        return Arrays.copyOf(entropy512Bits, newLength);
     }
 
-    /**
-     * Derive a BIP-39 mnemonic seed phrase for a BIP-85 derived key.
-     *
-     * @param masterPrivateKey DeterministicKey to derive from.
-     * @param derivationPath   path of derivation.  Example: {83696968, 39, 0, 12, 0} for BIP-39 English 12-word mnemonic, index 0.
-     * @return Seed Phrase for the derived BIP-85 deterministic key.
-     */
-    public static String deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int[] derivationPath) {
-        // Convert entropy to BIP-39 mnemonic (12 words) using English wordlist
-        List<String> wordList = MnemonicCode.INSTANCE.toMnemonic(deriveBIP85Entropy(masterPrivateKey, derivationPath));
-        return String.join(" ", wordList);
-    }
-
-    private static byte[] deriveKey(DeterministicKey childKey, int[] vals) {
-        for (int val : vals) {
+    private static byte[] deriveKey(DeterministicKey childKey, HDPath hdPath) {
+        for (int val : hdPath.children) {
             childKey = childKey.derive(val);
         }
 
