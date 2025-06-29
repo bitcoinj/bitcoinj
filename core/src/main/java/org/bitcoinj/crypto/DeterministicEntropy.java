@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.bitcoinj.crypto.ChildNumber.HARDENED_BIT;
 
