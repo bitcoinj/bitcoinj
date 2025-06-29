@@ -17,6 +17,7 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.internal.HexFormat;
+import org.bitcoinj.wallet.DeterministicSeed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,9 +71,10 @@ public class DeterministicEntropy {
      * @param hdPath           path of derivation.  Example: {83696968, 39, 0, 12, 0} for BIP-39 English 12-word mnemonic, index 0.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
-    public static List<String> deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, HDPath hdPath) {
+    public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, HDPath hdPath) {
         // Convert entropy to BIP-39 mnemonic (12 words) using English wordlist
-        return MnemonicCode.INSTANCE.toMnemonic(deriveBIP85Entropy(masterPrivateKey, hdPath));
+        byte[] data = deriveBIP85Entropy(masterPrivateKey, hdPath);
+        return DeterministicSeed.ofEntropy(data, "");
     }
 
     /**
@@ -84,9 +86,9 @@ public class DeterministicEntropy {
      * @param index            0 to 9999 for the index of the child key.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
-    public static List<String> deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, Language language, int wordCount, int index) {
+    public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, int wordCount, int index) {
         List<ChildNumber> children = Stream.of(BIP85_PATH_ROOT, BIP39_APPLICATION_NUMBER, language.intValue, wordCount, index).map(ChildNumber::new).collect(Collectors.toList());
-        return deriveBIP85Mnemonic(masterPrivateKey, HDPath.of(HDPath.Prefix.PRIVATE, children));
+        return deriveBIP85Seed(masterPrivateKey, HDPath.of(HDPath.Prefix.PRIVATE, children));
     }
 
     /**
@@ -97,8 +99,8 @@ public class DeterministicEntropy {
      * @param index            0 to 9999 for the index of the child key.
      * @return Seed Phrase for the derived BIP-85 deterministic key.
      */
-    public static List<String> deriveBIP85Mnemonic(DeterministicKey masterPrivateKey, int wordCount, int index) {
-        return deriveBIP85Mnemonic(masterPrivateKey, Language.English, wordCount, index);
+    public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, int wordCount, int index) {
+        return deriveBIP85Seed(masterPrivateKey, Language.English, wordCount, index);
     }
 
     /**
@@ -108,17 +110,17 @@ public class DeterministicEntropy {
      * @param hdPath           path of derivation.
      * @return Entropy for the derived BIP-85 deterministic key.
      */
-    public static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, HDPath hdPath) {
+    private static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, HDPath hdPath) {
         byte[] fullEntropy = deriveKey(masterPrivateKey, hdPath);
         byte[] entropy512Bits = generateBIP85Entropy(fullEntropy);
         byte[] entropy = getBytes(hdPath, entropy512Bits);
 
         if (logger.isDebugEnabled()) {
             HexFormat hex = new HexFormat();
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Child Private Key (hex): {}", hex.formatHex(fullEntropy));
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy (hex)a: {}", hex.formatHex(entropy));
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy 512bits (hex): {}", hex.formatHex(entropy512Bits));
-            logger.debug("deriveBIP85Mnemonic() BIP-85 Entropy full (hex): {}", hex.formatHex(fullEntropy));
+            logger.debug("deriveBIP85Entropy() BIP-85 Child Private Key (hex): {}", hex.formatHex(fullEntropy));
+            logger.debug("deriveBIP85Entropy() BIP-85 Entropy (hex)a: {}", hex.formatHex(entropy));
+            logger.debug("deriveBIP85Entropy() BIP-85 Entropy 512bits (hex): {}", hex.formatHex(entropy512Bits));
+            logger.debug("deriveBIP85Entropy() BIP-85 Entropy full (hex): {}", hex.formatHex(fullEntropy));
         }
 
         return entropy;
