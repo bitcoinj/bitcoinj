@@ -28,8 +28,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static org.bitcoinj.crypto.ChildNumber.HARDENED_BIT;
 
 /**
  * Utility class for working with BIP-85, generating wallets, etc. (<a href="https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki">https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki</a>).
@@ -39,8 +39,9 @@ import java.util.stream.Stream;
 public class DeterministicEntropy {
     private static final Logger logger = LoggerFactory.getLogger(DeterministicEntropy.class);
 
-    private static final int BIP85_PATH_ROOT = 83696968;
-    private static final int BIP39_APPLICATION_NUMBER = 39;
+    private static final ChildNumber BIP85_PATH_ROOT = new ChildNumber(83696968 & ~HARDENED_BIT, true);
+    private static final ChildNumber BIP39_APPLICATION_NUMBER = new ChildNumber(39 & ~HARDENED_BIT, true);
+
 
     public enum Language {
         English(0),
@@ -59,17 +60,43 @@ public class DeterministicEntropy {
         Language(int intValue) {
             this.intValue = intValue;
         }
+
+        public ChildNumber childNumber() {
+            return new ChildNumber(intValue & ~HARDENED_BIT, true);
+        }
     }
 
     public enum WordCount {
-        Twelve(12),
-        Eighteen(18),
-        TwentyFour(24);
+        Twelve(12, 16),
+        Eighteen(18, 24),
+        TwentyFour(24, 32);
 
         private final int intValue;
+        private final int bitCount;
 
-        WordCount(int intValue) {
+        WordCount(int intValue, int bits) {
             this.intValue = intValue;
+            this.bitCount = bits;
+        }
+
+        public static WordCount forWordCount(int wordCount) {
+            switch (wordCount) {
+                case 12:
+                case -2147483636: // 12 hardened
+                    return Twelve;
+                case 18:
+                case -2147483630: // 18 hardened
+                    return Eighteen;
+                case 24:
+                case -2147483624: // 24 hardened
+                    return TwentyFour;
+                default:
+                    throw new IllegalArgumentException(wordCount + " is not a valid word count");
+            }
+        }
+
+        public ChildNumber childNumber() {
+            return new ChildNumber(intValue & ~HARDENED_BIT, true);
         }
     }
 
@@ -101,10 +128,16 @@ public class DeterministicEntropy {
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, WordCount wordCount, int index) {
         // BIP-85 does not specify an upper limit on the index.  The index must be >= 0.
         if (index < 0) throw new IllegalArgumentException("index must be >= 0");
-        List<ChildNumber> children = Stream.of(BIP85_PATH_ROOT, BIP39_APPLICATION_NUMBER, language.intValue, wordCount.intValue, index)
-                .map(ChildNumber::new).collect(Collectors.toList());
+
+        List<ChildNumber> children = Arrays.asList(BIP85_PATH_ROOT,
+                BIP39_APPLICATION_NUMBER,
+                language.childNumber(),
+                wordCount.childNumber(),
+                new ChildNumber(index & ~HARDENED_BIT, true));
+
         return deriveBIP85Seed(masterPrivateKey, HDPath.of(HDPath.Prefix.PRIVATE, children));
     }
+
 
     /**
      * Perform a BIP-85 derivation and return the DeterministicSeed.
@@ -128,7 +161,7 @@ public class DeterministicEntropy {
     private static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, HDPath hdPath) {
         byte[] fullEntropy = deriveKey(masterPrivateKey, hdPath);
         byte[] entropy512Bits = generateBIP85Entropy(fullEntropy);
-        byte[] entropy = truncate(hdPath.children[3], entropy512Bits);
+        byte[] entropy = Arrays.copyOf(entropy512Bits, WordCount.forWordCount(hdPath.children[3]).bitCount);
 
         if (logger.isDebugEnabled()) {
             HexFormat hex = new HexFormat();
@@ -141,33 +174,9 @@ public class DeterministicEntropy {
         return entropy;
     }
 
-    private static byte[] truncate(int wordCount, byte[] entropy512Bits) {
-        int newLength;
-
-        switch (wordCount) {
-            case 12:
-                newLength = 16;
-                break;
-
-            case 18:
-                newLength = 24;
-                break;
-
-            case 24:
-                newLength = 32;
-                break;
-
-            default:
-                throw new IllegalArgumentException("Invalid word count: " + wordCount);
-        }
-
-        // 16 = 128 bits, 24 = 18 words, 32 = 256 bits for 24 words
-        return Arrays.copyOf(entropy512Bits, newLength);
-    }
-
     private static byte[] deriveKey(DeterministicKey childKey, HDPath hdPath) {
         for (int val : hdPath.children) {
-            childKey = childKey.derive(val);
+            childKey = childKey.derive(val & ~HARDENED_BIT);
         }
 
         byte[] fullEntropy = childKey.getPrivKeyBytes();
