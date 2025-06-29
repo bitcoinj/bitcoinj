@@ -65,26 +65,25 @@ public class DeterministicEntropy {
     }
 
     /**
-     * Derive a BIP-39 mnemonic seed phrase for a BIP-85 derived key.
+     * Perform a BIP-85 derivation and return the DeterministicSeed.
      *
      * @param masterPrivateKey DeterministicKey to derive from.
      * @param hdPath           path of derivation.  Example: {83696968, 39, 0, 12, 0} for BIP-39 English 12-word mnemonic, index 0.
-     * @return Seed Phrase for the derived BIP-85 deterministic key.
+     * @return Seed for the BIP-85 derivation.
      */
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, HDPath hdPath) {
-        // Convert entropy to BIP-39 mnemonic (12 words) using English wordlist
         byte[] data = deriveBIP85Entropy(masterPrivateKey, hdPath);
         return DeterministicSeed.ofEntropy(data, "");
     }
 
     /**
-     * Derive a BIP-85 key and return the corresponding BIP-39 mnemonic seed phrase.
+     * Perform a BIP-85 derivation and return the DeterministicSeed.
      *
      * @param masterPrivateKey DeterministicKey to derive from.
      * @param language         Language <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
      * @param wordCount        12, 18, or 24 for BIP-39 word counts.
      * @param index            0 to 9999 for the index of the child key.
-     * @return Seed Phrase for the derived BIP-85 deterministic key.
+     * @return Seed for the BIP-85 derivation.
      */
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, int wordCount, int index) {
         List<ChildNumber> children = Stream.of(BIP85_PATH_ROOT, BIP39_APPLICATION_NUMBER, language.intValue, wordCount, index).map(ChildNumber::new).collect(Collectors.toList());
@@ -92,12 +91,12 @@ public class DeterministicEntropy {
     }
 
     /**
-     * Derive a BIP-85 key and return the corresponding BIP-39 mnemonic seed phrase.
+     * Perform a BIP-85 derivation and return the DeterministicSeed.
      *
      * @param masterPrivateKey DeterministicKey to derive from.
      * @param wordCount        12, 18, or 24 for BIP-39 word counts.
      * @param index            0 to 9999 for the index of the child key.
-     * @return Seed Phrase for the derived BIP-85 deterministic key.
+     * @return Seed for the BIP-85 derivation.
      */
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, int wordCount, int index) {
         return deriveBIP85Seed(masterPrivateKey, Language.English, wordCount, index);
