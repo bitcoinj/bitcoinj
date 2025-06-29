@@ -44,9 +44,9 @@ public class DeterministicEntropy {
 
     public enum Language {
         English(0),
-        Japanese	(1),
-        Korean	(2),
-        Spanish	(3),
+        Japanese(1),
+        Korean(2),
+        Spanish(3),
         ChineseSimplified(4),
         ChineseTraditional(5),
         French(6),
