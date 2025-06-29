@@ -125,7 +125,7 @@ public class DeterministicEntropy {
      * @param masterPrivateKey DeterministicKey to derive from.
      * @param language         Language <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
      * @param wordCount        Number of words in generated seed.
-     * @param index            0 to 9999 for the index of the child key.
+     * @param index            Index of the child key.
      * @return Seed for the BIP-85 derivation.
      */
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, WordCount wordCount, int index) {
@@ -147,7 +147,7 @@ public class DeterministicEntropy {
      *
      * @param masterPrivateKey DeterministicKey to derive from.
      * @param wordCount        Number of words in generated seed.
-     * @param index            0 to 9999 for the index of the child key.
+     * @param index            Index of the child key.
      * @return Seed for the BIP-85 derivation.
      */
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, WordCount wordCount, int index) {
