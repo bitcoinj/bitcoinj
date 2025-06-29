@@ -44,42 +44,16 @@ public class DeterministicEntropyTest {
         assertEquals("73c5da0a", Integer.toHexString(key.getFingerprint()));
 
         assertEquals("prosper short ramp prepare exchange stove life snack client enough purpose fold",
-                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, 12, 0).getMnemonicCode()));
+                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, DeterministicEntropy.WordCount.Twelve, 0).getMnemonicCode()));
 
         assertEquals("prosper short ramp prepare exchange stove life snack client enough purpose fold",
-                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, DeterministicEntropy.Language.English, 12, 0).getMnemonicCode()));
+                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, DeterministicEntropy.Language.English, DeterministicEntropy.WordCount.Twelve, 0).getMnemonicCode()));
 
         assertEquals("winter brother stamp provide uniform useful doctor prevent venue upper peasant auto view club next clerk tone fox",
-                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, 18, 0).getMnemonicCode()));
+                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, DeterministicEntropy.WordCount.Eighteen, 0).getMnemonicCode()));
 
         assertEquals("stick exact spice sock filter ginger museum horse kit multiply manual wear grief demand derive alert quiz fault december lava picture immune decade jaguar",
-                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, 24, 0).getMnemonicCode()));
-    }
-
-    @Test
-    public void testExceptionForInvalidWordCounts() {
-        String mnemonicWords = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
-        DeterministicSeed seed = DeterministicSeed.ofMnemonic(mnemonicWords, "");
-        DeterministicKey key = HDKeyDerivation.createMasterPrivateKey(Objects.requireNonNull(seed.getSeedBytes()));
-
-        for (int wordCount = 0; wordCount < 30; wordCount++) {
-            switch (wordCount) {
-
-                case 12:
-                case 18:
-                case 24:
-                    DeterministicEntropy.deriveBIP85Seed(key, DeterministicEntropy.Language.English, wordCount, 0);
-                    break;
-
-                default:
-                    try {
-                        DeterministicEntropy.deriveBIP85Seed(key, DeterministicEntropy.Language.English, wordCount, 0);
-                        throw new RuntimeException("Invalid word count did not throw IllegalArgumentException: " + wordCount);
-                    } catch (IllegalArgumentException e) {
-                        // we expect failure here
-                    }
-            }
-        }
+                String.join(" ", DeterministicEntropy.deriveBIP85Seed(key, DeterministicEntropy.WordCount.TwentyFour, 0).getMnemonicCode()));
     }
 
     /**
@@ -94,7 +68,7 @@ public class DeterministicEntropyTest {
         assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
 
         assertEquals("girl mad pet galaxy egg matter matrix prison refuse sense ordinary nose",
-                String.join(" ", DeterministicEntropy.deriveBIP85Seed(masterKey, 12, 0).getMnemonicCode()));
+                String.join(" ", DeterministicEntropy.deriveBIP85Seed(masterKey, DeterministicEntropy.WordCount.Twelve, 0).getMnemonicCode()));
     }
 
     /**
@@ -109,7 +83,7 @@ public class DeterministicEntropyTest {
         assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
 
         assertEquals("near account window bike charge season chef number sketch tomorrow excuse sniff circle vital hockey outdoor supply token",
-                String.join(" ", DeterministicEntropy.deriveBIP85Seed(masterKey, 18, 0).getMnemonicCode()));
+                String.join(" ", DeterministicEntropy.deriveBIP85Seed(masterKey, DeterministicEntropy.WordCount.Eighteen, 0).getMnemonicCode()));
     }
 
     /**
@@ -124,6 +98,6 @@ public class DeterministicEntropyTest {
         assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
 
         assertEquals("puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano",
-                String.join(" ", DeterministicEntropy.deriveBIP85Seed(masterKey, 24, 0).getMnemonicCode()));
+                String.join(" ", DeterministicEntropy.deriveBIP85Seed(masterKey, DeterministicEntropy.WordCount.TwentyFour, 0).getMnemonicCode()));
     }
 }

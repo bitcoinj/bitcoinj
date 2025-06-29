@@ -61,6 +61,19 @@ public class DeterministicEntropy {
         }
     }
 
+    public enum WordCount {
+        Twelve(12),
+        Eighteen(18),
+        TwentyFour(24);
+
+        private final int intValue;
+
+        WordCount(int intValue) {
+            this.intValue = intValue;
+        }
+    }
+
+
     private DeterministicEntropy() {
     }
 
@@ -81,12 +94,15 @@ public class DeterministicEntropy {
      *
      * @param masterPrivateKey DeterministicKey to derive from.
      * @param language         Language <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
-     * @param wordCount        12, 18, or 24 for BIP-39 word counts.
+     * @param wordCount        Number of words in generated seed.
      * @param index            0 to 9999 for the index of the child key.
      * @return Seed for the BIP-85 derivation.
      */
-    public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, int wordCount, int index) {
-        List<ChildNumber> children = Stream.of(BIP85_PATH_ROOT, BIP39_APPLICATION_NUMBER, language.intValue, wordCount, index).map(ChildNumber::new).collect(Collectors.toList());
+    public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, WordCount wordCount, int index) {
+        // BIP-85 does not specify an upper limit on the index.  The index must be >= 0.
+        if (index < 0) throw new IllegalArgumentException("index must be >= 0");
+        List<ChildNumber> children = Stream.of(BIP85_PATH_ROOT, BIP39_APPLICATION_NUMBER, language.intValue, wordCount.intValue, index)
+                .map(ChildNumber::new).collect(Collectors.toList());
         return deriveBIP85Seed(masterPrivateKey, HDPath.of(HDPath.Prefix.PRIVATE, children));
     }
 
@@ -94,11 +110,11 @@ public class DeterministicEntropy {
      * Perform a BIP-85 derivation and return the DeterministicSeed.
      *
      * @param masterPrivateKey DeterministicKey to derive from.
-     * @param wordCount        12, 18, or 24 for BIP-39 word counts.
+     * @param wordCount        Number of words in generated seed.
      * @param index            0 to 9999 for the index of the child key.
      * @return Seed for the BIP-85 derivation.
      */
-    public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, int wordCount, int index) {
+    public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, WordCount wordCount, int index) {
         return deriveBIP85Seed(masterPrivateKey, Language.English, wordCount, index);
     }
 
@@ -112,7 +128,7 @@ public class DeterministicEntropy {
     private static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, HDPath hdPath) {
         byte[] fullEntropy = deriveKey(masterPrivateKey, hdPath);
         byte[] entropy512Bits = generateBIP85Entropy(fullEntropy);
-        byte[] entropy = getBytes(hdPath, entropy512Bits);
+        byte[] entropy = truncate(hdPath.children[3], entropy512Bits);
 
         if (logger.isDebugEnabled()) {
             HexFormat hex = new HexFormat();
@@ -125,10 +141,10 @@ public class DeterministicEntropy {
         return entropy;
     }
 
-    private static byte[] getBytes(HDPath hdPath, byte[] entropy512Bits) {
+    private static byte[] truncate(int wordCount, byte[] entropy512Bits) {
         int newLength;
 
-        switch (hdPath.children[3]) {
+        switch (wordCount) {
             case 12:
                 newLength = 16;
                 break;
@@ -142,7 +158,7 @@ public class DeterministicEntropy {
                 break;
 
             default:
-                throw new IllegalArgumentException("Invalid word count: " + hdPath.children[3]);
+                throw new IllegalArgumentException("Invalid word count: " + wordCount);
         }
 
         // 16 = 128 bits, 24 = 18 words, 32 = 256 bits for 24 words
