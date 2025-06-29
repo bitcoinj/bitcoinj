@@ -39,8 +39,12 @@ import static org.bitcoinj.crypto.ChildNumber.HARDENED_BIT;
 public class DeterministicEntropy {
     private static final Logger logger = LoggerFactory.getLogger(DeterministicEntropy.class);
 
-    private static final ChildNumber BIP85_PATH_ROOT = new ChildNumber(83696968 & ~HARDENED_BIT, true);
-    private static final ChildNumber BIP39_APPLICATION_NUMBER = new ChildNumber(39 & ~HARDENED_BIT, true);
+    private static ChildNumber createHardenedChildNumber(int childNumber) {
+        return new ChildNumber(childNumber & ~HARDENED_BIT, true);
+    }
+
+    private static final ChildNumber BIP85_PATH_ROOT = createHardenedChildNumber(83696968);
+    private static final ChildNumber BIP39_APPLICATION_NUMBER = createHardenedChildNumber(39);
 
 
     public enum Language {
@@ -62,7 +66,7 @@ public class DeterministicEntropy {
         }
 
         public ChildNumber childNumber() {
-            return new ChildNumber(intValue & ~HARDENED_BIT, true);
+            return createHardenedChildNumber(intValue);
         }
     }
 
@@ -96,7 +100,7 @@ public class DeterministicEntropy {
         }
 
         public ChildNumber childNumber() {
-            return new ChildNumber(intValue & ~HARDENED_BIT, true);
+            return createHardenedChildNumber(intValue);
         }
     }
 
@@ -133,7 +137,7 @@ public class DeterministicEntropy {
                 BIP39_APPLICATION_NUMBER,
                 language.childNumber(),
                 wordCount.childNumber(),
-                new ChildNumber(index & ~HARDENED_BIT, true));
+                createHardenedChildNumber(index));
 
         return deriveBIP85Seed(masterPrivateKey, HDPath.of(HDPath.Prefix.PRIVATE, children));
     }
