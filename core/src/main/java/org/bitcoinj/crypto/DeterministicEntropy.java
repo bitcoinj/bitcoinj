@@ -133,13 +133,13 @@ public class DeterministicEntropy {
         // BIP-85 does not specify an upper limit on the index.  The index must be >= 0.
         if (index < 0) throw new IllegalArgumentException("index must be >= 0");
 
-        List<ChildNumber> children = Arrays.asList(BIP85_PATH_ROOT,
+        HDPath.HDFullPath path = HDPath.m(BIP85_PATH_ROOT,
                 BIP39_APPLICATION_NUMBER,
                 language.childNumber(),
                 wordCount.childNumber(),
                 createHardenedChildNumber(index));
 
-        return deriveBIP85Seed(masterPrivateKey, HDPath.of(HDPath.Prefix.PRIVATE, children));
+        return deriveBIP85Seed(masterPrivateKey, path);
     }
 
 
