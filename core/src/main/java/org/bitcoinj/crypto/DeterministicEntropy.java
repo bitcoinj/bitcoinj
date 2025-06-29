@@ -176,7 +176,7 @@ public class DeterministicEntropy {
 
     private static byte[] deriveKey(DeterministicKey childKey, HDPath hdPath) {
         for (int val : hdPath.children) {
-            childKey = childKey.derive(val & ~HARDENED_BIT);
+            childKey = HDKeyDerivation.deriveChildKey(childKey, val);
         }
 
         byte[] fullEntropy = childKey.getPrivKeyBytes();
