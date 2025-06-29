@@ -39,7 +39,15 @@ public class DeterministicEntropy {
     private static final Logger logger = LoggerFactory.getLogger(DeterministicEntropy.class);
 
     private static ChildNumber createHardenedChildNumber(int childNumber) {
-        return new ChildNumber(childNumber & ~HARDENED_BIT, true);
+        return new ChildNumber(soften(childNumber), true);
+    }
+
+    private static int soften(int a) {
+        return a & ~HARDENED_BIT;
+    }
+
+    private static boolean hasHardenedBit(int a) {
+        return (a & HARDENED_BIT) != 0;
     }
 
     private static final ChildNumber BIP85_PATH_ROOT = createHardenedChildNumber(83696968);
@@ -131,6 +139,9 @@ public class DeterministicEntropy {
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, WordCount wordCount, int index) {
         // BIP-85 does not specify an upper limit on the index.  The index must be >= 0.
         if (index < 0) throw new IllegalArgumentException("index must be >= 0");
+
+        // this is redundant because only a negative int would have the hardened bit set, but adding for clarity.
+        if (hasHardenedBit(index)) throw new IllegalArgumentException("index may not have hardened bit set");
 
         HDPath.HDFullPath path = HDPath.m(BIP85_PATH_ROOT,
                 BIP39_APPLICATION_NUMBER,
