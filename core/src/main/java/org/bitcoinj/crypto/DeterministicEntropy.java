@@ -66,14 +66,14 @@ public class DeterministicEntropy {
         Czech(8),
         Portuguese(9);
 
-        private final int intValue;
+        private final ChildNumber childNumber;
 
         Language(int intValue) {
-            this.intValue = intValue;
+            this.childNumber = createHardenedChildNumber(intValue);
         }
 
         public ChildNumber childNumber() {
-            return createHardenedChildNumber(intValue);
+            return childNumber;
         }
     }
 
@@ -82,12 +82,12 @@ public class DeterministicEntropy {
         Eighteen(18, 24),
         TwentyFour(24, 32);
 
-        private final int intValue;
-        private final int bitCount;
+        private final ChildNumber childNumber;
+        private final int byteLength;
 
         WordCount(int intValue, int bits) {
-            this.intValue = intValue;
-            this.bitCount = bits;
+            this.childNumber = createHardenedChildNumber(intValue);
+            this.byteLength = bits;
         }
 
         public static WordCount forWordCount(int wordCount) {
@@ -107,7 +107,7 @@ public class DeterministicEntropy {
         }
 
         public ChildNumber childNumber() {
-            return createHardenedChildNumber(intValue);
+            return childNumber;
         }
     }
 
@@ -175,7 +175,7 @@ public class DeterministicEntropy {
     private static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, HDPath hdPath) {
         byte[] fullEntropy = deriveKey(masterPrivateKey, hdPath);
         byte[] entropy512Bits = generateBIP85Entropy(fullEntropy);
-        byte[] entropy = Arrays.copyOf(entropy512Bits, WordCount.forWordCount(hdPath.children[3]).bitCount);
+        byte[] entropy = Arrays.copyOf(entropy512Bits, WordCount.forWordCount(hdPath.get(3).i()).byteLength);
 
         if (logger.isDebugEnabled()) {
             HexFormat hex = new HexFormat();
@@ -189,8 +189,8 @@ public class DeterministicEntropy {
     }
 
     private static byte[] deriveKey(DeterministicKey childKey, HDPath hdPath) {
-        for (int val : hdPath.children) {
-            childKey = HDKeyDerivation.deriveChildKey(childKey, val);
+        for (ChildNumber child : hdPath.list()) {
+            childKey = HDKeyDerivation.deriveChildKey(childKey, child.i());
         }
 
         byte[] fullEntropy = childKey.getPrivKeyBytes();
