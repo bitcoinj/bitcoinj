@@ -53,7 +53,6 @@ public class DeterministicEntropy {
     private static final ChildNumber BIP85_PATH_ROOT = createHardenedChildNumber(83696968);
     private static final ChildNumber BIP39_APPLICATION_NUMBER = createHardenedChildNumber(39);
 
-
     public enum Language {
         English(0),
         Japanese(1),
@@ -111,7 +110,6 @@ public class DeterministicEntropy {
         }
     }
 
-
     private DeterministicEntropy() {
     }
 
@@ -140,7 +138,6 @@ public class DeterministicEntropy {
         // BIP-85 does not specify an upper limit on the index.  The index must be >= 0.
         if (index < 0) throw new IllegalArgumentException("index must be >= 0");
 
-        // this is redundant because only a negative int would have the hardened bit set, but adding for clarity.
         if (hasHardenedBit(index)) throw new IllegalArgumentException("index may not have hardened bit set");
 
         HDPath.HDFullPath path = HDPath.m(BIP85_PATH_ROOT,
@@ -151,7 +148,6 @@ public class DeterministicEntropy {
 
         return deriveBIP85Seed(masterPrivateKey, path);
     }
-
 
     /**
      * Perform a BIP-85 derivation and return the DeterministicSeed.
