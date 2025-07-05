@@ -1151,8 +1151,8 @@ public class PeerGroup implements TransactionBroadcaster {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             try {
                 log.info("Starting ...");
-                channels.startAsync();
-                channels.awaitRunning();
+                CompletableFuture<Void> started = channels.start(); // Start asynchronously
+                started.get();                                      // Wait until started
                 triggerConnections();
                 setupPinging();
             } catch (Throwable e) {
@@ -1177,8 +1177,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 // The log output this creates can be useful.
                 setDownloadPeer(null);
                 // Blocking close of all sockets.
-                channels.stopAsync();
-                channels.awaitTerminated();
+                CompletableFuture<Void> stopped = channels.stop();  // Stop asynchronously
+                stopped.get();                                      // Wait until stopped
                 for (PeerDiscovery peerDiscovery : peerDiscoverers) {
                     peerDiscovery.shutdown();
                 }
