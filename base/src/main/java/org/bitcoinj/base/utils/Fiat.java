@@ -112,7 +112,7 @@ public final class Fiat implements Monetary, Comparable<Fiat> {
 
     public Fiat subtract(final Fiat value) {
         checkArgument(value.currencyCode.equals(currencyCode), () ->
-                "values to substract must be of same currency: " + value.currencyCode + " vs " + currencyCode);
+                "values to subtract must be of same currency: " + value.currencyCode + " vs " + currencyCode);
         return new Fiat(currencyCode, Math.subtractExact(this.value, value.value));
     }
 
