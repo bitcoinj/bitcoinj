@@ -26,7 +26,7 @@ import java.math.BigInteger;
 import java.util.Locale;
 import java.util.Objects;
 
-// TODO: Fix this class: should not talk about addresses, height should be optional/support mempool height etc
+// TODO: Fix this class: height should be optional/support mempool height etc
 
 /**
  * A UTXO message contains the information necessary to check a spending transaction.
@@ -40,7 +40,6 @@ public class UTXO {
     private final long index;
     private final int height;
     private final boolean coinbase;
-    private final String address;
 
     /**
      * Creates a stored transaction output.
@@ -57,33 +56,12 @@ public class UTXO {
                 int height,
                 boolean coinbase,
                 Script script) {
-        this(hash, index, value, height, coinbase, script, "");
-    }
-
-    /**
-     * Creates a stored transaction output.
-     *
-     * @param hash     The hash of the containing transaction.
-     * @param index    The outpoint.
-     * @param value    The value available.
-     * @param height   The height this output was created in.
-     * @param coinbase The coinbase flag.
-     * @param address  The address.
-     */
-    public UTXO(Sha256Hash hash,
-                long index,
-                Coin value,
-                int height,
-                boolean coinbase,
-                Script script,
-                String address) {
         this.hash = Objects.requireNonNull(hash);
         this.index = index;
         this.value = Objects.requireNonNull(value);
         this.height = height;
         this.script = script;
         this.coinbase = coinbase;
-        this.address = address;
     }
 
     /** The value which this Transaction output holds. */
@@ -114,11 +92,6 @@ public class UTXO {
     /** Gets the flag of whether this was created by a coinbase tx. */
     public boolean isCoinbase() {
         return coinbase;
-    }
-
-    /** The address of this output, can be the empty string if none was provided at construction time or was deserialized */
-    public String getAddress() {
-        return address;
     }
 
     @Override
