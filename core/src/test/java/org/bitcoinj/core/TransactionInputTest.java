@@ -98,7 +98,7 @@ public class TransactionInputTest {
         Address a = w.currentReceiveAddress();
         final UTXO utxo = new UTXO(Sha256Hash.of(new byte[] { 1, 2, 3 }), 1, Coin.COIN, 0, false,
                 ScriptBuilder.createOutputScript(a));
-        w.setUTXOProvider(new UTXOProvider() {
+        w.setUTXOProviderInternal(new UTXOProvider() {
             @Override
             public Network network() {
                 return BitcoinNetwork.TESTNET;
