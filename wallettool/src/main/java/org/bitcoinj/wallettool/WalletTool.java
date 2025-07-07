@@ -385,41 +385,6 @@ public class WalletTool implements Callable<Integer> {
             return 1;
         }
 
-        initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
-        initChainFile(chainFile);
-
-        Context.propagate(new Context());
-
-        initCondition(conditionStr);
-
-        //remove: will be called in subcommand
-//        if (action == ActionEnum.CREATE) {
-//            createWallet(net, walletFile);
-//            return 0;  // We're done.
-//        }
-       checkWalletFileExists();
-
-        //remove: will be called in subcommand
-//        if (action == ActionEnum.RAW_DUMP) {
-//            // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
-//            // useful mostly for investigating corrupted wallets.
-//            return rawDumpWallet(walletFile);
-//        }
-
-        //remove: will be passed in subcommand
-        boolean forceReset = action == ActionEnum.RESET
-                || (action == ActionEnum.SYNC
-                && force);
-        initWallet(forceReset, walletFile);
-
-        //will now be derived from wallet file except on create
-        if (wallet.network() != net) {
-            System.err.println("Wallet does not match requested network: " +
-                    wallet.network() + " vs " + net);
-            return 1;
-        }
-
         // What should we do?
         switch (action) {
             case DUMP: dumpWallet(); break;
@@ -923,7 +888,7 @@ public class WalletTool implements Callable<Integer> {
 
         initCondition(conditionStr);
         checkWalletFileExists();
-        initWallet(force, walletFile);
+        initWallet(force, walletFile);//pass force as option
 
         try {
             setup();
@@ -1227,7 +1192,8 @@ public class WalletTool implements Callable<Integer> {
 
         initCondition(conditionStr);
         checkWalletFileExists();
-
+        // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
+        // useful mostly for investigating corrupted wallets.
         try (FileInputStream stream = new FileInputStream(walletFile)) {
             Protos.Wallet proto = WalletProtobufSerializer.parseToProto(stream);
             proto = attemptHexConversion(proto);
