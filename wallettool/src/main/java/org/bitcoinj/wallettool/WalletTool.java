@@ -97,58 +97,9 @@ import static org.bitcoinj.base.Coin.parseCoin;
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
  */
-@CommandLine.Command(name = "wallet-tool", usageHelpAutoWidth = true, sortOptions = false, description = "Print and manipulate wallets.")
+@CommandLine.Command(name = "wallet-tool", usageHelpAutoWidth = true, sortOptions = false, description = "Print and manipulate wallets.",subcommands = {CommandLine.HelpCommand.class})
 public class WalletTool implements Callable<Integer> {
-    @CommandLine.Parameters(index = "0", description = "Action to perform. Valid values:%n" +
-            "  dump                 Loads and prints the given wallet in textual form to stdout. Private keys and seed are only printed if --dump-privkeys is specified. If the wallet is encrypted, also specify the --password option to dump the private keys and seed.%n" +
-            "                       If --dump-lookahead is present, also show pregenerated but not yet issued keys.%n" +
-            "  raw-dump             Prints the wallet as a raw protobuf with no parsing or sanity checking applied.%n" +
-            "  create               Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.%n" +
-            "                       If --seed is present, it should specify either a mnemonic code or hex/base58 raw seed bytes.%n" +
-            "                       If --watchkey is present, it creates a watching wallet using the specified base58 xpub.%n" +
-            "                       If --seed or --watchkey is combined with either --date or --unixtime, use that as a birthdate for the wallet. See the set-creation-time action for the meaning of these flags.%n" +
-            "                       If --output-script-type is present, use that for deriving addresses.%n" +
-            "  add-key              Adds a new key to the wallet.%n" +
-            "                       If --date is specified, that's the creation date.%n" +
-            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
-            "                       If --privkey is specified, use as a WIF-, hex- or base58-encoded private key.%n" +
-            "                       Don't specify --pubkey in that case, it will be derived automatically.%n" +
-            "                       If --pubkey is specified, use as a hex/base58 encoded non-compressed public key.%n" +
-            "  add-addr             Requires --addr to be specified, and adds it as a watching address.%n" +
-            "  delete-key           Removes the key specified by --pubkey or --addr from the wallet.%n" +
-            "  current-receive-addr Prints the current receive address, deriving one if needed. Addresses derived with this action are%n" +
-            "                       independent of addresses derived with the add-key action.%n" +
-            "  sync                 Sync the wallet with the latest block chain (download new transactions).%n" +
-            "                       If the chain file does not exist or if --force is present, this will RESET the wallet.%n" +
-            "  reset                Deletes all transactions from the wallet, for if you want to replay the chain.%n" +
-            "  send                 Creates and broadcasts a transaction from the given wallet.%n" +
-            "                       Requires either --output or --payment-request to be specified.%n" +
-            "                       If --output is specified, a transaction is created from the provided output from this wallet and broadcasted, e.g.:%n" +
-            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245%n" +
-            "                       You can repeat --output=address:value multiple times.%n" +
-            "                       There is a magic value ALL which empties the wallet to that address, e.g.:%n" +
-            "                         --output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL%n" +
-            "                       The output destination can also be a native segwit address.%n" +
-            "                       If the output destination starts with 04 and is 65 or 33 bytes long it will be treated as a public key instead of an address and the send will use%n" +
-            "                       <key> CHECKSIG as the script.%n" +
-            "                       Other options include:%n" +
-            "                         --fee-per-vkb or --fee-sat-per-vbyte sets the network fee, see below%n" +
-            "                         --select-addr or --select-output to select specific outputs%n" +
-            "                         --locktime=1234  sets the lock time to block 1234%n" +
-            "                         --locktime=2013/01/01  sets the lock time to 1st Jan 2013%n" +
-            "                         --allow-unconfirmed will let you create spends of pending non-change outputs.%n" +
-            "                         --no-pki disables pki verification for payment requests.%n" +
-            "  encrypt              Requires --password and uses it to encrypt the wallet in place.%n" +
-            "  decrypt              Requires --password and uses it to decrypt the wallet in place.%n" +
-            "  upgrade              Upgrade basic or deterministic wallets to deterministic wallets of the given script type.%n" +
-            "                       If --output-script-type is present, use that as the upgrade target.%n" +
-            "  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it.%n" +
-            "                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree%n" +
-            "                       will be created from a new random seed.%n" +
-            "  set-creation-time    Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidently have been created \"in the future\". Currently, watching wallets are not supported.%n" +
-            "                       If --date is specified, that's the creation date.%n" +
-            "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
-            "                       If you omit both options, the creation time is being cleared (set to 0).%n")
+
     private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private static BitcoinNetwork net = BitcoinNetwork.MAINNET;
@@ -226,6 +177,23 @@ public class WalletTool implements Callable<Integer> {
     private static AbstractBlockChain chain;
     private static PeerGroup peerGroup;
     private static Wallet wallet;
+
+    public class Descriptions {
+        public static final String OPTION_NET = "Specifies the Bitcoin network to use. Valid values: mainnet, testnet, regtest.";
+        public static final String OPTION_SEED = "Specifies a mnemonic code or raw seed in hex/base58 raw seed bytes.";
+        public static final String OPTION_WATCHKEY = "If present, creates a watching wallet using the specified base58 xpub.";
+        public static final String OPTION_DATE = "Wallet creation date formatted as YYYY-MM-DD.";
+        public static final String OPTION_UNIXTIME = "Wallet creation time in Unix timestamp format.";
+        public static final String OPTION_OUTPUT_SCRIPT_TYPE = "Use this for deriving addresses. Valid values: P2PKH, P2WPKH. Default: P2WPKH.";
+        public static final String OPTION_FORCE = "Overwrites any existing wallet file.";
+        public static final String OPTION_DEBUGLOG = "Enable debug logging.";
+        public static final String OPTION_CHAIN = "Path to the chain file.";
+        public static final String OPTION_CONDITION = "Additional conditions to apply.";
+        public static final String PARAMETER_WALLET_FILE = "Path to the wallet file to create.";
+
+        //SUBCOMMAND DESCRIPTIONS
+        public static final String SUBCOMMAND_CREATE = "Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.Creates a new wallet in the specified file. This command supports deterministic wallet seeds, watch-only wallets, and various configurations like timestamps and address derivation types. If `--seed` or `--watchkey` is combined with either `--date` or `--unixtime`, use that as a birthdate for the wallet. If neither `--seed` nor `--watchkey` is provided, create will generate a wallet with a newly generated random seed.";
+    }
 
     public static class Condition {
         public enum Type {
@@ -342,7 +310,7 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private static void initNetworkParameter(BitcoinNetwork net, File walletFile) {
+    private static void initNetworkParameter(BitcoinNetwork net) {
         if (net != null){
             params = NetworkParameters.of(net);
             WalletTool.net = net;
@@ -376,31 +344,6 @@ public class WalletTool implements Callable<Integer> {
     @Override
     public Integer call() throws IOException, BlockStoreException {
 
-        //we do not need action enum anymore
-        ActionEnum action;
-        try {
-            action = ActionEnum.valueOf(actionStr.toUpperCase().replace("-", "_"));
-        } catch (IllegalArgumentException e) {
-            System.err.println("Could not understand action name " + actionStr);
-            return 1;
-        }
-
-        // What should we do?
-        switch (action) {
-            case DUMP: dumpWallet(); break;
-            case ADD_KEY: addKey(); break;
-            case ADD_ADDR: addAddr(); break;
-            case DELETE_KEY: deleteKey(); break;
-            case CURRENT_RECEIVE_ADDR: currentReceiveAddr(); break;
-            case RESET: reset(); break;
-            case SYNC: syncChain(); break;
-            case SEND: send(); break;
-            case ENCRYPT: encrypt(); break;
-            case DECRYPT: decrypt(); break;
-            case UPGRADE: upgrade(); break;
-            case ROTATE: rotate(); break;
-            case SET_CREATION_TIME: setCreationTime(); break;
-        }
 
        return 0;
     }
@@ -468,13 +411,15 @@ public class WalletTool implements Callable<Integer> {
 
     private int upgrade() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
         initCondition(conditionStr);
         checkWalletFileExists();
+        initWallet(false, walletFile);
+        initNetworkParameter(net);
+
         DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
         ScriptType currentOutputScriptType = activeKeyChain != null ? activeKeyChain.getOutputScriptType() : null;
         if (!wallet.isDeterministicUpgradeRequired(outputScriptType)) {
@@ -498,7 +443,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int rotate() throws BlockStoreException {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -529,7 +474,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int encrypt() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -551,7 +496,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int decrypt() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -578,7 +523,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int addAddr() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -592,7 +537,7 @@ public class WalletTool implements Callable<Integer> {
         try {
             Address address = LegacyAddress.fromBase58(addrStr, net);
             // If no creation time is specified, assume genesis (zero).
-            getCreationTime().ifPresentOrElse(
+            getCreationTime(date,unixtime).ifPresentOrElse(
                     creationTime -> wallet.addWatchedAddress(address, creationTime),
                     () -> wallet.addWatchedAddress(address));
         } catch (AddressFormatException e) {
@@ -813,7 +758,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int reset() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -821,6 +766,7 @@ public class WalletTool implements Callable<Integer> {
         initCondition(conditionStr);
         checkWalletFileExists();
         initWallet(true, walletFile);
+        initNetworkParameter(net); // TODO : we want to initialize wallet before we derive network for all other subcommands.
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
         saveWallet(walletFile);
@@ -881,14 +827,14 @@ public class WalletTool implements Callable<Integer> {
 
     private int syncChain() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
         initCondition(conditionStr);
         checkWalletFileExists();
-        initWallet(force, walletFile);//pass force as option
+        initWallet(force, walletFile);
 
         try {
             setup();
@@ -928,9 +874,21 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private int createWallet(Network network, File walletFile) throws IOException {
+    @CommandLine.Command(name = "create" , description=Descriptions.SUBCOMMAND_CREATE)
+    private int createWallet(
+            @CommandLine.Option(names = "--net", description = Descriptions.OPTION_NET, defaultValue = "testnet") BitcoinNetwork network,
+            @CommandLine.Option(names = "--seed", description = Descriptions.OPTION_SEED) String seedStr,
+            @CommandLine.Option(names = "--watchkey", description = Descriptions.OPTION_WATCHKEY) String watchKeyStr,
+            @CommandLine.Option(names = "--date", description = Descriptions.OPTION_DATE) LocalDate date,
+            @CommandLine.Option(names = "--unixtime", description = Descriptions.OPTION_UNIXTIME) Long unixtime,
+            @CommandLine.Option(names = "--output-script-type", description = Descriptions.OPTION_OUTPUT_SCRIPT_TYPE, defaultValue = "P2PKH") ScriptType outputScriptType,
+            @CommandLine.Option(names = "--force", description = Descriptions.OPTION_FORCE) boolean force,
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--condition", description = Descriptions.OPTION_CONDITION) String conditionStr,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile) throws IOException {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(network);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -943,7 +901,7 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("Wallet creation requested but " + walletFile + " already exists, use --force");
             return 1;
         }
-        Instant creationTime = getCreationTime().orElse(MnemonicCode.BIP39_STANDARDISATION_TIME);
+        Instant creationTime = getCreationTime(date,unixtime).orElse(MnemonicCode.BIP39_STANDARDISATION_TIME);
         if (seedStr != null) {
             DeterministicSeed seed;
             // Parse as mnemonic code.
@@ -996,7 +954,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int addKey() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -1005,7 +963,7 @@ public class WalletTool implements Callable<Integer> {
         checkWalletFileExists();
 
         ECKey key;
-        Optional<Instant> creationTime = getCreationTime();
+        Optional<Instant> creationTime = getCreationTime(date,unixtime);
         if (privKeyStr != null) {
             try {
                 DumpedPrivateKey dpk = DumpedPrivateKey.fromBase58(net, privKeyStr); // WIF
@@ -1090,7 +1048,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private Optional<Instant> getCreationTime() {
+    private Optional<Instant> getCreationTime(LocalDate date, Long unixtime) {
         if (unixtime != null)
             return Optional.of(Instant.ofEpochSecond(unixtime));
         else if (date != null)
@@ -1101,7 +1059,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int deleteKey() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -1139,7 +1097,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int currentReceiveAddr() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -1154,7 +1112,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int dumpWallet() throws BlockStoreException {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -1185,7 +1143,7 @@ public class WalletTool implements Callable<Integer> {
 
     private static int rawDumpWallet(File walletFile) throws IOException {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -1204,7 +1162,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int send() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -1268,14 +1226,14 @@ public class WalletTool implements Callable<Integer> {
 
     private int setCreationTime() {
         initLogger(debugLog);
-        initNetworkParameter(net, walletFile);
+        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
         initCondition(conditionStr);
         checkWalletFileExists();
-        Optional<Instant> creationTime = getCreationTime();
+        Optional<Instant> creationTime = getCreationTime(date,unixtime);
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
             DeterministicSeed seed = chain.getSeed();
             if (seed == null)
