@@ -94,7 +94,7 @@ public class BasicKeyChainTest {
 
         assertTrue(chain.hasKey(key1));
         assertTrue(chain.hasKey(key2));
-        assertEquals(key1, chain.findKeyFromPubHash(key1.getPubKeyHash()));
+        assertEquals(key1, chain.findKeyFromPubKeyHash(key1.getPubKeyHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
         assertNull(chain.findKeyFromPubKey(key2.getPubKeyHash()));
     }

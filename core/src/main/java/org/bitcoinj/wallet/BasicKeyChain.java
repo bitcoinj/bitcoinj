@@ -19,14 +19,8 @@ package org.bitcoinj.wallet;
 
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
-import org.bitcoinj.crypto.AesKey;
+import org.bitcoinj.crypto.*;
 import org.bitcoinj.core.BloomFilter;
-import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.crypto.EncryptableItem;
-import org.bitcoinj.crypto.EncryptedData;
-import org.bitcoinj.crypto.KeyCrypter;
-import org.bitcoinj.crypto.KeyCrypterException;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
@@ -218,7 +212,16 @@ public class BasicKeyChain implements EncryptableKeyChain {
         }
     }
 
+    /**
+     * Use {@link BasicKeyChain#findKeyFromPubKeyHash(byte[])}
+     */
+    @Deprecated
     public ECKey findKeyFromPubHash(byte[] pubKeyHash) {
+        return findKeyFromPubKeyHash(pubKeyHash);
+    }
+
+
+    public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash) {
         lock.lock();
         try {
             return hashToKeys.get(ByteString.copyFrom(pubKeyHash));
