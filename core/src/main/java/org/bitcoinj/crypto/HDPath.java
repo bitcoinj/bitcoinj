@@ -79,7 +79,11 @@ public abstract class HDPath {
     private static final InternalUtils.Splitter SEPARATOR_SPLITTER = s -> Stream.of(s.split(SEPARATOR))
             .map(String::trim)
             .collect(Collectors.toList());
-    protected final int[] children;
+    /**
+     * Internal representation of {@code HDPath}, use should be limited to {@code HDPath} and its nested subclasses.
+     * Java doesn't give us an easy way to limit scope accordingly.
+     */
+    final int[] children;
 
     /** Partial path with BIP44 purpose */
     public static final HDPartialPath BIP44_PARENT = partial(ChildNumber.PURPOSE_BIP44);

@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api project(':bitcoinj-core')
+    api project(':bitcoinj-base')
 }
 
 tasks.withType(JavaCompile) {

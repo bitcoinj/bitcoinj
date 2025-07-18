@@ -373,12 +373,6 @@ public class Script {
         }
     }
 
-    /** @deprecated use {@link #program()} */
-    @Deprecated
-    public byte[] getProgram() {
-        return program();
-    }
-
     /**
      * Gets an immutable list of the scripts parsed form. Each chunk is either an opcode or data element.
      *
@@ -386,12 +380,6 @@ public class Script {
      */
     public List<ScriptChunk> chunks() {
         return Collections.unmodifiableList(chunks);
-    }
-
-    /** @deprecated use {@link #chunks()} */
-    @Deprecated
-    public List<ScriptChunk> getChunks() {
-        return chunks();
     }
 
     /**
@@ -515,26 +503,18 @@ public class Script {
     }
 
     public static byte[] createInputScript(byte[] signature, byte[] pubkey) {
-        try {
-            // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new ByteArrayOutputStream(signature.length + pubkey.length + 2);
-            writeBytes(bits, signature);
-            writeBytes(bits, pubkey);
-            return bits.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return new ScriptBuilder()
+                .data(signature)
+                .data(pubkey)
+                .build()
+                .program();
     }
 
     public static byte[] createInputScript(byte[] signature) {
-        try {
-            // TODO: Do this by creating a Script *first* then having the script reassemble itself into bytes.
-            ByteArrayOutputStream bits = new ByteArrayOutputStream(signature.length + 2);
-            writeBytes(bits, signature);
-            return bits.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return new ScriptBuilder()
+                .data(signature)
+                .build()
+                .program();
     }
 
     /**
@@ -1731,10 +1711,8 @@ public class Script {
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
      * @param verifyFlags Each flag enables one validation rule.
-     * @deprecated Use {@link #correctlySpends(Transaction, int, TransactionWitness, Coin, Script, Set)} instead.
      */
-    @Deprecated
-    public void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
+    private void correctlySpends(Transaction txContainingThis, long scriptSigIndex, Script scriptPubKey,
                                 Set<VerifyFlag> verifyFlags) throws ScriptException {
         // Clone the transaction because executing the script involves editing it, and if we die, we'll leave
         // the tx half broken (also it's not so thread safe to work on it directly.
