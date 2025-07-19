@@ -1732,7 +1732,7 @@ public class Script {
             p2shStack = new LinkedList<>(stack);
         executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, verifyFlags);
         
-        if (stack.size() == 0)
+        if (stack.isEmpty())
             throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "Stack empty at end of script execution.");
 
         List<byte[]> stackCopy = new LinkedList<>(stack);
@@ -1763,7 +1763,7 @@ public class Script {
             
             executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack, verifyFlags);
             
-            if (p2shStack.size() == 0)
+            if (p2shStack.isEmpty())
                 throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH stack empty at end of script execution.");
             
             List<byte[]> p2shStackCopy = new LinkedList<>(p2shStack);
