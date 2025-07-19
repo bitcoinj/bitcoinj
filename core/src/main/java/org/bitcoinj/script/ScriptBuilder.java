@@ -229,7 +229,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes payment to the given address.
+     * Creates a scriptPubKey that locks an output to the given address.
      *
      * @param to           address to send payment to
      * @param creationTime creation time of the scriptPubKey
@@ -240,7 +240,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes payment to the given address.
+     * Creates a scriptPubKey that locks an output to the given address.
      *
      * @param to address to send payment to
      * @return scriptPubKey
@@ -426,7 +426,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a payment to the given raw public key. The pubkey can be arbitrary data and
+     * Creates a scriptPubKey that locks an output to the given raw public key. The pubkey can be arbitrary data and
      * may be invalid.
      * <p>
      * This is a special purpose method. For normal P2PK use, it is recommended to construct a pubkey with
@@ -440,7 +440,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a payment to the given public key.
+     * Creates a scriptPubKey that locks an output to the given public key.
      *
      * @param pubKey pubkey to pay to
      * @return scriptPubKey that encodes the P2PK payment
@@ -450,7 +450,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a payment to the given public key hash.
+     * Creates a scriptPubKey that locks an output to the given public key hash.
      *
      * @param pubKeyHash 20 hash bytes of the pubkey to pay to
      * @return scriptPubKey that encodes the P2PKH payment
@@ -470,7 +470,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a payment to a hash of a given public key.
+     * Creates a scriptPubKey that locks an output to a hash of a given public key.
      *
      * @param pubKey pubkey whose hash will be paid to
      * @return scriptPubKey that encodes the P2PKH payment
@@ -481,7 +481,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a segwit payment to the given public key hash.
+     * Creates a segwit scriptPubKey that locks an output to the given public key hash.
      *
      * @param pubKeyHash 20 hash bytes of the pubkey to pay to
      * @return scriptPubKey that encodes the P2WPKH payment
@@ -492,7 +492,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a segwit payment to the hash of a given public key. In accordance with the
+     * Creates a segwit scriptPubKey that locks an output to the hash of a given public key. In accordance with the
      * segwit specification, the public key must be compressed.
      *
      * @param pubKey pubkey whose hash will be paid to
@@ -504,7 +504,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a payment to the given script hash. Read
+     * Creates a scriptPubKey that locks an output to the given script hash. Read
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
      * kind of script.
      *
@@ -524,7 +524,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a payment to a hash of the given redeem script.
+     * Creates a scriptPubKey that locks an output to a hash of the given redeem script.
      *
      * @param redeemScript redeem script whose hash will be paid to
      * @return scriptPubKey that encodes the P2SH payment
@@ -535,7 +535,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a segwit payment to the given script hash.
+     * Creates a segwit scriptPubKey that locks an output to the given script hash.
      *
      * @param redeemScriptHash 32 hash bytes of the redeem script to pay to
      * @return scriptPubKey that encodes the P2WSH payment
@@ -546,7 +546,7 @@ public class ScriptBuilder {
     }
 
     /**
-     * Creates a scriptPubKey that encodes a segwit payment to a hash of the given redeem script.
+     * Creates a segwit scriptPubKey that locks an output to a hash of the given redeem script.
      *
      * @param redeemScript redeem script whose hash will be paid to
      * @return scriptPubKey that encodes the P2WSH payment
