@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module wallettemplate {
-    requires java.desktop;
-    requires java.logging;
 
-    requires javafx.controls;
-    requires javafx.fxml;
+/**
+ * Easing Utilities.
+ */
+@NullMarked
+package org.bitcoinj.walletfx.utils.easing;
 
-    requires org.jspecify;
-
-    requires org.slf4j;
-    requires com.google.zxing;
-
-    requires org.bitcoinj.core;
-
-    exports wallettemplate;
-    exports org.bitcoinj.walletfx.controls;
-    opens wallettemplate to javafx.fxml;
-    opens org.bitcoinj.walletfx.controls to javafx.fxml;
-}
+import org.jspecify.annotations.NullMarked;
