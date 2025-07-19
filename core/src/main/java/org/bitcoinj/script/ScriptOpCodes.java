@@ -152,9 +152,6 @@ public class ScriptOpCodes {
 
     // expansion
     public static final int OP_NOP1 = 0xb0;
-    /** Deprecated by BIP 65 */
-    @Deprecated
-    public static final int OP_NOP2 = OP_CHECKLOCKTIMEVERIFY;
     /** Deprecated by BIP 112 */
     @Deprecated
     public static final int OP_NOP3 = OP_CHECKSEQUENCEVERIFY;
@@ -286,7 +283,6 @@ public class ScriptOpCodes {
         Map<String, Integer> map = new HashMap<>(opCodeMap.inverse());
         map.put("OP_FALSE", OP_FALSE);
         map.put("OP_TRUE", OP_TRUE);
-        map.put("NOP2", OP_NOP2);
         map.put("NOP3", OP_NOP3);
         return Collections.unmodifiableMap(map);
     }
