@@ -231,9 +231,9 @@ public class ScriptBuilder {
     /**
      * Creates a scriptPubKey that locks an output to the given address.
      *
-     * @param to           address to send payment to
+     * @param to           address to lock an output to
      * @param creationTime creation time of the scriptPubKey
-     * @return scriptPubKey
+     * @return scriptPubKey that locks an output
      */
     public static Script createOutputScript(Address to, Instant creationTime) {
         return new ScriptBuilder().outputScript(to).creationTime(creationTime).build();
@@ -242,8 +242,8 @@ public class ScriptBuilder {
     /**
      * Creates a scriptPubKey that locks an output to the given address.
      *
-     * @param to address to send payment to
-     * @return scriptPubKey
+     * @param to address to lock an output to
+     * @return scriptPubKey that locks an output
      */
     public static Script createOutputScript(Address to) {
         return new ScriptBuilder().outputScript(to).build();
@@ -432,8 +432,8 @@ public class ScriptBuilder {
      * This is a special purpose method. For normal P2PK use, it is recommended to construct a pubkey with
      * {@link ECKey#fromPublicOnly(byte[])} and use that on {@link #createP2PKOutputScript(ECKey)}.
      *
-     * @param pubKey arbitrary pubkey bytes to pay to
-     * @return scriptPubKey that encodes the P2PK payment
+     * @param pubKey arbitrary pubkey bytes to lock an output to
+     * @return P2PK scriptPubKey that locks an output
      */
     public static Script createP2PKOutputScript(byte[] pubKey) {
         return new ScriptBuilder().data(pubKey).op(OP_CHECKSIG).build();
@@ -442,8 +442,8 @@ public class ScriptBuilder {
     /**
      * Creates a scriptPubKey that locks an output to the given public key.
      *
-     * @param pubKey pubkey to pay to
-     * @return scriptPubKey that encodes the P2PK payment
+     * @param pubKey pubkey to lock an output to
+     * @return P2PK scriptPubKey that locks an output
      */
     public static Script createP2PKOutputScript(ECKey pubKey) {
         return createP2PKOutputScript(pubKey.getPubKey());
@@ -452,8 +452,8 @@ public class ScriptBuilder {
     /**
      * Creates a scriptPubKey that locks an output to the given public key hash.
      *
-     * @param pubKeyHash 20 hash bytes of the pubkey to pay to
-     * @return scriptPubKey that encodes the P2PKH payment
+     * @param pubKeyHash 20 hash bytes of the pubkey to lock an output to
+     * @return P2PKH scriptPubKey that locks an output
      */
     public static Script createP2PKHOutputScript(byte[] pubKeyHash) {
         return new ScriptBuilder().p2pkhOutputScript(pubKeyHash).build();
@@ -472,8 +472,8 @@ public class ScriptBuilder {
     /**
      * Creates a scriptPubKey that locks an output to a hash of a given public key.
      *
-     * @param pubKey pubkey whose hash will be paid to
-     * @return scriptPubKey that encodes the P2PKH payment
+     * @param pubKey pubkey whose hash to lock an output to
+     * @return P2PKH scriptPubKey that locks an output
      */
     public static Script createP2PKHOutputScript(ECKey pubKey) {
         checkArgument(pubKey.isCompressed());
@@ -483,8 +483,8 @@ public class ScriptBuilder {
     /**
      * Creates a segwit scriptPubKey that locks an output to the given public key hash.
      *
-     * @param pubKeyHash 20 hash bytes of the pubkey to pay to
-     * @return scriptPubKey that encodes the P2WPKH payment
+     * @param pubKeyHash 20 hash bytes of the pubkey to lock an output to
+     * @return P2WPKH scriptPubKey that locks an output
      */
     public static Script createP2WPKHOutputScript(byte[] pubKeyHash) {
         checkArgument(pubKeyHash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_PKH);
@@ -495,8 +495,8 @@ public class ScriptBuilder {
      * Creates a segwit scriptPubKey that locks an output to the hash of a given public key. In accordance with the
      * segwit specification, the public key must be compressed.
      *
-     * @param pubKey pubkey whose hash will be paid to
-     * @return scriptPubKey that encodes the P2WPKH payment
+     * @param pubKey pubkey whose hash to lock an output to
+     * @return P2WPKH scriptPubKey that locks an output
      */
     public static Script createP2WPKHOutputScript(ECKey pubKey) {
         checkArgument(pubKey.isCompressed());
@@ -508,8 +508,8 @@ public class ScriptBuilder {
      * <a href="https://github.com/bitcoin/bips/blob/master/bip-0016.mediawiki">BIP 16</a> to learn more about this
      * kind of script.
      *
-     * @param redeemScriptHash 20 hash bytes of the redeem script to pay to
-     * @return scriptPubKey that encodes the P2SH payment
+     * @param redeemScriptHash 20 hash bytes of the redeem script to lock an output to
+     * @return P2SH scriptPubKey that locks an output
      */
     public static Script createP2SHOutputScript(byte[] redeemScriptHash) {
         return new ScriptBuilder().p2shOutputScript(redeemScriptHash).build();
@@ -526,8 +526,8 @@ public class ScriptBuilder {
     /**
      * Creates a scriptPubKey that locks an output to a hash of the given redeem script.
      *
-     * @param redeemScript redeem script whose hash will be paid to
-     * @return scriptPubKey that encodes the P2SH payment
+     * @param redeemScript redeem script whose hash to lock an output to
+     * @return P2SH scriptPubKey that locks an output
      */
     public static Script createP2SHOutputScript(Script redeemScript) {
         byte[] hash = CryptoUtils.sha256hash160(redeemScript.program());
@@ -537,8 +537,8 @@ public class ScriptBuilder {
     /**
      * Creates a segwit scriptPubKey that locks an output to the given script hash.
      *
-     * @param redeemScriptHash 32 hash bytes of the redeem script to pay to
-     * @return scriptPubKey that encodes the P2WSH payment
+     * @param redeemScriptHash 32 hash bytes of the redeem script to lock an output to
+     * @return P2WSH scriptPubKey that locks an output
      */
     public static Script createP2WSHOutputScript(byte[] redeemScriptHash) {
         checkArgument(redeemScriptHash.length == SegwitAddress.WITNESS_PROGRAM_LENGTH_SH);
@@ -548,8 +548,8 @@ public class ScriptBuilder {
     /**
      * Creates a segwit scriptPubKey that locks an output to a hash of the given redeem script.
      *
-     * @param redeemScript redeem script whose hash will be paid to
-     * @return scriptPubKey that encodes the P2WSH payment
+     * @param redeemScript redeem script whose hash to lock an output to
+     * @return P2WSH scriptPubKey that locks an output
      */
     public static Script createP2WSHOutputScript(Script redeemScript) {
         byte[] hash = Sha256Hash.hash(redeemScript.program());
@@ -561,8 +561,8 @@ public class ScriptBuilder {
      * be placed in redeem script in the lexicographical sorting order.
      *
      * @param threshold The threshold number of keys that must sign (n)
-     * @param pubkeys A list of m public keys
-     * @return The P2SH multisig output script
+     * @param pubkeys list of m public keys to lock an output to
+     * @return P2SH multisig scriptPubKey that locks an output
      */
     public static Script createP2SHOutputScript(int threshold, List<ECKey> pubkeys) {
         Script redeemScript = createRedeemScript(threshold, pubkeys);
@@ -574,8 +574,8 @@ public class ScriptBuilder {
      * redeem script in the lexicographical sorting order.
      *
      * @param threshold The threshold number of keys that must sign (n)
-     * @param pubkeys A list of m public keys
-     * @return The P2SH multisig redeem script
+     * @param pubkeys list of m public keys to lock an output to
+     * @return P2SH multisig scriptPubKey that locks an output
      */
     public static Script createRedeemScript(int threshold, List<ECKey> pubkeys) {
         pubkeys = new ArrayList<>(pubkeys);
