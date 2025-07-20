@@ -54,9 +54,7 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
     @Override
     public boolean signInputs(ProposedTransaction propTx, KeyBag keyBag) {
         Transaction tx = propTx.partialTx;
-        int numInputs = tx.getInputs().size();
-        for (int i = 0; i < numInputs; i++) {
-            TransactionInput txIn = tx.getInput(i);
+        for (TransactionInput txIn : tx.getInputs()) {
             TransactionOutput txOut = txIn.getConnectedOutput();
             if (txOut == null) {
                 continue;
@@ -73,9 +71,9 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
                 // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                 // we sign missing pieces (to check this would require either assuming any signatures are signing
                 // standard output types or a way to get processed signatures out of script execution)
-                txIn.getScriptSig().correctlySpends(tx, i, txIn.getWitness(), txOut.getValue(), txOut.getScriptPubKey(),
+                txIn.getScriptSig().correctlySpends(tx, txIn.getIndex(), txIn.getWitness(), txOut.getValue(), txOut.getScriptPubKey(),
                         Script.ALL_VERIFY_FLAGS);
-                log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
+                log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", txIn.getIndex());
                 continue;
             } catch (ScriptException e) {
                 // Expected.
@@ -83,11 +81,11 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
 
             RedeemData redeemData = txIn.getConnectedRedeemData(keyBag);
             if (redeemData == null) {
-                log.warn("No redeem data found for input {}", i);
+                log.warn("No redeem data found for input {}", txIn.getIndex());
                 continue;
             }
 
-            Sha256Hash sighash = tx.hashForSignature(i, redeemData.redeemScript, Transaction.SigHash.ALL, false);
+            Sha256Hash sighash = tx.hashForSignature(txIn.getIndex(), redeemData.redeemScript, Transaction.SigHash.ALL, false);
             SignatureAndKey sigKey = getSignature(sighash, propTx.keyPaths.get(scriptPubKey));
             TransactionSignature txSig = new TransactionSignature(sigKey.sig, Transaction.SigHash.ALL, false);
             int sigIndex = inputScript.getSigInsertionIndex(sighash, sigKey.pubKey);
