@@ -102,7 +102,7 @@ import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -1680,7 +1680,7 @@ public class Wallet extends BaseTaggableObject
      * @param delay How much time to wait until saving the wallet on a background thread.
      * @param eventListener callback to be informed when the auto-save thread does things, or null
      */
-    public WalletFiles autosaveToFile(File f, Duration delay, @Nullable WalletFiles.Listener eventListener) {
+    public WalletFiles autosaveToFile(File f, Duration delay, WalletFiles.@Nullable Listener eventListener) {
         lock.lock();
         try {
             checkState(vFileManager == null, () ->
@@ -5409,7 +5409,7 @@ public class Wallet extends BaseTaggableObject
      * re-organisation of the wallet contents on the block chain. For instance, in future the wallet may choose to
      * optimise itself to reduce fees or improve privacy.</p>
      */
-    public void setTransactionBroadcaster(@Nullable org.bitcoinj.core.TransactionBroadcaster broadcaster) {
+    public void setTransactionBroadcaster(org.bitcoinj.core.@Nullable TransactionBroadcaster broadcaster) {
         Transaction[] toBroadcast = {};
         lock.lock();
         try {

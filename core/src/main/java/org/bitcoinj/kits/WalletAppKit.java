@@ -44,8 +44,8 @@ import org.bitcoinj.wallet.WalletProtobufSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -109,7 +109,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected InputStream checkpoints;
     protected boolean blockingStartup = true;
     protected String userAgent, version;
-    @Nonnull protected WalletProtobufSerializer.WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
+    protected WalletProtobufSerializer.@NonNull WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
     @Nullable protected DeterministicSeed restoreFromSeed;
     @Nullable protected DeterministicKey restoreFromKey;
     @Nullable protected PeerDiscovery discovery;
@@ -281,7 +281,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
      * @param walletFactory Factory for making new wallets (Use {@link WalletProtobufSerializer.WalletFactory#DEFAULT} for default behavior)
      * @return WalletAppKit for method chaining purposes
      */
-    public WalletAppKit setWalletFactory(@Nonnull WalletProtobufSerializer.WalletFactory walletFactory) {
+    public WalletAppKit setWalletFactory(WalletProtobufSerializer.@NonNull WalletFactory walletFactory) {
         Objects.requireNonNull(walletFactory);
         this.walletFactory = walletFactory;
         return this;

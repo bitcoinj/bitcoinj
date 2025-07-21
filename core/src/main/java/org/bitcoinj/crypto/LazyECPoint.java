@@ -20,7 +20,7 @@ import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
 import java.util.Objects;
@@ -36,8 +36,7 @@ public final class LazyECPoint implements ECPublicKey {
     private static final ECCurve curve = ECKey.CURVE.getCurve();
 
     // bits will be null if LazyECPoint is constructed from an (already decoded) point
-    @Nullable
-    private final byte[] bits;
+    private final byte @Nullable [] bits;
     private final boolean compressed;
 
     // This field is lazy - once set it won't change again. However, it can be set after construction.

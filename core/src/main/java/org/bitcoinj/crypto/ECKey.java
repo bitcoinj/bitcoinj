@@ -66,7 +66,7 @@ import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -1247,9 +1247,8 @@ public class ECKey implements EncryptableItem {
         return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes.length > 0;
     }
 
-    @Nullable
     @Override
-    public Protos.Wallet.EncryptionType getEncryptionType() {
+    public Protos.Wallet.@Nullable EncryptionType getEncryptionType() {
         return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
     }
 
@@ -1258,8 +1257,7 @@ public class ECKey implements EncryptableItem {
      * to be derived (for the HD key case).
      */
     @Override
-    @Nullable
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         if (hasPrivKey())
             return getPrivKeyBytes();
         else
