@@ -26,6 +26,7 @@ import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.slf4j.Logger;
@@ -244,7 +245,7 @@ public class Block implements Message {
     }
 
     public static Block createGenesis(Instant time, Difficulty difficultyTarget) {
-        return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, genesisTransactions());
+        return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, genesisTransactions("test", new byte[33]));
     }
 
     /** @deprecated use {@link #createGenesis(Instant, Difficulty)} */
@@ -253,30 +254,27 @@ public class Block implements Message {
         return createGenesis(time, Difficulty.ofCompact(difficultyTarget));
     }
 
-    public static Block createGenesis(Instant time, Difficulty difficultyTarget, long nonce) {
-        return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, nonce, genesisTransactions());
+    public static Block createGenesis(Instant time, Difficulty difficultyTarget, long nonce, String message,
+                                      byte[] outputPubKey) {
+        return new Block(BLOCK_VERSION_GENESIS, time, difficultyTarget, nonce, genesisTransactions(message,
+                outputPubKey));
     }
 
-    /** @deprecated use {@link #createGenesis(Instant, Difficulty, long)} */
+    /** @deprecated use {@link #createGenesis(Instant, Difficulty, long, String, byte[])} */
     @Deprecated
     public static Block createGenesis(Instant time, long difficultyTarget, long nonce) {
-        return createGenesis(time, Difficulty.ofCompact(difficultyTarget), nonce);
+        return createGenesis(time, Difficulty.ofCompact(difficultyTarget), nonce,
+                BitcoinNetworkParams.GENESIS_MESSAGE, BitcoinNetworkParams.GENESIS_OUTPUT_PUBKEY);
     }
 
-    private static List<Transaction> genesisTransactions() {
-        byte[] messageBytes = GENESIS_MESSAGE.getBytes(StandardCharsets.US_ASCII);
+    private static List<Transaction> genesisTransactions(String message, byte[] outputPubKey) {
+        byte[] messageBytes = message.getBytes(StandardCharsets.US_ASCII);
         Script scriptSig = // TODO find out what the pushdata(4) is supposed to mean
                 new ScriptBuilder().bigNum(STANDARD_MAX_DIFFICULTY_TARGET).bigNum(4).data(messageBytes).build();
         Transaction tx = Transaction.coinbase(scriptSig.program());
-        tx.addOutput(new TransactionOutput(
-                tx, FIFTY_COINS, ScriptBuilder.createP2PKOutputScript(GENESIS_OUTPUT_PUBKEY).program()));
+        tx.addPayToInvalidPubkeyOutput(FIFTY_COINS, outputPubKey);
         return Collections.singletonList(tx);
     }
-
-    private static final String GENESIS_MESSAGE =
-            "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
-    private static final byte[] GENESIS_OUTPUT_PUBKEY = ByteUtils.parseHex(
-            "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
 
     @Override
     public int messageSize() {
