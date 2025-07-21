@@ -16,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.base.MoreObjects;
+
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -26,17 +28,16 @@ import java.util.stream.Collectors;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
- * <p>Represents the "inv" P2P network message. An inv contains a list of hashes of either blocks or transactions. It's
+ * Represents the "inv" P2P network message. An inv contains a list of hashes of either blocks or transactions. It's
  * a bandwidth optimization - on receiving some data, a (fully validating) peer sends every connected peer an inv
  * containing the hash of what it saw. It'll only transmit the full thing if a peer asks for it with a
- * {@link GetDataMessage}.</p>
- *
- * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
+ * {@link GetDataMessage}.
  */
-public class InventoryMessage extends ListMessage {
+public class InventoryMessage implements ListMessage {
 
     /** A hard coded constant in the protocol. */
     public static final int MAX_INV_SIZE = 50000;
+    private final List<InventoryItem> items;
 
     /**
      * Deserialize this message from a given payload.
@@ -46,11 +47,11 @@ public class InventoryMessage extends ListMessage {
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
     public static InventoryMessage read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
-        return new InventoryMessage(readItems(payload));
+        return new InventoryMessage(ListMessage.readItems(payload));
     }
 
     protected InventoryMessage(List<InventoryItem> items) {
-        super(items);
+        this.items = items;    // TODO: unmodifiable defensive copy
     }
 
     public static InventoryMessage ofBlocks(List<Block> blocks) {
@@ -73,5 +74,29 @@ public class InventoryMessage extends ListMessage {
 
     public static InventoryMessage ofTransactions(Transaction ...transactions) {
         return ofTransactions(Arrays.asList(transactions));
+    }
+
+    @Override
+    public List<InventoryItem> items() {
+        return items;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return items.equals(((InventoryMessage)o).items);
+    }
+
+    @Override
+    public int hashCode() {
+        return items.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
+        helper.addValue(items);
+        return helper.toString();
     }
 }
