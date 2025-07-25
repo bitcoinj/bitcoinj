@@ -190,9 +190,13 @@ public class WalletTool implements Callable<Integer> {
         public static final String OPTION_CHAIN = "Path to the chain file.";
         public static final String OPTION_CONDITION = "Additional conditions to apply.";
         public static final String PARAMETER_WALLET_FILE = "Path to the wallet file to create.";
+        public static final String OPTION_DUMP_PRIVKEYS = "Displays wallet seed and private keys (password required for an encrypted wallet).";
+        public static final String OPTION_DUMP_LOOKAHEAD = "Includes lookahead keys (pregenerated but unused).";
+        public static final String OPTION_PASSWORD = "Password to decrypt and access private keys. For an encrypted wallet, the password is provided here.";
 
         //SUBCOMMAND DESCRIPTIONS
         public static final String SUBCOMMAND_CREATE = "Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.Creates a new wallet in the specified file. This command supports deterministic wallet seeds, watch-only wallets, and various configurations like timestamps and address derivation types. If `--seed` or `--watchkey` is combined with either `--date` or `--unixtime`, use that as a birthdate for the wallet. If neither `--seed` nor `--watchkey` is provided, create will generate a wallet with a newly generated random seed.";
+        public static final String SUBCOMMAND_DUMP = "Loads and prints the given wallet in textual form to stdout. Allows printing private keys, seeds, and unused lookahead keys if specified.";
     }
 
     public static class Condition {
@@ -333,7 +337,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private static int checkWalletFileExists(){
+    private static int checkWalletFileExists(File walletFile) {
         if (!walletFile.exists()) {
             System.err.println("Specified wallet file " + walletFile + " does not exist. Try wallet-tool --wallet=" + walletFile + " create");
             return 1;
@@ -348,7 +352,7 @@ public class WalletTool implements Callable<Integer> {
        return 0;
     }
 
-    private int cleanUp(){
+    private int cleanUp(File walletFile) {
         if (!wallet.isConsistent()) {
             System.err.println("************** WALLET IS INCONSISTENT *****************");
             return 10;
@@ -416,7 +420,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         initWallet(false, walletFile);
         initNetworkParameter(net);
 
@@ -437,7 +441,7 @@ public class WalletTool implements Callable<Integer> {
         wallet.upgradeToDeterministic(outputScriptType, aesKey);
         System.out.println("Upgraded from " + (currentOutputScriptType != null ? currentOutputScriptType : "basic")
                 + " to " + outputScriptType);
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -449,7 +453,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         setup();
         peerGroup.start();
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
@@ -468,7 +472,7 @@ public class WalletTool implements Callable<Integer> {
                 return 1;
         }
         wallet.doMaintenance(aesKey, true).join();
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -480,7 +484,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         if (password == null) {
             System.err.println("You must provide a --password");
             return 1;
@@ -490,7 +494,7 @@ public class WalletTool implements Callable<Integer> {
             return 1;
         }
         wallet.encrypt(password);
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -502,7 +506,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         if (password == null) {
             System.err.println("You must provide a --password");
             return 1;
@@ -517,7 +521,7 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("Password incorrect.");
             return 1;
         }
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -529,7 +533,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         if (addrStr == null) {
             System.err.println("You must specify an --addr to watch.");
             return 1;
@@ -543,7 +547,7 @@ public class WalletTool implements Callable<Integer> {
         } catch (AddressFormatException e) {
             System.err.println("Could not parse given address, or wrong network: " + addrStr);
         }
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -764,13 +768,13 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
-        initWallet(true, walletFile);
+        checkWalletFileExists(walletFile);
+        initWallet(true, walletFile);// TODO : forcereset should not be true for all. its only true for reset and can be passed for sync. the rest use the defualt force which is false
         initNetworkParameter(net); // TODO : we want to initialize wallet before we derive network for all other subcommands.
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
         saveWallet(walletFile);
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -833,7 +837,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         initWallet(force, walletFile);
 
         try {
@@ -857,7 +861,7 @@ public class WalletTool implements Callable<Integer> {
             e.printStackTrace();
             return 1;
         }
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -886,6 +890,7 @@ public class WalletTool implements Callable<Integer> {
             @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
             @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
             @CommandLine.Option(names = "--condition", description = Descriptions.OPTION_CONDITION) String conditionStr,
+            @CommandLine.Option(names = "--password", description = Descriptions.OPTION_PASSWORD) String password,
             @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile) throws IOException {
         initLogger(debugLog);
         initNetworkParameter(network);
@@ -960,7 +965,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
 
         ECKey key;
         Optional<Instant> creationTime = getCreationTime(date,unixtime);
@@ -1012,7 +1017,7 @@ public class WalletTool implements Callable<Integer> {
         if (key.isCompressed())
             System.out.print("," + key.toAddress(ScriptType.P2WPKH, net));
         System.out.println();
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -1065,7 +1070,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         if (pubKeyStr == null && addrStr == null) {
             System.err.println("One of --pubkey or --addr must be specified.");
             return 1;
@@ -1091,7 +1096,7 @@ public class WalletTool implements Callable<Integer> {
             System.out.println("Key " + key + " was removed");
         else
             System.err.println("Key " + key + " could not be removed");
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -1103,25 +1108,40 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         Address address = wallet.currentReceiveAddress();
         System.out.println(address);
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
-    private int dumpWallet() throws BlockStoreException {
+    @CommandLine.Command(name = "dump" , description=Descriptions.SUBCOMMAND_DUMP)
+    private int dumpWallet(
+            @CommandLine.Option(names = "--dump-privkeys", description = Descriptions.OPTION_DUMP_PRIVKEYS) boolean dumpPrivKeys,
+            @CommandLine.Option(names = "--dump-lookahead", description = Descriptions.OPTION_DUMP_LOOKAHEAD) boolean dumpLookAhead,
+            @CommandLine.Option(names = "--password", description = Descriptions.OPTION_PASSWORD) String password,
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--condition", description = Descriptions.OPTION_CONDITION) String conditionStr,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+            ) throws BlockStoreException {
         initLogger(debugLog);
-        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult; //TODO check results for every other init in other subcommands like here.
+
+        initResult = initWallet(false, walletFile);
+        if (initResult != 0) return initResult;
+        initNetworkParameter(net);
+
+        this.dumpLookAhead = dumpLookAhead;
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
-        if (chainFile.exists())
+        if (WalletTool.chainFile.exists()) // TODO we might not want to rely on global chainfile since we are passing it here
             setup();
 
         if (dumpPrivKeys && wallet.isEncrypted()) {
@@ -1137,7 +1157,7 @@ public class WalletTool implements Callable<Integer> {
         } else {
             printWallet(null);
         }
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -1149,7 +1169,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
         // useful mostly for investigating corrupted wallets.
         try (FileInputStream stream = new FileInputStream(walletFile)) {
@@ -1168,7 +1188,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         if (feePerVkbStr != null && feeSatPerVbyteStr != null) {
             System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
             return 1;
@@ -1216,7 +1236,7 @@ public class WalletTool implements Callable<Integer> {
             System.err.println("You must specify at least one --output=addr:value.");
             return 1;
         }
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 
@@ -1232,7 +1252,7 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists();
+        checkWalletFileExists(walletFile);
         Optional<Instant> creationTime = getCreationTime(date,unixtime);
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
             DeterministicSeed seed = chain.getSeed();
@@ -1245,7 +1265,7 @@ public class WalletTool implements Callable<Integer> {
         System.out.println(creationTime
                 .map(time -> "Setting creation time to: " + TimeUtils.dateTimeFormat(time))
                 .orElse("Clearing creation time."));
-        cleanUp();
+        cleanUp(walletFile);
         return 0;
     }
 }
