@@ -197,6 +197,8 @@ public class WalletTool implements Callable<Integer> {
         //SUBCOMMAND DESCRIPTIONS
         public static final String SUBCOMMAND_CREATE = "Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.Creates a new wallet in the specified file. This command supports deterministic wallet seeds, watch-only wallets, and various configurations like timestamps and address derivation types. If `--seed` or `--watchkey` is combined with either `--date` or `--unixtime`, use that as a birthdate for the wallet. If neither `--seed` nor `--watchkey` is provided, create will generate a wallet with a newly generated random seed.";
         public static final String SUBCOMMAND_DUMP = "Loads and prints the given wallet in textual form to stdout. Allows printing private keys, seeds, and unused lookahead keys if specified.";
+        public static final String SUBCOMMAND_RAW_DUMP = "Prints the wallet as a raw protobuf with no parsing or sanity checking applied.";
+
     }
 
     public static class Condition {
@@ -1161,15 +1163,17 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private static int rawDumpWallet(File walletFile) throws IOException {
+    @CommandLine.Command(name = "raw-dump" , description=Descriptions.SUBCOMMAND_RAW_DUMP)
+    private static int rawDumpWallet(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+            ) throws IOException {
         initLogger(debugLog);
-        initNetworkParameter(net);
-        initChainFile(chainFile);
-
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
         // Just parse the protobuf and print, then bail out. Don't try and do a real deserialization. This is
         // useful mostly for investigating corrupted wallets.
         try (FileInputStream stream = new FileInputStream(walletFile)) {
