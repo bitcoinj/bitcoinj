@@ -23,7 +23,6 @@ import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.LegacyAddress;
-import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.exceptions.AddressFormatException;
@@ -305,9 +304,9 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private static int initWallet(boolean forceReset, File walletFile){
+    private static int initWallet(boolean forceReset, File walletFile, boolean ignoreMandatoryExtensions){
         try {
-            wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, ignoreMandatoryExtensions);
+            wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, WalletTool.ignoreMandatoryExtensions);
         } catch (UnreadableWalletException e) {
             System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
             e.printStackTrace();
@@ -423,7 +422,7 @@ public class WalletTool implements Callable<Integer> {
 
         initCondition(conditionStr);
         checkWalletFileExists(walletFile);
-        initWallet(false, walletFile);
+        initWallet(false, walletFile, ignoreMandatoryExtensions);
         initNetworkParameter(net);
 
         DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
@@ -771,7 +770,7 @@ public class WalletTool implements Callable<Integer> {
 
         initCondition(conditionStr);
         checkWalletFileExists(walletFile);
-        initWallet(true, walletFile);// TODO : forcereset should not be true for all. its only true for reset and can be passed for sync. the rest use the defualt force which is false
+        initWallet(true, walletFile, ignoreMandatoryExtensions);// TODO : forcereset should not be true for all. its only true for reset and can be passed for sync. the rest use the defualt force which is false
         initNetworkParameter(net); // TODO : we want to initialize wallet before we derive network for all other subcommands.
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
@@ -840,7 +839,7 @@ public class WalletTool implements Callable<Integer> {
 
         initCondition(conditionStr);
         checkWalletFileExists(walletFile);
-        initWallet(force, walletFile);
+        initWallet(force, walletFile, ignoreMandatoryExtensions);
 
         try {
             setup();
@@ -1125,6 +1124,7 @@ public class WalletTool implements Callable<Integer> {
             @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
             @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
             @CommandLine.Option(names = "--condition", description = Descriptions.OPTION_CONDITION) String conditionStr,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_CONDITION) boolean ignoreMandatoryExtensions,
             @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
             ) throws BlockStoreException {
         initLogger(debugLog);
@@ -1136,7 +1136,7 @@ public class WalletTool implements Callable<Integer> {
         int initResult = checkWalletFileExists(walletFile);
         if (initResult != 0) return initResult; //TODO check results for every other init in other subcommands like here.
 
-        initResult = initWallet(false, walletFile);
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
         if (initResult != 0) return initResult;
         initNetworkParameter(net);
 
@@ -1151,13 +1151,13 @@ public class WalletTool implements Callable<Integer> {
                 final AesKey aesKey = passwordToKey(true);
                 if (aesKey == null)
                     return 1; // Error message already printed.
-                printWallet(aesKey);
+                printWallet(aesKey,dumpLookAhead,dumpPrivKeys,chainFile);
             } else {
                 System.err.println("Can't dump privkeys, wallet is encrypted.");
                 return 1;
             }
         } else {
-            printWallet(null);
+            printWallet(null, dumpLookAhead, dumpPrivKeys, chainFile);
         }
         cleanUp(walletFile);
         return 0;
@@ -1244,8 +1244,8 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private void printWallet(@Nullable AesKey aesKey) {
-        System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, aesKey, true, true, chain));
+    private void printWallet(@Nullable AesKey aesKey, boolean dumpLookAhead, boolean dumpPrivKeys, File chainFile) {
+        System.out.println(wallet.toString(this.dumpLookAhead, this.dumpPrivKeys, aesKey, true, true, chain));
     }
 
     private int setCreationTime() {
