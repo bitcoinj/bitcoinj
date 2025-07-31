@@ -8,8 +8,8 @@ plugins {
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'com.google.zxing:core:3.5.3'
+    implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.16'
-    implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
 
     runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.16'
 

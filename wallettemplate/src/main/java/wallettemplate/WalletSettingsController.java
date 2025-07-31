@@ -17,7 +17,7 @@
 package wallettemplate;
 
 import com.google.common.util.concurrent.Service;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
