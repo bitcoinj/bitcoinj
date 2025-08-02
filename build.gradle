@@ -30,8 +30,12 @@ allprojects {
     }
 
     tasks.withType(Jar) {
-        dirMode = 0755
-        fileMode = 0644
+        dirPermissions {
+            unix('rwxr-xr-x')
+        }
+        filePermissions {
+            unix('rw-r--r--')
+        }
     }
 
     tasks.withType(Javadoc) {
