@@ -11,13 +11,13 @@ jobs:
         os: [ubuntu-24.04, macOS-13, windows-2022]
         java: ['17', '21', '23']
         distribution: ['temurin']
-        gradle: ['7.3', '8.14']
+        gradle: ['8.0', '8.14']
         exclude:
           # Java 21+ requires Gradle 8.5+
           - java: '21'
-            gradle: '7.3'
+            gradle: '8.0'
           - java: '23'
-            gradle: '7.3'
+            gradle: '8.0'
       fail-fast: false
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
