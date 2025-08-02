@@ -1,12 +1,12 @@
 /*
- * Settings file for Gradle 7.3 or later.
+ * Settings file for Gradle 8.0 or later.
  * For building with Debian Gradle 4.4, use the settings-debian.gradle settings.
  */
 
 import org.gradle.util.GradleVersion
 
 // Minimum Gradle version for build
-def minGradleVersion = GradleVersion.version("7.3")
+def minGradleVersion = GradleVersion.version("8.0")
 
 rootProject.name = 'bitcoinj-parent'
 
