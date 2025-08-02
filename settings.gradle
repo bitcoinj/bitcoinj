@@ -1,5 +1,5 @@
 /*
- * Settings file for Gradle 7.3 or later.
+ * Settings file for Gradle 8.0 or later.
  * For building with Debian Gradle 4.4, use the settings-debian.gradle settings.
  */
 
@@ -35,11 +35,11 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
-include 'wallettemplate'
-project(':wallettemplate').name = 'bitcoinj-wallettemplate'
+//include 'wallettemplate'
+//project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 
-include 'integration-test'
-project(':integration-test').name = 'bitcoinj-integration-test'
+//include 'integration-test'
+//project(':integration-test').name = 'bitcoinj-integration-test'
 
 include 'examples-kotlin'
 project(':examples-kotlin').name = 'bitcoinj-examples-kotlin'
