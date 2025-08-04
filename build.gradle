@@ -30,8 +30,19 @@ allprojects {
     }
 
     tasks.withType(Jar) {
-        dirMode = 0755
-        fileMode = 0644
+        boolean hasDirPermissions = GradleVersion.current() >= GradleVersion.version("8.3")
+        if (hasDirPermissions) {
+            dirPermissions {
+                unix('rwxr-xr-x')
+            }
+            filePermissions {
+                unix('rw-r--r--')
+            }
+        } else {
+            // Necessary for Debian Gradle 4.4
+            dirMode = 0755
+            fileMode = 0644
+        }
     }
 
     tasks.withType(Javadoc) {
