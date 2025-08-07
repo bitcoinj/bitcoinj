@@ -15,14 +15,7 @@
  */
 
 /**
- * The {@code base} package provides foundational types for <b>bitcoinj</b>. These types must have
- * minimal dependencies. The criteria for allowed dependencies for {@code base} types are:
- * <ul>
- *     <li>No dependencies on other packages of bitcoinj</li>
- *     <li>No API dependencies on external libraries other than the core JDK and {@code slf4j-api}</li>
- * </ul>
- * <p>
- * The base package/module makes bitcoinj more modular as it breaks circular dependencies between existing packages
- * and provides a "zero-dependency" foundation for the other packages.
+ * The {@code base} package provides foundational types for <b>bitcoinj</b>. This package
+ * has no dependencies other than {@code slf4j-api} and {@code jspecify}.
  */
 package org.bitcoinj.base;
