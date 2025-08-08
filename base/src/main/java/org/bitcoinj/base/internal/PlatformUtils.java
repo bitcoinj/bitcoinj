@@ -16,6 +16,7 @@
 
 package org.bitcoinj.base.internal;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,9 @@ public class PlatformUtils {
         LINUX, WINDOWS, MAC_OS
     }
 
+    @Nullable
     public static Runtime runtime = null;
+    @Nullable
     public static OS os = null;
 
     static {
