@@ -35,8 +35,12 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
-include 'wallettemplate'
-project(':wallettemplate').name = 'bitcoinj-wallettemplate'
+if (JavaVersion.current().getMajorVersion().toInteger() >= 21) {
+    include 'wallettemplate'
+    project(':wallettemplate').name = 'bitcoinj-wallettemplate'
+} else {
+    System.err.println "Skipping wallettemplate, requires Java 21+, currently running Java ${JavaVersion.current()}"
+}
 
 include 'integration-test'
 project(':integration-test').name = 'bitcoinj-integration-test'
