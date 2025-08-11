@@ -35,6 +35,9 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
+include 'examples-peermonitor'
+project(':examples-peermonitor').name = 'bitcoinj-examples-peermonitor'
+
 include 'wallettemplate'
 project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 
