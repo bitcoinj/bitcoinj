@@ -211,6 +211,8 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_RAW_DUMP = "Prints the wallet as a raw protobuf with no parsing or sanity checking applied.";
         public static final String SUBCOMMAND_SEND = "Creates and broadcasts a transaction from the given wallet. Requires --output to be specified.";
         public static final String SUBCOMMAND_SET_CREATION_TIME = "Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidentally have been created in the future. Currently, watching wallets are not supported. If you omit both options (`--date` and `--unixtime`), the creation time is cleared (set to 0).";
+        public static final String SUBCOMMAND_ADD_KEY = "Adds a key (private or public) to the wallet. Appropriate formats such as WIF, hex, or base58 are supported for private and public keys.";
+
 
     }
 
@@ -972,15 +974,32 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private int addKey() {
+    @CommandLine.Command(name = "add-key" , description=Descriptions.SUBCOMMAND_ADD_KEY)
+    private int addKey(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--condition", description = Descriptions.OPTION_CONDITION) String conditionStr,
+            @CommandLine.Option(names = "--password", description = Descriptions.OPTION_PASSWORD) String password,
+            @CommandLine.Option(names = "--date", description = Descriptions.OPTION_DATE) LocalDate date,
+            @CommandLine.Option(names = "--unixtime", description = Descriptions.OPTION_UNIXTIME) Long unixtime,
+            @CommandLine.Option(names = "--privkey", description = Descriptions.OPTION_DATE) String privKeyStr,
+            @CommandLine.Option(names = "--pubkey", description = Descriptions.OPTION_UNIXTIME) String pubKeyStr,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+    ) {
         initLogger(debugLog);
-        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(net);
 
         ECKey key;
         Optional<Instant> creationTime = getCreationTime(date,unixtime);
