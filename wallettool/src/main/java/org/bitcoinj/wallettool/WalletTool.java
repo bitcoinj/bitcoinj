@@ -210,6 +210,7 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_DUMP = "Loads and prints the given wallet in textual form to stdout. Allows printing private keys, seeds, and unused lookahead keys if specified.";
         public static final String SUBCOMMAND_RAW_DUMP = "Prints the wallet as a raw protobuf with no parsing or sanity checking applied.";
         public static final String SUBCOMMAND_SEND = "Creates and broadcasts a transaction from the given wallet. Requires --output to be specified.";
+        public static final String SUBCOMMAND_SET_CREATION_TIME = "Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidentally have been created in the future. Currently, watching wallets are not supported. If you omit both options (`--date` and `--unixtime`), the creation time is cleared (set to 0).";
 
     }
 
@@ -1196,7 +1197,7 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    @CommandLine.Command(name = "send" , description=Descriptions.SUBCOMMAND_RAW_DUMP)
+    @CommandLine.Command(name = "send" , description=Descriptions.SUBCOMMAND_SEND)
     private int send(
             @CommandLine.Option(names = "--output", description = Descriptions.OPTION_OUTPUT) List<String> outputsStr,
             @CommandLine.Option(names = "--fee-per-vkb", description = Descriptions.OPTION_FEE_PER_KB) String feePerVkbStr,
@@ -1210,7 +1211,7 @@ public class WalletTool implements Callable<Integer> {
             @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
             @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
             @CommandLine.Option(names = "--condition", description = Descriptions.OPTION_CONDITION) String conditionStr,
-            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_CONDITION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
             @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
     ) {
         initLogger(debugLog);
@@ -1219,7 +1220,6 @@ public class WalletTool implements Callable<Integer> {
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
 
         int initResult = checkWalletFileExists(walletFile);
         if (initResult != 0) return initResult;
@@ -1283,15 +1283,31 @@ public class WalletTool implements Callable<Integer> {
         System.out.println(wallet.toString(dumpLookAhead, dumpPrivKeys, aesKey, true, true, chain));
     }
 
-    private int setCreationTime() {
+
+    @CommandLine.Command(name = "set-creation-time" , description=Descriptions.SUBCOMMAND_SET_CREATION_TIME)
+    private int setCreationTime(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--condition", description = Descriptions.OPTION_CONDITION) String conditionStr,
+            @CommandLine.Option(names = "--date", description = Descriptions.OPTION_DATE) LocalDate date,
+            @CommandLine.Option(names = "--unixtime", description = Descriptions.OPTION_UNIXTIME) Long unixtime,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+    ) {
         initLogger(debugLog);
-        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(net);
+
         Optional<Instant> creationTime = getCreationTime(date,unixtime);
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
             DeterministicSeed seed = chain.getSeed();
