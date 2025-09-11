@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
@@ -53,7 +54,8 @@ public class TransactionBroadcast implements Wallet.SendResult {
 
     // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
     private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
-    private final PeerGroup peerGroup;
+    @Nullable
+    private final PeerGroup peerGroup;      // is null in the case of a mock broadcast
     private final Transaction tx;
     private final int minConnections;
     private final boolean dropPeersAfterBroadcast;
@@ -64,10 +66,16 @@ public class TransactionBroadcast implements Wallet.SendResult {
     public static Random random = new Random();
 
     TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
-        this(peerGroup, tx, Math.max(1, peerGroup != null ? peerGroup.getMinBroadcastConnections() : 0), false);
+        this(peerGroup, tx, Math.max(1, peerGroup.getMinBroadcastConnections()), false);
     }
 
     TransactionBroadcast(PeerGroup peerGroup, Transaction tx, int minConnections, boolean dropPeersAfterBroadcast) {
+        this(peerGroup, tx, minConnections, dropPeersAfterBroadcast, false);
+    }
+
+    // Private constructor is the only one that takes a null peerGroup
+    private TransactionBroadcast(@Nullable PeerGroup peerGroup, Transaction tx, int minConnections, boolean dropPeersAfterBroadcast, boolean isMock) {
+        Preconditions.checkArgument(!(peerGroup == null && !isMock), "peerGroup can only be null for mock broadcasts");
         this.peerGroup = peerGroup;
         this.tx = tx;
         this.minConnections = minConnections;
@@ -76,7 +84,7 @@ public class TransactionBroadcast implements Wallet.SendResult {
 
     // Only for mock broadcasts.
     private TransactionBroadcast(Transaction tx) {
-        this(null, tx);
+        this(null, tx, 1, false, true);
     }
 
     public Transaction transaction() {
