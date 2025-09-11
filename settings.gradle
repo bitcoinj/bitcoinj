@@ -6,7 +6,7 @@
 import org.gradle.util.GradleVersion
 
 // Minimum Gradle version for build
-def minGradleVersion = GradleVersion.version("8.0")
+def minGradleVersion = GradleVersion.version("8.5")
 
 rootProject.name = 'bitcoinj-parent'
 
