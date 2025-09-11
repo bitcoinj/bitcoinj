@@ -55,8 +55,8 @@ public class TransactionBroadcast implements Wallet.SendResult {
     private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
     private final PeerGroup peerGroup;
     private final Transaction tx;
-    private int minConnections;
-    private boolean dropPeersAfterBroadcast = false;
+    private final int minConnections;
+    private final boolean dropPeersAfterBroadcast;
     private int numWaitingFor;
 
     /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
@@ -64,15 +64,19 @@ public class TransactionBroadcast implements Wallet.SendResult {
     public static Random random = new Random();
 
     TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
+        this(peerGroup, tx, Math.max(1, peerGroup != null ? peerGroup.getMinBroadcastConnections() : 0), false);
+    }
+
+    TransactionBroadcast(PeerGroup peerGroup, Transaction tx, int minConnections, boolean dropPeersAfterBroadcast) {
         this.peerGroup = peerGroup;
         this.tx = tx;
-        this.minConnections = Math.max(1, peerGroup.getMinBroadcastConnections());
+        this.minConnections = minConnections;
+        this.dropPeersAfterBroadcast = dropPeersAfterBroadcast;
     }
 
     // Only for mock broadcasts.
     private TransactionBroadcast(Transaction tx) {
-        this.peerGroup = null;
-        this.tx = tx;
+        this(null, tx);
     }
 
     public Transaction transaction() {
@@ -109,14 +113,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
     @Deprecated
     public CompletableFuture<Transaction> future() {
         return awaitRelayed().thenApply(TransactionBroadcast::transaction);
-    }
-
-    public void setMinConnections(int minConnections) {
-        this.minConnections = minConnections;
-    }
-
-    public void setDropPeersAfterBroadcast(boolean dropPeersAfterBroadcast) {
-        this.dropPeersAfterBroadcast = dropPeersAfterBroadcast;
     }
 
     // TODO: Should this method be moved into the PeerGroup?
