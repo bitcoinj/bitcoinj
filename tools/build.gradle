@@ -1,3 +1,5 @@
+import org.gradle.util.GradleVersion
+
 plugins {
     id 'java'
 }
@@ -18,7 +20,12 @@ javadoc.options.encoding = 'UTF-8'
 
 task build_checkpoints(type: JavaExec) {
     description = 'Create checkpoint files to use with CheckpointManager.'
-    main = 'org.bitcoinj.tools.BuildCheckpoints'
+    def mainClassString = 'org.bitcoinj.tools.BuildCheckpoints'
+    if (GradleVersion.current() >= GradleVersion.version("8.0")) {
+        mainClass = mainClassString
+    } else {
+        main = mainClassString
+    }
     if (project.hasProperty('appArgs') && appArgs.length() > 0)
         args = Arrays.asList(appArgs.split("\\s+"))
     classpath = sourceSets.main.runtimeClasspath
