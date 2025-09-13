@@ -3,7 +3,7 @@ import org.gradle.util.GradleVersion
 plugins {
     id 'java'
     id 'application'
-    id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
+    id 'org.asciidoctor.jvm.convert' version '4.0.4' apply false
     id 'org.graalvm.buildtools.native' version '0.10.3' apply false
 }
 
@@ -40,8 +40,10 @@ tasks.withType(JavaCompile) {
 
 javadoc.options.encoding = 'UTF-8'
 
-mainClassName = "org.bitcoinj.wallettool.WalletTool"
-applicationName = "wallet-tool"
+application {
+    mainClass = "org.bitcoinj.wallettool.WalletTool"
+    applicationName = "wallet-tool"
+}
 
 // wallettool is using JUnit 5 for testing, if it's not available no tests will be run
 if (hasJunit5) {
@@ -59,8 +61,8 @@ task generateManpageAsciiDoc(type: JavaExec) {
     } else {
         classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
     }
-    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
-    args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
+    def mpgclass = 'picocli.codegen.docgen.manpage.ManPageGenerator'
+    args mpgclass, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
 }
 
 apply plugin: 'org.asciidoctor.jvm.convert'
@@ -81,7 +83,7 @@ if (hasGraalVM) {
     graalvmNative {
         binaries {
             main {
-                imageName = applicationName
+                imageName = "wallet-tool"
                 configurationFileDirectories.from(file('src/main/graal'))
                 buildArgs.add('--allow-incomplete-classpath')
             }
