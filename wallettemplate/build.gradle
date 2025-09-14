@@ -7,6 +7,7 @@ plugins {
 
 dependencies {
     implementation project(':bitcoinj-core')
+    implementation 'com.google.guava:guava:33.4.8-jre'
     implementation 'com.google.zxing:core:3.5.3'
     implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.16'
@@ -16,6 +17,12 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        force 'com.google.guava:guava:33.4.8-jre'
+    }
 }
 
 javafx {
