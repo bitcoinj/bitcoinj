@@ -27,11 +27,14 @@ dependencies {
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
 }
 
-// Prevent newer Gradle from switching to JRE version of Guava
+// Prevent newer Gradle from switching to JRE version of Guava for tests.
+// We want our tests to run on the lowest-common denominator Android variant. We only enforce
+// this on the `testImplementation` configuration because we don't want to affect dependent
+// modules like `wallettemplate`.
 def gradleVersionTargetJVM = GradleVersion.version("7.0")
 if (GradleVersion.current() > gradleVersionTargetJVM) {
     dependencies.constraints {
-        implementation("com.google.guava:guava") {
+        testImplementation("com.google.guava:guava") {
             attributes {
                 attribute(
                         TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
