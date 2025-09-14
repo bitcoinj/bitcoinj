@@ -23,6 +23,7 @@ module wallettemplate {
     requires org.jspecify;
 
     requires org.slf4j;
+    requires com.google.common;
     requires com.google.zxing;
 
     requires org.bitcoinj.core;
