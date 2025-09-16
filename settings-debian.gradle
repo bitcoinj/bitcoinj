@@ -1,11 +1,11 @@
 /*
- * Setting file only for Debian Gradle 4.4.1.
+ * Settings file only for Debian Gradle 4.4.1.
  * Usage: gradle --settings-file=settings-debian.gradle build
  */
 
 import org.gradle.util.GradleVersion
 
-// required Gradle version for build
+// Required Gradle version for build
 def gradleVersion = GradleVersion.version("4.4.1")
 
 if (GradleVersion.current() != gradleVersion) {
