@@ -11,14 +11,15 @@ dependencies {
 
     testImplementation 'org.jspecify:jspecify:1.0.0'
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.11.4"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.12.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.12.2"
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.easymock:easymock:5.5.0'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.18.1'
     testImplementation 'org.hamcrest:hamcrest-library:3.0'
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
-    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.11.4"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.12.2"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.12.2"
 }
 
 // Prevent newer Gradle from switching to JRE version of Guava for building/running integration tests.
