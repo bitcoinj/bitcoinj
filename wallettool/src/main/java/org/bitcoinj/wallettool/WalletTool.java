@@ -216,6 +216,7 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_ADD_KEY = "Adds a key (private or public) to the wallet. Appropriate formats such as WIF, hex, or base58 are supported for private and public keys.";
         public static final String SUBCOMMAND_ADD_ADDR = "Adds a Bitcoin address as a watching-only address. The `--addr` option is required.";
 
+        public static final String SUBCOMMAND_CURR_RECIEVING_ADDR = "Prints the current receive address of the wallet. If no address exists, a new one will be derived and set automatically. Addresses derived using this action are independent of addresses derived with the `add-key` action.";
 
 
     }
@@ -1152,15 +1153,28 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private int currentReceiveAddr() {
+    @CommandLine.Command(name = "current-receive-addr" , description=Descriptions.SUBCOMMAND_CURR_RECIEVING_ADDR)
+    private int currentReceiveAddr(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+
+    ) {
         initLogger(debugLog);
-        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
+        initCondition(conditionStr); // TODO : Not all subcommands need this initialization. Remove where not needed.
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(null); // TODO : Network param should be null for all subcommands. Except on create. This allows us derive network from walletfile.
+
         Address address = wallet.currentReceiveAddress();
         System.out.println(address);
         cleanUp(walletFile, waitFor);
