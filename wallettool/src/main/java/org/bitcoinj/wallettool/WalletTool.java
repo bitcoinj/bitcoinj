@@ -205,6 +205,8 @@ public class WalletTool implements Callable<Integer> {
         public static final String OPTION_WAIT_FOR = "Waits for a specific number of confirmations.";
         public static final String OPTION_ALLOW_UNCONFIRMED = "Allows you to create spends of pending non-change outputs.";
 
+        public static final String OPTION_ADDR = "If specified when sending, don't try and connect, just write the tx to the wallet.";
+
         //SUBCOMMAND DESCRIPTIONS
         public static final String SUBCOMMAND_CREATE = "Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.Creates a new wallet in the specified file. This command supports deterministic wallet seeds, watch-only wallets, and various configurations like timestamps and address derivation types. If `--seed` or `--watchkey` is combined with either `--date` or `--unixtime`, use that as a birthdate for the wallet. If neither `--seed` nor `--watchkey` is provided, create will generate a wallet with a newly generated random seed.";
         public static final String SUBCOMMAND_DUMP = "Loads and prints the given wallet in textual form to stdout. Allows printing private keys, seeds, and unused lookahead keys if specified.";
@@ -212,6 +214,8 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_SEND = "Creates and broadcasts a transaction from the given wallet. Requires --output to be specified.";
         public static final String SUBCOMMAND_SET_CREATION_TIME = "Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidentally have been created in the future. Currently, watching wallets are not supported. If you omit both options (`--date` and `--unixtime`), the creation time is cleared (set to 0).";
         public static final String SUBCOMMAND_ADD_KEY = "Adds a key (private or public) to the wallet. Appropriate formats such as WIF, hex, or base58 are supported for private and public keys.";
+        public static final String SUBCOMMAND_ADD_ADDR = "Adds a Bitcoin address as a watching-only address. The `--addr` option is required.";
+
 
 
     }
@@ -542,15 +546,29 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private int addAddr() {
+    @CommandLine.Command(name = "add-addr" , description=Descriptions.SUBCOMMAND_ADD_ADDR)
+    private int addAddr(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--date", description = Descriptions.OPTION_DATE) LocalDate date,
+            @CommandLine.Option(names = "--unixtime", description = Descriptions.OPTION_UNIXTIME) Long unixtime,
+            @CommandLine.Option(names = "--addr", description = Descriptions.OPTION_ADDR, required = true) String addrStr,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+    ) {
         initLogger(debugLog);
-        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(null);
+
         if (addrStr == null) {
             System.err.println("You must specify an --addr to watch.");
             return 1;
