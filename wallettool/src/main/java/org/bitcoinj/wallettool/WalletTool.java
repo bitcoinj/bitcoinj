@@ -447,7 +447,7 @@ public class WalletTool implements Callable<Integer> {
         initCondition(conditionStr);
         checkWalletFileExists(walletFile);
         initWallet(false, walletFile, ignoreMandatoryExtensions);
-        initNetworkParameter(net);
+        initNetworkParameter(null);
 
         DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
         ScriptType currentOutputScriptType = activeKeyChain != null ? activeKeyChain.getOutputScriptType() : null;
@@ -472,7 +472,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int rotate() throws BlockStoreException {
         initLogger(debugLog);
-        initNetworkParameter(net);
+        initNetworkParameter(null);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -503,7 +503,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int encrypt() {
         initLogger(debugLog);
-        initNetworkParameter(net);
+        initNetworkParameter(null);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -525,7 +525,7 @@ public class WalletTool implements Callable<Integer> {
 
     private int decrypt() {
         initLogger(debugLog);
-        initNetworkParameter(net);
+        initNetworkParameter(null);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
@@ -809,7 +809,7 @@ public class WalletTool implements Callable<Integer> {
         initCondition(conditionStr);
         checkWalletFileExists(walletFile);
         initWallet(true, walletFile, ignoreMandatoryExtensions);// TODO : forcereset should not be true for all. its only true for reset and can be passed for sync. the rest use the defualt force which is false
-        initNetworkParameter(net); // TODO : we want to initialize wallet before we derive network for all other subcommands.
+        initNetworkParameter(null); // TODO : we want to initialize wallet before we derive network for all other subcommands.
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
         saveWallet(walletFile);
@@ -888,7 +888,7 @@ public class WalletTool implements Callable<Integer> {
         initResult = initWallet(force, walletFile,ignoreMandatoryExtensions);
         if (initResult != 0) return initResult;
 
-        initNetworkParameter(net);
+        initNetworkParameter(null);
 
         try {
             setup(walletFile);
@@ -1032,7 +1032,7 @@ public class WalletTool implements Callable<Integer> {
         initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
         if (initResult != 0) return initResult;
 
-        initNetworkParameter(net);
+        initNetworkParameter(null);
 
         ECKey key;
         Optional<Instant> creationTime = getCreationTime(date,unixtime);
@@ -1230,7 +1230,7 @@ public class WalletTool implements Callable<Integer> {
 
         initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
         if (initResult != 0) return initResult;
-        initNetworkParameter(net);
+        initNetworkParameter(null);
 
         // Setup to get the chain height so we can estimate lock times, but don't wipe the transactions if it's not
         // there just for the dump case.
@@ -1304,7 +1304,7 @@ public class WalletTool implements Callable<Integer> {
 
         initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
         if (initResult != 0) return initResult;
-        initNetworkParameter(net);
+        initNetworkParameter(null);
 
         if (feePerVkbStr != null && feeSatPerVbyteStr != null) {
             System.err.println("--fee-per-kb and --fee-sat-per-byte cannot be used together.");
@@ -1384,7 +1384,7 @@ public class WalletTool implements Callable<Integer> {
         initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
         if (initResult != 0) return initResult;
 
-        initNetworkParameter(net);
+        initNetworkParameter(null);
 
         Optional<Instant> creationTime = getCreationTime(date,unixtime);
         for (DeterministicKeyChain chain : wallet.getActiveKeyChains()) {
