@@ -222,6 +222,7 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_DECRYPT = "Decrypts the wallet using the provided password. Requires --password";
         public static final String SUBCOMMAND_ENCRYPT = "Encrypts the wallet using the specified password. Requires --password.";
         public static final String SUBCOMMAND_RESET = "Deletes all wallet transactions to allow you to replay the chain.";
+        public static final String SUBCOMMAND_ROTATE = "Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it. If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree will be created from a new random seed.";
 
     }
 
@@ -331,6 +332,7 @@ public class WalletTool implements Callable<Integer> {
 
     private static int initWallet(boolean forceReset, File walletFile, boolean ignoreMandatoryExtensions){
         try {
+            WalletTool.walletFile = walletFile;
             wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, WalletTool.ignoreMandatoryExtensions);
         } catch (UnreadableWalletException e) {
             System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
@@ -471,15 +473,28 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private int rotate() throws BlockStoreException {
+    @CommandLine.Command(name = "rotate" , description=Descriptions.SUBCOMMAND_ROTATE)
+    private int rotate(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--date", description = Descriptions.OPTION_DATE) LocalDate date,
+            @CommandLine.Option(names = "--unixtime", description = Descriptions.OPTION_UNIXTIME) Long unixtime,
+            @CommandLine.Option(names = "--password", description = Descriptions.OPTION_PASSWORD) String password,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+            ) throws BlockStoreException {
         initLogger(debugLog);
-        initNetworkParameter(null);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(null);
         setup(walletFile);
         peerGroup.start();
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
