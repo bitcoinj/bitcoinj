@@ -217,11 +217,11 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_ADD_KEY = "Adds a key (private or public) to the wallet. Appropriate formats such as WIF, hex, or base58 are supported for private and public keys.";
         public static final String SUBCOMMAND_ADD_ADDR = "Adds a Bitcoin address as a watching-only address. The `--addr` option is required.";
         public static final String SUBCOMMAND_DELETE_KEY = "Removes a key specified by --pubkey or --addr from the wallet. Deletes a key (private or public) from the wallet.";
-
         public static final String SUBCOMMAND_CURR_RECIEVING_ADDR = "Prints the current receive address of the wallet. If no address exists, a new one will be derived and set automatically. Addresses derived using this action are independent of addresses derived with the `add-key` action.";
         public static final String SUBCOMMAND_SYNC = "Syncs the wallet with the latest blockchain to download new transactions. If the chain data file does not exist, or if the --force option is specified, the wallet will reset and sync from the beginning.";
         public static final String SUBCOMMAND_DECRYPT = "Decrypts the wallet using the provided password. Requires --password";
         public static final String SUBCOMMAND_ENCRYPT = "Encrypts the wallet using the specified password. Requires --password.";
+        public static final String SUBCOMMAND_RESET = "Deletes all wallet transactions to allow you to replay the chain.";
 
     }
 
@@ -823,17 +823,24 @@ public class WalletTool implements Callable<Integer> {
         return future;
     }
 
-    private int reset(File walletFile) {
+    @CommandLine.Command(name = "reset" , description=Descriptions.SUBCOMMAND_RESET)
+    private int reset(
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+    ) {
         initLogger(debugLog);
 
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
-        initWallet(true, walletFile, ignoreMandatoryExtensions);// TODO : forcereset should not be true for all. its only true for reset and can be passed for sync. the rest use the defualt force which is false
-        initNetworkParameter(null); // TODO : we want to initialize wallet before we derive network for all other subcommands.
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(true, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(null);
+
         // Delete the transactions and save. In future, reset the chain head pointer.
         wallet.clearTransactions(0);
         saveWallet(walletFile);
