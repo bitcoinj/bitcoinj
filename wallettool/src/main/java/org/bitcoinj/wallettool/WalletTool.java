@@ -220,7 +220,7 @@ public class WalletTool implements Callable<Integer> {
 
         public static final String SUBCOMMAND_CURR_RECIEVING_ADDR = "Prints the current receive address of the wallet. If no address exists, a new one will be derived and set automatically. Addresses derived using this action are independent of addresses derived with the `add-key` action.";
         public static final String SUBCOMMAND_SYNC = "Syncs the wallet with the latest blockchain to download new transactions. If the chain data file does not exist, or if the --force option is specified, the wallet will reset and sync from the beginning.";
-
+        public static final String SUBCOMMAND_DECRYPT = "Decrypts the wallet using the provided password. Requires --password";
         public static final String SUBCOMMAND_ENCRYPT = "Encrypts the wallet using the specified password. Requires --password.";
 
     }
@@ -535,16 +535,28 @@ public class WalletTool implements Callable<Integer> {
         return 0;
     }
 
-    private int decrypt() {
+    @CommandLine.Command(name = "decrypt" , description=Descriptions.SUBCOMMAND_DECRYPT)
+    private int decrypt(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--password", description = Descriptions.OPTION_PASSWORD,required = true) String password,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+    ) {
         initLogger(debugLog);
-        initNetworkParameter(null);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
-        if (password == null) {
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(null);
+
+        if (password == null) { //TODO: consider removing this check as password is required
             System.err.println("You must provide a --password");
             return 1;
         }
