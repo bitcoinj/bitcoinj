@@ -219,6 +219,7 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_DELETE_KEY = "Removes a key specified by --pubkey or --addr from the wallet. Deletes a key (private or public) from the wallet.";
 
         public static final String SUBCOMMAND_CURR_RECIEVING_ADDR = "Prints the current receive address of the wallet. If no address exists, a new one will be derived and set automatically. Addresses derived using this action are independent of addresses derived with the `add-key` action.";
+        public static final String SUBCOMMAND_SYNC = "Syncs the wallet with the latest blockchain to download new transactions. If the chain data file does not exist, or if the --force option is specified, the wallet will reset and sync from the beginning.";
 
 
     }
@@ -840,7 +841,7 @@ public class WalletTool implements Callable<Integer> {
         }
         chain = new BlockChain(net, wallet, store);
         // This will ensure the wallet is saved when it changes.
-        wallet.autosaveToFile(WalletTool.walletFile, Duration.ofSeconds(5), null);
+        wallet.autosaveToFile(walletFile, Duration.ofSeconds(5), null);
         if (peerGroup == null) {
             peerGroup = new PeerGroup(net, chain);
         }
@@ -867,16 +868,27 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private int syncChain() {
+    @CommandLine.Command(name = "sync" , description=Descriptions.SUBCOMMAND_SYNC)
+    private int syncChain( //TODO : SYNC should log progress so user as an idea of how long it will take
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--force", description = Descriptions.OPTION_FORCE) boolean force,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+    ) {
         initLogger(debugLog);
-        initNetworkParameter(net);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
         initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
-        initWallet(force, walletFile, ignoreMandatoryExtensions);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(force, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(net);
 
         try {
             setup(walletFile);
