@@ -206,6 +206,7 @@ public class WalletTool implements Callable<Integer> {
         public static final String OPTION_ALLOW_UNCONFIRMED = "Allows you to create spends of pending non-change outputs.";
 
         public static final String OPTION_ADDR = "If specified when sending, don't try and connect, just write the tx to the wallet.";
+        public static final String OPTION_PUBKEY_STR = "Specifies a hex/base58 encoded non-compressed public key.";
 
         //SUBCOMMAND DESCRIPTIONS
         public static final String SUBCOMMAND_CREATE = "Makes a new wallet in the file specified by --wallet. Will complain and require --force if the wallet already exists.Creates a new wallet in the specified file. This command supports deterministic wallet seeds, watch-only wallets, and various configurations like timestamps and address derivation types. If `--seed` or `--watchkey` is combined with either `--date` or `--unixtime`, use that as a birthdate for the wallet. If neither `--seed` nor `--watchkey` is provided, create will generate a wallet with a newly generated random seed.";
@@ -215,6 +216,7 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_SET_CREATION_TIME = "Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidentally have been created in the future. Currently, watching wallets are not supported. If you omit both options (`--date` and `--unixtime`), the creation time is cleared (set to 0).";
         public static final String SUBCOMMAND_ADD_KEY = "Adds a key (private or public) to the wallet. Appropriate formats such as WIF, hex, or base58 are supported for private and public keys.";
         public static final String SUBCOMMAND_ADD_ADDR = "Adds a Bitcoin address as a watching-only address. The `--addr` option is required.";
+        public static final String SUBCOMMAND_DELETE_KEY = "Removes a key specified by --pubkey or --addr from the wallet. Deletes a key (private or public) from the wallet.";
 
         public static final String SUBCOMMAND_CURR_RECIEVING_ADDR = "Prints the current receive address of the wallet. If no address exists, a new one will be derived and set automatically. Addresses derived using this action are independent of addresses derived with the `add-key` action.";
 
@@ -1003,7 +1005,7 @@ public class WalletTool implements Callable<Integer> {
             @CommandLine.Option(names = "--date", description = Descriptions.OPTION_DATE) LocalDate date,
             @CommandLine.Option(names = "--unixtime", description = Descriptions.OPTION_UNIXTIME) Long unixtime,
             @CommandLine.Option(names = "--privkey", description = Descriptions.OPTION_DATE) String privKeyStr,
-            @CommandLine.Option(names = "--pubkey", description = Descriptions.OPTION_UNIXTIME) String pubKeyStr,
+            @CommandLine.Option(names = "--pubkey", description = Descriptions.OPTION_PUBKEY_STR) String pubKeyStr,
             @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
     ) {
         initLogger(debugLog);
@@ -1115,15 +1117,28 @@ public class WalletTool implements Callable<Integer> {
             return Optional.empty();
     }
 
-    private int deleteKey() {
+    @CommandLine.Command(name = "delete-key" , description=Descriptions.SUBCOMMAND_DELETE_KEY)
+    private int deleteKey(// TODO : Not all keys can be deleted. Only  legacy Base58 only. Add a prompt or doc for that
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--pubkey", description = Descriptions.OPTION_PUBKEY_STR) String pubKeyStr,
+            @CommandLine.Option(names = "--addr", description = Descriptions.OPTION_ADDR) String addrStr,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+    ) {
         initLogger(debugLog);
-        initNetworkParameter(net);
+
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
+        initNetworkParameter(null);
         if (pubKeyStr == null && addrStr == null) {
             System.err.println("One of --pubkey or --addr must be specified.");
             return 1;
