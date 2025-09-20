@@ -50,27 +50,30 @@ if (hasJunit5) {
     }
 }
 
-task generateManpageAsciiDoc(type: JavaExec) {
-    dependsOn(classes)
-    group = "Documentation"
-    description = "Generate AsciiDoc manpage"
-    if (hasAnnotationProcessor) {
-        classpath(sourceSets.main.compileClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
-    } else {
-        classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
+// Disable asciidoctor manpage generation on Gradle 9+ (Temporarily) 
+if (GradleVersion.current() < GradleVersion.version("9.0")) {
+    task generateManpageAsciiDoc(type: JavaExec) {
+        dependsOn(classes)
+        group = "Documentation"
+        description = "Generate AsciiDoc manpage"
+        if (hasAnnotationProcessor) {
+            classpath(sourceSets.main.compileClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+        } else {
+            classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
+        }
+        main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+        args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
     }
-    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
-    args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
-}
 
-apply plugin: 'org.asciidoctor.jvm.convert'
-asciidoctor {
-    dependsOn(generateManpageAsciiDoc)
-    sourceDir = file("${project.buildDir}/generated-picocli-docs")
-    outputDir = file("${project.buildDir}/docs")
-    logDocuments = true
-    outputOptions {
-        backends = ['manpage', 'html5']
+    apply plugin: 'org.asciidoctor.jvm.convert'
+    asciidoctor {
+        dependsOn(generateManpageAsciiDoc)
+        sourceDir = file("${project.buildDir}/generated-picocli-docs")
+        outputDir = file("${project.buildDir}/docs")
+        logDocuments = true
+        outputOptions {
+            backends = ['manpage', 'html5']
+        }
     }
 }
 
