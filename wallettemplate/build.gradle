@@ -7,7 +7,7 @@ plugins {
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'com.google.guava:guava:33.4.8-jre'
+    implementation 'com.google.guava:guava:33.5.0-jre'
     implementation 'com.google.zxing:core:3.5.3'
     implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.16'
@@ -21,7 +21,7 @@ dependencies {
 
 configurations.configureEach {
     resolutionStrategy {
-        force 'com.google.guava:guava:33.4.8-jre'
+        force 'com.google.guava:guava:33.5.0-jre'
     }
 }
 
