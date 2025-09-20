@@ -32,5 +32,5 @@ jobs:
       - name: Upload wallet-tool as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wallet-tool-${{ matrix.os }}-${{ matrix.java }}
+          name: wallet-tool-${{ matrix.os }}-${{ matrix.java }}-gradle-${{ matrix.gradle }}
           path: wallettool/build/native/nativeCompile/wallet-tool
