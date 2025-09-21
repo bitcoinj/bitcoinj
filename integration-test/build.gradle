@@ -1,9 +1,9 @@
-import org.gradle.util.GradleVersion
-
 plugins {
     id 'java'
     id 'java-library'
 }
+
+// This module requires JDK 17+ and Gradle 8.5+ to compile.
 
 dependencies {
     implementation project(':bitcoinj-core')
@@ -22,18 +22,15 @@ dependencies {
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.11.4"
 }
 
-// Prevent newer Gradle from switching to JRE version of Guava for building/running integration tests.
+// Prevent Gradle from switching to JRE version of Guava for building/running integration tests.
 // We want our tests to run on the lowest-common denominator Android variant. We can enforce
 // this on the `implementation` configuration because `integration-test` has no dependents.
-def gradleVersionTargetJVM = GradleVersion.version("7.0")
-if (GradleVersion.current() > gradleVersionTargetJVM) {
-    dependencies.constraints {
-        implementation("com.google.guava:guava") {
-            attributes {
-                attribute(
-                        TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-                        objects.named(TargetJvmEnvironment, TargetJvmEnvironment.ANDROID))
-            }
+dependencies.constraints {
+    implementation("com.google.guava:guava") {
+        attributes {
+            attribute(
+                    TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                    objects.named(TargetJvmEnvironment, TargetJvmEnvironment.ANDROID))
         }
     }
 }
