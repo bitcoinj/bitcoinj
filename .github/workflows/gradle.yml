@@ -19,6 +19,8 @@ jobs:
           - java: '25'
             gradle: '8.14.3'
       fail-fast: false
+    env:
+      JDK_DISTRO: ${{ matrix.java == '25' && 'zulu' || matrix.distribution }}
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
       - name: Git checkout
@@ -26,7 +28,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ matrix.distribution }}
+          distribution: ${{ env.JDK_DISTRO }}
           java-version: ${{ matrix.java }}
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
