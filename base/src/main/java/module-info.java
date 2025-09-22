@@ -13,25 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module wallettemplate {
-    requires java.desktop;
-    requires java.logging;
 
-    requires javafx.controls;
-    requires javafx.fxml;
-
-    requires org.jspecify;
-
+module org.bitcoinj.base {
+    requires transitive org.jspecify;
     requires org.slf4j;
-    requires com.google.common;
-    requires com.google.zxing;
 
-    requires org.bitcoinj.base;
-    requires org.bitcoinj.core;
-
-    exports wallettemplate;
-    exports org.bitcoinj.walletfx.controls;
-    opens wallettemplate to javafx.fxml;
-    opens org.bitcoinj.walletfx.utils to javafx.fxml;
-    opens org.bitcoinj.walletfx.controls to javafx.fxml;
+    exports org.bitcoinj.base;
+    exports org.bitcoinj.base.exceptions;
+    exports org.bitcoinj.base.utils;
+    exports org.bitcoinj.base.internal;  // Used by core, should not be used by others
 }

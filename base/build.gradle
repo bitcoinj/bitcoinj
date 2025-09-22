@@ -56,15 +56,6 @@ if (minJdkVersion > 0 && GradleVersion.current() > gradleVersionToolchains) {
     check.dependsOn testOnMinJdk
 }
 
-ext.moduleName = 'org.bitcoinj.base'
-
-jar {
-    inputs.property("moduleName", moduleName)
-    manifest {
-        attributes 'Automatic-Module-Name': moduleName
-    }
-}
-
 def minGradleArchiveClassifierVersion = GradleVersion.version("5.0")
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
