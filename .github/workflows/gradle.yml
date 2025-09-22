@@ -9,12 +9,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, macOS-13, windows-2022]
-        java: ['17', '21', '23']
+        java: ['17', '21', '24']
         distribution: ['temurin']
         gradle: ['8.5', '8.14.3', '9.1.0']
         exclude:
-          # Java 23+ requires Gradle 8.10+
-          - java: '23'
+          # Java 24+ requires Gradle 8.14+
+          - java: '24'
             gradle: '8.5'
       fail-fast: false
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
@@ -31,7 +31,7 @@ jobs:
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
-        run: gradle -PtestMinJdk=8 build bitcoinj-wallettemplate:installDist bitcoinj-wallettemplate:jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
+        run: gradle -PtestMinJdk=8 build bitcoinj-wallettemplate:installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
