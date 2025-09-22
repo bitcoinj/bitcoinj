@@ -18,6 +18,8 @@ jobs:
             gradle: '8.5'
       fail-fast: false
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
+    env:
+        MIN_JDK: '9'
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -25,13 +27,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: ${{ matrix.distribution }}
-          java-version: ${{ matrix.java }}
+          java-version: |
+            ${{ env.MIN_JDK }}
+            ${{ matrix.java }}
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
-        run: gradle -PtestMinJdk=11 build bitcoinj-wallettemplate:installDist bitcoinj-wallettemplate:jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
+        run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build bitcoinj-wallettemplate:installDist bitcoinj-wallettemplate:jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
