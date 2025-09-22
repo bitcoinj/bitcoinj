@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     env:
-        MIN_JDK: '9'
+        MIN_JDK: '11'
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
