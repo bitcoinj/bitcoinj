@@ -26,6 +26,7 @@ module wallettemplate {
     requires com.google.common;
     requires com.google.zxing;
 
+    requires org.bitcoinj.base;
     requires org.bitcoinj.core;
 
     exports wallettemplate;
