@@ -85,23 +85,22 @@ test {
 }
 
 def gradleVersionToolchains = GradleVersion.version("6.7")
+// Activate if `testMinJdk` is a integer > 0 in `gradle.properties` or set with `-P` on the command-line
+def minJdkVersion = Integer.valueOf((String) findProperty('testMinJdk') ?: "0")
 
-if (GradleVersion.current() > gradleVersionToolchains) {
+if (minJdkVersion > 0 && GradleVersion.current() > gradleVersionToolchains) {
     // If the Gradle Java Toolchains feature is available, run tests on older JDKs
-    System.err.println "Adding 'testOnJdk8' task, because ${GradleVersion.current()}"
+    System.err.println "Adding 'testOnMinJdk' task for version=${minJdkVersion}, because ${GradleVersion.current()}"
 
-    task('testOnJdk8', type: Test) {
+    task('testOnMinJdk', type: Test) {
         doFirst {
             logger.lifecycle("Testing with JDK ${javaLauncher.get().metadata.javaRuntimeVersion}")
         }
         javaLauncher = javaToolchains.launcherFor {
-            languageVersion = JavaLanguageVersion.of(8)
+            languageVersion = JavaLanguageVersion.of(minJdkVersion)
         }
     }
-    // Activate if `testJdk8` is `true` in `gradle.properties` or `-PtestJdk8=true` is on command-line
-    if (Boolean.valueOf(findProperty('testJdk8'))) {
-        check.dependsOn testOnJdk8
-    }
+    check.dependsOn testOnMinJdk
 }
 
 ext.moduleName = 'org.bitcoinj.core'
