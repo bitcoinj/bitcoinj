@@ -34,6 +34,11 @@ jobs:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
         run: gradle -PtestMinJdk=8 build bitcoinj-wallettemplate:installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
+      - name: Run JLink with Gradle
+        # Only run JLink with the latest Gradle and the latest supported (LTS) Temurin JDK
+        # JDK 25 Temurin is not supported yet because of a bug in the BA JLink Plugin
+        if:  ${{ matrix.java == '21' && matrix.gradle == '9.1.0' }}
+        run: gradle bitcoinj-wallettemplate:jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
