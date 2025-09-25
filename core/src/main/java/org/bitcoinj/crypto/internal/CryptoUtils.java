@@ -52,26 +52,17 @@ public class CryptoUtils {
         return ripmemdHash;
     }
 
-    private static HMac createHmacSha512Digest(byte[] key) {
+    public static byte[] hmacSha512(byte[] key, byte[] data) {
         SHA512Digest digest = new SHA512Digest();
         HMac hMac = new HMac(digest);
         hMac.init(new KeyParameter(key));
-        return hMac;
-    }
-
-    private static byte[] hmacSha512(HMac hmacSha512, byte[] input) {
-        hmacSha512.reset();
-        hmacSha512.update(input, 0, input.length);
+        hMac.update(data, 0, data.length);
         byte[] out = new byte[64];
-        hmacSha512.doFinal(out, 0);
+        hMac.doFinal(out, 0);
         return out;
     }
 
-    public static byte[] hmacSha512(byte[] key, byte[] data) {
-        return hmacSha512(createHmacSha512Digest(key), data);
-    }
-
     public static byte[] hmacSha512(String key, byte[] data) {
-        return hmacSha512(createHmacSha512Digest(key.getBytes()), data);
+        return hmacSha512(key.getBytes(), data);
     }
 }
