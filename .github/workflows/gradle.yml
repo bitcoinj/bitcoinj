@@ -33,7 +33,11 @@ jobs:
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
-        run: gradle -PtestMinJdk=8 build bitcoinj-wallettemplate:installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
+        run: gradle -PtestMinJdk=8 build --init-script build-scan-agree.gradle --scan --info --stacktrace
+      - name: Run wallettemplate installDist with Gradle
+        # Only run bitcoinj-wallettemplate:installDist with JDK 25
+        if:  ${{ matrix.java == '25' }}
+        run: gradle bitcoinj-wallettemplate:installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
