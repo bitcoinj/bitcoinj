@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        os: [ubuntu-24.04, macOS-13, windows-2022]
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macOS-13, windows-2022]
         java: ['17', '21', '25']
         distribution: ['temurin']
         gradle: ['8.5', '8.14.3', '9.1.0']
@@ -33,7 +33,11 @@ jobs:
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
-        run: gradle -PtestMinJdk=8 build bitcoinj-wallettemplate:installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
+        run: gradle -PtestMinJdk=8 build --init-script build-scan-agree.gradle --scan --info --stacktrace
+      - name: Run wallettemplate installDist with Gradle
+        # Only run bitcoinj-wallettemplate:installDist with JDK 25
+        if:  ${{ matrix.java == '25' }}
+        run: gradle bitcoinj-wallettemplate:installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
