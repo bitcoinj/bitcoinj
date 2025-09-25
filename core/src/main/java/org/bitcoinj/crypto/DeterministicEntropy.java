@@ -16,7 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.base.internal.HexFormat;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +27,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import static org.bitcoinj.crypto.ChildNumber.HARDENED_BIT;
-
 /**
  * Utility class for working with BIP-85, generating wallets, etc. (<a href="https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki">https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki</a>).
  * <p>
@@ -38,20 +35,8 @@ import static org.bitcoinj.crypto.ChildNumber.HARDENED_BIT;
 public class DeterministicEntropy {
     private static final Logger logger = LoggerFactory.getLogger(DeterministicEntropy.class);
 
-    private static ChildNumber createHardenedChildNumber(int childNumber) {
-        return new ChildNumber(soften(childNumber), true);
-    }
-
-    private static int soften(int a) {
-        return a & ~HARDENED_BIT;
-    }
-
-    private static boolean hasHardenedBit(int a) {
-        return (a & HARDENED_BIT) != 0;
-    }
-
-    private static final ChildNumber BIP85_PATH_ROOT = createHardenedChildNumber(83696968);
-    private static final ChildNumber BIP39_APPLICATION_NUMBER = createHardenedChildNumber(39);
+    private static final ChildNumber BIP85_PATH_ROOT = new ChildNumber(83696968, true);
+    private static final ChildNumber BIP39_APPLICATION_NUMBER = new ChildNumber(39, true);
 
     public enum Language {
         English(0),
@@ -68,7 +53,7 @@ public class DeterministicEntropy {
         private final ChildNumber childNumber;
 
         Language(int intValue) {
-            this.childNumber = createHardenedChildNumber(intValue);
+            this.childNumber = new ChildNumber(intValue, true);
         }
 
         public ChildNumber childNumber() {
@@ -85,24 +70,26 @@ public class DeterministicEntropy {
         private final int byteLength;
 
         WordCount(int intValue, int bits) {
-            this.childNumber = createHardenedChildNumber(intValue);
+            this.childNumber = new ChildNumber(intValue, true);
             this.byteLength = bits;
         }
 
-        public static WordCount forWordCount(int wordCount) {
-            switch (wordCount) {
+        static WordCount forWordCount(ChildNumber wordCount) {
+            WordCount result;
+            switch (wordCount.num()) {
                 case 12:
-                case -2147483636: // 12 hardened
-                    return Twelve;
+                    result = Twelve;
+                    break;
                 case 18:
-                case -2147483630: // 18 hardened
-                    return Eighteen;
+                    result =  Eighteen;
+                    break;
                 case 24:
-                case -2147483624: // 24 hardened
-                    return TwentyFour;
+                    result =  TwentyFour;
+                    break;
                 default:
                     throw new IllegalArgumentException(wordCount + " is not a valid word count");
             }
+            return result;
         }
 
         public ChildNumber childNumber() {
@@ -131,20 +118,16 @@ public class DeterministicEntropy {
      * @param masterPrivateKey DeterministicKey to derive from.
      * @param language         Language <a href="https://bips.xyz/85#bip39">https://bips.xyz/85#bip39</a>.
      * @param wordCount        Number of words in generated seed.
-     * @param index            Index of the child key.
+     * @param index            Index of the child key. (Must not have hardened bit)
      * @return Seed for the BIP-85 derivation.
      */
     public static DeterministicSeed deriveBIP85Seed(DeterministicKey masterPrivateKey, Language language, WordCount wordCount, int index) {
-        // BIP-85 does not specify an upper limit on the index.  The index must be >= 0.
-        if (index < 0) throw new IllegalArgumentException("index must be >= 0");
-
-        if (hasHardenedBit(index)) throw new IllegalArgumentException("index may not have hardened bit set");
-
+        ChildNumber childNumber = new ChildNumber(index, true);
         HDPath.HDFullPath path = HDPath.m(BIP85_PATH_ROOT,
                 BIP39_APPLICATION_NUMBER,
                 language.childNumber(),
                 wordCount.childNumber(),
-                createHardenedChildNumber(index));
+                childNumber);
 
         return deriveBIP85Seed(masterPrivateKey, path);
     }
@@ -171,17 +154,7 @@ public class DeterministicEntropy {
     private static byte[] deriveBIP85Entropy(DeterministicKey masterPrivateKey, HDPath hdPath) {
         byte[] fullEntropy = deriveKey(masterPrivateKey, hdPath);
         byte[] entropy512Bits = generateBIP85Entropy(fullEntropy);
-        byte[] entropy = Arrays.copyOf(entropy512Bits, WordCount.forWordCount(hdPath.get(3).i()).byteLength);
-
-        if (logger.isDebugEnabled()) {
-            HexFormat hex = new HexFormat();
-            logger.debug("deriveBIP85Entropy() BIP-85 Child Private Key (hex): {}", hex.formatHex(fullEntropy));
-            logger.debug("deriveBIP85Entropy() BIP-85 Entropy (hex)a: {}", hex.formatHex(entropy));
-            logger.debug("deriveBIP85Entropy() BIP-85 Entropy 512bits (hex): {}", hex.formatHex(entropy512Bits));
-            logger.debug("deriveBIP85Entropy() BIP-85 Entropy full (hex): {}", hex.formatHex(fullEntropy));
-        }
-
-        return entropy;
+        return Arrays.copyOf(entropy512Bits, WordCount.forWordCount(hdPath.get(3)).byteLength);
     }
 
     private static byte[] deriveKey(DeterministicKey childKey, HDPath hdPath) {
