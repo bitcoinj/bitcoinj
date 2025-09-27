@@ -51,7 +51,7 @@ jobs:
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
-        run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
+        run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build installDist jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
