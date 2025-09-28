@@ -45,6 +45,12 @@ application {
 
 jlink {
     options = ['--add-modules', 'org.slf4j.jul']
+    mergedModule {
+        requires 'java.logging'
+        requires 'jdk.unsupported'
+
+        requires 'org.slf4j'
+    }
 }
 
 test {
