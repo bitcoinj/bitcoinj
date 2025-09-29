@@ -7,6 +7,7 @@ plugins {
     id 'org.graalvm.buildtools.native' version '0.11.0' apply false
 }
 
+def isModularBuild = GradleVersion.current() >= GradleVersion.version("8.5")
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
 boolean hasAnnotationProcessor = GradleVersion.current() >= annotationProcessorMinVersion
 def junit5MinVersion = GradleVersion.version("4.6")
@@ -39,6 +40,10 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '17'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
+    if (!isModularBuild) {
+        // Exclude the module-info.java file because Gradle 4.x doesn't handle module-info.java well.
+        source = source.filter { file -> !file.path.endsWith('module-info.java') }
+    }
 }
 
 javadoc.options.encoding = 'UTF-8'
@@ -49,6 +54,11 @@ if (GradleVersion.current() > GradleVersion.version("8.0")) {
     application {
         mainClass = walletToolMainClassName
         applicationName = walletToolName
+        // isModularBuild is not strictly necessary here because we're already Gradle 8+
+        if (isModularBuild) {
+            // setting mainModule will tell installDist to run wallet-tool using the module path
+            mainModule = "org.bitcoinj.wallettool"
+        }
     }
 } else {
     mainClassName = walletToolMainClassName
