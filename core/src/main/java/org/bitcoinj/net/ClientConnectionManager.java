@@ -59,7 +59,7 @@ public interface ClientConnectionManager extends Service {
      * @return a future that will complete when the service is stopped
      */
     default CompletableFuture<Void> stop() {
-        startAsync();
+        stopAsync();
         return CompletableFuture.runAsync(this::awaitTerminated);
     }
 }
