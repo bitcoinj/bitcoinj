@@ -165,8 +165,11 @@ public class TestWithNetworkConnections {
     }
 
     protected void stopPeerServer(int i) {
-        peerServers[i].stopAsync();
-        peerServers[i].awaitTerminated();
+        NioServer server = peerServers[i];
+        if (server != null) {
+            server.stopAsync();
+            server.awaitTerminated();
+        }
     }
 
     protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws Exception {
