@@ -91,7 +91,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         try {
             super.tearDown();
             blockJobs = false;
-            if (peerGroup.isRunning())
+            if (peerGroup != null && peerGroup.isRunning())
                 peerGroup.stopAsync();
         } catch (Exception e) {
             throw new RuntimeException(e);
