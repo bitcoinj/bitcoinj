@@ -470,7 +470,7 @@ public class PeerGroup implements TransactionBroadcaster {
         vMinRequiredProtocolVersion = ProtocolVersion.BLOOM_FILTER.intValue();
     }
 
-    private CountDownLatch executorStartupLatch = new CountDownLatch(1);
+    private final CountDownLatch executorStartupLatch = new CountDownLatch(1);
 
     protected ScheduledExecutorService createPrivateExecutor() {
         ScheduledExecutorService result =
