@@ -52,6 +52,12 @@ public class CryptoUtils {
         return ripmemdHash;
     }
 
+    /**
+     * Generate a MAC using a <i>binary</i> key and data
+     * @param key The key in binary format
+     * @param data The message data to process
+     * @return The final result of the MAC operation
+     */
     public static byte[] hmacSha512(byte[] key, byte[] data) {
         SHA512Digest digest = new SHA512Digest();
         HMac hMac = new HMac(digest);
@@ -62,6 +68,12 @@ public class CryptoUtils {
         return out;
     }
 
+    /**
+     * Generate a MAC using a {@link String} key and data
+     * @param key The key
+     * @param data The message data to process
+     * @return The final result of the MAC operation
+     */
     public static byte[] hmacSha512(String key, byte[] data) {
         return hmacSha512(key.getBytes(), data);
     }
