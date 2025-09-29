@@ -22,6 +22,7 @@ import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -69,12 +70,13 @@ public class CryptoUtils {
     }
 
     /**
-     * Generate a MAC using a {@link String} key and data
+     * Generate a MAC using a {@link String} key and data. The {@code String} will be serialized
+     * using {@link StandardCharsets#UTF_8}.
      * @param key The key
      * @param data The message data to process
      * @return The final result of the MAC operation
      */
     public static byte[] hmacSha512(String key, byte[] data) {
-        return hmacSha512(key.getBytes(), data);
+        return hmacSha512(key.getBytes(StandardCharsets.UTF_8), data);
     }
 }
