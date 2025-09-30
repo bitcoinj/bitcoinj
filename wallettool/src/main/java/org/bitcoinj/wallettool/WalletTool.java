@@ -177,7 +177,7 @@ public class WalletTool implements Callable<Integer> {
     private static PeerGroup peerGroup;
     private static Wallet wallet;
 
-    public class Descriptions {
+    public static class Descriptions {
         public static final String OPTION_NET = "Specifies the Bitcoin network to use. Valid values: mainnet, testnet, regtest.";
         public static final String OPTION_SEED = "Specifies a mnemonic code or raw seed in hex/base58 raw seed bytes.";
         public static final String OPTION_WATCHKEY = "If present, creates a watching wallet using the specified base58 xpub.";
@@ -223,6 +223,8 @@ public class WalletTool implements Callable<Integer> {
         public static final String SUBCOMMAND_ENCRYPT = "Encrypts the wallet using the specified password. Requires --password.";
         public static final String SUBCOMMAND_RESET = "Deletes all wallet transactions to allow you to replay the chain.";
         public static final String SUBCOMMAND_ROTATE = "Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it. If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree will be created from a new random seed.";
+
+        public static final String SUBCOMMAND_UPGRADE = "Upgrade deterministic wallets to the given script type. If specified, uses a target script type for deriving new addresses.";
 
     }
 
@@ -441,15 +443,26 @@ public class WalletTool implements Callable<Integer> {
         return ByteString.copyFrom(ByteUtils.formatHex(bytes.toByteArray()).getBytes());
     }
 
-    private int upgrade() {
+    @CommandLine.Command(name = "upgrade" , description=Descriptions.SUBCOMMAND_UPGRADE)
+    private int upgrade(
+            @CommandLine.Option(names = "--debuglog", description = Descriptions.OPTION_DEBUGLOG) boolean debugLog,
+            @CommandLine.Option(names = "--chain", description = Descriptions.OPTION_CHAIN) File chainFile,
+            @CommandLine.Option(names = "--ignore-mandatory-extensions", description = Descriptions.OPTION_IGNORE_MANDATORY_EXTENSION) boolean ignoreMandatoryExtensions,
+            @CommandLine.Option(names = "--password", description = Descriptions.OPTION_PASSWORD) String password,
+            @CommandLine.Option(names = "--output-script-type", description = Descriptions.OPTION_OUTPUT_SCRIPT_TYPE, defaultValue = "P2WPKH") ScriptType outputScriptType,
+            @CommandLine.Parameters(index = "0", paramLabel = "<wallet-file>", description = Descriptions.PARAMETER_WALLET_FILE) File walletFile
+            ) {
         initLogger(debugLog);
         initChainFile(chainFile);
 
         Context.propagate(new Context());
 
-        initCondition(conditionStr);
-        checkWalletFileExists(walletFile);
-        initWallet(false, walletFile, ignoreMandatoryExtensions);
+        int initResult = checkWalletFileExists(walletFile);
+        if (initResult != 0) return initResult;
+
+        initResult = initWallet(false, walletFile,ignoreMandatoryExtensions);
+        if (initResult != 0) return initResult;
+
         initNetworkParameter(null);
 
         DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
