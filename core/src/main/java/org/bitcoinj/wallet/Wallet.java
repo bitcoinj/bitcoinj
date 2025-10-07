@@ -244,6 +244,9 @@ public class Wallet extends BaseTaggableObject
 
     // A list of scripts watched by this wallet.
     @GuardedBy("keyChainGroupLock") private final Set<Script> watchedScripts;
+    
+    // A set of taproot addresses being watched by this wallet.
+    @GuardedBy("keyChainGroupLock") private final Set<Address> watchedTaprootAddresses;
 
     protected final Network network;
     protected final NetworkParameters params;
@@ -508,6 +511,7 @@ public class Wallet extends BaseTaggableObject
         this.coinSelector = DefaultCoinSelector.get(network);
         this.keyChainGroup = Objects.requireNonNull(keyChainGroup);
         watchedScripts = new HashSet<>();
+        watchedTaprootAddresses = new HashSet<>();
         unspent = new HashMap<>();
         spent = new HashMap<>();
         pending = new HashMap<>();
@@ -1163,7 +1167,54 @@ public class Wallet extends BaseTaggableObject
             for (Script script : watchedScripts)
                 if (ScriptPattern.isP2PKH(script))
                     addresses.add(script.getToAddress(network));
+            // Add watched taproot addresses
+            addresses.addAll(watchedTaprootAddresses);
             return addresses;
+        } finally {
+            keyChainGroupLock.unlock();
+        }
+    }
+    
+    /**
+     * Adds taproot addresses to the list of watched addresses.
+     * @param addresses list of taproot addresses to watch
+     * @return number of addresses added
+     */
+    public int addWatchedTaprootAddresses(final List<Address> addresses) {
+        int added = 0;
+        keyChainGroupLock.lock();
+        try {
+            for (final Address address : addresses) {
+                if (address.getOutputScriptType() != ScriptType.P2TR) {
+                    log.warn("Attempted to add non-taproot address to watched taproot addresses: {}", address);
+                    continue;
+                }
+                if (watchedTaprootAddresses.add(address)) {
+                    added++;
+                }
+            }
+        } finally {
+            keyChainGroupLock.unlock();
+        }
+        if (added > 0) {
+            saveNow();
+        }
+        return added;
+    }
+    
+    /**
+     * Removes taproot addresses from the list of watched addresses.
+     * @param addresses list of taproot addresses to stop watching
+     * @return true if successful
+     */
+    public boolean removeWatchedTaprootAddresses(final List<Address> addresses) {
+        keyChainGroupLock.lock();
+        try {
+            for (final Address address : addresses) {
+                watchedTaprootAddresses.remove(address);
+            }
+            saveNow();
+            return true;
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -1205,8 +1256,10 @@ public class Wallet extends BaseTaggableObject
             return isPubKeyHashMine(address.getHash(), scriptType);
         else if (scriptType == ScriptType.P2SH)
             return isPayToScriptHashMine(address.getHash());
-        else if (scriptType == ScriptType.P2WSH || scriptType == ScriptType.P2TR)
+        else if (scriptType == ScriptType.P2WSH)
             return false;
+        else if (scriptType == ScriptType.P2TR)
+            return isTaprootAddressWatched(address);
         else
             throw new IllegalArgumentException(address.toString());
     }
@@ -1221,6 +1274,18 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             return watchedScripts.contains(script);
+        } finally {
+            keyChainGroupLock.unlock();
+        }
+    }
+    
+    /**
+     * Returns true if the given taproot address is being watched by this wallet.
+     */
+    public boolean isTaprootAddressWatched(Address address) {
+        keyChainGroupLock.lock();
+        try {
+            return watchedTaprootAddresses.contains(address);
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -5040,6 +5105,8 @@ public class Wallet extends BaseTaggableObject
             // Some scripts may have more than one bloom element.  That should normally be okay, because under-counting
             // just increases false-positive rate.
             size += watchedScripts.size();
+            // Add taproot addresses to bloom filter
+            size += watchedTaprootAddresses.size();
             return size;
         } finally {
             endBloomFilterCalculation();
@@ -5085,6 +5152,15 @@ public class Wallet extends BaseTaggableObject
                     }
                 }
             }
+            // Add taproot addresses to bloom filter
+            for (Address address : watchedTaprootAddresses) {
+                Script script = ScriptBuilder.createOutputScript(address);
+                for (ScriptChunk chunk : script.chunks()) {
+                    if (!chunk.isOpCode() && (chunk.pushData() != null) && chunk.pushData().length >= MINIMUM_BLOOM_DATA_LENGTH) {
+                        filter.insert(chunk.pushData());
+                    }
+                }
+            }
             for (TransactionOutPoint point : bloomOutPoints)
                 filter.insert(point);
             return filter;
@@ -5097,7 +5173,7 @@ public class Wallet extends BaseTaggableObject
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
         Script script = out.getScriptPubKey();
         boolean isScriptTypeSupported = ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script)
-                || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2WSH(script);
+                || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2WSH(script) || ScriptPattern.isP2TR(script);
         return (isScriptTypeSupported && out.isMine(this)) || watchedScripts.contains(script);
     }
 

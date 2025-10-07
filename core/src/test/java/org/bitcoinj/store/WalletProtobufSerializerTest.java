@@ -17,9 +17,11 @@
 
 package org.bitcoinj.store;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -71,6 +73,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -470,5 +473,43 @@ public class WalletProtobufSerializerTest {
         Wallet wallet1 = roundTrip(myWallet);
         Transaction tx2 = wallet1.getTransaction(tx.getTxId());
         assertEquals(tx.getInput(0).getWitness(), tx2.getInput(0).getWitness());
+    }
+    
+    @Test
+    public void watchedTaprootAddressesSerialization() throws Exception {
+        // Create sample taproot addresses for testing
+        Address taprootAddress1 = SegwitAddress.fromProgram(BitcoinNetwork.TESTNET, 1, new byte[32]);
+        Address taprootAddress2 = SegwitAddress.fromProgram(BitcoinNetwork.TESTNET, 1, ByteUtils.parseHex("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"));
+        
+        // Add taproot addresses to wallet
+        List<Address> taprootAddresses = Lists.newArrayList(taprootAddress1, taprootAddress2);
+        int added = myWallet.addWatchedTaprootAddresses(taprootAddresses);
+        assertEquals(2, added);
+        
+        // Verify they are watched
+        assertTrue(myWallet.isTaprootAddressWatched(taprootAddress1));
+        assertTrue(myWallet.isTaprootAddressWatched(taprootAddress2));
+        assertTrue(myWallet.isAddressMine(taprootAddress1));
+        assertTrue(myWallet.isAddressMine(taprootAddress2));
+        
+        // Serialize and deserialize the wallet
+        Wallet roundTripWallet = roundTrip(myWallet);
+        
+        // Verify taproot addresses are preserved after deserialization
+        assertTrue(roundTripWallet.isTaprootAddressWatched(taprootAddress1));
+        assertTrue(roundTripWallet.isTaprootAddressWatched(taprootAddress2));
+        assertTrue(roundTripWallet.isAddressMine(taprootAddress1));
+        assertTrue(roundTripWallet.isAddressMine(taprootAddress2));
+        
+        // Verify they appear in watched addresses
+        List<Address> watchedAddresses = roundTripWallet.getWatchedAddresses();
+        assertTrue(watchedAddresses.contains(taprootAddress1));
+        assertTrue(watchedAddresses.contains(taprootAddress2));
+        
+        // Test removing addresses works after round trip
+        boolean removed = roundTripWallet.removeWatchedTaprootAddresses(Lists.newArrayList(taprootAddress1));
+        assertTrue(removed);
+        assertFalse(roundTripWallet.isTaprootAddressWatched(taprootAddress1));
+        assertTrue(roundTripWallet.isTaprootAddressWatched(taprootAddress2));
     }
 }

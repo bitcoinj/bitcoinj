@@ -353,6 +353,19 @@ message Tag {
     required bytes data = 2;
 }
 
+/** A watched Bitcoin address */
+message WatchedAddress {
+  // The address string (e.g. "bc1p..." for taproot)
+  required string address = 1;
+  
+  // The network identifier this address belongs to
+  required string network_identifier = 2;
+  
+  // Timestamp stored as millis since epoch. Useful for skipping block bodies before this point
+  // when watching for transactions to this address on the blockchain.
+  optional int64 creation_timestamp = 3;
+}
+
 /** A bitcoin wallet */
 message Wallet {
   /**
@@ -407,8 +420,10 @@ message Wallet {
   repeated Tag tags = 16;
 
   // (field number 17 was used by transaction_signers)
+  
+  repeated WatchedAddress watched_taproot_address = 18;
 
-  // Next tag: 18
+  // Next tag: 19
 }
 
 /** An exchange rate between Bitcoin and some fiat currency. */

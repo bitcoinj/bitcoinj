@@ -34,6 +34,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.base.LegacyAddress;
+import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -3535,5 +3536,31 @@ public class WalletTest extends TestWithWallet {
 
         Wallet wallet10 = Wallet.fromWatchingKeyB58(TESTNET, watchingKeyb58, Instant.ofEpochSecond(1415282801));
         assertEquals(TESTNET, wallet10.network());
+    }
+
+    @Test
+    public void testTaprootWatchedAddresses() throws Exception {
+        Wallet wallet = Wallet.createBasic(TESTNET);
+        
+        // Create a sample taproot address for testing
+        Address taprootAddress = SegwitAddress.fromProgram(TESTNET, 1, new byte[32]);
+        
+        // Test adding watched taproot address
+        int added = wallet.addWatchedTaprootAddresses(Lists.newArrayList(taprootAddress));
+        assertEquals(1, added);
+        
+        // Test that address is now watched
+        assertTrue(wallet.isTaprootAddressWatched(taprootAddress));
+        assertTrue(wallet.isAddressMine(taprootAddress));
+        
+        // Test getting watched addresses includes taproot
+        List<Address> watchedAddresses = wallet.getWatchedAddresses();
+        assertTrue(watchedAddresses.contains(taprootAddress));
+        
+        // Test removing watched taproot address
+        boolean removed = wallet.removeWatchedTaprootAddresses(Lists.newArrayList(taprootAddress));
+        assertTrue(removed);
+        assertFalse(wallet.isTaprootAddressWatched(taprootAddress));
+        assertFalse(wallet.isAddressMine(taprootAddress));
     }
 }
