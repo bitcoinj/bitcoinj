@@ -3545,22 +3545,21 @@ public class WalletTest extends TestWithWallet {
         // Create a sample taproot address for testing
         Address taprootAddress = SegwitAddress.fromProgram(TESTNET, 1, new byte[32]);
         
-        // Test adding watched taproot address
-        int added = wallet.addWatchedTaprootAddresses(Lists.newArrayList(taprootAddress));
+        // Test adding watched taproot address using existing API
+        int added = wallet.addWatchedAddresses(Lists.newArrayList(taprootAddress));
         assertEquals(1, added);
         
         // Test that address is now watched
-        assertTrue(wallet.isTaprootAddressWatched(taprootAddress));
         assertTrue(wallet.isAddressMine(taprootAddress));
         
         // Test getting watched addresses includes taproot
         List<Address> watchedAddresses = wallet.getWatchedAddresses();
         assertTrue(watchedAddresses.contains(taprootAddress));
         
-        // Test removing watched taproot address
-        boolean removed = wallet.removeWatchedTaprootAddresses(Lists.newArrayList(taprootAddress));
+        // Test removing watched taproot address by removing its script
+        Script taprootScript = ScriptBuilder.createOutputScript(taprootAddress);
+        boolean removed = wallet.removeWatchedScripts(Lists.newArrayList(taprootScript));
         assertTrue(removed);
-        assertFalse(wallet.isTaprootAddressWatched(taprootAddress));
         assertFalse(wallet.isAddressMine(taprootAddress));
     }
 }

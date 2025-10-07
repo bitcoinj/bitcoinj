@@ -21,13 +21,9 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.WireFormat;
-import org.bitcoinj.base.Address;
-import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
-import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.core.LockTime;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.base.Sha256Hash;
@@ -198,20 +194,6 @@ public class WalletProtobufSerializer {
                             .build();
 
             walletBuilder.addWatchedScript(protoScript);
-        }
-        
-        // Serialize watched taproot addresses
-        for (Address address : wallet.getWatchedAddresses()) {
-            if (address.getOutputScriptType() == ScriptType.P2TR) {
-                Protos.WatchedAddress protoAddress =
-                        Protos.WatchedAddress.newBuilder()
-                                .setAddress(address.toString())
-                                .setNetworkIdentifier(wallet.network().id())
-                                .setCreationTimestamp(System.currentTimeMillis())
-                                .build();
-                
-                walletBuilder.addWatchedTaprootAddress(protoAddress);
-            }
         }
 
         // Populate the lastSeenBlockHash field.
@@ -534,23 +516,6 @@ public class WalletProtobufSerializer {
         }
 
         wallet.addWatchedScripts(scripts);
-        
-        // Deserialize watched taproot addresses
-        List<Address> taprootAddresses = new ArrayList<>();
-        for (Protos.WatchedAddress protoAddress : walletProto.getWatchedTaprootAddressList()) {
-            try {
-                AddressParser parser = AddressParser.getDefault(network);
-                Address address = parser.parseAddress(protoAddress.getAddress());
-                if (address.getOutputScriptType() == ScriptType.P2TR) {
-                    taprootAddresses.add(address);
-                }
-            } catch (AddressFormatException e) {
-                throw new UnreadableWalletException("Unparseable taproot address in wallet: " + protoAddress.getAddress());
-            }
-        }
-        if (!taprootAddresses.isEmpty()) {
-            wallet.addWatchedTaprootAddresses(taprootAddresses);
-        }
 
         if (walletProto.hasDescription()) {
             wallet.setDescription(walletProto.getDescription());
