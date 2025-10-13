@@ -476,6 +476,11 @@ public class WalletProtobufSerializerTest {
         assertEquals(tx.getInput(0).getWitness(), tx2.getInput(0).getWitness());
     }
     
+    /**
+     * Tests that taproot (P2TR) watched addresses are properly serialized and deserialized
+     * in wallet protobuf format. Verifies that taproot addresses added via addWatchedAddresses()
+     * persist correctly across save/load cycles using the existing watchedScripts infrastructure.
+     */
     @Test
     public void watchedTaprootAddressesSerialization() throws Exception {
         // Create sample taproot addresses for testing

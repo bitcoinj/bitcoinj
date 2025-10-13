@@ -3538,6 +3538,11 @@ public class WalletTest extends TestWithWallet {
         assertEquals(TESTNET, wallet10.network());
     }
 
+    /**
+     * Tests that taproot (P2TR) addresses can be watched and tracked using the existing
+     * watched addresses infrastructure. Verifies that taproot addresses are properly
+     * recognized via isAddressMine() and can be added/removed from the watched list.
+     */
     @Test
     public void testTaprootWatchedAddresses() throws Exception {
         Wallet wallet = Wallet.createBasic(TESTNET);
@@ -3561,5 +3566,61 @@ public class WalletTest extends TestWithWallet {
         boolean removed = wallet.removeWatchedScripts(Lists.newArrayList(taprootScript));
         assertTrue(removed);
         assertFalse(wallet.isAddressMine(taprootAddress));
+    }
+
+    /**
+     * Integration test that verifies a wallet can detect incoming transactions to watched taproot addresses.
+     * Creates an actual transaction sending funds to a taproot address and confirms the wallet properly
+     * tracks the transaction and updates its balance.
+     */
+    @Test
+    public void testTaprootTransactionDetection() throws Exception {
+        Wallet wallet = Wallet.createBasic(TESTNET);
+        
+        // Create a taproot address for testing
+        byte[] taprootProgram = new byte[32];
+        // Use a deterministic test vector for reproducible results
+        Arrays.fill(taprootProgram, (byte) 0x42);
+        Address taprootAddress = SegwitAddress.fromProgram(TESTNET, 1, taprootProgram);
+        
+        // Add as watched address to the wallet
+        int added = wallet.addWatchedAddresses(Lists.newArrayList(taprootAddress));
+        assertEquals(1, added);
+        assertTrue(wallet.isAddressMine(taprootAddress));
+        
+        // Verify initial wallet state
+        assertEquals(Coin.ZERO, wallet.getBalance());
+        assertEquals(0, wallet.getTransactions(true).size());
+        
+        // Create a transaction sending funds to the taproot address
+        Coin testAmount = Coin.valueOf(150000); // 0.0015 BTC
+        Transaction tx = FakeTxBuilder.createFakeTx(TESTNET, testAmount, taprootAddress);
+        
+        // Verify the transaction output script is correct P2TR format
+        TransactionOutput output = tx.getOutput(0);
+        assertTrue("Output should be P2TR", ScriptPattern.isP2TR(output.getScriptPubKey()));
+        assertEquals("Output should be to our taproot address", taprootAddress, output.getScriptPubKey().getToAddress(TESTNET));
+        
+        // Simulate receiving the transaction in a block
+        StoredBlock block = createFakeBlock(blockStore, tx).storedBlock;
+        wallet.receiveFromBlock(tx, block, AbstractBlockChain.NewBlockType.BEST_CHAIN, 0);
+        
+        // Verify wallet detected the transaction and updated balance
+        assertEquals("Wallet should have the correct balance", testAmount, wallet.getBalance());
+        assertEquals("Wallet should contain exactly one transaction", 1, wallet.getTransactions(true).size());
+        
+        // Verify the specific transaction was added
+        Transaction receivedTx = wallet.getTransactions(true).iterator().next();
+        assertEquals("Transaction hash should match", tx.getTxId(), receivedTx.getTxId());
+        
+        // Verify the transaction output is recognized as belonging to this wallet
+        List<TransactionOutput> walletOutputs = receivedTx.getWalletOutputs(wallet);
+        assertEquals("Should have one output belonging to wallet", 1, walletOutputs.size());
+        assertEquals("Output value should match", testAmount, walletOutputs.get(0).getValue());
+        
+        // Test that the transaction is received by us (not sent from us)
+        assertEquals("No coins should be sent from wallet", Coin.ZERO, receivedTx.getValueSentFromMe(wallet));
+        assertEquals("Transaction received amount should match", testAmount, receivedTx.getValueSentToMe(wallet));
+        assertEquals("Net transaction value should match", testAmount, receivedTx.getValue(wallet));
     }
 }
