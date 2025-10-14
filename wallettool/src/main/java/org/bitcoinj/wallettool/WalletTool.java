@@ -96,7 +96,7 @@ import static org.bitcoinj.base.Coin.parseCoin;
 /**
  * A command line tool for manipulating wallets and working with Bitcoin.
  */
-@CommandLine.Command(name = "wallet-tool", usageHelpAutoWidth = true, sortOptions = false, description = "Print and manipulate wallets.",subcommands = {CommandLine.HelpCommand.class})
+@CommandLine.Command(name = "wallet-tool", usageHelpAutoWidth = true, sortOptions = false, description = "Print and manipulate wallets.",mixinStandardHelpOptions = true,subcommands = {CommandLine.HelpCommand.class})
 public class WalletTool implements Callable<Integer> {
     private static BitcoinNetwork net = BitcoinNetwork.MAINNET;
     private static boolean debugLog = false;
