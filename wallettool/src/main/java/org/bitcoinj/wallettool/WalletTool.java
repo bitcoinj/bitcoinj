@@ -102,17 +102,11 @@ public class WalletTool implements Callable<Integer> {
     private static boolean debugLog = false;
     private static File walletFile = null;
     private WaitForEnum waitFor = null;
-    @CommandLine.Option(names = "--filter", description = "Use filter when synching the chain. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private Filter filter = Filter.SERVER;
-    @CommandLine.Option(names = "--chain", description = "Specifies the name of the file that stores the block chain.")
     private static File chainFile = null;
     private static String conditionStr = null;
-
-    @CommandLine.Option(names = "--offline", description = "If specified when sending, don't try and connect, just write the tx to the wallet.")
     private boolean offline = false;
     private static boolean ignoreMandatoryExtensions = false;
-
-    @CommandLine.Option(names = "--peers", description = "Comma separated IP addresses/domain names for connections instead of peer discovery.")
     private String peersStr;
 
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
