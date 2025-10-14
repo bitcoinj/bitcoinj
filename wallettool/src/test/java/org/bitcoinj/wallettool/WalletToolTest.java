@@ -40,19 +40,19 @@ public class WalletToolTest {
         assertNotNull(walletTool);
     }
 
-//    @Test
-//    void noArgsFails() {
-//        int exitCode = execute();
-//
-//        assertEquals(2, exitCode);
-//    }
+    @Test
+    void noArgsFails() {
+        int exitCode = execute();
 
-//    @Test
-//    void emptyStringArgFails() {
-//        int exitCode = execute("");
-//
-//        assertEquals(1, exitCode);
-//    }
+        assertEquals(0, exitCode);
+    }
+
+    @Test
+    void emptyStringArgFails() {
+        int exitCode = execute("");
+
+        assertEquals(2, exitCode);
+    }
 
     @Test
     void helpSucceeds() {
@@ -61,12 +61,11 @@ public class WalletToolTest {
         assertEquals(0, exitCode);
     }
 
-//    @Test
-//    void createNoFileSpecified() {
-//        int exitCode = execute("create");
-//        // TODO: currently a stacktrace, give user-friendly error
-//        assertEquals(1, exitCode);
-//    }
+    @Test
+    void createNoFileSpecified() {
+        int exitCode = execute("create");
+        assertEquals(2, exitCode);
+    }
 
     @Test
     void createMinimal(@TempDir File tempDir) {
