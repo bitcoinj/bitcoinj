@@ -44,14 +44,14 @@ public class WalletToolTest {
     void noArgsFails() {
         int exitCode = execute();
 
-        assertEquals(2, exitCode);
+        assertEquals(0, exitCode);
     }
 
     @Test
     void emptyStringArgFails() {
         int exitCode = execute("");
 
-        assertEquals(1, exitCode);
+        assertEquals(2, exitCode);
     }
 
     @Test
@@ -64,14 +64,13 @@ public class WalletToolTest {
     @Test
     void createNoFileSpecified() {
         int exitCode = execute("create");
-        // TODO: currently a stacktrace, give user-friendly error
-        assertEquals(1, exitCode);
+        assertEquals(2, exitCode);
     }
 
     @Test
     void createMinimal(@TempDir File tempDir) {
         String walletFile = tempDir.getPath() + "/wallet";
-        int exitCode = execute("create", "--wallet", walletFile);
+        int exitCode = execute("create", walletFile);
 
         assertEquals(0, exitCode);
     }
@@ -80,7 +79,7 @@ public class WalletToolTest {
     void createWithDate(@TempDir File tempDir) {
         String walletFile = tempDir.getPath() + "/wallet";
         String date = "2023-05-01";
-        int exitCode = execute("create", "--wallet", walletFile, "--date", date);
+        int exitCode = execute("create", "--date", date, walletFile);
 
         assertEquals(0, exitCode);
     }
