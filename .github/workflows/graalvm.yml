@@ -1,4 +1,4 @@
-name: GraalVM Build
+name: GraalVM Gradle Build
 
 on: [push, pull_request]
 
