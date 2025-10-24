@@ -1,4 +1,4 @@
-name: GraalVM Gradle Build
+name: GraalVM Maven Build
 
 on: [push, pull_request]
 
@@ -11,7 +11,11 @@ jobs:
         os: [ubuntu-24.04, macOS-13]
         java: [ '21', '25' ]
         distribution: [ 'graalvm-community' ]
-        gradle: ['9.1.0']
+        maven: ['3.9.9', '3.9.11']
+        exclude:
+          # Java 25+ requires Maven 3.9.11+
+          - java: '25'
+            maven: '3.9.9'
       fail-fast: false
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }}
     steps:
@@ -23,14 +27,15 @@ jobs:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v5
         with:
-          gradle-version: ${{ matrix.gradle }}
-      - name: Run Gradle
-        run: gradle test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
-      - name: Upload wallet-tool as artifact
+          maven-version: ${{ matrix.maven }}
+      - name: Run Maven
+        run: mvn clean validate compile -X
+      - name: Upload Build Results
         uses: actions/upload-artifact@v4
         with:
-          name: wallet-tool-${{ matrix.os }}-${{ matrix.java }}-gradle-${{ matrix.gradle }}
-          path: wallettool/build/native/nativeCompile/wallet-tool
+          name: bitcoinj-graalvm-build-${{ matrix.os }}-${{ matrix.java }}-maven-${{ matrix.maven }}
+          path: target/
+

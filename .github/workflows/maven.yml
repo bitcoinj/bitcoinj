@@ -1,0 +1,42 @@
+name: Maven Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macOS-13, windows-2022]
+        java: ['17', '21', '25']
+        distribution: ['temurin']
+        maven: ['3.9.9', '3.9.10', '3.9.11']
+        exclude:
+          # Java 25+ requires Maven 3.1.11+
+          - java: '25'
+            maven: '3.9.9'
+      fail-fast: false
+    name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Maven ${{ matrix.maven }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: ${{ matrix.maven }}
+      - name: Run Maven
+        run: mvn clean validate compile
+      - name: Upload Build Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bitcoinj-maven-build-jdk${{ matrix.java }}-${{ matrix.os }}-maven-${{ matrix.maven }}
+          path: |
+            target/
+
