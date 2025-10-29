@@ -11,7 +11,8 @@ The bitcoinj library is a Java implementation of the Bitcoin protocol, which all
 ### Technologies
 
 * Java 8+ (needs Java 8 API or Android 8.0 API, compiles to Java 8 bytecode) for `base` and `core` module
-* Java 17+ for `tools`, `wallettool`, `examples` and the JavaFX-based `wallettemplate`
+* Java 17+ for `tools`, `wallettool`, `examples`
+* Java 25+ for the JavaFX-based `wallettemplate`
 * https://gradle.org/[Gradle]
 ** Gradle 8.5+ for building the whole project or
 ** Debian Gradle 4.4 for just the `base`, `core`, `tools`, `wallettool` and `examples` modules (see "reference build" below)
@@ -23,7 +24,7 @@ To get started, it is best to have the latest JDK and Gradle installed. The HEAD
 
 #### Building from the command line
 
-Official builds are currently using JDK 17. Our GitHub Actions build and test with JDK 17 and 21.
+Official builds are currently using JDK 17. Our GitHub Actions build and test with JDK 17, 21 and 25.
 
 ```
 gradle clean build
