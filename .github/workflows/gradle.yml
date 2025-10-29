@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-24.04, macOS-13, windows-2022]
         java: ['17', '21', '25']
         distribution: ['temurin']
-        gradle: ['8.5', '8.14.3', '9.1.0']
+        gradle: ['8.5', '8.14.3', '9.2.0']
         exclude:
           # Java 25+ requires Gradle 9.1+
           - java: '25'
