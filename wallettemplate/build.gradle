@@ -26,7 +26,7 @@ configurations.configureEach {
 }
 
 javafx {
-    version = '21.0.4'
+    version = '25.0.1'
     modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
