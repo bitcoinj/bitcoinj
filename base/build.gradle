@@ -8,7 +8,7 @@ plugins {
 version = '0.18-SNAPSHOT'
 
 dependencies {
-    implementation 'org.jspecify:jspecify:1.0.0'
+    api 'org.jspecify:jspecify:1.0.0'
 
     testImplementation project(':bitcoinj-test-support')
     testImplementation 'junit:junit:4.13.2'
