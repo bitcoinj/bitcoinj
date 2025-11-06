@@ -16,16 +16,12 @@
 
 package org.bitcoinj.base.internal;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Locale;
 
 /**
  * Utilities for determining platform information (OS and runtime)
  */
 public class PlatformUtils {
-    private static final Logger log = LoggerFactory.getLogger(PlatformUtils.class);
     public enum Runtime {
         ANDROID, OPENJDK, ORACLE_JAVA, GRAALVM, UNKNOWN
     }
