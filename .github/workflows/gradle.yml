@@ -19,6 +19,9 @@ jobs:
           - java: '25'
             gradle: '8.14.3'
       fail-fast: false
+    env:
+      # Use env variable to specify the JDK version to use for the `testMinJdk` Gradle option
+      MIN_JDK: '8'
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
       - name: Git checkout
@@ -27,13 +30,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: ${{ matrix.distribution }}
-          java-version: ${{ matrix.java }}
+          java-version: |
+            ${{ env.MIN_JDK }}
+            ${{ matrix.java }}
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
-        run: gradle -PtestMinJdk=8 build installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
+        run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
