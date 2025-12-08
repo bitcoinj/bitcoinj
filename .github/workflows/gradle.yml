@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        os: [ubuntu-24.04, macOS-15-intel, windows-2022]
+        os: [ubuntu-24.04, macOS-15, macOS-15-intel, windows-2022]
         java: ['17', '21', '25']
         distribution: ['temurin']
         gradle: ['8.5', '8.14.3', '9.2.0']
@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
     env:
       # Use env variable to specify the JDK version to use for the `testMinJdk` Gradle option
-      MIN_JDK: '8'
+      MIN_JDK: ${{ matrix.os == 'macOS-15' && '11' || '8' }}
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
       - name: Git checkout
