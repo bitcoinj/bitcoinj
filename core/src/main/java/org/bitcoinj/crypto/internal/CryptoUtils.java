@@ -17,17 +17,16 @@ package org.bitcoinj.crypto.internal;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-import org.bouncycastle.crypto.digests.SHA512Digest;
-import org.bouncycastle.crypto.macs.HMac;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.jcajce.provider.digest.SHA3;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 /**
- * Utilities for the crypto module (e.g. using Bouncy Castle)
+ * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle)
  */
 public class CryptoUtils {
     /**
@@ -60,13 +59,16 @@ public class CryptoUtils {
      * @return The final result of the MAC operation
      */
     public static byte[] hmacSha512(byte[] key, byte[] data) {
-        SHA512Digest digest = new SHA512Digest();
-        HMac hMac = new HMac(digest);
-        hMac.init(new KeyParameter(key));
-        hMac.update(data, 0, data.length);
-        byte[] out = new byte[64];
-        hMac.doFinal(out, 0);
-        return out;
+        // HmacSHA512 is built-in on Java since at least Java 8 and Android since API Level 1
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "HmacSHA512");
+        Mac mac;
+        try {
+            mac = Mac.getInstance("HmacSHA512");
+            mac.init(secretKeySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+        return mac.doFinal(data);
     }
 
     /**
