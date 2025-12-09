@@ -54,6 +54,11 @@ if (GradleVersion.current() > GradleVersion.version("8.0")) {
     application {
         mainClass = walletToolMainClassName
         applicationName = walletToolName
+        // isModularBuild is not strictly necessary here because we're already Gradle 8+
+        if (isModularBuild) {
+            // setting mainModule tells installDist to create a launch script that uses module path
+            mainModule = "org.bitcoinj.wallettool"
+        }
     }
 } else {
     mainClassName = walletToolMainClassName
