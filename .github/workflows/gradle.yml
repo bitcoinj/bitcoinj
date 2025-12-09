@@ -39,6 +39,11 @@ jobs:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
         run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build installDist --init-script build-scan-agree.gradle --scan --info --stacktrace
+      - name: Run JLink with Gradle
+        # Run JLink if we are not using JDK 25
+        # JDK 25 Temurin is not supported yet because of a bug in the BA JLink Plugin
+        if:  ${{ matrix.java != '25' }}
+        run: gradle jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()
