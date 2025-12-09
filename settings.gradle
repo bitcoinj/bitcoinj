@@ -36,8 +36,10 @@ project(':wallettool').name = 'bitcoinj-wallettool'
 include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
-include 'wallettemplate'
-project(':wallettemplate').name = 'bitcoinj-wallettemplate'
+if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+    include 'wallettemplate'
+    project(':wallettemplate').name = 'bitcoinj-wallettemplate'
+}
 
 include 'integration-test'
 project(':integration-test').name = 'bitcoinj-integration-test'
