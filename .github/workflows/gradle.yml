@@ -18,6 +18,19 @@ jobs:
             gradle: '8.5'
           - java: '25'
             gradle: '8.14.3'
+          # Exclude older versions of Gradle on macOS and Windows
+          - os: macOS-15
+            gradle: '8.5'
+          - os: macOS-15
+            gradle: '8.14.3'
+          - os: macOS-15-intel
+            gradle: '8.5'
+          - os: macOS-15-intel
+            gradle: '8.14.3'
+          - os: windows-2022
+            gradle: '8.5'
+          - os: windows-2022
+            gradle: '8.14.3'
       fail-fast: false
     env:
       # Use env variable to specify the JDK version to use for the `testMinJdk` Gradle option
