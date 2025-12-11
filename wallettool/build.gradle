@@ -3,6 +3,7 @@ import org.gradle.util.GradleVersion
 plugins {
     id 'java'
     id 'application'
+    id 'org.beryx.jlink' version '3.1.5' apply false
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
     id 'org.graalvm.buildtools.native' version '0.11.0' apply false
 }
@@ -58,6 +59,20 @@ if (GradleVersion.current() > GradleVersion.version("8.0")) {
 } else {
     mainClassName = walletToolMainClassName
     applicationName = walletToolName
+}
+
+if (isModularBuild) {
+    apply plugin: 'org.beryx.jlink'
+
+    jlink {
+        options = ['--add-modules', 'org.slf4j.jul']
+        mergedModule {
+            requires 'jdk.unsupported'    // For protobuf
+            requires 'java.logging'       // For bitcoinj-core
+
+            requires 'org.slf4j'          // For bitcoinj-core
+        }
+    }
 }
 
 // wallettool is using JUnit 5 for testing, if it's not available no tests will be run
