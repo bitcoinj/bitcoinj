@@ -16,53 +16,53 @@
 
 package org.bitcoinj.base.internal;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Locale;
 
 /**
  * Utilities for determining platform information (OS and runtime)
  */
 public class PlatformUtils {
-    private static final Logger log = LoggerFactory.getLogger(PlatformUtils.class);
     public enum Runtime {
-        ANDROID, OPENJDK, ORACLE_JAVA, GRAALVM
+        ANDROID, OPENJDK, ORACLE_JAVA, GRAALVM, UNKNOWN
     }
 
     public enum OS {
-        LINUX, WINDOWS, MAC_OS
+        LINUX, WINDOWS, MAC_OS, UNKNOWN
     }
 
-    public static Runtime runtime = null;
-    public static OS os = null;
+    public static final Runtime runtime;
+    public static final OS os;
 
     static {
         String runtimeProp = System.getProperty("java.runtime.name", "").toLowerCase(Locale.US);
-        if (runtimeProp.equals(""))
-            PlatformUtils.runtime = null;
+        Runtime runtimeEnum;
+        if (runtimeProp.isEmpty())
+            runtimeEnum= PlatformUtils.Runtime.UNKNOWN;
         else if (runtimeProp.contains("android"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.ANDROID;
+            runtimeEnum = PlatformUtils.Runtime.ANDROID;
         else if (runtimeProp.contains("openjdk"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.OPENJDK;
+            runtimeEnum = PlatformUtils.Runtime.OPENJDK;
         else if (runtimeProp.contains("java(tm) se"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.ORACLE_JAVA;
+            runtimeEnum = PlatformUtils.Runtime.ORACLE_JAVA;
         else if (runtimeProp.contains("graalvm"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.GRAALVM;
+            runtimeEnum = PlatformUtils.Runtime.GRAALVM;
         else
-            log.info("Unknown java.runtime.name '{}'", runtimeProp);
+            runtimeEnum = PlatformUtils.Runtime.UNKNOWN;
+        runtime = runtimeEnum;
 
         String osProp = System.getProperty("os.name", "").toLowerCase(Locale.US);
-        if (osProp.equals(""))
-            PlatformUtils.os = null;
+        OS osEnum;
+        if (osProp.isEmpty())
+            osEnum = PlatformUtils.OS.UNKNOWN;
         else if (osProp.contains("linux"))
-            PlatformUtils.os = PlatformUtils.OS.LINUX;
+            osEnum = PlatformUtils.OS.LINUX;
         else if (osProp.contains("win"))
-            PlatformUtils.os = PlatformUtils.OS.WINDOWS;
+            osEnum = PlatformUtils.OS.WINDOWS;
         else if (osProp.contains("mac"))
-            PlatformUtils.os = PlatformUtils.OS.MAC_OS;
+            osEnum = PlatformUtils.OS.MAC_OS;
         else
-            log.info("Unknown os.name '{}'", runtimeProp);
+            osEnum = PlatformUtils.OS.UNKNOWN;
+        os = osEnum;
     }
 
     public static boolean isAndroidRuntime() {
