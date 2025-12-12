@@ -533,7 +533,7 @@ public class WalletTool implements Callable<Integer> {
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
         Instant rotationTime = TimeUtils.currentTime();
         if (date != null) {
-            rotationTime = Instant.from(date);
+            rotationTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant();
         } else if (unixtime != null) {
             rotationTime = Instant.ofEpochSecond(unixtime);
         }
