@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 module org.bitcoinj.wallettool {
     requires java.logging;
 
