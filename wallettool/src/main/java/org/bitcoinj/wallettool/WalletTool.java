@@ -66,7 +66,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -402,7 +402,7 @@ public class WalletTool implements Callable<Integer> {
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
         Instant rotationTime = TimeUtils.currentTime();
         if (date != null) {
-            rotationTime = Instant.from(date);
+            rotationTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant();
         } else if (unixtime != null) {
             rotationTime = Instant.ofEpochSecond(unixtime);
         }
