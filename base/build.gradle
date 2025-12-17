@@ -56,12 +56,9 @@ if (minJdkVersion > 0 && GradleVersion.current() > gradleVersionToolchains) {
     check.dependsOn testOnMinJdk
 }
 
-ext.moduleName = 'org.bitcoinj.base'
-
 jar {
-    inputs.property("moduleName", moduleName)
     manifest {
-        attributes 'Automatic-Module-Name': moduleName
+        attributes 'Automatic-Module-Name': 'org.bitcoinj.base'
     }
 }
 
