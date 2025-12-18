@@ -80,6 +80,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.MissingSigResolutionSigner;
@@ -101,7 +102,7 @@ import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -1679,7 +1680,7 @@ public class Wallet extends BaseTaggableObject
      * @param delay How much time to wait until saving the wallet on a background thread.
      * @param eventListener callback to be informed when the auto-save thread does things, or null
      */
-    public WalletFiles autosaveToFile(File f, Duration delay, @Nullable WalletFiles.Listener eventListener) {
+    public WalletFiles autosaveToFile(File f, Duration delay, WalletFiles.@Nullable Listener eventListener) {
         lock.lock();
         try {
             checkState(vFileManager == null, () ->
@@ -4519,8 +4520,8 @@ public class Wallet extends BaseTaggableObject
                     // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                     // we sign missing pieces (to check this would require either assuming any signatures are signing
                     // standard output types or a way to get processed signatures out of script execution)
-                    txIn.getScriptSig().correctlySpends(tx, i, txIn.getWitness(), connectedOutput.getValue(),
-                            connectedOutput.getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+                    ScriptExecution.correctlySpends(txIn.getScriptSig(), tx, i, txIn.getWitness(), connectedOutput.getValue(),
+                            connectedOutput.getScriptPubKey(), ScriptExecution.ALL_VERIFY_FLAGS);
                     log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                     continue;
                 } catch (ScriptException e) {
@@ -4590,7 +4591,7 @@ public class Wallet extends BaseTaggableObject
                                         (!excludeImmatureCoinbases || isTransactionMature(output.getParentTransaction())))
                     .collect(StreamUtils.toUnmodifiableList());
             } else {
-                candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
+                candidates = calculateAllSpendCandidatesFromUTXOProviderInternal(excludeImmatureCoinbases);
             }
             return candidates;
         } finally {
@@ -4632,13 +4633,18 @@ public class Wallet extends BaseTaggableObject
      * Returns the spendable candidates from the {@link UTXOProvider} based on keys that the wallet contains.
      * @return The list of candidates.
      */
+    @Deprecated
     protected List<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
+        return calculateAllSpendCandidatesFromUTXOProviderInternal(excludeImmatureCoinbases);
+    }
+
+    private List<TransactionOutput> calculateAllSpendCandidatesFromUTXOProviderInternal(boolean excludeImmatureCoinbases) {
         checkState(lock.isHeldByCurrentThread());
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         List<TransactionOutput> candidates = new LinkedList<>();
         try {
             int chainHeight = utxoProvider.getChainHeadHeight();
-            for (UTXO output : getStoredOutputsFromUTXOProvider()) {
+            for (UTXO output : getStoredOutputsFromUTXOProviderInternal()) {
                 boolean coinbase = output.isCoinbase();
                 int depth = chainHeight - output.getHeight() + 1; // the current depth of the output (1 = same as head).
                 // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
@@ -4675,7 +4681,12 @@ public class Wallet extends BaseTaggableObject
      * wallet contains.
      * @return The list of stored outputs.
      */
+    @Deprecated
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
+        return getStoredOutputsFromUTXOProviderInternal();
+    }
+
+    private List<UTXO> getStoredOutputsFromUTXOProviderInternal() throws UTXOProviderException {
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
@@ -4697,7 +4708,9 @@ public class Wallet extends BaseTaggableObject
     /**
      * Get the {@link UTXOProvider}.
      * @return The UTXO provider.
+     * @deprecated Use a UTXOProvider separate from the wallet if you want to search an external source for UTXOs.
      */
+    @Deprecated
     @Nullable public UTXOProvider getUTXOProvider() {
         lock.lock();
         try {
@@ -4715,8 +4728,15 @@ public class Wallet extends BaseTaggableObject
      *
      * <p>Note that the associated provider must be reattached after a wallet is loaded from disk.
      * The association is not serialized.</p>
+     * @deprecated Use a UTXOProvider separate from the wallet if you want to search an external source for UTXOs.
      */
+    @Deprecated
     public void setUTXOProvider(@Nullable UTXOProvider provider) {
+        setUTXOProviderInternal(provider);
+    }
+
+    @VisibleForTesting
+    public void setUTXOProviderInternal(@Nullable UTXOProvider provider) {
         lock.lock();
         try {
             checkArgument(provider == null || provider.network() == network);
@@ -4823,7 +4843,7 @@ public class Wallet extends BaseTaggableObject
             // because there are so many ways the block can be invalid.
 
             // Avoid spuriously informing the user of wallet/tx confidence changes whilst we're re-organizing.
-            checkState(confidenceChanged.size() == 0);
+            checkState(confidenceChanged.isEmpty());
             checkState(!insideReorg);
             insideReorg = true;
             checkState(onWalletChangedSuppressions == 0);
@@ -5060,8 +5080,8 @@ public class Wallet extends BaseTaggableObject
                     // Only add long (at least 64 bit) data to the bloom filter.
                     // If any long constants become popular in scripts, we will need logic
                     // here to exclude them.
-                    if (!chunk.isOpCode() && (chunk.data != null) && chunk.data.length >= MINIMUM_BLOOM_DATA_LENGTH) {
-                        filter.insert(chunk.data);
+                    if (!chunk.isOpCode() && (chunk.pushData() != null) && chunk.pushData().length >= MINIMUM_BLOOM_DATA_LENGTH) {
+                        filter.insert(chunk.pushData());
                     }
                 }
             }
@@ -5389,7 +5409,7 @@ public class Wallet extends BaseTaggableObject
      * re-organisation of the wallet contents on the block chain. For instance, in future the wallet may choose to
      * optimise itself to reduce fees or improve privacy.</p>
      */
-    public void setTransactionBroadcaster(@Nullable org.bitcoinj.core.TransactionBroadcaster broadcaster) {
+    public void setTransactionBroadcaster(org.bitcoinj.core.@Nullable TransactionBroadcaster broadcaster) {
         Transaction[] toBroadcast = {};
         lock.lock();
         try {

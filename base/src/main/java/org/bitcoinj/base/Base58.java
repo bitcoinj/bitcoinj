@@ -123,7 +123,7 @@ public class Base58 {
      * @throws AddressFormatException if the given string is not a valid base58 string
      */
     public static byte[] decode(String input) throws AddressFormatException {
-        if (input.length() == 0) {
+        if (input.isEmpty()) {
             return new byte[0];
         }
         // Convert the base58-encoded ASCII chars to a base58 byte sequence (base58 digits).

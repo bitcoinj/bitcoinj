@@ -25,11 +25,12 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -165,8 +166,8 @@ public class TransactionInput {
         this(parentTransaction,
                 null, EMPTY_ARRAY,
                 output.getParentTransaction() != null ?
-                        new TransactionOutPoint(output.getIndex(), output.getParentTransaction()) :
-                        new TransactionOutPoint(output),
+                        TransactionOutPoint.from(output.getParentTransaction(), output.getIndex()) :
+                        TransactionOutPoint.from(output),
                 NO_SEQUENCE,
                 output.getValue(),
                 null);
@@ -446,7 +447,7 @@ public class TransactionInput {
             return ConnectionResult.NO_SUCH_TX;
         TransactionOutput out = transaction.getOutput(outpoint);
         if (!out.isAvailableForSpending()) {
-            if (getParentTransaction().equals(outpoint.fromTx)) {
+            if (getParentTransaction().equals(outpoint.getFromTx())) {
                 // Already connected.
                 return ConnectionResult.SUCCESS;
             } else if (mode == ConnectMode.DISCONNECT_ON_CONFLICT) {
@@ -474,21 +475,15 @@ public class TransactionInput {
      * @return true if the disconnection took place, false if it was not connected.
      */
     public boolean disconnect() {
-        TransactionOutput connectedOutput;
-        if (outpoint.fromTx != null) {
-            // The outpoint is connected using a "standard" wallet, disconnect it.
-            connectedOutput = outpoint.fromTx.getOutput(outpoint);
-            outpoint = outpoint.disconnectTransaction();
-        } else if (outpoint.connectedOutput != null) {
-            // The outpoint is connected using a UTXO based wallet, disconnect it.
-            connectedOutput = outpoint.connectedOutput;
+        TransactionOutput connectedOutput = outpoint.getConnectedOutput();
+        if (connectedOutput != null) {
             outpoint = outpoint.disconnectOutput();
         } else {
             // The outpoint is not connected, do nothing.
             return false;
         }
 
-        if (connectedOutput != null && connectedOutput.getSpentBy() == this) {
+        if (connectedOutput.getSpentBy() == this) {
             // The outpoint was connected to an output, disconnect the output.
             connectedOutput.markAsUnspent();
             return true;
@@ -526,7 +521,7 @@ public class TransactionInput {
      * @throws VerificationException If the outpoint doesn't match the given output.
      */
     public void verify() throws VerificationException {
-        final Transaction fromTx = getOutpoint().fromTx;
+        final Transaction fromTx = getOutpoint().getFromTx();
         Objects.requireNonNull(fromTx, "Not connected");
         final TransactionOutput output = fromTx.getOutput(outpoint);
         verify(output);
@@ -548,8 +543,8 @@ public class TransactionInput {
                 throw new VerificationException("This input refers to a different output on the given tx.");
         }
         Script pubKey = output.getScriptPubKey();
-        getScriptSig().correctlySpends(getParentTransaction(), getIndex(), getWitness(), getValue(), pubKey,
-                Script.ALL_VERIFY_FLAGS);
+        ScriptExecution.correctlySpends(getScriptSig(), getParentTransaction(), getIndex(), getWitness(), getValue(), pubKey,
+                ScriptExecution.ALL_VERIFY_FLAGS);
     }
 
     /**
@@ -569,7 +564,7 @@ public class TransactionInput {
      */
     @Nullable
     public Transaction getConnectedTransaction() {
-        return getOutpoint().fromTx;
+        return getOutpoint().getFromTx();
     }
 
     /**

@@ -20,9 +20,10 @@ module wallettemplate {
     requires javafx.controls;
     requires javafx.fxml;
 
-    requires jakarta.annotation;
+    requires org.jspecify;
 
     requires org.slf4j;
+    requires com.google.common;
     requires com.google.zxing;
 
     requires org.bitcoinj.core;
@@ -30,5 +31,6 @@ module wallettemplate {
     exports wallettemplate;
     exports org.bitcoinj.walletfx.controls;
     opens wallettemplate to javafx.fxml;
+    opens org.bitcoinj.walletfx.utils to javafx.fxml;
     opens org.bitcoinj.walletfx.controls to javafx.fxml;
 }

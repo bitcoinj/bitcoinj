@@ -20,6 +20,7 @@ package org.bitcoinj.core;
 import com.google.common.collect.Iterables;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.net.NioClient;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
@@ -58,7 +59,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 public class BitcoindComparisonTool {
     private static final Logger log = LoggerFactory.getLogger(BitcoindComparisonTool.class);
 
-    private static final NetworkParameters PARAMS = RegTestParams.get();
+    private static final BitcoinNetworkParams PARAMS = RegTestParams.get();
     private static FullPrunedBlockChain chain;
     private static Sha256Hash bitcoindChainHead;
     private static volatile InventoryMessage mostRecentInv = null;
@@ -83,7 +84,7 @@ public class BitcoindComparisonTool {
         try {
             FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
-            chain = new FullPrunedBlockChain(PARAMS, store);
+            chain = new FullPrunedBlockChain(PARAMS.network(), store);
         } catch (BlockStoreException e) {
             e.printStackTrace();
             System.exit(1);

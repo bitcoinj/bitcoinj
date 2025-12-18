@@ -23,13 +23,11 @@ import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.Time;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -112,7 +110,7 @@ public class WalletFiles {
     /**
      * The given listener will be called on the autosave thread before and after the wallet is saved to disk.
      */
-    public void setListener(@Nonnull Listener listener) {
+    public void setListener(@NonNull Listener listener) {
         this.vListener = Objects.requireNonNull(listener);
     }
 

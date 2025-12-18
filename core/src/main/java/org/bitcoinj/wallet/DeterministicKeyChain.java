@@ -47,7 +47,7 @@ import org.bitcoinj.protobuf.wallet.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -392,7 +392,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 rootKey.clearCreationTime();
             basicKeyChain.importKey(rootKey);
             hierarchy = new DeterministicHierarchy(rootKey);
-            for (HDPath path : getAccountPath().asPartial().ancestors(true)) {
+            for (HDPath path : accountPartialPath().ancestors(true)) {
                 basicKeyChain.importKey(hierarchy.get(path, false, true));
             }
             initializeHierarchyUnencrypted();
@@ -665,7 +665,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
     protected DeterministicKey getKeyByPath(ChildNumber... path) {
-        return getKeyByPath(HDPath.M(Arrays.asList(path)));
+        return getKeyByPath(HDPath.partial(path));
     }
 
     /** Returns the deterministic key for the given absolute path in the hierarchy. */
@@ -861,7 +861,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         int lookaheadSize = -1;
         int sigsRequiredToSpend = 1;
 
-        HDPath.HDPartialPath accountPath = HDPath.partial(Collections.emptyList());
+        HDPath.HDPartialPath accountPath = HDPath.partial();
         ScriptType outputScriptType = ScriptType.P2PKH;
         for (Protos.Key key : keys) {
             final Protos.Key.Type t = key.getType();

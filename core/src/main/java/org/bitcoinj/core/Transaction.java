@@ -47,7 +47,7 @@ import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.math.RoundingMode;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -903,7 +903,7 @@ public class Transaction implements Message {
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
         TransactionInput input = addInput(new TransactionInput(this, script.program(),
-                new TransactionOutPoint(outputIndex, spendTxHash)));
+                TransactionOutPoint.of(spendTxHash, outputIndex)));
         invalidateCachedTxIds();
         return input;
     }

@@ -9,11 +9,11 @@ version = '0.18-SNAPSHOT'
 
 dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.16'
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'org.jspecify:jspecify:1.0.0'
 
     testImplementation project(':bitcoinj-test-support')
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.easymock:easymock:5.5.0'
+    testImplementation 'org.easymock:easymock:5.6.0'
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.18.1'
     testImplementation 'org.hamcrest:hamcrest-library:3.0'
@@ -38,31 +38,27 @@ test {
 }
 
 def gradleVersionToolchains = GradleVersion.version("6.7")
+// Activate if `testMinJdk` is a integer > 0 in `gradle.properties` or set with `-P` on the command-line
+def minJdkVersion = Integer.valueOf((String) findProperty('testMinJdk') ?: "0")
 
-if (GradleVersion.current() > gradleVersionToolchains) {
+if (minJdkVersion > 0 && GradleVersion.current() > gradleVersionToolchains) {
     // If the Gradle Java Toolchains feature is available, run tests on older JDKs
-    System.err.println "Adding 'testOnJdk8' task, because ${GradleVersion.current()}"
+    System.err.println "Adding 'testOnMinJdk' task for version=${minJdkVersion}, because ${GradleVersion.current()}"
 
-    task('testOnJdk8', type: Test) {
+    task('testOnMinJdk', type: Test) {
         doFirst {
             logger.lifecycle("Testing with JDK ${javaLauncher.get().metadata.javaRuntimeVersion}")
         }
         javaLauncher = javaToolchains.launcherFor {
-            languageVersion = JavaLanguageVersion.of(8)
+            languageVersion = JavaLanguageVersion.of(minJdkVersion)
         }
     }
-    // Activate if `testJdk8` is `true` in `gradle.properties` or `-PtestJdk8=true` is on command-line
-    if (Boolean.valueOf(findProperty('testJdk8'))) {
-        check.dependsOn testOnJdk8
-    }
+    check.dependsOn testOnMinJdk
 }
 
-ext.moduleName = 'org.bitcoinj.base'
-
 jar {
-    inputs.property("moduleName", moduleName)
     manifest {
-        attributes 'Automatic-Module-Name': moduleName
+        attributes 'Automatic-Module-Name': 'org.bitcoinj.base'
     }
 }
 

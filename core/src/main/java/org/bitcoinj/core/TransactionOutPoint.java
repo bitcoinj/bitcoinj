@@ -28,7 +28,7 @@ import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -47,18 +47,22 @@ public class TransactionOutPoint {
 
     /** Special outpoint that normally marks a coinbase input. It's also used as a test dummy. */
     public static final TransactionOutPoint UNCONNECTED =
-            new TransactionOutPoint(ByteUtils.MAX_UNSIGNED_INTEGER, Sha256Hash.ZERO_HASH);
+            TransactionOutPoint.of(Sha256Hash.ZERO_HASH, ByteUtils.MAX_UNSIGNED_INTEGER);
 
     /** Hash of the transaction to which we refer. */
     private final Sha256Hash hash;
     /** Which output of that transaction we are talking about. */
     private final long index;
 
+    // `fromTx` and `connectedOutput` can both be `null`, but they can't both be non-`null`.
+
     // This is not part of bitcoin serialization. It points to the connected transaction.
-    final Transaction fromTx;
+    @Nullable
+    private final Transaction fromTx;
 
     // The connected output.
-    final TransactionOutput connectedOutput;
+    @Nullable
+    private final TransactionOutput connectedOutput;
 
     /**
      * Deserialize this transaction outpoint from a given payload.
@@ -70,19 +74,58 @@ public class TransactionOutPoint {
     public static TransactionOutPoint read(ByteBuffer payload) throws BufferUnderflowException, ProtocolException {
         Sha256Hash hash = Sha256Hash.read(payload);
         long index = ByteUtils.readUint32(payload);
-        return new TransactionOutPoint(index, hash);
+        return TransactionOutPoint.of(hash, index);
     }
 
+    /** @deprecated use {@link TransactionOutPoint#from(Transaction, long)} */
+    @Deprecated
     public TransactionOutPoint(long index, Transaction fromTx) {
         this(fromTx.getTxId(), index, fromTx, null);
     }
 
+    @Deprecated
     public TransactionOutPoint(long index, Sha256Hash hash) {
         this(hash, index, null, null);
     }
 
+    private TransactionOutPoint(Sha256Hash hash, long index) {
+        this(hash, index, null, null);
+    }
+
+    /** @deprecated use {@link TransactionOutPoint#from(TransactionOutput)} */
+    @Deprecated
     public TransactionOutPoint(TransactionOutput connectedOutput) {
         this(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null, connectedOutput);
+    }
+
+    /**
+     * Create a simple {@code TransactionOutPoint} with only {@code txid} and {@code index}.
+     * @param hash Transaction ID of the referenced transaction
+     * @param index Output index of the referenced output
+     * @return a new transaction outpoint
+     */
+    public static TransactionOutPoint of(Sha256Hash hash, long index) {
+        return new TransactionOutPoint(hash, index);
+    }
+
+    /**
+     * Create a {@code TransactionOutPoint} <i>from</i> an existing {@link Transaction}.
+     * @param fromTx transaction the new outpoint will reference (and be "connected to")
+     * @param index index of the transaction output the new outpoint will reference
+     * @return a new transaction outpoint
+     */
+    public static TransactionOutPoint from(Transaction fromTx, long index) {
+        return new TransactionOutPoint (fromTx.getTxId(), index, fromTx, null);
+    }
+
+    /**
+     * Create a {@code TransactionOutPoint} <i>from</i> an existing {@link TransactionOutput}.
+     * @param connectedOutput transaction output the new outpoint will reference (and be "connected to")
+     * @return a new transaction outpoint
+     */
+    public static TransactionOutPoint from(TransactionOutput connectedOutput) {
+        return new TransactionOutPoint(connectedOutput.getParentTransactionHash(), connectedOutput.getIndex(), null,
+                connectedOutput);
     }
 
     private TransactionOutPoint(Sha256Hash hash, long index, @Nullable Transaction fromTx,
@@ -94,9 +137,7 @@ public class TransactionOutPoint {
         if (fromTx != null) {
             TransactionOutput outputFromTx = fromTx.getOutput(index);
             Objects.requireNonNull(outputFromTx);
-            if (connectedOutput != null) {
-                checkArgument(connectedOutput.equals(outputFromTx), () -> "mismatched connected output");
-            }
+            checkArgument(connectedOutput == null, () -> "Both fromTx and connectedOutput are non-null");
         }
         this.fromTx = fromTx;
         this.connectedOutput = connectedOutput;
@@ -134,12 +175,16 @@ public class TransactionOutPoint {
      */
     @Nullable
     public TransactionOutput getConnectedOutput() {
-        if (fromTx != null) {
-            return fromTx.getOutput(index);
-        } else if (connectedOutput != null) {
-            return connectedOutput;
-        }
-        return null;
+        return (fromTx != null) ? fromTx.getOutput(index) : connectedOutput;
+    }
+
+    /**
+     * Return the connected {@link Transaction} if available.
+     * @return connected transaction or {@code null} if not available
+     */
+    @Nullable
+    public Transaction getFromTx() {
+        return fromTx;
     }
 
     /**
@@ -209,11 +254,11 @@ public class TransactionOutPoint {
     }
 
     /**
-     * Returns a copy of this outpoint, but with the connectedOutput removed.
-     * @return outpoint with removed connectedOutput
+     * Returns a copy of this outpoint, but without either {@code fromTx} or {@code connectedOutput}.
+     * @return outpoint with no connections
      */
     public TransactionOutPoint disconnectOutput() {
-        return new TransactionOutPoint(hash, index, fromTx, null);
+        return new TransactionOutPoint(hash, index, null, null);
     }
 
     /**
@@ -222,15 +267,17 @@ public class TransactionOutPoint {
      * @return outpoint with fromTx set
      */
     public TransactionOutPoint connectTransaction(Transaction transaction) {
-        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), connectedOutput);
+        return new TransactionOutPoint(hash, index, Objects.requireNonNull(transaction), null);
     }
 
     /**
      * Returns a copy of this outpoint, but with fromTx removed.
      * @return outpoint with removed fromTx
+     * @deprecated use {@link #disconnectOutput()}
      */
+    @Deprecated
     public TransactionOutPoint disconnectTransaction() {
-        return new TransactionOutPoint(hash, index, null, connectedOutput);
+        return disconnectOutput();
     }
 
     @Override

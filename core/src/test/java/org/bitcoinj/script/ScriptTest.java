@@ -18,8 +18,16 @@
 
 package org.bitcoinj.script;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.Lists;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
@@ -43,7 +51,6 @@ import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.script.Script.VerifyFlag;
 import org.hamcrest.core.IsNot;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -51,7 +58,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -64,6 +70,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.core.Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
@@ -252,7 +259,7 @@ public class ScriptTest {
         Script script = new ScriptBuilder().smallNum(0).build();
 
         LinkedList<byte[]> stack = new LinkedList<>();
-        Script.executeScript(tx, 0, script, stack, Script.ALL_VERIFY_FLAGS);
+        ScriptExecution.executeScript(tx, 0, script, stack, ScriptExecution.ALL_VERIFY_FLAGS);
         assertEquals("OP_0 push length", 0, stack.get(0).length);
     }
 
@@ -292,12 +299,12 @@ public class ScriptTest {
         return Script.parse(out.toByteArray());
     }
 
-    private Set<VerifyFlag> parseVerifyFlags(String str) {
-        Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
+    private Set<ScriptExecution.VerifyFlag> parseVerifyFlags(String str) {
+        Set<ScriptExecution.VerifyFlag> flags = EnumSet.noneOf(ScriptExecution.VerifyFlag.class);
         if (!"NONE".equals(str)) {
             for (String flag : str.split(",")) {
                 try {
-                    flags.add(VerifyFlag.valueOf(flag));
+                    flags.add(ScriptExecution.VerifyFlag.valueOf(flag));
                 } catch (IllegalArgumentException x) {
                     log.debug("Cannot handle verify flag {} -- ignored.", flag);
                 }
@@ -308,19 +315,16 @@ public class ScriptTest {
 
     @Test
     public void dataDrivenScripts() throws Exception {
-        JsonNode json = new ObjectMapper()
-                .readTree(new InputStreamReader(getClass().getResourceAsStream("script_tests.json"), StandardCharsets.UTF_8));
-        for (JsonNode test : json) {
-            if (test.size() == 1)
-                continue; // skip comment
-            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
-            ScriptError expectedError = ScriptError.fromMnemonic(test.get(3).asText());
+        List<List<String>> tests = readScriptTestsJson("script_tests.json");
+        for (List<String> test : tests) {
+            Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2));
+            ScriptError expectedError = ScriptError.fromMnemonic(test.get(3));
             try {
-                Script scriptSig = parseScriptString(test.get(0).asText());
-                Script scriptPubKey = parseScriptString(test.get(1).asText());
+                Script scriptSig = parseScriptString(test.get(0));
+                Script scriptPubKey = parseScriptString(test.get(1));
                 Transaction txCredit = buildCreditingTransaction(scriptPubKey);
                 Transaction txSpend = buildSpendingTransaction(txCredit, scriptSig);
-                scriptSig.correctlySpends(txSpend, 0, null, null, scriptPubKey, verifyFlags);
+                ScriptExecution.correctlySpends(scriptSig, txSpend, 0, null, null, scriptPubKey, verifyFlags);
                 if (!expectedError.equals(ScriptError.SCRIPT_ERR_OK))
                     fail(test + " is expected to fail");
             } catch (ScriptException e) {
@@ -334,16 +338,12 @@ public class ScriptTest {
         }
     }
 
-    private Map<TransactionOutPoint, Script> parseScriptPubKeys(JsonNode inputs) throws IOException {
+    private Map<TransactionOutPoint, Script> parseScriptPubKeys(List<ScriptPubKeyEntry> inputs) throws IOException {
         Map<TransactionOutPoint, Script> scriptPubKeys = new HashMap<>();
-        for (JsonNode input : inputs) {
-            String hash = input.get(0).asText();
-            long index = input.get(1).asLong();
-            if (index == -1)
-                index = ByteUtils.MAX_UNSIGNED_INTEGER;
-            String script = input.get(2).asText();
-            Sha256Hash sha256Hash = Sha256Hash.wrap(ByteUtils.parseHex(hash));
-            scriptPubKeys.put(new TransactionOutPoint(index, sha256Hash), parseScriptString(script));
+        for (ScriptPubKeyEntry input : inputs) {
+            Sha256Hash hash = Sha256Hash.wrap(ByteUtils.parseHex(input.hash));
+            long index = input.index == -1 ? ByteUtils.MAX_UNSIGNED_INTEGER : input.index;
+            scriptPubKeys.put(TransactionOutPoint.of(hash, index), parseScriptString(input.script));
         }
         return scriptPubKeys;
     }
@@ -383,22 +383,19 @@ public class ScriptTest {
 
     @Test
     public void dataDrivenValidTransactions() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "tx_valid.json"), StandardCharsets.UTF_8));
-        for (JsonNode test : json) {
-            if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
-                continue; // This is a comment.
+        List<TestEntry> tests = readTransactionsJson("tx_valid.json");
+        for (TestEntry test : tests) {
             Transaction transaction = null;
             try {
-                Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-                transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(test.get(1).asText().toLowerCase())));
+                Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.scriptPubKeyEntries);
+                transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(test.transaction.toLowerCase())));
                 Transaction.verify(TESTNET.network(), transaction);
-                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
+                Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
                     TransactionInput input = transaction.getInput(i);
                     assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
-                    input.getScriptSig().correctlySpends(transaction, i, null, null,
+                    ScriptExecution.correctlySpends(input.getScriptSig(), transaction, i, null, null,
                             scriptPubKeys.get(input.getOutpoint()), verifyFlags);
                 }
             } catch (Exception e) {
@@ -412,13 +409,10 @@ public class ScriptTest {
 
     @Test
     public void dataDrivenInvalidTransactions() throws Exception {
-        JsonNode json = new ObjectMapper().readTree(new InputStreamReader(getClass().getResourceAsStream(
-                "tx_invalid.json"), StandardCharsets.UTF_8));
-        for (JsonNode test : json) {
-            if (test.isArray() && test.size() == 1 && test.get(0).isTextual())
-                continue; // This is a comment.
-            Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.get(0));
-            byte[] txBytes = ByteUtils.parseHex(test.get(1).asText().toLowerCase());
+        List<TestEntry> tests = readTransactionsJson("tx_invalid.json");
+        for (TestEntry test : tests) {
+            Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.scriptPubKeyEntries);
+            byte[] txBytes = ByteUtils.parseHex(test.transaction.toLowerCase());
             MessageSerializer serializer = TESTNET.getDefaultSerializer();
             Transaction transaction;
             try {
@@ -429,7 +423,7 @@ public class ScriptTest {
                 int protoVersionNoWitness = serializer.getProtocolVersion() | SERIALIZE_TRANSACTION_NO_WITNESS;
                 transaction = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(ByteBuffer.wrap(txBytes));
             }
-            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2).asText());
+            Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
 
             boolean valid = true;
             try {
@@ -451,7 +445,7 @@ public class ScriptTest {
                 TransactionInput input = transaction.getInput(i);
                 assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
                 try {
-                    input.getScriptSig().correctlySpends(transaction, i, null, null,
+                    ScriptExecution.correctlySpends(input.getScriptSig(), transaction, i, null, null,
                             scriptPubKeys.get(input.getOutpoint()), verifyFlags);
                 } catch (VerificationException e) {
                     valid = false;
@@ -493,5 +487,120 @@ public class ScriptTest {
     @Test(expected = ScriptException.class)
     public void getToAddressNoPubKey() {
         ScriptBuilder.createP2PKOutputScript(ECKey.random()).getToAddress(BitcoinNetwork.TESTNET, false);
+    }
+
+    List<List<String>> readScriptTestsJson(String resourcePath) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        JavaType type = mapper.getTypeFactory().constructCollectionType(List.class, mapper.getTypeFactory()
+                .constructCollectionType(List.class, String.class));
+        List<List<String>> list = mapper.readValue(getClass().getResourceAsStream(resourcePath), type);
+        return list.stream()
+                .filter(test -> test.size() > 1)    // Filter out comment entries
+                .collect(Collectors.toList());
+    }
+
+    List<TestEntry> readTransactionsJson(String resourcePath) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        JavaType type = mapper.getTypeFactory().constructCollectionType(List.class, JsonNode.class);
+        List<JsonNode> nodes = mapper.readValue(getClass().getResourceAsStream(resourcePath), type);
+        return  nodes.stream()
+                .filter(test -> !(test.isArray() && test.size() == 1 && test.get(0).isTextual()))
+                .map(n -> mapper.convertValue(n, TestEntry.class))
+                .collect(Collectors.toList());
+    }
+
+    @Test
+    public void checkTestEntryToString() throws JsonProcessingException {
+        String expectedOutput = "[ [ [ \"0000000000000000000000000000000000000000000000000000000000000100\", 0, \"HASH160 0x14 0xb558cbf4930954aa6a344363a15668d7477ae716 EQUAL\" ] ], " +
+                "\"01000000010001000000000000000000000000000000000000000000000000000000000000000000006d483045022027deccc14aa6668e78a8c9da3484fbcd4f9dcc9bb7d1b85146314b21b9ae4d86022100d0b43dece8cfb07348de0ca8bc5b86276fa88f7f2138381128b7c36ab2e42264012321029bb13463ddd5d2cc05da6e84e37536cb9525703cfd8f43afdb414988987a92f6acffffffff020040075af075070001510000000000000000015100000000\", \"P2SH\" ]";
+        ObjectMapper mapper = new ObjectMapper();
+        TestEntry entry = mapper.readValue(expectedOutput, TestEntry.class);
+        assertEquals(expectedOutput, entry.toString());
+    }
+
+    @Test
+    public void checkScriptPubKeyEntryToString() {
+        ScriptPubKeyEntry entry = new ScriptPubKeyEntry(Sha256Hash.ZERO_HASH.toString(), 1, "HASH160");
+        String expectedOutput = "[ \"0000000000000000000000000000000000000000000000000000000000000000\", 1, \"HASH160\" ]";
+        assertEquals(expectedOutput, entry.toString());
+    }
+
+    @JsonSerialize(using = TestEntry.Serializer.class)
+    static class TestEntry {
+        public final List<ScriptPubKeyEntry> scriptPubKeyEntries;
+        public final String transaction;
+        public final String verifyFlags;
+
+        @JsonCreator
+        public TestEntry(List<Object> entry) {
+            this((List<List<Object>>) entry.get(0), (String) entry.get(1), (String) entry.get(2));
+        }
+
+        TestEntry(List<List<Object>> scriptPubKeyEntries, String transaction, String verifyFlags) {
+            this.scriptPubKeyEntries = scriptPubKeyEntries.stream()
+                    .map(l -> new ScriptPubKeyEntry((String) l.get(0), (int) l.get(1), (String) l.get(2)))
+                    .collect(Collectors.toList());
+            this.transaction = transaction;
+            this.verifyFlags = verifyFlags;
+        }
+
+        @Override
+        public String toString() {
+            ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
+            try {
+                return writer.writeValueAsString(this);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static class Serializer extends JsonSerializer<TestEntry> {
+            @Override
+            public void serialize(TestEntry value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                gen.writeStartArray();
+                gen.writeStartArray();
+                for (ScriptPubKeyEntry entry : value.scriptPubKeyEntries) {
+                    gen.writeObject(entry);
+                }
+                gen.writeEndArray();
+                gen.writeString(value.transaction);
+                gen.writeString(value.verifyFlags);
+                gen.writeEndArray();
+            }
+        }
+    }
+
+    @JsonSerialize(using = ScriptPubKeyEntry.Serializer.class)
+    static class ScriptPubKeyEntry {
+        public final String hash;
+        public final long index;
+        public final String script;
+
+        public ScriptPubKeyEntry(String hash, long index, String script) {
+            this.hash = hash;
+            this.index = index;
+            this.script = script;
+        }
+
+        @Override
+        public String toString() {
+            ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
+            try {
+                return writer.writeValueAsString(this);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static class Serializer extends JsonSerializer<ScriptPubKeyEntry> {
+            @Override
+            public void serialize(ScriptPubKeyEntry value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                gen.writeStartArray();
+                gen.writeString(value.hash);
+                gen.writeNumber(value.index);
+                gen.writeString(value.script);
+                gen.writeEndArray();
+            }
+        }
     }
 }

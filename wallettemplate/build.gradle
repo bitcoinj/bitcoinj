@@ -2,19 +2,27 @@ plugins {
     id 'java'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
-    id 'org.beryx.jlink' version '3.1.1'
+    id 'org.beryx.jlink' version '3.1.5'
 }
 
 dependencies {
     implementation project(':bitcoinj-core')
+    implementation 'com.google.guava:guava:33.5.0-jre'
     implementation 'com.google.zxing:core:3.5.3'
+    implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.16'
-    implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
 
     runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.16'
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
+}
+
+configurations.configureEach {
+    resolutionStrategy {
+        force 'com.google.guava:guava:33.5.0-jre'
+    }
 }
 
 javafx {
@@ -37,6 +45,12 @@ application {
 
 jlink {
     options = ['--add-modules', 'org.slf4j.jul']
+    mergedModule {
+        requires 'java.logging'
+        requires 'jdk.unsupported'
+
+        requires 'org.slf4j'
+    }
 }
 
 test {

@@ -19,39 +19,59 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.function.IntFunction;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
  * Utilities for {@link CompletableFuture}.
- * <p>
- * Note: When the <b>bitcoinj</b> migration to {@code CompletableFuture} is finished this class will
- * either be removed or its remaining methods changed to use generic {@code CompletableFuture}s.
  */
 public class FutureUtils {
     /**
-     * Note: When the migration to {@code CompletableFuture} is complete this routine will
-     * either be removed or changed to return a generic {@code CompletableFuture}.
+     * Create a single {@link CompletableFuture} that completes with a {@code List} of {@link T}
+     * from a {@code List} of {@code CompletableFuture} that each completes with a {@link T}. If any
+     * of the input futures fails, the consolidated future will also fail.
      * @param stages A list of {@code CompletionStage}s all returning the same type
      * @param <T> the result type
      * @return A CompletableFuture that returns a list of result type
      */
     public static <T> CompletableFuture<List<T>> allAsList(
             List<? extends CompletionStage<? extends T>> stages) {
-        return FutureUtils.allAsCFList(stages);
+        // Convert List to Array
+        final CompletableFuture<? extends T>[] all = listToArray(stages);
+
+        // Create a single future that completes when all futures in the array complete
+        final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
+
+        // If any of the components fails, fail the whole thing
+        stages.forEach(stage -> stage.whenComplete((r, throwable) -> {
+            if (throwable != null) {
+                allOf.completeExceptionally(throwable);
+            }
+        }));
+
+        // Transform allOf from Void to List<T>
+        return transformToListResult(allOf, all);
     }
 
     /**
-     * Note: When the migration to {@code CompletableFuture} is complete this routine will
-     * either be removed or changed to return a generic {@code CompletableFuture}.
+     * Create a single {@link CompletableFuture} that completes with a {@code List} of {@link T}
+     * from a {@code List} of {@code CompletableFuture} that each completes with a {@link T}. For each
+     * input future that fails a corresponding {@code null} result will be present in the returned list.
      * @param stages A list of {@code CompletionStage}s all returning the same type
      * @param <T> the result type
      * @return A CompletableFuture that returns a list of result type
      */
     public static <T> CompletableFuture<List<T>> successfulAsList(
             List<? extends CompletionStage<? extends T>> stages) {
-        return FutureUtils.successfulAsCFList(stages);
+        // Convert List to Array and map exceptions to null results
+        final CompletableFuture<? extends T>[] all = listToArrayExceptionToNull(stages);
+
+        // Create a single future that completes when all futures in the array complete
+        final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
+
+        // Transform allOf from Void to List<T>
+        return transformToListResult(allOf, all);
     }
 
     /**
@@ -66,94 +86,24 @@ public class FutureUtils {
         return future;
     }
 
-    /**
-     * Subinterface of {@link Supplier} for Lambdas which throw exceptions.
-     * Can be used for two purposes:
-     * 1. To cast a lambda that throws an exception to a {@link Supplier} and
-     * automatically wrapping any exceptions with {@link RuntimeException}.
-     * 2. As a {@code FunctionalInterface} where a lambda that throws exceptions is
-     * expected or allowed.
-     *
-     * @param <T> the supplied type
-     */
-    @FunctionalInterface
-    public interface ThrowingSupplier<T> extends Supplier<T> {
-
-        /**
-         * Gets a result wrapping checked Exceptions with {@link RuntimeException}
-         * @return a result
-         */
-        @Override
-        default T get() {
-            try {
-                return getThrows();
-            } catch (final Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        /**
-         * Gets a result.
-         *
-         * @return a result
-         * @throws Exception Any checked Exception
-         */
-        T getThrows() throws Exception;
-    }
-
-    /**
-     * Thank you Apache-licensed Spotify https://github.com/spotify/completable-futures
-     * @param stages A list of {@code CompletionStage}s all returning the same type
-     * @param <T> the result type
-     * @return  A generic CompletableFuture that returns a list of result type
-     */
-    private static <T> CompletableFuture<List<T>> allAsCFList(
-            List<? extends CompletionStage<? extends T>> stages) {
-        // Convert List to Array
-        final CompletableFuture<? extends T>[] all = listToArray(stages);
-
-        // Use allOf on the Array
-        final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
-
-        // If any of the components fails, fail the whole thing
-        stages.forEach(stage -> stage.whenComplete((r, throwable) -> {
-            if (throwable != null) {
-                allOf.completeExceptionally(throwable);
-            }
-        }));
-
-        // Transform allOf from Void to List<T>
-        return transformToListResult(allOf, all);
-    }
-
-    private static <T> CompletableFuture<List<T>> successfulAsCFList(
-            List<? extends CompletionStage<? extends T>> stages) {
-        // Convert List to Array
-        final CompletableFuture<? extends T>[] all = listToArray2(stages);
-
-        // Use allOf on the Array
-        final CompletableFuture<Void> allOf = CompletableFuture.allOf(all);
-
-        // Transform allOf from Void to List<T>
-        return transformToListResult(allOf, all);
-    }
-
+    // Convert a list of CompletionStage to an array of CompletableFuture
     private static <T> CompletableFuture<? extends T>[] listToArray( List<? extends CompletionStage<? extends T>> stages) {
-        // Convert List to Array
-        final CompletableFuture<? extends T>[] all = stages.stream()
-                .map(CompletionStage::toCompletableFuture)
-                .toArray(genericArray(CompletableFuture[]::new));
-        return all;
+        return listToArrayWithMapping(stages, CompletionStage::toCompletableFuture);
     }
 
-    private static <T> CompletableFuture<? extends T>[] listToArray2( List<? extends CompletionStage<? extends T>> stages) {
-        // Convert List to Array
-        final CompletableFuture<? extends T>[] all = stages.stream()
-                .map(s -> s.exceptionally(throwable -> null).toCompletableFuture())
-                .toArray(genericArray(CompletableFuture[]::new));
-        return all;
+    // Convert a list of CompletionStage to an array of CompletableFuture also mapping exceptions to null results
+    private static <T> CompletableFuture<? extends T>[] listToArrayExceptionToNull(List<? extends CompletionStage<? extends T>> stages) {
+        return listToArrayWithMapping(stages, stage -> stage.exceptionally(throwable -> null).toCompletableFuture());
     }
 
+    // Convert a list of CompletionStage to an array of CompletableFuture using a mapping function to transform each CompletionStage
+    private static <T> CompletableFuture<? extends T>[] listToArrayWithMapping(List<? extends CompletionStage<? extends T>> stages, Function<CompletionStage<? extends T>, CompletableFuture<? extends T>> mapper) {
+        return stages.stream()
+                .map(mapper::apply)
+                .toArray(genericArray(CompletableFuture[]::new));
+    }
+
+    // Transform a CompletableFuture returning Void to a CompletableFuture returning all results from an array of CompletableFuture
     private static <T> CompletableFuture<List<T>>  transformToListResult(CompletableFuture<Void> allOf, CompletableFuture<? extends T>[] all) {
         return allOf.thenApply(ignored -> Arrays.stream(all)
                 .map(CompletableFuture::join)

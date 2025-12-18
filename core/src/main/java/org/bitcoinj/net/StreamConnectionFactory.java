@@ -16,7 +16,7 @@
 
 package org.bitcoinj.net;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.net.InetAddress;
 
 /**

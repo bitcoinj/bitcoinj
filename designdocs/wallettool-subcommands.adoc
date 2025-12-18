@@ -1,0 +1,575 @@
+= WalletTool Conversion to Picocli Subcommands
+:toc: left
+:toclevels: 4
+
+:toc-title: Table of Contents
+:sectnums:
+:sectnumlevels: 4
+
+
+== WalletTool: Migrate to subcommand
+
+This document aims to highlight some issues in the WalletTool module and
+suggests how most of the issues can be solved or improved by migrating to
+the use of picocli's link:https://picocli.info/#_options_and_parameters[Parameter] as a way of calling various actions, to
+link:https://picocli.info/#_subcommands[Subcommands]
+ as the first improvement step.
+
+=== Identified Problems
+The issues this migration aims to solve can be divided into 3 types: User Interface, Documentation, and Code Refactoring.
+
+==== User Interface
+Currently, the commandline print out for things like Help is difficult to read because there are lots of options mapped to wallet-tool command. This makes it difficult to tell which options go with which command/action. In addition, not all options need to be specified when there are default values for those options. If the option is not specified, we could use the defaults. This will help for a better user experience.
+
+==== Documentation
+Similar to the user interface, the documentation generated using link:https://picocli.info/#_generate_man_page_documentation[picocli-codegen] has several challenges:
+
+* Excessive global options are included, many of which are unnecessary.
+* Poor formatting of action descriptions in the `WalletTool` class makes it difficult to tell where one action's description ends and another begins.
+* Option descriptions are not tailored to specific commands, reducing clarity. For example:
+** The `--date` option could be described as "Wallet creation date" when used with the `create` command.
+** The same option could be described as "Date for key rotation (format: `YYYY-MM-DD`)" when used with the `rotate` command.
+Instead, a single generic description is applied to all commands, resulting in confusion.
+
+==== Code Structure Challenges
+The current implementation of `WalletTool` shares logic across multiple actions/commands, leading to several issues:
+
+* The use of `if` statements to determine preliminary steps for actions or commands creates tightly coupled logic, making the code harder to maintain and extend.
+* It is unclear which fields are required for a given action, as many fields are class-level variables and are directly accessed within methods.
+* The centralized handling of preliminary checks in a single `call()` method results in rigid execution flow, increasing the risk of breaking unrelated commands when changes are made.
+
+=== Proposed Solution
+A good start for addressing the issues from section 1.1 is to use subcommands to call the various actions in the WalletTool class from command line. Below outlines how subcommands addresses the issues in known issues section
+
+==== Improved User Interface
+Implementing subcommands will enhance the clarity and usability of the command-line help. Each subcommand will have its own distinct options, which will be explicitly stated in the help output, providing clearer guidance when errors occur. Additionally, subcommands enable more flexible and organized presentation of information, giving finer control over how details are displayed to the user.
+
+==== Improved Documentation
+The use of subcommands allows for the personalization of options for each specific subcommand. This enables the proper formatting and organization of descriptions within the documentation. Additionally, the documentation will clearly associate each option with its corresponding subcommand, improving clarity and usability.
+
+==== Code Refactoring
+Refactoring the code to use subcommands can address the identified issues effectively by providing a more modular and extensible structure. Here's how:
+
+- **Decoupled Logic with Better Clarity**
+* Each subcommand would encapsulate its specific logic, eliminating the need for large `if` or `switch` structures to determine the preliminary steps for different actions.
+* This separation ensures that commands are isolated and independent, reducing the risk of unintended dependencies or side effects.
+
+- **Action-Specific Fields and Methods**
+* By restructuring the code into subcommands, the data and methods required for a specific action can be encapsulated within that subcommand.
+* This eliminates the problem of ambiguous field usage at the class level and makes the responsibility of each subcommand clearer and more self-contained.
+
+- **Improved Maintainability**
+* Each subcommand acts as a standalone unit with defined responsibilities, making the code easier to understand, maintain, and extend.
+* New commands can be added without affecting existing functionality, avoiding the need to modify a centralized `call()` method.
+
+- **Flexible and Modular Preliminary Checks**
+* Subcommands can handle their own preliminary checks, avoiding a rigid centralized execution flow.
+* This modularity reduces the likelihood of unrelated commands being affected when introducing changes and ensures that responsibilities are distributed cleanly across the system.
+
+- **Extensibility for Future Development**
+* Adding a new command becomes straightforward because it only requires creating a new subcommand and registering it, without altering existing logic.
+* This makes the codebase more adaptable to future requirements.
+
+By leveraging subcommands, the overall design becomes more robust, flexible, and easier to work with, effectively solving the identified challenges in the original implementation.
+
+
+
+
+== wallet-tool: Command
+
+Below shows the proposed format for the subcommand for WalletTool
+
+=== *`wallet-tool`*
+
+*Description*: Print and manipulate wallets. This command is the main command which requires that you specify a subcommand. You may provide a wallet file as an argument. The create command takes a `--net NETWORK` parameter to specify which Bitcoin network should be used. After that the network is inferred from the wallet files.
+
+==== *Parameter*:
+* `++<++WALLET++_++FILE++>++`: Specifies what wallet file to load and save. If not specified, wallet will be created in default path with a default name. Only subcommand `create` allows you to exempt this parameter.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool <Subcommand> <WALLET_FILE>
+----
+
+==== *Examples*:
+
+[arabic]
+. Specify a wallet file and subcommand:
++
+[source,bash]
+----
+wallet-tool dump mywallet.wallet
+----
+
+. Create a new wallet with the `create` subcommand:
++
+[source,bash]
+----
+wallet-tool create --net mainnet newwallet.wallet
+----
+
+== Wallet-tool: Subcommands
+=== *`create`*
+
+*Description*: Creates a new wallet in the specified file. This command supports deterministic wallet seeds, watch-only wallets, and various configurations like timestamps and address derivation types. If `--seed` or `--watchkey` is combined with either `--date` or `--unixtime`, use that as a birthdate for the wallet. If neither `--seed` nor `--watchkey` is provided, create will generate a wallet with a newly generated random seed.
+
+==== **Usage**:
+
+[source,bash]
+----
+wallet-tool create [--net <NETWORK>] [--seed <SEED> | --watchkey <XPUB>] [--date <DATE> | --unixtime <UNIX_TIMESTAMP>] [--output-script-type <TYPE>] [--force] <WALLET_FILE>
+----
+
+==== **Options**:
+- `--seed <SEED>`: Specifies a mnemonic code or raw seed in hex/base58 raw seed bytes.
+- `--watchkey <XPUB>`: If present, it creates a watching wallet using the specified base58 xpub.
+- `--date <DATE>`: Wallet creation date (formatted as `YYYY-MM-DD`).
+- `--unixtime <UNIX_TIMESTAMP>`: Wallet creation time in Unix timestamp format.
+- `--output-script-type <TYPE>`: If specified, use that for deriving addresses. Provide an output script type. Valid values: P2PKH, P2WPKH. Default: P2WPKH.
+- `--force`: Overwrites any existing wallet file.
+- `--net <NETWORK>`: Specifies the network.
+
+==== **Examples**:
+
+[arabic]
+. Create a wallet with a mnemonic seed:
++
+[source,bash]
+----
+wallet-tool create --seed "12 mnemonic words" --output-script-type P2WPKH newwallet.wallet
+----
+. Create a watch-only wallet:
++
+[source,bash]
+----
+wallet-tool create --watchkey xpub6xxxxxxxxxx watcher.wallet
+----
+. Set a wallet creation date and derive P2PKH addresses:
++
+[source,bash]
+----
+wallet-tool create --date 2022-01-01 --output-script-type P2PKH datedwallet.wallet
+----
+
+=== *`dump`*
+
+*Description*: Loads and prints the given wallet in textual form to stdout. Allows printing private keys, seeds, and unused lookahead keys if specified.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool dump [--dump-privkeys] [--dump-lookahead] [--password <PASSWORD>] <WALLET_FILE>
+----
+
+==== *Options*:
+* `--dump-privkeys`: Displays wallet seed and private keys (password required for an encrypted wallet).
+* `--dump-lookahead`: Includes lookahead keys (pregenerated but unused).
+* `--password <PASSWORD>`: Password to decrypt and access private keys. For an encrypted wallet, the password is provided here.
+
+==== *Examples*:
+
+[arabic]
+. Dump wallet data without private keys:
++
+[source,bash]
+----
+wallet-tool dump example.wallet
+----
+. Dump wallet data including lookahead keys and private keys:
++
+[source,bash]
+----
+wallet-tool dump --dump-privkeys --dump-lookahead --password myPassword  example.wallet
+----
+
+=== *`upgrade`*
+
+*Description*: Upgrade deterministic wallets to the given script type. If specified, uses a target script type for deriving new addresses.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool upgrade [--output-script-type <TYPE>] <WALLET_FILE>
+----
+
+==== *Options*:
+* `--output-script-type <TYPE>`: If specified, use that as the upgrade target. Script type for address derivation. Note that upgrade can be made from `P2PKH` --> `P2WPKH`.
+
+==== *Examples*:
+
+[arabic]
+. Upgrade a wallet to a P2WPKH deterministic structure:
++
+[source,bash]
+----
+wallet-tool upgrade --output-script-type P2WPKH legacy.wallet
+----
+. Upgrade without specifying a derivation type (defaults to the most compatible type):
++
+[source,bash]
+----
+wallet-tool upgrade legacy.wallet
+----
+
+=== *`rotate`*
+
+*Description*: Takes `--date` and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it. If `--date` is missing, the current time is assumed. If the time covers all keys, a new HD tree will be created from a new random seed.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool rotate [--date <DATE>] <WALLET_FILE>
+----
+
+==== *Options*:
+* `--date <DATE>`: Date for key rotation (format: `YYYY-MM-DD`).
+
+==== *Examples*:
+
+[arabic]
+. Rotate old wallet keys created before Jan 1, 2023:
++
+[source,bash]
+----
+wallet-tool rotate --date 2023-01-01 example.wallet
+----
+. Automatically rotate all outdated keys based on the current date:
++
+[source,bash]
+----
+wallet-tool rotate example.wallet
+----
+
+=== *`raw-dump`*
+
+*Description*: Prints the wallet as a raw protobuf with no parsing or sanity checking applied.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool raw-dump <WALLET_FILE>
+----
+
+==== *Options*:
+*No options available for this command.*
+
+==== *Examples*:
+
+[arabic]
+. Dump the wallet in raw protobuf format:
++
+[source,bash]
+----
+wallet-tool raw-dump example.wallet
+----
+
+=== *`reset`*
+
+*Description*: Deletes all wallet transactions to allow you to replay the chain.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool reset <WALLET_FILE>
+----
+
+==== *Options*:
+*No options available for this command.*
+
+==== *Examples*:
+
+[arabic]
+. Reset all transactions in a wallet:
++
+[source,bash]
+----
+wallet-tool reset example.wallet
+----
+
+=== *`encrypt`*
+
+*Description*: Encrypts the wallet using the specified password. Requires `--password`.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool encrypt --password <PASSWORD> <WALLET_FILE>
+----
+
+==== *Options*:
+* `--password <PASSWORD>`: Password to encrypt the wallet.
+
+==== *Examples*:
+
+[arabic]
+. Encrypt the wallet with a password:
++
+[source,bash]
+----
+wallet-tool encrypt --password strongpassword123 example.wallet
+----
+
+=== *`decrypt`*
+
+*Description*: Decrypts the wallet using the provided password. Requires
+`--password`
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool decrypt --wallet --password <PASSWORD> <WALLET_FILE>
+----
+
+==== *Options*:
+
+* `--wallet ++<++WALLET++_++FILE++>++`: The wallet file to decrypt.
+* `--password ++<++PASSWORD++>++`: Password used to decrypt the wallet.
+
+==== *Examples*:
+
+[arabic]
+. Decrypt an encrypted wallet:
++
+[source,bash]
+----
+wallet-tool decrypt --wallet --password strongpassword123 example.wallet
+----
+
+=== *`send`*
+
+*Description*: Creates and broadcasts a transaction from the given wallet. Requires `--output` to be specified.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool send --output <ADDRESS>:<AMOUNT> [--password <PASSWORD>] [--fee-per-vkb <FEE> | --fee-sat-per-vbyte <FEE>] [--locktime <BLOCK/TIME>] [--select-addr <ADDRESS> | --select-output <OUTPUT>] [--waitfor <CONFIRMATIONS>] [--allow-unconfirmed] <WALLET_FILE>
+----
+
+==== *Options*:
+
+* `--output ++<++ADDRESS++>++:++<++AMOUNT++>++`: Target address and amount. If specified, a transaction is created from the provided output from this wallet and broadcast. (e.g., `1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:1.245`). You can repeat `--output=address:value` multiple times. There is a magic value `ALL` which empties the wallet to that address, e.g., `--output=1GthXFQMktFLWdh5EPNGqbq3H6WdG8zsWj:ALL`. The output destination can also be a native segwit address. If the output destination starts with 04 and is 65 or 33 bytes long it will be treated as a public key instead of an address and the `send` will use `<key> CHECKSIG` as the script.
+* `--password ++<++PASSWORD++>++`: Password to unlock the wallet (if encrypted).
+* `--fee-per-vkb ++<++FEE++>++`: Sets the network fee. Transaction fee per kilobyte.
+* `--fee-sat-per-vbyte ++<++FEE++>++`: Sets the network fee. Transaction fee per virtual byte in satoshis.
+* `--locktime ++<++BLOCK/TIME++>++`: Specifies a lock-time either by date (e.g., `--locktime=2013/01/01`) or by block number (e.g., `--locktime=1234`).
+* `--select-addr ++<++ADDRESS++>++`: Restricts input selection to a specific address.
+* `--select-output ++<++OUTPUT++>++`: Restricts input selection to a specific output.
+* `--waitfor ++<++CONFIRMATIONS++>++`: Waits for a specific number of confirmations.
+* `--allow-unconfirmed`: Allows you to create spends of pending non-change outputs.
+
+==== *Examples*:
+
+[arabic]
+. Send BTC to a specific address:
++
+[source,bash]
+----
+wallet-tool send --output 1Gthxxxx:0.01 example.wallet
+----
+. Use a custom transaction fee per kilobyte:
++
+[source,bash]
+----
+wallet-tool send --output 1Gthxxxx:0.01 --fee-per-vkb 0.0001 example.wallet
+----
+
+=== *`set-creation-time`*
+
+*Description*: Modify the creation time of the active chains of this wallet. This is useful for repairing wallets that accidentally have been created "`in the future`". Currently, watching wallets are not supported. If you omit both options (`--date` and `--unixtime`), the creation time is cleared (set to 0).
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool set-creation-time [--date <DATE> | --unixtime <TIMESTAMP>] <WALLET_FILE>
+----
+
+==== *Options*:
+
+* `--date ++<++DATE++>++`: Sets the creation date (`YYYY-MM-DD` format).
+* `--unixtime ++<++TIMESTAMP++>++`: Unix timestamp for wallet creation.
+
+==== *Examples*:
+
+[arabic]
+. Set the wallet creation time to Jan 1, 2023:
++
+[source,bash]
+----
+wallet-tool set-creation-time --date 2023-01-01 example.wallet
+----
+. Set the creation time using a Unix timestamp:
++
+[source,bash]
+----
+wallet-tool set-creation-time --unixtime 1672531200 example.wallet
+----
+
+=== *`add-key`*
+
+*Description*: Adds a key (private or public) to the wallet. Appropriate formats such as WIF, hex, or base58 are supported for private and public keys.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool add-key [--privkey <PRIVATE_KEY> | --pubkey <PUBLIC_KEY>] [--date <DATE> | --unixtime <UNIX_TIMESTAMP>] <WALLET_FILE>
+----
+
+==== *Options*:
+
+* `--privkey ++<++PRIVATE++_++KEY++>++`: The private key to add (in WIF, hex, or base58 format). Don’t specify `--pubkey`; it will be derived automatically.
+* `--pubkey ++<++PUBLIC++_++KEY++>++`: The public key to add in hex or base58-encoded non-compressed format. If a private key is provided, the public key is derived automatically.
+* `--date ++<++DATE++>++`: Creation date assigned to the key (format: `YYYY-MM-DD`).
+* `--unixtime ++<++UNIX++_++TIMESTAMP++>++`: Optional creation time assigned to the key, specified as a Unix timestamp.
+
+==== *Examples*:
+
+[arabic]
+. Add a private key to the wallet:
++
+[source,bash]
+----
+wallet-tool add-key --privkey L1xxxxxxxxxxxxxxxxxx --date 2023-01-01 example.wallet
+----
+. Add a public key to the wallet:
++
+[source,bash]
+----
+wallet-tool add-key --pubkey 02a163xxxxxxxxxxxxxxxxxx example.wallet
+----
+. Add a private key with a specific Unix timestamp:
++
+[source,bash]
+----
+wallet-tool add-key --privkey L1xxxxxxxxxxxxxxxxxx --unixtime 1672531200 example.wallet
+----
+
+=== *`add-addr`*
+
+*Description*: Adds a Bitcoin address as a watching-only address. The `--addr` option is required.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool add-addr --addr <ADDRESS> <WALLET_FILE>
+----
+
+==== *Options*:
+
+* `--addr ++<++ADDRESS++>++`: Specifies a Bitcoin address (segwit or legacy) to add in watching-only mode.
+
+==== *Examples*:
+
+[arabic]
+. Add a watching-only Bitcoin address to the wallet:
++
+[source,bash]
+----
+wallet-tool add-addr --addr 1Gthxxxxxxxxxxxxxxxxxx example.wallet
+----
+
+=== *`delete-key`*
+
+*Description*: Removes a key specified by `--pubkey` or `--addr` from the wallet.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool delete-key [--pubkey <PUBLIC_KEY> | --addr <ADDRESS>] <WALLET_FILE>
+----
+
+==== *Options*:
+
+* `--pubkey ++<++PUBLIC++_++KEY++>++`: Specifies a hex/base58 encoded non-compressed public key.
+* `--addr ++<++ADDRESS++>++`: Specifies a Bitcoin address, either segwit or legacy.
+
+==== *Examples*:
+
+[arabic]
+. Delete a key using its public key:
++
+[source,bash]
+----
+wallet-tool delete-key --pubkey 02a163xxxxxxxxxxxxxxxxxx example.wallet
+----
+. Delete a key using its address:
++
+[source,bash]
+----
+wallet-tool delete-key --addr 1Gthxxxxxxxxxxxxxxxxxx example.wallet
+----
+
+=== *`sync`*
+
+*Description*: Syncs the wallet with the latest blockchain to download new transactions. If the chain data file does not exist, or if the `--force` option is specified, the wallet will reset and sync from the beginning.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool sync [--force] <WALLET_FILE>
+----
+
+==== *Options*:
+
+* `--force`: Resets the wallet, removing all transactions, before syncing from the blockchain.
+
+==== *Examples*:
+
+[arabic]
+. Sync a wallet with the blockchain:
++
+[source,bash]
+----
+wallet-tool sync example.wallet
+----
+. Reset the wallet and re-sync from the beginning:
++
+[source,bash]
+----
+wallet-tool sync --force example.wallet
+----
+
+=== *`current-receive-addr`*
+
+*Description*: Prints the current receive address of the wallet. If no address exists, a new one will be derived and set automatically. Addresses derived using this action are independent of addresses derived with the `add-key` action.
+
+==== *Usage*:
+
+[source,bash]
+----
+wallet-tool current-receive-addr <WALLET_FILE>
+----
+
+==== *Options*:
+
+* No additional options are required beyond specifying the wallet file.
+
+==== *Examples*:
+
+[arabic]
+. Print the current receive address:
++
+[source,bash]
+----
+wallet-tool current-receive-addr example.wallet
+----
+. Automatically derive and set a new receive address if none exists:
++
+[source,bash]
+----
+wallet-tool example.wallet current-receive-addr
+----

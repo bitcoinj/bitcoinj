@@ -1,4 +1,4 @@
-name: Java CI
+name: Gradle Build
 
 on: [push, pull_request]
 
@@ -8,17 +8,33 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        os: [ubuntu-24.04, macOS-13, windows-2022]
-        java: ['17', '21', '23']
+        os: [ubuntu-24.04, macOS-15, macOS-15-intel, windows-2022]
+        java: ['17', '21', '25']
         distribution: ['temurin']
-        gradle: ['7.3', '8.13']
+        gradle: ['8.5', '8.14.3', '9.2.1']
         exclude:
-          # Java 21+ requires Gradle 8.5+
-          - java: '21'
-            gradle: '7.3'
-          - java: '23'
-            gradle: '7.3'
+          # Java 25+ requires Gradle 9.1+
+          - java: '25'
+            gradle: '8.5'
+          - java: '25'
+            gradle: '8.14.3'
+          # Exclude older versions of Gradle on macOS and Windows
+          - os: macOS-15
+            gradle: '8.5'
+          - os: macOS-15
+            gradle: '8.14.3'
+          - os: macOS-15-intel
+            gradle: '8.5'
+          - os: macOS-15-intel
+            gradle: '8.14.3'
+          - os: windows-2022
+            gradle: '8.5'
+          - os: windows-2022
+            gradle: '8.14.3'
       fail-fast: false
+    env:
+      # Use env variable to specify the JDK version to use for the `testMinJdk` Gradle option
+      MIN_JDK: ${{ matrix.os == 'macOS-15' && '11' || '8' }}
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
       - name: Git checkout
@@ -27,13 +43,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: ${{ matrix.distribution }}
-          java-version: ${{ matrix.java }}
+          java-version: |
+            ${{ env.MIN_JDK }}
+            ${{ matrix.java }}
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ matrix.gradle }}
       - name: Run Gradle
-        run: gradle -PtestJdk8=true build bitcoinj-wallettemplate:installDist bitcoinj-wallettemplate:jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
+        run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build installDist jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
         uses: actions/upload-artifact@v4
         if: always()

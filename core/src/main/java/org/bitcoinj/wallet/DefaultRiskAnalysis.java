@@ -30,7 +30,7 @@ import org.bitcoinj.script.ScriptChunk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -182,18 +182,18 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
     /** Checks if the given input passes some of the AreInputsStandard checks. Not complete. */
     public static RuleViolation isInputStandard(TransactionInput input) {
         for (ScriptChunk chunk : input.getScriptSig().chunks()) {
-            if (chunk.data != null && !chunk.isShortestPossiblePushData())
+            if (chunk.pushData() != null && !chunk.isShortestPossiblePushData())
                 return RuleViolation.SHORTEST_POSSIBLE_PUSHDATA;
             if (chunk.isPushData()) {
                 ECDSASignature signature;
                 try {
-                    signature = ECKey.ECDSASignature.decodeFromDER(chunk.data);
+                    signature = ECKey.ECDSASignature.decodeFromDER(chunk.pushData());
                 } catch (SignatureDecodeException x) {
                     // Doesn't look like a signature.
                     signature = null;
                 }
                 if (signature != null) {
-                    if (!TransactionSignature.isEncodingCanonical(chunk.data))
+                    if (!TransactionSignature.isEncodingCanonical(chunk.pushData()))
                         return RuleViolation.SIGNATURE_CANONICAL_ENCODING;
                     if (!signature.isCanonical())
                         return RuleViolation.SIGNATURE_CANONICAL_ENCODING;

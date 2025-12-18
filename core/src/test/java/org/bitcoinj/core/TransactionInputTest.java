@@ -44,6 +44,8 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -69,14 +71,25 @@ public class TransactionInputTest {
         w.completeTx(req);
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
+        TransactionOutPoint txOutPoint = txInToDisconnect.getOutpoint();
 
-        assertEquals(tx1, txInToDisconnect.getOutpoint().fromTx);
-        assertNull(txInToDisconnect.getOutpoint().connectedOutput);
+        // Before disconnect, txOutPoint getFromTx() references tx1 and
+        // getConnectedOutput() references the correct indexed output of tx1
+        assertEquals(tx1, txOutPoint.getFromTx());
+        assertEquals(tx1.getOutput(txOutPoint.index()), txOutPoint.getConnectedOutput());
 
+        // Disconnect the input from tx1
         txInToDisconnect.disconnect();
+        TransactionOutPoint newTxOutPoint = txInToDisconnect.getOutpoint();
 
-        assertNull(txInToDisconnect.getOutpoint().fromTx);
-        assertNull(txInToDisconnect.getOutpoint().connectedOutput);
+        // Since TransactionOutPoint is immutable, we expect a new TransactionOutPoint object, but since equals() only
+        // compares index and hash, equals will return true.
+        assertNotSame(txOutPoint, newTxOutPoint);
+        assertEquals(txOutPoint, newTxOutPoint);
+
+        // After disconnect, newTxOutPoint getFromTx() and getConnectedOutput() are both null
+        assertNull(newTxOutPoint.getFromTx());
+        assertNull(newTxOutPoint.getConnectedOutput());
     }
 
     @Test
@@ -85,7 +98,7 @@ public class TransactionInputTest {
         Address a = w.currentReceiveAddress();
         final UTXO utxo = new UTXO(Sha256Hash.of(new byte[] { 1, 2, 3 }), 1, Coin.COIN, 0, false,
                 ScriptBuilder.createOutputScript(a));
-        w.setUTXOProvider(new UTXOProvider() {
+        w.setUTXOProviderInternal(new UTXOProvider() {
             @Override
             public Network network() {
                 return BitcoinNetwork.TESTNET;
@@ -107,14 +120,27 @@ public class TransactionInputTest {
         w.completeTx(SendRequest.forTx(tx2));
 
         TransactionInput txInToDisconnect = tx2.getInput(0);
+        TransactionOutPoint txOutPoint = txInToDisconnect.getOutpoint();
 
-        assertNull(txInToDisconnect.getOutpoint().fromTx);
-        assertEquals(utxo.getHash(), txInToDisconnect.getOutpoint().connectedOutput.getParentTransactionHash());
+        // Before disconnect, txOutPoint getFromTx() returns null and
+        // getConnectedOutput() references the UTXO
+        assertNull(txOutPoint.getFromTx());
+        assertNotNull(txOutPoint.getConnectedOutput());
+        assertEquals(utxo.getHash(), txOutPoint.getConnectedOutput().getParentTransactionHash());
+        assertEquals(utxo.getIndex(), txOutPoint.getConnectedOutput().getIndex());
 
+        // Disconnect the input from its UTXO
         txInToDisconnect.disconnect();
+        TransactionOutPoint newTxOutPoint = txInToDisconnect.getOutpoint();
 
-        assertNull(txInToDisconnect.getOutpoint().fromTx);
-        assertNull(txInToDisconnect.getOutpoint().connectedOutput);
+        // Since TransactionOutPoint is immutable, we expect a new TransactionOutPoint object, but since equals() only
+        // compares index and hash, equals will return true.
+        assertNotSame(txOutPoint, newTxOutPoint);
+        assertEquals(txOutPoint, newTxOutPoint);
+
+        // After disconnect, newTxOutPoint getFromTx() and getConnectedOutput() are both null
+        assertNull(newTxOutPoint.getFromTx());
+        assertNull(newTxOutPoint.getConnectedOutput());
     }
 
     @Test

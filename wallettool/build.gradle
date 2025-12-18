@@ -3,21 +3,24 @@ import org.gradle.util.GradleVersion
 plugins {
     id 'java'
     id 'application'
+    id 'org.beryx.jlink' version '3.1.5' apply false
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
-    id 'org.graalvm.buildtools.native' version '0.10.3' apply false
+    id 'org.graalvm.buildtools.native' version '0.11.0' apply false
 }
 
+def isModularBuild = GradleVersion.current() >= GradleVersion.version("8.5")
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
 boolean hasAnnotationProcessor = GradleVersion.current() >= annotationProcessorMinVersion
 def junit5MinVersion = GradleVersion.version("4.6")
 boolean hasJunit5 = GradleVersion.current() >= junit5MinVersion
 
-def graalVMMinVersion = GradleVersion.version("7.4")     // Toolchains with selection by vendor
+def graalVMMinVersion = GradleVersion.version("8.3")     // Gradle plugin for GraalVM requires 8.3+
 boolean hasGraalVM = GradleVersion.current() >= graalVMMinVersion
 
 dependencies {
     implementation project(':bitcoinj-core')
     implementation 'info.picocli:picocli:4.7.6'
+    implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-jdk14:2.0.16'
     if (hasAnnotationProcessor) {
         annotationProcessor 'info.picocli:picocli-codegen:4.7.6'
@@ -27,6 +30,9 @@ dependencies {
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
+    if (hasJunit5) {
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    }
 
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
 }
@@ -35,12 +41,39 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '17'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
+    if (!isModularBuild) {
+        // Exclude the module-info.java file because Gradle 4.x doesn't handle module-info.java well.
+        source = source.filter { file -> !file.path.endsWith('module-info.java') }
+    }
 }
 
 javadoc.options.encoding = 'UTF-8'
 
-mainClassName = "org.bitcoinj.wallettool.WalletTool"
-applicationName = "wallet-tool"
+def walletToolMainClassName = "org.bitcoinj.wallettool.WalletTool"
+def walletToolName = "wallet-tool"
+if (GradleVersion.current() > GradleVersion.version("8.0")) {
+    application {
+        mainClass = walletToolMainClassName
+        applicationName = walletToolName
+    }
+} else {
+    mainClassName = walletToolMainClassName
+    applicationName = walletToolName
+}
+
+if (isModularBuild) {
+    apply plugin: 'org.beryx.jlink'
+
+    jlink {
+        options = ['--add-modules', 'org.slf4j.jul']
+        mergedModule {
+            requires 'jdk.unsupported'    // For protobuf
+            requires 'java.logging'       // For bitcoinj-core
+
+            requires 'org.slf4j'          // For bitcoinj-core
+        }
+    }
+}
 
 // wallettool is using JUnit 5 for testing, if it's not available no tests will be run
 if (hasJunit5) {
@@ -49,27 +82,30 @@ if (hasJunit5) {
     }
 }
 
-task generateManpageAsciiDoc(type: JavaExec) {
-    dependsOn(classes)
-    group = "Documentation"
-    description = "Generate AsciiDoc manpage"
-    if (hasAnnotationProcessor) {
-        classpath(sourceSets.main.compileClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
-    } else {
-        classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
+// Disable asciidoctor manpage generation on Gradle 9+ (temporarily)
+if (GradleVersion.current() < GradleVersion.version("9.0")) {
+    task generateManpageAsciiDoc(type: JavaExec) {
+        dependsOn(classes)
+        group = "Documentation"
+        description = "Generate AsciiDoc manpage"
+        if (hasAnnotationProcessor) {
+            classpath(sourceSets.main.compileClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+        } else {
+            classpath(sourceSets.main.compileClasspath, sourceSets.main.runtimeClasspath)
+        }
+        main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+        args walletToolMainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
     }
-    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
-    args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v" //, "--template-dir=src/docs/mantemplates"
-}
 
-apply plugin: 'org.asciidoctor.jvm.convert'
-asciidoctor {
-    dependsOn(generateManpageAsciiDoc)
-    sourceDir = file("${project.buildDir}/generated-picocli-docs")
-    outputDir = file("${project.buildDir}/docs")
-    logDocuments = true
-    outputOptions {
-        backends = ['manpage', 'html5']
+    apply plugin: 'org.asciidoctor.jvm.convert'
+    asciidoctor {
+        dependsOn(generateManpageAsciiDoc)
+        sourceDir = file("${project.buildDir}/generated-picocli-docs")
+        outputDir = file("${project.buildDir}/docs")
+        logDocuments = true
+        outputOptions {
+            backends = ['manpage', 'html5']
+        }
     }
 }
 
@@ -80,7 +116,7 @@ if (hasGraalVM) {
     graalvmNative {
         binaries {
             main {
-                imageName = applicationName
+                imageName = walletToolName
                 configurationFileDirectories.from(file('src/main/graal'))
                 buildArgs.add('--allow-incomplete-classpath')
             }

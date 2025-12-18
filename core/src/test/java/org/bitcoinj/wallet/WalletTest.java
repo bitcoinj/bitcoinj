@@ -58,6 +58,7 @@ import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
@@ -511,7 +512,7 @@ public class WalletTest extends TestWithWallet {
         List<ScriptChunk> scriptSigChunks = t2.getInput(0).getScriptSig().chunks();
         // check 'from address' -- in a unit test this is fine
         assertEquals(2, scriptSigChunks.size());
-        assertEquals(myAddress, LegacyAddress.fromPubKeyHash(TESTNET, CryptoUtils.sha256hash160(scriptSigChunks.get(1).data)));
+        assertEquals(myAddress, LegacyAddress.fromPubKeyHash(TESTNET, CryptoUtils.sha256hash160(scriptSigChunks.get(1).pushData())));
         assertEquals(TransactionConfidence.ConfidenceType.UNKNOWN, t2.getConfidence().getConfidenceType());
 
         // We have NOT proven that the signature is correct!
@@ -1534,7 +1535,7 @@ public class WalletTest extends TestWithWallet {
         assertNotNull(t2);
         // TODO: This code is messy, improve the Script class and fixinate!
         assertEquals(t2.toString(), 1, t2.getInput(0).getScriptSig().chunks().size());
-        assertTrue(t2.getInput(0).getScriptSig().chunks().get(0).data.length > 50);
+        assertTrue(t2.getInput(0).getScriptSig().chunks().get(0).pushData().length > 50);
     }
 
     @Test
@@ -1638,7 +1639,7 @@ public class WalletTest extends TestWithWallet {
     public void watchingScriptsBloomFilter() {
         Address watchedAddress = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
         Transaction t1 = createFakeTx(TESTNET, CENT, watchedAddress);
-        TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
+        TransactionOutPoint outPoint = TransactionOutPoint.from(t1, 0);
         wallet.addWatchedAddress(watchedAddress);
 
         // Note that this has a 1e-12 chance of failing this unit test due to a false positive
@@ -1692,7 +1693,7 @@ public class WalletTest extends TestWithWallet {
 
         for (Address addr : addressesForRemoval) {
             Transaction t1 = createFakeTx(TESTNET, CENT, addr);
-            TransactionOutPoint outPoint = new TransactionOutPoint(0, t1);
+            TransactionOutPoint outPoint = TransactionOutPoint.from(t1, 0);
 
             // Note that this has a 1e-12 chance of failing this unit test due to a false positive
             assertFalse(wallet.getBloomFilter(1e-12).contains(outPoint.serialize()));
@@ -2717,12 +2718,12 @@ public class WalletTest extends TestWithWallet {
         assertEquals(1, request2.tx.getOutputs().size());
         assertEquals(CENT, request2.tx.getOutput(0).getValue());
         // Make sure it was properly signed
-        request2.tx.getInput(0).getScriptSig().correctlySpends(
-                request2.tx, 0, null, null, tx3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+        ScriptExecution.correctlySpends(request2.tx.getInput(0).getScriptSig(),
+                request2.tx, 0, null, null, tx3.getOutput(0).getScriptPubKey(), ScriptExecution.ALL_VERIFY_FLAGS);
 
         // However, if there is no connected output, we connect it
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, CENT);
-        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, new TransactionOutPoint(0, tx3.getTxId())));
+        request3.tx.addInput(new TransactionInput(request3.tx, new byte[] {}, TransactionOutPoint.of(tx3.getTxId(), 0)));
         // Now completeTx will find the matching UTXO from the wallet and add its value to the unconnected input
         request3.shuffleOutputs = false;
         wallet.completeTx(request3);
@@ -2753,7 +2754,7 @@ public class WalletTest extends TestWithWallet {
 
         // SendRequest using that output as an unconnected input
         SendRequest request = SendRequest.to(OTHER_ADDRESS, COIN);
-        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, new TransactionOutPoint(0, tx.getTxId())));
+        request.tx.addInput(new TransactionInput(request.tx, new byte[] {}, TransactionOutPoint.of(tx.getTxId(), 0)));
 
         // Complete the transaction
         wallet.completeTx(request);
@@ -3083,12 +3084,12 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < req.tx.getInputs().size(); i++) {
             TransactionInput input = req.tx.getInput(i);
             if (input.getConnectedOutput().getParentTransaction().equals(t1)) {
-                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).data);
+                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).pushData());
             } else if (input.getConnectedOutput().getParentTransaction().equals(t2)) {
-                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).data);
+                assertArrayEquals(expectedSig, input.getScriptSig().chunks().get(0).pushData());
             } else if (input.getConnectedOutput().getParentTransaction().equals(t3)) {
-                input.getScriptSig().correctlySpends(
-                        req.tx, i, null, null, t3.getOutput(0).getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+                ScriptExecution.correctlySpends(input.getScriptSig(),
+                        req.tx, i, null, null, t3.getOutput(0).getScriptPubKey(), ScriptExecution.ALL_VERIFY_FLAGS);
             }
         }
         assertTrue(TransactionSignature.isEncodingCanonical(dummySig));

@@ -10,14 +10,16 @@ version = '0.18-SNAPSHOT'
 
 dependencies {
     api project(':bitcoinj-base')
-    api 'org.bouncycastle:bcprov-jdk15to18:1.80'
-    api 'com.google.guava:guava:33.4.0-android'
-    api 'com.google.protobuf:protobuf-javalite:4.29.3'
+    api 'org.bouncycastle:bcprov-jdk15to18:1.81'
+    api 'com.google.guava:guava:33.5.0-android'
+    api 'com.google.protobuf:protobuf-javalite:4.30.2'
+
+    implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'org.slf4j:slf4j-api:2.0.16'
 
     testImplementation project(':bitcoinj-test-support')
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.easymock:easymock:5.5.0'
+    testImplementation 'org.easymock:easymock:5.6.0'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.18.1'
@@ -25,11 +27,14 @@ dependencies {
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
 }
 
-// Prevent newer Gradle from switching to JRE version of Guava
+// Prevent newer Gradle from switching to JRE version of Guava for tests.
+// We want our tests to run on the lowest-common denominator Android variant. We only enforce
+// this on the `testImplementation` configuration because we don't want to affect dependent
+// modules like `wallettemplate`.
 def gradleVersionTargetJVM = GradleVersion.version("7.0")
 if (GradleVersion.current() > gradleVersionTargetJVM) {
     dependencies.constraints {
-        implementation("com.google.guava:guava") {
+        testImplementation("com.google.guava:guava") {
             attributes {
                 attribute(
                         TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
@@ -51,7 +56,7 @@ javadoc.options.encoding = 'UTF-8'
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:4.29.3'
+        artifact = 'com.google.protobuf:protoc:4.30.2'
     }
     generateProtoTasks {
         all().each { task ->
@@ -80,31 +85,27 @@ test {
 }
 
 def gradleVersionToolchains = GradleVersion.version("6.7")
+// Activate if `testMinJdk` is a integer > 0 in `gradle.properties` or set with `-P` on the command-line
+def minJdkVersion = Integer.valueOf((String) findProperty('testMinJdk') ?: "0")
 
-if (GradleVersion.current() > gradleVersionToolchains) {
+if (minJdkVersion > 0 && GradleVersion.current() > gradleVersionToolchains) {
     // If the Gradle Java Toolchains feature is available, run tests on older JDKs
-    System.err.println "Adding 'testOnJdk8' task, because ${GradleVersion.current()}"
+    System.err.println "Adding 'testOnMinJdk' task for version=${minJdkVersion}, because ${GradleVersion.current()}"
 
-    task('testOnJdk8', type: Test) {
+    task('testOnMinJdk', type: Test) {
         doFirst {
             logger.lifecycle("Testing with JDK ${javaLauncher.get().metadata.javaRuntimeVersion}")
         }
         javaLauncher = javaToolchains.launcherFor {
-            languageVersion = JavaLanguageVersion.of(8)
+            languageVersion = JavaLanguageVersion.of(minJdkVersion)
         }
     }
-    // Activate if `testJdk8` is `true` in `gradle.properties` or `-PtestJdk8=true` is on command-line
-    if (Boolean.valueOf(findProperty('testJdk8'))) {
-        check.dependsOn testOnJdk8
-    }
+    check.dependsOn testOnMinJdk
 }
 
-ext.moduleName = 'org.bitcoinj.core'
-
 jar {
-    inputs.property("moduleName", moduleName)
     manifest {
-        attributes 'Automatic-Module-Name': moduleName
+        attributes 'Automatic-Module-Name': 'org.bitcoinj.core'
     }
 }
 

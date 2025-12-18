@@ -64,7 +64,7 @@ public class ScriptChunkTest {
             assertTrue("push of single byte " + i, new ScriptBuilder().data(new byte[] { i }).build().chunks()
                     .get(0).isShortestPossiblePushData());
 
-        for (int len = 2; len < Script.MAX_SCRIPT_ELEMENT_SIZE; len++)
+        for (int len = 2; len < ScriptExecution.MAX_SCRIPT_ELEMENT_SIZE; len++)
             assertTrue("push of " + len + " bytes", new ScriptBuilder().data(new byte[len]).build().chunks().get(0)
                     .isShortestPossiblePushData());
 

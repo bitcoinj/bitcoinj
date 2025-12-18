@@ -18,7 +18,7 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.protobuf.wallet.Protos;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -32,8 +32,7 @@ public interface EncryptableItem {
     boolean isEncrypted();
 
     /** Returns the raw bytes of the item, if not encrypted, or null if encrypted or the secret is missing. */
-    @Nullable
-    byte[] getSecretBytes();
+    byte @Nullable [] getSecretBytes();
 
     /** Returns the initialization vector and encrypted secret bytes, or null if not encrypted. */
     @Nullable

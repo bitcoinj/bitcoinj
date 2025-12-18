@@ -18,6 +18,7 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BlockChain;
@@ -48,7 +49,7 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -111,12 +112,12 @@ public class TestWithNetworkConnections {
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
             // Reduce the number of keys we need to work with to speed up these tests.
-            KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST.network()).lookaheadSize(4).lookaheadThreshold(2)
+            KeyChainGroup kcg = KeyChainGroup.builder(BitcoinNetwork.TESTNET).lookaheadSize(4).lookaheadThreshold(2)
                     .fromRandom(ScriptType.P2PKH).build();
-            wallet = new Wallet(UNITTEST.network(), kcg);
+            wallet = new Wallet(BitcoinNetwork.TESTNET, kcg);
             address = wallet.freshReceiveAddress(ScriptType.P2PKH);
         }
-        blockChain = new BlockChain(UNITTEST, wallet, blockStore);
+        blockChain = BlockChain.unitTestBlockChain(wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
@@ -164,8 +165,11 @@ public class TestWithNetworkConnections {
     }
 
     protected void stopPeerServer(int i) {
-        peerServers[i].stopAsync();
-        peerServers[i].awaitTerminated();
+        NioServer server = peerServers[i];
+        if (server != null) {
+            server.stopAsync();
+            server.awaitTerminated();
+        }
     }
 
     protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws Exception {

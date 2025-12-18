@@ -33,6 +33,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.wallet.Wallet;
 import org.easymock.EasyMock;
@@ -176,7 +177,7 @@ public class TransactionTest {
 
         // add fake transaction input
         TransactionInput input = new TransactionInput(null, ScriptBuilder.createEmpty().program(),
-                new TransactionOutPoint(0, Sha256Hash.ZERO_HASH));
+                TransactionOutPoint.of(Sha256Hash.ZERO_HASH, 0));
         tx.addInput(input);
         length += input.messageSize();
 
@@ -214,13 +215,13 @@ public class TransactionTest {
         ECKey fromKey = ECKey.random();
         Address fromAddress = fromKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
+        TransactionOutPoint outPoint = TransactionOutPoint.of(utxo_id, 0);
         TransactionOutput output = new TransactionOutput(null, inAmount, fromAddress);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 
         // verify signature
-        input.getScriptSig().correctlySpends(tx, 0, null, null, ScriptBuilder.createOutputScript(fromAddress), null);
+        ScriptExecution.correctlySpends(input.getScriptSig(), tx, 0, null, null, ScriptBuilder.createOutputScript(fromAddress), null);
 
         byte[] rawTx = tx.serialize();
 
@@ -237,12 +238,12 @@ public class TransactionTest {
         ECKey fromKey = ECKey.random();
         Address fromAddress = fromKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET);
         Transaction tx = new Transaction();
-        TransactionOutPoint outPoint = new TransactionOutPoint(0, utxo_id);
+        TransactionOutPoint outPoint = TransactionOutPoint.of(utxo_id, 0);
         tx.addOutput(outAmount, toAddr);
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 
         // verify signature
-        input.getScriptSig().correctlySpends(tx, 0, input.getWitness(), input.getValue(),
+        ScriptExecution.correctlySpends(input.getScriptSig(), tx, 0, input.getWitness(), input.getValue(),
                 ScriptBuilder.createOutputScript(fromAddress), null);
 
         byte[] rawTx = tx.serialize();
@@ -467,8 +468,8 @@ public class TransactionTest {
 
     private boolean correctlySpends(TransactionInput txIn, Script scriptPubKey, int inputIndex) {
         try {
-            txIn.getScriptSig().correctlySpends(txIn.getParentTransaction(), inputIndex, txIn.getWitness(),
-                    txIn.getValue(), scriptPubKey, Script.ALL_VERIFY_FLAGS);
+            ScriptExecution.correctlySpends(txIn.getScriptSig(), txIn.getParentTransaction(), inputIndex, txIn.getWitness(),
+                    txIn.getValue(), scriptPubKey, ScriptExecution.ALL_VERIFY_FLAGS);
             return true;
         } catch (ScriptException x) {
             return false;

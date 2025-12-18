@@ -52,7 +52,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,13 +86,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     private BlockingQueue<Peer> connectedPeers;
     private BlockingQueue<Peer> disconnectedPeers;
-    private PeerConnectedEventListener connectedListener = new PeerConnectedEventListener() {
+    private final PeerConnectedEventListener connectedListener = new PeerConnectedEventListener() {
         @Override
         public void onPeerConnected(Peer peer, int peerCount) {
             connectedPeers.add(peer);
         }
     };
-    private PeerDisconnectedEventListener disconnectedListener = new PeerDisconnectedEventListener() {
+    private final PeerDisconnectedEventListener disconnectedListener = new PeerDisconnectedEventListener() {
         @Override
         public void onPeerDisconnected(Peer peer, int peerCount) {
             disconnectedPeers.add(peer);
@@ -104,7 +103,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
-        return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
+        return List.of(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
                              new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
     }
 
@@ -120,11 +119,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         connectedPeers = new LinkedBlockingQueue<>();
         disconnectedPeers = new LinkedBlockingQueue<>();
         preMessageReceivedListener = (peer, m) -> {
-            AtomicInteger messageCount = peerToMessageCount.get(peer);
-            if (messageCount == null) {
-                messageCount = new AtomicInteger(0);
-                peerToMessageCount.put(peer, messageCount);
-            }
+            AtomicInteger messageCount = peerToMessageCount.computeIfAbsent(peer, p -> new AtomicInteger(0));
             messageCount.incrementAndGet();
             // Just pass the message right through for further processing.
             return m;
@@ -184,7 +179,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 } else {
                     // Return a bogus address.
                     latch.countDown();
-                    return Arrays.asList(new InetSocketAddress("localhost", 1));
+                    return List.of(new InetSocketAddress("localhost", 1));
                 }
             }
 
@@ -876,11 +871,11 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void testMaxOfMostFreq() {
         assertEquals(0, PeerGroup.maxOfMostFreq(Collections.emptyList()));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(0, 0, 1)));
-        assertEquals(3, PeerGroup.maxOfMostFreq(Arrays.asList(1, 3, 1, 2, 2, 3, 3)));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2)));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(-1, 1, 1, 2, 2)));
-        assertEquals(1, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2, 1)));
-        assertEquals(-1, PeerGroup.maxOfMostFreq(Arrays.asList(-1, -1, 2, 2, -1)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(0, 0, 1)));
+        assertEquals(3, PeerGroup.maxOfMostFreq(List.of(1, 3, 1, 2, 2, 3, 3)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(1, 1, 2, 2)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(-1, 1, 1, 2, 2)));
+        assertEquals(1, PeerGroup.maxOfMostFreq(List.of(1, 1, 2, 2, 1)));
+        assertEquals(-1, PeerGroup.maxOfMostFreq(List.of(-1, -1, 2, 2, -1)));
     }
 }

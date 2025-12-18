@@ -34,7 +34,7 @@ import org.bitcoinj.wallet.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -421,7 +421,7 @@ public class TransactionOutput {
      * Requires that this output is not detached.
      */
     public TransactionOutPoint getOutPointFor() {
-        return new TransactionOutPoint(getIndex(), getParentTransaction());
+        return TransactionOutPoint.from(getParentTransaction(), getIndex());
     }
 
     /** Returns a copy of the output detached from its containing transaction, if need be. */

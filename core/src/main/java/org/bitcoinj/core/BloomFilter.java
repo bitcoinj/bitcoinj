@@ -358,7 +358,7 @@ public class BloomFilter implements Message {
             for (ScriptChunk chunk : script.chunks()) {
                 if (!chunk.isPushData())
                     continue;
-                if (contains(chunk.data)) {
+                if (contains(chunk.pushData())) {
                     boolean isSendingToPubKeys = ScriptPattern.isP2PK(script) || ScriptPattern.isSentToMultisig(script);
                     if (flag == BloomUpdate.UPDATE_ALL || (flag == BloomUpdate.UPDATE_P2PUBKEY_ONLY && isSendingToPubKeys))
                         insert(output.getOutPointFor());
@@ -372,7 +372,7 @@ public class BloomFilter implements Message {
                 return true;
             }
             for (ScriptChunk chunk : input.getScriptSig().chunks()) {
-                if (chunk.isPushData() && contains(chunk.data))
+                if (chunk.isPushData() && contains(chunk.pushData()))
                     return true;
             }
         }

@@ -64,7 +64,7 @@ public final class HDKeyDerivation {
         checkArgument(seed.length > 8, () ->
                 "seed is too short and could be brute forced");
         // Calculate I = HMAC-SHA512(key="Bitcoin seed", msg=S)
-        byte[] i = CryptoUtils.hmacSha512(CryptoUtils.createHmacSha512Digest("Bitcoin seed".getBytes()), seed);
+        byte[] i = CryptoUtils.hmacSha512("Bitcoin seed", seed);
         // Split I into two 32-byte sequences, Il and Ir.
         // Use Il as master secret key, and Ir as master chain code.
         checkState(i.length == 64, () ->
@@ -87,7 +87,7 @@ public final class HDKeyDerivation {
         BigInteger priv = ByteUtils.bytesToBigInteger(privKeyBytes);
         assertNonZero(priv, "Generated master key is invalid.");
         assertLessThanN(priv, "Generated master key is invalid.");
-        return new DeterministicKey(HDPath.m(), chainCode, priv, null);
+        return new DeterministicKey(HDPath.partial(), chainCode, priv, null);
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {

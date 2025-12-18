@@ -16,7 +16,7 @@
 
 package org.bitcoinj.walletfx.utils;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.concurrent.Task;
 import org.bitcoinj.crypto.AesKey;

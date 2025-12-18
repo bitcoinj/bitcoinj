@@ -20,7 +20,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.ECKey;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
