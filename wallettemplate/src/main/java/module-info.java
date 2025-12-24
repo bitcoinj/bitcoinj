@@ -27,6 +27,11 @@ module wallettemplate {
     requires com.google.zxing;
 
     requires org.bitcoinj.core;
+    // Since bitcoinj-core doesn't have a module-info and IDEs are generally unaware of the
+    // processing done by the jlink plugin, we include transitive dependencies here that would
+    // be unnecessary if bitcoinj-core were fully modular.
+    requires org.bitcoinj.base;     // Transitive via bitcoinj-core
+    requires com.google.protobuf;   // Transitive via bitcoinj-core
 
     exports wallettemplate;
     exports org.bitcoinj.walletfx.controls;
