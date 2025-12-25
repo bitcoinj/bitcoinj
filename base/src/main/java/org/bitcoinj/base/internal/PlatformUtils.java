@@ -35,7 +35,7 @@ public class PlatformUtils {
 
     static {
         String runtimeProp = System.getProperty("java.runtime.name", "").toLowerCase(Locale.US);
-        if (runtimeProp.equals(""))
+        if (runtimeProp.isEmpty())
             runtime = PlatformUtils.Runtime.UNKNOWN;
         else if (runtimeProp.contains("android"))
             runtime = PlatformUtils.Runtime.ANDROID;
@@ -49,7 +49,7 @@ public class PlatformUtils {
             runtime = PlatformUtils.Runtime.UNKNOWN;
 
         String osProp = System.getProperty("os.name", "").toLowerCase(Locale.US);
-        if (osProp.equals(""))
+        if (osProp.isEmpty())
             os = PlatformUtils.OS.UNKNOWN;
         else if (osProp.contains("linux"))
             os = PlatformUtils.OS.LINUX;
