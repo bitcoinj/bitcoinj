@@ -27,20 +27,20 @@ import java.util.Locale;
 public class PlatformUtils {
     private static final Logger log = LoggerFactory.getLogger(PlatformUtils.class);
     public enum Runtime {
-        ANDROID, OPENJDK, ORACLE_JAVA, GRAALVM
+        ANDROID, OPENJDK, ORACLE_JAVA, GRAALVM, UNKNOWN
     }
 
     public enum OS {
-        LINUX, WINDOWS, MAC_OS
+        LINUX, WINDOWS, MAC_OS, UNKNOWN
     }
 
-    public static Runtime runtime = null;
-    public static OS os = null;
+    public static Runtime runtime = PlatformUtils.Runtime.UNKNOWN;
+    public static OS os = PlatformUtils.OS.UNKNOWN;
 
     static {
         String runtimeProp = System.getProperty("java.runtime.name", "").toLowerCase(Locale.US);
         if (runtimeProp.equals(""))
-            PlatformUtils.runtime = null;
+            PlatformUtils.runtime = PlatformUtils.Runtime.UNKNOWN;
         else if (runtimeProp.contains("android"))
             PlatformUtils.runtime = PlatformUtils.Runtime.ANDROID;
         else if (runtimeProp.contains("openjdk"))
@@ -50,11 +50,11 @@ public class PlatformUtils {
         else if (runtimeProp.contains("graalvm"))
             PlatformUtils.runtime = PlatformUtils.Runtime.GRAALVM;
         else
-            log.info("Unknown java.runtime.name '{}'", runtimeProp);
+            PlatformUtils.runtime = PlatformUtils.Runtime.UNKNOWN;
 
         String osProp = System.getProperty("os.name", "").toLowerCase(Locale.US);
         if (osProp.equals(""))
-            PlatformUtils.os = null;
+            PlatformUtils.os = PlatformUtils.OS.UNKNOWN;
         else if (osProp.contains("linux"))
             PlatformUtils.os = PlatformUtils.OS.LINUX;
         else if (osProp.contains("win"))
@@ -62,7 +62,7 @@ public class PlatformUtils {
         else if (osProp.contains("mac"))
             PlatformUtils.os = PlatformUtils.OS.MAC_OS;
         else
-            log.info("Unknown os.name '{}'", runtimeProp);
+            PlatformUtils.os = PlatformUtils.OS.UNKNOWN;
     }
 
     public static boolean isAndroidRuntime() {
