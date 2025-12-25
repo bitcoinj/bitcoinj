@@ -30,35 +30,35 @@ public class PlatformUtils {
         LINUX, WINDOWS, MAC_OS, UNKNOWN
     }
 
-    public static Runtime runtime = PlatformUtils.Runtime.UNKNOWN;
-    public static OS os = PlatformUtils.OS.UNKNOWN;
+    public static final Runtime runtime;
+    public static final OS os;
 
     static {
         String runtimeProp = System.getProperty("java.runtime.name", "").toLowerCase(Locale.US);
         if (runtimeProp.equals(""))
-            PlatformUtils.runtime = PlatformUtils.Runtime.UNKNOWN;
+            runtime = PlatformUtils.Runtime.UNKNOWN;
         else if (runtimeProp.contains("android"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.ANDROID;
+            runtime = PlatformUtils.Runtime.ANDROID;
         else if (runtimeProp.contains("openjdk"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.OPENJDK;
+            runtime = PlatformUtils.Runtime.OPENJDK;
         else if (runtimeProp.contains("java(tm) se"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.ORACLE_JAVA;
+            runtime = PlatformUtils.Runtime.ORACLE_JAVA;
         else if (runtimeProp.contains("graalvm"))
-            PlatformUtils.runtime = PlatformUtils.Runtime.GRAALVM;
+            runtime = PlatformUtils.Runtime.GRAALVM;
         else
-            PlatformUtils.runtime = PlatformUtils.Runtime.UNKNOWN;
+            runtime = PlatformUtils.Runtime.UNKNOWN;
 
         String osProp = System.getProperty("os.name", "").toLowerCase(Locale.US);
         if (osProp.equals(""))
-            PlatformUtils.os = PlatformUtils.OS.UNKNOWN;
+            os = PlatformUtils.OS.UNKNOWN;
         else if (osProp.contains("linux"))
-            PlatformUtils.os = PlatformUtils.OS.LINUX;
+            os = PlatformUtils.OS.LINUX;
         else if (osProp.contains("win"))
-            PlatformUtils.os = PlatformUtils.OS.WINDOWS;
+            os = PlatformUtils.OS.WINDOWS;
         else if (osProp.contains("mac"))
-            PlatformUtils.os = PlatformUtils.OS.MAC_OS;
+            os = PlatformUtils.OS.MAC_OS;
         else
-            PlatformUtils.os = PlatformUtils.OS.UNKNOWN;
+            os = PlatformUtils.OS.UNKNOWN;
     }
 
     public static boolean isAndroidRuntime() {
