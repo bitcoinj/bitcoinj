@@ -20,10 +20,12 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -66,14 +68,14 @@ public class SegwitAddress implements Address {
         TB(BitcoinNetwork.TESTNET, BitcoinNetwork.SIGNET),
         BCRT(BitcoinNetwork.REGTEST);
 
-        private final EnumSet<BitcoinNetwork> networks;
+        private final Set<BitcoinNetwork> networks;
 
         SegwitHrp(BitcoinNetwork n) {
-            networks = EnumSet.of(n);
+            networks = Collections.unmodifiableSet(EnumSet.of(n));
         }
 
         SegwitHrp(BitcoinNetwork n1, BitcoinNetwork n2) {
-            networks = EnumSet.of(n1, n2);
+            networks = Collections.unmodifiableSet(EnumSet.of(n1, n2));
         }
 
         /**
