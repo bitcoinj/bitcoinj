@@ -42,6 +42,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -81,6 +82,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_PUSHDATA4;
  */
 public class Script {
     public static final int SIG_SIZE = 75;
+    public static final Script EMPTY = new Script(new byte[]{}, null);
 
     private static final Logger log = LoggerFactory.getLogger(Script.class);
 
@@ -116,6 +118,20 @@ public class Script {
      */
     public static Script of(List<ScriptChunk> chunks, Instant creationTime) {
         return new Script(chunks, creationTime);
+    }
+
+    /**
+     * Returns true if this script is empty
+     */
+    public boolean isEmpty() {
+        return chunks.isEmpty();
+    }
+
+    /**
+     * Returns a copy of this script
+     */
+    public Script copy() {
+        return new Script(program, creationTime);
     }
 
     /**
@@ -245,6 +261,20 @@ public class Script {
      */
     public List<ScriptChunk> chunks() {
         return Collections.unmodifiableList(chunks);
+    }
+
+    /**
+     * Get the size in bytes of this Script
+     * @return the size of the program
+     */
+    public int size() {
+        int size;
+        if (program != null)
+            size = program.length;
+        else {
+            size = chunks.stream().mapToInt(ScriptChunk::size).sum();
+        }
+        return size;
     }
 
     /**
