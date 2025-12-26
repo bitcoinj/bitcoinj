@@ -22,9 +22,11 @@ import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.internal.ByteUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -214,7 +216,7 @@ public class LegacyAddress implements Address {
         X6F(0x6f, BitcoinNetwork.SIGNET);
 
         private final int headerByte;
-        private final EnumSet<BitcoinNetwork> networks;
+        private final Set<BitcoinNetwork> networks;
 
         /**
          * @param network network to find enum for
@@ -229,7 +231,7 @@ public class LegacyAddress implements Address {
 
         AddressHeader(int headerByte, BitcoinNetwork first, BitcoinNetwork... rest) {
             this.headerByte = headerByte;
-            this.networks = EnumSet.of(first, rest);
+            this.networks = Collections.unmodifiableSet(EnumSet.of(first, rest));
         }
 
         public int headerByte() {
@@ -245,7 +247,7 @@ public class LegacyAddress implements Address {
         X196(196, BitcoinNetwork.TESTNET, BitcoinNetwork.SIGNET, BitcoinNetwork.REGTEST);
 
         private final int headerByte;
-        private final EnumSet<BitcoinNetwork> networks;
+        private final Set<BitcoinNetwork> networks;
 
         /**
          * @param network network to find enum for
@@ -260,7 +262,7 @@ public class LegacyAddress implements Address {
 
         P2SHHeader(int headerByte, BitcoinNetwork first, BitcoinNetwork... rest) {
             this.headerByte = headerByte;
-            this.networks = EnumSet.of(first, rest);
+            this.networks = Collections.unmodifiableSet(EnumSet.of(first, rest));
         }
 
         public int headerByte() {
