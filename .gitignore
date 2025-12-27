@@ -4,6 +4,7 @@ build
 gradlew
 gradlew.bat
 gradle/wrapper
+.kotlin/
 .project
 .classpath
 .settings
