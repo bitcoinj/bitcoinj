@@ -98,3 +98,9 @@ jobs:
         with:
           name: wallet-tool-${{ matrix.os }}-${{ matrix.java }}-gradle-${{ matrix.gradle }}
           path: wallettool/build/native/nativeCompile/wallet-tool
+
+  build_all_green:
+    runs-on: ubuntu-24.04
+    needs: [build, build_graalvm]
+    steps:
+      - run: echo "All upstream jobs passed"
