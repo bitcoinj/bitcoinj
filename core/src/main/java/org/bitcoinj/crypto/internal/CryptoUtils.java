@@ -22,6 +22,7 @@ import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -69,12 +70,15 @@ public class CryptoUtils {
     }
 
     /**
-     * Generate a MAC using a {@link String} key and data
-     * @param key The key
+     * Generate a MAC using a {@link String} tag and data. For example, this is used in our BIP-32
+     * implementation with a tag {@code String} of {@code "Bitcoin seed"}. The {@link Charset} parameter
+     * is typically {@link StandardCharsets#US_ASCII}.
+     * @param tag The tag
+     * @param charset The {@link Charset} to be used to encode the tag {@code String}
      * @param data The message data to process
      * @return The final result of the MAC operation
      */
-    public static byte[] hmacSha512(String key, byte[] data) {
-        return hmacSha512(key.getBytes(), data);
+    public static byte[] hmacSha512(String tag, Charset charset, byte[] data) {
+        return hmacSha512(tag.getBytes(charset), data);
     }
 }
