@@ -23,6 +23,7 @@ import org.bouncycastle.math.ec.ECPoint;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -64,7 +65,7 @@ public final class HDKeyDerivation {
         checkArgument(seed.length > 8, () ->
                 "seed is too short and could be brute forced");
         // Calculate I = HMAC-SHA512(key="Bitcoin seed", msg=S)
-        byte[] i = CryptoUtils.hmacSha512("Bitcoin seed", seed);
+        byte[] i = CryptoUtils.hmacSha512("Bitcoin seed", StandardCharsets.US_ASCII, seed);
         // Split I into two 32-byte sequences, Il and Ir.
         // Use Il as master secret key, and Ir as master chain code.
         checkState(i.length == 64, () ->
