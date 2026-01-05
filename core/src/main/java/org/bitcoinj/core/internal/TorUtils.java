@@ -17,7 +17,7 @@
 package org.bitcoinj.core.internal;
 
 import com.google.common.io.BaseEncoding;
-import org.bouncycastle.jcajce.provider.digest.SHA3;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -99,10 +99,8 @@ public class TorUtils {
     private static byte[] onionChecksum(byte[] pubkey, byte version) {
         if (pubkey.length != 32)
             throw new IllegalArgumentException();
-        SHA3.Digest256 digest256 = new SHA3.Digest256();
-        digest256.update(".onion checksum".getBytes(StandardCharsets.US_ASCII));
-        digest256.update(pubkey);
-        digest256.update(version);
-        return Arrays.copyOf(digest256.digest(), 2);
+        byte[] digest = CryptoUtils.sha3Digest(
+                ".onion checksum".getBytes(StandardCharsets.US_ASCII), pubkey, new byte[] { version });
+        return Arrays.copyOf(digest, 2);
     }
 }
