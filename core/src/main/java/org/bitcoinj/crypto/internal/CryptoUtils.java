@@ -17,6 +17,7 @@ package org.bitcoinj.crypto.internal;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
+import org.bouncycastle.jcajce.provider.digest.SHA3;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -82,5 +83,18 @@ public class CryptoUtils {
      */
     public static byte[] hmacSha512(String tag, Charset charset, byte[] data) {
         return hmacSha512(tag.getBytes(charset), data);
+    }
+
+    /**
+     * Calculate a SHA3-256 digest. Suitable for TOR Onion checksums.
+     * @param inputs An ordered collection of inputs to be hashed
+     * @return A SHA3 256-bit hash
+     */
+    public static byte[] sha3Digest(byte[] ...inputs) {
+        SHA3.Digest256 digest = new SHA3.Digest256();
+        for (byte[] input : inputs) {
+            digest.update(input, 0, input.length);
+        }
+        return digest.digest();
     }
 }
