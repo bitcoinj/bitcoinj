@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.params.MainNetParams;
@@ -40,12 +39,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class BitcoinSerializerTest {
-    private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
     private static final NetworkParameters MAINNET = MainNetParams.get();
     private static final byte[] ADDRESS_MESSAGE_BYTES = ByteUtils.parseHex("f9beb4d96164647200000000000000001f000000" +
             "ed52399b01e215104d010000000000000000000000000000000000ffff0a000001208d");
 
-    private static final byte[] TRANSACTION_MESSAGE_BYTES = HEX.withSeparator(" ", 2).decode(
+    private static final byte[] TRANSACTION_MESSAGE_BYTES = ByteUtils.parseHex(
             "f9 be b4 d9 74 78 00 00  00 00 00 00 00 00 00 00" +
             "02 01 00 00 e2 93 cd be  01 00 00 00 01 6d bd db" +
             "08 5b 1d 8a f7 51 84 f0  bc 01 fa d5 8d 12 66 e9" +
@@ -63,7 +61,7 @@ public class BitcoinSerializerTest {
             "cd 1c be a6 e7 45 8a 7a  ba d5 12 a9 d9 ea 1a fb" +
             "22 5e 88 ac 80 fa e9 c7  00 00 00 00 19 76 a9 14" +
             "0e ab 5b ea 43 6a 04 84  cf ab 12 48 5e fd a0 b7" +
-            "8b 4e cc 52 88 ac 00 00  00 00");
+            "8b 4e cc 52 88 ac 00 00  00 00").replaceAll("\\s+", ""));
 
     @Test
     public void testAddr() throws Exception {
