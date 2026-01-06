@@ -16,7 +16,7 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.BaseEncoding;
+import org.bitcoinj.core.internal.ByteUtils;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.junit.Test;
 
@@ -25,12 +25,10 @@ import java.nio.ByteBuffer;
 import static org.junit.Assert.assertTrue;
 
 public class SendHeadersMessageTest {
-    private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
     @Test
     public void decodeAndEncode() throws Exception {
-        byte[] message = HEX
-                .decode("00000000fabfb5da73656e646865616465727300000000005df6e0e2fabfb5da70696e670000000000000000080000009a"
+        byte[] message = ByteUtils.parseHex("00000000fabfb5da73656e646865616465727300000000005df6e0e2fabfb5da70696e670000000000000000080000009a"
                         + "65b9cc9840c9729e4502b200000000000000000000000000000d000000000000000000000000000000000000000000000000007ad82"
                         + "872c28ac782102f5361746f7368693a302e31342e312fe41d000001fabfb5da76657261636b000000000000000000005df6e0e2fabf"
                         + "b5da616c65727400000000000000a80000001bf9aaea60010000000000000000000000ffffff7f00000000ffffff7ffeffff7f01fff"
