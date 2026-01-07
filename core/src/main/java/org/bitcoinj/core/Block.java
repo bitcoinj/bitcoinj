@@ -26,6 +26,7 @@ import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.btc.BtcBlock;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.slf4j.Logger;
@@ -68,7 +69,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Block implements Message {
+public class Block implements Message, BtcBlock {
     /**
      * Flags used to control which elements of block validation are done on
      * received blocks.
@@ -635,6 +636,10 @@ public class Block implements Message {
         return merkleRoot;
     }
 
+    public Sha256Hash merkleRoot() {
+        return getMerkleRoot();  // See TODO in getMerkleRoot
+    }
+
     /** Exists only for unit testing. */
     // For testing only
     void setMerkleRoot(Sha256Hash value) {
@@ -755,12 +760,20 @@ public class Block implements Message {
         this.hash = null;
     }
 
+    public long bits() {
+        return difficultyTarget.compact();
+    }
+
     /**
      * Returns the nonce, an arbitrary value that exists only to make the hash of the block header fall below the
      * difficulty target.
      */
     public long getNonce() {
         return nonce;
+    }
+
+    public long nonce() {
+        return getNonce();
     }
 
     /** Sets the nonce and clears any cached data. */
