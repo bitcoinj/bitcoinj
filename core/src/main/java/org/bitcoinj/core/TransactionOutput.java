@@ -22,7 +22,6 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
@@ -31,10 +30,10 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.Wallet;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.jspecify.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -48,11 +47,13 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 /**
  * <p>A TransactionOutput message contains a scriptPubKey that controls who is able to spend its value. It is a sub-part
  * of the Transaction message.</p>
- * 
+ *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class TransactionOutput {
     private static final Logger log = LoggerFactory.getLogger(TransactionOutput.class);
+
+    private static final byte[] EMPTY_ARRAY = new byte[0];
 
     @Nullable protected Transaction parent;
 
@@ -81,8 +82,8 @@ public class TransactionOutput {
      * @return read message
      * @throws BufferUnderflowException if the read message extends beyond the remaining bytes of the payload
      */
-    public static TransactionOutput read(ByteBuffer payload, Transaction parentTransaction) throws BufferUnderflowException, ProtocolException {
-        Objects.requireNonNull(parentTransaction);
+    public static TransactionOutput read(ByteBuffer payload, @Nullable Transaction parentTransaction)
+            throws BufferUnderflowException, ProtocolException {
         Coin value = Coin.read(payload);
         byte[] scriptBytes = Buffers.readLengthPrefixedBytes(payload);
         return new TransactionOutput(parentTransaction, value, scriptBytes);
@@ -117,6 +118,13 @@ public class TransactionOutput {
         this.scriptBytes = scriptBytes;
         setParent(parent);
         availableForSpending = true;
+    }
+
+    /**
+     * Convert it to a null value
+     */
+    static TransactionOutput createNull() {
+        return new TransactionOutput(null, Coin.NEGATIVE_SATOSHI, TransactionOutput.EMPTY_ARRAY);
     }
 
     public Script getScriptPubKey() throws ScriptException {
@@ -157,6 +165,14 @@ public class TransactionOutput {
     public int messageSize() {
         return Coin.BYTES + // value
                 Buffers.lengthPrefixedBytesSize(scriptBytes);
+    }
+
+    /**
+     * Returns wherever this output is considered "null", meaning it's value is -1.
+     * @return true if value is -1
+     */
+    boolean isNull() {
+        return value == Coin.NEGATIVE_SATOSHI.value;
     }
 
     /**
