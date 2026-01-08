@@ -329,7 +329,9 @@ public class Script {
      * @param os ByteArrayOutputStream to write to
      * @param bytes byte array to prefix with push opcode and write
      * @throws IOException shouldn't happen when using ByteArrayOutputStream
+     * @deprecated use {@link #writePushData(ByteBuffer, byte[])}
      */
+    @Deprecated
     public static void writeBytes(ByteArrayOutputStream os, byte[] bytes) throws IOException {
         if (bytes.length < OP_PUSHDATA1) {
             os.write(bytes.length);       // opcode *is* length
@@ -348,6 +350,43 @@ public class Script {
     }
 
     /**
+     * Writes a byte array to an output buffer with the correct "push" opcode prefix.
+     * To write an integer call {@code writePushData(out, Utils.reverseBytes(Utils.encodeMPI(val, false)));}
+     * @param buffer buffer to write to
+     * @param bytes byte array to prefix with push opcode and write
+     */
+    public static void writePushData(ByteBuffer buffer, byte[] bytes) {
+        buffer.put(toPushData(bytes));
+    }
+
+    // TODO: Use in `writePushData()`?
+    // TODO: Use in 2 places in `ScriptExecution` where `ByteBuffer` or (BAOS) would be unnecessary.
+    // Functional transformation of bytes to push-data-prefixed bytes
+    public static byte[] toPushData(byte[] bytes) {
+        if (bytes.length < OP_PUSHDATA1) {
+            byte[] result = new byte[bytes.length + 1];
+            result[0] = (byte) bytes.length;
+            System.arraycopy(bytes, 0, result, 1, bytes.length);
+            return result;
+        } else if (bytes.length < 256) {
+            byte[] result = new byte[bytes.length + 2];
+            result[0] = OP_PUSHDATA1;
+            result[1] = (byte) bytes.length;
+            System.arraycopy(bytes, 0, result, 2, bytes.length);
+            return result;
+        } else if (bytes.length < 65536) {
+            byte[] result = new byte[bytes.length + 3];
+            result[0] = OP_PUSHDATA2;
+            result[1] = (byte) bytes.length;
+            result[2] = (byte) (bytes.length >> 8);
+            System.arraycopy(bytes, 0, result, 3, bytes.length);
+            return result;
+        } else {
+            throw new RuntimeException("byte array too big");
+        }
+    }
+
+    /**
      * Create a Bitcoin Script program that requires {@code M} of {@code N} keys to sign, using {@code OP_CHECKMULTISIG}.
      * @param threshold The minimum number {@code M} of keys that must sign
      * @param pubkeys A list of {@code N} keys
@@ -360,18 +399,17 @@ public class Script {
         if (pubkeys.size() > 3) {
             log.warn("Creating a multi-signature output that is non-standard: {} pubkeys, should be <= 3", pubkeys.size());
         }
-        try {
-            ByteArrayOutputStream bits = new ByteArrayOutputStream();
-            bits.write(encodeToOpN(threshold));
-            for (ECKey key : pubkeys) {
-                writeBytes(bits, key.getPubKey());
-            }
-            bits.write(encodeToOpN(pubkeys.size()));
-            bits.write(OP_CHECKMULTISIG);
-            return bits.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
+        // Size of keys with push opcodes = 1 length opcode per key + sum of key sizes
+        int pushedKeysSize = pubkeys.size() + pubkeys.stream().mapToInt(pk -> pk.getPubKey().length).sum();
+        int size = 1 + pushedKeysSize + 1;  // Threshold byte + pushed keys + number-of-keys byte
+        ByteBuffer buf = ByteBuffer.allocate(size);
+        buf.put((byte) encodeToOpN(threshold));
+        for (ECKey key : pubkeys) {
+            writePushData(buf, key.getPubKey());
         }
+        buf.put((byte) encodeToOpN(pubkeys.size())); // 1 byte
+        buf.put((byte) OP_CHECKMULTISIG);
+        return buf.array();
     }
 
     public static byte[] createInputScript(byte[] signature, byte[] pubkey) {

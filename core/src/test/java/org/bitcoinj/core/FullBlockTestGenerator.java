@@ -20,6 +20,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Transaction.SigHash;
@@ -653,40 +654,34 @@ public class FullBlockTestGenerator {
         int b39numP2SHOutputs = 0, b39sigOpsPerOutput = 6;
         NewBlock b39 = createNextBlock(b35, chainHeadHeight + 12, null, null);
         {
-            ByteArrayOutputStream p2shScriptPubKey = new ByteArrayOutputStream();
-            try {
-                Script.writeBytes(p2shScriptPubKey, coinbaseOutKeyPubKey);
-                p2shScriptPubKey.write(OP_2DUP);
-                p2shScriptPubKey.write(OP_CHECKSIGVERIFY);
-                p2shScriptPubKey.write(OP_2DUP);
-                p2shScriptPubKey.write(OP_CHECKSIGVERIFY);
-                p2shScriptPubKey.write(OP_2DUP);
-                p2shScriptPubKey.write(OP_CHECKSIGVERIFY);
-                p2shScriptPubKey.write(OP_2DUP);
-                p2shScriptPubKey.write(OP_CHECKSIGVERIFY);
-                p2shScriptPubKey.write(OP_2DUP);
-                p2shScriptPubKey.write(OP_CHECKSIGVERIFY);
-                p2shScriptPubKey.write(OP_CHECKSIG);
-            } catch (IOException e) {
-                throw new RuntimeException(e);  // Cannot happen.
-            }
-            b39p2shScriptPubKey = p2shScriptPubKey.toByteArray();
+            ByteBuffer buffer = ByteBuffer.allocate(100);
+            Script.writePushData(buffer, coinbaseOutKeyPubKey);
+            buffer.put((byte) OP_2DUP);
+            buffer.put((byte) OP_CHECKSIGVERIFY);
+            buffer.put((byte) OP_2DUP);
+            buffer.put((byte) OP_CHECKSIGVERIFY);
+            buffer.put((byte) OP_2DUP);
+            buffer.put((byte) OP_CHECKSIGVERIFY);
+            buffer.put((byte) OP_2DUP);
+            buffer.put((byte) OP_CHECKSIGVERIFY);
+            buffer.put((byte) OP_2DUP);
+            buffer.put((byte) OP_CHECKSIGVERIFY);
+            buffer.put((byte) OP_CHECKSIG);
+            b39p2shScriptPubKey = Buffers.flipAndRead(buffer);
 
             byte[] scriptHash = CryptoUtils.sha256hash160(b39p2shScriptPubKey);
-            ByteArrayOutputStream scriptPubKey = new ByteArrayOutputStream(scriptHash.length + 3);
-            scriptPubKey.write(OP_HASH160);
-            try {
-                Script.writeBytes(scriptPubKey, scriptHash);
-            } catch (IOException e) {
-                throw new RuntimeException(e);  // Cannot happen.
-            }
-            scriptPubKey.write(OP_EQUAL);
+            ByteBuffer scriptPubKeyBuf = ByteBuffer.allocate(scriptHash.length + 3);
+
+            scriptPubKeyBuf.put((byte) OP_HASH160);
+            Script.writePushData(scriptPubKeyBuf, scriptHash);
+            scriptPubKeyBuf.put((byte) OP_EQUAL);
+            byte[] scriptPubKey = Buffers.flipAndRead(scriptPubKeyBuf);
 
             Coin lastOutputValue = out11.value.subtract(SATOSHI);
             TransactionOutPoint lastOutPoint;
             {
                 Transaction tx = new Transaction();
-                tx.addOutput(new TransactionOutput(tx, SATOSHI, scriptPubKey.toByteArray()));
+                tx.addOutput(new TransactionOutput(tx, SATOSHI, scriptPubKey));
                 tx.addOutput(new TransactionOutput(tx, lastOutputValue, new byte[]{OP_1}));
                 addOnlyInputToTransaction(tx, out11);
                 lastOutPoint = TransactionOutPoint.of(tx.getTxId(), 1);
@@ -699,7 +694,7 @@ public class FullBlockTestGenerator {
                 Transaction tx = new Transaction();
 
                 lastOutputValue = lastOutputValue.subtract(SATOSHI);
-                tx.addOutput(new TransactionOutput(tx, SATOSHI, scriptPubKey.toByteArray()));
+                tx.addOutput(new TransactionOutput(tx, SATOSHI, scriptPubKey));
                 tx.addOutput(new TransactionOutput(tx, lastOutputValue, new byte[]{OP_1}));
                 tx.addInput(new TransactionInput(tx, new byte[]{OP_1}, lastOutPoint));
                 lastOutPoint = TransactionOutPoint.of(tx.getTxId(), 1);
@@ -741,21 +736,17 @@ public class FullBlockTestGenerator {
                     Sha256Hash hash = tx.hashForSignature(1, b39p2shScriptPubKey, SigHash.SINGLE, false);
 
                     // Sign input
-                    try {
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream(73);
-                        bos.write(coinbaseOutKey.sign(hash).encodeToDER());
-                        bos.write(SigHash.SINGLE.value);
-                        byte[] signature = bos.toByteArray();
+                    ByteBuffer buf = ByteBuffer.allocate(80);
+                    buf.put(coinbaseOutKey.sign(hash).encodeToDER());
+                    buf.putInt(SigHash.SINGLE.value);
+                    byte[] signature = Buffers.flipAndRead(buf);
 
-                        ByteArrayOutputStream scriptSigBos = new ByteArrayOutputStream(signature.length + b39p2shScriptPubKey.length + 3);
-                        Script.writeBytes(scriptSigBos, new byte[] {(byte) OP_CHECKSIG});
-                        scriptSigBos.write(Script.createInputScript(signature));
-                        Script.writeBytes(scriptSigBos, b39p2shScriptPubKey);
+                    ByteBuffer scriptSigBuf = ByteBuffer.allocate(signature.length + b39p2shScriptPubKey.length + 10);
+                    Script.writePushData(scriptSigBuf, new byte[] {(byte) OP_CHECKSIG});
+                    scriptSigBuf.put(Script.createInputScript(signature));
+                    Script.writePushData(scriptSigBuf, b39p2shScriptPubKey);
 
-                        scriptSig = scriptSigBos.toByteArray();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);  // Cannot happen.
-                    }
+                    scriptSig = Buffers.flipAndRead(buf);
                 }
 
                 tx.replaceInput(inputIndex, tx.getInput(inputIndex).withScriptBytes(scriptSig));
@@ -806,26 +797,22 @@ public class FullBlockTestGenerator {
                                 b39p2shScriptPubKey, SigHash.SINGLE, false);
 
                         // Sign input
-                        try {
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream(
-                                    73);
-                            bos.write(coinbaseOutKey.sign(hash).encodeToDER());
-                            bos.write(SigHash.SINGLE.value);
-                            byte[] signature = bos.toByteArray();
+                        ByteBuffer buf = ByteBuffer.allocate(73);
+                        buf.put(coinbaseOutKey.sign(hash).encodeToDER());
+                        buf.put((byte) SigHash.SINGLE.value);
+                        byte[] signature = Buffers.flipAndRead(buf);
 
-                            ByteArrayOutputStream scriptSigBos = new ByteArrayOutputStream(
-                                    signature.length
-                                            + b39p2shScriptPubKey.length + 3);
-                            Script.writeBytes(scriptSigBos,
-                                    new byte[] { (byte) OP_CHECKSIG});
-                            scriptSigBos.write(Script
-                                    .createInputScript(signature));
-                            Script.writeBytes(scriptSigBos, b39p2shScriptPubKey);
+                        ByteBuffer scriptSigBuf = ByteBuffer.allocate(
+                                signature.length
+                                        + b39p2shScriptPubKey.length + 3);
+                        Script.writePushData(scriptSigBuf,
+                                new byte[] { (byte) OP_CHECKSIG});
+                        scriptSigBuf.put(Script
+                                .createInputScript(signature));
+                        Script.writePushData(scriptSigBuf, b39p2shScriptPubKey);
 
-                            scriptSig = scriptSigBos.toByteArray();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e); // Cannot happen.
-                        }
+                        scriptSig = Buffers.flipAndRead(scriptSigBuf);
+
                     }
 
                     tx.replaceInput(inputIndex, tx.getInput(inputIndex).withScriptBytes(scriptSig));
