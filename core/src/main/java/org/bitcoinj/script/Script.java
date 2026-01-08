@@ -347,7 +347,12 @@ public class Script {
         }
     }
 
-    /** Creates a program that requires at least N of the given keys to sign, using OP_CHECKMULTISIG. */
+    /**
+     * Create a Bitcoin Script program that requires {@code M} of {@code N} keys to sign, using {@code OP_CHECKMULTISIG}.
+     * @param threshold The minimum number {@code M} of keys that must sign
+     * @param pubkeys A list of {@code N} keys
+     * @return The Bitcoin Script program
+     */
     public static byte[] createMultiSigOutputScript(int threshold, List<ECKey> pubkeys) {
         checkArgument(threshold > 0);
         checkArgument(threshold <= pubkeys.size());
