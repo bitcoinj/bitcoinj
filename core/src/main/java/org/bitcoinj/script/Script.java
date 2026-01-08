@@ -41,7 +41,6 @@ import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -327,11 +326,11 @@ public class Script {
     /**
      * Writes a byte array to an output stream with the correct "push" opcode prefix
      * To write an integer call writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(val, false)));
-     * @param os OutputStream to write to
+     * @param os ByteArrayOutputStream to write to
      * @param bytes byte array to prefix with push opcode and write
      * @throws IOException shouldn't happen when using ByteArrayOutputStream
      */
-    public static void writeBytes(OutputStream os, byte[] bytes) throws IOException {
+    public static void writeBytes(ByteArrayOutputStream os, byte[] bytes) throws IOException {
         if (bytes.length < OP_PUSHDATA1) {
             os.write(bytes.length);       // opcode *is* length
             os.write(bytes);
