@@ -26,7 +26,6 @@ import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
@@ -99,7 +98,7 @@ public class DeterministicKeyChainTest {
         final Address address = LegacyAddress.fromBase58("n1bQNoEx8uhmCzzA5JPG6sFdtsUQhwiQJV", TESTNET);
         assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
         assertEquals("mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
-        assertEquals(key1, chain.findKeyFromPubHash(address.getHash()));
+        assertEquals(key1, chain.findKeyFromPubKeyHash(address.getHash()));
         assertEquals(key2, chain.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
@@ -132,7 +131,7 @@ public class DeterministicKeyChainTest {
         final Address address = LegacyAddress.fromBase58("n2nHHRHs7TiZScTuVhZUkzZfTfVgGYwy6X", TESTNET);
         assertEquals(address, key1.toAddress(ScriptType.P2PKH, TESTNET));
         assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
-        assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
+        assertEquals(key1, chain1.findKeyFromPubKeyHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
@@ -161,7 +160,7 @@ public class DeterministicKeyChainTest {
 
         ECKey key2 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         assertEquals("mnp2j9za5zMuz44vNxrJCXXhZsCdh89QXn", key2.toAddress(ScriptType.P2PKH, TESTNET).toString());
-        assertEquals(key1, chain1.findKeyFromPubHash(address.getHash()));
+        assertEquals(key1, chain1.findKeyFromPubKeyHash(address.getHash()));
         assertEquals(key2, chain1.findKeyFromPubKey(key2.getPubKey()));
 
         key1.sign(Sha256Hash.ZERO_HASH);
@@ -254,9 +253,9 @@ public class DeterministicKeyChainTest {
         chain = DeterministicKeyChain.fromProtobuf(keys, null).get(0);
         assertEquals(DeterministicKeyChain.ACCOUNT_ZERO_PATH.asPrivate(), chain.accountFullPath());
         assertEquals(EXPECTED_SERIALIZATION, protoToString(chain.serializeToProtobuf()));
-        assertEquals(key1, chain.findKeyFromPubHash(key1.getPubKeyHash()));
-        assertEquals(key2, chain.findKeyFromPubHash(key2.getPubKeyHash()));
-        assertEquals(key3, chain.findKeyFromPubHash(key3.getPubKeyHash()));
+        assertEquals(key1, chain.findKeyFromPubKeyHash(key1.getPubKeyHash()));
+        assertEquals(key2, chain.findKeyFromPubKeyHash(key2.getPubKeyHash()));
+        assertEquals(key3, chain.findKeyFromPubKeyHash(key3.getPubKeyHash()));
         assertEquals(key4, chain.getKey(KeyChain.KeyPurpose.CHANGE));
         key1.sign(Sha256Hash.ZERO_HASH);
         key2.sign(Sha256Hash.ZERO_HASH);
@@ -291,9 +290,9 @@ public class DeterministicKeyChainTest {
         int oldLookaheadSize = segwitChain.getLookaheadSize();
         segwitChain = DeterministicKeyChain.fromProtobuf(keys, null).get(0);
         assertEquals(EXPECTED_SERIALIZATION, protoToString(segwitChain.serializeToProtobuf()));
-        assertEquals(key1, segwitChain.findKeyFromPubHash(key1.getPubKeyHash()));
-        assertEquals(key2, segwitChain.findKeyFromPubHash(key2.getPubKeyHash()));
-        assertEquals(key3, segwitChain.findKeyFromPubHash(key3.getPubKeyHash()));
+        assertEquals(key1, segwitChain.findKeyFromPubKeyHash(key1.getPubKeyHash()));
+        assertEquals(key2, segwitChain.findKeyFromPubKeyHash(key2.getPubKeyHash()));
+        assertEquals(key3, segwitChain.findKeyFromPubKeyHash(key3.getPubKeyHash()));
         assertEquals(key4, segwitChain.getKey(KeyChain.KeyPurpose.CHANGE));
         key1.sign(Sha256Hash.ZERO_HASH);
         key2.sign(Sha256Hash.ZERO_HASH);
@@ -329,9 +328,9 @@ public class DeterministicKeyChainTest {
         bip44chain = DeterministicKeyChain.fromProtobuf(keys, null).get(0);
         assertEquals(BIP44_COIN_1_ACCOUNT_ZERO_PATH.asPrivate(), bip44chain.accountFullPath());
         assertEquals(EXPECTED_SERIALIZATION, protoToString(bip44chain.serializeToProtobuf()));
-        assertEquals(key1, bip44chain.findKeyFromPubHash(key1.getPubKeyHash()));
-        assertEquals(key2, bip44chain.findKeyFromPubHash(key2.getPubKeyHash()));
-        assertEquals(key3, bip44chain.findKeyFromPubHash(key3.getPubKeyHash()));
+        assertEquals(key1, bip44chain.findKeyFromPubKeyHash(key1.getPubKeyHash()));
+        assertEquals(key2, bip44chain.findKeyFromPubKeyHash(key2.getPubKeyHash()));
+        assertEquals(key3, bip44chain.findKeyFromPubKeyHash(key3.getPubKeyHash()));
         assertEquals(key4, bip44chain.getKey(KeyChain.KeyPurpose.CHANGE));
         key1.sign(Sha256Hash.ZERO_HASH);
         key2.sign(Sha256Hash.ZERO_HASH);
@@ -388,8 +387,8 @@ public class DeterministicKeyChainTest {
         DeterministicKey encKey2 = encChain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
         // Decrypt and check the keys match.
         DeterministicKeyChain decChain = encChain.toDecrypted("open secret");
-        DeterministicKey decKey1 = decChain.findKeyFromPubHash(encKey1.getPubKeyHash());
-        DeterministicKey decKey2 = decChain.findKeyFromPubHash(encKey2.getPubKeyHash());
+        DeterministicKey decKey1 = decChain.findKeyFromPubKeyHash(encKey1.getPubKeyHash());
+        DeterministicKey decKey2 = decChain.findKeyFromPubKeyHash(encKey2.getPubKeyHash());
         assertEquals(decKey1.getPubKeyPoint(), encKey1.getPubKeyPoint());
         assertEquals(decKey2.getPubKeyPoint(), encKey2.getPubKeyPoint());
         assertFalse(decKey1.isEncrypted());
