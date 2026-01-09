@@ -17,7 +17,7 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Lists;
+
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
@@ -298,7 +298,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         totalAmount = totalAmount.add(amount);
 
-        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(toKey));
+        List<UTXO> outputs = store.getOpenTransactionOutputs(Arrays.asList(toKey));
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
         UTXO output = outputs.get(0);
