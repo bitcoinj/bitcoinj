@@ -53,6 +53,8 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 public class WalletPasswordController implements OverlayController<WalletPasswordController> {
     private static final Logger log = LoggerFactory.getLogger(WalletPasswordController.class);
 
+    static final Duration estimatedKeyDerivationTime = Duration.ofSeconds(10);
+
     @FXML HBox buttonsBox;
     @FXML PasswordField pass1;
     @FXML ImageView padlockImage;
@@ -89,7 +91,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
         Objects.requireNonNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
-            protected final void onFinish(AesKey aesKey, int timeTakenMsec) {
+            protected void onFinish(AesKey aesKey, int timeTakenMsec) {
                 checkGuiThread();
                 if (app.walletAppKit().wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
@@ -123,24 +125,8 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static final String TAG = WalletPasswordController.class.getName() + ".target-time";
-
-    // Writes the given time to the wallet as a tag so we can find it again in this class.
-    public static void setTargetTime(Duration targetTime) {
-        ByteString bytes = ByteString.copyFrom(longToByteArray(targetTime.toMillis()));
-        WalletApplication.instance().walletAppKit().wallet().setTag(TAG, bytes);
-    }
-
-    // Reads target time or throws if not set yet (should never happen).
-    public static Duration getTargetTime() throws IllegalArgumentException {
-        return Duration.ofMillis(longFromByteArray(WalletApplication.instance().walletAppKit().wallet().getTag(TAG).toByteArray()));
-    }
-
-    private static byte[] longToByteArray(long val) {
-        return ByteBuffer.allocate(8).putLong(val).array();
-    }
-
-    private static long longFromByteArray(byte[] bytes) {
-        return ByteBuffer.wrap(bytes).getLong();
+    // Returns target time
+    public static Duration getTargetTime() {
+        return estimatedKeyDerivationTime;
     }
 }

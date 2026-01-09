@@ -137,8 +137,6 @@ public abstract class WalletApplication implements AppDelegate {
 
         primaryStage.show();
 
-        WalletSetPasswordController.initEstimatedKeyDerivationTime();
-
         walletAppKit.addListener(new Service.Listener() {
             @Override
             public void failed(Service.State from, Throwable failure) {
