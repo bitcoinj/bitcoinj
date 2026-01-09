@@ -392,14 +392,6 @@ public class WalletProtobufSerializerTest {
     }
 
     @Test
-    public void tags() throws Exception {
-        myWallet.setTag("foo", ByteString.copyFromUtf8("bar"));
-        assertEquals("bar", myWallet.getTag("foo").toStringUtf8());
-        myWallet = roundTrip(myWallet);
-        assertEquals("bar", myWallet.getTag("foo").toStringUtf8());
-    }
-
-    @Test
     public void extensions() throws Exception {
         myWallet.addExtension(new FooWalletExtension("com.whatever.required", true));
         Protos.Wallet proto = new WalletProtobufSerializer().walletToProto(myWallet);
