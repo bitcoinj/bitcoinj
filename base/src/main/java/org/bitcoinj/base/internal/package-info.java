@@ -17,4 +17,7 @@
 /**
  * Classes for internal use only (in both {@code bitcoinj-base} and {@code bitcoinj-core}.)
  */
+@NullMarked
 package org.bitcoinj.base.internal;
+
+import org.jspecify.annotations.NullMarked;

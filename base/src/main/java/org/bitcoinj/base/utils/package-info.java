@@ -17,4 +17,7 @@
 /**
  * bitcoinj utility classes.
  */
+@NullMarked
 package org.bitcoinj.base.utils;
+
+import org.jspecify.annotations.NullMarked;

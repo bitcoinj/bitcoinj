@@ -17,4 +17,7 @@
 /**
  * Exceptions thrown by classes in bitcoinj base.
  */
+@NullMarked
 package org.bitcoinj.base.exceptions;
+
+import org.jspecify.annotations.NullMarked;
