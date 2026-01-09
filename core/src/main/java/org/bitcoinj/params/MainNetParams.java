@@ -19,6 +19,7 @@ package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
+import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
 
@@ -132,7 +133,9 @@ public class MainNetParams extends BitcoinNetworkParams {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
                 genesisBlock = Block.createGenesis(GENESIS_TIME, Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
-                        GENESIS_NONCE);
+                        GENESIS_NONCE, GENESIS_MESSAGE, GENESIS_OUTPUT_PUBKEY);
+                checkState(genesisBlock.getMerkleRoot().equals(GENESIS_MERKLE_ROOT), () ->
+                        "invalid merkle root in block: " + ByteUtils.formatHex(genesisBlock.serialize()));
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () -> "invalid genesis hash");
             }
         }
