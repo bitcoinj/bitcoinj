@@ -18,6 +18,7 @@ package org.bitcoinj.base.utils;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Monetary;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -78,10 +79,10 @@ public final class MonetaryFormat {
     private final char zeroDigit;
     private final char decimalMark;
     private final int minDecimals;
-    private final List<Integer> decimalGroups;
+    private final @Nullable List<Integer> decimalGroups;
     private final int shift;
     private final RoundingMode roundingMode;
-    private final String[] codes;
+    private final String @Nullable[] codes;
     private final char codeSeparator;
     private final boolean codePrefixed;
 
@@ -342,7 +343,7 @@ public final class MonetaryFormat {
     }
 
     private MonetaryFormat(char negativeSign, char positiveSign, char zeroDigit, char decimalMark, int minDecimals,
-            List<Integer> decimalGroups, int shift, RoundingMode roundingMode, String[] codes,
+            @Nullable List<Integer> decimalGroups, int shift, RoundingMode roundingMode, String @Nullable[] codes,
             char codeSeparator, boolean codePrefixed) {
         this.negativeSign = negativeSign;
         this.positiveSign = positiveSign;
@@ -513,6 +514,7 @@ public final class MonetaryFormat {
     /**
      * Get currency code that will be used for current shift.
      */
+    @Nullable
     public String code() {
         if (codes == null)
             return null;
