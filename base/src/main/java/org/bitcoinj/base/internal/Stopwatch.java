@@ -16,6 +16,8 @@ package org.bitcoinj.base.internal;
  * limitations under the License.
  */
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -33,6 +35,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  */
 public class Stopwatch implements TemporalAmount {
     private final Instant startTime;
+    @Nullable
     private Instant stopTime = null;
 
     /**
