@@ -1754,20 +1754,30 @@ public class Wallet extends BaseTaggableObject
     /**
      * Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
      * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}
-     *
      * @param file the wallet file to read
      * @param walletExtensions extensions possibly added to the wallet.
      * @return The Wallet
      * @throws UnreadableWalletException if there was a problem loading or parsing the file
+     * @deprecated WalletExtensions are deprecated, use {@link #loadFromFile(File)}
      */
+    @Deprecated
     public static Wallet loadFromFile(File file, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         return loadFromFile(file, WalletProtobufSerializer.WalletFactory.DEFAULT, false, false, walletExtensions);
     }
 
     /**
+     * Returns a wallet deserialized from the given file.
+     * @param file the wallet file to read
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem loading or parsing the file
+     */
+    public static Wallet loadFromFile(File file) throws UnreadableWalletException {
+        return loadFromFile(file,  new WalletExtension[0]);
+    }
+
+    /**
      * Returns a wallet deserialized from the given file. Extensions previously saved with the wallet can be
      * deserialized by calling @{@link WalletExtension#deserializeWalletExtension(Wallet, byte[])}}
-     *
      * @param file the wallet file to read
      * @param factory wallet factory
      * @param forceReset force a reset of the wallet
@@ -1775,13 +1785,27 @@ public class Wallet extends BaseTaggableObject
      * @param walletExtensions extensions possibly added to the wallet.
      * @return The Wallet
      * @throws UnreadableWalletException if there was a problem loading or parsing the file
+     * @deprecated WalletExtensions are deprecated, use {@link #loadFromFile(File, WalletProtobufSerializer.WalletFactory, boolean)}
      */
+    @Deprecated
     public static Wallet loadFromFile(File file, WalletProtobufSerializer.WalletFactory factory, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         try (FileInputStream stream = new FileInputStream(file)) {
             return loadFromFileStream(stream, factory, forceReset, ignoreMandatoryExtensions, walletExtensions);
         } catch (IOException e) {
             throw new UnreadableWalletException("Could not open file", e);
         }
+    }
+
+    /**
+     * Returns a wallet deserialized from the given file.
+     * @param file the wallet file to read
+     * @param factory wallet factory
+     * @param forceReset force a reset of the wallet
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem loading or parsing the file
+     */
+    public static Wallet loadFromFile(File file, WalletProtobufSerializer.WalletFactory factory, boolean forceReset) throws UnreadableWalletException {
+        return loadFromFile(file, factory, forceReset, false,  new WalletExtension[0]);
     }
 
     /**
@@ -1873,9 +1897,21 @@ public class Wallet extends BaseTaggableObject
      * @param walletExtensions extensions possibly added to the wallet.
      * @return The Wallet
      * @throws UnreadableWalletException if there was a problem reading or parsing the stream
+     * @deprecated WalletExtensions are deprecated, use {@link #loadFromFileStream(InputStream)}
      */
+    @Deprecated
     public static Wallet loadFromFileStream(InputStream stream, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         return loadFromFileStream(stream, WalletProtobufSerializer.WalletFactory.DEFAULT, false, false, walletExtensions);
+    }
+
+    /**
+     * Returns a wallet deserialized from the given input stream and wallet extensions.
+     * @param stream An open InputStream containing a ProtoBuf Wallet
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem reading or parsing the stream
+     */
+    public static Wallet loadFromFileStream(InputStream stream) throws UnreadableWalletException {
+        return loadFromFileStream(stream, new WalletExtension[0]);
     }
 
     /**
@@ -1887,6 +1923,7 @@ public class Wallet extends BaseTaggableObject
      * @param walletExtensions extensions possibly added to the wallet.
      * @return The Wallet
      * @throws UnreadableWalletException if there was a problem reading or parsing the stream
+     * @deprecated WalletExtensions are deprecated, use {@link #loadFromFileStream(InputStream, WalletProtobufSerializer.WalletFactory, boolean)}
      */
     public static Wallet loadFromFileStream(InputStream stream,  WalletProtobufSerializer.WalletFactory factory, boolean forceReset, boolean ignoreMandatoryExtensions, @Nullable WalletExtension... walletExtensions) throws UnreadableWalletException {
         WalletProtobufSerializer loader = new WalletProtobufSerializer(factory);
@@ -1898,6 +1935,18 @@ public class Wallet extends BaseTaggableObject
             log.error("Loaded an inconsistent wallet");
         }
         return wallet;
+    }
+
+    /**
+     * Returns a wallet deserialized from the given input stream and wallet extensions.
+     * @param stream An open InputStream containing a ProtoBuf Wallet
+     * @param factory wallet factory
+     * @param forceReset if true, configure wallet to replay transactions from the blockchain
+     * @return The Wallet
+     * @throws UnreadableWalletException if there was a problem reading or parsing the stream
+     */
+    public static Wallet loadFromFileStream(InputStream stream,  WalletProtobufSerializer.WalletFactory factory, boolean forceReset) throws UnreadableWalletException {
+        return loadFromFileStream(stream, factory, forceReset, false, (WalletExtension) null);
     }
 
     //endregion
@@ -5130,13 +5179,15 @@ public class Wallet extends BaseTaggableObject
 
     // ***************************************************************************************************************
 
-    //region Extensions to the wallet format.
+    //region Extensions to the wallet format (All are deprecated.)
 
     /**
      * By providing an object implementing the {@link WalletExtension} interface, you can save and load arbitrary
      * additional data that will be stored with the wallet. Each extension is identified by an ID, so attempting to
      * add the same extension twice (or two different objects that use the same ID) will throw an IllegalStateException.
+     * @deprecated Store additional wallet data using another mechanism
      */
+    @Deprecated
     public void addExtension(WalletExtension extension) {
         String id = Objects.requireNonNull(extension).getWalletExtensionID();
         lock.lock();
@@ -5152,7 +5203,9 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Atomically adds extension or returns an existing extension if there is one with the same id already present.
+     * @deprecated Store additional wallet data using another mechanism
      */
+    @Deprecated
     public WalletExtension addOrGetExistingExtension(WalletExtension extension) {
         String id = Objects.requireNonNull(extension).getWalletExtensionID();
         lock.lock();
@@ -5172,7 +5225,9 @@ public class Wallet extends BaseTaggableObject
      * Either adds extension as a new extension or replaces the existing extension if one already exists with the same
      * id. This also triggers wallet auto-saving, so may be useful even when called with the same extension as is
      * already present.
+     * @deprecated Store additional wallet data using another mechanism
      */
+    @Deprecated
     public void addOrUpdateExtension(WalletExtension extension) {
         String id = Objects.requireNonNull(extension).getWalletExtensionID();
         lock.lock();
@@ -5184,7 +5239,10 @@ public class Wallet extends BaseTaggableObject
         }
     }
 
-    /** Returns a snapshot of all registered extension objects. The extensions themselves are not copied. */
+    /** Returns a snapshot of all registered extension objects. The extensions themselves are not copied.
+     * @deprecated Store additional wallet data using another mechanism
+     */
+    @Deprecated
     public Map<String, WalletExtension> getExtensions() {
         lock.lock();
         try {
@@ -5198,7 +5256,9 @@ public class Wallet extends BaseTaggableObject
      * Deserialize the wallet extension with the supplied data and then install it, replacing any existing extension
      * that may have existed with the same ID. If an exception is thrown then the extension is removed from the wallet,
      * if already present.
+     * @deprecated Store additional wallet data using another mechanism
      */
+    @Deprecated
     public void deserializeExtension(WalletExtension extension, byte[] data) throws Exception {
         lock.lock();
         keyChainGroupLock.lock();
