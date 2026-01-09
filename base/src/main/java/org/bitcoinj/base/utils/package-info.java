@@ -15,10 +15,9 @@
  */
 
 /**
- * The {@code base} package provides foundational types for <b>bitcoinj</b>. This package
- * has no dependencies other than {@code slf4j-api} and {@code jspecify}.
+ * bitcoinj utility classes.
  */
 @NullMarked
-package org.bitcoinj.base;
+package org.bitcoinj.base.utils;
 
 import org.jspecify.annotations.NullMarked;
