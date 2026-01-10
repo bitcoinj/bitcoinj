@@ -16,7 +16,7 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.base.MoreObjects;
+
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -1428,14 +1428,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public String toString() {
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.addValue(outputScriptType);
-        helper.add("accountPath", accountPath);
-        helper.add("lookaheadSize", lookaheadSize);
-        helper.add("lookaheadThreshold", lookaheadThreshold);
-        if (isFollowing)
-            helper.addValue("following");
-        return helper.toString();
+        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "DeterministicKeyChain{", "}");
+        if (outputScriptType != null) joiner.add(outputScriptType.toString());
+        if (accountPath != null) joiner.add("accountPath=" + accountPath);
+        joiner.add("lookaheadSize=" + lookaheadSize);
+        joiner.add("lookaheadThreshold=" + lookaheadThreshold);
+        if (isFollowing) joiner.add("following");
+        return joiner.toString();
     }
 
     public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey, Network network) {

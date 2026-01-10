@@ -17,7 +17,7 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.MoreObjects;
+
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.LegacyAddress;
@@ -1338,28 +1338,33 @@ public class ECKey implements EncryptableItem {
     }
 
     private String toString(boolean includePrivate, @Nullable AesKey aesKey, Network network) {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub HEX", getPublicKeyAsHex());
+        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "ECKey{", "}");
+        joiner.add("pub HEX=" + getPublicKeyAsHex());
         if (includePrivate) {
             ECKey decryptedKey = isEncrypted() ? decrypt(Objects.requireNonNull(aesKey)) : this;
             try {
-                helper.add("priv HEX", decryptedKey.getPrivateKeyAsHex());
-                helper.add("priv WIF", decryptedKey.getPrivateKeyAsWiF(network));
+                joiner.add("priv HEX=" + decryptedKey.getPrivateKeyAsHex());
+                joiner.add("priv WIF=" + decryptedKey.getPrivateKeyAsWiF(network));
             } catch (IllegalStateException e) {
                 // TODO: Make hasPrivKey() work for deterministic keys and fix this.
             } catch (Exception e) {
                 final String message = e.getMessage();
-                helper.add("priv EXCEPTION", e.getClass().getName() + (message != null ? ": " + message : ""));
+                joiner.add("priv EXCEPTION=" + e.getClass().getName() + (message != null ? ": " + message : ""));
             }
         }
         if (creationTime != null)
-            helper.add("creationTime", creationTime);
-        helper.add("keyCrypter", keyCrypter);
-        if (includePrivate)
-            helper.add("encryptedPrivateKey", encryptedPrivateKey);
-        helper.add("isEncrypted", isEncrypted());
-        helper.add("isPubKeyOnly", isPubKeyOnly());
-        return helper.toString();
+            joiner.add("creationTime=" + creationTime);
+
+        // Explicit null checks to mimic .omitNullValues() behavior
+        if (keyCrypter != null)
+            joiner.add("keyCrypter=" + keyCrypter);
+
+        if (includePrivate && encryptedPrivateKey != null)
+            joiner.add("encryptedPrivateKey=" + encryptedPrivateKey);
+
+        joiner.add("isEncrypted=" + isEncrypted());
+        joiner.add("isPubKeyOnly=" + isPubKeyOnly());
+        return joiner.toString();
     }
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,

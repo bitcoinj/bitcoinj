@@ -17,7 +17,7 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.base.MoreObjects;
+
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.crypto.AesKey;
@@ -230,16 +230,17 @@ public class SendRequest {
     @Override
     public String toString() {
         // print only the user-settable fields
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("emptyWallet", emptyWallet);
-        helper.add("changeAddress", changeAddress);
-        helper.add("feePerKb", feePerKb);
-        helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
-        helper.add("signInputs", signInputs);
-        helper.add("aesKey", aesKey != null ? "set" : null); // careful to not leak the key
-        helper.add("coinSelector", coinSelector);
-        helper.add("shuffleOutputs", shuffleOutputs);
-        helper.add("recipientsPayFees", recipientsPayFees);
-        return helper.toString();
+        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "SendRequest{", "}");
+        joiner.add("emptyWallet=" + emptyWallet);
+        if (changeAddress != null) joiner.add("changeAddress=" + changeAddress);
+        if (feePerKb != null) joiner.add("feePerKb=" + feePerKb);
+        joiner.add("ensureMinRequiredFee=" + ensureMinRequiredFee);
+        joiner.add("signInputs=" + signInputs);
+        // Mimic the logic: helper.add("aesKey", aesKey != null ? "set" : null);
+        if (aesKey != null) joiner.add("aesKey=set");
+        if (coinSelector != null) joiner.add("coinSelector=" + coinSelector);
+        joiner.add("shuffleOutputs=" + shuffleOutputs);
+        joiner.add("recipientsPayFees=" + recipientsPayFees);
+        return joiner.toString();
     }
 }

@@ -17,7 +17,7 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.MoreObjects;
+
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -753,21 +753,23 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
-        helper.add("chainCode", ByteUtils.formatHex(chainCode));
-        helper.add("path", getPathAsString());
-        helper.add("depth", depth);
+        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "DeterministicKey{", "}");
+        joiner.add("pub=" + ByteUtils.formatHex(pub.getEncoded()));
+        joiner.add("chainCode=" + ByteUtils.formatHex(chainCode));
+        joiner.add("path=" + getPathAsString());
+        joiner.add("depth=" + depth);
+
         Optional<Instant> creationTime = this.getCreationTime();
         if (!creationTime.isPresent())
-            helper.add("creationTimeSeconds", "unknown");
+            joiner.add("creationTimeSeconds=unknown");
         else if (parent != null)
-            helper.add("creationTimeSeconds", creationTime.get().getEpochSecond() + " (inherited)");
+            joiner.add("creationTimeSeconds=" + creationTime.get().getEpochSecond() + " (inherited)");
         else
-            helper.add("creationTimeSeconds", creationTime.get().getEpochSecond());
-        helper.add("isEncrypted", isEncrypted());
-        helper.add("isPubKeyOnly", isPubKeyOnly());
-        return helper.toString();
+            joiner.add("creationTimeSeconds=" + creationTime.get().getEpochSecond());
+
+        joiner.add("isEncrypted=" + isEncrypted());
+        joiner.add("isPubKeyOnly=" + isPubKeyOnly());
+        return joiner.toString();
     }
 
     @Override

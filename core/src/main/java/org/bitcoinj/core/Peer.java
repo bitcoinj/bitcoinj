@@ -16,7 +16,7 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.MoreObjects;
+
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.bitcoinj.core.internal.GuardedBy;
@@ -69,6 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.StringJoiner;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -384,15 +385,23 @@ public class Peer extends PeerSocketHandler {
 
     @Override
     public String toString() {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.addValue(getAddress());
-        helper.add("version", vPeerVersionMessage.clientVersion);
-        helper.add("subVer", vPeerVersionMessage.subVer);
+        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "Peer{", "}");
+
+        if (getAddress() != null)
+            joiner.add(getAddress().toString());
+
+        joiner.add("version=" + vPeerVersionMessage.clientVersion);
+
+        if (vPeerVersionMessage.subVer != null)
+            joiner.add("subVer=" + vPeerVersionMessage.subVer);
+
         if (vPeerVersionMessage.localServices.hasAny())
-            helper.add("services", vPeerVersionMessage.localServices.toString());
-        helper.add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time));
-        helper.add("height", vPeerVersionMessage.bestHeight);
-        return helper.toString();
+            joiner.add("services=" + vPeerVersionMessage.localServices);
+
+        joiner.add("time=" + TimeUtils.dateTimeFormat(vPeerVersionMessage.time));
+        joiner.add("height=" + vPeerVersionMessage.bestHeight);
+
+        return joiner.toString();
     }
 
     @Override

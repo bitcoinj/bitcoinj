@@ -17,7 +17,7 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.MoreObjects;
+
 import com.google.common.math.IntMath;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
@@ -696,9 +696,7 @@ public class Transaction implements Message {
 
     @Override
     public String toString() {
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(toString(null, null));
-        return helper.toString();
+        return "Transaction{" + toString(null, null) + "}";
     }
 
     /**

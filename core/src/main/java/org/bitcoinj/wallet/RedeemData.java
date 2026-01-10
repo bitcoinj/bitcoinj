@@ -17,7 +17,7 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.base.MoreObjects;
+
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
@@ -73,9 +73,9 @@ public class RedeemData {
 
     @Override
     public String toString() {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("redeemScript", redeemScript);
-        helper.add("keys", keys);
-        return helper.toString();
+        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "RedeemData{", "}");
+        if (redeemScript != null) joiner.add("redeemScript=" + redeemScript);
+        if (keys != null) joiner.add("keys=" + keys);
+        return joiner.toString();
     }
 }

@@ -16,7 +16,7 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.MoreObjects;
+
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -106,8 +106,6 @@ public abstract class ListMessage implements Message {
 
     @Override
     public String toString() {
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(items);
-        return helper.toString();
+        return "ListMessage{" + items + "}";
     }
 }
