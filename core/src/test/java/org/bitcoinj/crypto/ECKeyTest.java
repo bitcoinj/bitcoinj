@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
@@ -323,7 +322,7 @@ public class ECKeyTest {
         ECKey.ECDSASignature sig = key.sign(hash);
         key = ECKey.fromPublicOnly(key);
 
-        List<Byte> possibleRecIds = Lists.newArrayList((byte) 0, (byte) 1, (byte) 2, (byte) 3);
+        List<Byte> possibleRecIds = Arrays.asList((byte) 0, (byte) 1, (byte) 2, (byte) 3);
         byte recId = key.findRecoveryId(hash, sig);
         assertTrue(possibleRecIds.contains(recId));
     }

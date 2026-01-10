@@ -18,7 +18,6 @@
 
 package org.bitcoinj.script;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.DumpedPrivateKey;
@@ -35,7 +34,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ScriptPatternTest {
-    private List<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random(), ECKey.random());
+    private List<ECKey> keys = Arrays.asList(ECKey.random(), ECKey.random(), ECKey.random());
 
     @Test
     public void testCreateP2PKHOutputScript() {

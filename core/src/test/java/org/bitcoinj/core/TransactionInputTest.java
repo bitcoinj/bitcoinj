@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Lists;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bitcoinj.base.Address;
@@ -37,6 +36,7 @@ import org.junit.runner.RunWith;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -106,7 +106,7 @@ public class TransactionInputTest {
 
             @Override
             public List<UTXO> getOpenTransactionOutputs(List<ECKey> addresses) throws UTXOProviderException {
-                return Lists.newArrayList(utxo);
+                return Arrays.asList(utxo);
             }
 
             @Override

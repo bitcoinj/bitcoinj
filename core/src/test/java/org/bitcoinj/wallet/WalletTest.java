@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bitcoinj.base.BitcoinNetwork;
@@ -1019,8 +1018,8 @@ public class WalletTest extends TestWithWallet {
         FakeTxBuilder.BlockPair blockPair2 = createFakeBlock(blockStore, blockPair0.storedBlock, 2, txA1, txB1);
         wallet.receiveFromBlock(txA1, blockPair2.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 0);
         wallet.receiveFromBlock(txB1, blockPair2.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 1);
-        wallet.reorganize(blockPair0.storedBlock, Lists.newArrayList(blockPair1.storedBlock),
-                Lists.newArrayList(blockPair2.storedBlock));
+        wallet.reorganize(blockPair0.storedBlock, Arrays.asList(blockPair1.storedBlock),
+                Arrays.asList(blockPair2.storedBlock));
         assertSpent(txA1);
         assertDead(txA2);
         assertDead(txA3);
@@ -1036,8 +1035,8 @@ public class WalletTest extends TestWithWallet {
         wallet.receiveFromBlock(txA1, blockPair3.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 0);
         wallet.receiveFromBlock(txB1, blockPair3.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 1);
         wallet.receiveFromBlock(txC1, blockPair3.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 2);
-        wallet.reorganize(blockPair0.storedBlock, Lists.newArrayList(blockPair2.storedBlock),
-                Lists.newArrayList(blockPair3.storedBlock));
+        wallet.reorganize(blockPair0.storedBlock, Arrays.asList(blockPair2.storedBlock),
+                Arrays.asList(blockPair3.storedBlock));
         assertSpent(txA1);
         assertDead(txA2);
         assertDead(txA3);
@@ -1051,8 +1050,8 @@ public class WalletTest extends TestWithWallet {
         // A reorg: previous block "replaced" by new block containing txB1
         FakeTxBuilder.BlockPair blockPair4 = createFakeBlock(blockStore, blockPair0.storedBlock, 2, txB1);
         wallet.receiveFromBlock(txB1, blockPair4.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 0);
-        wallet.reorganize(blockPair0.storedBlock, Lists.newArrayList(blockPair3.storedBlock),
-                Lists.newArrayList(blockPair4.storedBlock));
+        wallet.reorganize(blockPair0.storedBlock, Arrays.asList(blockPair3.storedBlock),
+                Arrays.asList(blockPair4.storedBlock));
         assertPending(txA1);
         assertDead(txA2);
         assertDead(txA3);
@@ -1066,8 +1065,8 @@ public class WalletTest extends TestWithWallet {
         // A reorg: previous block "replaced" by new block containing txA2
         FakeTxBuilder.BlockPair blockPair5 = createFakeBlock(blockStore, blockPair0.storedBlock, 2, txA2);
         wallet.receiveFromBlock(txA2, blockPair5.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 0);
-        wallet.reorganize(blockPair0.storedBlock, Lists.newArrayList(blockPair4.storedBlock),
-                Lists.newArrayList(blockPair5.storedBlock));
+        wallet.reorganize(blockPair0.storedBlock, Arrays.asList(blockPair4.storedBlock),
+                Arrays.asList(blockPair5.storedBlock));
         assertDead(txA1);
         assertUnspent(txA2);
         assertDead(txA3);
@@ -1080,8 +1079,8 @@ public class WalletTest extends TestWithWallet {
 
         // A reorg: previous block "replaced" by new empty block
         FakeTxBuilder.BlockPair blockPair6 = createFakeBlock(blockStore, blockPair0.storedBlock, 2);
-        wallet.reorganize(blockPair0.storedBlock, Lists.newArrayList(blockPair5.storedBlock),
-                Lists.newArrayList(blockPair6.storedBlock));
+        wallet.reorganize(blockPair0.storedBlock, Arrays.asList(blockPair5.storedBlock),
+                Arrays.asList(blockPair6.storedBlock));
         assertDead(txA1);
         assertPending(txA2);
         assertDead(txA3);
@@ -1124,8 +1123,8 @@ public class WalletTest extends TestWithWallet {
         // A reorg: previous block "replaced" by new block containing doubleSpends.t2
         FakeTxBuilder.BlockPair blockPair2 = createFakeBlock(blockStore, blockPair0.storedBlock, 2, doubleSpends.t2);
         wallet.receiveFromBlock(doubleSpends.t2, blockPair2.storedBlock, AbstractBlockChain.NewBlockType.SIDE_CHAIN, 0);
-        wallet.reorganize(blockPair0.storedBlock, Lists.newArrayList(blockPair1.storedBlock),
-                Lists.newArrayList(blockPair2.storedBlock));
+        wallet.reorganize(blockPair0.storedBlock, Arrays.asList(blockPair1.storedBlock),
+                Arrays.asList(blockPair2.storedBlock));
         assertDead(doubleSpends.t1);
         assertSpent(doubleSpends.t2);
         assertDead(t1b);
