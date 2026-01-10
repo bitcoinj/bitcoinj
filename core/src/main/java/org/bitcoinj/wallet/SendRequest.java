@@ -17,9 +17,9 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
@@ -229,17 +229,16 @@ public class SendRequest {
 
     @Override
     public String toString() {
-        // print only the user-settable fields
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("emptyWallet", emptyWallet);
-        helper.add("changeAddress", changeAddress);
-        helper.add("feePerKb", feePerKb);
-        helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
-        helper.add("signInputs", signInputs);
-        helper.add("aesKey", aesKey != null ? "set" : null); // careful to not leak the key
-        helper.add("coinSelector", coinSelector);
-        helper.add("shuffleOutputs", shuffleOutputs);
-        helper.add("recipientsPayFees", recipientsPayFees);
-        return helper.toString();
+        return new ToStringUtil(this)
+                .add("emptyWallet", emptyWallet)
+                .add("changeAddress", changeAddress)
+                .add("feePerKb", feePerKb)
+                .add("ensureMinRequiredFee", ensureMinRequiredFee)
+                .add("signInputs", signInputs)
+                .addIf(aesKey != null, "aesKey", "set")
+                .add("coinSelector", coinSelector)   // Skips if null
+                .add("shuffleOutputs", shuffleOutputs)
+                .add("recipientsPayFees", recipientsPayFees)
+                .toString();
     }
 }

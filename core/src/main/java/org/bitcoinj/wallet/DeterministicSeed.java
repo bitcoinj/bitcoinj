@@ -17,9 +17,9 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.crypto.EncryptableItem;
 import org.bitcoinj.crypto.EncryptedData;
@@ -201,14 +201,16 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     public String toString(boolean includePrivate) {
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        if (isEncrypted())
-            helper.addValue("encrypted");
-        else if (includePrivate)
-            helper.addValue(toHexString()).add("mnemonicCode", getMnemonicString());
-        else
-            helper.addValue("unencrypted");
-        return helper.toString();
+        ToStringUtil helper = new ToStringUtil(this);
+        if (isEncrypted()) {
+            return helper.addValue("encrypted").toString();
+        } else if (includePrivate) {
+            return helper.addValue(toHexString())
+                    .addIf(getMnemonicString() != null, "mnemonicCode", getMnemonicString())
+                    .toString();
+        } else {
+            return helper.addValue("unencrypted").toString();
+        }
     }
 
     /** Returns the seed as hex or null if encrypted. */
