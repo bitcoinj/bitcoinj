@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
@@ -26,6 +25,7 @@ import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
+import org.bitcoinj.core.internal.VisibleForTesting;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.slf4j.Logger;

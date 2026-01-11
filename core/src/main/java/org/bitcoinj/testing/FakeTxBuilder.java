@@ -17,13 +17,13 @@
 
 package org.bitcoinj.testing;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
+import org.bitcoinj.core.internal.VisibleForTesting;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.TestBlocks;
 import org.bitcoinj.crypto.ECKey;
