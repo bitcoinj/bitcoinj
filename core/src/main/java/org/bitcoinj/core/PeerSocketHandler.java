@@ -16,8 +16,8 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.internal.FutureUtils;
+import org.bitcoinj.core.internal.VisibleForTesting;
 import org.bitcoinj.net.MessageWriteTarget;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.net.NioClientManager;
