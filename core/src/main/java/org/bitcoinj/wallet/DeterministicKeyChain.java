@@ -16,12 +16,12 @@
 
 package org.bitcoinj.wallet;
 
-
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.StreamUtils;
@@ -53,7 +53,6 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -1428,13 +1427,13 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
 
     @Override
     public String toString() {
-        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "DeterministicKeyChain{", "}");
-        if (outputScriptType != null) joiner.add(outputScriptType.toString());
-        if (accountPath != null) joiner.add("accountPath=" + accountPath);
-        joiner.add("lookaheadSize=" + lookaheadSize);
-        joiner.add("lookaheadThreshold=" + lookaheadThreshold);
-        if (isFollowing) joiner.add("following");
-        return joiner.toString();
+        return ToStringUtil.forObject(this)
+                .addValue(outputScriptType)
+                .add("accountPath", accountPath)
+                .add("lookaheadSize", lookaheadSize)
+                .add("lookaheadThreshold", lookaheadThreshold)
+                .addIf(isFollowing, "following")
+                .toString();
     }
 
     public String toString(boolean includeLookahead, boolean includePrivateKeys, @Nullable AesKey aesKey, Network network) {

@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -25,6 +24,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
@@ -753,23 +753,24 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "DeterministicKey{", "}");
-        joiner.add("pub=" + ByteUtils.formatHex(pub.getEncoded()));
-        joiner.add("chainCode=" + ByteUtils.formatHex(chainCode));
-        joiner.add("path=" + getPathAsString());
-        joiner.add("depth=" + depth);
+        ToStringUtil helper = ToStringUtil.forObject(this)
+                .add("pub", ByteUtils.formatHex(pub.getEncoded()))
+                .add("chainCode", ByteUtils.formatHex(chainCode))
+                .add("path", getPathAsString())
+                .add("depth", depth);
 
         Optional<Instant> creationTime = this.getCreationTime();
         if (!creationTime.isPresent())
-            joiner.add("creationTimeSeconds=unknown");
+            helper.add("creationTimeSeconds", "unknown");
         else if (parent != null)
-            joiner.add("creationTimeSeconds=" + creationTime.get().getEpochSecond() + " (inherited)");
+            helper.add("creationTimeSeconds", creationTime.get().getEpochSecond() + " (inherited)");
         else
-            joiner.add("creationTimeSeconds=" + creationTime.get().getEpochSecond());
+            helper.add("creationTimeSeconds", creationTime.get().getEpochSecond());
 
-        joiner.add("isEncrypted=" + isEncrypted());
-        joiner.add("isPubKeyOnly=" + isPubKeyOnly());
-        return joiner.toString();
+        return helper
+                .add("isEncrypted", isEncrypted())
+                .add("isPubKeyOnly", isPubKeyOnly())
+                .toString();
     }
 
     @Override

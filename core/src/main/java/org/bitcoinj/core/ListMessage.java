@@ -16,10 +16,10 @@
 
 package org.bitcoinj.core;
 
-
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.core.internal.ToStringUtil;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -106,6 +106,8 @@ public abstract class ListMessage implements Message {
 
     @Override
     public String toString() {
-        return "ListMessage{" + items + "}";
+        return ToStringUtil.forObject(this)
+                .addValue(items)
+                .toString();
     }
 }

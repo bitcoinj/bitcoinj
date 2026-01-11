@@ -16,13 +16,13 @@
 
 package org.bitcoinj.core;
 
-
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
@@ -385,23 +385,22 @@ public class Peer extends PeerSocketHandler {
 
     @Override
     public String toString() {
-        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "Peer{", "}");
+        ToStringUtil helper = ToStringUtil.forObject(this)
+                .addValue(getAddress())
+                .add("version", vPeerVersionMessage.clientVersion);
 
-        if (getAddress() != null)
-            joiner.add(getAddress().toString());
+        if (vPeerVersionMessage.subVer != null) {
+            helper.add("subVer", vPeerVersionMessage.subVer);
+        }
 
-        joiner.add("version=" + vPeerVersionMessage.clientVersion);
+        if (vPeerVersionMessage.localServices.hasAny()) {
+            helper.add("services", vPeerVersionMessage.localServices);
+        }
 
-        if (vPeerVersionMessage.subVer != null)
-            joiner.add("subVer=" + vPeerVersionMessage.subVer);
-
-        if (vPeerVersionMessage.localServices.hasAny())
-            joiner.add("services=" + vPeerVersionMessage.localServices);
-
-        joiner.add("time=" + TimeUtils.dateTimeFormat(vPeerVersionMessage.time));
-        joiner.add("height=" + vPeerVersionMessage.bestHeight);
-
-        return joiner.toString();
+        return helper
+                .add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time))
+                .add("height", vPeerVersionMessage.bestHeight)
+                .toString();
     }
 
     @Override

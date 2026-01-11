@@ -17,9 +17,9 @@
 
 package org.bitcoinj.wallet;
 
-
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
@@ -229,18 +229,21 @@ public class SendRequest {
 
     @Override
     public String toString() {
-        // print only the user-settable fields
-        java.util.StringJoiner joiner = new java.util.StringJoiner(", ", "SendRequest{", "}");
-        joiner.add("emptyWallet=" + emptyWallet);
-        if (changeAddress != null) joiner.add("changeAddress=" + changeAddress);
-        if (feePerKb != null) joiner.add("feePerKb=" + feePerKb);
-        joiner.add("ensureMinRequiredFee=" + ensureMinRequiredFee);
-        joiner.add("signInputs=" + signInputs);
-        // Mimic the logic: helper.add("aesKey", aesKey != null ? "set" : null);
-        if (aesKey != null) joiner.add("aesKey=set");
-        if (coinSelector != null) joiner.add("coinSelector=" + coinSelector);
-        joiner.add("shuffleOutputs=" + shuffleOutputs);
-        joiner.add("recipientsPayFees=" + recipientsPayFees);
-        return joiner.toString();
+        ToStringUtil helper = ToStringUtil.forObject(this)
+                .add("emptyWallet", emptyWallet);
+
+        if (changeAddress != null) helper.add("changeAddress", changeAddress);
+        if (feePerKb != null) helper.add("feePerKb", feePerKb);
+
+        helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
+        helper.add("signInputs", signInputs);
+
+        if (aesKey != null) helper.add("aesKey", "set"); // careful to not leak the key
+        if (coinSelector != null) helper.add("coinSelector", coinSelector);
+
+        return helper
+                .add("shuffleOutputs", shuffleOutputs)
+                .add("recipientsPayFees", recipientsPayFees)
+                .toString();
     }
 }

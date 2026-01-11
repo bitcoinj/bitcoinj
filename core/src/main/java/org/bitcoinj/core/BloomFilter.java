@@ -16,10 +16,10 @@
 
 package org.bitcoinj.core;
 
-
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptChunk;
@@ -157,8 +157,11 @@ public class BloomFilter implements Message {
 
     @Override
     public String toString() {
-        return "BloomFilter{data length=" + data.length + ", hashFuncs=" + hashFuncs + ", nFlags=" + getUpdateFlag()
-                + "}";
+        return ToStringUtil.forObject(this)
+                .add("data length", data.length)
+                .add("hashFuncs", hashFuncs)
+                .add("nFlags", getUpdateFlag())
+                .toString();
     }
 
     @Override
