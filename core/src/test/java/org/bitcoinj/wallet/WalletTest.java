@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bitcoinj.base.BitcoinNetwork;

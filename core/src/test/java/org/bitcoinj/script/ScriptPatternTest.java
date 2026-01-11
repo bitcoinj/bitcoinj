@@ -18,7 +18,6 @@
 
 package org.bitcoinj.script;
 
-
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.DumpedPrivateKey;

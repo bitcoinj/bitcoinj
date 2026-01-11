@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;

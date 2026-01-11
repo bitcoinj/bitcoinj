@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bitcoinj.base.Address;
@@ -37,7 +36,10 @@ import org.junit.runner.RunWith;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;

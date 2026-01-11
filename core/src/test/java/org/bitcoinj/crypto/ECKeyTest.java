@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;

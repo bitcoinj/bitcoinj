@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
