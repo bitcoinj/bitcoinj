@@ -17,11 +17,11 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.core.internal.GuardedBy;
+import org.bitcoinj.core.internal.VisibleForTesting;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.exceptions.AddressFormatException;
