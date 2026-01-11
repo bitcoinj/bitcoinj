@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
@@ -74,7 +73,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = ECKey.random();
-        final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
+        final ArrayList<ECKey> keys = new ArrayList<>(Arrays.asList(key1, key2));
 
         // Import two keys, check the event is correct.
         assertEquals(2, chain.importKeys(keys));
@@ -126,14 +125,14 @@ public class BasicKeyChainTest {
 
     @Test(expected = IllegalStateException.class)
     public void checkPasswordNotEncrypted() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final ArrayList<ECKey> keys = new ArrayList<>(Arrays.asList(ECKey.random(), ECKey.random()));
         chain.importKeys(keys);
         chain.checkPassword("test");
     }
 
     @Test(expected = IllegalStateException.class)
     public void doubleEncryptFails() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final ArrayList<ECKey> keys = new ArrayList<>(Arrays.asList(ECKey.random(), ECKey.random()));
         chain.importKeys(keys);
         chain = chain.toEncrypted("foo");
         chain.toEncrypted("foo");
@@ -283,7 +282,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = ECKey.random();
-        final List<ECKey> keys = Lists.newArrayList(key1, key2);
+        final List<ECKey> keys = new ArrayList<>(Arrays.asList(key1, key2));
         assertEquals(2, chain.importKeys(keys));
 
         assertFalse(chain.findOldestKeyAfter(now.plus(2, ChronoUnit.DAYS)).isPresent());
