@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.math.IntMath;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
@@ -48,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.jspecify.annotations.Nullable;
-import java.math.RoundingMode;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -397,7 +395,7 @@ public class Transaction implements Message {
     public int getVsize() {
         if (!hasWitnesses())
             return this.messageSize();
-        return IntMath.divide(getWeight(), 4, RoundingMode.CEILING); // round up
+        return (getWeight() + 3) / 4;
     }
 
 

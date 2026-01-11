@@ -17,7 +17,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Coin;

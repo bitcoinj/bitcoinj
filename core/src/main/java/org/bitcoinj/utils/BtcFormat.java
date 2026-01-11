@@ -16,7 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.base.Strings;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.utils.BtcAutoFormat.Style;
 
@@ -679,7 +678,7 @@ public abstract class BtcFormat extends Format {
          *  <p>Note that by applying a pattern you override the configured formatting style of
          *  {@link BtcAutoFormat} instances.  */
         public Builder pattern(String val) {
-            if (!Strings.isNullOrEmpty(localizedPattern))
+            if (localizedPattern != null && !localizedPattern.isEmpty())
                 throw new IllegalStateException("You cannot invoke both pattern() and localizedPattern()");
             pattern = val;
             return this;
@@ -713,7 +712,7 @@ public abstract class BtcFormat extends Format {
          *  <p>Note that by applying a pattern you override the configured formatting style of
          *  {@link BtcAutoFormat} instances.         */
         public Builder localizedPattern(String val) {
-            if (!Strings.isNullOrEmpty(pattern))
+            if (pattern != null && !pattern.isEmpty())
                 throw new IllegalStateException("You cannot invoke both pattern() and localizedPattern().");
             localizedPattern = val;
             return this;
@@ -723,16 +722,16 @@ public abstract class BtcFormat extends Format {
          *  to the state of this {@code Builder} instance at the time this method is invoked. */
         public BtcFormat build() {
             BtcFormat f = variant.newInstance(this);
-            if (!Strings.isNullOrEmpty(symbol) || !Strings.isNullOrEmpty(code)) { synchronized(f.numberFormat) {
+            if ((symbol != null && !symbol.isEmpty()) || (code != null && !code.isEmpty())) { synchronized(f.numberFormat) {
                 DecimalFormatSymbols defaultSigns = f.numberFormat.getDecimalFormatSymbols();
                 setSymbolAndCode(f.numberFormat,
-                        !Strings.isNullOrEmpty(symbol) ? symbol : defaultSigns.getCurrencySymbol(),
-                        !Strings.isNullOrEmpty(code) ? code : defaultSigns.getInternationalCurrencySymbol()
+                        (symbol != null && !symbol.isEmpty()) ? symbol : defaultSigns.getCurrencySymbol(),
+                        (code != null && !code.isEmpty()) ? code : defaultSigns.getInternationalCurrencySymbol()
                 );
             }}
-            if (!Strings.isNullOrEmpty(localizedPattern) || !Strings.isNullOrEmpty(pattern)) {
+            if ((localizedPattern != null && !localizedPattern.isEmpty()) || (pattern != null && !pattern.isEmpty())) {
                 int places = f.numberFormat.getMinimumFractionDigits();
-                if (!Strings.isNullOrEmpty(localizedPattern)) f.numberFormat.applyLocalizedPattern(negify(localizedPattern));
+                if (localizedPattern != null && !localizedPattern.isEmpty()) f.numberFormat.applyLocalizedPattern(negify(localizedPattern));
                 else f.numberFormat.applyPattern(negify(pattern));
                 f.numberFormat.setMinimumFractionDigits(places);
                 f.numberFormat.setMaximumFractionDigits(places);
@@ -1549,7 +1548,7 @@ public abstract class BtcFormat extends Format {
     public String pattern() { synchronized(numberFormat) {
         StringBuilder groups = new StringBuilder();
         for (int group : decimalGroups) {
-            groups.append("(").append(Strings.repeat("#", group)).append(")");
+            groups.append("(").append(String.join("", Collections.nCopies(group, "#"))).append(")");
         }
         DecimalFormatSymbols s = numberFormat.getDecimalFormatSymbols();
         String digit = String.valueOf(s.getDigit());
