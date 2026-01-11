@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.LegacyAddress;
@@ -29,6 +28,7 @@ import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.crypto.utils.MessageVerifyUtils;
 import org.bitcoinj.protobuf.wallet.Protos;
@@ -1338,8 +1338,9 @@ public class ECKey implements EncryptableItem {
     }
 
     private String toString(boolean includePrivate, @Nullable AesKey aesKey, Network network) {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub HEX", getPublicKeyAsHex());
+        ToStringUtil helper = ToStringUtil.forObject(this)
+                .add("pub HEX", getPublicKeyAsHex());
+
         if (includePrivate) {
             ECKey decryptedKey = isEncrypted() ? decrypt(Objects.requireNonNull(aesKey)) : this;
             try {
@@ -1352,14 +1353,15 @@ public class ECKey implements EncryptableItem {
                 helper.add("priv EXCEPTION", e.getClass().getName() + (message != null ? ": " + message : ""));
             }
         }
-        if (creationTime != null)
-            helper.add("creationTime", creationTime);
-        helper.add("keyCrypter", keyCrypter);
-        if (includePrivate)
-            helper.add("encryptedPrivateKey", encryptedPrivateKey);
-        helper.add("isEncrypted", isEncrypted());
-        helper.add("isPubKeyOnly", isPubKeyOnly());
-        return helper.toString();
+
+        if (creationTime != null) helper.add("creationTime", creationTime);
+        if (keyCrypter != null) helper.add("keyCrypter", keyCrypter);
+        if (includePrivate && encryptedPrivateKey != null) helper.add("encryptedPrivateKey", encryptedPrivateKey);
+
+        return helper
+                .add("isEncrypted", isEncrypted())
+                .add("isPubKeyOnly", isPubKeyOnly())
+                .toString();
     }
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,

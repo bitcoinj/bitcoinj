@@ -17,7 +17,6 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
@@ -25,6 +24,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
@@ -753,11 +753,12 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public String toString() {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
-        helper.add("chainCode", ByteUtils.formatHex(chainCode));
-        helper.add("path", getPathAsString());
-        helper.add("depth", depth);
+        ToStringUtil helper = ToStringUtil.forObject(this)
+                .add("pub", ByteUtils.formatHex(pub.getEncoded()))
+                .add("chainCode", ByteUtils.formatHex(chainCode))
+                .add("path", getPathAsString())
+                .add("depth", depth);
+
         Optional<Instant> creationTime = this.getCreationTime();
         if (!creationTime.isPresent())
             helper.add("creationTimeSeconds", "unknown");
@@ -765,9 +766,11 @@ public class DeterministicKey extends ECKey {
             helper.add("creationTimeSeconds", creationTime.get().getEpochSecond() + " (inherited)");
         else
             helper.add("creationTimeSeconds", creationTime.get().getEpochSecond());
-        helper.add("isEncrypted", isEncrypted());
-        helper.add("isPubKeyOnly", isPubKeyOnly());
-        return helper.toString();
+
+        return helper
+                .add("isEncrypted", isEncrypted())
+                .add("isPubKeyOnly", isPubKeyOnly())
+                .toString();
     }
 
     @Override
