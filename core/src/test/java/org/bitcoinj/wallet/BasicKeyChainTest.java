@@ -74,7 +74,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = ECKey.random();
-        final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
+        final List<ECKey> keys = Lists.newArrayList(key1, key2);
 
         // Import two keys, check the event is correct.
         assertEquals(2, chain.importKeys(keys));
@@ -84,11 +84,11 @@ public class BasicKeyChainTest {
         assertEquals(now, chain.earliestKeyCreationTime());
         // Check we ignore duplicates.
         final ECKey newKey = ECKey.random();
-        keys.add(newKey);
-        assertEquals(1, chain.importKeys(keys));
+        final List<ECKey> keys2 = Lists.newArrayList(key1, key2, newKey);
+        assertEquals(1, chain.importKeys(keys2));
         assertTrue(onKeysAddedRan.getAndSet(false));
         assertEquals(newKey, onKeysAdded.getAndSet(null).get(0));
-        assertEquals(0, chain.importKeys(keys));
+        assertEquals(0, chain.importKeys(keys2));
         assertFalse(onKeysAddedRan.getAndSet(false));
         assertNull(onKeysAdded.get());
 
