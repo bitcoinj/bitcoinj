@@ -32,7 +32,6 @@ import org.junit.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -126,14 +125,14 @@ public class BasicKeyChainTest {
 
     @Test(expected = IllegalStateException.class)
     public void checkPasswordNotEncrypted() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final List<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain.checkPassword("test");
     }
 
     @Test(expected = IllegalStateException.class)
     public void doubleEncryptFails() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final List<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain = chain.toEncrypted("foo");
         chain.toEncrypted("foo");
