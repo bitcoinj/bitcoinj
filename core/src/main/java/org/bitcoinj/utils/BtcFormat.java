@@ -16,7 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.base.Strings;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.utils.BtcAutoFormat.Style;
 
@@ -1549,7 +1548,7 @@ public abstract class BtcFormat extends Format {
     public String pattern() { synchronized(numberFormat) {
         StringBuilder groups = new StringBuilder();
         for (int group : decimalGroups) {
-            groups.append("(").append(Strings.repeat("#", group)).append(")");
+            groups.append("(").append(String.join("", Collections.nCopies(group, "#"))).append(")");
         }
         DecimalFormatSymbols s = numberFormat.getDecimalFormatSymbols();
         String digit = String.valueOf(s.getDigit());
