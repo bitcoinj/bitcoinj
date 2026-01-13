@@ -1130,17 +1130,6 @@ public class ECKey implements EncryptableItem {
         this.creationTime = null;
     }
 
-    /** @deprecated use {@link #setCreationTime(Instant)} */
-    @Deprecated
-    public void setCreationTimeSeconds(long creationTimeSecs) {
-        if (creationTimeSecs > 0)
-            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
-        else if (creationTimeSecs == 0)
-            clearCreationTime();
-        else
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
-    }
-
     /**
      * Create an encrypted private key with the keyCrypter and the AES key supplied.
      * This method returns a new encrypted key and leaves the original unchanged.
