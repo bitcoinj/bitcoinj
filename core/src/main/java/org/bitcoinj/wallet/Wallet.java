@@ -19,7 +19,6 @@ package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
@@ -5367,8 +5366,7 @@ public class Wallet extends BaseTaggableObject
             } else if (ScriptPattern.isP2WPKH(script)) {
                 ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), ScriptType.P2WPKH);
                 Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
-                return IntMath.divide(script.getNumberOfBytesRequiredToSpend(key, null), 4,
-                        RoundingMode.CEILING); // round up
+                return Transaction.calculateVirtualTransactionSize(script.getNumberOfBytesRequiredToSpend(key, null));
             } else if (ScriptPattern.isP2SH(script)) {
                 Script redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
                 Objects.requireNonNull(redeemScript, "Coin selection includes unspendable outputs");
