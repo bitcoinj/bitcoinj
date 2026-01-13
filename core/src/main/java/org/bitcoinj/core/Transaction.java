@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.math.IntMath;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
@@ -164,7 +163,7 @@ public class Transaction implements Message {
      * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki">BIP 141</a>
      */
     public static int calculateVirtualTransactionSize(int weight) {
-        return IntMath.divide(weight, WITNESS_SCALE_FACTOR, RoundingMode.CEILING); // round up
+        return (weight + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR; // round up
     }
 
     private final int protocolVersion;
