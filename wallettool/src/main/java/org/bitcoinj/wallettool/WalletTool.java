@@ -149,6 +149,7 @@ public class WalletTool implements Callable<Integer> {
             "                       If --date is specified, that's the creation date.%n" +
             "                       If --unixtime is specified, that's the creation time and it overrides --date.%n" +
             "                       If you omit both options, the creation time is being cleared (set to 0).%n")
+    @Nullable
     private String actionStr;
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private BitcoinNetwork net = BitcoinNetwork.MAINNET;
@@ -157,50 +158,69 @@ public class WalletTool implements Callable<Integer> {
     @CommandLine.Option(names = "--force", description = "Overrides any safety checks on the requested action.")
     private boolean force = false;
     @CommandLine.Option(names = "--wallet", description = "Specifies what wallet file to load and save.")
+    @Nullable
     private File walletFile = null;
     @CommandLine.Option(names = "--seed", description = "Specifies either a mnemonic code or hex/base58 raw seed bytes.")
+    @Nullable
     private String seedStr = null;
     @CommandLine.Option(names = "--watchkey", description = "Describes a watching wallet using the specified base58 xpub.")
+    @Nullable
     private String watchKeyStr = null;
     @CommandLine.Option(names = "--output-script-type", description = "Provide an output script type to any action that requires one. Valid values: P2PKH, P2WPKH. Default: ${DEFAULT-VALUE}")
     private ScriptType outputScriptType = ScriptType.P2PKH;
     @CommandLine.Option(names = "--date", description = "Provide a date in form YYYY-MM-DD to any action that requires one.")
+    @Nullable
     private LocalDate date = null;
     @CommandLine.Option(names = "--unixtime", description = "Provide a date in seconds since epoch.")
+    @Nullable
     private Long unixtime = null;
     @CommandLine.Option(names = "--waitfor", description = "You can wait for the condition specified by the --waitfor flag to become true. Transactions and new blocks will be processed during this time. When the waited for condition is met, the tx/block hash will be printed. Waiting occurs after the --action is performed, if any is specified. Valid values:%n" +
             "EVER       Never quit.%n" +
             "WALLET_TX  Any transaction that sends coins to or from the wallet.%n" +
             "BLOCK      A new block that builds on the best chain.%n" +
             "BALANCE    Waits until the wallets balance meets the --condition.")
+    @Nullable
     private WaitForEnum waitFor = null;
     @CommandLine.Option(names = "--filter", description = "Use filter when synching the chain. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private Filter filter = Filter.SERVER;
     @CommandLine.Option(names = "--chain", description = "Specifies the name of the file that stores the block chain.")
+    @Nullable
     private File chainFile = null;
     @CommandLine.Option(names = "--pubkey", description = "Specifies a hex/base58 encoded non-compressed public key.")
+    @Nullable
     private String pubKeyStr;
     @CommandLine.Option(names = "--privkey", description = "Specifies a WIF-, hex- or base58-encoded private key.")
+    @Nullable
     private String privKeyStr;
     @CommandLine.Option(names = "--addr", description = "Specifies a Bitcoin address, either segwit or legacy.")
+    @Nullable
     private String addrStr;
     @CommandLine.Option(names = "--peers", description = "Comma separated IP addresses/domain names for connections instead of peer discovery.")
+    @Nullable
     private String peersStr;
     @CommandLine.Option(names = "--xpubkeys", description = "Specifies external public keys.")
+    @Nullable
     private String xpubKeysStr;
     @CommandLine.Option(names = "--select-addr", description = "When sending, only pick coins from this address.")
+    @Nullable
     private String selectAddrStr;
     @CommandLine.Option(names = "--select-output", description = "When sending, only pick coins from this output.")
+    @Nullable
     private String selectOutputStr;
     @CommandLine.Option(names = "--output", description = "Creates an output with the specified amount, separated by a colon. The special amount ALL is used to use the entire balance.")
+    @Nullable
     private List<String> outputsStr;
     @CommandLine.Option(names = "--fee-per-vkb", description = "Sets the network fee in Bitcoin per kilobyte when sending, e.g. --fee-per-vkb=0.0005")
+    @Nullable
     private String feePerVkbStr;
     @CommandLine.Option(names = "--fee-sat-per-vbyte", description = "Sets the network fee in satoshi per byte when sending, e.g. --fee-sat-per-vbyte=50")
+    @Nullable
     private String feeSatPerVbyteStr;
     @CommandLine.Option(names = "--condition", description = "Allows you to specify a numeric condition for other commands. The format is one of the following operators = < > <= >= immediately followed by a number.%nExamples: --condition=\">5.10\" or --condition=\"<=1\"")
+    @Nullable
     private String conditionStr = null;
     @CommandLine.Option(names = "--locktime", description = "Specifies a lock-time either by date or by block number.")
+    @Nullable
     private String lockTimeStr;
     @CommandLine.Option(names = "--allow-unconfirmed", description = "Lets you create spends of pending non-change outputs.")
     private boolean allowUnconfirmed = false;
@@ -209,6 +229,7 @@ public class WalletTool implements Callable<Integer> {
     @CommandLine.Option(names = "--ignore-mandatory-extensions", description = "If a wallet has unknown required extensions that would otherwise cause load failures, this overrides that.")
     private boolean ignoreMandatoryExtensions = false;
     @CommandLine.Option(names = "--password", description = "For an encrypted wallet, the password is provided here.")
+    @Nullable
     private String password = null;
     @CommandLine.Option(names = "--no-pki", description = "Disables pki verification for payment requests.")
     private boolean noPki = false;
@@ -221,10 +242,15 @@ public class WalletTool implements Callable<Integer> {
 
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
 
+    @Nullable
     private static NetworkParameters params;
+    @Nullable
     private static BlockStore store;
+    @Nullable
     private static AbstractBlockChain chain;
+    @Nullable
     private static PeerGroup peerGroup;
+    @Nullable
     private static Wallet wallet;
 
     public static class Condition {
@@ -533,7 +559,7 @@ public class WalletTool implements Callable<Integer> {
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
         Instant rotationTime = TimeUtils.currentTime();
         if (date != null) {
-            rotationTime = Instant.from(date);
+            rotationTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant();
         } else if (unixtime != null) {
             rotationTime = Instant.ofEpochSecond(unixtime);
         }
