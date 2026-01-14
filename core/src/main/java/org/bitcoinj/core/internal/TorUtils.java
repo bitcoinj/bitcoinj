@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core.internal;
 
-import com.google.common.io.BaseEncoding;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -30,8 +29,6 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  */
 public class TorUtils {
 
-    private static final BaseEncoding BASE32 = BaseEncoding.base32().omitPadding().lowerCase();
-
     /**
      * Encode an Onion URL from a Tor V2 address.
      * <p>
@@ -42,7 +39,7 @@ public class TorUtils {
      */
     public static String encodeOnionUrlV2(byte[] onionAddrBytes) {
         checkArgument(onionAddrBytes.length == 10);
-        return BASE32.encode(onionAddrBytes) + ".onion";
+        return BaseUtils.base32Encode(onionAddrBytes) + ".onion";
     }
 
     /**
@@ -60,7 +57,7 @@ public class TorUtils {
         System.arraycopy(onionAddrBytes, 0, onionAddress, 0, 32);
         System.arraycopy(onionChecksum(onionAddrBytes, torVersion), 0, onionAddress, 32, 2);
         onionAddress[34] = torVersion;
-        return BASE32.encode(onionAddress) + ".onion";
+        return BaseUtils.base32Encode(onionAddress) + ".onion";
     }
 
     /**
@@ -74,7 +71,7 @@ public class TorUtils {
     public static byte[] decodeOnionUrl(String onionUrl) {
         if (!onionUrl.toLowerCase(Locale.ROOT).endsWith(".onion"))
             throw new IllegalArgumentException("not an onion URL: " + onionUrl);
-        byte[] onionAddress = BASE32.decode(onionUrl.substring(0, onionUrl.length() - 6));
+        byte[] onionAddress = BaseUtils.base32Decode(onionUrl.substring(0, onionUrl.length() - 6));
         if (onionAddress.length == 10) {
             // TORv2
             return onionAddress;
