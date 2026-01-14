@@ -16,7 +16,7 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.BaseEncoding;
+import org.bitcoinj.core.internal.BaseUtils;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.store.BlockStore;
@@ -84,8 +84,6 @@ public class CheckpointManager {
     protected final NetworkParameters params;
     protected final Sha256Hash dataHash;
 
-    public static final BaseEncoding BASE64 = BaseEncoding.base64().omitPadding();
-
     /** Loads the default checkpoints bundled with bitcoinj */
     public CheckpointManager(NetworkParameters params) throws IOException {
         this(params, null);
@@ -128,7 +126,7 @@ public class CheckpointManager {
             // Hash numCheckpoints in a way compatible to the binary format.
             digest.update(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
             for (int i = 0; i < numCheckpoints; i++) {
-                byte[] bytes = BASE64.decode(reader.readLine());
+                byte[] bytes = BaseUtils.base64Decode(reader.readLine());
                 digest.update(bytes);
                 ByteBuffer buffer = ByteBuffer.wrap(bytes);
                 StoredBlock block;
