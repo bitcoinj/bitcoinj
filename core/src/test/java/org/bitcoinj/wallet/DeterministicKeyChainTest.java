@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
@@ -50,6 +49,7 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -375,7 +375,7 @@ public class DeterministicKeyChainTest {
 
         // Round-trip to ensure de/serialization works and that we can store two chains and they both deserialize.
         List<Protos.Key> serialized = encChain.serializeToProtobuf();
-        List<Protos.Key> doubled = Lists.newArrayListWithExpectedSize(serialized.size() * 2);
+        List<Protos.Key> doubled = new ArrayList<>(serialized.size() * 2);
         doubled.addAll(serialized);
         doubled.addAll(serialized);
         final List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(doubled, encChain.getKeyCrypter());

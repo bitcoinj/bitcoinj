@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -116,7 +115,7 @@ public class ScriptTest {
 
     @Test
     public void testMultiSig() {
-        List<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random(), ECKey.random());
+        List<ECKey> keys = Arrays.asList(ECKey.random(), ECKey.random(), ECKey.random());
         assertTrue(ScriptPattern.isSentToMultisig(ScriptBuilder.createMultiSigOutputScript(2, keys)));
         Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
         assertTrue(ScriptPattern.isSentToMultisig(script));
