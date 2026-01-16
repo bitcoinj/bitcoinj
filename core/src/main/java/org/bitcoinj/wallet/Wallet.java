@@ -20,7 +20,6 @@ package org.bitcoinj.wallet;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.math.IntMath;
-import com.google.protobuf.ByteString;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
@@ -85,7 +84,6 @@ import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.MissingSigResolutionSigner;
 import org.bitcoinj.signers.TransactionSigner;
-import org.bitcoinj.utils.BaseTaggableObject;
 import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
@@ -181,7 +179,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * {@link Wallet#autosaveToFile(File, Duration, WalletFiles.Listener)}
  * for more information about this.</p>
  */
-public class Wallet extends BaseTaggableObject
+public class Wallet
     implements NewBestBlockListener, TransactionReceivedInBlockListener, PeerFilterProvider,
         KeyBag, TransactionBag, ReorganizeListener, AddressParser {
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
@@ -5214,15 +5212,6 @@ public class Wallet extends BaseTaggableObject
             keyChainGroupLock.unlock();
             lock.unlock();
         }
-    }
-
-    /**
-     * @deprecated Applications should use another mechanism to persist application state information
-     */
-    @Override
-    public void setTag(String tag, ByteString value) {
-        super.setTag(tag, value);
-        saveNow();
     }
 
     //endregion

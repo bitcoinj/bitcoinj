@@ -28,25 +28,34 @@ import java.time.Duration;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
 
+// TODO: This should be rewritten as a single JavaFX task called something like EstimatedCompletionTask<T>.
+// It will be a subclass of JavaFX Task<T> and its constructor will take 2 parameters:
+// 1. an estimated duration
+// 2. a CompletableFuture<T>
+// It's job is to update progressProperty based upon the time estimate and complete when the
+// CompletableFuture completes (whether that is before or after the estimated time).
+// Maybe it will have an onFinish method or maybe the caller should just use the CompletableFuture for that.
+// If an onFinish is included maybe it just returns T or maybe it returns a record containing T and the actual time taken
+// And maybe we can remove the use of Uninterruptibles.sleepUninterruptibly() while were at it.
 /**
  * Background tasks for pumping a progress meter and deriving an AES key using scrypt.
  */
-public class KeyDerivationTasks {
+public abstract class KeyDerivationTasks {
     private static final Logger log = LoggerFactory.getLogger(KeyDerivationTasks.class);
     // 60fps would require a 16 millisecond value here.
     private static final Duration PROGRESS_UPDATE_INTERVAL = Duration.ofMillis(20);
 
-    public final Task<AesKey> keyDerivationTask;
+    private final Task<AesKey> keyDerivationTask;
     public final ReadOnlyDoubleProperty progress;
 
     private final Task<Void> progressTask;
 
     private volatile int timeTakenMsec = -1;
 
-    public KeyDerivationTasks(KeyCrypterScrypt scrypt, String password, @Nullable Duration targetTime) {
+    public KeyDerivationTasks(KeyCrypterScrypt scrypt, String password, Duration targetTime) {
         keyDerivationTask = new Task<>() {
             @Override
-            protected AesKey call() throws Exception {
+            protected AesKey call() {
                 long start = System.currentTimeMillis();
                 try {
                     log.info("Started key derivation");
@@ -72,7 +81,7 @@ public class KeyDerivationTasks {
                     long startTime = System.currentTimeMillis();
                     long curTime;
                     long targetTimeMillis = targetTime.toMillis();
-                    while ((curTime = System.currentTimeMillis()) < startTime + targetTimeMillis) {
+                    while ((curTime = System.currentTimeMillis()) < startTime + targetTimeMillis && !keyDerivationTask.isDone()) {
                         double progress = (curTime - startTime) / (double) targetTimeMillis;
                         updateProgress(progress, 1.0);
 
@@ -101,6 +110,5 @@ public class KeyDerivationTasks {
         new Thread(progressTask, "Progress ticker").start();
     }
 
-    protected void onFinish(AesKey aesKey, int timeTakenMsec) {
-    }
+    abstract protected void onFinish(AesKey aesKey, int timeTakenMsec);
 }

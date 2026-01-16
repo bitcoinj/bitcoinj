@@ -230,11 +230,6 @@ public class WalletProtobufSerializer {
 
         populateExtensions(wallet, walletBuilder);
 
-        for (Map.Entry<String, ByteString> entry : wallet.getTags().entrySet()) {
-            Protos.Tag.Builder tag = Protos.Tag.newBuilder().setTag(entry.getKey()).setData(entry.getValue());
-            walletBuilder.addTags(tag);
-        }
-
         // Populate the wallet version.
         walletBuilder.setVersion(wallet.getVersion());
 
@@ -558,10 +553,6 @@ public class WalletProtobufSerializer {
         }
 
         loadExtensions(wallet, extensions != null ? extensions : new WalletExtension[0], walletProto);
-
-        for (Protos.Tag tag : walletProto.getTagsList()) {
-            wallet.setTag(tag.getTag(), tag.getData());
-        }
 
         if (walletProto.hasVersion()) {
             wallet.setVersion(walletProto.getVersion());
