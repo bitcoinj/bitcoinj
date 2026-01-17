@@ -62,7 +62,6 @@ import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.math.ec.FixedPointUtil;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.bouncycastle.util.Properties;
-import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +76,7 @@ import java.security.SignatureException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
@@ -869,7 +869,7 @@ public class ECKey implements EncryptableItem {
         sigData[0] = (byte)headerByte;
         System.arraycopy(ByteUtils.bigIntegerToBytes(sig.r, 32), 0, sigData, 1, 32);
         System.arraycopy(ByteUtils.bigIntegerToBytes(sig.s, 32), 0, sigData, 33, 32);
-        return new String(Base64.encode(sigData), StandardCharsets.UTF_8);
+        return new String(Base64.getEncoder().encode(sigData), StandardCharsets.UTF_8);
     }
 
     /**
@@ -886,7 +886,7 @@ public class ECKey implements EncryptableItem {
     public static ECKey signedMessageToKey(String message, String signatureBase64) throws SignatureException {
         byte[] signatureEncoded;
         try {
-            signatureEncoded = Base64.decode(signatureBase64);
+            signatureEncoded = Base64.getDecoder().decode(signatureBase64);
         } catch (RuntimeException e) {
             // This is what you get back from Bouncy Castle if base64 doesn't decode :(
             throw new SignatureException("Could not decode base64", e);
