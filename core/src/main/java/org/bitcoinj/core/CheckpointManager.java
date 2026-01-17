@@ -42,6 +42,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -84,6 +85,10 @@ public class CheckpointManager {
     protected final NetworkParameters params;
     protected final Sha256Hash dataHash;
 
+    /**
+     * @deprecated Use {@link java.util.Base64} or a 3rd-party Base64 implementation.
+     */
+    @Deprecated
     public static final BaseEncoding BASE64 = BaseEncoding.base64().omitPadding();
 
     /** Loads the default checkpoints bundled with bitcoinj */
@@ -128,7 +133,7 @@ public class CheckpointManager {
             // Hash numCheckpoints in a way compatible to the binary format.
             digest.update(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
             for (int i = 0; i < numCheckpoints; i++) {
-                byte[] bytes = BASE64.decode(reader.readLine());
+                byte[] bytes = Base64.getDecoder().decode(reader.readLine());
                 digest.update(bytes);
                 ByteBuffer buffer = ByteBuffer.wrap(bytes);
                 StoredBlock block;
