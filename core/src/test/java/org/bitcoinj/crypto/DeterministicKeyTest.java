@@ -32,7 +32,7 @@ public class DeterministicKeyTest {
         ehkey.serialize(BitcoinNetwork.MAINNET, false);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = ArithmeticException.class)
     public void serialize_depthOverflow_throws() {
         DeterministicKey masterPrivateKey = HDKeyDerivation.createMasterPrivateKey(new byte[16]);
         DeterministicHierarchy dh = new DeterministicHierarchy(masterPrivateKey);

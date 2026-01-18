@@ -165,11 +165,11 @@ public class ByteUtils {
      *
      * @param value value to be checked and cast
      * @return the value as a {@code byte}
-     * @throws IllegalArgumentException if the value doesn't fit in an unsigned byte
+     * @throws ArithmeticException if the value doesn't fit in an unsigned byte
      */
     public static byte longToByteExact(long value) {
         if (value < 0 || value > 255) {
-            throw new IllegalArgumentException("Value " + value + " out of range for unsigned byte");
+            throw new ArithmeticException("Value " + value + " out of range for unsigned byte");
         }
         return (byte) value;
     }
