@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.math.IntMath;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
@@ -150,6 +149,22 @@ public class Transaction implements Message {
      * This should be adjusted from time to time. Last adjustment: February 2017.
      */
     public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100_000); // 1 mBTC
+
+    /**
+     * The scale factor for Witness data in Segregated Witness transactions.
+     * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki">BIP 141</a>
+     */
+    public static final int WITNESS_SCALE_FACTOR = 4;
+
+    /**
+     * Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
+     * @param weight the transaction weight
+     * @return the virtual transaction size
+     * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki">BIP 141</a>
+     */
+    public static int calculateVirtualTransactionSize(int weight) {
+        return (weight + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR; // round up
+    }
 
     private final int protocolVersion;
 
@@ -397,7 +412,7 @@ public class Transaction implements Message {
     public int getVsize() {
         if (!hasWitnesses())
             return this.messageSize();
-        return IntMath.divide(getWeight(), 4, RoundingMode.CEILING); // round up
+        return calculateVirtualTransactionSize(getWeight());
     }
 
 
