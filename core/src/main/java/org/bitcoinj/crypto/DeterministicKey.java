@@ -18,7 +18,6 @@
 package org.bitcoinj.crypto;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.primitives.UnsignedBytes;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -555,7 +554,7 @@ public class DeterministicKey extends ECKey {
             ser.putInt(pub ? params.getBip32HeaderP2WPKHpub() : params.getBip32HeaderP2WPKHpriv());
         else
             throw new IllegalStateException(outputScriptType.toString());
-        ser.put(UnsignedBytes.checkedCast(getDepth()));
+        ser.put(ByteUtils.longToByteExact(getDepth()));
         ser.putInt(getParentFingerprint());
         ser.putInt(getChildNumber().i());
         ser.put(getChainCode());
