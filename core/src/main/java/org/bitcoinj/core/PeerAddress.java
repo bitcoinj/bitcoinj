@@ -46,7 +46,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * A PeerAddress holds an IP address and port number representing the network location of
  * a peer in the Bitcoin P2P network. It exists primarily for serialization purposes.
  * <p>
- * Instances of this class are not safe for use by multiple threads.
+ * This class is immutable and thread-safe.
  */
 public class PeerAddress {
     @Nullable
