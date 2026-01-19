@@ -47,9 +47,7 @@ public class BaseUtils {
 
         int padding = (8 - (string.length() % 8)) % 8;
         if (padding != 0) {
-            StringBuilder sb = new StringBuilder(string);
-            sb.append("=".repeat(padding));
-            string = sb.toString();
+            string = string + "=".repeat(padding);
         }
         try {
             return Base32.decode(string);
