@@ -55,7 +55,7 @@ public class BaseUtils {
                 string = sb.toString();
             }
 
-            return org.bouncycastle.util.encoders.Base32.decode(string);
+            return Base32.decode(string);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid Base32 input", e);
         }
