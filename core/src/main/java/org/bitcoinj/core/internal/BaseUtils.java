@@ -43,10 +43,9 @@ public class BaseUtils {
      * Replaces: BaseEncoding.base32().omitPadding().lowerCase().decode(string)
      */
     public static byte[] base32Decode(String string) {
-        string = string.toUpperCase(Locale.ROOT);
-        string = pad(string);
+        String uppercasePadded = pad(string.toUpperCase(Locale.ROOT));
         try {
-            return Base32.decode(string);
+            return Base32.decode(uppercasePadded);
         } catch (DecoderException e) {
             throw new IllegalArgumentException("Invalid Base32 input", e);
         }
