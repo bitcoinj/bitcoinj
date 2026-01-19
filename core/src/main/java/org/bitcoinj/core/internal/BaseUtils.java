@@ -48,9 +48,7 @@ public class BaseUtils {
         int padding = (8 - (string.length() % 8)) % 8;
         if (padding != 0) {
             StringBuilder sb = new StringBuilder(string);
-            for (int i = 0; i < padding; i++) {
-                sb.append('=');
-            }
+            sb.append("=".repeat(padding));
             string = sb.toString();
         }
         try {
