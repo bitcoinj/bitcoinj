@@ -56,7 +56,7 @@ public class BaseUtils {
             }
 
             return Base32.decode(string);
-        } catch (Exception e) {
+        } catch (DecoderException e) {
             throw new IllegalArgumentException("Invalid Base32 input", e);
         }
     }
