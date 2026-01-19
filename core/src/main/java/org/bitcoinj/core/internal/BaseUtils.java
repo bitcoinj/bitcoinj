@@ -44,7 +44,15 @@ public class BaseUtils {
      */
     public static byte[] base32Decode(String string) {
         string = string.toUpperCase(Locale.ROOT);
+        string = pad(string);
+        try {
+            return Base32.decode(string);
+        } catch (DecoderException e) {
+            throw new IllegalArgumentException("Invalid Base32 input", e);
+        }
+    }
 
+    private static String pad(String string) {
         int padding = (8 - (string.length() % 8)) % 8;
         if (padding != 0) {
             StringBuilder sb = new StringBuilder(string);
@@ -53,10 +61,6 @@ public class BaseUtils {
             }
             string = sb.toString();
         }
-        try {
-            return Base32.decode(string);
-        } catch (DecoderException e) {
-            throw new IllegalArgumentException("Invalid Base32 input", e);
-        }
+        return string;
     }
 }
