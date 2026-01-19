@@ -44,10 +44,9 @@ public class BaseUtils {
      */
     public static byte[] base32Decode(String string) {
         int padding = (8 - (string.length() % 8)) % 8;
-        String uppercasePadded = string.toUpperCase(Locale.ROOT);
-        if (padding != 0) {
-            uppercasePadded = uppercasePadded + "=".repeat(padding);
-        }
+        String uppercasePadded =  (padding != 0)
+            ? string.toUpperCase(Locale.ROOT) + "=".repeat(padding)
+            : string.toUpperCase(Locale.ROOT);
         try {
             return Base32.decode(uppercasePadded);
         } catch (DecoderException e) {
