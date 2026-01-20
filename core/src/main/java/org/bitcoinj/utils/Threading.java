@@ -129,7 +129,8 @@ public class Threading {
         // Default policy goes here. If you want to change this, use one of the static methods before
         // instantiating any bitcoinj objects. The policy change will take effect only on new objects
         // from that point onwards.
-        throwOnLockCycles();
+        policy = CycleDetectingLockFactory.Policies.THROW;
+        factory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
 
         USER_THREAD = new UserThread();
         SAME_THREAD = Runnable::run;
@@ -155,23 +156,28 @@ public class Threading {
             return factory.newReentrantLock(name);
     }
 
+    @Deprecated
     public static void warnOnLockCycles() {
         setPolicy(CycleDetectingLockFactory.Policies.WARN);
     }
 
+    @Deprecated
     public static void throwOnLockCycles() {
         setPolicy(CycleDetectingLockFactory.Policies.THROW);
     }
 
+    @Deprecated
     public static void ignoreLockCycles() {
         setPolicy(CycleDetectingLockFactory.Policies.DISABLED);
     }
 
+    @Deprecated
     public static void setPolicy(CycleDetectingLockFactory.Policy policy) {
         Threading.policy = policy;
         factory = CycleDetectingLockFactory.newInstance(policy);
     }
 
+    @Deprecated
     public static CycleDetectingLockFactory.Policy getPolicy() {
         return policy;
     }
