@@ -76,11 +76,11 @@ public class HeadersMessage implements Message {
         return new HeadersMessage(blockHeaders);
     }
 
-    public HeadersMessage(Block... headers) throws ProtocolException {
+    public HeadersMessage(Block... headers) {
         blockHeaders = Arrays.asList(headers);
     }
 
-    public HeadersMessage(List<Block> headers) throws ProtocolException {
+    public HeadersMessage(List<Block> headers) {
         blockHeaders = headers;
     }
 
