@@ -42,7 +42,7 @@ public class HeadersMessage implements Message {
     // The main client will never send us more than this number of headers.
     public static final int MAX_HEADERS = 2000;
 
-    private List<Block> blockHeaders;
+    private final List<Block> blockHeaders;
 
     /**
      * Deserialize this message from a given payload.
