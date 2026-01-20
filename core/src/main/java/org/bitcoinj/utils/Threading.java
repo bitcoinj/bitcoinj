@@ -190,8 +190,7 @@ public class Threading {
 
     /** A caching thread pool that creates daemon threads, which won't keep the JVM alive waiting for more work. */
     public static ExecutorService THREAD_POOL = Executors.newCachedThreadPool(r -> {
-        Thread t = new Thread(r);
-        t.setName("Threading.THREAD_POOL worker");
+        Thread t = new Thread(r, "Threading.THREAD_POOL worker");
         t.setDaemon(true);
         return t;
     });
