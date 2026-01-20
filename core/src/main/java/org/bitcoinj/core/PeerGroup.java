@@ -167,7 +167,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private final ClientConnectionManager channels;
 
     // The peer that has been selected for the purposes of downloading announced data.
-    @GuardedBy("lock") private Peer downloadPeer;
+    @Nullable @GuardedBy("lock") private Peer downloadPeer;
     // Callback for events related to chain download.
     @Nullable @GuardedBy("lock") private BlockchainDownloadEventListener downloadListener;
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> peersBlocksDownloadedEventListeners
@@ -2386,6 +2386,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Returns the currently selected download peer. Bear in mind that it may have changed as soon as this method
      * returns. Can return null if no peer was selected.
      */
+    @Nullable
     public Peer getDownloadPeer() {
         lock.lock();
         try {
