@@ -17,7 +17,6 @@
 
 package org.bitcoinj.kits;
 
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
@@ -248,8 +247,13 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
      * (https://bitcoinj.github.io/speeding-up-chain-sync) for further details.
      */
     public WalletAppKit setCheckpoints(InputStream checkpoints) {
-        if (this.checkpoints != null)
-            Closeables.closeQuietly(checkpoints);
+        if (this.checkpoints != null) {
+            try {
+                this.checkpoints.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         this.checkpoints = Objects.requireNonNull(checkpoints);
         return this;
     }
