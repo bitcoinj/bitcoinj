@@ -521,7 +521,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    private Runnable triggerConnectionsJob = new Runnable() {
+    private final Runnable triggerConnectionsJob = new Runnable() {
         private boolean firstRun = true;
         private final Duration MIN_PEER_DISCOVERY_INTERVAL = Duration.ofSeconds(1);
 
