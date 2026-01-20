@@ -76,6 +76,7 @@ import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.easymock.EasyMock;
+import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -127,7 +128,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -2661,7 +2661,7 @@ public class WalletTest extends TestWithWallet {
         emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq);
         final Coin feePerKb = emptyReq.tx.getFee().multiply(1000).divide(emptyReq.tx.getVsize());
-        assertThat((double) feePerKb.toSat(), closeTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.toSat(),20));
+        MatcherAssert.assertThat((double) feePerKb.toSat(), closeTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.toSat(),20));
         wallet.commitTx(emptyReq.tx);
     }
 
