@@ -76,8 +76,10 @@ public class HeadersMessage implements Message {
         return new HeadersMessage(blockHeaders);
     }
 
+    /** @deprecated Use {@link #HeadersMessage(List)} and {@link Arrays#asList(Object[])} */
+    @Deprecated
     public HeadersMessage(Block... headers) {
-        blockHeaders = Arrays.asList(headers);
+        this(Arrays.asList(headers));
     }
 
     public HeadersMessage(List<Block> headers) {
