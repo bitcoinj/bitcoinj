@@ -17,7 +17,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Coin;
@@ -56,7 +55,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
