@@ -77,8 +77,7 @@ public class DnsDiscovery extends MultiplexingDiscovery {
     @Override
     protected ExecutorService createExecutor() {
         return Executors.newFixedThreadPool(seeds.size(), r -> {
-            Thread thread = Executors.defaultThreadFactory().newThread(r);
-            thread.setName("DNS seed lookups");
+            Thread thread = new Thread(Thread.currentThread().getThreadGroup(), r, "DNS seed lookups", 0);
             thread.setDaemon(true);
             return thread;
         });
