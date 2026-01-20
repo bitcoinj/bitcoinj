@@ -17,7 +17,6 @@
 
 package org.bitcoinj.kits;
 
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
@@ -106,7 +105,6 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected PeerAddress[] peerAddresses;
     protected DownloadProgressTracker downloadListener = new DownloadProgressTracker();
     protected boolean autoStop = true;
-    protected InputStream checkpoints;
     protected boolean blockingStartup = true;
     protected String userAgent, version;
     protected WalletProtobufSerializer.@NonNull WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
@@ -243,18 +241,6 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     }
 
     /**
-     * If set, the file is expected to contain a checkpoints file calculated with BuildCheckpoints. It makes initial
-     * block sync faster for new users - please refer to the documentation on the bitcoinj website
-     * (https://bitcoinj.github.io/speeding-up-chain-sync) for further details.
-     */
-    public WalletAppKit setCheckpoints(InputStream checkpoints) {
-        if (this.checkpoints != null)
-            Closeables.closeQuietly(checkpoints);
-        this.checkpoints = Objects.requireNonNull(checkpoints);
-        return this;
-    }
-
-    /**
      * If true (the default) then the startup of this service won't be considered complete until the network has been
      * brought up, peer connections established and the block chain synchronised. Therefore {@link #awaitRunning()} can
      * potentially take a very long time. If false, then startup is considered complete once the network activity
@@ -364,6 +350,8 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
 
     @Override
     protected void startUp() throws Exception {
+        InputStream checkpoints = null;
+
         // Runs in a separate thread.
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
@@ -381,7 +369,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         // Initiate Bitcoin network objects (block store, blockchain and peer group)
         vStore = new SPVBlockStore(params, chainFile);
         if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
-            if (checkpoints == null && !PlatformUtils.isAndroidRuntime()) {
+            if (!PlatformUtils.isAndroidRuntime()) {
                 checkpoints = CheckpointManager.openStream(params);
             }
 
