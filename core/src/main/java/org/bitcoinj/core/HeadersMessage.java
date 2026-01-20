@@ -77,12 +77,10 @@ public class HeadersMessage implements Message {
     }
 
     public HeadersMessage(Block... headers) throws ProtocolException {
-        super();
         blockHeaders = Arrays.asList(headers);
     }
 
     public HeadersMessage(List<Block> headers) throws ProtocolException {
-        super();
         blockHeaders = headers;
     }
 
