@@ -25,6 +25,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.bitcoinj.base.internal.Preconditions.check;
@@ -83,7 +84,7 @@ public class HeadersMessage implements Message {
     }
 
     public HeadersMessage(List<Block> headers) {
-        blockHeaders = headers;
+        blockHeaders = Collections.unmodifiableList(headers);
     }
 
     @Override
