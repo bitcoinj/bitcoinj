@@ -126,12 +126,6 @@ public class Threading {
     }
 
     static {
-        // Default policy goes here. If you want to change this, use one of the static methods before
-        // instantiating any bitcoinj objects. The policy change will take effect only on new objects
-        // from that point onwards.
-        policy = CycleDetectingLockFactory.Policies.THROW;
-        factory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
-
         USER_THREAD = new UserThread();
         SAME_THREAD = Runnable::run;
     }
@@ -142,9 +136,6 @@ public class Threading {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static CycleDetectingLockFactory.Policy policy;
-    private static CycleDetectingLockFactory factory;
-
     public static ReentrantLock lock(Class clazz) {
         return lock(clazz.getSimpleName() + " lock");
     }
@@ -153,7 +144,7 @@ public class Threading {
         if (PlatformUtils.isAndroidRuntime())
             return new ReentrantLock(true);
         else
-            return factory.newReentrantLock(name);
+            return new ReentrantLock(false);
     }
 
     @Deprecated
@@ -173,13 +164,11 @@ public class Threading {
 
     @Deprecated
     public static void setPolicy(CycleDetectingLockFactory.Policy policy) {
-        Threading.policy = policy;
-        factory = CycleDetectingLockFactory.newInstance(policy);
     }
 
     @Deprecated
     public static CycleDetectingLockFactory.Policy getPolicy() {
-        return policy;
+        return CycleDetectingLockFactory.Policies.DISABLED;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
