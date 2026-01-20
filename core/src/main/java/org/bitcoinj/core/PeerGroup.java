@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Network;
@@ -1332,7 +1331,7 @@ public class PeerGroup implements TransactionBroadcaster {
         DONT_SEND,
     }
 
-    private final Map<FilterRecalculateMode, CompletableFuture<BloomFilter>> inFlightRecalculations = Maps.newHashMap();
+    private final Map<FilterRecalculateMode, CompletableFuture<BloomFilter>> inFlightRecalculations = new HashMap<>();
 
     /**
      * Recalculates the bloom filter given to peers as well as the timestamp after which full blocks are downloaded
