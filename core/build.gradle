@@ -11,7 +11,7 @@ version = '0.18-SNAPSHOT'
 dependencies {
     api project(':bitcoinj-base')
     api 'org.jspecify:jspecify:1.0.0'
-    api 'org.bouncycastle:bcprov-jdk15to18:1.81'
+    api 'org.bouncycastle:bcprov-jdk15to18:1.83'
     api 'com.google.guava:guava:33.5.0-android'
     api 'com.google.protobuf:protobuf-javalite:4.33.4'
 
