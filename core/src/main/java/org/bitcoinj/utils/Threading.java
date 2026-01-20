@@ -16,7 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.slf4j.Logger;
@@ -145,30 +144,6 @@ public class Threading {
             return new ReentrantLock(true);
         else
             return new ReentrantLock(false);
-    }
-
-    @Deprecated
-    public static void warnOnLockCycles() {
-        setPolicy(CycleDetectingLockFactory.Policies.WARN);
-    }
-
-    @Deprecated
-    public static void throwOnLockCycles() {
-        setPolicy(CycleDetectingLockFactory.Policies.THROW);
-    }
-
-    @Deprecated
-    public static void ignoreLockCycles() {
-        setPolicy(CycleDetectingLockFactory.Policies.DISABLED);
-    }
-
-    @Deprecated
-    public static void setPolicy(CycleDetectingLockFactory.Policy policy) {
-    }
-
-    @Deprecated
-    public static CycleDetectingLockFactory.Policy getPolicy() {
-        return CycleDetectingLockFactory.Policies.DISABLED;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
