@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
@@ -73,7 +72,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = ECKey.random();
-        final List<ECKey> keys = Lists.newArrayList(key1, key2);
+        final List<ECKey> keys = Arrays.asList(key1, key2);
 
         // Import two keys, check the event is correct.
         assertEquals(2, chain.importKeys(keys));
@@ -83,7 +82,7 @@ public class BasicKeyChainTest {
         assertEquals(now, chain.earliestKeyCreationTime());
         // Check we ignore duplicates.
         final ECKey newKey = ECKey.random();
-        final List<ECKey> keys2 = Lists.newArrayList(key1, key2, newKey);
+        final List<ECKey> keys2 = Arrays.asList(key1, key2, newKey);
         assertEquals(1, chain.importKeys(keys2));
         assertTrue(onKeysAddedRan.getAndSet(false));
         assertEquals(newKey, onKeysAdded.getAndSet(null).get(0));
@@ -125,14 +124,14 @@ public class BasicKeyChainTest {
 
     @Test(expected = IllegalStateException.class)
     public void checkPasswordNotEncrypted() {
-        final List<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final List<ECKey> keys = Arrays.asList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain.checkPassword("test");
     }
 
     @Test(expected = IllegalStateException.class)
     public void doubleEncryptFails() {
-        final List<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final List<ECKey> keys = Arrays.asList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain = chain.toEncrypted("foo");
         chain.toEncrypted("foo");
@@ -282,7 +281,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = ECKey.random();
-        final List<ECKey> keys = Lists.newArrayList(key1, key2);
+        final List<ECKey> keys = Arrays.asList(key1, key2);
         assertEquals(2, chain.importKeys(keys));
 
         assertFalse(chain.findOldestKeyAfter(now.plus(2, ChronoUnit.DAYS)).isPresent());
