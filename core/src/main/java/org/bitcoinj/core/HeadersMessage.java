@@ -59,7 +59,7 @@ public class HeadersMessage implements Message {
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
                     MAX_HEADERS);
 
-        List<Block> blockHeaders = new ArrayList<>();
+        List<Block> blockHeaders = new ArrayList<>(numHeaders);
         for (int i = 0; i < numHeaders; ++i) {
             final Block newBlockHeader = Block.read(payload);
             if (newBlockHeader.hasTransactions()) {
