@@ -4848,17 +4848,19 @@ public class Wallet extends BaseTaggableObject
             checkState(onWalletChangedSuppressions == 0);
             onWalletChangedSuppressions++;
 
-            // Map block hash to transactions that appear in it. We ensure that the map values are sorted according
-            // to their relative position within those blocks.
-            ArrayListMultimap<Sha256Hash, TxOffsetPair> mapBlockTx = ArrayListMultimap.create();
+            // Map block hash to transactions that appear in it. We ensure that the map values (lists) are
+            // sorted according to their relative position within those blocks, by sorting each list
+            // with our custom TxOffsetPair.compareTo().
+            Map<Sha256Hash, List<TxOffsetPair>> mapBlockTx = new HashMap<>();
             for (Transaction tx : getTransactions(true)) {
                 Map<Sha256Hash, Integer> appearsIn = tx.getAppearsInHashes();
                 if (appearsIn == null) continue;  // Pending.
                 for (Map.Entry<Sha256Hash, Integer> block : appearsIn.entrySet())
-                    mapBlockTx.put(block.getKey(), new TxOffsetPair(tx, block.getValue()));
+                    mapBlockTx.computeIfAbsent(block.getKey(), k -> new ArrayList<>())
+                            .add(new TxOffsetPair(tx, block.getValue()));
             }
             for (Sha256Hash blockHash : mapBlockTx.keySet())
-                Collections.sort(mapBlockTx.get(blockHash));
+                Collections.sort(mapBlockTx.get(blockHash));    // Sort each List<TxOffsetPair>>
 
             List<Sha256Hash> oldBlockHashes = new ArrayList<>(oldBlocks.size());
             log.info("Old part of chain (top to bottom):");
@@ -4876,7 +4878,7 @@ public class Wallet extends BaseTaggableObject
             // For each block in the old chain, disconnect the transactions in reverse order.
             List<Transaction> oldChainTxns = new LinkedList<>();
             for (Sha256Hash blockHash : oldBlockHashes) {
-                for (TxOffsetPair pair : mapBlockTx.get(blockHash)) {
+                for (TxOffsetPair pair : mapBlockTx.getOrDefault(blockHash, Collections.emptyList())) {
                     Transaction tx = pair.tx;
                     final Sha256Hash txHash = tx.getTxId();
                     if (tx.isCoinBase()) {
@@ -4945,7 +4947,7 @@ public class Wallet extends BaseTaggableObject
             // conflict.
             for (StoredBlock block : newBlocks) {
                 log.info("Replaying block {}", block.getHeader().getHashAsString());
-                for (TxOffsetPair pair : mapBlockTx.get(block.getHeader().getHash())) {
+                for (TxOffsetPair pair : mapBlockTx.getOrDefault(block.getHeader().getHash(), Collections.emptyList())) {
                     log.info("  tx {}", pair.tx.getTxId());
                     try {
                         receive(pair.tx, block, BlockChain.NewBlockType.BEST_CHAIN, pair.offset);
