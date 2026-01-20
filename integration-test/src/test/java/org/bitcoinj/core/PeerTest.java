@@ -458,8 +458,8 @@ public class PeerTest extends TestWithNetworkConnections {
         assertEquals(expectedLocator, getheaders.getLocator());
         assertEquals(Sha256Hash.ZERO_HASH, getheaders.getStopHash());
         // Now send all the headers.
-        HeadersMessage headers = new HeadersMessage(b2.asHeader(),
-                b3.asHeader(), b4.asHeader());
+        HeadersMessage headers = new HeadersMessage(Arrays.asList(b2.asHeader(),
+                b3.asHeader(), b4.asHeader()));
         // We expect to be asked for b3 and b4 again, but this time, with a body.
         expectedLocator = BlockLocator.ofBlocks(
                 b2,
