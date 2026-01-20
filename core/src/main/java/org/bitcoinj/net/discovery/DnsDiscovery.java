@@ -21,7 +21,6 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionMessage;
-import org.bitcoinj.utils.DaemonThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +76,12 @@ public class DnsDiscovery extends MultiplexingDiscovery {
 
     @Override
     protected ExecutorService createExecutor() {
-        return Executors.newFixedThreadPool(seeds.size(), new DaemonThreadFactory("DNS seed lookups"));
+        return Executors.newFixedThreadPool(seeds.size(), r -> {
+            Thread thread = Executors.defaultThreadFactory().newThread(r);
+            thread.setName("DNS seed lookups");
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
     /** Implements discovery from a single DNS host. */
