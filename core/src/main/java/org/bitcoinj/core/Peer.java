@@ -161,7 +161,17 @@ public class Peer extends PeerSocketHandler {
         }
     }
     // TODO: The types/locking should be rationalised a bit.
+    // Don't add to getDataFutures directly, use either addGetDataFuture() or addGetDataFutures()
     private final Queue<GetDataRequest<?>> getDataFutures;
+
+    private void addGetDataFuture(GetDataRequest<?> future) {
+        getDataFutures.add(future);
+    }
+
+    private void addGetDataFutures(List<GetDataRequest<?>> futures) {
+        getDataFutures.addAll(futures);
+    }
+
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
@@ -847,7 +857,7 @@ public class Peer extends PeerSocketHandler {
                .map(GetDataRequest::new)
                .collect(Collectors.toList());
             // Add the futures to the queue of outstanding requests
-            getDataFutures.addAll(futures);
+            addGetDataFutures(futures);
 
             CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList((List) futures);
             successful.whenComplete((transactionsWithNulls, throwable) -> {
@@ -1294,7 +1304,7 @@ public class Peer extends PeerSocketHandler {
         // This does not need to be locked.
         checkArgument(getdata.getItems().size() == 1);
         GetDataRequest<T> req = new GetDataRequest<>(getdata.getItems().get(0).hash);
-        getDataFutures.add(req);
+        addGetDataFuture(req);
         sendMessage(getdata);
         return req;
     }
