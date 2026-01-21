@@ -272,7 +272,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private final ExponentialBackoff.Params peerBackoffParams = new ExponentialBackoff.Params(Duration.ofSeconds(1),
             1.5f, Duration.ofMinutes(10));
     // Tracks failures globally in case of a network failure.
-    @GuardedBy("lock") private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(Duration.ofSeconds(1), 1.5f, Duration.ofSeconds(10)));
+    @GuardedBy("lock") private final ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(Duration.ofSeconds(1), 1.5f, Duration.ofSeconds(10)));
 
     // This is a synchronized set, so it locks on itself. We use it to prevent TransactionBroadcast objects from
     // being garbage collected if nothing in the apps code holds on to them transitively. See the discussion
