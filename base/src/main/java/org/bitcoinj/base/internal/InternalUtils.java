@@ -121,4 +121,29 @@ public class InternalUtils {
             }
         }
     }
+
+    /**
+     * To get the root Throwable to find the reason for multiple exceptions occurance.
+     * Used two pointers to takle infinite loop cases and it safely returns the root cause.
+     * Null values are not handled, because usually this method must be called inside catch blocks, so if there is no exception,
+     * then that catch block will be skipped and no null is passed.
+     * @param Throwable type parameter
+     * @return Throwable (first block of chain of exceptions) 
+     */
+    public static Throwable getRootCause(Throwable throwable) {
+
+        Throwable slowPointer = throwable;
+        boolean moveSlowPointer = false;
+
+        Throwable tempCause;
+        while ((tempCause = throwable.getCause()) != null) {
+            throwable = tempCause;
+
+            if (moveSlowPointer) {
+                slowPointer = slowPointer.getCause();
+            }
+            moveSlowPointer = !moveSlowPointer; 
+        }
+        return throwable;
+    }
 }
