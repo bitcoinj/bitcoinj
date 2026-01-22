@@ -142,7 +142,7 @@ public class Transaction implements Message {
     /**
      * If feePerKb is lower than this, Bitcoin Core will treat it as if there were no fee.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1_000); // 0.01 mBTC
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(100); // per vkB
 
     /**
      * Minimum feerate for defining dust, in sats per kB.
