@@ -145,6 +145,11 @@ public class Transaction implements Message {
     public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1_000); // 0.01 mBTC
 
     /**
+     * Minimum feerate for defining dust, in sats per kB.
+     */
+    public static final Coin DUST_RELAY_TX_FEE_RATE = Coin.valueOf(3_000); // per kB
+
+    /**
      * If using this feePerKb, transactions will get confirmed within the next couple of blocks.
      * This should be adjusted from time to time. Last adjustment: February 2017.
      */
