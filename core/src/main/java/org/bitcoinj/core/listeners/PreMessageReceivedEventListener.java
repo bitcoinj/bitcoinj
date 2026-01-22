@@ -20,22 +20,27 @@ import org.bitcoinj.core.Message;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.utils.Threading;
+import org.jspecify.annotations.Nullable;
 
 /**
- * <p>Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
+ * Implementors can listen to events like blocks being downloaded/transactions being broadcast/connect/disconnects,
  * they can pre-filter messages before they are processed by a {@link Peer} or {@link PeerGroup}, and they can
- * provide transactions to remote peers when they ask for them.</p>
+ * provide transactions to remote peers when they ask for them.
  */
 public interface PreMessageReceivedEventListener {
 
     /**
-     * <p>Called when a message is received by a peer, before the message is processed. The returned message is
-     * processed instead. Returning null will cause the message to be ignored by the Peer returning the same message
+     * Called when a message is received by a peer, before the message is processed. The returned message is
+     * processed instead. Returning {@code null} will cause the message to be ignored by the Peer. Returning the same message
      * object allows you to see the messages received but not change them. The result from one event listeners
-     * callback is passed as "m" to the next, forming a chain.</p>
-     *
-     * <p>Note that this will never be called if registered with any executor other than
-     * {@link Threading#SAME_THREAD}</p>
+     * callback is passed as "m" to the next, forming a chain.
+     * <p>
+     * Note that this will never be called if registered with any executor other than
+     * {@link Threading#SAME_THREAD}
+     * @param peer the receiving peer
+     * @param m The message to pre-process
+     * @return Unmodified message, modified message, or {@code null}
      */
+    @Nullable
     Message onPreMessageReceived(Peer peer, Message m);
 }
