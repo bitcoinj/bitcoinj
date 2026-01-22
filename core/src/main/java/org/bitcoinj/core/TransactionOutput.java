@@ -241,7 +241,7 @@ public class TransactionOutput {
      * and mined by default miners.
      */
     public Coin getMinNonDustValue() {
-        return getMinNonDustValue(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(3));
+        return getMinNonDustValue(Transaction.DUST_RELAY_TX_FEE_RATE);
     }
 
     /**
