@@ -136,7 +136,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void listener() throws Exception {
         peerGroup.addConnectedEventListener(connectedListener);
         peerGroup.addDisconnectedEventListener(disconnectedListener);
-        peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
+        peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, preMessageReceivedListener);
         peerGroup.start();
 
         // Create a couple of peers.
@@ -549,7 +549,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         ));
         peerGroup.addConnectedEventListener(connectedListener);
         peerGroup.addDisconnectedEventListener(disconnectedListener);
-        peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
+        peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, preMessageReceivedListener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             @Override
             public List<InetSocketAddress> getPeers(long services, Duration unused) throws PeerDiscoveryException {
