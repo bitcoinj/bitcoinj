@@ -157,6 +157,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         disconnectedPeers.take();
         assertEquals(0, disconnectedPeers.size());
 
+        assertTrue(peerToMessageCount.size() >= 2);     // Verify preMessageReceivedListener was called
+
         assertTrue(peerGroup.removeConnectedEventListener(connectedListener));
         assertFalse(peerGroup.removeConnectedEventListener(connectedListener));
         assertTrue(peerGroup.removeDisconnectedEventListener(disconnectedListener));
