@@ -152,16 +152,27 @@ public class Peer extends PeerSocketHandler {
     private static final int PENDING_TX_DOWNLOADS_LIMIT = 100;
     // The lowest version number we're willing to accept. Lower than this will result in an immediate disconnect.
     private volatile int vMinProtocolVersion;
-    // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
-    // whilst waiting for the response. Is not used for downloads Peer generates itself.
+
+    /**
+     * A future representing expected data (either a Transaction or a Block) from the remote peer via a {@link GetDataMessage}.
+     * @param <T> The type of the expected response.
+     */
     private static class GetDataRequest<T extends Message> extends CompletableFuture<T> {
         final Sha256Hash hash;
+        /**
+         * @param hash The hash of the block or transaction requested
+         */
         public GetDataRequest(Sha256Hash hash) {
             this.hash = hash;
         }
     }
     // TODO: The types/locking should be rationalised a bit.
-    // Don't add to getDataFutures directly, use either addGetDataFuture() or addGetDataFutures()
+    /**
+     * When an API user explicitly requests a block or transaction from a peer, the request for InventoryItem is put here
+     * whilst waiting for the response. Is not used for downloads Peer generates itself.
+     * <p>
+     * Don't add to getDataFutures directly, use either addGetDataFuture() or addGetDataFutures().
+     */
     private final Queue<GetDataRequest<Message>> getDataFutures;
 
     @SuppressWarnings("unchecked")
@@ -854,7 +865,7 @@ public class Peer extends PeerSocketHandler {
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), txIdsToRequest.size(), depth + 1);
             // Build the request for the missing dependencies.
             GetDataMessage getdata = buildMultiTransactionDataMessage(txIdsToRequest);
-            // Create futures for each TxId this request will produce
+            // Create a list of futures: one for each TxId this request will produce
             List<GetDataRequest<Transaction>> futures = txIdsToRequest.stream()
                .map(GetDataRequest<Transaction>::new)
                .collect(Collectors.toList());
@@ -1301,7 +1312,13 @@ public class Peer extends PeerSocketHandler {
         return sendSingleGetData(getdata);
     }
 
-    /** Sends a getdata with a single item in it. */
+    /**
+     * Sends a getdata with a single item in it.
+     * @param getdata A GetDataMessage with a single item in it
+     * @return A future for the requested item
+     * @param <T> Either {@link Block} or {@link Transaction}
+     * @throws IllegalArgumentException If the GetDataMessage does not contain exactly 1 item
+     */
     private <T extends Message> CompletableFuture<T> sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
         checkArgument(getdata.getItems().size() == 1);
