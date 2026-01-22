@@ -154,7 +154,7 @@ public class Peer extends PeerSocketHandler {
     private volatile int vMinProtocolVersion;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
     // whilst waiting for the response. Is not used for downloads Peer generates itself.
-    private static class GetDataRequest<T> extends CompletableFuture<T> {
+    private static class GetDataRequest<T extends Message> extends CompletableFuture<T> {
         final Sha256Hash hash;
         public GetDataRequest(Sha256Hash hash) {
             this.hash = hash;
@@ -162,14 +162,16 @@ public class Peer extends PeerSocketHandler {
     }
     // TODO: The types/locking should be rationalised a bit.
     // Don't add to getDataFutures directly, use either addGetDataFuture() or addGetDataFutures()
-    private final Queue<GetDataRequest<?>> getDataFutures;
+    private final Queue<GetDataRequest<Message>> getDataFutures;
 
-    private void addGetDataFuture(GetDataRequest<?> future) {
-        getDataFutures.add(future);
+    @SuppressWarnings("unchecked")
+    private <T extends Message> void addGetDataFuture(GetDataRequest<T> future) {
+        getDataFutures.add((GetDataRequest<Message>) future);
     }
 
-    private void addGetDataFutures(List<GetDataRequest<?>> futures) {
-        getDataFutures.addAll(futures);
+    @SuppressWarnings("unchecked")
+    private <T extends Message> void addGetDataFutures(List<? extends GetDataRequest<T>> futures) {
+        getDataFutures.addAll((List<? extends GetDataRequest<Message>>) futures);
     }
 
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
@@ -604,7 +606,7 @@ public class Peer extends PeerSocketHandler {
         // in the chain).
         //
         // We go through and cancel the pending getdata futures for the items we were told weren't found.
-        for (GetDataRequest req : getDataFutures) {
+        for (GetDataRequest<Message> req : getDataFutures) {
             for (InventoryItem item : m.getItems()) {
                 if (item.hash.equals(req.hash)) {
                     log.info("{}: Bottomed out dep tree at {}", this, req.hash);
@@ -853,13 +855,13 @@ public class Peer extends PeerSocketHandler {
             // Build the request for the missing dependencies.
             GetDataMessage getdata = buildMultiTransactionDataMessage(txIdsToRequest);
             // Create futures for each TxId this request will produce
-            List<GetDataRequest<?>> futures = txIdsToRequest.stream()
-               .map(GetDataRequest::new)
+            List<GetDataRequest<Transaction>> futures = txIdsToRequest.stream()
+               .map(GetDataRequest<Transaction>::new)
                .collect(Collectors.toList());
             // Add the futures to the queue of outstanding requests
             addGetDataFutures(futures);
 
-            CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList((List) futures);
+            CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList(futures);
             successful.whenComplete((transactionsWithNulls, throwable) -> {
                 if (throwable == null) {
                     // If no exception/throwable, then success
@@ -1116,7 +1118,7 @@ public class Peer extends PeerSocketHandler {
 
     private boolean maybeHandleRequestedData(Message m, Sha256Hash hash) {
         boolean found = false;
-        for (GetDataRequest req : getDataFutures) {
+        for (GetDataRequest<Message> req : getDataFutures) {
             if (hash.equals(req.hash)) {
                 req.complete(m);
                 getDataFutures.remove(req);
@@ -1300,7 +1302,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /** Sends a getdata with a single item in it. */
-    private <T> CompletableFuture<T> sendSingleGetData(GetDataMessage getdata) {
+    private <T extends Message> CompletableFuture<T> sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
         checkArgument(getdata.getItems().size() == 1);
         GetDataRequest<T> req = new GetDataRequest<>(getdata.getItems().get(0).hash);
