@@ -138,7 +138,10 @@ public class InternalUtils {
         Throwable tempCause;
         while ((tempCause = throwable.getCause()) != null) {
             throwable = tempCause;
-
+            
+            if (throwable == slowPointer) {
+                return throwable;
+            }
             if (moveSlowPointer) {
                 slowPointer = slowPointer.getCause();
             }
