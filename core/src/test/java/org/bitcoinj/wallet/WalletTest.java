@@ -2658,8 +2658,8 @@ public class WalletTest extends TestWithWallet {
         emptyReq.ensureMinRequiredFee = true;
         emptyReq.emptyWallet = true;
         emptyReq.allowUnconfirmed();
-        wallet.completeTx(emptyReq);
-        assertEquals(Coin.valueOf(342), emptyReq.tx.getFee()); // converted to fee rate this is close to min rate
+        wallet.completeTx(emptyReq); // resulting vsize ~339
+        assertEquals(Coin.valueOf(171), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 
