@@ -5653,7 +5653,7 @@ public class Wallet extends BaseTaggableObject
             }
             // When not signing, don't waste addresses.
             rekeyTx.addOutput(toMove.totalValue(), sign ? freshReceiveAddress() : currentReceiveAddress());
-            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE, true)) {
+            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE_RATE, true)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }
