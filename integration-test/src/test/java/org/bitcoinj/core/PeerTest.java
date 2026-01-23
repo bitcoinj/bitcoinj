@@ -126,7 +126,7 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void chainDownloadEnd2End() throws Exception {
         // A full end-to-end test of the chain download process, with a new block being solved in the middle.
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         Block b2 = makeSolvedTestBlock(b1);
@@ -295,7 +295,7 @@ public class PeerTest extends TestWithNetworkConnections {
     // Check that inventory message containing blocks we want is processed correctly.
     @Test
     public void newBlock() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         final Block b2 = makeSolvedTestBlock(b1);
@@ -355,7 +355,7 @@ public class PeerTest extends TestWithNetworkConnections {
     // Check that it starts downloading the block chain correctly on request.
     @Test
     public void startBlockChainDownload() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         Block b2 = makeSolvedTestBlock(b1);
@@ -381,7 +381,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void getBlock() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         connect();
 
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
@@ -404,7 +404,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void getLargeBlock() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         connect();
 
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
@@ -430,7 +430,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Test
     public void fastCatchup() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         connect();
         TimeUtils.setMockClock();
         // Check that blocks before the fast catchup point are retrieved using getheaders, and after using getblocks.

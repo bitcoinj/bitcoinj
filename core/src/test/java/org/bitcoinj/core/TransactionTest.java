@@ -622,7 +622,7 @@ public class TransactionTest {
      */
     @Test
     public void testHashForSignatureThreadSafety() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block genesis = TESTNET.getGenesisBlock();
         Block block1 = genesis.createNextBlock(new ECKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
