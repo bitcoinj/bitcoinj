@@ -2646,9 +2646,9 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void lowerThanDefaultFee() throws InsufficientMoneyException {
+    public void lowerThanDefaultFeeRate() throws InsufficientMoneyException {
         int feeFactor = 200;
-        Coin fee = Transaction.DEFAULT_TX_FEE.divide(feeFactor);
+        Coin fee = Transaction.DEFAULT_TX_FEE_RATE.divide(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;
@@ -2666,9 +2666,9 @@ public class WalletTest extends TestWithWallet {
     }
 
     @Test
-    public void higherThanDefaultFee() throws InsufficientMoneyException {
+    public void higherThanDefaultFeeRate() throws InsufficientMoneyException {
         int feeFactor = 10;
-        Coin fee = Transaction.DEFAULT_TX_FEE.multiply(feeFactor);
+        Coin fee = Transaction.DEFAULT_TX_FEE_RATE.multiply(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;

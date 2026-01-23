@@ -150,10 +150,14 @@ public class Transaction implements Message {
     public static final Coin DUST_RELAY_TX_FEE_RATE = Coin.valueOf(3_000); // per kB
 
     /**
-     * If using this feePerKb, transactions will get confirmed within the next couple of blocks.
+     * If using this fee rate, transactions will get confirmed within the next couple of blocks.
      * This should be adjusted from time to time. Last adjustment: February 2017.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100_000); // 1 mBTC
+    public static final Coin DEFAULT_TX_FEE_RATE = Coin.valueOf(100_000); // per vkB
+
+    /** @deprecated use {@link #DEFAULT_TX_FEE_RATE} */
+    @Deprecated
+    public static final Coin DEFAULT_TX_FEE = DEFAULT_TX_FEE_RATE;
 
     /**
      * The scale factor for Witness data in Segregated Witness transactions.
