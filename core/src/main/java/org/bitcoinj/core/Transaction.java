@@ -140,9 +140,13 @@ public class Transaction implements Message {
     public static final int MAX_STANDARD_TX_SIZE = 100_000;
 
     /**
-     * If feePerKb is lower than this, Bitcoin Core will treat it as if there were no fee.
+     * If fee rate is lower than this, Bitcoin Core will treat it as if there were no fee.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(100); // per vkB
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE_RATE = Coin.valueOf(100); // per vkB
+
+    /** @deprecated use {@link #REFERENCE_DEFAULT_MIN_TX_FEE_RATE} */
+    @Deprecated
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = REFERENCE_DEFAULT_MIN_TX_FEE_RATE;
 
     /**
      * Minimum feerate for defining dust, in sats per kB.
