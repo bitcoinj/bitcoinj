@@ -155,9 +155,9 @@ public class Transaction implements Message {
 
     /**
      * If using this fee rate, transactions will get confirmed within the next couple of blocks.
-     * This should be adjusted from time to time. Last adjustment: February 2017.
+     * This should be adjusted from time to time. Last adjustment: January 2026.
      */
-    public static final Coin DEFAULT_TX_FEE_RATE = Coin.valueOf(100_000); // per vkB
+    public static final Coin DEFAULT_TX_FEE_RATE = Coin.valueOf(10_000); // per vkB
 
     /** @deprecated use {@link #DEFAULT_TX_FEE_RATE} */
     @Deprecated
