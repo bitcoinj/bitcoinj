@@ -11,18 +11,18 @@ jobs:
         os: [ubuntu-24.04, macOS-15, macOS-15-intel, windows-2022]
         java: ['17', '21', '25']
         distribution: ['temurin']
-        gradle: ['8.14.3', '9.2.1']
+        gradle: ['8.14.4', '9.2.1']
         exclude:
           # Java 25+ requires Gradle 9.1+
           - java: '25'
-            gradle: '8.14.3'
+            gradle: '8.14.4'
           # Exclude older versions of Gradle on macOS and Windows
           - os: macOS-15
-            gradle: '8.14.3'
+            gradle: '8.14.4'
           - os: macOS-15-intel
-            gradle: '8.14.3'
+            gradle: '8.14.4'
           - os: windows-2022
-            gradle: '8.14.3'
+            gradle: '8.14.4'
       fail-fast: false
     env:
       # Use env variable to specify the JDK version to use for the `testMinJdk` Gradle option
