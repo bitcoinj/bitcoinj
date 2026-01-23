@@ -127,7 +127,7 @@ public class InternalUtils {
      * Used two pointers to takle infinite loop cases and it safely returns the root cause.
      * Null values are not handled, because usually this method must be called inside catch blocks, so if there is no exception,
      * then that catch block will be skipped and no null is passed.
-     * @param Throwable type parameter
+     * @param throwable the exception to analyze for root cause
      * @return Throwable (first block of chain of exceptions) 
      */
     public static Throwable getRootCause(Throwable throwable) {
