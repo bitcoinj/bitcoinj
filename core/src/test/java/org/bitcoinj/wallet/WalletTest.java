@@ -2647,13 +2647,13 @@ public class WalletTest extends TestWithWallet {
 
     @Test
     public void lowerThanDefaultFeeRate() throws InsufficientMoneyException {
-        int feeFactor = 200;
+        int feeFactor = 10;
         Coin fee = Transaction.DEFAULT_TX_FEE_RATE.divide(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;
         wallet.completeTx(req);
-        assertEquals(Coin.valueOf(22700).divide(feeFactor), req.tx.getFee());
+        assertEquals(Coin.valueOf(2_270).divide(feeFactor), req.tx.getFee());
         wallet.commitTx(req.tx);
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
@@ -2661,7 +2661,7 @@ public class WalletTest extends TestWithWallet {
         emptyReq.emptyWallet = true;
         emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq); // resulting vsize ~339
-        assertEquals(Coin.valueOf(171), emptyReq.tx.getFee());
+        assertEquals(Coin.valueOf(3_420).divide(feeFactor), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 
@@ -2673,14 +2673,14 @@ public class WalletTest extends TestWithWallet {
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;
         wallet.completeTx(req);
-        assertEquals(Coin.valueOf(22700).multiply(feeFactor), req.tx.getFee());
+        assertEquals(Coin.valueOf(2_270).multiply(feeFactor), req.tx.getFee());
         wallet.commitTx(req.tx);
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
         emptyReq.emptyWallet = true;
         emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq);
-        assertEquals(Coin.valueOf(342000), emptyReq.tx.getFee());
+        assertEquals(Coin.valueOf(3_420).multiply(feeFactor), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 
@@ -2900,7 +2900,7 @@ public class WalletTest extends TestWithWallet {
 
         Transaction tx = broadcaster.waitForTransactionAndSucceed();
         final Coin THREE_CENTS = CENT.add(CENT).add(CENT);
-        assertEquals(Coin.valueOf(49100), tx.getFee());
+        assertEquals(Coin.valueOf(4910), tx.getFee());
         assertEquals(THREE_CENTS, tx.getValueSentFromMe(wallet));
         assertEquals(THREE_CENTS.subtract(tx.getFee()), tx.getValueSentToMe(wallet));
         // TX sends to one of our addresses (for now we ignore married wallets).
@@ -2924,7 +2924,7 @@ public class WalletTest extends TestWithWallet {
         assertNotNull(wallet.findKeyFromPubKeyHash(tx.getOutput(0).getScriptPubKey().getPubKeyHash(),
                 toAddress.getOutputScriptType()));
         log.info("Unexpected thing: {}", tx);
-        assertEquals(Coin.valueOf(19300), tx.getFee());
+        assertEquals(Coin.valueOf(1930), tx.getFee());
         assertEquals(1, tx.getInputs().size());
         assertEquals(1, tx.getOutputs().size());
         assertEquals(CENT, tx.getValueSentFromMe(wallet));
