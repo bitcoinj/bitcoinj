@@ -17,12 +17,12 @@
 package org.bitcoinj.utils;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -107,7 +107,7 @@ public class VersionTallyTest {
 
     @Test
     public void testInitialize() throws BlockStoreException {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         final BlockStore blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
         final BlockChain chain = new BlockChain(BitcoinNetwork.TESTNET, blockStore);
 

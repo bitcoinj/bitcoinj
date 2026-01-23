@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -71,7 +72,7 @@ public class ParseByteCacheTest {
     @Before
     public void setUp() throws Exception {
         TimeUtils.setMockClock(); // Use mock clock
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         wallet.freshReceiveKey();
 
