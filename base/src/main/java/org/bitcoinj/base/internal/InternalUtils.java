@@ -132,6 +132,7 @@ public class InternalUtils {
      */
     public static Throwable getRootCause(Throwable throwable) {
 
+        if(throwable == null) return null;
         Throwable slowPointer = throwable;
         boolean moveSlowPointer = false;
 

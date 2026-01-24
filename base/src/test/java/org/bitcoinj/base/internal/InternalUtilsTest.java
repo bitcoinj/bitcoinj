@@ -16,8 +16,12 @@
 
 package org.bitcoinj.base.internal;
 
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
+
 import java.lang.reflect.Field;
 
 public class InternalUtilsTest {
@@ -44,5 +48,10 @@ public class InternalUtilsTest {
         
         Throwable result = InternalUtils.getRootCause(a);
         assertTrue(result == a || result == b);  
+    }
+
+    @Test
+    void testNullInput() {
+        assertNull(InternalUtils.getRootCause(null));
     }
 }
