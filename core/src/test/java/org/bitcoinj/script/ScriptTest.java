@@ -127,7 +127,7 @@ public class ScriptTest {
             // Fail if we ask for more signatures than keys.
             Script.createMultiSigOutputScript(4, keys);
             fail();
-        } catch (Throwable e) {
+        } catch (RuntimeException e) {
             // Expected.
         }
         try {
