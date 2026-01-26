@@ -687,8 +687,7 @@ public class WalletTool implements Callable<Integer> {
 
     // "Atomically" create a SendRequest. In the future SendRequest may be immutable and this method will be updated
     private SendRequest buildSendRequest(Transaction tx, boolean emptyWallet, boolean allowUnconfirmed, @Nullable CoinSelector coinSelector, @Nullable Coin feePerVkb, @Nullable AesKey aesKey) {
-        SendRequest req = SendRequest.forTx(tx);
-        req.emptyWallet = emptyWallet;
+        SendRequest req = SendRequest.emptyWallet(tx);
         if (coinSelector != null) {
             req.coinSelector = coinSelector;
             req.recipientsPayFees = true;

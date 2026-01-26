@@ -55,11 +55,11 @@ public class SendRequest {
     public final Transaction tx;
 
     /**
-     * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
-     * (its value is ignored and set to {@link Wallet#getBalance()} - the fees required
+     * When emptyWallet is {@code true}, all coins selected by the coin selector are sent to the first output in {@link #tx}
+     * (its {@code value} is ignored and set to {@link Wallet#getBalance()} <i>less the fee</i> required
      * for the transaction). Any additional outputs are removed.
      */
-    public boolean emptyWallet = false;
+    public final boolean emptyWallet;
 
     /**
      * "Change" means the difference between the value gathered by a transactions inputs (the size of which you
@@ -159,6 +159,12 @@ public class SendRequest {
 
     private SendRequest(Transaction transaction) {
         tx = transaction;
+        emptyWallet = false;
+    }
+
+    private SendRequest(Transaction transaction, boolean emptyWallet) {
+        tx = transaction;
+        this.emptyWallet = emptyWallet;
     }
 
     /**
@@ -193,12 +199,24 @@ public class SendRequest {
         return new SendRequest(tx);
     }
 
+    /**
+     * Create a {@link SendRequest} that can be used to send all funds in wallet to an address.
+     * @param destination where to send all remaining wallet funds
+     * @return An SendRequest with an incomplete transaction sending to {@code destination}
+     */
     public static SendRequest emptyWallet(Address destination) {
         Transaction tx = new Transaction();
         tx.addOutput(Coin.ZERO, destination);
-        SendRequest req = new SendRequest(tx);
-        req.emptyWallet = true;
-        return req;
+        return new SendRequest(tx, true);
+    }
+
+    /**
+     * Create a {@link SendRequest} that can be used to send all funds in wallet to an address.
+     * @param tx An incomplete transaction that when completed will send all funds
+     * @return An SendRequest with the specified incomplete transaction
+     */
+    public static SendRequest emptyWallet(Transaction tx) {
+        return new SendRequest(tx, true);
     }
 
     /**
