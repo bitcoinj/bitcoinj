@@ -18,7 +18,6 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
