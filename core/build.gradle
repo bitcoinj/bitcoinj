@@ -1,9 +1,11 @@
 import org.gradle.util.GradleVersion
+import net.ltgt.gradle.errorprone.CheckSeverity
 
 plugins {
     id 'java-library'
     id 'com.google.protobuf'
     id 'maven-publish'
+    id "net.ltgt.errorprone" version "4.2.0"
 }
 
 version = '0.18-SNAPSHOT'
@@ -25,6 +27,9 @@ dependencies {
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.18.1'
     testImplementation 'org.hamcrest:hamcrest-library:3.0'
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
+
+    annotationProcessor "com.uber.nullaway:nullaway:0.12.7"
+    errorprone "com.google.errorprone:error_prone_core:2.38.0"
 }
 
 // Prevent newer Gradle from switching to JRE version of Guava for tests.
@@ -48,6 +53,10 @@ tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '8'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
+    options.errorprone {
+        check("NullAway", CheckSeverity.ERROR)
+        option("NullAway:OnlyNullMarked")
+    }
 }
 
 javadoc.options.encoding = 'UTF-8'

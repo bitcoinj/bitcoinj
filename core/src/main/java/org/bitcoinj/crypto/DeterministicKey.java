@@ -476,6 +476,7 @@ public class DeterministicKey extends ECKey {
         }
         if (cursor == null)
             throw new KeyCrypterException("Neither this key nor its parents have an encrypted private key");
+        Objects.requireNonNull(cursor.encryptedPrivateKey);
         byte[] parentalPrivateKeyBytes = keyCrypter.decrypt(cursor.encryptedPrivateKey, aesKey);
         if (parentalPrivateKeyBytes.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -483,6 +484,7 @@ public class DeterministicKey extends ECKey {
         return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
     }
 
+    @Nullable
     private DeterministicKey findParentWithPrivKey() {
         DeterministicKey cursor = this;
         while (cursor != null) {
@@ -495,7 +497,7 @@ public class DeterministicKey extends ECKey {
     @Nullable
     private BigInteger findOrDerivePrivateKey() {
         DeterministicKey cursor = findParentWithPrivKey();
-        if (cursor == null)
+        if (cursor == null || cursor.priv == null)
             return null;
         return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
     }
@@ -536,6 +538,7 @@ public class DeterministicKey extends ECKey {
         final BigInteger key = findOrDerivePrivateKey();
         checkState(key != null, () ->
                 "private key bytes not available");
+        Objects.requireNonNull(key);
         return key;
     }
 
