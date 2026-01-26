@@ -23,6 +23,7 @@ import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +69,7 @@ public class MnemonicCode {
 
     private static final int PBKDF2_ROUNDS = 2048;
 
-    public static MnemonicCode INSTANCE;
+    @Nullable public static MnemonicCode INSTANCE;
 
     static {
         try {

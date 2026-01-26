@@ -483,6 +483,7 @@ public class DeterministicKey extends ECKey {
         return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
     }
 
+    @Nullable
     private DeterministicKey findParentWithPrivKey() {
         DeterministicKey cursor = this;
         while (cursor != null) {
@@ -495,7 +496,7 @@ public class DeterministicKey extends ECKey {
     @Nullable
     private BigInteger findOrDerivePrivateKey() {
         DeterministicKey cursor = findParentWithPrivKey();
-        if (cursor == null)
+        if (cursor == null || cursor.priv == null)
             return null;
         return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
     }
@@ -536,6 +537,7 @@ public class DeterministicKey extends ECKey {
         final BigInteger key = findOrDerivePrivateKey();
         checkState(key != null, () ->
                 "private key bytes not available");
+        assert key != null;
         return key;
     }
 
@@ -725,7 +727,7 @@ public class DeterministicKey extends ECKey {
      * objects will equal each other.
      */
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DeterministicKey other = (DeterministicKey) o;
