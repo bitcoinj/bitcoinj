@@ -796,4 +796,15 @@ public class DeterministicKeyChainTest {
             throw new RuntimeException(e);
         }
     }
+
+    @Test
+    public void testToString() {
+        DeterministicSeed seed = new DeterministicSeed("correct horse battery staple", null, "", Instant.ofEpochSecond(1000L));
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).build();
+
+        String str = chain.toString();
+        assertTrue("Output should contain class name", str.contains("DeterministicKeyChain"));
+        assertFalse("Security Fail: toString() leaked the mnemonic!", str.contains("correct horse battery staple"));
+        assertFalse("Security Fail: toString() leaked the xprv (private key)!", str.contains("xprv"));
+    }
 }
