@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Iterables;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.params.BitcoinNetworkParams;
@@ -42,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -129,8 +129,9 @@ public class BitcoindComparisonTool {
 
         bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, (peer, m) -> {
             if (m instanceof HeadersMessage) {
-                if (!((HeadersMessage) m).getBlockHeaders().isEmpty()) {
-                    Block b = Iterables.getLast(((HeadersMessage) m).getBlockHeaders());
+                List<Block> headers = ((HeadersMessage) m).getBlockHeaders();
+                if (!headers.isEmpty()) {
+                    Block b = headers.get(headers.size() - 1);
                     log.info("Got header from bitcoind " + b.getHashAsString());
                     bitcoindChainHead = b.getHash();
                 } else
