@@ -17,4 +17,7 @@
 /**
  * Utilities for verifying messages signed with Bitcoin private keys.
  */
+@NullMarked
 package org.bitcoinj.crypto.utils;
+
+import org.jspecify.annotations.NullMarked;
