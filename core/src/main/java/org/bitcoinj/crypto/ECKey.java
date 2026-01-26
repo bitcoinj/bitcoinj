@@ -164,10 +164,10 @@ public class ECKey implements EncryptableItem {
     // not have this field.
     @Nullable private Instant creationTime = null;
 
-    protected KeyCrypter keyCrypter;
-    protected EncryptedData encryptedPrivateKey;
+    @Nullable protected KeyCrypter keyCrypter;
+    @Nullable protected EncryptedData encryptedPrivateKey;
 
-    private byte[] pubKeyHash;
+    private byte @Nullable [] pubKeyHash;
 
     /**
      * Generates an entirely random, new keypair.
@@ -1165,6 +1165,7 @@ public class ECKey implements EncryptableItem {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         checkState(encryptedPrivateKey != null, () ->
                 "this key is not encrypted");
+        assert encryptedPrivateKey != null;
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
         if (unencryptedPrivateKey.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -1237,7 +1238,7 @@ public class ECKey implements EncryptableItem {
     }
 
     @Override
-    public Protos.Wallet.@Nullable EncryptionType getEncryptionType() {
+    public Protos.Wallet.EncryptionType getEncryptionType() {
         return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
     }
 
@@ -1352,7 +1353,7 @@ public class ECKey implements EncryptableItem {
     }
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
-                                     Network network, ScriptType outputScriptType, @Nullable String comment) {
+                                     Network network, @Nullable ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:");
         if (outputScriptType != null) {
             builder.append(toAddress(outputScriptType, network));
