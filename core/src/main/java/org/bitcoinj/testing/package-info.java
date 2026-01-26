@@ -17,4 +17,7 @@
 /**
  * Mock classes for unit testing.
  */
+@NullMarked
 package org.bitcoinj.testing;
+
+import org.jspecify.annotations.NullMarked;
