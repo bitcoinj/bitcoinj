@@ -526,11 +526,13 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
 
     private void installShutdownHook() {
         if (autoStop) {
-            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook, "shutdownHook"));
+            Runtime.getRuntime().addShutdownHook(shutdownHookThread);
         }
     }
 
-    private void shutdownHook() {
+    private final Thread shutdownHookThread = new Thread(this::shutdownFromHook, "shutdownHook");
+
+    private void shutdownFromHook() {
         try {
             stopAsync();
             awaitTerminated();
@@ -543,6 +545,9 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
         try {
+            if (autoStop) {
+                Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
+            }
             vPeerGroup.stop();
             vWallet.saveToFile(vWalletFile);
             vStore.close();
