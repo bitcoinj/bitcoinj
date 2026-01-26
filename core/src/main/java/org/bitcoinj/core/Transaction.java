@@ -17,7 +17,8 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.MoreObjects;
+import com.google.common.math.IntMath;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
@@ -27,6 +28,7 @@ import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.LockTime.HeightLock;
 import org.bitcoinj.core.LockTime.TimeLock;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
@@ -724,9 +726,9 @@ public class Transaction implements Message {
 
     @Override
     public String toString() {
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(toString(null, null));
-        return helper.toString();
+        return new ToStringUtil(this)
+                .addValue(toString(null, null))
+                .toString();
     }
 
     /**
