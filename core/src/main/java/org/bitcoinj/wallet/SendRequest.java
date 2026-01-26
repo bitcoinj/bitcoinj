@@ -58,10 +58,8 @@ public class SendRequest {
      * When emptyWallet is {@code true}, all coins selected by the coin selector are sent to the first output in {@link #tx}
      * (its {@code value} is ignored and set to {@link Wallet#getBalance()} <i>less the fee</i> required
      * for the transaction). Any additional outputs are removed.
-     * <p>
-     * This field should be treated as {@code final} and set via {@link SendRequest#emptyWallet(Transaction)} or {@link SendRequest#emptyWallet(Address)}.
      */
-    public boolean emptyWallet;
+    public final boolean emptyWallet;
 
     /**
      * "Change" means the difference between the value gathered by a transactions inputs (the size of which you
