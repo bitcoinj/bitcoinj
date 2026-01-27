@@ -333,20 +333,8 @@ public class Script {
      */
     @Deprecated
     public static void writeBytes(ByteArrayOutputStream os, byte[] bytes) throws IOException {
-        if (bytes.length < OP_PUSHDATA1) {
-            os.write(bytes.length);       // opcode *is* length
-            os.write(bytes);
-        } else if (bytes.length < 256) {
-            os.write(OP_PUSHDATA1);
-            os.write(bytes.length);
-            os.write(bytes);
-        } else if (bytes.length < 65536) {
-            os.write(OP_PUSHDATA2);
-            ByteUtils.writeInt16LE(bytes.length, os);
-            os.write(bytes);
-        } else {
-            throw new RuntimeException("byte array too long: " + bytes.length + " bytes");
-        }
+        byte[] pushData = toPushData(bytes);
+        os.write(pushData, 0, pushData.length);
     }
 
     /**
