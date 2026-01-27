@@ -212,12 +212,6 @@ public class Peer extends PeerSocketHandler {
                         return peer1;
                     });
 
-    /** @deprecated Use {@link #Peer(NetworkParameters, VersionMessage, PeerAddress, AbstractBlockChain)}. */
-    @Deprecated
-    public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockChain chain, PeerAddress remoteAddress) {
-        this(params, ver, remoteAddress, chain);
-    }
-
     /**
      * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link TxConfidenceTable}
      * will have their confidence levels updated when a peer announces it, to reflect the greater likelihood that
@@ -286,7 +280,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, AbstractBlockChain blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
-        this(params, new VersionMessage(params, blockChain.getBestChainHeight()), blockChain, peerAddress);
+        this(params, new VersionMessage(params, blockChain.getBestChainHeight()), peerAddress, blockChain);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 
