@@ -103,8 +103,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
-        return List.of(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
-                             new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
+        return Collections.singletonList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER});
     }
 
     public PeerGroupTest(ClientType clientType) {

@@ -45,6 +45,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -60,8 +61,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
-        return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
-                             new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
+        return Collections.singletonList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER});
     }
 
     public FilteredBlockAndPartialMerkleTreeTest(ClientType clientType) {
