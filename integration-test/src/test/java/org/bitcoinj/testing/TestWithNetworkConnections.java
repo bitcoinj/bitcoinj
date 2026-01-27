@@ -84,6 +84,22 @@ public class TestWithNetworkConnections {
     private final ClientConnectionManager channels;
     protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<>();
 
+    public class TestStreamConnectionFactory implements StreamConnectionFactory {
+        @Override
+        public @Nullable StreamConnection getNewConnection(InetAddress inetAddress, int port) {
+            return new InboundMessageQueuer(UNITTEST.getSerializer()) {
+                @Override
+                public void connectionClosed() {
+                }
+
+                @Override
+                public void connectionOpened() {
+                    newPeerWriteTargetQueue.offer(this);
+                }
+            };
+        }
+    }
+
     public enum ClientType {
         NIO_CLIENT_MANAGER,
         BLOCKING_CLIENT_MANAGER,
@@ -135,22 +151,8 @@ public class TestWithNetworkConnections {
     }
 
     protected void startPeerServer(int i) throws IOException {
-        peerServers[i] = new NioServer(new StreamConnectionFactory() {
-            @Nullable
-            @Override
-            public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new InboundMessageQueuer(UNITTEST.getSerializer()) {
-                    @Override
-                    public void connectionClosed() {
-                    }
-
-                    @Override
-                    public void connectionOpened() {
-                        newPeerWriteTargetQueue.offer(this);
-                    }
-                };
-            }
-        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i));
+        peerServers[i] = new NioServer(new TestStreamConnectionFactory(),
+                new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i));
         peerServers[i].startAsync();
         peerServers[i].awaitRunning();
     }
