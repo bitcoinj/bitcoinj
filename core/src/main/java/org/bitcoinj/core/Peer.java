@@ -212,12 +212,6 @@ public class Peer extends PeerSocketHandler {
                         return peer1;
                     });
 
-    /** @deprecated Use {@link #Peer(NetworkParameters, VersionMessage, PeerAddress, AbstractBlockChain)}. */
-    @Deprecated
-    public Peer(NetworkParameters params, VersionMessage ver, @Nullable AbstractBlockChain chain, PeerAddress remoteAddress) {
-        this(params, ver, remoteAddress, chain);
-    }
-
     /**
      * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link TxConfidenceTable}
      * will have their confidence levels updated when a peer announces it, to reflect the greater likelihood that
@@ -286,7 +280,7 @@ public class Peer extends PeerSocketHandler {
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
      */
     public Peer(NetworkParameters params, AbstractBlockChain blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
-        this(params, new VersionMessage(params, blockChain.getBestChainHeight()), blockChain, peerAddress);
+        this(params, new VersionMessage(params, blockChain.getBestChainHeight()), peerAddress, blockChain);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
     }
 
@@ -1577,28 +1571,12 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * @deprecated Use {@link #sendPing()}
-     */
-    @Deprecated
-    public CompletableFuture<Long> ping() {
-        return sendPing().thenApply(Duration::toMillis);
-    }
-
-    /**
      * Returns the elapsed time of the last ping/pong cycle. If {@link Peer#sendPing()} has never
      * been called or we did not hear back the "pong" message yet, returns empty.
      * @return last ping, or empty
      */
     public Optional<Duration> lastPingInterval() {
         return Optional.ofNullable(lastPing);
-    }
-
-    /** @deprecated use {@link #lastPingInterval()} */
-    @Deprecated
-    public long getLastPingTime() {
-        return lastPingInterval()
-                .map(Duration::toMillis)
-                .orElse(Long.MAX_VALUE);
     }
 
     /**
@@ -1609,14 +1587,6 @@ public class Peer extends PeerSocketHandler {
      */
     public Optional<Duration> pingInterval() {
         return Optional.ofNullable(averagePing);
-    }
-
-    /** @deprecated use {@link #pingInterval()} */
-    @Deprecated
-    public long getPingTime() {
-        return pingInterval()
-                .map(Duration::toMillis)
-                .orElse(Long.MAX_VALUE);
     }
 
     private void processPing(Ping m) {
