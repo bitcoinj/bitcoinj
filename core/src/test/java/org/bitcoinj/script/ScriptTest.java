@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
@@ -55,7 +56,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -262,10 +262,10 @@ public class ScriptTest {
         assertEquals("OP_0 push length", 0, stack.get(0).length);
     }
 
-    private Script parseScriptString(String string) throws IOException {
+    private Script parseScriptString(String string) {
         String[] words = string.split("[ \\t\\n]");
         
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteBuffer buf = ByteBuffer.allocate(1024 * 10);
 
         for(String w : words) {
             if (w.equals(""))
@@ -274,28 +274,27 @@ public class ScriptTest {
                 // Number
                 long val = Long.parseLong(w);
                 if (val >= -1 && val <= 16)
-                    out.write(Script.encodeToOpN((int)val));
+                    buf.put((byte) Script.encodeToOpN((int)val));
                 else
-                    Script.writeBytes(out, ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(val), false)));
+                    Script.writePushData(buf, ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(val), false)));
             } else if (w.matches("^0x[0-9a-fA-F]*$")) {
                 // Raw hex data, inserted NOT pushed onto stack:
-                out.write(ByteUtils.parseHex(w.substring(2).toLowerCase()));
+                buf.put(ByteUtils.parseHex(w.substring(2).toLowerCase()));
             } else if (w.length() >= 2 && w.startsWith("'") && w.endsWith("'")) {
                 // Single-quoted string, pushed as data. NOTE: this is poor-man's
                 // parsing, spaces/tabs/newlines in single-quoted strings won't work.
-                Script.writeBytes(out, w.substring(1, w.length() - 1).getBytes(StandardCharsets.UTF_8));
+                Script.writePushData(buf, w.substring(1, w.length() - 1).getBytes(StandardCharsets.UTF_8));
             } else if (ScriptOpCodes.getOpCode(w) != OP_INVALIDOPCODE) {
                 // opcode, e.g. OP_ADD or OP_1:
-                out.write(ScriptOpCodes.getOpCode(w));
+                buf.put((byte) ScriptOpCodes.getOpCode(w));
             } else if (w.startsWith("OP_") && ScriptOpCodes.getOpCode(w.substring(3)) != OP_INVALIDOPCODE) {
                 // opcode, e.g. OP_ADD or OP_1:
-                out.write(ScriptOpCodes.getOpCode(w.substring(3)));
+                buf.put((byte) ScriptOpCodes.getOpCode(w.substring(3)));
             } else {
                 throw new RuntimeException("Invalid word: '" + w + "'");
-            }                        
+            }
         }
-        
-        return Script.parse(out.toByteArray());
+        return Script.parse(Buffers.flipAndRead(buf));
     }
 
     private Set<ScriptExecution.VerifyFlag> parseVerifyFlags(String str) {
