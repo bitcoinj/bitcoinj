@@ -1571,28 +1571,12 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * @deprecated Use {@link #sendPing()}
-     */
-    @Deprecated
-    public CompletableFuture<Long> ping() {
-        return sendPing().thenApply(Duration::toMillis);
-    }
-
-    /**
      * Returns the elapsed time of the last ping/pong cycle. If {@link Peer#sendPing()} has never
      * been called or we did not hear back the "pong" message yet, returns empty.
      * @return last ping, or empty
      */
     public Optional<Duration> lastPingInterval() {
         return Optional.ofNullable(lastPing);
-    }
-
-    /** @deprecated use {@link #lastPingInterval()} */
-    @Deprecated
-    public long getLastPingTime() {
-        return lastPingInterval()
-                .map(Duration::toMillis)
-                .orElse(Long.MAX_VALUE);
     }
 
     /**
@@ -1603,14 +1587,6 @@ public class Peer extends PeerSocketHandler {
      */
     public Optional<Duration> pingInterval() {
         return Optional.ofNullable(averagePing);
-    }
-
-    /** @deprecated use {@link #pingInterval()} */
-    @Deprecated
-    public long getPingTime() {
-        return pingInterval()
-                .map(Duration::toMillis)
-                .orElse(Long.MAX_VALUE);
     }
 
     private void processPing(Ping m) {
