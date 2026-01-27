@@ -20,6 +20,7 @@ import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerSocketHandler;
 import org.bitcoinj.core.Ping;
 
@@ -43,7 +44,7 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public BloomFilter lastReceivedFilter;
 
     protected InboundMessageQueuer(NetworkParameters params) {
-        super(params, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
+        super(PeerAddress.simple(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000)), params.getDefaultSerializer());
     }
 
     public Message nextMessage() {
