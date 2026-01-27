@@ -344,7 +344,7 @@ public class Script {
             ByteUtils.writeInt16LE(buf.length, os);
             os.write(buf);
         } else {
-            throw new RuntimeException("Unimplemented");
+            throw new RuntimeException("byte array too long: " + buf.length + " bytes");
         }
     }
 
