@@ -328,23 +328,23 @@ public class Script {
      * Writes a byte array to an output stream with the correct "push" opcode prefix
      * To write an integer call writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(val, false)));
      * @param os OutputStream to write to
-     * @param buf byte array to prefix with push opcode and write
+     * @param bytes byte array to prefix with push opcode and write
      * @throws IOException shouldn't happen when using ByteArrayOutputStream
      */
-    public static void writeBytes(OutputStream os, byte[] buf) throws IOException {
-        if (buf.length < OP_PUSHDATA1) {
-            os.write(buf.length);       // opcode *is* length
-            os.write(buf);
-        } else if (buf.length < 256) {
+    public static void writeBytes(OutputStream os, byte[] bytes) throws IOException {
+        if (bytes.length < OP_PUSHDATA1) {
+            os.write(bytes.length);       // opcode *is* length
+            os.write(bytes);
+        } else if (bytes.length < 256) {
             os.write(OP_PUSHDATA1);
-            os.write(buf.length);
-            os.write(buf);
-        } else if (buf.length < 65536) {
+            os.write(bytes.length);
+            os.write(bytes);
+        } else if (bytes.length < 65536) {
             os.write(OP_PUSHDATA2);
-            ByteUtils.writeInt16LE(buf.length, os);
-            os.write(buf);
+            ByteUtils.writeInt16LE(bytes.length, os);
+            os.write(bytes);
         } else {
-            throw new RuntimeException("byte array too long: " + buf.length + " bytes");
+            throw new RuntimeException("byte array too long: " + bytes.length + " bytes");
         }
     }
 
