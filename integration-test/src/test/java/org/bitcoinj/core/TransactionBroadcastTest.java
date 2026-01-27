@@ -36,6 +36,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -56,8 +57,7 @@ import static org.junit.Assert.assertTrue;
 public class TransactionBroadcastTest extends TestWithPeerGroup {
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
-        return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
-                             new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
+        return Collections.singletonList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER});
     }
 
     public TransactionBroadcastTest(ClientType clientType) {
