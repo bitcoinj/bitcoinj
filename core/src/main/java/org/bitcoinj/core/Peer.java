@@ -253,7 +253,7 @@ public class Peer extends PeerSocketHandler {
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
                 @Nullable AbstractBlockChain chain, long requiredServices, int downloadTxDependencyDepth) {
-        super(params, remoteAddress);
+        super(remoteAddress, params.getDefaultSerializer());
         this.params = Objects.requireNonNull(params);
         this.versionMessage = Objects.requireNonNull(ver);
         this.vDownloadTxDependencyDepth = chain != null ? downloadTxDependencyDepth : 0;

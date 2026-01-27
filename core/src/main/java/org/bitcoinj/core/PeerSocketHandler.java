@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -66,14 +65,9 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     private int largeReadBufferPos;
     private BitcoinSerializer.BitcoinPacketHeader header;
 
-    public PeerSocketHandler(NetworkParameters params, InetSocketAddress remoteIp) {
-        this(params, PeerAddress.simple(remoteIp));
-    }
-
-    public PeerSocketHandler(NetworkParameters params, PeerAddress peerAddress) {
-        Objects.requireNonNull(params);
-        serializer = params.getDefaultSerializer();
+    protected PeerSocketHandler(PeerAddress peerAddress, MessageSerializer messageSerializer) {
         this.peerAddress = Objects.requireNonNull(peerAddress);
+        this.serializer = Objects.requireNonNull(messageSerializer);
         this.timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
     }
 
