@@ -83,9 +83,10 @@ public class AddressData {
 
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder(this.getClass().getSimpleName()).append('{');
-        s.append("address=").append(address).append(',');
-        s.append("expected=").append(expectedNetwork).append(',').append(expectedScriptPubKey).append(',').append(expectedWitnessVersion);
-        return s.append('}').toString();
+        String s = this.getClass().getSimpleName() + '{' +
+                "address=" + address + ',' +
+                "expected=" + expectedNetwork + ',' + expectedScriptPubKey + ',' + expectedWitnessVersion +
+                '}';
+        return s;
     }
 }
