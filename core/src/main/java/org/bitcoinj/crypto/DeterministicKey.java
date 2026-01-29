@@ -652,6 +652,11 @@ public class DeterministicKey extends ECKey {
         final int parentFingerprint = buffer.getInt();
         final int i = buffer.getInt();
         final ChildNumber childNumber = new ChildNumber(i);
+        if (depth == 0 && (parentFingerprint != 0 || childNumber.getI() != 0)) {
+            throw new IllegalArgumentException(
+                "Invalid DeterministicKey: master key (depth 0) must have zero parent fingerprint and zero child number"
+            );
+        }
         HDPath.HDPartialPath path;
         if (parent != null) {
             if (parentFingerprint == 0)
@@ -674,13 +679,32 @@ public class DeterministicKey extends ECKey {
         buffer.get(chainCode);
         byte[] data = new byte[33];
         buffer.get(data);
+        if (priv && (data[0] != 0)) {
+            throw new IllegalArgumentException("prv/pub version mismatch: expected private key bytes for xprv");
+        }
+        if (pub && (data[0] == 0)) {
+            throw new IllegalArgumentException("prv/pub version mismatch: expected public key bytes for xpub");
+        }
         checkArgument(!buffer.hasRemaining(), () ->
                 "found unexpected data in key");
-        if (pub) {
-            return new DeterministicKey(path, chainCode, new LazyECPoint(data), parent, depth, parentFingerprint);
+        if (pub) {            
+            LazyECPoint pubPoint = new LazyECPoint(data);
+
+            // Force validation of the point on EC
+            try {
+                pubPoint.get();
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid public key bytes for xpub", e);
+            }
+            return new DeterministicKey(path, chainCode, pubPoint, parent, depth, parentFingerprint);
         } else {
-            return new DeterministicKey(path, chainCode, ByteUtils.bytesToBigInteger(data), parent, depth, parentFingerprint);
+            BigInteger privKey = ByteUtils.bytesToBigInteger(data);
+            if (privKey.compareTo(BigInteger.ONE) < 0 || privKey.compareTo(ECKey.CURVE.getN()) >= 0) {
+                throw new IllegalArgumentException("Private key out of range 1..n-1");
+            }
+            return new DeterministicKey(path, chainCode, privKey, parent, depth, parentFingerprint);
         }
+
     }
 
     /**
