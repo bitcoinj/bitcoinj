@@ -1,6 +1,5 @@
 /*
- * Copyright 2011 Google Inc.
- * Copyright 2014 Andreas Schildbach
+ * Copyright by the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.bitcoinj.core.listeners;
-
 /**
- * Event Listener for blockchain download. Combines {@link BlocksDownloadedEventListener} and {@link ChainDownloadStartedEventListener}.
+ * Test support classes that depend upon {@code bitcoinj-base} and can be used in both
+ * {@code bitcoinj-base} and {@code bitcoinj-core} tests.
  */
-public interface BlockchainDownloadEventListener extends BlocksDownloadedEventListener, ChainDownloadStartedEventListener {
-}
+@NullMarked
+package org.bitcoinj.test.support;
+
+import org.jspecify.annotations.NullMarked;

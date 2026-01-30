@@ -140,15 +140,28 @@ public class Transaction implements Message {
     public static final int MAX_STANDARD_TX_SIZE = 100_000;
 
     /**
-     * If feePerKb is lower than this, Bitcoin Core will treat it as if there were no fee.
+     * If fee rate is lower than this, Bitcoin Core will treat it as if there were no fee.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1_000); // 0.01 mBTC
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE_RATE = Coin.valueOf(100); // per vkB
+
+    /** @deprecated use {@link #REFERENCE_DEFAULT_MIN_TX_FEE_RATE} */
+    @Deprecated
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = REFERENCE_DEFAULT_MIN_TX_FEE_RATE;
 
     /**
-     * If using this feePerKb, transactions will get confirmed within the next couple of blocks.
-     * This should be adjusted from time to time. Last adjustment: February 2017.
+     * Minimum feerate for defining dust, in sats per kB.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100_000); // 1 mBTC
+    public static final Coin DUST_RELAY_TX_FEE_RATE = Coin.valueOf(3_000); // per kB
+
+    /**
+     * If using this fee rate, transactions will get confirmed within the next couple of blocks.
+     * This should be adjusted from time to time. Last adjustment: January 2026.
+     */
+    public static final Coin DEFAULT_TX_FEE_RATE = Coin.valueOf(10_000); // per vkB
+
+    /** @deprecated use {@link #DEFAULT_TX_FEE_RATE} */
+    @Deprecated
+    public static final Coin DEFAULT_TX_FEE = DEFAULT_TX_FEE_RATE;
 
     /**
      * The scale factor for Witness data in Segregated Witness transactions.

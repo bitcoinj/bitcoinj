@@ -17,6 +17,7 @@
 package org.bitcoinj.walletfx.application;
 
 import com.google.common.util.concurrent.Service;
+import org.bitcoinj.core.Peer;
 import org.jspecify.annotations.Nullable;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
@@ -116,7 +117,11 @@ public abstract class WalletApplication implements AppDelegate {
         controller = loadController();
         primaryStage.setScene(controller.scene());
         startWalletAppKit(primaryStage);
-        controller.scene().getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> walletAppKit().peerGroup().getDownloadPeer().close());
+        controller.scene().getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> {
+            Peer peer =  walletAppKit().peerGroup().getDownloadPeer();
+            if (peer != null)
+                peer.close();
+        });
     }
 
     protected void startWalletAppKit(Stage primaryStage) throws IOException {

@@ -127,7 +127,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -141,6 +140,8 @@ public class WalletTest extends TestWithWallet {
 
     private final Address OTHER_ADDRESS = ECKey.random().toAddress(ScriptType.P2PKH, TESTNET);
     private final Address OTHER_SEGWIT_ADDRESS = ECKey.random().toAddress(ScriptType.P2WPKH, TESTNET);
+
+    private static final Coin TEST_TX_FEE_RATE = Coin.valueOf(100_000); // per vkB
 
     @Before
     @Override
@@ -2293,7 +2294,7 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < 29; i++)
             request15.tx.addOutput(CENT, OTHER_ADDRESS);
         assertTrue(request15.tx.messageSize() > 1000);
-        request15.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request15.feePerKb = TEST_TX_FEE_RATE;
         request15.ensureMinRequiredFee = true;
         wallet.completeTx(request15);
         assertEquals(Coin.valueOf(121300), request15.tx.getFee());
@@ -2313,7 +2314,7 @@ public class WalletTest extends TestWithWallet {
         wallet.completeTx(request16);
         // Just the reference fee should be added if feePerKb == 0
         // Hardcoded tx length because actual length may vary depending on actual signature length
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(1213).divide(1000), request16.tx.getFee());
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE_RATE.multiply(1213).divide(1000), request16.tx.getFee());
         Transaction spend16 = request16.tx;
         assertEquals(31, spend16.getOutputs().size());
         // We optimize for priority, so the output selected should be the largest one
@@ -2325,7 +2326,7 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < 22; i++)
             request17.tx.addOutput(CENT, OTHER_ADDRESS);
         request17.tx.addOutput(new TransactionOutput(request17.tx, CENT, new byte[15]));
-        request17.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request17.feePerKb = TEST_TX_FEE_RATE;
         request17.ensureMinRequiredFee = true;
         wallet.completeTx(request17);
         assertEquals(Coin.valueOf(99900), request17.tx.getFee());
@@ -2352,7 +2353,7 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < 22; i++)
             request18.tx.addOutput(CENT, OTHER_ADDRESS);
         request18.tx.addOutput(new TransactionOutput(request18.tx, CENT, new byte[17]));
-        request18.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request18.feePerKb = TEST_TX_FEE_RATE;
         request18.ensureMinRequiredFee = true;
         wallet.completeTx(request18);
         assertEquals(Coin.valueOf(100100), request18.tx.getFee());
@@ -2386,7 +2387,7 @@ public class WalletTest extends TestWithWallet {
         // Now reset request19 and give it a fee per kb
         request19.tx.clearInputs();
         request19 = SendRequest.forTx(request19.tx);
-        request19.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request19.feePerKb = TEST_TX_FEE_RATE;
         request19.shuffleOutputs = false;
         wallet.completeTx(request19);
         assertEquals(Coin.valueOf(374200), request19.tx.getFee());
@@ -2407,7 +2408,7 @@ public class WalletTest extends TestWithWallet {
         // Now reset request19 and give it a fee per kb
         request20.tx.clearInputs();
         request20 = SendRequest.forTx(request20.tx);
-        request20.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request20.feePerKb = TEST_TX_FEE_RATE;
         wallet.completeTx(request20);
         // 4kb tx.
         assertEquals(Coin.valueOf(374200), request20.tx.getFee());
@@ -2427,7 +2428,7 @@ public class WalletTest extends TestWithWallet {
         // If we send without a feePerKb, we should still require REFERENCE_DEFAULT_MIN_TX_FEE because we have an output < 0.01
         wallet.completeTx(request21);
         // Hardcoded tx length because actual length may vary depending on actual signature length
-        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(3776).divide(1000), request21.tx.getFee());
+        assertEquals(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE_RATE.multiply(3776).divide(1000), request21.tx.getFee());
         assertEquals(2, request21.tx.getInputs().size());
         assertEquals(COIN, request21.tx.getInput(0).getValue());
         assertEquals(CENT, request21.tx.getInput(1).getValue());
@@ -2445,7 +2446,7 @@ public class WalletTest extends TestWithWallet {
         // Now reset request25 and give it a fee per kb
         request25.tx.clearInputs();
         request25 = SendRequest.forTx(request25.tx);
-        request25.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request25.feePerKb = TEST_TX_FEE_RATE;
         request25.shuffleOutputs = false;
         wallet.completeTx(request25);
         assertEquals(Coin.valueOf(279000), request25.tx.getFee());
@@ -2467,7 +2468,7 @@ public class WalletTest extends TestWithWallet {
         for (int i = 0; i < 98; i++)
             request26.tx.addOutput(CENT, OTHER_ADDRESS);
         // Hardcoded tx length because actual length may vary depending on actual signature length
-        Coin fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.multiply(3560).divide(1000);
+        Coin fee = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE_RATE.multiply(3560).divide(1000);
         Coin dustThresholdMinusOne = new TransactionOutput(null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue().subtract(SATOSHI);
         request26.tx.addOutput(CENT.subtract(fee.add(dustThresholdMinusOne)),
                 OTHER_ADDRESS);
@@ -2490,7 +2491,7 @@ public class WalletTest extends TestWithWallet {
         // Simplest recipientPaysFees use case
         Coin valueToSend = CENT.divide(2);
         SendRequest request = SendRequest.to(OTHER_ADDRESS, valueToSend);
-        request.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request.feePerKb = TEST_TX_FEE_RATE;
         request.ensureMinRequiredFee = true;
         request.recipientsPayFees = true;
         request.shuffleOutputs = false;
@@ -2508,7 +2509,7 @@ public class WalletTest extends TestWithWallet {
         // Fee is split between the 2 outputs
         SendRequest request2 = SendRequest.to(OTHER_ADDRESS, valueToSend);
         request2.tx.addOutput(valueToSend, OTHER_ADDRESS);
-        request2.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request2.feePerKb = TEST_TX_FEE_RATE;
         request2.ensureMinRequiredFee = true;
         request2.recipientsPayFees = true;
         request2.shuffleOutputs = false;
@@ -2528,7 +2529,7 @@ public class WalletTest extends TestWithWallet {
         SendRequest request3 = SendRequest.to(OTHER_ADDRESS, valueToSend);
         request3.tx.addOutput(valueToSend, OTHER_ADDRESS);
         request3.tx.addOutput(valueToSend, OTHER_ADDRESS);
-        request3.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request3.feePerKb = TEST_TX_FEE_RATE;
         request3.ensureMinRequiredFee = true;
         request3.recipientsPayFees = true;
         request3.shuffleOutputs = false;
@@ -2549,11 +2550,11 @@ public class WalletTest extends TestWithWallet {
 
         // Output when subtracted fee is dust
         // Hardcoded tx length because actual length may vary depending on actual signature length
-        Coin fee4 = Transaction.DEFAULT_TX_FEE.multiply(227).divide(1000);
+        Coin fee4 = TEST_TX_FEE_RATE.multiply(227).divide(1000);
         Coin dustThreshold = new TransactionOutput(null, Coin.COIN, OTHER_ADDRESS).getMinNonDustValue();
         valueToSend = fee4.add(dustThreshold).subtract(SATOSHI);
         SendRequest request4 = SendRequest.to(OTHER_ADDRESS, valueToSend);
-        request4.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request4.feePerKb = TEST_TX_FEE_RATE;
         request4.ensureMinRequiredFee = true;
         request4.recipientsPayFees = true;
         request4.shuffleOutputs = false;
@@ -2565,11 +2566,11 @@ public class WalletTest extends TestWithWallet {
 
         // Change is dust, so it is incremented to min non dust value. First output value is reduced to compensate.
         // Hardcoded tx length because actual length may vary depending on actual signature length
-        Coin fee5 = Transaction.DEFAULT_TX_FEE.multiply(261).divide(1000);
+        Coin fee5 = TEST_TX_FEE_RATE.multiply(261).divide(1000);
         valueToSend = COIN.divide(2).subtract(Coin.MICROCOIN);
         SendRequest request5 = SendRequest.to(OTHER_ADDRESS, valueToSend);
         request5.tx.addOutput(valueToSend, OTHER_ADDRESS);
-        request5.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request5.feePerKb = TEST_TX_FEE_RATE;
         request5.ensureMinRequiredFee = true;
         request5.recipientsPayFees = true;
         request5.shuffleOutputs = false;
@@ -2589,12 +2590,12 @@ public class WalletTest extends TestWithWallet {
         // Change is dust, so it is incremented to min non dust value. First output value is about to be reduced to
         // compensate, but after subtracting some satoshis, first output is dust.
         // Hardcoded tx length because actual length may vary depending on actual signature length
-        Coin fee6 = Transaction.DEFAULT_TX_FEE.multiply(261).divide(1000);
+        Coin fee6 = TEST_TX_FEE_RATE.multiply(261).divide(1000);
         Coin valueToSend1 = fee6.divide(2).add(dustThreshold).add(Coin.MICROCOIN);
         Coin valueToSend2 = COIN.subtract(valueToSend1).subtract(Coin.MICROCOIN.multiply(2));
         SendRequest request6 = SendRequest.to(OTHER_ADDRESS, valueToSend1);
         request6.tx.addOutput(valueToSend2, OTHER_ADDRESS);
-        request6.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request6.feePerKb = TEST_TX_FEE_RATE;
         request6.ensureMinRequiredFee = true;
         request6.recipientsPayFees = true;
         request6.shuffleOutputs = false;
@@ -2614,7 +2615,7 @@ public class WalletTest extends TestWithWallet {
 
         // Create a transaction
         SendRequest request = SendRequest.to(OTHER_ADDRESS, CENT);
-        request.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request.feePerKb = TEST_TX_FEE_RATE;
         wallet.completeTx(request);
         assertEquals(Coin.valueOf(22700), request.tx.getFee());
     }
@@ -2631,7 +2632,7 @@ public class WalletTest extends TestWithWallet {
 
         // Create a transaction
         SendRequest request = SendRequest.to(OTHER_SEGWIT_ADDRESS, CENT);
-        request.feePerKb = Transaction.DEFAULT_TX_FEE;
+        request.feePerKb = TEST_TX_FEE_RATE;
         mySegwitWallet.completeTx(request);
 
         // Fee test, absolute and per virtual kilobyte
@@ -2640,47 +2641,46 @@ public class WalletTest extends TestWithWallet {
         Coin feePerVkb = fee.multiply(1000).divide(vsize);
         assertEquals(Coin.valueOf(14100), fee);
         // due to shorter than expected signature encoding, in rare cases we overpay a little
-        Coin overpaidFee = Transaction.DEFAULT_TX_FEE.add(valueOf(714));
-        assertTrue(feePerVkb.toString(),feePerVkb.equals(Transaction.DEFAULT_TX_FEE) || feePerVkb.equals(overpaidFee));
+        Coin overpaidFee = TEST_TX_FEE_RATE.add(valueOf(714));
+        assertTrue(feePerVkb.toString(),feePerVkb.equals(TEST_TX_FEE_RATE) || feePerVkb.equals(overpaidFee));
     }
 
     @Test
-    public void lowerThanDefaultFee() throws InsufficientMoneyException {
-        int feeFactor = 200;
-        Coin fee = Transaction.DEFAULT_TX_FEE.divide(feeFactor);
+    public void lowerThanDefaultFeeRate() throws InsufficientMoneyException {
+        int feeFactor = 10;
+        Coin fee = Transaction.DEFAULT_TX_FEE_RATE.divide(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;
         wallet.completeTx(req);
-        assertEquals(Coin.valueOf(22700).divide(feeFactor), req.tx.getFee());
+        assertEquals(Coin.valueOf(2_270).divide(feeFactor), req.tx.getFee());
         wallet.commitTx(req.tx);
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
         emptyReq.ensureMinRequiredFee = true;
         emptyReq.emptyWallet = true;
         emptyReq.allowUnconfirmed();
-        wallet.completeTx(emptyReq);
-        final Coin feePerKb = emptyReq.tx.getFee().multiply(1000).divide(emptyReq.tx.getVsize());
-        assertThat((double) feePerKb.toSat(), closeTo(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE.toSat(),20));
+        wallet.completeTx(emptyReq); // resulting vsize ~339
+        assertEquals(Coin.valueOf(3_420).divide(feeFactor), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 
     @Test
-    public void higherThanDefaultFee() throws InsufficientMoneyException {
+    public void higherThanDefaultFeeRate() throws InsufficientMoneyException {
         int feeFactor = 10;
-        Coin fee = Transaction.DEFAULT_TX_FEE.multiply(feeFactor);
+        Coin fee = Transaction.DEFAULT_TX_FEE_RATE.multiply(feeFactor);
         receiveATransactionAmount(wallet, myAddress, Coin.COIN);
         SendRequest req = SendRequest.to(myAddress, Coin.CENT);
         req.feePerKb = fee;
         wallet.completeTx(req);
-        assertEquals(Coin.valueOf(22700).multiply(feeFactor), req.tx.getFee());
+        assertEquals(Coin.valueOf(2_270).multiply(feeFactor), req.tx.getFee());
         wallet.commitTx(req.tx);
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
         emptyReq.emptyWallet = true;
         emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq);
-        assertEquals(Coin.valueOf(342000), emptyReq.tx.getFee());
+        assertEquals(Coin.valueOf(3_420).multiply(feeFactor), emptyReq.tx.getFee());
         wallet.commitTx(emptyReq.tx);
     }
 
@@ -2900,7 +2900,7 @@ public class WalletTest extends TestWithWallet {
 
         Transaction tx = broadcaster.waitForTransactionAndSucceed();
         final Coin THREE_CENTS = CENT.add(CENT).add(CENT);
-        assertEquals(Coin.valueOf(49100), tx.getFee());
+        assertEquals(Coin.valueOf(4910), tx.getFee());
         assertEquals(THREE_CENTS, tx.getValueSentFromMe(wallet));
         assertEquals(THREE_CENTS.subtract(tx.getFee()), tx.getValueSentToMe(wallet));
         // TX sends to one of our addresses (for now we ignore married wallets).
@@ -2924,7 +2924,7 @@ public class WalletTest extends TestWithWallet {
         assertNotNull(wallet.findKeyFromPubKeyHash(tx.getOutput(0).getScriptPubKey().getPubKeyHash(),
                 toAddress.getOutputScriptType()));
         log.info("Unexpected thing: {}", tx);
-        assertEquals(Coin.valueOf(19300), tx.getFee());
+        assertEquals(Coin.valueOf(1930), tx.getFee());
         assertEquals(1, tx.getInputs().size());
         assertEquals(1, tx.getOutputs().size());
         assertEquals(CENT, tx.getValueSentFromMe(wallet));

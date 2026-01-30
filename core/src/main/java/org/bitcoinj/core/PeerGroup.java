@@ -167,7 +167,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private final ClientConnectionManager channels;
 
     // The peer that has been selected for the purposes of downloading announced data.
-    @GuardedBy("lock") private Peer downloadPeer;
+    @Nullable @GuardedBy("lock") private Peer downloadPeer;
     // Callback for events related to chain download.
     @Nullable @GuardedBy("lock") private BlockchainDownloadEventListener downloadListener;
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> peersBlocksDownloadedEventListeners
@@ -272,7 +272,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private final ExponentialBackoff.Params peerBackoffParams = new ExponentialBackoff.Params(Duration.ofSeconds(1),
             1.5f, Duration.ofMinutes(10));
     // Tracks failures globally in case of a network failure.
-    @GuardedBy("lock") private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(Duration.ofSeconds(1), 1.5f, Duration.ofSeconds(10)));
+    @GuardedBy("lock") private final ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(Duration.ofSeconds(1), 1.5f, Duration.ofSeconds(10)));
 
     // This is a synchronized set, so it locks on itself. We use it to prevent TransactionBroadcast objects from
     // being garbage collected if nothing in the apps code holds on to them transitively. See the discussion
@@ -521,7 +521,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    private Runnable triggerConnectionsJob = new Runnable() {
+    private final Runnable triggerConnectionsJob = new Runnable() {
         private boolean firstRun = true;
         private final Duration MIN_PEER_DISCOVERY_INTERVAL = Duration.ofSeconds(1);
 
@@ -1967,7 +1967,9 @@ public class PeerGroup implements TransactionBroadcaster {
                             log.warn(String.format(Locale.US,
                                     "Chain download stalled: received %.2f KB/sec for %d seconds, require average of %.2f KB/sec, disconnecting %s, %d stalls left",
                                     average / 1024.0, samples.length, minSpeedBytesPerSec / 1024.0, peer, maxStalls));
-                            peer.close();
+                            if (peer != null) {
+                                peer.close();
+                            }
                             // Reset the sample buffer and give the next peer time to get going.
                             samples = null;
                             warmupSeconds = period;
@@ -2384,6 +2386,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Returns the currently selected download peer. Bear in mind that it may have changed as soon as this method
      * returns. Can return null if no peer was selected.
      */
+    @Nullable
     public Peer getDownloadPeer() {
         lock.lock();
         try {

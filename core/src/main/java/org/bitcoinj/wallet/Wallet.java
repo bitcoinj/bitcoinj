@@ -4552,7 +4552,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size.
-     * If ensureMinRequiredFee is true, feePerKb is set to at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.
+     * If ensureMinRequiredFee is true, feePerKb is set to at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE_RATE}.
      * @return true if output is not dust
      */
     private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
@@ -5345,8 +5345,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     private Coin estimateFees(Transaction tx, CoinSelection coinSelection, Coin requestedFeePerKb, boolean ensureMinRequiredFee) {
-        Coin feePerKb = (ensureMinRequiredFee && requestedFeePerKb.isLessThan(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE))
-                ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
+        Coin feePerKb = (ensureMinRequiredFee && requestedFeePerKb.isLessThan(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE_RATE))
+                ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE_RATE
                 : requestedFeePerKb;
         int vSize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection.outputs());
         return feePerKb.multiply(vSize).divide(1000);
@@ -5653,7 +5653,7 @@ public class Wallet extends BaseTaggableObject
             }
             // When not signing, don't waste addresses.
             rekeyTx.addOutput(toMove.totalValue(), sign ? freshReceiveAddress() : currentReceiveAddress());
-            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE, true)) {
+            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE_RATE, true)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }

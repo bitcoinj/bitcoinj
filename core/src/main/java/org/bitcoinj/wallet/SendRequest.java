@@ -93,7 +93,7 @@ public class SendRequest {
      *
      * <p>Note that this does not enforce certain fee rules that only apply to transactions which are larger than
      * 26,000 bytes. If you get a transaction which is that large, you should set a feePerKb of at least
-     * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
+     * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE_RATE}.</p>
      */
     public boolean ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
 

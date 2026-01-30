@@ -152,16 +152,39 @@ public class Peer extends PeerSocketHandler {
     private static final int PENDING_TX_DOWNLOADS_LIMIT = 100;
     // The lowest version number we're willing to accept. Lower than this will result in an immediate disconnect.
     private volatile int vMinProtocolVersion;
-    // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
-    // whilst waiting for the response. Is not used for downloads Peer generates itself.
-    private static class GetDataRequest<T> extends CompletableFuture<T> {
+
+    /**
+     * A future representing expected data (either a Transaction or a Block) from the remote peer via a {@link GetDataMessage}.
+     * @param <T> The type of the expected response.
+     */
+    private static class GetDataRequest<T extends Message> extends CompletableFuture<T> {
         final Sha256Hash hash;
+        /**
+         * @param hash The hash of the block or transaction requested
+         */
         public GetDataRequest(Sha256Hash hash) {
             this.hash = hash;
         }
     }
     // TODO: The types/locking should be rationalised a bit.
-    private final Queue<GetDataRequest<?>> getDataFutures;
+    /**
+     * When an API user explicitly requests a block or transaction from a peer, the request for InventoryItem is put here
+     * whilst waiting for the response. Is not used for downloads Peer generates itself.
+     * <p>
+     * Don't add to getDataFutures directly, use either addGetDataFuture() or addGetDataFutures().
+     */
+    private final Queue<GetDataRequest<Message>> getDataFutures;
+
+    @SuppressWarnings("unchecked")
+    private <T extends Message> void addGetDataFuture(GetDataRequest<T> future) {
+        getDataFutures.add((GetDataRequest<Message>) future);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Message> void addGetDataFutures(List<? extends GetDataRequest<T>> futures) {
+        getDataFutures.addAll((List<? extends GetDataRequest<Message>>) futures);
+    }
+
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
 
     // Outstanding pings against this peer and how long the last one took to complete.
@@ -594,7 +617,7 @@ public class Peer extends PeerSocketHandler {
         // in the chain).
         //
         // We go through and cancel the pending getdata futures for the items we were told weren't found.
-        for (GetDataRequest req : getDataFutures) {
+        for (GetDataRequest<Message> req : getDataFutures) {
             for (InventoryItem item : m.getItems()) {
                 if (item.hash.equals(req.hash)) {
                     log.info("{}: Bottomed out dep tree at {}", this, req.hash);
@@ -708,7 +731,7 @@ public class Peer extends PeerSocketHandler {
 
     protected void processTransaction(final Transaction tx) throws VerificationException {
         // Check a few basic syntax issues to ensure the received TX isn't nonsense.
-        tx.verify(params.network(), tx);
+        Transaction.verify(params.network(), tx);
         lock.lock();
         try {
             if (log.isDebugEnabled())
@@ -842,14 +865,14 @@ public class Peer extends PeerSocketHandler {
                 log.info("{}: Requesting {} transactions for depth {} dep resolution", getAddress(), txIdsToRequest.size(), depth + 1);
             // Build the request for the missing dependencies.
             GetDataMessage getdata = buildMultiTransactionDataMessage(txIdsToRequest);
-            // Create futures for each TxId this request will produce
-            List<GetDataRequest<?>> futures = txIdsToRequest.stream()
-               .map(GetDataRequest::new)
+            // Create a list of futures: one for each TxId this request will produce
+            List<GetDataRequest<Transaction>> futures = txIdsToRequest.stream()
+               .map(GetDataRequest<Transaction>::new)
                .collect(Collectors.toList());
             // Add the futures to the queue of outstanding requests
-            getDataFutures.addAll(futures);
+            addGetDataFutures(futures);
 
-            CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList((List) futures);
+            CompletableFuture<List<Transaction>> successful = FutureUtils.successfulAsList(futures);
             successful.whenComplete((transactionsWithNulls, throwable) -> {
                 if (throwable == null) {
                     // If no exception/throwable, then success
@@ -1106,7 +1129,7 @@ public class Peer extends PeerSocketHandler {
 
     private boolean maybeHandleRequestedData(Message m, Sha256Hash hash) {
         boolean found = false;
-        for (GetDataRequest req : getDataFutures) {
+        for (GetDataRequest<Message> req : getDataFutures) {
             if (hash.equals(req.hash)) {
                 req.complete(m);
                 getDataFutures.remove(req);
@@ -1289,12 +1312,18 @@ public class Peer extends PeerSocketHandler {
         return sendSingleGetData(getdata);
     }
 
-    /** Sends a getdata with a single item in it. */
-    private <T> CompletableFuture<T> sendSingleGetData(GetDataMessage getdata) {
+    /**
+     * Sends a getdata with a single item in it.
+     * @param getdata A GetDataMessage with a single item in it
+     * @return A future for the requested item
+     * @param <T> Either {@link Block} or {@link Transaction}
+     * @throws IllegalArgumentException If the GetDataMessage does not contain exactly 1 item
+     */
+    private <T extends Message> CompletableFuture<T> sendSingleGetData(GetDataMessage getdata) {
         // This does not need to be locked.
         checkArgument(getdata.getItems().size() == 1);
         GetDataRequest<T> req = new GetDataRequest<>(getdata.getItems().get(0).hash);
-        getDataFutures.add(req);
+        addGetDataFuture(req);
         sendMessage(getdata);
         return req;
     }

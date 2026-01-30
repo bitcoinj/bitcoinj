@@ -16,7 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.util.concurrent.CycleDetectingLockFactory;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.slf4j.Logger;
@@ -82,14 +81,14 @@ public class Threading {
      */
     public static volatile Thread.@Nullable UncaughtExceptionHandler uncaughtExceptionHandler;
 
-    public static class UserThread extends Thread implements Executor {
+    private static class UserThread extends Thread implements Executor {
         private static final Logger log = LoggerFactory.getLogger(UserThread.class);
         // 10,000 pending tasks is entirely arbitrary and may or may not be appropriate for the device we're
         // running on.
-        public static int WARNING_THRESHOLD = 10000;
+        private static final int WARNING_THRESHOLD = 10000;
         private final BlockingQueue<Runnable> tasks;
 
-        public UserThread() {
+        private UserThread() {
             super("bitcoinj user thread");
             setDaemon(true);
             tasks = new LinkedBlockingQueue<>();
@@ -126,12 +125,6 @@ public class Threading {
     }
 
     static {
-        // Default policy goes here. If you want to change this, use one of the static methods before
-        // instantiating any bitcoinj objects. The policy change will take effect only on new objects
-        // from that point onwards.
-        policy = CycleDetectingLockFactory.Policies.THROW;
-        factory = CycleDetectingLockFactory.newInstance(CycleDetectingLockFactory.Policies.THROW);
-
         USER_THREAD = new UserThread();
         SAME_THREAD = Runnable::run;
     }
@@ -142,9 +135,6 @@ public class Threading {
     //
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private static CycleDetectingLockFactory.Policy policy;
-    private static CycleDetectingLockFactory factory;
-
     public static ReentrantLock lock(Class clazz) {
         return lock(clazz.getSimpleName() + " lock");
     }
@@ -153,33 +143,7 @@ public class Threading {
         if (PlatformUtils.isAndroidRuntime())
             return new ReentrantLock(true);
         else
-            return factory.newReentrantLock(name);
-    }
-
-    @Deprecated
-    public static void warnOnLockCycles() {
-        setPolicy(CycleDetectingLockFactory.Policies.WARN);
-    }
-
-    @Deprecated
-    public static void throwOnLockCycles() {
-        setPolicy(CycleDetectingLockFactory.Policies.THROW);
-    }
-
-    @Deprecated
-    public static void ignoreLockCycles() {
-        setPolicy(CycleDetectingLockFactory.Policies.DISABLED);
-    }
-
-    @Deprecated
-    public static void setPolicy(CycleDetectingLockFactory.Policy policy) {
-        Threading.policy = policy;
-        factory = CycleDetectingLockFactory.newInstance(policy);
-    }
-
-    @Deprecated
-    public static CycleDetectingLockFactory.Policy getPolicy() {
-        return policy;
+            return new ReentrantLock(false);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
