@@ -86,7 +86,7 @@ public class Peer extends PeerSocketHandler {
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
     private final long requiredServices;
-    private final Context context;
+    private final TxConfidenceTable txConfidenceTable;
 
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> blocksDownloadedEventListeners
         = new CopyOnWriteArrayList<>();
@@ -260,7 +260,7 @@ public class Peer extends PeerSocketHandler {
         this.pendingPings = new CopyOnWriteArrayList<>();
         this.vMinProtocolVersion = ProtocolVersion.MINIMUM.intValue();
         this.wallets = new CopyOnWriteArrayList<>();
-        this.context = Context.get();
+        this.txConfidenceTable = Context.get().getConfidenceTable();
 
         this.versionHandshakeFuture.thenRunAsync(this::versionHandshakeComplete, Threading.SAME_THREAD);
     }
@@ -1200,7 +1200,7 @@ public class Peer extends PeerSocketHandler {
             // sending us the transaction: currently we'll never try to re-fetch after a timeout.
             //
             // The line below can trigger confidence listeners.
-            TransactionConfidence conf = context.getConfidenceTable().seen(item, this.getAddress());
+            TransactionConfidence conf = txConfidenceTable.seen(item, this.getAddress());
             if (conf.numBroadcastPeers() > 1) {
                 // Some other peer already announced this so don't download.
                 it.remove();
