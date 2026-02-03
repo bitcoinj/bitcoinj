@@ -56,7 +56,7 @@ public class NioServer extends AbstractExecutionThreadService {
                 handler.connection.connectionOpened();
             } catch (IOException e) {
                 // This can happen if ConnectionHandler's call to get a new handler returned null
-                log.error("Error handling new connection", Throwables.getRootCause(e).getMessage());
+                log.error("Error handling new connection", Throwables.getRootCause(e));
                 newKey.channel().close();
             }
         } else { // Got a closing channel or a channel to a client connection
@@ -95,7 +95,7 @@ public class NioServer extends AbstractExecutionThreadService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error trying to open/read from connection: {}", e);
+            log.error("Error trying to open/read from connection", e);
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
             for (SelectionKey key : selector.keys()) {
