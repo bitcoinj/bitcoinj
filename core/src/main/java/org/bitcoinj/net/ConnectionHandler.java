@@ -78,14 +78,10 @@ class ConnectionHandler implements MessageWriteTarget {
 
     private Set<ConnectionHandler> connectedHandlers;
 
-    ConnectionHandler(@Nullable StreamConnection connection, SelectionKey key) {
+    ConnectionHandler(StreamConnection connection, SelectionKey key) {
+        this.connection = Objects.requireNonNull(connection);
         this.key = key;
         this.channel = Objects.requireNonNull(((SocketChannel)key.channel()));
-        if (connection == null) {
-            readBuff = null;
-            return;
-        }
-        this.connection = connection;
         readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         connection.setWriteTarget(this); // May callback into us (e.g. closeConnection() now)
         connectedHandlers = null;
