@@ -60,7 +60,7 @@ class ConnectionHandler implements MessageWriteTarget {
     @GuardedBy("lock") private final ByteBuffer readBuff;
     @GuardedBy("lock") private final SocketChannel channel;
     @GuardedBy("lock") private final SelectionKey key;
-    @GuardedBy("lock") StreamConnection connection;
+    @GuardedBy("lock") final StreamConnection connection;
     @GuardedBy("lock") private boolean closeCalled = false;
 
     @GuardedBy("lock") private long bytesToWriteRemaining = 0;
