@@ -25,18 +25,19 @@ import org.bitcoinj.core.Ping;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An extension of {@link PeerSocketHandler} that keeps inbound messages in a queue for later processing
  */
 public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public final BlockingQueue<Message> inboundMessages = new ArrayBlockingQueue<>(1000);
-    public final Map<Long, CompletableFuture<Void>> mapPingFutures = new HashMap<>();
+    /** Map (by nonce) of sent pings waiting for response */
+    public final Map<Long, CompletableFuture<Void>> mapPingFutures = new ConcurrentHashMap<>();
 
     public Peer peer;
     public BloomFilter lastReceivedFilter;
