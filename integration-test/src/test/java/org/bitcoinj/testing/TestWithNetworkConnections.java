@@ -139,7 +139,7 @@ public class TestWithNetworkConnections {
             @Nullable
             @Override
             public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new InboundMessageQueuer(UNITTEST) {
+                return new InboundMessageQueuer(UNITTEST.getSerializer()) {
                     @Override
                     public void connectionClosed() {
                     }
