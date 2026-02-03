@@ -16,34 +16,32 @@
 
 package org.bitcoinj.test.support;
 
-import org.bitcoinj.base.BitcoinNetwork;
-
-import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
-import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
-import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
-
 /**
  * AddressData wrapper class with valid and invalid address test vectors.
  */
 public class AddressData {
+    public static String MAINNET_ID = "org.bitcoin.production";
+    public static String TESTNET_ID = "org.bitcoin.test";
+    public static String REGTEST_ID = "org.bitcoin.regtest";
+    
     public static AddressData[] VALID_ADDRESSES = {
             // from BIP350 (includes the corrected BIP173 vectors):
-            new AddressData("BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4", MAINNET,
+            new AddressData("BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4", MAINNET_ID,
                     "0014751e76e8199196d454941c45d1b3a323f1433bd6", 0),
-            new AddressData("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", TESTNET,
+            new AddressData("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", TESTNET_ID,
                     "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262", 0),
-            new AddressData("BC1SW50QGDZ25J", MAINNET, "6002751e", 16),
-            new AddressData("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", MAINNET, "5210751e76e8199196d454941c45d1b3a323", 2),
-            new AddressData("tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", TESTNET,
+            new AddressData("BC1SW50QGDZ25J", MAINNET_ID, "6002751e", 16),
+            new AddressData("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", MAINNET_ID, "5210751e76e8199196d454941c45d1b3a323", 2),
+            new AddressData("tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", TESTNET_ID,
                     "0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433", 0),
-            new AddressData("tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c", TESTNET,
+            new AddressData("tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c", TESTNET_ID,
                     "5120000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433", 1),
-            new AddressData("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0", MAINNET,
+            new AddressData("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0", MAINNET_ID,
                     "512079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", 1),
             // P2A (pay-to-anchor) output script address representations (see https://delvingbitcoin.org/t/segwit-ephemeral-anchors/160/2)
-            new AddressData("bc1pfeessrawgf", MAINNET, "51024e73", 1), // pay-2-anchor (P2A) mainnet address
-            new AddressData("tb1pfees9rn5nz", TESTNET, "51024e73", 1), // pay-2-anchor (P2A) testnet address
-            new AddressData("bcrt1pfeesnyr2tx", REGTEST, "51024e73", 1), // pay-2-anchor (P2A) regtest address
+            new AddressData("bc1pfeessrawgf", MAINNET_ID, "51024e73", 1), // pay-2-anchor (P2A) MAINNET_ID address
+            new AddressData("tb1pfees9rn5nz", TESTNET_ID, "51024e73", 1), // pay-2-anchor (P2A) TESTNET_ID address
+            new AddressData("bcrt1pfeesnyr2tx", REGTEST_ID, "51024e73", 1), // pay-2-anchor (P2A) REGTEST_ID address
     };
     public static String[] INVALID_ADDRESSES = {
             // from BIP173:
@@ -71,11 +69,11 @@ public class AddressData {
             "bc1gmk9yu", // Empty data section
     };
     public final String address;
-    public final BitcoinNetwork expectedNetwork;
+    public final String expectedNetwork;
     public final String expectedScriptPubKey;
     public final int expectedWitnessVersion;
 
-    public AddressData(String address, BitcoinNetwork expectedNetwork, String expectedScriptPubKey,
+    public AddressData(String address, String expectedNetwork, String expectedScriptPubKey,
                        int expectedWitnessVersion) {
         this.address = address;
         this.expectedNetwork = expectedNetwork;
@@ -87,7 +85,7 @@ public class AddressData {
     public String toString() {
         StringBuilder s = new StringBuilder(this.getClass().getSimpleName()).append('{');
         s.append("address=").append(address).append(',');
-        s.append("expected=").append(expectedNetwork.id()).append(',').append(expectedScriptPubKey).append(',').append(expectedWitnessVersion);
+        s.append("expected=").append(expectedNetwork).append(',').append(expectedScriptPubKey).append(',').append(expectedWitnessVersion);
         return s.append('}').toString();
     }
 }
