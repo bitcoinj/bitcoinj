@@ -78,13 +78,7 @@ class ConnectionHandler implements MessageWriteTarget {
 
     private Set<ConnectionHandler> connectedHandlers;
 
-    public ConnectionHandler(StreamConnectionFactory connectionFactory, SelectionKey key) throws IOException {
-        this(connectionFactory.getNewConnection(((SocketChannel) key.channel()).socket().getInetAddress(), ((SocketChannel) key.channel()).socket().getPort()), key);
-        if (connection == null)
-            throw new IOException("Parser factory.getNewConnection returned null");
-    }
-
-    private ConnectionHandler(@Nullable StreamConnection connection, SelectionKey key) {
+    ConnectionHandler(@Nullable StreamConnection connection, SelectionKey key) {
         this.key = key;
         this.channel = Objects.requireNonNull(((SocketChannel)key.channel()));
         if (connection == null) {
