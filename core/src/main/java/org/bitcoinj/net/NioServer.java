@@ -94,7 +94,7 @@ public class NioServer extends AbstractExecutionThreadService {
                     handleKey(selector, key);
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Error trying to open/read from connection", e);
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
