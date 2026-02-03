@@ -81,7 +81,7 @@ public class NioServer extends AbstractExecutionThreadService {
     }
 
     @Override
-    protected void run() throws Exception {
+    protected void run() {
         try {
             while (isRunning()) {
                 selector.select();
