@@ -564,6 +564,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 discoverySuccess = discoverPeers() > 0;
             }
 
+            // Check if PeerGroup is shutting down before doing further work
+            if (executor.isShutdown())
+                return;
+
             lock.lock();
             try {
                 if (doDiscovery) {
@@ -581,7 +585,7 @@ public class PeerGroup implements TransactionBroadcaster {
                         Duration interval = TimeUtils.longest(Duration.between(now, groupBackoff.retryTime()), MIN_PEER_DISCOVERY_INTERVAL);
                         log.info("Peer discovery didn't provide us any more peers, will try again in "
                             + interval.toMillis() + " ms.");
-                        executor.schedule(this, interval.toMillis(), TimeUnit.MILLISECONDS);
+                        triggerConnectionsAfterDelay(interval.toMillis());
                     } else {
                         // We have enough peers and discovery provided no more, so just settle down. Most likely we
                         // were given a fixed set of addresses in some test scenario.
@@ -603,15 +607,20 @@ public class PeerGroup implements TransactionBroadcaster {
                     Duration delay = Duration.between(now, retryTime);
                     log.info("Waiting {} ms before next connect attempt to {}", delay.toMillis(), addrToTry);
                     inactives.add(addrToTry);
-                    executor.schedule(this, delay.toMillis(), TimeUnit.MILLISECONDS);
+                    triggerConnectionsAfterDelay(delay.toMillis());
                     return;
                 }
+
+                // Check if PeerGroup has shut down before making a connection attempt
+                if (executor.isShutdown())
+                    return;
+
                 connectTo(addrToTry, false, vConnectTimeout);
             } finally {
                 lock.unlock();
             }
             if (countConnectedAndPendingPeers() < getMaxConnections()) {
-                executor.execute(this);   // Try next peer immediately.
+                triggerConnections();   // Try next peer immediately.
             }
         }
     };
@@ -620,6 +629,12 @@ public class PeerGroup implements TransactionBroadcaster {
         // Run on a background thread due to the need to potentially retry and back off in the background.
         if (!executor.isShutdown())
             executor.execute(triggerConnectionsJob);
+    }
+
+    private void triggerConnectionsAfterDelay(long delayMilliseconds) {
+        // Run on a background thread due to the need to potentially retry and back off in the background.
+        if (!executor.isShutdown())
+            executor.schedule(triggerConnectionsJob, delayMilliseconds, TimeUnit.MILLISECONDS);
     }
 
     /** The maximum number of connections that we will create to peers. */
@@ -1672,6 +1687,9 @@ public class PeerGroup implements TransactionBroadcaster {
     private void setupPinging() {
         if (getPingIntervalMsec() <= 0)
             return;  // Disabled.
+
+        if (executor.isShutdown())
+            return;
 
         vPingTask = executor.scheduleAtFixedRate(() -> {
             try {
