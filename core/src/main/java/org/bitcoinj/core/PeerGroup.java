@@ -1673,6 +1673,9 @@ public class PeerGroup implements TransactionBroadcaster {
         if (getPingIntervalMsec() <= 0)
             return;  // Disabled.
 
+        if (executor.isShutdown())
+            return;
+
         vPingTask = executor.scheduleAtFixedRate(() -> {
             try {
                 if (getPingIntervalMsec() <= 0) {
