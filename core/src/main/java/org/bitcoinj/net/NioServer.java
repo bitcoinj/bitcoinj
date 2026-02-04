@@ -134,4 +134,12 @@ public class NioServer extends AbstractExecutionThreadService {
         // Wake up the selector and let the selection thread break its loop as the ExecutionService !isRunning()
         selector.wakeup();
     }
+
+    /**
+     * Returns the port this server is bound to. Useful for testing when port 0 is used to let the OS allocate a port.
+     * @return the local port number
+     */
+    public int getPort() {
+        return sc.socket().getLocalPort();
+    }
 }
