@@ -564,6 +564,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 discoverySuccess = discoverPeers() > 0;
             }
 
+            // Check if PeerGroup is shutting down before doing further work
+            if (executor.isShutdown())
+                return;
+
             lock.lock();
             try {
                 if (doDiscovery) {
@@ -606,6 +610,11 @@ public class PeerGroup implements TransactionBroadcaster {
                     triggerConnectionsAfterDelay(delay.toMillis());
                     return;
                 }
+
+                // Check if PeerGroup has shut down before making a connection attempt
+                if (executor.isShutdown())
+                    return;
+
                 connectTo(addrToTry, false, vConnectTimeout);
             } finally {
                 lock.unlock();
