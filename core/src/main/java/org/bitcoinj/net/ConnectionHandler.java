@@ -60,7 +60,7 @@ class ConnectionHandler implements MessageWriteTarget {
     @GuardedBy("lock") private final ByteBuffer readBuff;
     @GuardedBy("lock") private final SocketChannel channel;
     @GuardedBy("lock") private final SelectionKey key;
-    @GuardedBy("lock") StreamConnection connection;
+    @GuardedBy("lock") final StreamConnection connection;
     @GuardedBy("lock") private boolean closeCalled = false;
 
     @GuardedBy("lock") private long bytesToWriteRemaining = 0;
@@ -76,41 +76,28 @@ class ConnectionHandler implements MessageWriteTarget {
         }
     }
 
-    private Set<ConnectionHandler> connectedHandlers;
+    // Set of ConnectionHandler that we need to remove ourselves from in connectionClosed()
+    private @Nullable final Set<ConnectionHandler> connectedHandlers;
 
-    public ConnectionHandler(StreamConnectionFactory connectionFactory, SelectionKey key) throws IOException {
-        this(connectionFactory.getNewConnection(((SocketChannel) key.channel()).socket().getInetAddress(), ((SocketChannel) key.channel()).socket().getPort()), key);
-        if (connection == null)
-            throw new IOException("Parser factory.getNewConnection returned null");
-    }
-
-    private ConnectionHandler(@Nullable StreamConnection connection, SelectionKey key) {
-        this.key = key;
-        this.channel = Objects.requireNonNull(((SocketChannel)key.channel()));
-        if (connection == null) {
-            readBuff = null;
-            return;
-        }
-        this.connection = connection;
-        readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
-        connection.setWriteTarget(this); // May callback into us (e.g. closeConnection() now)
-        connectedHandlers = null;
+    ConnectionHandler(StreamConnection connection, SelectionKey key) {
+        this(connection, null, key);
     }
 
     public ConnectionHandler(StreamConnection connection, SelectionKey key, Set<ConnectionHandler> connectedHandlers) {
-        this(Objects.requireNonNull(connection), key);
+        this(Objects.requireNonNull(connection), connectedHandlers, key);
+    }
 
-        // closeConnection() may have already happened because we invoked the other c'tor above, which called
-        // connection.setWriteTarget which might have re-entered already. In this case we shouldn't add ourselves
-        // to the connectedHandlers set.
-        lock.lock();
-        try {
-            this.connectedHandlers = connectedHandlers;
-            if (!closeCalled)
-                checkState(this.connectedHandlers.add(this));
-        } finally {
-            lock.unlock();
+    private ConnectionHandler(StreamConnection connection, @Nullable Set<ConnectionHandler> connectedHandlers, SelectionKey key) {
+        this.connection = Objects.requireNonNull(connection);
+        this.key = key;
+        this.channel = Objects.requireNonNull(((SocketChannel)key.channel()));
+        readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
+        this.connectedHandlers = connectedHandlers;
+        if (connectedHandlers != null) {
+            // Since we are doing this before setWriteTarget() we don't have to worry about closeCalled being true
+            checkState(this.connectedHandlers.add(this));
         }
+        connection.setWriteTarget(this); // May callback into us (e.g. closeConnection() now) -- so do last!
     }
 
     @GuardedBy("lock")

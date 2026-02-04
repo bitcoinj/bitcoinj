@@ -51,7 +51,7 @@ public class NioServer extends AbstractExecutionThreadService {
             newChannel.configureBlocking(false);
             SelectionKey newKey = newChannel.register(selector, SelectionKey.OP_READ);
             try {
-                ConnectionHandler handler = new ConnectionHandler(connectionFactory, newKey);
+                ConnectionHandler handler = newHandler(newKey);
                 newKey.attach(handler);
                 handler.connection.connectionOpened();
             } catch (IOException e) {
@@ -62,6 +62,14 @@ public class NioServer extends AbstractExecutionThreadService {
         } else { // Got a closing channel or a channel to a client connection
             ConnectionHandler.handleKey(key);
         }
+    }
+
+    private ConnectionHandler newHandler(SelectionKey key) throws IOException {
+        StreamConnection connection = connectionFactory.getNewConnection(((SocketChannel) key.channel()).socket().getInetAddress(), ((SocketChannel) key.channel()).socket().getPort());
+        if (connection == null) {
+            throw new IOException("Parser factory.getNewConnection returned null");
+        }
+        return new ConnectionHandler(connection, key);
     }
 
     /**
