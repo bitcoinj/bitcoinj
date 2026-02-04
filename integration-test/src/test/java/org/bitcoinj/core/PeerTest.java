@@ -843,6 +843,7 @@ public class PeerTest extends TestWithNetworkConnections {
         } catch (ExecutionException e) {
             assertTrue(e.getCause() instanceof ProtocolException);
         }
+        Threading.uncaughtExceptionHandler = null;
         peerDisconnected.get();
         try {
             peer.writeTarget.writeBytes(new byte[1]);
