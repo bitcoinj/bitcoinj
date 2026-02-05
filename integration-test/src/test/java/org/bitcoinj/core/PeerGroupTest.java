@@ -30,6 +30,7 @@ import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscoveryException;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
@@ -62,6 +63,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -113,7 +115,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Override
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException, IOException {
         super.setUp();
         peerToMessageCount = new HashMap<>();
         connectedPeers = new LinkedBlockingQueue<>();
@@ -516,7 +518,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
-    public void peerTimeoutTest() throws Exception {
+    public void peerTimeoutTest() throws ExecutionException, InterruptedException {
         final Duration timeout = Duration.ofMillis(100);
         peerGroup.start();
         peerGroup.setConnectTimeout(timeout);
@@ -774,7 +776,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         }
     }
 
-    private <T extends Message> T assertNextMessageIs(InboundMessageQueuer q, Class<T> klass) throws Exception {
+    private <T extends Message> T assertNextMessageIs(InboundMessageQueuer q, Class<T> klass) throws InterruptedException {
         Message outbound = waitForOutbound(q);
         assertEquals(klass, outbound.getClass());
         return (T) outbound;

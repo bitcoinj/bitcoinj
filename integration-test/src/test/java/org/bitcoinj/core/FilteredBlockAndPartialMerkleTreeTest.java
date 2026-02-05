@@ -27,6 +27,7 @@ import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
@@ -38,6 +39,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -69,7 +71,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException, IOException {
         MemoryBlockStore store = new MemoryBlockStore(TESTNET.getGenesisBlock());
 
         // Cheat and place the previous block (block 100000) at the head of the block store without supporting blocks
