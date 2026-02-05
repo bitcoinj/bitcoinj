@@ -537,7 +537,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // check things after disconnect
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
         watch.stop();
-        assertTrue(watch.toString(), watch.elapsed().compareTo(timeout) >= 0); // should not disconnect before timeout
+        assertTrue("Disconnect in " + watch + " for " + timeout.toMillis() + " ms timeout",
+                watch.elapsed().compareTo(timeout) >= 0); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 
