@@ -449,7 +449,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     @Override
-    protected void processMessage(Message m) throws Exception {
+    protected void processMessage(Message m) {
         // Allow event listeners to filter the message stream. Listeners are allowed to drop messages by
         // returning null.
         for (ListenerRegistration<PreMessageReceivedEventListener> registration : preMessageReceivedEventListeners) {
