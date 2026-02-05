@@ -17,7 +17,6 @@
 
 package org.bitcoinj.store;
 
-import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
@@ -226,7 +225,7 @@ public class WalletProtobufSerializerTest {
 
         // Create a block.
         Block block = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"))));
+                ByteUtils.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"))));
         Sha256Hash blockHash = block.getHash();
         wallet.setLastBlockSeenHash(blockHash);
         wallet.setLastBlockSeenHeight(1);
