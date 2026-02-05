@@ -25,6 +25,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithNetworkConnections;
@@ -91,7 +92,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Override
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws IOException, BlockStoreException {
         super.setUp();
         VersionMessage ver = new VersionMessage(TESTNET, 100);
         InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), 4000);
@@ -101,16 +102,16 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Override
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         super.tearDown();
         assertFalse(fail.get());
     }
 
-    private void connect() throws Exception {
+    private void connect() throws IOException, ExecutionException, InterruptedException {
         connectWithVersion(70001, Services.NODE_NETWORK);
     }
 
-    private void connectWithVersion(int version, int flags) throws Exception {
+    private void connectWithVersion(int version, int flags) throws IOException, ExecutionException, InterruptedException {
         VersionMessage peerVersion = new VersionMessage(TESTNET, OTHER_PEER_CHAIN_HEIGHT);
         peerVersion.clientVersion = version;
         peerVersion.localServices = Services.of(flags);
@@ -714,7 +715,7 @@ public class PeerTest extends TestWithNetworkConnections {
         checkTimeLockedDependency(true);
     }
 
-    private void checkTimeLockedDependency(boolean shouldAccept) throws Exception {
+    private void checkTimeLockedDependency(boolean shouldAccept) throws IOException, ExecutionException, InterruptedException {
         // Initial setup.
         connectWithVersion(70001, Services.NODE_NETWORK);
         Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);

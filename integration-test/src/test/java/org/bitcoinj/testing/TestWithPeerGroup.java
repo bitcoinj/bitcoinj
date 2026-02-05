@@ -30,14 +30,17 @@ import org.bitcoinj.net.BlockingClientManager;
 import org.bitcoinj.net.ClientConnectionManager;
 import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -69,12 +72,12 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     public Timeout globalTimeout = Timeout.seconds(15);
 
     @Override
-    public void setUp() throws Exception {
+    public void setUp() throws IOException, BlockStoreException {
         setUp(new MemoryBlockStore(UNITTEST.getGenesisBlock()));
     }
 
     @Override
-    public void setUp(BlockStore blockStore) throws Exception {
+    public void setUp(BlockStore blockStore) throws IOException, BlockStoreException {
         super.setUp(blockStore);
 
         remoteVersionMessage = new VersionMessage(UNITTEST, 1);
@@ -131,7 +134,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         };
     }
 
-    protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws Exception {
+    protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws ExecutionException, InterruptedException {
         checkArgument(id < PEER_SERVERS);
         InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + id);
         Peer peer = peerGroup.connectTo(remoteAddress).getConnectionOpenFuture().get();
@@ -140,11 +143,11 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
         return writeTarget;
     }
     
-    protected InboundMessageQueuer connectPeer(int id) throws Exception {
+    protected InboundMessageQueuer connectPeer(int id) throws ExecutionException, InterruptedException {
         return connectPeer(id, remoteVersionMessage);
     }
 
-    protected InboundMessageQueuer connectPeer(int id, VersionMessage versionMessage) throws Exception {
+    protected InboundMessageQueuer connectPeer(int id, VersionMessage versionMessage) throws ExecutionException, InterruptedException {
         checkArgument(versionMessage.services().has(Services.NODE_NETWORK));
         InboundMessageQueuer writeTarget = connectPeerWithoutVersionExchange(id);
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter
@@ -155,12 +158,12 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     }
 
     // handle peer discovered by PeerGroup
-    protected InboundMessageQueuer handleConnectToPeer(int id) throws Exception {
+    protected InboundMessageQueuer handleConnectToPeer(int id) throws InterruptedException {
         return handleConnectToPeer(id, remoteVersionMessage);
     }
 
     // handle peer discovered by PeerGroup
-    protected InboundMessageQueuer handleConnectToPeer(int id, VersionMessage versionMessage) throws Exception {
+    protected InboundMessageQueuer handleConnectToPeer(int id, VersionMessage versionMessage) throws InterruptedException {
         InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
         checkArgument(versionMessage.services().has(Services.NODE_NETWORK));
         // Complete handshake with the peer - send/receive version(ack)s, receive bloom filter

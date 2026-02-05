@@ -43,6 +43,7 @@ import org.bitcoinj.net.StreamConnectionFactory;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
@@ -59,6 +60,7 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -117,11 +119,11 @@ public class TestWithNetworkConnections {
             channels = null;
     }
 
-    public void setUp() throws Exception {
+    public void setUp() throws IOException, BlockStoreException {
         setUp(new MemoryBlockStore(UNITTEST.getGenesisBlock()));
     }
     
-    public void setUp(BlockStore blockStore) throws Exception {
+    public void setUp(BlockStore blockStore) throws IOException, BlockStoreException {
         BriefLogFormatter.init();
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         this.blockStore = blockStore;
@@ -157,7 +159,7 @@ public class TestWithNetworkConnections {
         peerServers[i].awaitRunning();
     }
 
-    public void tearDown() throws Exception {
+    public void tearDown() {
         stopPeerServers();
     }
 
@@ -174,7 +176,7 @@ public class TestWithNetworkConnections {
         }
     }
 
-    protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws Exception {
+    protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws IOException, InterruptedException, ExecutionException {
         checkArgument(versionMessage.services().has(Services.NODE_NETWORK));
         final AtomicBoolean doneConnecting = new AtomicBoolean(false);
         final Thread thisThread = Thread.currentThread();
@@ -213,7 +215,7 @@ public class TestWithNetworkConnections {
         return writeTarget;
     }
 
-    protected void closePeer(Peer peer) throws Exception {
+    protected void closePeer(Peer peer) {
         peer.close();
     }
 
@@ -221,7 +223,7 @@ public class TestWithNetworkConnections {
         peerChannel.sendMessage(message);
     }
 
-    private void outboundPingAndWait(final InboundMessageQueuer p, long nonce) throws Exception {
+    private void outboundPingAndWait(final InboundMessageQueuer p, long nonce) throws ExecutionException, InterruptedException {
         // Send a ping and wait for it to get to the other side
         CompletableFuture<Void> pingReceivedFuture = new CompletableFuture<>();
         p.mapPingFutures.put(nonce, pingReceivedFuture);
@@ -230,7 +232,7 @@ public class TestWithNetworkConnections {
         p.mapPingFutures.remove(nonce);
     }
 
-    private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws Exception {
+    private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws ExecutionException, InterruptedException {
         // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
         final CompletableFuture<Void> pongReceivedFuture = new CompletableFuture<>();
         PreMessageReceivedEventListener listener = (p1, m) -> {
@@ -246,7 +248,7 @@ public class TestWithNetworkConnections {
         p.peer.removePreMessageReceivedEventListener(listener);
     }
 
-    protected void pingAndWait(final InboundMessageQueuer p) throws Exception {
+    protected void pingAndWait(final InboundMessageQueuer p) throws ExecutionException, InterruptedException {
         final long nonce = (long) (Math.random() * Long.MAX_VALUE);
         // Start with an inbound Pong as pingAndWait often happens immediately after an inbound() call, and then wants
         // to wait on an outbound message, so we do it in the same order or we see race conditions
@@ -254,7 +256,7 @@ public class TestWithNetworkConnections {
         outboundPingAndWait(p, nonce);
     }
 
-    protected Message outbound(InboundMessageQueuer p1) throws Exception {
+    protected Message outbound(InboundMessageQueuer p1) throws ExecutionException, InterruptedException {
         pingAndWait(p1);
         return p1.nextMessage();
     }

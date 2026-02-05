@@ -30,6 +30,7 @@ import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscoveryException;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
@@ -113,7 +114,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Override
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException, IOException {
         super.setUp();
         peerToMessageCount = new HashMap<>();
         connectedPeers = new LinkedBlockingQueue<>();
@@ -776,7 +777,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         }
     }
 
-    private <T extends Message> T assertNextMessageIs(InboundMessageQueuer q, Class<T> klass) throws Exception {
+    private <T extends Message> T assertNextMessageIs(InboundMessageQueuer q, Class<T> klass) throws InterruptedException {
         Message outbound = waitForOutbound(q);
         assertEquals(klass, outbound.getClass());
         return (T) outbound;
