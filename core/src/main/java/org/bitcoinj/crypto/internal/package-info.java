@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /**
- * Parsing and handling of bitcoin: textual URIs as found in qr codes and web links.
+ * This package is for internal ({@code bitcoinj-core}) use only.
  */
-@NullMarked
-package org.bitcoinj.uri;
-
-import org.jspecify.annotations.NullMarked;
+package org.bitcoinj.crypto.internal;
