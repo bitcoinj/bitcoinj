@@ -80,7 +80,7 @@ public class SendRequest {
      * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
      * definition, a virtual kilobyte is defined as 1000 virtual bytes, not 1024.</p>
      */
-    public Coin feePerKb = Context.get().getFeePerKb();
+    public Coin feePerKb;
 
     public void setFeePerVkb(Coin feePerVkb) {
         this.feePerKb = feePerVkb;
@@ -95,7 +95,7 @@ public class SendRequest {
      * 26,000 bytes. If you get a transaction which is that large, you should set a feePerKb of at least
      * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE_RATE}.</p>
      */
-    public boolean ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
+    public boolean ensureMinRequiredFee;
 
     /**
      * If true (the default), the inputs will be signed.
@@ -159,6 +159,8 @@ public class SendRequest {
 
     private SendRequest(Transaction transaction) {
         tx = transaction;
+        feePerKb = Context.get().getFeePerKb();
+        ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
     }
 
     /**
