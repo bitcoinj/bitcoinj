@@ -152,7 +152,7 @@ public class BitcoinSerializer extends MessageSerializer {
      * Reads a message from the given ByteBuffer and returns it.
      */
     @Override
-    public Message deserialize(ByteBuffer in) throws ProtocolException, IOException {
+    public Message deserialize(ByteBuffer in) throws ProtocolException {
         // A Bitcoin protocol message has the following format.
         //
         //   - 4 byte magic number: 0xfabfb5da for the testnet or
@@ -178,7 +178,7 @@ public class BitcoinSerializer extends MessageSerializer {
      * the payload. This method assumes you have already called seekPastMagicBytes()
      */
     @Override
-    public BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws ProtocolException, IOException {
+    public BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws ProtocolException {
         return new BitcoinPacketHeader(in);
     }
 
