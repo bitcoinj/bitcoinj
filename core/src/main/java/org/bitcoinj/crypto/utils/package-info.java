@@ -1,6 +1,6 @@
 /*
  * Copyright by the original author or authors.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,9 +15,9 @@
  */
 
 /**
- * Parsing and handling of bitcoin: textual URIs as found in qr codes and web links.
+ * Utilities for verifying messages signed with Bitcoin private keys.
  */
 @NullMarked
-package org.bitcoinj.uri;
+package org.bitcoinj.crypto.utils;
 
 import org.jspecify.annotations.NullMarked;

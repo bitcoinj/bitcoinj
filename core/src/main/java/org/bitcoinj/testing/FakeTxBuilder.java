@@ -213,7 +213,7 @@ public class FakeTxBuilder {
     }
 
     public static class DoubleSpends {
-        public Transaction t1, t2, prevTx;
+        public @Nullable Transaction t1, t2, prevTx;
     }
 
     /**
