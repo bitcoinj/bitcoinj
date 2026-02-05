@@ -42,13 +42,13 @@ public abstract class MessageSerializer {
     /**
      * Reads a message from the given ByteBuffer and returns it.
      */
-    public abstract Message deserialize(ByteBuffer in) throws ProtocolException, IOException, UnsupportedOperationException;
+    public abstract Message deserialize(ByteBuffer in) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Deserializes only the header in case packet meta data is needed before decoding
      * the payload. This method assumes you have already called seekPastMagicBytes()
      */
-    public abstract BitcoinSerializer.BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws ProtocolException, IOException, UnsupportedOperationException;
+    public abstract BitcoinSerializer.BitcoinPacketHeader deserializeHeader(ByteBuffer in) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Deserialize payload only.  You must provide a header, typically obtained by calling

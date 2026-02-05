@@ -135,67 +135,62 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     public int receiveBytes(ByteBuffer buff) {
         checkArgument(buff.position() == 0 &&
                 buff.capacity() >= BitcoinSerializer.BitcoinPacketHeader.HEADER_LENGTH + 4);
-        try {
-            // Repeatedly try to deserialize messages until we hit a BufferUnderflowException
-            boolean firstMessage = true;
-            while (true) {
-                // If we are in the middle of reading a message, try to fill that one first, before we expect another
-                if (largeReadBuffer != null) {
-                    // This can only happen in the first iteration
-                    checkState(firstMessage);
-                    // Read new bytes into the largeReadBuffer
-                    int bytesToGet = Math.min(buff.remaining(), largeReadBuffer.length - largeReadBufferPos);
-                    buff.get(largeReadBuffer, largeReadBufferPos, bytesToGet);
-                    largeReadBufferPos += bytesToGet;
-                    // Check the largeReadBuffer's status
-                    if (largeReadBufferPos == largeReadBuffer.length) {
-                        // ...processing a message if one is available
-                        processMessage(serializer.deserializePayload(header, ByteBuffer.wrap(largeReadBuffer)));
-                        largeReadBuffer = null;
-                        header = null;
-                        firstMessage = false;
-                    } else // ...or just returning if we don't have enough bytes yet
-                        return buff.position();
-                }
-                // Now try to deserialize any messages left in buff
-                Message message;
-                int preSerializePosition = buff.position();
-                try {
-                    message = serializer.deserialize(buff);
-                } catch (BufferUnderflowException e) {
-                    // If we went through the whole buffer without a full message, we need to use the largeReadBuffer
-                    if (firstMessage && buff.limit() == buff.capacity()) {
-                        // ...so reposition the buffer to 0 and read the next message header
-                        ((Buffer) buff).position(0);
-                        try {
-                            serializer.seekPastMagicBytes(buff);
-                            header = serializer.deserializeHeader(buff);
-                            // Initialize the largeReadBuffer with the next message's size and fill it with any bytes
-                            // left in buff
-                            largeReadBuffer = new byte[header.size];
-                            largeReadBufferPos = buff.remaining();
-                            buff.get(largeReadBuffer, 0, largeReadBufferPos);
-                        } catch (BufferUnderflowException e1) {
-                            // If we went through a whole buffer's worth of bytes without getting a header, give up
-                            // In cases where the buff is just really small, we could create a second largeReadBuffer
-                            // that we use to deserialize the magic+header, but that is rather complicated when the buff
-                            // should probably be at least that big anyway (for efficiency)
-                            throw new ProtocolException("No magic bytes+header after reading " + buff.capacity() + " bytes");
-                        }
-                    } else {
-                        // Reposition the buffer to its original position, which saves us from skipping messages by
-                        // seeking past part of the magic bytes before all of them are in the buffer
-                        ((Buffer) buff).position(preSerializePosition);
-                    }
+        // Repeatedly try to deserialize messages until we hit a BufferUnderflowException
+        boolean firstMessage = true;
+        while (true) {
+            // If we are in the middle of reading a message, try to fill that one first, before we expect another
+            if (largeReadBuffer != null) {
+                // This can only happen in the first iteration
+                checkState(firstMessage);
+                // Read new bytes into the largeReadBuffer
+                int bytesToGet = Math.min(buff.remaining(), largeReadBuffer.length - largeReadBufferPos);
+                buff.get(largeReadBuffer, largeReadBufferPos, bytesToGet);
+                largeReadBufferPos += bytesToGet;
+                // Check the largeReadBuffer's status
+                if (largeReadBufferPos == largeReadBuffer.length) {
+                    // ...processing a message if one is available
+                    processMessage(serializer.deserializePayload(header, ByteBuffer.wrap(largeReadBuffer)));
+                    largeReadBuffer = null;
+                    header = null;
+                    firstMessage = false;
+                } else // ...or just returning if we don't have enough bytes yet
                     return buff.position();
-                }
-                // Process our freshly deserialized message
-                processMessage(message);
-                firstMessage = false;
             }
-        } catch (Exception e) {
-            exceptionCaught(e);
-            return -1; // Returning -1 also throws an IllegalStateException upstream and kills the connection
+            // Now try to deserialize any messages left in buff
+            Message message;
+            int preSerializePosition = buff.position();
+            try {
+                message = serializer.deserialize(buff);
+            } catch (BufferUnderflowException e) {
+                // If we went through the whole buffer without a full message, we need to use the largeReadBuffer
+                if (firstMessage && buff.limit() == buff.capacity()) {
+                    // ...so reposition the buffer to 0 and read the next message header
+                    ((Buffer) buff).position(0);
+                    try {
+                        serializer.seekPastMagicBytes(buff);
+                        header = serializer.deserializeHeader(buff);
+                        // Initialize the largeReadBuffer with the next message's size and fill it with any bytes
+                        // left in buff
+                        largeReadBuffer = new byte[header.size];
+                        largeReadBufferPos = buff.remaining();
+                        buff.get(largeReadBuffer, 0, largeReadBufferPos);
+                    } catch (BufferUnderflowException e1) {
+                        // If we went through a whole buffer's worth of bytes without getting a header, give up
+                        // In cases where the buff is just really small, we could create a second largeReadBuffer
+                        // that we use to deserialize the magic+header, but that is rather complicated when the buff
+                        // should probably be at least that big anyway (for efficiency)
+                        throw new ProtocolException("No magic bytes+header after reading " + buff.capacity() + " bytes");
+                    }
+                } else {
+                    // Reposition the buffer to its original position, which saves us from skipping messages by
+                    // seeking past part of the magic bytes before all of them are in the buffer
+                    ((Buffer) buff).position(preSerializePosition);
+                }
+                return buff.position();
+            }
+            // Process our freshly deserialized message
+            processMessage(message);
+            firstMessage = false;
         }
     }
 
