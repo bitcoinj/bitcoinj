@@ -19,4 +19,7 @@
  * buffer of headers on disk and is suitable for lightweight user wallets, a store that can calculate a full indexed
  * UTXO set (i.e. it can query address balances), and a memory only store useful for unit tests.
  */
+@NullMarked
 package org.bitcoinj.store;
+
+import org.jspecify.annotations.NullMarked;

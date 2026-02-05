@@ -17,4 +17,7 @@
 /**
  * Parsing and handling of bitcoin: textual URIs as found in qr codes and web links.
  */
+@NullMarked
 package org.bitcoinj.uri;
+
+import org.jspecify.annotations.NullMarked;
