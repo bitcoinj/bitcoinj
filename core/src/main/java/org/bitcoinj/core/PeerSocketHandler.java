@@ -129,7 +129,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     /**
      * Called every time a message is received from the network
      */
-    protected abstract void processMessage(Message m) throws Exception;
+    protected abstract void processMessage(Message m);
 
     @Override
     public int receiveBytes(ByteBuffer buff) {
