@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -83,7 +84,12 @@ public class NioServer extends AbstractExecutionThreadService {
 
         sc = ServerSocketChannel.open();
         sc.configureBlocking(false);
-        sc.socket().bind(bindAddress);
+        try {
+            sc.socket().bind(bindAddress);
+        } catch (BindException e) {
+            log.error("BindException {} while creating NioServer at address {}: ", e.getMessage(), bindAddress);
+            throw new IOException("Address " + bindAddress + " already in use", e);
+        }
         selector = SelectorProvider.provider().openSelector();
         sc.register(selector, SelectionKey.OP_ACCEPT);
     }
