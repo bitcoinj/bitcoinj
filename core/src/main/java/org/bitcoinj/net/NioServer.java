@@ -40,7 +40,7 @@ public class NioServer extends AbstractExecutionThreadService {
 
     private final StreamConnectionFactory connectionFactory;
 
-    private final ServerSocketChannel sc;
+    public final ServerSocketChannel sc;
     // For testing only
     final Selector selector;
 
