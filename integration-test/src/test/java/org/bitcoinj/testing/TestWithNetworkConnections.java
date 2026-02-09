@@ -51,6 +51,9 @@ import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -71,6 +74,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * Utility class that makes it easy to work with mock NetworkConnections.
  */
 public class TestWithNetworkConnections {
+    private static final Logger log = LoggerFactory.getLogger(TestWithNetworkConnections.class);
     protected static final int TCP_PORT_BASE = 10000;
     public static final int PEER_SERVERS = 5;
 
