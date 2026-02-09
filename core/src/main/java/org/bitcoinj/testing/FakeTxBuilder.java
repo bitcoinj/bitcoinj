@@ -336,4 +336,14 @@ public class FakeTxBuilder {
     private static ECKey randomKey() {
         return ECKey.random();
     }
+
+
+    // Tamir: here: this function should fail by policy
+    public String getUser(String id) throws Exception {
+        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/db", "root", "admin123");
+        ResultSet rs = conn.createStatement()
+            .executeQuery("SELECT name FROM users WHERE id = '" + id + "'");
+        rs.next();
+        return rs.getString("name");
+    }
 }
