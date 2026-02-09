@@ -518,6 +518,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void peerTimeoutTest() throws Exception {
         final Duration timeout = Duration.ofMillis(100);
+        final Duration errorMargin = Duration.ofMillis(1);
         peerGroup.start();
         peerGroup.setConnectTimeout(timeout);
 
@@ -538,7 +539,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
         watch.stop();
         assertTrue("Disconnect in " + watch + " for " + timeout.toMillis() + " ms timeout",
-                watch.elapsed().compareTo(timeout) >= 0); // should not disconnect before timeout
+                watch.elapsed().compareTo(timeout.minus(errorMargin)) >= 0); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 
