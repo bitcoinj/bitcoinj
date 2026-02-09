@@ -185,8 +185,13 @@ public class TestWithNetworkConnections {
         log.warn("Stopping PeerServer at address: {}", socketAddress);
 
         if (server != null) {
-            server.stopAsync();
-            server.awaitTerminated();
+            try {
+                server.stopAsync();
+                server.awaitTerminated();
+            } catch (Throwable t) {
+                log.error("Exception while stopping PeerServer: ", t);
+                throw new RuntimeException(t);
+            }
         }
     }
 
