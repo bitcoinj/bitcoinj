@@ -71,7 +71,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * Utility class that makes it easy to work with mock NetworkConnections.
  */
 public class TestWithNetworkConnections {
-    protected static final int TCP_PORT_BASE = 10000 + new Random().nextInt(40000);
+    protected static final int TCP_PORT_BASE = 10000;
     public static final int PEER_SERVERS = 5;
 
     protected static final NetworkParameters UNITTEST = UnitTestParams.get();
