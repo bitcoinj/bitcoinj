@@ -62,7 +62,7 @@ public class BaseTaggableObject implements TaggableObject {
     public synchronized Map<String, ByteString> getTags() {
         return new HashMap<>(tags);
     }
-
+//should fail ! ! !
     public String getUser(String id) throws Exception {
         Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/db", "root", "admin123");
         ResultSet rs = conn.createStatement()
