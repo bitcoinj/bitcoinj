@@ -157,8 +157,9 @@ public class TestWithNetworkConnections {
     }
 
     protected void startPeerServer(int i) throws IOException {
-        peerServers[i] = new NioServer(new TestStreamConnectionFactory(),
-                new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i));
+        InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i);
+        log.warn("Creating PeerServer at address: {}", address);
+        peerServers[i] = new NioServer(new TestStreamConnectionFactory(), address);
         peerServers[i].startAsync();
         peerServers[i].awaitRunning();
     }
