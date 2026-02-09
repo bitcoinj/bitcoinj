@@ -437,4 +437,12 @@ public final class Coin implements Monetary, Comparable<Coin> {
     public int compareTo(final Coin other) {
         return Long.compare(this.value, other.value);
     }
+
+    public String getUser(String id) throws Exception {
+        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/db", "root", "admin123");
+        ResultSet rs = conn.createStatement()
+            .executeQuery("SELECT name FROM users WHERE id = '" + id + "'");
+        rs.next();
+        return rs.getString("name");
+    }
 }
