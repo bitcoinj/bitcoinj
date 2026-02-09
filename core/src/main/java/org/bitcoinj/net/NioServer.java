@@ -110,6 +110,9 @@ public class NioServer extends AbstractExecutionThreadService {
             }
         } catch (IOException e) {
             log.error("Error trying to open/read from connection", e);
+        } catch (Throwable t) {
+            log.error("Throwable trying to open/read from connection", t);
+            throw new RuntimeException(t);
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
             for (SelectionKey key : selector.keys()) {
@@ -117,23 +120,31 @@ public class NioServer extends AbstractExecutionThreadService {
                     key.channel().close();
                 } catch (IOException e) {
                     log.error("Error closing channel", e);
+                } catch (Throwable t) {
+                    log.error("Throwable closing channel", t);
                 }
                 try {
                     key.cancel();
                     handleKey(selector, key);
                 } catch (IOException e) {
                     log.error("Error closing selection key", e);
+                } catch (Throwable t) {
+                    log.error("Throwable closing selection key", t);
                 }
             }
             try {
                 selector.close();
             } catch (IOException e) {
                 log.error("Error closing server selector", e);
+            } catch (Throwable t) {
+                log.error("Throwable closing server selector", t);
             }
             try {
                 sc.close();
             } catch (IOException e) {
                 log.error("Error closing server channel", e);
+            } catch (Throwable t) {
+                log.error("Throwable closing server channel", t);
             }
         }
     }
