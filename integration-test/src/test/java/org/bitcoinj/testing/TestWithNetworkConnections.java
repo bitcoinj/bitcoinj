@@ -175,6 +175,15 @@ public class TestWithNetworkConnections {
 
     protected void stopPeerServer(int i) {
         NioServer server = peerServers[i];
+        SocketAddress socketAddress;
+        try {
+            socketAddress = server.sc.getLocalAddress();
+        } catch (IOException e) {
+            log.error("Can't get local SocketAddress");
+            throw new RuntimeException(e);
+        }
+        log.warn("Stopping PeerServer at address: {}", socketAddress);
+
         if (server != null) {
             server.stopAsync();
             server.awaitTerminated();
