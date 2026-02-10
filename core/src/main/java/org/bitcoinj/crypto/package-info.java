@@ -21,4 +21,7 @@
  * on strong crypto. This is legal because Oracle got permission to ship strong AES to everyone years ago but hasn't
  * bothered to actually remove the logic barriers.
  */
+@NullMarked
 package org.bitcoinj.crypto;
+
+import org.jspecify.annotations.NullMarked;

@@ -20,6 +20,8 @@ import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -166,7 +168,7 @@ public abstract class HDPath {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if ((o == null) || getClass() != o.getClass()) return false;
             HDFullPath other = (HDFullPath) o;
@@ -374,7 +376,7 @@ public abstract class HDPath {
      * <p>
      * Where a letter {@code H} means hardened key. Spaces are ignored.
      */
-    public static HDPath parsePath(@NonNull String path) {
+    public static HDPath parsePath(String path) {
         List<String> parsedNodes = SEPARATOR_SPLITTER.splitToList(path);
         Optional<Prefix> prefix = parsedNodes.isEmpty() ? Optional.empty() : Prefix.of(parsedNodes.get(0));
 
