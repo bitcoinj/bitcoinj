@@ -15,9 +15,9 @@
  */
 
 /**
- * Parsing and handling of bitcoin: textual URIs as found in qr codes and web links.
+ * Mock classes for unit testing.
  */
 @NullMarked
-package org.bitcoinj.uri;
+package org.bitcoinj.testing;
 
 import org.jspecify.annotations.NullMarked;
