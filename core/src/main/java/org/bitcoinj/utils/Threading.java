@@ -128,7 +128,8 @@ public class Threading {
             try {
                 while(true) {
                     try {
-                        return queue.take();
+                        Runnable task = queue.take();
+                        return task;
                     } catch (InterruptedException exception) {
                         isInterrupted = true;
                     }

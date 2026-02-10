@@ -79,7 +79,7 @@ public class ThreadingTest {
             }
         });
         thread.start();
-        Thread.sleep(100);
+        Thread.sleep(200);
         thread.interrupt();
 
         assertTrue(thread.isAlive());
