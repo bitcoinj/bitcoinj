@@ -4273,7 +4273,7 @@ public class Wallet extends BaseTaggableObject
     }
 
     TransactionConfidence getConfidence(Transaction tx) {
-        return Context.get().getConfidenceTable().getConfidence(tx);
+        return Context.get().peerNetwork().txConfidenceTable().getConfidence(tx);
     }
 
     /**
