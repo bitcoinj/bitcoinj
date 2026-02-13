@@ -147,6 +147,12 @@ public class KeyChainGroup implements KeyBag {
                 this.chains.clear();
                 this.chains.add(fallbackChain);
                 this.chains.add(defaultChain);
+            } else if (outputScriptType == ScriptType.P2TR) {
+                DeterministicKeyChain defaultChain = DeterministicKeyChain.builder().seed(seed)
+                        .outputScriptType(ScriptType.P2TR)
+                        .accountPath(structure.accountPathFor(ScriptType.P2TR, network)).build();
+                this.chains.clear();
+                this.chains.add(defaultChain);
             } else {
                 throw new IllegalArgumentException(outputScriptType.toString());
             }
@@ -351,7 +357,7 @@ public class KeyChainGroup implements KeyBag {
     public Address currentAddress(KeyChain.KeyPurpose purpose) {
         DeterministicKeyChain chain = getActiveKeyChain();
         ScriptType outputScriptType = chain.getOutputScriptType();
-        if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH) {
+        if (outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH || outputScriptType == ScriptType.P2TR) {
             return currentKey(purpose).toAddress(outputScriptType, network);
         } else {
             throw new IllegalStateException(chain.getOutputScriptType().toString());
