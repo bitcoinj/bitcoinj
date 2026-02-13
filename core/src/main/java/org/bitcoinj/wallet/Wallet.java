@@ -1158,9 +1158,11 @@ public class Wallet extends BaseTaggableObject
         keyChainGroupLock.lock();
         try {
             List<Address> addresses = new LinkedList<>();
-            for (Script script : watchedScripts)
-                if (ScriptPattern.isP2PKH(script))
+            for (Script script : watchedScripts) {
+                if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2TR(script)) {
                     addresses.add(script.getToAddress(network));
+                }
+            }
             return addresses;
         } finally {
             keyChainGroupLock.unlock();
@@ -1204,7 +1206,7 @@ public class Wallet extends BaseTaggableObject
         else if (scriptType == ScriptType.P2SH)
             return isPayToScriptHashMine(address.getHash());
         else if (scriptType == ScriptType.P2WSH || scriptType == ScriptType.P2TR)
-            return false;
+            return isWatchedScript(ScriptBuilder.createOutputScript(address));
         else
             throw new IllegalArgumentException(address.toString());
     }
@@ -5097,7 +5099,7 @@ public class Wallet extends BaseTaggableObject
     private boolean isTxOutputBloomFilterable(TransactionOutput out) {
         Script script = out.getScriptPubKey();
         boolean isScriptTypeSupported = ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script)
-                || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2WSH(script);
+                || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2WSH(script) || ScriptPattern.isP2TR(script);
         return (isScriptTypeSupported && out.isMine(this)) || watchedScripts.contains(script);
     }
 
