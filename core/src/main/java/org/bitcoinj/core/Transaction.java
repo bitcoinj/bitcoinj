@@ -1493,7 +1493,7 @@ public class Transaction implements Message {
         return messageSize(useSegwitSerialization());
     }
 
-    private int messageSize(boolean useSegwitSerialization) {
+    int messageSize(boolean useSegwitSerialization) {
         int size = 4; // version
         if (useSegwitSerialization)
             size += 2; // marker, flag
@@ -1515,8 +1515,7 @@ public class Transaction implements Message {
 
     @Override
     public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-        write(buf, useSegwitSerialization());
-        return buf;
+        return write(buf, useSegwitSerialization());
     }
 
     /**
@@ -1524,7 +1523,7 @@ public class Transaction implements Message {
      * <a href="https://en.bitcoin.it/wiki/Protocol_documentation#tx">classic format</a>, depending on if segwit is
      * desired.
      */
-    protected void write(ByteBuffer buf, boolean useSegwitSerialization) throws BufferOverflowException {
+    protected ByteBuffer write(ByteBuffer buf, boolean useSegwitSerialization) throws BufferOverflowException {
         // version
         writeInt32LE(version, buf);
         // marker, flag
@@ -1547,6 +1546,8 @@ public class Transaction implements Message {
         }
         // lock_time
         writeInt32LE(vLockTime.rawValue(), buf);
+
+        return buf;
     }
 
     /**
@@ -1913,5 +1914,15 @@ public class Transaction implements Message {
                 if (input.isCoinBase())
                     throw new VerificationException.UnexpectedCoinbaseInput();
         }
+    }
+
+    /*
+     * Make a copy of this transaction by serializing and de-serializing
+     * @return the copied transaction
+     */
+    Transaction copy() {
+        ByteBuffer buf = write(ByteBuffer.allocate(messageSize()));
+        buf.rewind();
+        return Transaction.read(buf);
     }
 }
