@@ -988,22 +988,6 @@ public class Transaction implements Message {
     }
 
     /**
-     * @param prevOut A reference to the output being spent
-     * @param scriptPubKey The scriptPubKey of the output
-     * @param sigKey The signing key
-     * @param sigHash enum specifying how the transaction hash is calculated
-     * @param anyoneCanPay anyone-can-pay hashing
-     * @return The newly created input
-     * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)}
-     */
-    @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
-                                           SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, null, sigKey, sigHash, anyoneCanPay);
-    }
-
-    /**
      * Adds a new and fully signed input for the given parameters. Note that this method is <b>not</b> thread safe
      * and requires external synchronization.
      * Defaults to {@link SigHash#ALL} and "false" for the anyoneCanPay flag. This is normally what you want.
@@ -1016,19 +1000,6 @@ public class Transaction implements Message {
      */
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, amount, sigKey, SigHash.ALL, false);
-    }
-
-    /**
-     * @param prevOut A reference to the output being spent
-     * @param scriptPubKey The scriptPubKey of the output
-     * @param sigKey The signing key
-     * @return The newly created input
-     * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey)}
-     */
-    @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, null, sigKey);
     }
 
     /**
