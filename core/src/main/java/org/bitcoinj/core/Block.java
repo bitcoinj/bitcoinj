@@ -782,6 +782,7 @@ public class Block implements Message {
      */
     public List<Transaction> transactions() {
         checkState(!isHeaderOnly(), () -> "block is header-only");
+        assert transactions != null;
         return Collections.unmodifiableList(transactions);
     }
 
