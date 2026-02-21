@@ -15,12 +15,47 @@ buildscript {
     }
 }
 
-allprojects {
+plugins {
+    id "net.ltgt.errorprone" version "5.0.0" apply false
+}
+
+allprojects { proj ->
     repositories {
         mavenCentral()
     }
 
     group = 'org.bitcoinj'
+
+    def supportsErrorProne = GradleVersion.current() >= GradleVersion.version("8.5") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)
+    def checkedProjects = [
+            'test-support',
+            'base',
+            // Core is in another PR
+            'tools',
+            // WalletTool is in another PR
+            'examples',
+            'wallettemplate',
+            'integration-test',
+            'examples-kotlin'].collect { 'bitcoinj-' + it }
+    def enableErrorProne = supportsErrorProne && checkedProjects.contains(proj.name)
+
+    if (enableErrorProne) {
+        apply plugin: 'java';
+        apply plugin: 'net.ltgt.errorprone'
+
+        dependencies {
+            annotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+            testAnnotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+            errorprone "com.google.errorprone:error_prone_core:2.47.0"
+        }
+
+        tasks.withType(JavaCompile) {
+            options.errorprone {
+                check("NullAway", net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
+                option("NullAway:OnlyNullMarked")
+            }
+        }
+    }
 
     // Ensure standard artifacts in all projects are built reproducibly
 
