@@ -20,6 +20,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.SPVBlockStore;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -128,6 +129,7 @@ public class StoredBlock {
      *
      * @return the previous block in the chain or null if it was not found in the store.
      */
+    @Nullable
     public StoredBlock getPrev(BlockStore store) throws BlockStoreException {
         return height > 0 ?
                 store.get(header.prevHash()) :
