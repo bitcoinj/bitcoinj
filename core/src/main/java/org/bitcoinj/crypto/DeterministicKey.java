@@ -28,6 +28,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -476,6 +477,7 @@ public class DeterministicKey extends ECKey {
         }
         if (cursor == null)
             throw new KeyCrypterException("Neither this key nor its parents have an encrypted private key");
+        Objects.requireNonNull(cursor.encryptedPrivateKey);
         byte[] parentalPrivateKeyBytes = keyCrypter.decrypt(cursor.encryptedPrivateKey, aesKey);
         if (parentalPrivateKeyBytes.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -537,7 +539,7 @@ public class DeterministicKey extends ECKey {
         final BigInteger key = findOrDerivePrivateKey();
         checkState(key != null, () ->
                 "private key bytes not available");
-        assert key != null;
+        Objects.requireNonNull(key);
         return key;
     }
 
@@ -763,7 +765,8 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
-                                     Network network, ScriptType outputScriptType, @Nullable String comment) {
+                                     Network network, @Nullable ScriptType outputScriptType, @Nullable String comment) {
+        Objects.requireNonNull(outputScriptType);
         builder.append("  addr:").append(toAddress(outputScriptType, network).toString());
         builder.append("  hash160:").append(ByteUtils.formatHex(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());

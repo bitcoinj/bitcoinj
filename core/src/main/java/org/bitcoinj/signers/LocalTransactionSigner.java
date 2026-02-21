@@ -137,7 +137,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                     txIn = txIn.withScriptSig(ScriptBuilder.createEmpty());
                     txIn = txIn.withWitness(TransactionWitness.redeemP2WPKH(signature, key));
                 } else {
-                    throw new IllegalStateException(script.toString());
+                    throw new IllegalStateException("Unsupported script");
                 }
             } catch (ECKey.KeyIsEncryptedException e) {
                 throw e;
