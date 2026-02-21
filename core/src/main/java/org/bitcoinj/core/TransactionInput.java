@@ -88,7 +88,7 @@ public class TransactionInput {
     @Nullable
     private Coin value;
 
-    private final TransactionWitness witness;
+    @Nullable private final TransactionWitness witness;
 
     /**
      * Creates an input that connects to nothing - used only in creation of coinbase transactions.
@@ -326,6 +326,7 @@ public class TransactionInput {
     /**
      * @return The Transaction that owns this input.
      */
+    @Nullable
     public Transaction getParentTransaction() {
         return parent;
     }

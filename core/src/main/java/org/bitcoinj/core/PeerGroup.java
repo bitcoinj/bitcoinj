@@ -1886,7 +1886,7 @@ public class PeerGroup implements TransactionBroadcaster {
         private int warmupSeconds = -1;
 
         // Used to calculate a moving average.
-        private long[] samples;
+        private long @Nullable[] samples;
         private int cursor;
 
         private boolean syncDone;

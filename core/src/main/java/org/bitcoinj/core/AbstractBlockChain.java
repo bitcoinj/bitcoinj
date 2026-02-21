@@ -138,8 +138,8 @@ public abstract class AbstractBlockChain {
     // Holds a block header and, optionally, a list of tx hashes or block's transactions
     static class OrphanBlock {
         final Block block;
-        final List<Sha256Hash> filteredTxHashes;
-        final Map<Sha256Hash, Transaction> filteredTxn;
+        final @Nullable List<Sha256Hash> filteredTxHashes;
+        final @Nullable Map<Sha256Hash, Transaction> filteredTxn;
         OrphanBlock(Block block, @Nullable List<Sha256Hash> filteredTxHashes, @Nullable Map<Sha256Hash, Transaction> filteredTxn) {
             final boolean filtered = filteredTxHashes != null && filteredTxn != null;
             checkArgument((block.isHeaderOnly() && filtered)
