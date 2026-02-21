@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -41,6 +42,7 @@ public class InventoryItem {
             this.code = code;
         }
 
+        @Nullable
         public static Type ofCode(int code) {
             for (Type type : values())
                 if (type.code == code)

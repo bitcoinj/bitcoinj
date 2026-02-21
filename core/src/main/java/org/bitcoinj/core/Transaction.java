@@ -246,8 +246,8 @@ public class Transaction implements Message {
     private String memo;
 
     // These are in memory helpers only. They contain the transaction hashes without and with witness.
-    private Sha256Hash cachedTxId;
-    private Sha256Hash cachedWTxId;
+    @Nullable private Sha256Hash cachedTxId;
+    @Nullable private Sha256Hash cachedWTxId;
 
     /**
      * Constructs an incomplete coinbase transaction with a minimal input script and no outputs.
@@ -563,6 +563,7 @@ public class Transaction implements Message {
      *
      * @return fee, or null if it cannot be determined
      */
+    @Nullable
     public Coin getFee() {
         Coin fee = Coin.ZERO;
         if (inputs.isEmpty() || outputs.isEmpty()) // Incomplete transaction
