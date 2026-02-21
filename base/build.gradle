@@ -4,12 +4,12 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id "net.ltgt.errorprone" version "4.3.0" apply false
+    id "net.ltgt.errorprone" version "5.0.0" apply false
 }
 
 version = '0.18-SNAPSHOT'
 
-def supportsErrorProne = GradleVersion.current() >= GradleVersion.version("8.5")
+def supportsErrorProne = GradleVersion.current() >= GradleVersion.version("8.5") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)
 if (supportsErrorProne) {
     apply plugin: 'net.ltgt.errorprone'
 }
@@ -26,9 +26,9 @@ dependencies {
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
 
     if (supportsErrorProne) {
-        annotationProcessor "com.uber.nullaway:nullaway:0.12.14"
-        testAnnotationProcessor "com.uber.nullaway:nullaway:0.12.14"
-        errorprone "com.google.errorprone:error_prone_core:2.42.0"
+        annotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+        testAnnotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+        errorprone "com.google.errorprone:error_prone_core:2.47.0"
     }
 }
 
