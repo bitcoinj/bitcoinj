@@ -380,7 +380,7 @@ public class ByteUtils {
     }
 
     /**
-     * Read 4 bytes from the byte array (starting at the offset) as signed 32-bit integer in little endian format.
+     * Read 4 bytes from the buffer as signed 32-bit integer in little endian format.
      * @param buf buffer to be read from
      * @return read integer
      * @throws BufferUnderflowException if the read value extends beyond the remaining bytes of the buffer

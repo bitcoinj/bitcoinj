@@ -117,6 +117,9 @@ public class ECKey implements EncryptableItem {
     // Note: this can be replaced with Arrays.compareUnsigned(a, b) once we require Java 9
     private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = ByteUtils.arrayUnsignedComparator();
 
+    public final static int PUBLIC_KEY_SIZE = 65;
+    public final static int COMPRESSED_PUBLIC_KEY_SIZE = 33;
+
     /** Sorts oldest keys first, newest last. */
     public static final Comparator<ECKey> AGE_COMPARATOR = Comparator.comparing(ecKey -> ecKey.getCreationTime().orElse(Instant.EPOCH));
 
