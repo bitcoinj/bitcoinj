@@ -35,6 +35,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 /**
  * This is a clean-room implementation of PBKDF2 using RFC 2898 as a reference.
@@ -96,6 +97,7 @@ public class PBKDF2SHA512 {
             } else {
                 byte[] baU = mac.doFinal(U_LAST);
 
+                Objects.requireNonNull(U_XOR);
                 for (int k = 0; k < U_XOR.length; k++) {
                     U_XOR[k] = (byte) (U_XOR[k] ^ baU[k]);
                 }
@@ -104,6 +106,7 @@ public class PBKDF2SHA512 {
             }
         }
 
+        Objects.requireNonNull(U_XOR);
         return U_XOR;
     }
 

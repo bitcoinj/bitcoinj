@@ -147,7 +147,7 @@ public class BIP38PrivateKeyTest {
     @Test(expected = AddressFormatException.InvalidDataLength.class)
     public void fromBase58_invalidLength() {
         String base58 = Base58.encodeChecked(1, new byte[16]);
-        BIP38PrivateKey.fromBase58((Network) null, base58);
+        BIP38PrivateKey.fromBase58(TESTNET, base58);
     }
 
     @Test
