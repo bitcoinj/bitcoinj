@@ -19,6 +19,7 @@ package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
+import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
@@ -36,6 +37,13 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      * Block reward halving interval (number of blocks)
      */
     public static final int REWARD_HALVING_INTERVAL = 210_000;
+
+    public static final String GENESIS_MESSAGE =
+            "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
+    public static final byte[] GENESIS_OUTPUT_PUBKEY = ByteUtils.parseHex(
+            "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
+    protected static final Sha256Hash GENESIS_MERKLE_ROOT =
+            Sha256Hash.wrap("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
 
     /** lazy-initialized by the first call to {@link NetworkParameters#getGenesisBlock()} */
     protected Block genesisBlock;
@@ -75,6 +83,8 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
                 return MainNetParams.get();
             case TESTNET:
                 return TestNet3Params.get();
+            case TESTNET4:
+                return TestNet4Params.get();
             case SIGNET:
                 return SigNetParams.get();
             case REGTEST:

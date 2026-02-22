@@ -21,6 +21,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.internal.ByteUtils;
 
 import java.time.Instant;
 
@@ -79,7 +80,10 @@ public class RegTestParams extends BitcoinNetworkParams {
     public Block getGenesisBlock() {
         synchronized (GENESIS_HASH) {
             if (genesisBlock == null) {
-                genesisBlock = Block.createGenesis(GENESIS_TIME, Difficulty.EASIEST_DIFFICULTY_TARGET, GENESIS_NONCE);
+                genesisBlock = Block.createGenesis(GENESIS_TIME, Difficulty.EASIEST_DIFFICULTY_TARGET, GENESIS_NONCE,
+                        GENESIS_MESSAGE, GENESIS_OUTPUT_PUBKEY);
+                checkState(genesisBlock.getMerkleRoot().equals(GENESIS_MERKLE_ROOT), () ->
+                        "invalid merkle root in block: " + ByteUtils.formatHex(genesisBlock.serialize()));
                 checkState(genesisBlock.getHash().equals(GENESIS_HASH), () ->
                         "invalid genesis hash");
             }
