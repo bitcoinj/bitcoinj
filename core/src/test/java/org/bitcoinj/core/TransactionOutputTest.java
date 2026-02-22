@@ -116,14 +116,17 @@ public class TransactionOutputTest extends TestWithWallet {
 
     @Test
     public void toString_() {
-        TransactionOutput p2pk = new TransactionOutput(null, Coin.COIN, myKey);
-        p2pk.toString();
-        TransactionOutput p2pkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2PKH,
-                BitcoinNetwork.TESTNET));
-        p2pkh.toString();
-        TransactionOutput p2wpkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2WPKH,
-                BitcoinNetwork.TESTNET));
-        p2wpkh.toString();
+        String p2pk = new TransactionOutput(null, Coin.COIN, myKey).toString();
+        assertTrue("p2pk string unexpected format: " + p2pk,
+            p2pk.matches("TxOut of 1\\.00 BTC to pubkey [0-9a-f]+ script:PUSHDATA\\(33\\)\\[[0-9a-f]+] CHECKSIG"));
+
+        String p2pkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET)).toString();
+        assertTrue("p2pkh string unexpected format: " + p2pkh,
+            p2pkh.matches("TxOut of 1\\.00 BTC to P2PKH script:DUP HASH160 PUSHDATA\\(20\\)\\[[0-9a-f]+] EQUALVERIFY CHECKSIG"));
+
+        String p2wpkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2WPKH, BitcoinNetwork.TESTNET)).toString();
+        assertTrue("p2wpkh string unexpected format: " + p2wpkh,
+            p2wpkh.matches("TxOut of 1\\.00 BTC to P2WPKH script:0\\[] PUSHDATA\\(20\\)\\[[0-9a-f]+]"));
     }
 
     @Test
