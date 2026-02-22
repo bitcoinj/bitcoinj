@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.MoreObjects;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -31,18 +30,15 @@ import java.util.List;
 import static org.bitcoinj.base.internal.Preconditions.check;
 
 /**
- * <p>Abstract superclass of classes with list based payload, ie InventoryMessage and GetDataMessage.</p>
- * 
- * <p>Instances of this class -- that use deprecated methods -- are not safe for use by multiple threads.</p>
+ * Mix-in interface for classes with list-based payload, i.e., InventoryMessage and GetDataMessage.
  */
-public abstract class ListMessage implements Message {
+interface ListMessage extends Message {
 
-    // For some reason the compiler complains if this is inside InventoryItem
-    protected final List<InventoryItem> items;
+    List<InventoryItem> items();
 
-    public static final int MAX_INVENTORY_ITEMS = 50000;
+    int MAX_INVENTORY_ITEMS = 50000;
 
-    protected static List<InventoryItem> readItems(ByteBuffer payload) throws BufferUnderflowException,
+    static List<InventoryItem> readItems(ByteBuffer payload) throws BufferUnderflowException,
             ProtocolException {
         VarInt arrayLenVarInt = VarInt.read(payload);
         check(arrayLenVarInt.fitsInt(), BufferUnderflowException::new);
@@ -66,48 +62,25 @@ public abstract class ListMessage implements Message {
         return items;
     }
 
-    protected ListMessage(List<InventoryItem> items) {
-        this.items = items;    // TODO: unmodifiable defensive copy
-    }
-
-    public List<InventoryItem> getItems() {
-        return Collections.unmodifiableList(items);
+    default List<InventoryItem> getItems() {
+        return Collections.unmodifiableList(items());
     }
 
     @Override
-    public int messageSize() {
-        return VarInt.sizeOf(items.size()) +
-                items.size() * (4 + Sha256Hash.LENGTH);
+    default int messageSize() {
+        return VarInt.sizeOf(items().size()) +
+                items().size() * (4 + Sha256Hash.LENGTH);
     }
 
     @Override
-    public ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
-        VarInt.of(items.size()).write(buf);
-        for (InventoryItem i : items) {
+    default ByteBuffer write(ByteBuffer buf) throws BufferOverflowException {
+        VarInt.of(items().size()).write(buf);
+        for (InventoryItem i : items()) {
             // Write out the type code.
             ByteUtils.writeInt32LE(i.type.code, buf);
             // And now the hash.
             i.hash.write(buf);
         }
         return buf;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return items.equals(((ListMessage)o).items);
-    }
-
-    @Override
-    public int hashCode() {
-        return items.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);
-        helper.addValue(items);
-        return helper.toString();
     }
 }

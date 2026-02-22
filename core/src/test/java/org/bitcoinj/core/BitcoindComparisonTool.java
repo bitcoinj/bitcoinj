@@ -141,7 +141,7 @@ public class BitcoindComparisonTool {
                 log.error("bitcoind sent us a block it already had, make sure bitcoind has no blocks!");
                 System.exit(1);
             } else if (m instanceof GetDataMessage) {
-                for (InventoryItem item : ((GetDataMessage) m).items)
+                for (InventoryItem item : ((GetDataMessage) m).items())
                     if (item.type == InventoryItem.Type.BLOCK) {
                         log.info("Requested " + item.hash);
                         if (currentBlock.block.getHash().equals(item.hash))
@@ -322,15 +322,15 @@ public class BitcoindComparisonTool {
                     rulesSinceFirstFail++;
                 } else if (mostRecentInv != null) {
                     Set<InventoryItem> originalRuleSet = new HashSet<>(((MemoryPoolState)rule).mempool);
-                    boolean matches = mostRecentInv.items.size() == ((MemoryPoolState)rule).mempool.size();
-                    for (InventoryItem item : mostRecentInv.items)
+                    boolean matches = mostRecentInv.items().size() == ((MemoryPoolState)rule).mempool.size();
+                    for (InventoryItem item : mostRecentInv.items())
                         if (!((MemoryPoolState) rule).mempool.remove(item))
                             matches = false;
                     if (matches)
                         continue;
                     log.error("bitcoind's mempool didn't match what we were expecting on rule " + rule.ruleName);
                     log.info("  bitcoind's mempool was: ");
-                    for (InventoryItem item : mostRecentInv.items)
+                    for (InventoryItem item : mostRecentInv.items())
                         log.info("    " + item.hash);
                     log.info("  The expected mempool was: ");
                     for (InventoryItem item : originalRuleSet)
