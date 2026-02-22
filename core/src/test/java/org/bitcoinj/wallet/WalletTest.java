@@ -78,6 +78,7 @@ import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -3001,7 +3002,9 @@ public class WalletTest extends TestWithWallet {
         wallet.importKey(wallet.freshReceiveKey());
     }
 
-    //@Test   //- this test is slow, disable for now.
+    // this test is slow, disable for now.
+    @Test
+    @Ignore
     public void fragmentedReKeying() {
         // Send lots of small coins and check the fee is correct.
         ECKey key = wallet.freshReceiveKey();
