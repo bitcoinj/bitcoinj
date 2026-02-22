@@ -1165,7 +1165,7 @@ public class ECKey implements EncryptableItem {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         checkState(encryptedPrivateKey != null, () ->
                 "this key is not encrypted");
-        assert encryptedPrivateKey != null;
+        Objects.requireNonNull(encryptedPrivateKey);
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
         if (unencryptedPrivateKey.length != 32)
             throw new KeyCrypterException.InvalidCipherText(

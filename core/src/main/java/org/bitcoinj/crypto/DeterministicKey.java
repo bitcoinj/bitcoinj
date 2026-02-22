@@ -476,6 +476,7 @@ public class DeterministicKey extends ECKey {
         }
         if (cursor == null)
             throw new KeyCrypterException("Neither this key nor its parents have an encrypted private key");
+        Objects.requireNonNull(cursor.encryptedPrivateKey);
         byte[] parentalPrivateKeyBytes = keyCrypter.decrypt(cursor.encryptedPrivateKey, aesKey);
         if (parentalPrivateKeyBytes.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -537,7 +538,7 @@ public class DeterministicKey extends ECKey {
         final BigInteger key = findOrDerivePrivateKey();
         checkState(key != null, () ->
                 "private key bytes not available");
-        assert key != null;
+        Objects.requireNonNull(key);
         return key;
     }
 
@@ -763,7 +764,9 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
-                                     Network network, ScriptType outputScriptType, @Nullable String comment) {
+                                     Network network, @Nullable ScriptType outputScriptType, @Nullable String comment) {
+        // Even though we override a method with nullable outputScriptType, we do not accept null.
+        Objects.requireNonNull(outputScriptType);
         builder.append("  addr:").append(toAddress(outputScriptType, network).toString());
         builder.append("  hash160:").append(ByteUtils.formatHex(getPubKeyHash()));
         builder.append("  (").append(getPathAsString());
