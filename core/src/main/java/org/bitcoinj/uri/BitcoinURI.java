@@ -267,6 +267,7 @@ public class BitcoinURI {
      * @return The amount name encoded using a pure integer value based at
      *         10,000,000 units is 1 BTC. May be null if no amount is specified
      */
+    @Nullable
     public Coin getAmount() {
         return (Coin) parameterMap.get(FIELD_AMOUNT);
     }
@@ -274,6 +275,7 @@ public class BitcoinURI {
     /**
      * @return The label from the URI.
      */
+    @Nullable
     public String getLabel() {
         return (String) parameterMap.get(FIELD_LABEL);
     }
@@ -281,6 +283,7 @@ public class BitcoinURI {
     /**
      * @return The message from the URI.
      */
+    @Nullable
     public String getMessage() {
         return (String) parameterMap.get(FIELD_MESSAGE);
     }
@@ -289,6 +292,7 @@ public class BitcoinURI {
      * @param name The name of the parameter
      * @return The parameter value, or null if not present
      */
+    @Nullable
     public Object getParameterByName(String name) {
         return parameterMap.get(name);
     }
@@ -319,7 +323,7 @@ public class BitcoinURI {
      * @return A String containing the Bitcoin URI
      */
     public static String convertToBitcoinURI(Address address, @Nullable Coin amount,
-                                             String label, @Nullable String message) {
+                                             @Nullable String label, @Nullable String message) {
         return convertToBitcoinURI(address.network(), address.toString(), amount, label, message);
     }
 
