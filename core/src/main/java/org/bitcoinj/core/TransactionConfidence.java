@@ -143,7 +143,7 @@ public class TransactionConfidence {
     private ConfidenceType confidenceType = ConfidenceType.UNKNOWN;
     private int appearedAtChainHeight = -1;
     // The transaction that double spent this one, if any.
-    private Sha256Hash overridingTxId;
+    @Nullable private Sha256Hash overridingTxId;
 
     /**
      * Information about where the transaction was first seen (network, sent direct from peer, created by ourselves).

@@ -81,7 +81,7 @@ public class PBKDF2SHA512 {
 
     private static byte[] F(String P, String S, int c, int i) throws NoSuchAlgorithmException, InvalidKeyException {
         byte[] U_LAST = null;
-        byte[] U_XOR = null;
+        byte[] U_XOR = new byte[0];
 
         SecretKeySpec key = new SecretKeySpec(P.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
         Mac mac = Mac.getInstance(key.getAlgorithm());

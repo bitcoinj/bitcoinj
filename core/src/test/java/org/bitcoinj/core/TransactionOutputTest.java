@@ -117,13 +117,13 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void toString_() {
         TransactionOutput p2pk = new TransactionOutput(null, Coin.COIN, myKey);
-        p2pk.toString();
+        String s1 = p2pk.toString();
         TransactionOutput p2pkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2PKH,
                 BitcoinNetwork.TESTNET));
-        p2pkh.toString();
+        String s2 = p2pkh.toString();
         TransactionOutput p2wpkh = new TransactionOutput(null, Coin.COIN, myKey.toAddress(ScriptType.P2WPKH,
                 BitcoinNetwork.TESTNET));
-        p2wpkh.toString();
+        String s3 = p2wpkh.toString();
     }
 
     @Test

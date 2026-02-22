@@ -25,6 +25,7 @@ import org.bitcoinj.net.SocketTimeoutTask;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.net.TimeoutHandler;
 import org.bitcoinj.utils.Threading;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,14 +57,14 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     // If we close() before we know our writeTarget, set this to true to call writeTarget.closeConnection() right away.
     private boolean closePending = false;
     // writeTarget will be thread-safe, and may call into PeerGroup, which calls us, so we should call it unlocked
-    @VisibleForTesting protected MessageWriteTarget writeTarget = null;
+    @Nullable @VisibleForTesting protected MessageWriteTarget writeTarget = null;
 
     // The ByteBuffers passed to us from the writeTarget are static in size, and usually smaller than some messages we
     // will receive. For SPV clients, this should be rare (ie we're mostly dealing with small transactions), but for
     // messages which are larger than the read buffer, we have to keep a temporary buffer with its bytes.
-    private byte[] largeReadBuffer;
+    private byte @Nullable[] largeReadBuffer;
     private int largeReadBufferPos;
-    private BitcoinSerializer.BitcoinPacketHeader header;
+    private BitcoinSerializer.@Nullable BitcoinPacketHeader header;
 
     protected PeerSocketHandler(PeerAddress peerAddress, MessageSerializer messageSerializer) {
         this.peerAddress = Objects.requireNonNull(peerAddress);
