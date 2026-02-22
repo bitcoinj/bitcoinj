@@ -23,12 +23,14 @@ import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.Networks;
 import org.bitcoinj.testing.MockAltNetworkParams;
+import org.jspecify.annotations.Nullable;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Objects;
 
 import static org.bitcoinj.base.Coin.CENT;
 import static org.bitcoinj.base.Coin.parseCoin;
@@ -39,7 +41,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class BitcoinURITest {
-    private BitcoinURI testObject = null;
+    @Nullable private BitcoinURI testObject = null;
 
     private static final BitcoinNetwork MAINNET = BitcoinNetwork.MAINNET;
     private static final BitcoinNetwork TESTNET = BitcoinNetwork.TESTNET;
@@ -50,15 +52,15 @@ public class BitcoinURITest {
     @Test
     public void of_anyNetwork() throws Exception {
         BitcoinURI uri1 = BitcoinURI.of("bitcoin:" + MAINNET_GOOD_ADDRESS);
-        assertEquals(BitcoinNetwork.MAINNET, uri1.getAddress().network());
+        assertEquals(BitcoinNetwork.MAINNET, Objects.requireNonNull(uri1.getAddress()).network());
         BitcoinURI uri2 = BitcoinURI.of("bitcoin:" + MAINNET_GOOD_SEGWIT_ADDRESS);
-        assertEquals(BitcoinNetwork.MAINNET, uri2.getAddress().network());
+        assertEquals(BitcoinNetwork.MAINNET, Objects.requireNonNull(uri2.getAddress()).network());
         BitcoinURI uri3 = BitcoinURI.of("bitcoin:mutDLVyes4YNWkL4j8g9oUsSUSTtnt13hP");
-        assertEquals(BitcoinNetwork.TESTNET, uri3.getAddress().network());
+        assertEquals(BitcoinNetwork.TESTNET, Objects.requireNonNull(uri3.getAddress()).network());
         BitcoinURI uri4 = BitcoinURI.of("bitcoin:tb1qn96rzewt04q0vtnh8lh0kelekkj2lpjh29lg6x");
-        assertEquals(BitcoinNetwork.TESTNET, uri4.getAddress().network());
+        assertEquals(BitcoinNetwork.TESTNET, Objects.requireNonNull(uri4.getAddress()).network());
         BitcoinURI uri5 = BitcoinURI.of("BITCOIN:TB1QN96RZEWT04Q0VTNH8LH0KELEKKJ2LPJH29LG6X");
-        assertEquals(BitcoinNetwork.TESTNET, uri5.getAddress().network());
+        assertEquals(BitcoinNetwork.TESTNET, Objects.requireNonNull(uri5.getAddress()).network());
     }
 
     @Test
@@ -120,7 +122,7 @@ public class BitcoinURITest {
     @Test
     public void testGood_legacy() throws BitcoinURIParseException {
         testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS, MAINNET);
-        assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
+        assertEquals(MAINNET_GOOD_ADDRESS, Objects.requireNonNull(testObject.getAddress()).toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
         assertEquals("Unexpected label", 20, testObject.getAddress().getHash().length);
@@ -129,7 +131,7 @@ public class BitcoinURITest {
     @Test
     public void testGood_uppercaseScheme() throws BitcoinURIParseException {
         testObject = BitcoinURI.of(BITCOIN_SCHEME.toUpperCase(Locale.US) + ":" + MAINNET_GOOD_ADDRESS, MAINNET);
-        assertEquals(MAINNET_GOOD_ADDRESS, testObject.getAddress().toString());
+        assertEquals(MAINNET_GOOD_ADDRESS, Objects.requireNonNull(testObject.getAddress()).toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
         assertEquals("Unexpected label", 20, testObject.getAddress().getHash().length);
@@ -138,7 +140,7 @@ public class BitcoinURITest {
     @Test
     public void testGood_segwit() throws BitcoinURIParseException {
         testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_SEGWIT_ADDRESS, MAINNET);
-        assertEquals(MAINNET_GOOD_SEGWIT_ADDRESS, testObject.getAddress().toString());
+        assertEquals(MAINNET_GOOD_SEGWIT_ADDRESS, Objects.requireNonNull(testObject.getAddress()).toString());
         assertNull("Unexpected amount", testObject.getAmount());
         assertNull("Unexpected label", testObject.getLabel());
     }
@@ -165,14 +167,14 @@ public class BitcoinURITest {
             testObject = BitcoinURI.of(BITCOIN_SCHEME + "|" + MAINNET_GOOD_ADDRESS, MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Bad URI syntax"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("Bad URI syntax"));
         }
 
         try {
             testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS + "\\", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Bad URI syntax"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("Bad URI syntax"));
         }
 
         // Separator without field
@@ -180,7 +182,7 @@ public class BitcoinURITest {
             testObject = BitcoinURI.of(BITCOIN_SCHEME + ":", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Bad URI syntax"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("Bad URI syntax"));
         }
     }
 
@@ -205,7 +207,7 @@ public class BitcoinURITest {
             testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS, TESTNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("Bad address"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("Bad address"));
         }
     }
 
@@ -220,17 +222,17 @@ public class BitcoinURITest {
         // Test the decimal parsing
         testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210.12345678", MAINNET);
-        assertEquals("654321012345678", testObject.getAmount().toString());
+        assertEquals("654321012345678", Objects.requireNonNull(testObject.getAmount()).toString());
 
         // Test the decimal parsing
         testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=.12345678", MAINNET);
-        assertEquals("12345678", testObject.getAmount().toString());
+        assertEquals("12345678", Objects.requireNonNull(testObject.getAmount()).toString());
 
         // Test the integer parsing
         testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
                 + "?amount=6543210", MAINNET);
-        assertEquals("654321000000000", testObject.getAmount().toString());
+        assertEquals("654321000000000", Objects.requireNonNull(testObject.getAmount()).toString());
 
         // the maximum amount
         testObject = BitcoinURI.of(BITCOIN_SCHEME + ":" + MAINNET_GOOD_ADDRESS
@@ -321,7 +323,7 @@ public class BitcoinURITest {
                     + "?amount=", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("amount"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("amount"));
         }
 
         // Non-decimal (BIP 21)
@@ -330,7 +332,7 @@ public class BitcoinURITest {
                     + "?amount=12X4", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("amount"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("amount"));
         }
     }
 
@@ -356,7 +358,7 @@ public class BitcoinURITest {
                     + "?address=aardvark", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("address"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("address"));
         }
     }
 
@@ -387,7 +389,7 @@ public class BitcoinURITest {
                     + "?aardvark", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("no separator"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("no separator"));
         }
 
         // Unknown and required field
@@ -396,7 +398,7 @@ public class BitcoinURITest {
                     + "?req-aardvark=true", MAINNET);
             fail("Expecting BitcoinURIParseException");
         } catch (BitcoinURIParseException e) {
-            assertTrue(e.getMessage().contains("req-aardvark"));
+            assertTrue(e.getMessage() != null && e.getMessage().contains("req-aardvark"));
         }
     }
 
@@ -405,7 +407,7 @@ public class BitcoinURITest {
         // Check we can parse the incorrectly formatted URIs produced by blockchain.info and its iPhone app.
         String str = "bitcoin://1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH?amount=0.01000000";
         BitcoinURI uri = BitcoinURI.of(str);
-        assertEquals("1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH", uri.getAddress().toString());
+        assertEquals("1KzTSfqjF2iKCduwz59nv2uqh1W2JsTxZH", Objects.requireNonNull(uri.getAddress()).toString());
         assertEquals(CENT, uri.getAmount());
     }
 
