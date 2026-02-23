@@ -43,6 +43,7 @@ import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -951,14 +952,14 @@ public class Transaction implements Message {
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey,
+    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, @NonNull Coin amount, ECKey sigKey,
                                            SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), () ->
                 "attempting to sign tx without outputs");
-        if (amount == null || amount.value <= 0) {
-            log.warn("Illegal amount value. Amount is required for SegWit transactions.");
-        }
+        Objects.requireNonNull(amount);
+        checkState(amount.value > 0, () ->
+                "Illegal amount value. Amount is required for SegWit transactions.");
         TransactionInput input = new TransactionInput(this, new byte[] {}, prevOut, amount);
         addInput(input);
         int inputIndex = inputs.size() - 1;
@@ -998,7 +999,7 @@ public class Transaction implements Message {
      * @return The newly created input
      * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
      */
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
+    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, @NonNull Coin amount, ECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, amount, sigKey, SigHash.ALL, false);
     }
 
