@@ -1,4 +1,5 @@
 import org.gradle.util.GradleVersion
+import net.ltgt.gradle.errorprone.CheckSeverity
 
 plugins {
     id 'java'
@@ -6,6 +7,7 @@ plugins {
     id 'org.beryx.jlink' version '3.1.5' apply false
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
     id 'org.graalvm.buildtools.native' version '0.11.0' apply false
+    id "net.ltgt.errorprone" version "5.0.0" apply false
 }
 
 def isModularBuild = GradleVersion.current() >= GradleVersion.version("8.5")
@@ -16,6 +18,11 @@ boolean hasJunit5 = GradleVersion.current() >= junit5MinVersion
 
 def graalVMMinVersion = GradleVersion.version("8.3")     // Gradle plugin for GraalVM requires 8.3+
 boolean hasGraalVM = GradleVersion.current() >= graalVMMinVersion
+
+def supportsErrorProne = GradleVersion.current() >= GradleVersion.version("8.5") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)
+if (supportsErrorProne) {
+    apply plugin: 'net.ltgt.errorprone'
+}
 
 dependencies {
     implementation project(':bitcoinj-core')
@@ -35,12 +42,24 @@ dependencies {
     }
 
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
+
+    if (supportsErrorProne) {
+        annotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+        testAnnotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+        errorprone "com.google.errorprone:error_prone_core:2.47.0"
+    }
 }
 
 tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '17'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
+    if (supportsErrorProne) {
+        options.errorprone {
+            check("NullAway", CheckSeverity.ERROR)
+            option("NullAway:OnlyNullMarked")
+        }
+    }
     if (!isModularBuild) {
         // Exclude the module-info.java file because Gradle 4.x doesn't handle module-info.java well.
         source = source.filter { file -> !file.path.endsWith('module-info.java') }
