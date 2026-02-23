@@ -50,6 +50,7 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
  * with money in whatever ways you wish. Note that for simplicity with amounts, this class sets the default
  * fee per kilobyte to zero in setUp.
  */
+@SuppressWarnings("NullAway.Init")      // Disable warnings/errors about members initialized in `setUp()`
 public class TestWithWallet {
     protected static final NetworkParameters TESTNET_PARAMS = TestNet3Params.get();
 
