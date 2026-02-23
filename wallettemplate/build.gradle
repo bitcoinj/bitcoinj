@@ -1,8 +1,11 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+
 plugins {
     id 'java'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'org.beryx.jlink' version '3.1.5'
+    id "net.ltgt.errorprone" version "5.0.0"
 }
 
 dependencies {
@@ -17,6 +20,11 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
+
+    annotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+    testAnnotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+
+    errorprone "com.google.errorprone:error_prone_core:2.47.0"
 }
 
 configurations.configureEach {
@@ -34,6 +42,10 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
     options.release = 25
     options.compilerArgs << '-Xlint:deprecation'
+    options.errorprone {
+        check("NullAway", CheckSeverity.ERROR)
+        option("NullAway:OnlyNullMarked")
+    }
 }
 
 javadoc.options.encoding = 'UTF-8'
