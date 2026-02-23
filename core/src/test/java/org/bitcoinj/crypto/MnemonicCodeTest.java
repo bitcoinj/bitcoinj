@@ -95,6 +95,7 @@ public class MnemonicCodeTest {
     }
 
     @Test(expected = NullPointerException.class)
+    @SuppressWarnings("NullAway")
     public void testNullPassphrase() {
         List<String> code = WHITESPACE_SPLITTER.splitToList("legal winner thank year wave sausage worth useful legal winner thank yellow");
         MnemonicCode.toSeed(code, null);

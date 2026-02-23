@@ -28,6 +28,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
+import org.jspecify.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -496,10 +497,10 @@ public class ECKeyTest {
         checkSomeBytesAreNonZero(unencryptedKey.getPrivKeyBytes());
 
         // The encryptedPrivateKey should be null in an unencrypted ECKey anyhow but check all the same.
-        assertTrue(unencryptedKey.getEncryptedPrivateKey() == null);
+        assertNull(unencryptedKey.getEncryptedPrivateKey());
 
         checkSomeBytesAreNonZero(encryptedKey.getSecretBytes());
-        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().encryptedBytes);
+        checkSomeBytesAreNonZero(Objects.requireNonNull(encryptedKey.getEncryptedPrivateKey()).encryptedBytes);
         checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().initialisationVector);
     }
 
@@ -591,7 +592,7 @@ public class ECKeyTest {
         ECKey.isPubKeyCompressed(ByteUtils.parseHex("0438746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f"));
     }
 
-    private static boolean checkSomeBytesAreNonZero(byte[] bytes) {
+    private static boolean checkSomeBytesAreNonZero(byte @Nullable[] bytes) {
         if (bytes == null) return false;
         for (byte b : bytes) if (b != 0) return true;
         return false;

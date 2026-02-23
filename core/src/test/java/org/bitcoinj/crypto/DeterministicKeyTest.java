@@ -21,6 +21,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
+import java.util.Objects;
 
 public class DeterministicKeyTest {
     @Test
@@ -30,6 +31,7 @@ public class DeterministicKeyTest {
         HDPath path = HDPath.M(Collections.nCopies(255, ChildNumber.ZERO)); // max
         DeterministicKey ehkey = dh.get(path, false, true);
 
+        Objects.requireNonNull(ehkey);
         ehkey.serialize(BitcoinNetwork.MAINNET, false);
     }
 
@@ -40,6 +42,7 @@ public class DeterministicKeyTest {
         HDPath path = HDPath.M(Collections.nCopies(256, ChildNumber.ZERO)); // exceeds
         DeterministicKey ehkey = dh.get(path, false, true);
 
+        Objects.requireNonNull(ehkey);
         ehkey.serialize(BitcoinNetwork.MAINNET, false);
     }
 
