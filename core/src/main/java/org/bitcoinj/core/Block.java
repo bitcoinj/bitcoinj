@@ -121,7 +121,7 @@ public class Block implements Message {
     // Fields defined as part of the protocol format.
     private final long version;
     private final Sha256Hash prevHash; // previous block
-    private Sha256Hash merkleRoot, witnessRoot;
+    @Nullable private Sha256Hash merkleRoot, witnessRoot;
     private Instant time;
     private Difficulty difficultyTarget; // "nBits"
     private long nonce;
@@ -131,7 +131,7 @@ public class Block implements Message {
     private final List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
-    private Sha256Hash hash;
+    @Nullable private Sha256Hash hash;
 
     /**
      * Deserialize this message from a given payload.
@@ -782,6 +782,7 @@ public class Block implements Message {
      */
     public List<Transaction> transactions() {
         checkState(!isHeaderOnly(), () -> "block is header-only");
+        assert transactions != null;
         return Collections.unmodifiableList(transactions);
     }
 
