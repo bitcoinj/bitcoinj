@@ -41,7 +41,6 @@ import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -325,23 +324,26 @@ public class Script {
     ////////////////////// Interface for writing scripts from scratch ////////////////////////////////
 
     /**
-     * Writes out the given byte buffer to the output stream with the correct opcode prefix
+     * Writes a byte array to an output stream with the correct "push" opcode prefix
      * To write an integer call writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(val, false)));
+     * @param os ByteArrayOutputStream to write to
+     * @param bytes byte array to prefix with push opcode and write
+     * @throws IOException shouldn't happen when using ByteArrayOutputStream
      */
-    public static void writeBytes(OutputStream os, byte[] buf) throws IOException {
-        if (buf.length < OP_PUSHDATA1) {
-            os.write(buf.length);
-            os.write(buf);
-        } else if (buf.length < 256) {
+    public static void writeBytes(ByteArrayOutputStream os, byte[] bytes) throws IOException {
+        if (bytes.length < OP_PUSHDATA1) {
+            os.write(bytes.length);       // opcode *is* length
+            os.write(bytes);
+        } else if (bytes.length < 256) {
             os.write(OP_PUSHDATA1);
-            os.write(buf.length);
-            os.write(buf);
-        } else if (buf.length < 65536) {
+            os.write(bytes.length);
+            os.write(bytes);
+        } else if (bytes.length < 65536) {
             os.write(OP_PUSHDATA2);
-            ByteUtils.writeInt16LE(buf.length, os);
-            os.write(buf);
+            ByteUtils.writeInt16LE(bytes.length, os);
+            os.write(bytes);
         } else {
-            throw new RuntimeException("Unimplemented");
+            throw new RuntimeException("byte array too long: " + bytes.length + " bytes");
         }
     }
 
