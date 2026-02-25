@@ -27,7 +27,7 @@ allprojects { proj ->
     group = 'org.bitcoinj'
 
     def supportsErrorProne = GradleVersion.current() >= GradleVersion.version("8.5") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)
-    def checkedProjects = ['bitcoinj-base']
+    def checkedProjects = ['base', 'test-support'].collect { 'bitcoinj-' + it }
     def enableErrorProne = supportsErrorProne && checkedProjects.contains(proj.name)
 
     if (enableErrorProne) {
