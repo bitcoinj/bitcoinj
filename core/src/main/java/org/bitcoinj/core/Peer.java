@@ -16,11 +16,13 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.base.MoreObjects;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.internal.ToStringUtil;
 import org.bitcoinj.core.listeners.AddressEventListener;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.ChainDownloadStartedEventListener;
@@ -398,15 +400,14 @@ public class Peer extends PeerSocketHandler {
 
     @Override
     public String toString() {
-        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.addValue(getAddress());
-        helper.add("version", vPeerVersionMessage.clientVersion);
-        helper.add("subVer", vPeerVersionMessage.subVer);
-        if (vPeerVersionMessage.localServices.hasAny())
-            helper.add("services", vPeerVersionMessage.localServices.toString());
-        helper.add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time));
-        helper.add("height", vPeerVersionMessage.bestHeight);
-        return helper.toString();
+        return new ToStringUtil(this)
+                .addValue(getAddress())
+                .add("version", vPeerVersionMessage.clientVersion)
+                .add("subVer", vPeerVersionMessage.subVer)
+                .addIf(vPeerVersionMessage.localServices.hasAny(), "services", vPeerVersionMessage.localServices)
+                .add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time))
+                .add("height", vPeerVersionMessage.bestHeight)
+                .toString();
     }
 
     @Override
