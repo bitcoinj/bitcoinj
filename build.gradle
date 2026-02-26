@@ -27,7 +27,16 @@ allprojects { proj ->
     group = 'org.bitcoinj'
 
     def supportsErrorProne = GradleVersion.current() >= GradleVersion.version("8.5") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)
-    def checkedProjects = ['base', 'test-support', 'wallettemplate', 'integration-test'].collect { 'bitcoinj-' + it }
+    def checkedProjects = [
+            'test-support',
+            'base',
+            // Core is in another PR
+            'tools',
+            // WalletTool is in another PR
+            'examples',
+            'wallettemplate',
+            'integration-test',
+            'examples-kotlin'].collect { 'bitcoinj-' + it }
     def enableErrorProne = supportsErrorProne && checkedProjects.contains(proj.name)
 
     if (enableErrorProne) {
