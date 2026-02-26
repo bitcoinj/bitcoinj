@@ -23,6 +23,7 @@ import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerSocketHandler;
 import org.bitcoinj.core.Ping;
+import org.jspecify.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -40,8 +41,8 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
     /** Map (by nonce) of sent pings waiting for response */
     public final Map<Long, CompletableFuture<Void>> mapPingFutures = new ConcurrentHashMap<>();
 
-    public Peer peer;
-    public BloomFilter lastReceivedFilter;
+    @Nullable public Peer peer;
+    @Nullable public BloomFilter lastReceivedFilter;
 
     protected InboundMessageQueuer(BitcoinSerializer serializer) {
         super(PeerAddress.simple(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000)), serializer);
