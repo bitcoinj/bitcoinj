@@ -57,6 +57,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -76,14 +77,14 @@ public class TestWithNetworkConnections {
 
     protected static final NetworkParameters UNITTEST = UnitTestParams.get();
     protected static final NetworkParameters TESTNET = TestNet3Params.get();
-    protected BlockStore blockStore;
-    protected BlockChain blockChain;
-    protected Wallet wallet;
-    protected Address address;
-    protected SocketAddress socketAddress;
+    @Nullable protected BlockStore blockStore;
+    @Nullable protected BlockChain blockChain;
+    @Nullable protected Wallet wallet;
+    @Nullable protected Address address;
+    @Nullable protected SocketAddress socketAddress;
 
     private final NioServer[] peerServers = new NioServer[PEER_SERVERS];
-    private final ClientConnectionManager channels;
+    @Nullable private final ClientConnectionManager channels;
     protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<>();
 
     public class TestStreamConnectionFactory implements StreamConnectionFactory {
@@ -139,6 +140,7 @@ public class TestWithNetworkConnections {
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
+            Objects.requireNonNull(channels);
             channels.startAsync();
             channels.awaitRunning();
         }
@@ -186,8 +188,10 @@ public class TestWithNetworkConnections {
                     thisThread.interrupt();
             }
         });
-        if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
+        if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
+            Objects.requireNonNull(channels);
             channels.openConnection(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer);
+        }
         else if (clientType == ClientType.NIO_CLIENT)
             new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, Duration.ofMillis(100));
         else if (clientType == ClientType.BLOCKING_CLIENT)
@@ -227,6 +231,7 @@ public class TestWithNetworkConnections {
         // Send a ping and wait for it to get to the other side
         CompletableFuture<Void> pingReceivedFuture = new CompletableFuture<>();
         p.mapPingFutures.put(nonce, pingReceivedFuture);
+        Objects.requireNonNull(p.peer);
         p.peer.sendMessage(Ping.of(nonce));
         pingReceivedFuture.get();
         p.mapPingFutures.remove(nonce);
@@ -242,6 +247,7 @@ public class TestWithNetworkConnections {
             }
             return m;
         };
+        Objects.requireNonNull(p.peer);
         p.peer.addPreMessageReceivedEventListener(Threading.SAME_THREAD, listener);
         inbound(p, Pong.of(nonce));
         pongReceivedFuture.get();
@@ -265,6 +271,7 @@ public class TestWithNetworkConnections {
         return ch.nextMessageBlocking();
     }
 
+    @Nullable
     protected Peer peerOf(InboundMessageQueuer ch) {
         return ch.peer;
     }
