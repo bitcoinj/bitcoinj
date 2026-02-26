@@ -33,6 +33,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -56,9 +58,9 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * mock, but means unit tests cannot be run simultaneously.
  */
 public class TestWithPeerGroup extends TestWithNetworkConnections {
-    protected PeerGroup peerGroup;
+    @Nullable protected PeerGroup peerGroup;
 
-    protected VersionMessage remoteVersionMessage;
+    @Nullable protected VersionMessage remoteVersionMessage;
     private final ClientType clientType;
 
     public TestWithPeerGroup(ClientType clientType) {
@@ -137,6 +139,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     protected InboundMessageQueuer connectPeerWithoutVersionExchange(int id) throws ExecutionException, InterruptedException {
         checkArgument(id < PEER_SERVERS);
         InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + id);
+        Objects.requireNonNull(peerGroup);
         Peer peer = peerGroup.connectTo(remoteAddress).getConnectionOpenFuture().get();
         InboundMessageQueuer writeTarget = newPeerWriteTargetQueue.take();
         writeTarget.peer = peer;
@@ -144,7 +147,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
     }
     
     protected InboundMessageQueuer connectPeer(int id) throws ExecutionException, InterruptedException {
-        return connectPeer(id, remoteVersionMessage);
+        return connectPeer(id, Objects.requireNonNull(remoteVersionMessage));
     }
 
     protected InboundMessageQueuer connectPeer(int id, VersionMessage versionMessage) throws ExecutionException, InterruptedException {
@@ -159,7 +162,7 @@ public class TestWithPeerGroup extends TestWithNetworkConnections {
 
     // handle peer discovered by PeerGroup
     protected InboundMessageQueuer handleConnectToPeer(int id) throws InterruptedException {
-        return handleConnectToPeer(id, remoteVersionMessage);
+        return handleConnectToPeer(id, Objects.requireNonNull(remoteVersionMessage));
     }
 
     // handle peer discovered by PeerGroup
