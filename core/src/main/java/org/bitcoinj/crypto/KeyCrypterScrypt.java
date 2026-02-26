@@ -121,8 +121,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
         this.scryptParameters = Objects.requireNonNull(scryptParameters);
         // Check there is a non-empty salt.
         // (Some early MultiBit wallets has a missing salt so it is not a hard fail).
-        if (scryptParameters.getSalt() == null
-                || scryptParameters.getSalt().toByteArray() == null
+        if (scryptParameters.getSalt().toByteArray() == null
                 || scryptParameters.getSalt().toByteArray().length == 0) {
             log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
         }
@@ -142,14 +141,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
         byte[] passwordBytes = null;
         try {
             passwordBytes = convertToByteArray(password);
-            byte[] salt = new byte[0];
-            if ( scryptParameters.getSalt() != null) {
-                salt = scryptParameters.getSalt().toByteArray();
-            } else {
-                // Warn the user that they are not using a salt.
-                // (Some early MultiBit wallets had a blank salt).
-                log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
-            }
+            byte[] salt = scryptParameters.getSalt().toByteArray();
 
             Stopwatch watch = Stopwatch.start();
             byte[] keyBytes = SCrypt.generate(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
