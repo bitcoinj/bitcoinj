@@ -1,4 +1,4 @@
-$ git log --format='%aN' | sort -u
+$ git log --format='%aN' | sort -guanlong huang
 
 Aaron Voisine
 Adam Mackler
