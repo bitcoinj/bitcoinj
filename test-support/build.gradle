@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api project(':bitcoinj-base')
+    api 'org.jspecify:jspecify:1.0.0'
 }
 
 tasks.withType(JavaCompile) {
