@@ -30,10 +30,7 @@ import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.script.ScriptBuilder;
-import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
@@ -595,14 +592,14 @@ public class KeyChainGroup implements KeyBag {
     public ECKey findKeyFromPubKeyHash(byte[] pubKeyHash, @Nullable ScriptType scriptType) {
         ECKey result;
         // BasicKeyChain can mix output script types.
-        if ((result = basic.findKeyFromPubHash(pubKeyHash)) != null)
+        if ((result = basic.findKeyFromPubKeyHash(pubKeyHash)) != null)
             return result;
         if (chains != null) {
             for (DeterministicKeyChain chain : chains) {
                 // This check limits DeterministicKeyChain to specific output script usage.
                 if (scriptType != null && scriptType != chain.getOutputScriptType())
                     continue;
-                if ((result = chain.findKeyFromPubHash(pubKeyHash)) != null)
+                if ((result = chain.findKeyFromPubKeyHash(pubKeyHash)) != null)
                     return result;
             }
         }
@@ -617,7 +614,7 @@ public class KeyChainGroup implements KeyBag {
         if (chains != null) {
             for (DeterministicKeyChain chain : chains) {
                 DeterministicKey key;
-                if ((key = chain.markPubHashAsUsed(pubKeyHash)) != null) {
+                if ((key = chain.markPubKeyHashAsUsed(pubKeyHash)) != null) {
                     maybeMarkCurrentKeyAsUsed(key);
                     return;
                 }
