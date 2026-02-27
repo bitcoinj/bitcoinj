@@ -40,9 +40,12 @@ import java.io.IOException;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 
-/**
- * Base class for JavaFX Wallet Applications
- */
+/// Base class for JavaFX Wallet Applications.
+///
+/// Note that previous versions of `WalletApplication` were setting [Threading#USER_THREAD] to [Platform#runLater(Runnable)],
+/// so that **bitcoinj** event handlers in the application would automatically be called on the JavaFX UI thread.
+/// It is now the responsibility of the calling JavaFX application to use [Platform#runLater(Runnable)] where necessary,
+/// which can be used to reduce the amount of processing on the JavaFX UI thread to that which is strictly necessary.
 public abstract class WalletApplication implements AppDelegate {
     private static WalletApplication instance;
     private WalletAppKit walletAppKit;
@@ -126,11 +129,6 @@ public abstract class WalletApplication implements AppDelegate {
 
     protected void startWalletAppKit(Stage primaryStage) throws IOException {
         Context.propagate(new Context());
-        // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
-        // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
-        // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
-        // a future version.
-        Threading.USER_THREAD = Platform::runLater;
         // Create the app kit. It won't do any heavyweight initialization until after we start it.
         setupWalletKit(null);
 
