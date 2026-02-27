@@ -51,6 +51,9 @@ import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -71,7 +74,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * Utility class that makes it easy to work with mock NetworkConnections.
  */
 public class TestWithNetworkConnections {
-    protected static final int TCP_PORT_BASE = 10000 + new Random().nextInt(40000);
+    private static final Logger log = LoggerFactory.getLogger(TestWithNetworkConnections.class);
+    protected static final int TCP_PORT_BASE = 10000;
     public static final int PEER_SERVERS = 5;
 
     protected static final NetworkParameters UNITTEST = UnitTestParams.get();
@@ -153,8 +157,9 @@ public class TestWithNetworkConnections {
     }
 
     protected void startPeerServer(int i) throws IOException {
-        peerServers[i] = new NioServer(new TestStreamConnectionFactory(),
-                new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i));
+        InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i);
+        log.warn("Creating PeerServer at address: {}", address);
+        peerServers[i] = new NioServer(new TestStreamConnectionFactory(), address);
         peerServers[i].startAsync();
         peerServers[i].awaitRunning();
     }
@@ -170,9 +175,23 @@ public class TestWithNetworkConnections {
 
     protected void stopPeerServer(int i) {
         NioServer server = peerServers[i];
+        SocketAddress socketAddress;
+        try {
+            socketAddress = server.sc.getLocalAddress();
+        } catch (IOException e) {
+            log.error("Can't get local SocketAddress");
+            throw new RuntimeException(e);
+        }
+        log.warn("Stopping PeerServer at address: {}", socketAddress);
+
         if (server != null) {
-            server.stopAsync();
-            server.awaitTerminated();
+            try {
+                server.stopAsync();
+                server.awaitTerminated();
+            } catch (Throwable t) {
+                log.error("Exception while stopping PeerServer: ", t);
+                throw new RuntimeException(t);
+            }
         }
     }
 
