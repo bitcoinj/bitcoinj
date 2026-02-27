@@ -28,6 +28,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -36,6 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Also provides a worker thread that is designed for event listeners to be dispatched on.
  */
 public class Threading {
+    private static final Logger log = LoggerFactory.getLogger(Threading.class);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -81,51 +85,37 @@ public class Threading {
      */
     public static volatile Thread.@Nullable UncaughtExceptionHandler uncaughtExceptionHandler;
 
-    private static class UserThread extends Thread implements Executor {
-        private static final Logger log = LoggerFactory.getLogger(UserThread.class);
+    private static class UserThread {
         // 10,000 pending tasks is entirely arbitrary and may or may not be appropriate for the device we're
         // running on.
         private static final int WARNING_THRESHOLD = 10000;
-        private final BlockingQueue<Runnable> tasks;
+    }
 
-        private UserThread() {
-            super("bitcoinj user thread");
-            setDaemon(true);
-            tasks = new LinkedBlockingQueue<>();
-            start();
-        }
-
-        @SuppressWarnings("InfiniteLoopStatement") @Override
-        public void run() {
-            while (true) {
-                Runnable task = Uninterruptibles.takeUninterruptibly(tasks);
-                try {
-                    task.run();
-                } catch (Throwable throwable) {
-                    log.warn("Exception in user thread", throwable);
-                    Thread.UncaughtExceptionHandler handler = uncaughtExceptionHandler;
-                    if (handler != null)
-                        handler.uncaughtException(this, throwable);
-                }
-            }
-        }
-
+    private static class UserThreadFactory implements ThreadFactory {
         @Override
-        public void execute(Runnable command) {
-            final int size = tasks.size();
-            if (size == WARNING_THRESHOLD) {
-                log.warn(
-                    "User thread has {} pending tasks, memory exhaustion may occur.\n" +
-                    "If you see this message, check your memory consumption and see if it's problematic or excessively spikey.\n" +
-                    "If it is, check for deadlocked or slow event handlers. If it isn't, try adjusting the constant \n" +
-                    "Threading.UserThread.WARNING_THRESHOLD upwards until it's a suitable level for your app, or Integer.MAX_VALUE to disable." , size);
-            }
-            Uninterruptibles.putUninterruptibly(tasks, command);
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, "bitcoinj user thread");
+            t.setDaemon(true);
+            return t;
         }
     }
 
     static {
-        USER_THREAD = new UserThread();
+        ExecutorService baseExecutor = new ThreadPoolExecutor(1, 1,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(UserThread.WARNING_THRESHOLD),       // THIS IS A HARD LIMIT, PREVIOUSLY WARNING
+                new UserThreadFactory());
+//        USER_THREAD = command -> baseExecutor.submit(() -> {
+//            try {
+//                command.run();
+//            } catch (Throwable throwable) {
+//                log.warn("Exception in user thread", throwable);
+//                Thread.UncaughtExceptionHandler handler = uncaughtExceptionHandler;
+//                if (handler != null)
+//                    handler.uncaughtException(command., throwable);
+//            }
+//        });
+        USER_THREAD = baseExecutor;
         SAME_THREAD = Runnable::run;
     }
 
