@@ -2139,9 +2139,8 @@ public class WalletTest extends TestWithWallet {
         Script script2 = ScriptBuilder.createOpReturnScript("hello world 2!".getBytes());
         tx.addOutput(messagePrice, script1);
         tx.addOutput(messagePrice, script2);
-        SendRequest request = SendRequest.forTx(tx);
+        SendRequest request = SendRequest.emptyWallet(tx);
         request.ensureMinRequiredFee = ensureMinRequiredFee;
-        request.emptyWallet = emptyWallet;
         wallet.completeTx(request);
     }
 
@@ -2659,7 +2658,6 @@ public class WalletTest extends TestWithWallet {
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
         emptyReq.ensureMinRequiredFee = true;
-        emptyReq.emptyWallet = true;
         emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq); // resulting vsize ~339
         assertEquals(Coin.valueOf(3_420).divide(feeFactor), emptyReq.tx.getFee());
@@ -2678,7 +2676,6 @@ public class WalletTest extends TestWithWallet {
         wallet.commitTx(req.tx);
         SendRequest emptyReq = SendRequest.emptyWallet(myAddress);
         emptyReq.feePerKb = fee;
-        emptyReq.emptyWallet = true;
         emptyReq.allowUnconfirmed();
         wallet.completeTx(emptyReq);
         assertEquals(Coin.valueOf(3_420).multiply(feeFactor), emptyReq.tx.getFee());
