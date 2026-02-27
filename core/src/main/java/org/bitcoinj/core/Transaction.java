@@ -1630,7 +1630,7 @@ public class Transaction implements Message {
      * referenced by the implicit {@link Context}.
      */
     public TransactionConfidence getConfidence() {
-        return getConfidence(Context.get());
+        return getConfidence(Context.get().peerNetwork().txConfidenceTable());
     }
 
     /**
@@ -1638,7 +1638,7 @@ public class Transaction implements Message {
      * referenced by the given {@link Context}.
      */
     TransactionConfidence getConfidence(Context context) {
-        return getConfidence(context.getConfidenceTable());
+        return getConfidence(context.peerNetwork().txConfidenceTable());
     }
 
     /**

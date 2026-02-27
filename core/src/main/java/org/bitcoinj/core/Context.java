@@ -47,15 +47,15 @@ public class Context {
 
     public static final int DEFAULT_EVENT_HORIZON = 100;
 
-    final private TxConfidenceTable confidenceTable;
     final private int eventHorizon;
     final private boolean ensureMinRequiredFee;
     final private Coin feePerKb;
     final private boolean relaxProofOfWork;
+    private final PeerNetwork peerNetwork;
 
     /**
-     * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
-     * expected to do this yourself.
+     * Creates a new context object. For now, this will be done for you (??) by the framework. Eventually, context objects
+     * will be deprecated and removed.
      */
     public Context() {
         this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE_RATE, true, false);
@@ -71,7 +71,7 @@ public class Context {
      */
     public Context(int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee, boolean relaxProofOfWork) {
         log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
-        this.confidenceTable = new TxConfidenceTable();
+        this.peerNetwork = new PeerNetwork();
         this.eventHorizon = eventHorizon;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
         this.feePerKb = feePerKb;
@@ -153,9 +153,22 @@ public class Context {
      * and downloaded transactions so their confidence can be measured as a proportion of how many peers announced it.
      * With an un-tampered with internet connection, the more peers announce a transaction the more confidence you can
      * have that it's really valid.
+     * @deprecated Use a {@link PeerNetwork}. You can use {@link #peerNetwork}, but eventually you should be getting
+     * it from somewhere else like a {@link org.bitcoinj.wallet.Wallet} or {@link PeerGroup}.
      */
+    @Deprecated
     public TxConfidenceTable getConfidenceTable() {
-        return confidenceTable;
+        return peerNetwork.txConfidenceTable();
+    }
+
+    /**
+     * Returns the {@link PeerNetwork} for this context. In the future {@link Context} will be deprecated and removed,
+     * so if you have an alternate mechanism for getting the {@link PeerNetwork}, you should use it (e.g. from a
+     * {@link org.bitcoinj.wallet.Wallet} or {@link PeerGroup} instance.)
+     * @return the {@link PeerNetwork} for this context
+     */
+    public PeerNetwork peerNetwork() {
+        return peerNetwork;
     }
 
     /**
