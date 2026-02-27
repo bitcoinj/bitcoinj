@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 /**
- * Test support classes that depend upon {@code bitcoinj-base} and can be used in both
- * {@code bitcoinj-base} and {@code bitcoinj-core} tests.
+ * Test support classes that can be used in both {@code bitcoinj-base} and {@code bitcoinj-core} tests.
  */
 @NullMarked
 package org.bitcoinj.test.support;
