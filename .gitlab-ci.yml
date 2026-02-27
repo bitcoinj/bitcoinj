@@ -1,5 +1,5 @@
 reference:
-  image: debian:bookworm-slim
+  image: debian:trixie-slim
   before_script:
     - apt-get update
     - apt-get -y install ca-certificates buildah
