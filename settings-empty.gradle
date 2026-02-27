@@ -1,0 +1,1 @@
+// Empty settings file. Used to run the `wrapper` task to upgrade Gradle on CI. See .gitlab-ci.yml

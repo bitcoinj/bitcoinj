@@ -37,6 +37,18 @@ trixie-jdk21:
     - gradle --version
     - sha256sum core/build/libs/*.jar wallettool/build/install/wallet-tool/bin/*  wallettool/build/install/wallet-tool/lib/*.jar
 
+trixie-jdk25:
+  image: debian:trixie-slim
+  before_script:
+    - apt-get update
+    - apt-get -y install openjdk-25-jdk-headless gradle
+  script:
+    - gradle --settings-file settings-empty.gradle wrapper --gradle-version=9.1.0 --stacktrace
+    - ./gradlew build :bitcoinj-base:publishToMavenLocal :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist --stacktrace
+  after_script:
+    - gradle --version
+    - sha256sum core/build/libs/*.jar wallettool/build/install/wallet-tool/bin/*  wallettool/build/install/wallet-tool/lib/*.jar
+
 sast:
   stage: test
 
