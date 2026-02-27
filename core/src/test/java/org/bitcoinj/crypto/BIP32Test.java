@@ -145,6 +145,55 @@ public class BIP32Test {
                     )
             )
     };
+    private static final String[] INVALID_EXT_KEYS = {
+        // Test5-1: xpub/prv version mismatch
+        "xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6LBpB85b3D2yc8sfvZU521AAwdZafEz7mnzBBsz4wKY5fTtTQBm",
+    
+        // Test5-2: prv/pub version mismatch
+        "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFGTQQD3dC4H2D5GBj7vWvSQaaBv5cxi9gafk7NF3pnBju6dwKvH",
+    
+        // Test5-3: invalid pubkey prefix 04
+        "xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6Txnt3siSujt9RCVYsx4qHZGc62TG4McvMGcAUjeuwZdduYEvFn",
+    
+        // Test5-4: invalid prvkey prefix 04
+        "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFGP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fEQ3Qen6J",
+    
+        // Test5-5: invalid pubkey prefix 01
+        "xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6N8ZMMXctdiCjxTNq964yKkwrkBJJwpzZS4HS2fxvyYUA4q2Xe4",
+    
+        // Test5-6: invalid prvkey prefix 01
+        "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fEQ3Qen6J",
+    
+        // Test5-7: zero depth with non-zero parent fingerprint
+        "xprv9s2SPatNQ9Vc6GTbVMFPFo7jsaZySyzk7L8n2uqKXJen3KUmvQNTuLh3fhZMBoG3G4ZW1N2kZuHEPY53qmbZzCHshoQnNf4GvELZfqTUrcv",
+    
+        // Test5-8: zero depth with non-zero parent fingerprint
+        "xpub661no6RGEX3uJkY4bNnPcw4URcQTrSibUZ4NqJEw5eBkv7ovTwgiT91XX27VbEXGENhYRCf7hyEbWrR3FewATdCEebj6znwMfQkhRYHRLpJ",
+    
+        // Test5-9: zero depth with non-zero index
+        "xprv9s21ZrQH4r4TsiLvyLXqM9P7k1K3EYhA1kkD6xuquB5i39AU8KF42acDyL3qsDbU9NmZn6MsGSUYZEsuoePmjzsB3eFKSUEh3Gu1N3cqVUN",
+    
+        // Test5-10: zero depth with non-zero index
+        "xpub661MyMwAuDcm6CRQ5N4qiHKrJ39Xe1R1NyfouMKTTWcguwVcfrZJaNvhpebzGerh7gucBvzEQWRugZDuDXjNDRmXzSZe4c7mnTK97pTvGS8",
+    
+        // Test5-11: unknown extended key version
+        "DMwo58pR1QLEFihHiXPVykYB6fJmsTeHvyTp7hRThAtCX8CvYzgPcn8XnmdfHGMQzT7ayAmfo4z3gY5KfbrZWZ6St24UVf2Qgo6oujFktLHdHY4",
+    
+        // Test5-12: unknown extended key version
+        "DMwo58pR1QLEFihHiXPVykYB6fJmsTeHvyTp7hRThAtCX8CvYzgPcn8XnmdfHPmHJiEDXkTiJTVV9rHEBUem2mwVbbNfvT2MTcAqj3nesx8uBf9",
+    
+        // Test5-13: private key 0 not in 1..n-1
+        "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx",
+    
+        // Test5-14: private key n not in 1..n-1
+        "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD5SDKr24z3aiUvKr9bJpdrcLg1y3G",
+    
+        // Test5-15: invalid pubkey 020000…07
+        "xpub661MyMwAqRbcEYS8w7XLSVeEsBXy79zSzH1J8vCdxAZningWLdN3zgtU6Q5JXayek4PRsn35jii4veMimro1xefsM58PgBMrvdYre8QyULY",
+    
+        // Test5-16: invalid checksum
+        "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHL"
+    };
 
     @Test
     public void testVector1() {
@@ -165,6 +214,10 @@ public class BIP32Test {
     public void testVector4() {
         testVector(3);
     }
+    @Test
+    public void testVector5() {
+        testInvalidExtendedKeys();
+    }
 
     private void testVector(int testCase) {
         log.info("=======  Test vector {}", testCase);
@@ -181,6 +234,18 @@ public class BIP32Test {
             DeterministicKey ehkey = dh.deriveChild(tc.path.ancestorByDepth(depth), false, true, tc.path.get(depth));
             assertEquals(testEncode(tc.priv), testEncode(ehkey.serializePrivB58(MAINNET)));
             assertEquals(testEncode(tc.pub), testEncode(ehkey.serializePubB58(MAINNET)));
+        }
+    }
+
+    @Test
+    public void testInvalidExtendedKeys() {
+        for (String key : INVALID_EXT_KEYS) {
+            try {
+                DeterministicKey.deserializeB58(key, MAINNET);
+                throw new AssertionError("Invalid extended key parsed successfully: " + key);
+            } catch (IllegalArgumentException e) {
+                log.info("Correctly failed to parse invalid key: {}", key);
+            }
         }
     }
 
