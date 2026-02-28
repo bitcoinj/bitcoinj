@@ -49,10 +49,10 @@ public class TransactionBroadcast implements Wallet.SendResult {
     private static final Logger log = LoggerFactory.getLogger(TransactionBroadcast.class);
 
     // This future completes when all broadcast messages were sent (to a buffer)
-    private final CompletableFuture<TransactionBroadcast> sentFuture = new CompletableFuture<>();
+    protected final CompletableFuture<TransactionBroadcast> sentFuture = new CompletableFuture<>();
 
     // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
-    private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
+    protected final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
     private final PeerGroup peerGroup;
     private final Transaction tx;
     private int minConnections;
@@ -89,26 +89,30 @@ public class TransactionBroadcast implements Wallet.SendResult {
 
     @VisibleForTesting
     public static TransactionBroadcast createMockBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
-        return new TransactionBroadcast(tx) {
-            @Override
-            public CompletableFuture<Transaction> broadcast() {
-                return future;
-            }
-
-            @Override
-            public CompletableFuture<Transaction> future() {
-                return future;
-            }
-        };
+        return new MockTransactionBroadcast(tx, future);
     }
 
-    /**
-     * @return future that completes when some number of remote peers has rebroadcast the transaction
-     * @deprecated Use {@link #awaitRelayed()} (and maybe {@link CompletableFuture#thenApply(Function)})
-     */
-    @Deprecated
-    public CompletableFuture<Transaction> future() {
-        return awaitRelayed().thenApply(TransactionBroadcast::transaction);
+    static class MockTransactionBroadcast extends TransactionBroadcast {
+        private final CompletableFuture<Transaction> future;
+
+        MockTransactionBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
+            super(tx);
+            this.future = future;
+        }
+
+        @Override
+        public CompletableFuture<TransactionBroadcast> broadcastOnly() {
+            future.whenComplete((transaction, ex) -> {
+                if (transaction != null) {
+                    this.sentFuture.complete(this);
+                    this.seenFuture.complete(this);
+                } else {
+                    this.sentFuture.completeExceptionally(ex);
+                    this.seenFuture.completeExceptionally(ex);
+                }
+            });
+            return sentFuture;
+        }
     }
 
     public void setMinConnections(int minConnections) {
@@ -214,21 +218,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
      */
     public CompletableFuture<TransactionBroadcast> awaitSent() {
         return sentFuture;
-    }
-
-    /**
-     * If you migrate to {@link #broadcastAndAwaitRelay()} and need a {@link CompletableFuture} that returns
-     *  {@link Transaction} you can use:
-     * <pre>{@code
-     *  CompletableFuture<Transaction> seenFuture = broadcast
-     *              .broadcastAndAwaitRelay()
-     *              .thenApply(TransactionBroadcast::transaction);
-     * }</pre>
-     * @deprecated Use {@link #broadcastAndAwaitRelay()} or {@link #broadcastOnly()} as appropriate
-     */
-    @Deprecated
-    public CompletableFuture<Transaction> broadcast() {
-        return broadcastAndAwaitRelay().thenApply(TransactionBroadcast::transaction);
     }
 
     private CompletableFuture<Void> broadcastOne(Peer peer) {
