@@ -49,15 +49,13 @@ public class ExchangeRate {
 
     /**
      * Convert a coin amount to a fiat amount using this exchange rate.
-     * @throws ArithmeticException if the converted fiat amount is too high or too low.
      */
     public Fiat coinToFiat(Coin convertCoin) {
         // Use BigInteger because it's much easier to maintain full precision without overflowing.
-        final BigInteger converted = BigInteger.valueOf(convertCoin.value).multiply(BigInteger.valueOf(fiat.value))
-                .divide(BigInteger.valueOf(coin.value));
-        if (converted.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0
-                || converted.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0)
-            throw new ArithmeticException("Overflow");
+        final BigInteger converted = convert(convertCoin.value, fiat.value, coin.value);
+
+        checkOverflow(converted);
+
         return Fiat.valueOf(fiat.currencyCode, converted.longValue());
     }
 
@@ -68,17 +66,36 @@ public class ExchangeRate {
     public Coin fiatToCoin(Fiat convertFiat) {
         checkArgument(convertFiat.currencyCode.equals(fiat.currencyCode), () ->
                 "currency mismatch: " + convertFiat.currencyCode + " vs " + fiat.currencyCode);
+
         // Use BigInteger because it's much easier to maintain full precision without overflowing.
-        final BigInteger converted = BigInteger.valueOf(convertFiat.value).multiply(BigInteger.valueOf(coin.value))
-                .divide(BigInteger.valueOf(fiat.value));
-        if (converted.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0
-                || converted.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0)
-            throw new ArithmeticException("Overflow");
+        final BigInteger converted = convert(convertFiat.value, coin.value, fiat.value);
+
+        checkOverflow(converted);
+
         try {
             return Coin.valueOf(converted.longValue());
         } catch (IllegalArgumentException x) {
             throw new ArithmeticException("Overflow: " + x.getMessage());
         }
+    }
+
+    /**
+     * Checks for overflow in the BigInteger value.
+     * @throws ArithmeticException if the value is outside the range of Long.MIN_VALUE to Long.MAX_VALUE.
+     */
+    private void checkOverflow(BigInteger value) throws ArithmeticException {
+        if (value.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0
+                || value.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0) {
+            throw new ArithmeticException("Overflow");
+        }
+    }
+
+    /**
+     * Common conversion logic.
+     */
+    private BigInteger convert(long fromValue, long toValue, long targetValue) {
+        return BigInteger.valueOf(fromValue).multiply(BigInteger.valueOf(toValue))
+                .divide(BigInteger.valueOf(targetValue));
     }
 
     @Override
