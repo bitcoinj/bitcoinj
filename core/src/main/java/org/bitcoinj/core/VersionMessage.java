@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.net.InetAddresses;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -24,6 +23,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.jspecify.annotations.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -149,12 +149,19 @@ public class VersionMessage implements Message {
         this.clientVersion = ProtocolVersion.CURRENT.intValue();
         this.localServices = Services.none();
         this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        InetAddress localhost = InetAddresses.forString("127.0.0.1");
         this.receivingServices = Services.none();
-        this.receivingAddr = new InetSocketAddress(localhost, params.getPort());
+        this.receivingAddr = new InetSocketAddress(getLocalhostAddr(), params.getPort());
         this.subVer = LIBRARY_SUBVER;
         this.bestHeight = bestHeight;
         this.relayTxesBeforeFilter = true;
+    }
+
+    private InetAddress getLocalhostAddr() {
+        try {
+            return InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private VersionMessage(int clientVersion, Services localServices, Instant time, Services receivingServices,
