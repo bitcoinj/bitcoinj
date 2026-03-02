@@ -48,6 +48,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
@@ -197,11 +198,11 @@ public class BuildCheckpoints implements Callable<Integer> {
                 if (block.getChainWork().compareTo(MAX_WORK_V1) <= 0) {
                     ((Buffer) bufferV1).rewind();
                     block.serializeCompact(bufferV1);
-                    writer.println(CheckpointManager.BASE64.encode(bufferV1.array()));
+                    writer.println(Base64.getEncoder().encodeToString(bufferV1.array()));
                 } else {
                     ((Buffer) bufferV2).rewind();
                     block.serializeCompactV2(bufferV2);
-                    writer.println(CheckpointManager.BASE64.encode(bufferV2.array()));
+                    writer.println(Base64.getEncoder().encodeToString(bufferV2.array()));
                 }
             }
             System.out.println("Checkpoints written to '" + file.getCanonicalPath() + "'.");

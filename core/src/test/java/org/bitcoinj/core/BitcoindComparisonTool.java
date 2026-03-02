@@ -17,9 +17,9 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Iterables;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.net.NioClient;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -58,7 +59,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 public class BitcoindComparisonTool {
     private static final Logger log = LoggerFactory.getLogger(BitcoindComparisonTool.class);
 
-    private static final NetworkParameters PARAMS = RegTestParams.get();
+    private static final BitcoinNetworkParams PARAMS = RegTestParams.get();
     private static FullPrunedBlockChain chain;
     private static Sha256Hash bitcoindChainHead;
     private static volatile InventoryMessage mostRecentInv = null;
@@ -83,7 +84,7 @@ public class BitcoindComparisonTool {
         try {
             FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
-            chain = new FullPrunedBlockChain(PARAMS, store);
+            chain = new FullPrunedBlockChain(PARAMS.network(), store);
         } catch (BlockStoreException e) {
             e.printStackTrace();
             System.exit(1);
@@ -128,8 +129,9 @@ public class BitcoindComparisonTool {
 
         bitcoind.addPreMessageReceivedEventListener(Threading.SAME_THREAD, (peer, m) -> {
             if (m instanceof HeadersMessage) {
-                if (!((HeadersMessage) m).getBlockHeaders().isEmpty()) {
-                    Block b = Iterables.getLast(((HeadersMessage) m).getBlockHeaders());
+                List<Block> headers = ((HeadersMessage) m).getBlockHeaders();
+                if (!headers.isEmpty()) {
+                    Block b = headers.get(headers.size() - 1);
                     log.info("Got header from bitcoind " + b.getHashAsString());
                     bitcoindChainHead = b.getHash();
                 } else

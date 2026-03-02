@@ -67,7 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -140,7 +140,7 @@ public class WalletTool implements Callable<Integer> {
             "                         --no-pki disables pki verification for payment requests.%n" +
             "  encrypt              Requires --password and uses it to encrypt the wallet in place.%n" +
             "  decrypt              Requires --password and uses it to decrypt the wallet in place.%n" +
-            "  upgrade              Upgrade basic or deterministic wallets to deterministic wallets of the given script type.%n" +
+            "  upgrade              Upgrade deterministic wallets to the given script type.%n" +
             "                       If --output-script-type is present, use that as the upgrade target.%n" +
             "  rotate               Takes --date and sets that as the key rotation time. Any coins controlled by keys or HD chains created before this date will be re-spent to a key (from an HD tree) that was created after it.%n" +
             "                       If --date is missing, the current time is assumed. If the time covers all keys, a new HD tree%n" +
@@ -455,11 +455,13 @@ public class WalletTool implements Callable<Integer> {
 
     private void upgrade() {
         DeterministicKeyChain activeKeyChain = wallet.getActiveKeyChain();
-        ScriptType currentOutputScriptType = activeKeyChain != null ? activeKeyChain.getOutputScriptType() : null;
+        if (activeKeyChain == null) {
+            System.err.println("Basic keychains cannot be upgraded.");
+            return;
+        }
+        ScriptType currentOutputScriptType = activeKeyChain.getOutputScriptType();
         if (!wallet.isDeterministicUpgradeRequired(outputScriptType)) {
-            System.err
-                    .println("No upgrade from " + (currentOutputScriptType != null ? currentOutputScriptType : "basic")
-                            + " to " + outputScriptType);
+            System.err.println("No upgrade from " + currentOutputScriptType + " to " + outputScriptType);
             return;
         }
         AesKey aesKey = null;
@@ -469,8 +471,7 @@ public class WalletTool implements Callable<Integer> {
                 return;
         }
         wallet.upgradeToDeterministic(outputScriptType, aesKey);
-        System.out.println("Upgraded from " + (currentOutputScriptType != null ? currentOutputScriptType : "basic")
-                + " to " + outputScriptType);
+        System.out.println("Upgraded from " + currentOutputScriptType + " to " + outputScriptType);
     }
 
     private void rotate() throws BlockStoreException {
@@ -479,7 +480,7 @@ public class WalletTool implements Callable<Integer> {
         // Set a key rotation time and possibly broadcast the resulting maintenance transactions.
         Instant rotationTime = TimeUtils.currentTime();
         if (date != null) {
-            rotationTime = Instant.from(date);
+            rotationTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant();
         } else if (unixtime != null) {
             rotationTime = Instant.ofEpochSecond(unixtime);
         }

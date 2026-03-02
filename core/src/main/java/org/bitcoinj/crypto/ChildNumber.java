@@ -16,13 +16,15 @@
 
 package org.bitcoinj.crypto;
 
-import java.util.List;
 import java.util.Locale;
 
 /**
- * <p>This is just a wrapper for the i (child number) as per BIP 32 with a boolean getter for the most significant bit
- * and a getter for the actual 0-based child number. A {@link List} of these forms a <i>path</i> through a
+ * This is just a wrapper for the i (child number) as per BIP 32 with a boolean getter for the most significant bit
+ * and a getter for the actual 0-based child number. A list of these forms a <i>path</i> through a
  * {@link DeterministicHierarchy}. This class is immutable.
+ * <p>
+ * This is a value-based class; use of identity-sensitive operations (including reference equality (==), identity
+ * hash code, or synchronization) on instances of {@code ChildNumber} may have unpredictable results and should be avoided.
  */
 public class ChildNumber implements Comparable<ChildNumber> {
     /**

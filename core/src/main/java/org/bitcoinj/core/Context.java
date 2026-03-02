@@ -58,7 +58,7 @@ public class Context {
      * expected to do this yourself.
      */
     public Context() {
-        this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE, true, false);
+        this(DEFAULT_EVENT_HORIZON, Transaction.DEFAULT_TX_FEE_RATE, true, false);
     }
 
     /**

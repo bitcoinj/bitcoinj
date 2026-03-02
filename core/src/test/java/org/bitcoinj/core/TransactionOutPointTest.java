@@ -50,7 +50,7 @@ public class TransactionOutPointTest {
         return Stream.generate(() -> {
             byte[] randomBytes = new byte[Sha256Hash.LENGTH];
             random.nextBytes(randomBytes);
-            return new TransactionOutPoint(Integer.toUnsignedLong(random.nextInt()), Sha256Hash.wrap(randomBytes));
+            return TransactionOutPoint.of(Sha256Hash.wrap(randomBytes), Integer.toUnsignedLong(random.nextInt()));
         }).limit(10).iterator();
     }
 }

@@ -6,7 +6,7 @@ buildscript {
     }
     // If using Gradle 7, use the compatible protobuf plugin, else use the one that works with oldest supported Gradle
     boolean isGradle7 = GradleVersion.current() >= GradleVersion.version("7.0")
-    def gradleProtobufVersion = isGradle7 ? "0.9.4" : "0.8.10"
+    def gradleProtobufVersion = isGradle7 ? "0.9.5" : "0.8.10"
     if (isGradle7) {
         System.err.println "Warning: Using com.google.protobuf:protobuf-gradle-plugin:${gradleProtobufVersion} because ${GradleVersion.current()}"
     }
@@ -25,13 +25,21 @@ allprojects {
     // Ensure standard artifacts in all projects are built reproducibly
 
     tasks.withType(AbstractArchiveTask) {
-        preserveFileTimestamps = false
-        reproducibleFileOrder = true
+        // Gradle 9+ has consistent timestamps and file order in archives by default
+        boolean hasConsistentArchives = GradleVersion.current() >= GradleVersion.version("9.0")
+        if (!hasConsistentArchives) {
+            preserveFileTimestamps = false
+            reproducibleFileOrder = true
+        }
     }
 
     tasks.withType(Jar) {
-        dirMode = 0755
-        fileMode = 0644
+        // Gradle 9+ has consistent permissions in jars by default
+        boolean hasConsistentArchives = GradleVersion.current() >= GradleVersion.version("9.0")
+        if (!hasConsistentArchives) {
+            dirMode = 0755
+            fileMode = 0644
+        }
     }
 
     tasks.withType(Javadoc) {

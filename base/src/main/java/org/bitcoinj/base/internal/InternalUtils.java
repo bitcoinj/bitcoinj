@@ -16,6 +16,8 @@
 
 package org.bitcoinj.base.internal;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -92,7 +94,7 @@ public class InternalUtils {
      * @param strings varargs strings
      * @return A joined string
      */
-    public static String commaJoin(String... strings) {
+    public static String commaJoin(@Nullable String... strings) {
         return Arrays.stream(strings).filter(Objects::nonNull).collect(Collectors.joining(", "));
     }
 

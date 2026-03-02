@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.test.integration.wallet;
 
+import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.HDPath;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.bitcoinj.wallet.KeyChainGroupStructure;
+import org.bitcoinj.wallet.UnreadableWalletException;
+import org.bitcoinj.wallet.Wallet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,6 +44,7 @@ import static org.bitcoinj.base.ScriptType.P2WPKH;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP32;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Create new Wallets in a temp directory and make sure their account paths are correct.
@@ -63,6 +69,10 @@ public class WalletAccountPathTest {
 
         // Then the account path is as expected
         assertEquals(expectedPath, wallet.getActiveKeyChain().accountFullPath());
+
+        // We can get the first receive address
+        Address address = wallet.currentReceiveAddress();
+        assertNotNull(address);
     }
 
     static final List<Arguments> walletStructureParams = List.of(
@@ -80,7 +90,7 @@ public class WalletAccountPathTest {
     // Create a wallet, save it to a file, then reload from a file
     private static Wallet createWallet(File walletFile, Network network, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
         Context.propagate(new Context());
-        DeterministicSeed seed = new DeterministicSeed(testWalletMnemonic, null, "", Instant.now());
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic(testWalletMnemonic, "", Instant.now());
         Wallet wallet = Wallet.fromSeed(network, seed, outputScriptType, structure);
         wallet.saveToFile(walletFile);
         return Wallet.loadFromFile(walletFile);

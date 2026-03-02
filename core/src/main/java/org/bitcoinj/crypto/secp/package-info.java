@@ -18,4 +18,7 @@
  * This is a <b>temporary</b> package for holding temporary classes and interfaces that we anticipate
  * will eventually be replaced by classes and interfaces in <b>secp256k1-jdk</b>
  */
+@NullMarked
 package org.bitcoinj.crypto.secp;
+
+import org.jspecify.annotations.NullMarked;

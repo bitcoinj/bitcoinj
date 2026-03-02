@@ -16,9 +16,6 @@
 
 package org.bitcoinj.script;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -167,123 +164,131 @@ public class ScriptOpCodes {
     public static final int OP_NOP10 = 0xb9;
     public static final int OP_INVALIDOPCODE = 0xff;
 
-    private static final BiMap<Integer, String> opCodeMap = ImmutableBiMap.<Integer, String>builder()
-        .put(OP_0, "0")
-        .put(OP_PUSHDATA1, "PUSHDATA1")
-        .put(OP_PUSHDATA2, "PUSHDATA2")
-        .put(OP_PUSHDATA4, "PUSHDATA4")
-        .put(OP_1NEGATE, "1NEGATE")
-        .put(OP_RESERVED, "RESERVED")
-        .put(OP_1, "1")
-        .put(OP_2, "2")
-        .put(OP_3, "3")
-        .put(OP_4, "4")
-        .put(OP_5, "5")
-        .put(OP_6, "6")
-        .put(OP_7, "7")
-        .put(OP_8, "8")
-        .put(OP_9, "9")
-        .put(OP_10, "10")
-        .put(OP_11, "11")
-        .put(OP_12, "12")
-        .put(OP_13, "13")
-        .put(OP_14, "14")
-        .put(OP_15, "15")
-        .put(OP_16, "16")
-        .put(OP_NOP, "NOP")
-        .put(OP_VER, "VER")
-        .put(OP_IF, "IF")
-        .put(OP_NOTIF, "NOTIF")
-        .put(OP_VERIF, "VERIF")
-        .put(OP_VERNOTIF, "VERNOTIF")
-        .put(OP_ELSE, "ELSE")
-        .put(OP_ENDIF, "ENDIF")
-        .put(OP_VERIFY, "VERIFY")
-        .put(OP_RETURN, "RETURN")
-        .put(OP_TOALTSTACK, "TOALTSTACK")
-        .put(OP_FROMALTSTACK, "FROMALTSTACK")
-        .put(OP_2DROP, "2DROP")
-        .put(OP_2DUP, "2DUP")
-        .put(OP_3DUP, "3DUP")
-        .put(OP_2OVER, "2OVER")
-        .put(OP_2ROT, "2ROT")
-        .put(OP_2SWAP, "2SWAP")
-        .put(OP_IFDUP, "IFDUP")
-        .put(OP_DEPTH, "DEPTH")
-        .put(OP_DROP, "DROP")
-        .put(OP_DUP, "DUP")
-        .put(OP_NIP, "NIP")
-        .put(OP_OVER, "OVER")
-        .put(OP_PICK, "PICK")
-        .put(OP_ROLL, "ROLL")
-        .put(OP_ROT, "ROT")
-        .put(OP_SWAP, "SWAP")
-        .put(OP_TUCK, "TUCK")
-        .put(OP_CAT, "CAT")
-        .put(OP_SUBSTR, "SUBSTR")
-        .put(OP_LEFT, "LEFT")
-        .put(OP_RIGHT, "RIGHT")
-        .put(OP_SIZE, "SIZE")
-        .put(OP_INVERT, "INVERT")
-        .put(OP_AND, "AND")
-        .put(OP_OR, "OR")
-        .put(OP_XOR, "XOR")
-        .put(OP_EQUAL, "EQUAL")
-        .put(OP_EQUALVERIFY, "EQUALVERIFY")
-        .put(OP_RESERVED1, "RESERVED1")
-        .put(OP_RESERVED2, "RESERVED2")
-        .put(OP_1ADD, "1ADD")
-        .put(OP_1SUB, "1SUB")
-        .put(OP_2MUL, "2MUL")
-        .put(OP_2DIV, "2DIV")
-        .put(OP_NEGATE, "NEGATE")
-        .put(OP_ABS, "ABS")
-        .put(OP_NOT, "NOT")
-        .put(OP_0NOTEQUAL, "0NOTEQUAL")
-        .put(OP_ADD, "ADD")
-        .put(OP_SUB, "SUB")
-        .put(OP_MUL, "MUL")
-        .put(OP_DIV, "DIV")
-        .put(OP_MOD, "MOD")
-        .put(OP_LSHIFT, "LSHIFT")
-        .put(OP_RSHIFT, "RSHIFT")
-        .put(OP_BOOLAND, "BOOLAND")
-        .put(OP_BOOLOR, "BOOLOR")
-        .put(OP_NUMEQUAL, "NUMEQUAL")
-        .put(OP_NUMEQUALVERIFY, "NUMEQUALVERIFY")
-        .put(OP_NUMNOTEQUAL, "NUMNOTEQUAL")
-        .put(OP_LESSTHAN, "LESSTHAN")
-        .put(OP_GREATERTHAN, "GREATERTHAN")
-        .put(OP_LESSTHANOREQUAL, "LESSTHANOREQUAL")
-        .put(OP_GREATERTHANOREQUAL, "GREATERTHANOREQUAL")
-        .put(OP_MIN, "MIN")
-        .put(OP_MAX, "MAX")
-        .put(OP_WITHIN, "WITHIN")
-        .put(OP_RIPEMD160, "RIPEMD160")
-        .put(OP_SHA1, "SHA1")
-        .put(OP_SHA256, "SHA256")
-        .put(OP_HASH160, "HASH160")
-        .put(OP_HASH256, "HASH256")
-        .put(OP_CODESEPARATOR, "CODESEPARATOR")
-        .put(OP_CHECKSIG, "CHECKSIG")
-        .put(OP_CHECKSIGVERIFY, "CHECKSIGVERIFY")
-        .put(OP_CHECKMULTISIG, "CHECKMULTISIG")
-        .put(OP_CHECKMULTISIGVERIFY, "CHECKMULTISIGVERIFY")
-        .put(OP_NOP1, "NOP1")
-        .put(OP_CHECKLOCKTIMEVERIFY, "CHECKLOCKTIMEVERIFY")
-        .put(OP_CHECKSEQUENCEVERIFY, "CHECKSEQUENCEVERIFY")
-        .put(OP_NOP4, "NOP4")
-        .put(OP_NOP5, "NOP5")
-        .put(OP_NOP6, "NOP6")
-        .put(OP_NOP7, "NOP7")
-        .put(OP_NOP8, "NOP8")
-        .put(OP_NOP9, "NOP9")
-        .put(OP_NOP10, "NOP10").build();
+    private static final Map<Integer, String> opCodeMap;
+    static {
+        Map<Integer, String> map = new HashMap<>();
+        map.put(OP_0, "0");
+        map.put(OP_PUSHDATA1, "PUSHDATA1");
+        map.put(OP_PUSHDATA2, "PUSHDATA2");
+        map.put(OP_PUSHDATA4, "PUSHDATA4");
+        map.put(OP_1NEGATE, "1NEGATE");
+        map.put(OP_RESERVED, "RESERVED");
+        map.put(OP_1, "1");
+        map.put(OP_2, "2");
+        map.put(OP_3, "3");
+        map.put(OP_4, "4");
+        map.put(OP_5, "5");
+        map.put(OP_6, "6");
+        map.put(OP_7, "7");
+        map.put(OP_8, "8");
+        map.put(OP_9, "9");
+        map.put(OP_10, "10");
+        map.put(OP_11, "11");
+        map.put(OP_12, "12");
+        map.put(OP_13, "13");
+        map.put(OP_14, "14");
+        map.put(OP_15, "15");
+        map.put(OP_16, "16");
+        map.put(OP_NOP, "NOP");
+        map.put(OP_VER, "VER");
+        map.put(OP_IF, "IF");
+        map.put(OP_NOTIF, "NOTIF");
+        map.put(OP_VERIF, "VERIF");
+        map.put(OP_VERNOTIF, "VERNOTIF");
+        map.put(OP_ELSE, "ELSE");
+        map.put(OP_ENDIF, "ENDIF");
+        map.put(OP_VERIFY, "VERIFY");
+        map.put(OP_RETURN, "RETURN");
+        map.put(OP_TOALTSTACK, "TOALTSTACK");
+        map.put(OP_FROMALTSTACK, "FROMALTSTACK");
+        map.put(OP_2DROP, "2DROP");
+        map.put(OP_2DUP, "2DUP");
+        map.put(OP_3DUP, "3DUP");
+        map.put(OP_2OVER, "2OVER");
+        map.put(OP_2ROT, "2ROT");
+        map.put(OP_2SWAP, "2SWAP");
+        map.put(OP_IFDUP, "IFDUP");
+        map.put(OP_DEPTH, "DEPTH");
+        map.put(OP_DROP, "DROP");
+        map.put(OP_DUP, "DUP");
+        map.put(OP_NIP, "NIP");
+        map.put(OP_OVER, "OVER");
+        map.put(OP_PICK, "PICK");
+        map.put(OP_ROLL, "ROLL");
+        map.put(OP_ROT, "ROT");
+        map.put(OP_SWAP, "SWAP");
+        map.put(OP_TUCK, "TUCK");
+        map.put(OP_CAT, "CAT");
+        map.put(OP_SUBSTR, "SUBSTR");
+        map.put(OP_LEFT, "LEFT");
+        map.put(OP_RIGHT, "RIGHT");
+        map.put(OP_SIZE, "SIZE");
+        map.put(OP_INVERT, "INVERT");
+        map.put(OP_AND, "AND");
+        map.put(OP_OR, "OR");
+        map.put(OP_XOR, "XOR");
+        map.put(OP_EQUAL, "EQUAL");
+        map.put(OP_EQUALVERIFY, "EQUALVERIFY");
+        map.put(OP_RESERVED1, "RESERVED1");
+        map.put(OP_RESERVED2, "RESERVED2");
+        map.put(OP_1ADD, "1ADD");
+        map.put(OP_1SUB, "1SUB");
+        map.put(OP_2MUL, "2MUL");
+        map.put(OP_2DIV, "2DIV");
+        map.put(OP_NEGATE, "NEGATE");
+        map.put(OP_ABS, "ABS");
+        map.put(OP_NOT, "NOT");
+        map.put(OP_0NOTEQUAL, "0NOTEQUAL");
+        map.put(OP_ADD, "ADD");
+        map.put(OP_SUB, "SUB");
+        map.put(OP_MUL, "MUL");
+        map.put(OP_DIV, "DIV");
+        map.put(OP_MOD, "MOD");
+        map.put(OP_LSHIFT, "LSHIFT");
+        map.put(OP_RSHIFT, "RSHIFT");
+        map.put(OP_BOOLAND, "BOOLAND");
+        map.put(OP_BOOLOR, "BOOLOR");
+        map.put(OP_NUMEQUAL, "NUMEQUAL");
+        map.put(OP_NUMEQUALVERIFY, "NUMEQUALVERIFY");
+        map.put(OP_NUMNOTEQUAL, "NUMNOTEQUAL");
+        map.put(OP_LESSTHAN, "LESSTHAN");
+        map.put(OP_GREATERTHAN, "GREATERTHAN");
+        map.put(OP_LESSTHANOREQUAL, "LESSTHANOREQUAL");
+        map.put(OP_GREATERTHANOREQUAL, "GREATERTHANOREQUAL");
+        map.put(OP_MIN, "MIN");
+        map.put(OP_MAX, "MAX");
+        map.put(OP_WITHIN, "WITHIN");
+        map.put(OP_RIPEMD160, "RIPEMD160");
+        map.put(OP_SHA1, "SHA1");
+        map.put(OP_SHA256, "SHA256");
+        map.put(OP_HASH160, "HASH160");
+        map.put(OP_HASH256, "HASH256");
+        map.put(OP_CODESEPARATOR, "CODESEPARATOR");
+        map.put(OP_CHECKSIG, "CHECKSIG");
+        map.put(OP_CHECKSIGVERIFY, "CHECKSIGVERIFY");
+        map.put(OP_CHECKMULTISIG, "CHECKMULTISIG");
+        map.put(OP_CHECKMULTISIGVERIFY, "CHECKMULTISIGVERIFY");
+        map.put(OP_NOP1, "NOP1");
+        map.put(OP_CHECKLOCKTIMEVERIFY, "CHECKLOCKTIMEVERIFY");
+        map.put(OP_CHECKSEQUENCEVERIFY, "CHECKSEQUENCEVERIFY");
+        map.put(OP_NOP4, "NOP4");
+        map.put(OP_NOP5, "NOP5");
+        map.put(OP_NOP6, "NOP6");
+        map.put(OP_NOP7, "NOP7");
+        map.put(OP_NOP8, "NOP8");
+        map.put(OP_NOP9, "NOP9");
+        map.put(OP_NOP10, "NOP10");
+        opCodeMap = Collections.unmodifiableMap(map);
+    }
 
     private static final Map<String, Integer> opCodeNameMap = createOpCodeNameMap();
 
     private static Map<String, Integer> createOpCodeNameMap() {
-        Map<String, Integer> map = new HashMap<>(opCodeMap.inverse());
+        Map<String, Integer> map = new HashMap<>();
+
+        for (Map.Entry<Integer, String> entry : opCodeMap.entrySet()) {
+            map.put(entry.getValue(), entry.getKey());
+        }
         map.put("OP_FALSE", OP_FALSE);
         map.put("OP_TRUE", OP_TRUE);
         map.put("NOP2", OP_NOP2);

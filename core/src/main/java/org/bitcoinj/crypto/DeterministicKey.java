@@ -28,7 +28,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bouncycastle.math.ec.ECPoint;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -387,9 +387,8 @@ public class DeterministicKey extends ECKey {
         return findParentWithPrivKey() != null;
     }
 
-    @Nullable
     @Override
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         return priv != null ? getPrivKeyBytes() : null;
     }
 
@@ -484,6 +483,7 @@ public class DeterministicKey extends ECKey {
         return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
     }
 
+    @Nullable
     private DeterministicKey findParentWithPrivKey() {
         DeterministicKey cursor = this;
         while (cursor != null) {
@@ -496,7 +496,7 @@ public class DeterministicKey extends ECKey {
     @Nullable
     private BigInteger findOrDerivePrivateKey() {
         DeterministicKey cursor = findParentWithPrivKey();
-        if (cursor == null)
+        if (cursor == null || cursor.priv == null)
             return null;
         return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
     }
@@ -537,6 +537,7 @@ public class DeterministicKey extends ECKey {
         final BigInteger key = findOrDerivePrivateKey();
         checkState(key != null, () ->
                 "private key bytes not available");
+        assert key != null;
         return key;
     }
 
@@ -653,7 +654,7 @@ public class DeterministicKey extends ECKey {
         final int parentFingerprint = buffer.getInt();
         final int i = buffer.getInt();
         final ChildNumber childNumber = new ChildNumber(i);
-        HDPath path;
+        HDPath.HDPartialPath path;
         if (parent != null) {
             if (parentFingerprint == 0)
                 throw new IllegalArgumentException("Parent was provided but this key doesn't have one");
@@ -668,8 +669,8 @@ public class DeterministicKey extends ECKey {
                 // This can happen when deserializing an account key for a watching wallet.  In this case, we assume that
                 // the client wants to conceal the key's position in the hierarchy.  The path is truncated at the
                 // parent's node.
-                path = HDPath.M(childNumber);
-            else path = HDPath.M();
+                path = HDPath.partial(childNumber);
+            else path = HDPath.partial();
         }
         byte[] chainCode = new byte[32];
         buffer.get(chainCode);
@@ -721,23 +722,12 @@ public class DeterministicKey extends ECKey {
             super.clearCreationTime();
     }
 
-    /** @deprecated use {@link #setCreationTime(Instant)} */
-    @Deprecated
-    public void setCreationTimeSeconds(long creationTimeSecs) {
-        if (creationTimeSecs > 0)
-            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
-        else if (creationTimeSecs == 0)
-            clearCreationTime();
-        else
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
-    }
-
     /**
      * Verifies equality of all fields but NOT the parent pointer (thus the same key derived in two separate hierarchy
      * objects will equal each other.
      */
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DeterministicKey other = (DeterministicKey) o;

@@ -30,6 +30,7 @@ import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscoveryException;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
@@ -52,7 +53,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,13 +87,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     private BlockingQueue<Peer> connectedPeers;
     private BlockingQueue<Peer> disconnectedPeers;
-    private PeerConnectedEventListener connectedListener = new PeerConnectedEventListener() {
+    private final PeerConnectedEventListener connectedListener = new PeerConnectedEventListener() {
         @Override
         public void onPeerConnected(Peer peer, int peerCount) {
             connectedPeers.add(peer);
         }
     };
-    private PeerDisconnectedEventListener disconnectedListener = new PeerDisconnectedEventListener() {
+    private final PeerDisconnectedEventListener disconnectedListener = new PeerDisconnectedEventListener() {
         @Override
         public void onPeerDisconnected(Peer peer, int peerCount) {
             disconnectedPeers.add(peer);
@@ -104,7 +104,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
-        return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
+        return List.of(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
                              new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
     }
 
@@ -114,17 +114,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
     @Override
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException, IOException {
         super.setUp();
         peerToMessageCount = new HashMap<>();
         connectedPeers = new LinkedBlockingQueue<>();
         disconnectedPeers = new LinkedBlockingQueue<>();
         preMessageReceivedListener = (peer, m) -> {
-            AtomicInteger messageCount = peerToMessageCount.get(peer);
-            if (messageCount == null) {
-                messageCount = new AtomicInteger(0);
-                peerToMessageCount.put(peer, messageCount);
-            }
+            AtomicInteger messageCount = peerToMessageCount.computeIfAbsent(peer, p -> new AtomicInteger(0));
             messageCount.incrementAndGet();
             // Just pass the message right through for further processing.
             return m;
@@ -141,7 +137,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     public void listener() throws Exception {
         peerGroup.addConnectedEventListener(connectedListener);
         peerGroup.addDisconnectedEventListener(disconnectedListener);
-        peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
+        peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, preMessageReceivedListener);
         peerGroup.start();
 
         // Create a couple of peers.
@@ -161,6 +157,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         p2.close();
         disconnectedPeers.take();
         assertEquals(0, disconnectedPeers.size());
+
+        assertTrue(peerToMessageCount.size() >= 2);     // Verify preMessageReceivedListener was called
 
         assertTrue(peerGroup.removeConnectedEventListener(connectedListener));
         assertFalse(peerGroup.removeConnectedEventListener(connectedListener));
@@ -184,7 +182,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
                 } else {
                     // Return a bogus address.
                     latch.countDown();
-                    return Arrays.asList(new InetSocketAddress("localhost", 1));
+                    return List.of(new InetSocketAddress("localhost", 1));
                 }
             }
 
@@ -521,6 +519,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void peerTimeoutTest() throws Exception {
         final Duration timeout = Duration.ofMillis(100);
+        final Duration errorMargin = Duration.ofMillis(1);
         peerGroup.start();
         peerGroup.setConnectTimeout(timeout);
 
@@ -540,7 +539,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // check things after disconnect
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
         watch.stop();
-        assertTrue(watch.toString(), watch.elapsed().compareTo(timeout) >= 0); // should not disconnect before timeout
+        assertTrue("Disconnect in " + watch + " for " + timeout.toMillis() + " ms timeout",
+                watch.elapsed().compareTo(timeout.minus(errorMargin)) >= 0); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 
@@ -554,7 +554,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         ));
         peerGroup.addConnectedEventListener(connectedListener);
         peerGroup.addDisconnectedEventListener(disconnectedListener);
-        peerGroup.addPreMessageReceivedEventListener(preMessageReceivedListener);
+        peerGroup.addPreMessageReceivedEventListener(Threading.SAME_THREAD, preMessageReceivedListener);
         peerGroup.addPeerDiscovery(new PeerDiscovery() {
             @Override
             public List<InetSocketAddress> getPeers(long services, Duration unused) throws PeerDiscoveryException {
@@ -777,7 +777,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         }
     }
 
-    private <T extends Message> T assertNextMessageIs(InboundMessageQueuer q, Class<T> klass) throws Exception {
+    private <T extends Message> T assertNextMessageIs(InboundMessageQueuer q, Class<T> klass) throws InterruptedException {
         Message outbound = waitForOutbound(q);
         assertEquals(klass, outbound.getClass());
         return (T) outbound;
@@ -876,11 +876,11 @@ public class PeerGroupTest extends TestWithPeerGroup {
     @Test
     public void testMaxOfMostFreq() {
         assertEquals(0, PeerGroup.maxOfMostFreq(Collections.emptyList()));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(0, 0, 1)));
-        assertEquals(3, PeerGroup.maxOfMostFreq(Arrays.asList(1, 3, 1, 2, 2, 3, 3)));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2)));
-        assertEquals(0, PeerGroup.maxOfMostFreq(Arrays.asList(-1, 1, 1, 2, 2)));
-        assertEquals(1, PeerGroup.maxOfMostFreq(Arrays.asList(1, 1, 2, 2, 1)));
-        assertEquals(-1, PeerGroup.maxOfMostFreq(Arrays.asList(-1, -1, 2, 2, -1)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(0, 0, 1)));
+        assertEquals(3, PeerGroup.maxOfMostFreq(List.of(1, 3, 1, 2, 2, 3, 3)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(1, 1, 2, 2)));
+        assertEquals(0, PeerGroup.maxOfMostFreq(List.of(-1, 1, 1, 2, 2)));
+        assertEquals(1, PeerGroup.maxOfMostFreq(List.of(1, 1, 2, 2, 1)));
+        assertEquals(-1, PeerGroup.maxOfMostFreq(List.of(-1, -1, 2, 2, -1)));
     }
 }

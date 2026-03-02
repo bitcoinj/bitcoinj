@@ -30,7 +30,8 @@ import java.util.stream.Stream;
 import static org.bitcoinj.base.Coin.COIN;
 
 /**
- * A convenient {@code enum} representation of a Bitcoin network.
+ * A convenient {@code enum} representation of a Bitcoin {@link Network}. In most code you will probably want
+ * to use this {@link BitcoinNetwork} type rather than the {@link Network} type, see {@link Network} for details.
  * <p>
  * Note that the name of each {@code enum} constant is defined in <i>uppercase</i> as is the convention in Java.
  * However, the <q>canonical</q> representation in <b>bitcoinj</b> for user-facing display and input

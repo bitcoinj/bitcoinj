@@ -16,9 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.hash.HashCode;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -29,7 +26,7 @@ import org.bitcoinj.store.SPVBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -45,6 +42,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -87,6 +85,10 @@ public class CheckpointManager {
     protected final NetworkParameters params;
     protected final Sha256Hash dataHash;
 
+    /**
+     * @deprecated Use {@link java.util.Base64} or a 3rd-party Base64 implementation.
+     */
+    @Deprecated
     public static final BaseEncoding BASE64 = BaseEncoding.base64().omitPadding();
 
     /** Loads the default checkpoints bundled with bitcoinj */
@@ -116,7 +118,7 @@ public class CheckpointManager {
     }
 
     private Sha256Hash readTextual(InputStream inputStream) throws IOException {
-        Hasher hasher = Hashing.sha256().newHasher();
+        MessageDigest digest = Sha256Hash.newDigest();
         try (BufferedReader reader =
                      new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
             String magic = reader.readLine();
@@ -127,11 +129,12 @@ public class CheckpointManager {
                 reader.readLine(); // Skip sigs for now.
             int numCheckpoints = Integer.parseInt(reader.readLine());
             checkState(numCheckpoints > 0);
+
             // Hash numCheckpoints in a way compatible to the binary format.
-            hasher.putBytes(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
+            digest.update(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(numCheckpoints).array());
             for (int i = 0; i < numCheckpoints; i++) {
-                byte[] bytes = BASE64.decode(reader.readLine());
-                hasher.putBytes(bytes);
+                byte[] bytes = Base64.getDecoder().decode(reader.readLine());
+                digest.update(bytes);
                 ByteBuffer buffer = ByteBuffer.wrap(bytes);
                 StoredBlock block;
                 if (bytes.length == StoredBlock.COMPACT_SERIALIZED_SIZE)
@@ -142,10 +145,10 @@ public class CheckpointManager {
                     throw new IllegalStateException("unexpected length of checkpoint: " + bytes.length);
                 checkpoints.put(block.getHeader().time(), block);
             }
-            HashCode hash = hasher.hash();
+            Sha256Hash hash = Sha256Hash.wrap(digest.digest());
             log.info("Read {} checkpoints up to time {}, hash is {}", checkpoints.size(),
                     TimeUtils.dateTimeFormat(checkpoints.lastEntry().getKey()), hash);
-            return Sha256Hash.wrap(hash.asBytes());
+            return hash;
         }
     }
 

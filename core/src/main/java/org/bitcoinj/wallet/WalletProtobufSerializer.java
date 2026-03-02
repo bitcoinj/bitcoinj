@@ -46,7 +46,7 @@ import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -644,9 +644,9 @@ public class WalletProtobufSerializer {
 
         for (Protos.TransactionInput inputProto : txProto.getTransactionInputList()) {
             byte[] scriptBytes = inputProto.getScriptBytes().toByteArray();
-            TransactionOutPoint outpoint = new TransactionOutPoint(
-                    inputProto.getTransactionOutPointIndex() & 0xFFFFFFFFL,
-                    byteStringToHash(inputProto.getTransactionOutPointHash())
+            TransactionOutPoint outpoint = TransactionOutPoint.of(
+                    byteStringToHash(inputProto.getTransactionOutPointHash()),
+                    inputProto.getTransactionOutPointIndex() & 0xFFFFFFFFL
             );
             Coin value = inputProto.hasValue() ? Coin.valueOf(inputProto.getValue()) : null;
             long sequence = inputProto.hasSequence() ? 0xffffffffL & inputProto.getSequence() : TransactionInput.NO_SEQUENCE;

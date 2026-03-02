@@ -27,7 +27,7 @@ import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -52,7 +52,7 @@ public class DeterministicSeed implements EncryptableItem {
     public static final int DEFAULT_SEED_ENTROPY_BITS = 128;
     public static final int MAX_SEED_ENTROPY_BITS = 512;
 
-    @Nullable private final byte[] seed;
+    private final byte @Nullable [] seed;
     @Nullable private final List<String> mnemonicCode; // only one of mnemonicCode/encryptedMnemonicCode will be set
     @Nullable private final EncryptedData encryptedMnemonicCode;
     @Nullable private final EncryptedData encryptedSeed;
@@ -160,13 +160,11 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     /** Internal use only. */
-    private DeterministicSeed(List<String> mnemonicCode, @Nullable byte[] seed, String passphrase, @Nullable Instant creationTime) {
+    private DeterministicSeed(List<String> mnemonicCode, byte @Nullable [] seed, String passphrase, @Nullable Instant creationTime) {
         this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, Objects.requireNonNull(passphrase))), mnemonicCode, creationTime);
     }
 
-    /** @deprecated use {@link #ofRandom(SecureRandom, int, String)} */
-    @Deprecated
-    public DeterministicSeed(SecureRandom random, int bits, String passphrase) {
+    private DeterministicSeed(SecureRandom random, int bits, String passphrase) {
         this(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
@@ -219,14 +217,12 @@ public class DeterministicSeed implements EncryptableItem {
         return seed != null ? ByteUtils.formatHex(seed) : null;
     }
 
-    @Nullable
     @Override
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         return getMnemonicAsBytes();
     }
 
-    @Nullable
-    public byte[] getSeedBytes() {
+    public byte @Nullable [] getSeedBytes() {
         return seed;
     }
 

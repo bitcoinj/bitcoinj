@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.wallet;
+package org.bitcoinj.test.integration.wallet;
 
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.HDPath;
+import org.bitcoinj.wallet.UnreadableWalletException;
+import org.bitcoinj.wallet.Wallet;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -29,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Basic test of loading a wallet from a known test file
  */
 public class WalletLoadTest {
-    private static final File walletFile = new File("src/test/resources/org/bitcoinj/wallet/panda-test-wallet.wallet");
+    private static final File walletFile = new File("src/test/resources/org/bitcoinj/test/integration/wallet/panda-test-wallet.wallet");
     private static final String testWalletMnemonic = "panda diary marriage suffer basic glare surge auto scissors describe sell unique";
     private static final Instant testWalletCreation = Instant.ofEpochSecond(1554102000);
 

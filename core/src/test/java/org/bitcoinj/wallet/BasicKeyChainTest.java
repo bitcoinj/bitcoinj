@@ -16,7 +16,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
@@ -32,7 +31,6 @@ import org.junit.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -74,7 +72,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = ECKey.random();
-        final ArrayList<ECKey> keys = Lists.newArrayList(key1, key2);
+        final List<ECKey> keys = Arrays.asList(key1, key2);
 
         // Import two keys, check the event is correct.
         assertEquals(2, chain.importKeys(keys));
@@ -84,11 +82,11 @@ public class BasicKeyChainTest {
         assertEquals(now, chain.earliestKeyCreationTime());
         // Check we ignore duplicates.
         final ECKey newKey = ECKey.random();
-        keys.add(newKey);
-        assertEquals(1, chain.importKeys(keys));
+        final List<ECKey> keys2 = Arrays.asList(key1, key2, newKey);
+        assertEquals(1, chain.importKeys(keys2));
         assertTrue(onKeysAddedRan.getAndSet(false));
         assertEquals(newKey, onKeysAdded.getAndSet(null).get(0));
-        assertEquals(0, chain.importKeys(keys));
+        assertEquals(0, chain.importKeys(keys2));
         assertFalse(onKeysAddedRan.getAndSet(false));
         assertNull(onKeysAdded.get());
 
@@ -126,14 +124,14 @@ public class BasicKeyChainTest {
 
     @Test(expected = IllegalStateException.class)
     public void checkPasswordNotEncrypted() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final List<ECKey> keys = Arrays.asList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain.checkPassword("test");
     }
 
     @Test(expected = IllegalStateException.class)
     public void doubleEncryptFails() {
-        final ArrayList<ECKey> keys = Lists.newArrayList(ECKey.random(), ECKey.random());
+        final List<ECKey> keys = Arrays.asList(ECKey.random(), ECKey.random());
         chain.importKeys(keys);
         chain = chain.toEncrypted("foo");
         chain.toEncrypted("foo");
@@ -283,7 +281,7 @@ public class BasicKeyChainTest {
         final ECKey key1 = ECKey.random();
         TimeUtils.rollMockClock(Duration.ofDays(1));
         final ECKey key2 = ECKey.random();
-        final List<ECKey> keys = Lists.newArrayList(key1, key2);
+        final List<ECKey> keys = Arrays.asList(key1, key2);
         assertEquals(2, chain.importKeys(keys));
 
         assertFalse(chain.findOldestKeyAfter(now.plus(2, ChronoUnit.DAYS)).isPresent());

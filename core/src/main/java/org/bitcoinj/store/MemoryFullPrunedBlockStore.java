@@ -29,8 +29,10 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProviderException;
 import org.bitcoinj.core.VerificationException;
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptPattern;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,8 +69,7 @@ class TransactionalHashMap<KeyType, ValueType> {
             for(KeyType key : tempSetRemoved.get())
                 map.remove(key);
         if (tempMap.get() != null)
-            for (Map.Entry<KeyType, ValueType> entry : tempMap.get().entrySet())
-                map.put(entry.getKey(), entry.getValue());
+            map.putAll(tempMap.get());
         abortDatabaseBatchWrite();
     }
 
@@ -134,16 +135,14 @@ class TransactionalHashMap<KeyType, ValueType> {
 }
 
 /**
- * A Map with multiple key types that is DB per-thread-transaction-aware.
- * However, this class is not thread-safe.
- * @param <UniqueKeyType> is a key that must be unique per object
- * @param <MultiKeyType> is a key that can have multiple values
+ * A map of {@link Sha256Hash} to {@link StoredUndoableBlock} that is also indexed by a height {@link Integer} that
+ * is DB per-thread-transaction-aware. However, this class is not thread-safe.
  */
-class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
-    TransactionalHashMap<UniqueKeyType, ValueType> mapValues;
-    HashMap<MultiKeyType, Set<UniqueKeyType>> mapKeys;
+class TransactionalFullBlockMap {
+    TransactionalHashMap<Sha256Hash, StoredUndoableBlock> mapValues;
+    HashMap<Integer, Set<Sha256Hash>> mapKeys;
     
-    public TransactionalMultiKeyHashMap() {
+    public TransactionalFullBlockMap() {
         mapValues = new TransactionalHashMap<>();
         mapKeys = new HashMap<>();
     }
@@ -161,32 +160,27 @@ class TransactionalMultiKeyHashMap<UniqueKeyType, MultiKeyType, ValueType> {
     }
 
     @Nullable
-    public ValueType get(UniqueKeyType key) {
+    public StoredUndoableBlock get(Sha256Hash key) {
         return mapValues.get(key);
     }
     
-    public void put(UniqueKeyType uniqueKey, MultiKeyType multiKey, ValueType value) {
-        mapValues.put(uniqueKey, value);
-        Set<UniqueKeyType> set = mapKeys.get(multiKey);
+    public void put(Sha256Hash hash, int height, StoredUndoableBlock block) {
+        mapValues.put(hash, block);
+        Set<Sha256Hash> set = mapKeys.get(height);
         if (set == null) {
             set = new HashSet<>();
-            set.add(uniqueKey);
-            mapKeys.put(multiKey, set);
+            set.add(hash);
+            mapKeys.put(height, set);
         }else{
-            set.add(uniqueKey);
+            set.add(hash);
         }
     }
     
-    @Nullable
-    public ValueType removeByUniqueKey(UniqueKeyType key) {
-        return mapValues.remove(key);
-    }
-    
-    public void removeByMultiKey(MultiKeyType key) {
-        Set<UniqueKeyType> set = mapKeys.remove(key);
+    public void removeByHeight(int height) {
+        Set<Sha256Hash> set = mapKeys.remove(height);
         if (set != null)
-            for (UniqueKeyType uniqueKey : set)
-                removeByUniqueKey(uniqueKey);
+            for (Sha256Hash hash : set)
+                mapValues.remove(hash);
     }
 }
 
@@ -201,13 +195,13 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         public StoredBlockAndWasUndoableFlag(StoredBlock block, boolean wasUndoable) { this.block = block; this.wasUndoable = wasUndoable; }
     }
     private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
-    private TransactionalMultiKeyHashMap<Sha256Hash, Integer, StoredUndoableBlock> fullBlockMap;
+    private TransactionalFullBlockMap fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
     private TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
-    private int fullStoreDepth;
-    private NetworkParameters params;
+    private final int fullStoreDepth;
+    private final Network network;
     
     /**
      * Set up the MemoryFullPrunedBlockStore
@@ -216,7 +210,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
      */
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
         blockMap = new TransactionalHashMap<>();
-        fullBlockMap = new TransactionalMultiKeyHashMap<>();
+        fullBlockMap = new TransactionalFullBlockMap();
         transactionOutputMap = new TransactionalHashMap<>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
@@ -228,7 +222,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
             setVerifiedChainHead(storedGenesisHeader);
-            this.params = params;
+            network = params.network();
         } catch (BlockStoreException | VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
@@ -298,7 +292,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             setChainHead(chainHead);
         // Potential leak here if not all blocks get setChainHead'd
         // Though the FullPrunedBlockStore allows for this, the current AbstractBlockChain will not do it.
-        fullBlockMap.removeByMultiKey(chainHead.getHeight() - fullStoreDepth);
+        fullBlockMap.removeByHeight(chainHead.getHeight() - fullStoreDepth);
     }
     
     @Override
@@ -359,7 +353,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public Network network() {
-        return params.network();
+        return network;
     }
 
     @Override
@@ -380,9 +374,13 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         for (UTXO output : outputsList) {
             for (ECKey key : keys) {
                 // TODO switch to pubKeyHash in order to support native segwit addresses
-                Address address = key.toAddress(ScriptType.P2PKH, params.network());
-                if (output.getAddress().equals(address.toString())) {
-                    foundOutputs.add(output);
+                Script script = output.getScript();
+                if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script)) {
+                    Address outputAddress = script.getToAddress(network, true);
+                    Address keyAddress = key.toAddress(ScriptType.P2PKH, network);
+                    if (outputAddress.equals(keyAddress)) {
+                        foundOutputs.add(output);
+                    }
                 }
             }
         }

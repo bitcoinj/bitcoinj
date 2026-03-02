@@ -62,11 +62,10 @@ import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.math.ec.FixedPointUtil;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
 import org.bouncycastle.util.Properties;
-import org.bouncycastle.util.encoders.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -77,6 +76,7 @@ import java.security.SignatureException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
@@ -164,10 +164,10 @@ public class ECKey implements EncryptableItem {
     // not have this field.
     @Nullable private Instant creationTime = null;
 
-    protected KeyCrypter keyCrypter;
-    protected EncryptedData encryptedPrivateKey;
+    @Nullable protected KeyCrypter keyCrypter;
+    @Nullable protected EncryptedData encryptedPrivateKey;
 
-    private byte[] pubKeyHash;
+    private byte @Nullable [] pubKeyHash;
 
     /**
      * Generates an entirely random, new keypair.
@@ -869,7 +869,7 @@ public class ECKey implements EncryptableItem {
         sigData[0] = (byte)headerByte;
         System.arraycopy(ByteUtils.bigIntegerToBytes(sig.r, 32), 0, sigData, 1, 32);
         System.arraycopy(ByteUtils.bigIntegerToBytes(sig.s, 32), 0, sigData, 33, 32);
-        return new String(Base64.encode(sigData), StandardCharsets.UTF_8);
+        return new String(Base64.getEncoder().encode(sigData), StandardCharsets.UTF_8);
     }
 
     /**
@@ -886,7 +886,7 @@ public class ECKey implements EncryptableItem {
     public static ECKey signedMessageToKey(String message, String signatureBase64) throws SignatureException {
         byte[] signatureEncoded;
         try {
-            signatureEncoded = Base64.decode(signatureBase64);
+            signatureEncoded = Base64.getDecoder().decode(signatureBase64);
         } catch (RuntimeException e) {
             // This is what you get back from Bouncy Castle if base64 doesn't decode :(
             throw new SignatureException("Could not decode base64", e);
@@ -1130,17 +1130,6 @@ public class ECKey implements EncryptableItem {
         this.creationTime = null;
     }
 
-    /** @deprecated use {@link #setCreationTime(Instant)} */
-    @Deprecated
-    public void setCreationTimeSeconds(long creationTimeSecs) {
-        if (creationTimeSecs > 0)
-            setCreationTime(Instant.ofEpochSecond(creationTimeSecs));
-        else if (creationTimeSecs == 0)
-            clearCreationTime();
-        else
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + creationTimeSecs);
-    }
-
     /**
      * Create an encrypted private key with the keyCrypter and the AES key supplied.
      * This method returns a new encrypted key and leaves the original unchanged.
@@ -1176,6 +1165,7 @@ public class ECKey implements EncryptableItem {
             throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
         checkState(encryptedPrivateKey != null, () ->
                 "this key is not encrypted");
+        assert encryptedPrivateKey != null;
         byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
         if (unencryptedPrivateKey.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
@@ -1247,7 +1237,6 @@ public class ECKey implements EncryptableItem {
         return keyCrypter != null && encryptedPrivateKey != null && encryptedPrivateKey.encryptedBytes.length > 0;
     }
 
-    @Nullable
     @Override
     public Protos.Wallet.EncryptionType getEncryptionType() {
         return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
@@ -1258,8 +1247,7 @@ public class ECKey implements EncryptableItem {
      * to be derived (for the HD key case).
      */
     @Override
-    @Nullable
-    public byte[] getSecretBytes() {
+    public byte @Nullable [] getSecretBytes() {
         if (hasPrivKey())
             return getPrivKeyBytes();
         else
@@ -1365,7 +1353,7 @@ public class ECKey implements EncryptableItem {
     }
 
     public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable AesKey aesKey, StringBuilder builder,
-                                     Network network, ScriptType outputScriptType, @Nullable String comment) {
+                                     Network network, @Nullable ScriptType outputScriptType, @Nullable String comment) {
         builder.append("  addr:");
         if (outputScriptType != null) {
             builder.append(toAddress(outputScriptType, network));

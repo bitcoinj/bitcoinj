@@ -262,7 +262,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception {
         // Test the TransactionConfidence appearedAtChainHeight, depth and workDone field are stored.
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         BlockChain chain = new BlockChain(BitcoinNetwork.TESTNET, myWallet, new MemoryBlockStore(TESTNET.getGenesisBlock()));
 
         final ArrayList<Transaction> txns = new ArrayList<>(2);
@@ -377,7 +377,7 @@ public class WalletProtobufSerializerTest {
     @Test
     public void coinbaseTxns() throws Exception {
         // Covers issue 420 where the outpoint index of a coinbase tx input was being mis-serialized.
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block b = TestBlocks.createNextBlockWithCoinbase(TESTNET.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, myKey.getPubKey(), FIFTY_COINS, Block.BLOCK_HEIGHT_GENESIS);
         Transaction coinbase = b.transaction(0);
         assertTrue(coinbase.isCoinBase());

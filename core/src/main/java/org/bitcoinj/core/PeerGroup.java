@@ -18,10 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Ordering;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Network;
@@ -60,7 +56,7 @@ import org.bitcoinj.wallet.listeners.WalletCoinsSentEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -99,6 +95,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -169,7 +167,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private final ClientConnectionManager channels;
 
     // The peer that has been selected for the purposes of downloading announced data.
-    @GuardedBy("lock") private Peer downloadPeer;
+    @Nullable @GuardedBy("lock") private Peer downloadPeer;
     // Callback for events related to chain download.
     @Nullable @GuardedBy("lock") private BlockchainDownloadEventListener downloadListener;
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> peersBlocksDownloadedEventListeners
@@ -274,7 +272,7 @@ public class PeerGroup implements TransactionBroadcaster {
     private final ExponentialBackoff.Params peerBackoffParams = new ExponentialBackoff.Params(Duration.ofSeconds(1),
             1.5f, Duration.ofMinutes(10));
     // Tracks failures globally in case of a network failure.
-    @GuardedBy("lock") private ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(Duration.ofSeconds(1), 1.5f, Duration.ofSeconds(10)));
+    @GuardedBy("lock") private final ExponentialBackoff groupBackoff = new ExponentialBackoff(new ExponentialBackoff.Params(Duration.ofSeconds(1), 1.5f, Duration.ofSeconds(10)));
 
     // This is a synchronized set, so it locks on itself. We use it to prevent TransactionBroadcast objects from
     // being garbage collected if nothing in the apps code holds on to them transitively. See the discussion
@@ -471,7 +469,7 @@ public class PeerGroup implements TransactionBroadcaster {
         vMinRequiredProtocolVersion = ProtocolVersion.BLOOM_FILTER.intValue();
     }
 
-    private CountDownLatch executorStartupLatch = new CountDownLatch(1);
+    private final CountDownLatch executorStartupLatch = new CountDownLatch(1);
 
     protected ScheduledExecutorService createPrivateExecutor() {
         ScheduledExecutorService result =
@@ -495,7 +493,6 @@ public class PeerGroup implements TransactionBroadcaster {
      * if there aren't enough current connections to meet the new requested max size, some will be added.
      */
     public void setMaxConnections(int maxConnections) {
-        int adjustment;
         lock.lock();
         try {
             this.maxConnections = maxConnections;
@@ -504,12 +501,11 @@ public class PeerGroup implements TransactionBroadcaster {
             lock.unlock();
         }
         // We may now have too many or too few open connections. Add more or drop some to get to the right amount.
-        adjustment = maxConnections - channels.getConnectedClientCount();
-        if (adjustment > 0)
+        int excessConnections = channels.getConnectedClientCount() - maxConnections;
+        if (excessConnections < 0)
             triggerConnections();
-
-        if (adjustment < 0)
-            channels.closeConnections(-adjustment);
+        else if (excessConnections > 0)
+            channels.closeConnections(excessConnections);
     }
 
     /**
@@ -525,7 +521,7 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    private Runnable triggerConnectionsJob = new Runnable() {
+    private final Runnable triggerConnectionsJob = new Runnable() {
         private boolean firstRun = true;
         private final Duration MIN_PEER_DISCOVERY_INTERVAL = Duration.ofSeconds(1);
 
@@ -568,6 +564,10 @@ public class PeerGroup implements TransactionBroadcaster {
                 discoverySuccess = discoverPeers() > 0;
             }
 
+            // Check if PeerGroup is shutting down before doing further work
+            if (executor.isShutdown())
+                return;
+
             lock.lock();
             try {
                 if (doDiscovery) {
@@ -585,7 +585,7 @@ public class PeerGroup implements TransactionBroadcaster {
                         Duration interval = TimeUtils.longest(Duration.between(now, groupBackoff.retryTime()), MIN_PEER_DISCOVERY_INTERVAL);
                         log.info("Peer discovery didn't provide us any more peers, will try again in "
                             + interval.toMillis() + " ms.");
-                        executor.schedule(this, interval.toMillis(), TimeUnit.MILLISECONDS);
+                        triggerConnectionsAfterDelay(interval.toMillis());
                     } else {
                         // We have enough peers and discovery provided no more, so just settle down. Most likely we
                         // were given a fixed set of addresses in some test scenario.
@@ -607,15 +607,20 @@ public class PeerGroup implements TransactionBroadcaster {
                     Duration delay = Duration.between(now, retryTime);
                     log.info("Waiting {} ms before next connect attempt to {}", delay.toMillis(), addrToTry);
                     inactives.add(addrToTry);
-                    executor.schedule(this, delay.toMillis(), TimeUnit.MILLISECONDS);
+                    triggerConnectionsAfterDelay(delay.toMillis());
                     return;
                 }
+
+                // Check if PeerGroup has shut down before making a connection attempt
+                if (executor.isShutdown())
+                    return;
+
                 connectTo(addrToTry, false, vConnectTimeout);
             } finally {
                 lock.unlock();
             }
             if (countConnectedAndPendingPeers() < getMaxConnections()) {
-                executor.execute(this);   // Try next peer immediately.
+                triggerConnections();   // Try next peer immediately.
             }
         }
     };
@@ -624,6 +629,12 @@ public class PeerGroup implements TransactionBroadcaster {
         // Run on a background thread due to the need to potentially retry and back off in the background.
         if (!executor.isShutdown())
             executor.execute(triggerConnectionsJob);
+    }
+
+    private void triggerConnectionsAfterDelay(long delayMilliseconds) {
+        // Run on a background thread due to the need to potentially retry and back off in the background.
+        if (!executor.isShutdown())
+            executor.schedule(triggerConnectionsJob, delayMilliseconds, TimeUnit.MILLISECONDS);
     }
 
     /** The maximum number of connections that we will create to peers. */
@@ -1094,8 +1105,13 @@ public class PeerGroup implements TransactionBroadcaster {
     }
 
     // For testing only
+    private static final Runnable NO_OP = () -> {};
     void waitForJobQueue() {
-        Futures.getUnchecked(executor.submit(Runnables.doNothing()));
+        try {
+            InternalUtils.getUninterruptibly(executor.submit(NO_OP));
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private int countConnectedAndPendingPeers() {
@@ -1151,8 +1167,8 @@ public class PeerGroup implements TransactionBroadcaster {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             try {
                 log.info("Starting ...");
-                channels.startAsync();
-                channels.awaitRunning();
+                CompletableFuture<Void> started = channels.start(); // Start asynchronously
+                started.get();                                      // Wait until started
                 triggerConnections();
                 setupPinging();
             } catch (Throwable e) {
@@ -1177,8 +1193,8 @@ public class PeerGroup implements TransactionBroadcaster {
                 // The log output this creates can be useful.
                 setDownloadPeer(null);
                 // Blocking close of all sockets.
-                channels.stopAsync();
-                channels.awaitTerminated();
+                CompletableFuture<Void> stopped = channels.stop();  // Stop asynchronously
+                stopped.get();                                      // Wait until stopped
                 for (PeerDiscovery peerDiscovery : peerDiscoverers) {
                     peerDiscovery.shutdown();
                 }
@@ -1330,7 +1346,7 @@ public class PeerGroup implements TransactionBroadcaster {
         DONT_SEND,
     }
 
-    private final Map<FilterRecalculateMode, CompletableFuture<BloomFilter>> inFlightRecalculations = Maps.newHashMap();
+    private final Map<FilterRecalculateMode, CompletableFuture<BloomFilter>> inFlightRecalculations = new HashMap<>();
 
     /**
      * Recalculates the bloom filter given to peers as well as the timestamp after which full blocks are downloaded
@@ -1672,6 +1688,9 @@ public class PeerGroup implements TransactionBroadcaster {
         if (getPingIntervalMsec() <= 0)
             return;  // Disabled.
 
+        if (executor.isShutdown())
+            return;
+
         vPingTask = executor.scheduleAtFixedRate(() -> {
             try {
                 if (getPingIntervalMsec() <= 0) {
@@ -1966,7 +1985,9 @@ public class PeerGroup implements TransactionBroadcaster {
                             log.warn(String.format(Locale.US,
                                     "Chain download stalled: received %.2f KB/sec for %d seconds, require average of %.2f KB/sec, disconnecting %s, %d stalls left",
                                     average / 1024.0, samples.length, minSpeedBytesPerSec / 1024.0, peer, maxStalls));
-                            peer.close();
+                            if (peer != null) {
+                                peer.close();
+                            }
                             // Reset the sample buffer and give the next peer time to get going.
                             samples = null;
                             warmupSeconds = period;
@@ -2294,31 +2315,30 @@ public class PeerGroup implements TransactionBroadcaster {
         return maxOfMostFreq(heights);
     }
 
-    private static class Pair implements Comparable<Pair> {
+    private static class Pair {
         final int item;
-        int count = 0;
-        public Pair(int item) { this.item = item; }
-        // note that in this implementation compareTo() is not consistent with equals()
-        @Override public int compareTo(Pair o) { return -Integer.compare(count, o.count); }
+        final long count;
+        public Pair(int item, long count ) { this.item = item; this.count = count;}
     }
 
     static int maxOfMostFreq(List<Integer> items) {
         if (items.isEmpty())
             return 0;
-        // This would be much easier in a functional language (or in Java 8).
-        items = Ordering.natural().reverse().sortedCopy(items);
-        LinkedList<Pair> pairs = new LinkedList<>();
-        pairs.add(new Pair(items.get(0)));
-        for (int item : items) {
-            Pair pair = pairs.getLast();
-            if (pair.item != item)
-                pairs.add((pair = new Pair(item)));
-            pair.count++;
-        }
-        // pairs now contains a uniquified list of the sorted inputs, with counts for how often that item appeared.
-        // Now sort by how frequently they occur, and pick the most frequent. If the first place is tied between two,
-        // don't pick any.
-        Collections.sort(pairs);
+
+        // Create a map of value to count
+        Map<Integer, Long> countMap = items.stream()
+                .collect(Collectors.groupingBy(
+                        Function.identity(),        // classifier is identity function (producing `Integer` key)
+                        Collectors.counting()       // downstream reduction is counting (as a `Long`)
+                ));
+
+        // `pairs` will contain a sorted, uniquified list of the sorted inputs (as keys), with counts (as values)
+        // for how often that item appeared. If the first place is tied between two entries, don't pick any.
+        List<Pair> pairs = countMap.entrySet().stream()
+                .map(e -> new Pair(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparingLong(e -> -e.count))    // negation for descending order
+                .collect(Collectors.toList());
+
         final Pair firstPair = pairs.get(0);
         if (pairs.size() == 1)
             return firstPair.item;
@@ -2384,6 +2404,7 @@ public class PeerGroup implements TransactionBroadcaster {
      * Returns the currently selected download peer. Bear in mind that it may have changed as soon as this method
      * returns. Can return null if no peer was selected.
      */
+    @Nullable
     public Peer getDownloadPeer() {
         lock.lock();
         try {

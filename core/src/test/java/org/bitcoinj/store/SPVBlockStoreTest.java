@@ -18,6 +18,7 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
@@ -31,7 +32,6 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.core.Transaction;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -70,7 +70,7 @@ public class SPVBlockStoreTest {
 
     @Test
     public void basics() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
 
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
@@ -125,7 +125,7 @@ public class SPVBlockStoreTest {
 
     @Test
     public void twoStores_sequentially_grow() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
         final StoredBlock block0 = store.getChainHead();
@@ -178,7 +178,7 @@ public class SPVBlockStoreTest {
 
     @Test
     public void clear() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
 
         // Build a new block.

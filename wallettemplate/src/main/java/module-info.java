@@ -20,15 +20,22 @@ module wallettemplate {
     requires javafx.controls;
     requires javafx.fxml;
 
-    requires jakarta.annotation;
+    requires org.jspecify;
 
     requires org.slf4j;
+    requires com.google.common;
     requires com.google.zxing;
 
     requires org.bitcoinj.core;
+    // Since bitcoinj-core doesn't have a module-info and IDEs are generally unaware of the
+    // processing done by the jlink plugin, we include transitive dependencies here that would
+    // be unnecessary if bitcoinj-core were fully modular.
+    requires org.bitcoinj.base;     // Transitive via bitcoinj-core
+    requires com.google.protobuf;   // Transitive via bitcoinj-core
 
     exports wallettemplate;
     exports org.bitcoinj.walletfx.controls;
     opens wallettemplate to javafx.fxml;
+    opens org.bitcoinj.walletfx.utils to javafx.fxml;
     opens org.bitcoinj.walletfx.controls to javafx.fxml;
 }

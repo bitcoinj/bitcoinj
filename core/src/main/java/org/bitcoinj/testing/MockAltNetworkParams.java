@@ -37,11 +37,11 @@ public class MockAltNetworkParams extends NetworkParameters {
 
     @Override
     public Block getGenesisBlock() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public BitcoinSerializer getSerializer() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 }
