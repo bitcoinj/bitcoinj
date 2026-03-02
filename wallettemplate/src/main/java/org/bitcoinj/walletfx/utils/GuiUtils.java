@@ -33,6 +33,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -180,7 +181,7 @@ public class GuiUtils {
      */
     public static URL getResource(Class<?> clazz, String name) {
         if (false)
-            return unchecked(() -> new URL("file:///your/path/here/src/main/wallettemplate/" + name));
+            return unchecked(() -> URI.create("file:///your/path/here/src/main/wallettemplate/" + name).toURL());
         else
             return clazz.getResource(name);
     }

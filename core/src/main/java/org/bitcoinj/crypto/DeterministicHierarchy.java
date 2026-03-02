@@ -67,7 +67,7 @@ public class DeterministicHierarchy {
      * inserted in order.
      */
     public final void putKey(DeterministicKey key) {
-        HDPath.HDPartialPath path = key.getPath().asPartial();
+        HDPath.HDPartialPath path = key.getPath();
         // Update our tracking of what the next child in each branch of the tree should be. Just assume that keys are
         // inserted in order here.
         final DeterministicKey parent = key.getParent();

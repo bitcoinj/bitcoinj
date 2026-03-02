@@ -61,7 +61,7 @@ class G,S,A,BC,P external;
 
 ## bitcoinj 0.18 (current plan)
  
-In this release the `bitcoinj-base` module will be a standalone module with minimal external dependencies. All use of Elliptic Curve Cryptography will be factored out to use the  `secp-api` module from [secp256k1-jdk](https://github.com/bitcoinj/secp256k1-jdk) with API implementations provided for **Bouncy Castle** and (hopefully) the [secp256k1](https://github.com/bitcoin-core/secp256k1) native ('C') library.
+In this release the `bitcoinj-base` module will be a standalone module with minimal external dependencies. All use of Elliptic Curve Cryptography will be factored out to use the `secp-api` module from [secp256k1-jdk](https://github.com/bitcoinj/secp256k1-jdk) with API implementations provided for **Bouncy Castle** and the [secp256k1](https://github.com/bitcoin-core/secp256k1) native ('C') library.
 
 ````mermaid
 flowchart TD
@@ -87,8 +87,8 @@ flowchart TD
     SECPBC --> BC[Bouncy Castle]
     SECPFFM --> SECPC[libsecp256k1]
     CORE --> P[ProtoBuf]
-    BASE .-> S[SLF4J]
-    BASE .-> JS[JSpecify]
+    CORE .-> S[SLF4J]
+    BASE --> JS[JSpecify]
 
 classDef external fill:#999;
 class G,S,JS,BC,SECPC,P external;
@@ -98,7 +98,7 @@ class G,S,JS,BC,SECPC,P external;
 
 In a proposed 0.19 release, we hope to do the following:
 
-1. Separate the current ProtoBuf-based wallet implementation into it's own module. This will require creating a `Wallet` interface in core.
+1. Separate the current ProtoBuf-based wallet implementation into its own module. This will require creating a `Wallet` interface in core.
 2. Eliminate dependencies on Guava for all modules.
 
 Stretch goal:
@@ -124,8 +124,8 @@ flowchart TD
     end
     CORE --> BASE
     CORE --> SECP
-    BASE .-> S[SLF4J]
-    BASE .-> JS[JSpecify]
+    CORE .-> S[SLF4J]
+    BASE --> JS[JSpecify]
     SECP[secp-api] .-> SECPFFM[secp-ffm]
     SECP .-> SECPBOUNCY[secp-bouncy]
     SECPBOUNCY .-> BC[Bouncy Castle]

@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterators;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.utils.ListenerRegistration;
@@ -26,7 +25,7 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.Wallet;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
@@ -328,9 +327,7 @@ public class TransactionConfidence {
      * Returns a snapshot of {@link PeerAddress}es that announced the transaction.
      */
     public Set<PeerAddress> getBroadcastBy() {
-        Set<PeerAddress> broadcastBySet = new HashSet<>();
-        Iterators.addAll(broadcastBySet, broadcastBy.listIterator());
-        return broadcastBySet;
+        return Collections.unmodifiableSet(new HashSet<>(broadcastBy));
     }
 
     /** Returns true if the given address has been seen via markBroadcastBy() */

@@ -55,8 +55,8 @@ public class SendRequest {
     public final Transaction tx;
 
     /**
-     * When emptyWallet is set, all coins selected by the coin selector are sent to the first output in tx
-     * (its value is ignored and set to {@link Wallet#getBalance()} - the fees required
+     * When emptyWallet is {@code true}, all coins selected by the coin selector are sent to the first output in {@link #tx}
+     * (its {@code value} is ignored and set to {@link Wallet#getBalance()} <i>less the fee</i> required
      * for the transaction). Any additional outputs are removed.
      */
     public boolean emptyWallet = false;
@@ -80,7 +80,7 @@ public class SendRequest {
      * when choosing which transactions to add to a block. Note that, to keep this equivalent to Bitcoin Core
      * definition, a virtual kilobyte is defined as 1000 virtual bytes, not 1024.</p>
      */
-    public Coin feePerKb = Context.get().getFeePerKb();
+    public Coin feePerKb;
 
     public void setFeePerVkb(Coin feePerVkb) {
         this.feePerKb = feePerVkb;
@@ -93,9 +93,9 @@ public class SendRequest {
      *
      * <p>Note that this does not enforce certain fee rules that only apply to transactions which are larger than
      * 26,000 bytes. If you get a transaction which is that large, you should set a feePerKb of at least
-     * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.</p>
+     * {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE_RATE}.</p>
      */
-    public boolean ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
+    public boolean ensureMinRequiredFee;
 
     /**
      * If true (the default), the inputs will be signed.
@@ -159,6 +159,8 @@ public class SendRequest {
 
     private SendRequest(Transaction transaction) {
         tx = transaction;
+        feePerKb = Context.get().getFeePerKb();
+        ensureMinRequiredFee = Context.get().isEnsureMinRequiredFee();
     }
 
     /**
@@ -193,6 +195,11 @@ public class SendRequest {
         return new SendRequest(tx);
     }
 
+    /**
+     * Create a {@link SendRequest} that can be used to send all funds in wallet to an address.
+     * @param destination where to send all remaining wallet funds
+     * @return An SendRequest with an incomplete transaction sending to {@code destination}
+     */
     public static SendRequest emptyWallet(Address destination) {
         Transaction tx = new Transaction();
         tx.addOutput(Coin.ZERO, destination);

@@ -17,7 +17,6 @@
 
 package org.bitcoinj.wallet;
 
-import com.google.common.collect.Lists;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
@@ -50,6 +49,7 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -123,7 +123,7 @@ public class DeterministicKeyChainTest {
     @Test
     public void deriveAccountOne() {
         final Instant secs = Instant.ofEpochSecond(1389353062L);
-        final HDPath accountOne = HDPath.M(ChildNumber.ONE);
+        final HDPath.HDPartialPath accountOne = HDPath.partial(ChildNumber.ONE);
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().accountPath(accountOne)
                 .entropy(ENTROPY, secs).build();
         ECKey key1 = chain1.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
@@ -375,7 +375,7 @@ public class DeterministicKeyChainTest {
 
         // Round-trip to ensure de/serialization works and that we can store two chains and they both deserialize.
         List<Protos.Key> serialized = encChain.serializeToProtobuf();
-        List<Protos.Key> doubled = Lists.newArrayListWithExpectedSize(serialized.size() * 2);
+        List<Protos.Key> doubled = new ArrayList<>(serialized.size() * 2);
         doubled.addAll(serialized);
         doubled.addAll(serialized);
         final List<DeterministicKeyChain> chains = DeterministicKeyChain.fromProtobuf(doubled, encChain.getKeyCrypter());
@@ -795,5 +795,16 @@ public class DeterministicKeyChainTest {
         } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    public void testToString() {
+        DeterministicSeed seed = new DeterministicSeed("correct horse battery staple", null, "", Instant.ofEpochSecond(1000L));
+        DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).build();
+
+        String str = chain.toString();
+        assertTrue("Output should contain class name", str.contains("DeterministicKeyChain"));
+        assertFalse("Security Fail: toString() leaked the mnemonic!", str.contains("correct horse battery staple"));
+        assertFalse("Security Fail: toString() leaked the xprv (private key)!", str.contains("xprv"));
     }
 }

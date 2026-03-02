@@ -32,6 +32,7 @@ import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.utils.MonetaryFormat;
+import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.walletfx.application.MainWindowController;
 import org.bitcoinj.walletfx.application.WalletApplication;
@@ -83,7 +84,11 @@ public class MainController extends MainWindowController {
         // Add CSS that we need. cssResourceName will be loaded from the same package as this class.
         scene.getStylesheets().add(getClass().getResource(cssResourceName).toString());
         uiStack.getChildren().add(notificationBar);
-        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> app.walletAppKit().peerGroup().getDownloadPeer().close());
+        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> {
+            Peer peer = app.walletAppKit().peerGroup().getDownloadPeer();
+            if (peer != null)
+                peer.close();
+        });
     }
 
     @Override

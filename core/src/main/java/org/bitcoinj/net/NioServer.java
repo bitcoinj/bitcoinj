@@ -51,17 +51,25 @@ public class NioServer extends AbstractExecutionThreadService {
             newChannel.configureBlocking(false);
             SelectionKey newKey = newChannel.register(selector, SelectionKey.OP_READ);
             try {
-                ConnectionHandler handler = new ConnectionHandler(connectionFactory, newKey);
+                ConnectionHandler handler = newHandler(newKey);
                 newKey.attach(handler);
                 handler.connection.connectionOpened();
             } catch (IOException e) {
                 // This can happen if ConnectionHandler's call to get a new handler returned null
-                log.error("Error handling new connection", Throwables.getRootCause(e).getMessage());
+                log.error("Error handling new connection", Throwables.getRootCause(e));
                 newKey.channel().close();
             }
         } else { // Got a closing channel or a channel to a client connection
             ConnectionHandler.handleKey(key);
         }
+    }
+
+    private ConnectionHandler newHandler(SelectionKey key) throws IOException {
+        StreamConnection connection = connectionFactory.getNewConnection(((SocketChannel) key.channel()).socket().getInetAddress(), ((SocketChannel) key.channel()).socket().getPort());
+        if (connection == null) {
+            throw new IOException("Parser factory.getNewConnection returned null");
+        }
+        return new ConnectionHandler(connection, key);
     }
 
     /**
@@ -81,7 +89,7 @@ public class NioServer extends AbstractExecutionThreadService {
     }
 
     @Override
-    protected void run() throws Exception {
+    protected void run() {
         try {
             while (isRunning()) {
                 selector.select();
@@ -94,8 +102,8 @@ public class NioServer extends AbstractExecutionThreadService {
                     handleKey(selector, key);
                 }
             }
-        } catch (Exception e) {
-            log.error("Error trying to open/read from connection: {}", e);
+        } catch (IOException e) {
+            log.error("Error trying to open/read from connection", e);
         } finally {
             // Go through and close everything, without letting IOExceptions get in our way
             for (SelectionKey key : selector.keys()) {

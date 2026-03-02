@@ -18,6 +18,7 @@
 package org.bitcoinj.testing;
 
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BlockChain;
@@ -42,13 +43,14 @@ import org.bitcoinj.net.StreamConnectionFactory;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -58,6 +60,7 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -83,6 +86,22 @@ public class TestWithNetworkConnections {
     private final ClientConnectionManager channels;
     protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<>();
 
+    public class TestStreamConnectionFactory implements StreamConnectionFactory {
+        @Override
+        public @Nullable StreamConnection getNewConnection(InetAddress inetAddress, int port) {
+            return new InboundMessageQueuer(UNITTEST.getSerializer()) {
+                @Override
+                public void connectionClosed() {
+                }
+
+                @Override
+                public void connectionOpened() {
+                    newPeerWriteTargetQueue.offer(this);
+                }
+            };
+        }
+    }
+
     public enum ClientType {
         NIO_CLIENT_MANAGER,
         BLOCKING_CLIENT_MANAGER,
@@ -100,23 +119,23 @@ public class TestWithNetworkConnections {
             channels = null;
     }
 
-    public void setUp() throws Exception {
+    public void setUp() throws IOException, BlockStoreException {
         setUp(new MemoryBlockStore(UNITTEST.getGenesisBlock()));
     }
     
-    public void setUp(BlockStore blockStore) throws Exception {
+    public void setUp(BlockStore blockStore) throws IOException, BlockStoreException {
         BriefLogFormatter.init();
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
             // Reduce the number of keys we need to work with to speed up these tests.
-            KeyChainGroup kcg = KeyChainGroup.builder(UNITTEST.network()).lookaheadSize(4).lookaheadThreshold(2)
+            KeyChainGroup kcg = KeyChainGroup.builder(BitcoinNetwork.TESTNET).lookaheadSize(4).lookaheadThreshold(2)
                     .fromRandom(ScriptType.P2PKH).build();
-            wallet = new Wallet(UNITTEST.network(), kcg);
+            wallet = new Wallet(BitcoinNetwork.TESTNET, kcg);
             address = wallet.freshReceiveAddress(ScriptType.P2PKH);
         }
-        blockChain = new BlockChain(UNITTEST, wallet, blockStore);
+        blockChain = BlockChain.unitTestBlockChain(wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
@@ -134,27 +153,13 @@ public class TestWithNetworkConnections {
     }
 
     protected void startPeerServer(int i) throws IOException {
-        peerServers[i] = new NioServer(new StreamConnectionFactory() {
-            @Nullable
-            @Override
-            public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new InboundMessageQueuer(UNITTEST) {
-                    @Override
-                    public void connectionClosed() {
-                    }
-
-                    @Override
-                    public void connectionOpened() {
-                        newPeerWriteTargetQueue.offer(this);
-                    }
-                };
-            }
-        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i));
+        peerServers[i] = new NioServer(new TestStreamConnectionFactory(),
+                new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE + i));
         peerServers[i].startAsync();
         peerServers[i].awaitRunning();
     }
 
-    public void tearDown() throws Exception {
+    public void tearDown() {
         stopPeerServers();
     }
 
@@ -164,11 +169,14 @@ public class TestWithNetworkConnections {
     }
 
     protected void stopPeerServer(int i) {
-        peerServers[i].stopAsync();
-        peerServers[i].awaitTerminated();
+        NioServer server = peerServers[i];
+        if (server != null) {
+            server.stopAsync();
+            server.awaitTerminated();
+        }
     }
 
-    protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws Exception {
+    protected InboundMessageQueuer connect(Peer peer, VersionMessage versionMessage) throws IOException, InterruptedException, ExecutionException {
         checkArgument(versionMessage.services().has(Services.NODE_NETWORK));
         final AtomicBoolean doneConnecting = new AtomicBoolean(false);
         final Thread thisThread = Thread.currentThread();
@@ -207,7 +215,7 @@ public class TestWithNetworkConnections {
         return writeTarget;
     }
 
-    protected void closePeer(Peer peer) throws Exception {
+    protected void closePeer(Peer peer) {
         peer.close();
     }
 
@@ -215,7 +223,7 @@ public class TestWithNetworkConnections {
         peerChannel.sendMessage(message);
     }
 
-    private void outboundPingAndWait(final InboundMessageQueuer p, long nonce) throws Exception {
+    private void outboundPingAndWait(final InboundMessageQueuer p, long nonce) throws ExecutionException, InterruptedException {
         // Send a ping and wait for it to get to the other side
         CompletableFuture<Void> pingReceivedFuture = new CompletableFuture<>();
         p.mapPingFutures.put(nonce, pingReceivedFuture);
@@ -224,7 +232,7 @@ public class TestWithNetworkConnections {
         p.mapPingFutures.remove(nonce);
     }
 
-    private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws Exception {
+    private void inboundPongAndWait(final InboundMessageQueuer p, final long nonce) throws ExecutionException, InterruptedException {
         // Receive a ping (that the Peer doesn't see) and wait for it to get through the socket
         final CompletableFuture<Void> pongReceivedFuture = new CompletableFuture<>();
         PreMessageReceivedEventListener listener = (p1, m) -> {
@@ -240,7 +248,7 @@ public class TestWithNetworkConnections {
         p.peer.removePreMessageReceivedEventListener(listener);
     }
 
-    protected void pingAndWait(final InboundMessageQueuer p) throws Exception {
+    protected void pingAndWait(final InboundMessageQueuer p) throws ExecutionException, InterruptedException {
         final long nonce = (long) (Math.random() * Long.MAX_VALUE);
         // Start with an inbound Pong as pingAndWait often happens immediately after an inbound() call, and then wants
         // to wait on an outbound message, so we do it in the same order or we see race conditions
@@ -248,7 +256,7 @@ public class TestWithNetworkConnections {
         outboundPingAndWait(p, nonce);
     }
 
-    protected Message outbound(InboundMessageQueuer p1) throws Exception {
+    protected Message outbound(InboundMessageQueuer p1) throws ExecutionException, InterruptedException {
         pingAndWait(p1);
         return p1.nextMessage();
     }

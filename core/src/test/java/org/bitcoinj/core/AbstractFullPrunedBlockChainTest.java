@@ -17,13 +17,14 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.collect.Lists;
+
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
@@ -62,8 +63,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
-    protected static NetworkParameters PARAMS;
-    private static final NetworkParameters MAINNET = MainNetParams.get();
+    protected static UnitTestParams PARAMS;
+    private static final BitcoinNetworkParams MAINNET = MainNetParams.get();
 
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
@@ -84,7 +85,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, false));
     }
 
-    public abstract FullPrunedBlockStore createStore(NetworkParameters params, int blockCount)
+    public abstract FullPrunedBlockStore createStore(BitcoinNetworkParams params, int blockCount)
         throws BlockStoreException;
 
     public abstract void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
@@ -249,7 +250,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         
         store = createStore(MAINNET, 10);
         resetStore(store);
-        chain = new FullPrunedBlockChain(MAINNET, store);
+        chain = new FullPrunedBlockChain(MAINNET.network(), store);
         for (Block block : loader)
             chain.add(block);
         try {
@@ -297,11 +298,11 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         totalAmount = totalAmount.add(amount);
 
-        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(toKey));
+        List<UTXO> outputs = store.getOpenTransactionOutputs(Arrays.asList(toKey));
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
         UTXO output = outputs.get(0);
-        assertEquals("The address is not equal", address.toString(), output.getAddress());
+        assertEquals("The address is not equal", address, output.getScript().getToAddress(PARAMS.network(), true));
         assertEquals("The amount is not equal", totalAmount, output.getValue());
 
         outputs = null;
@@ -328,7 +329,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         chain.add(rollingBlock);
         Transaction transaction = rollingBlock.transaction(0);
         TransactionOutput spendableOutput = transaction.getOutput(0);
-        TransactionOutPoint spendableOutPoint = new TransactionOutPoint(0, transaction.getTxId());
+        TransactionOutPoint spendableOutPoint = TransactionOutPoint.of(transaction.getTxId(), 0);
         Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
         for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
             rollingBlock = TestBlocks.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
@@ -342,7 +343,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
         assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
 
-        wallet.setUTXOProvider(store);
+        wallet.setUTXOProviderInternal(store);
         ECKey toKey = wallet.freshReceiveKey();
         Coin amount = Coin.valueOf(100000000);
 

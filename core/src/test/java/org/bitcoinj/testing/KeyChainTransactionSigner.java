@@ -30,10 +30,7 @@ import org.bitcoinj.wallet.DeterministicKeyChain;
  */
 public class KeyChainTransactionSigner extends CustomTransactionSigner {
 
-    private DeterministicKeyChain keyChain;
-
-    public KeyChainTransactionSigner() {
-    }
+    private final DeterministicKeyChain keyChain;
 
     public KeyChainTransactionSigner(DeterministicKeyChain keyChain) {
         this.keyChain = keyChain;

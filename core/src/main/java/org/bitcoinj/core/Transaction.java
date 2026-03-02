@@ -18,7 +18,6 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.math.IntMath;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
@@ -47,7 +46,7 @@ import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.math.RoundingMode;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -141,15 +140,44 @@ public class Transaction implements Message {
     public static final int MAX_STANDARD_TX_SIZE = 100_000;
 
     /**
-     * If feePerKb is lower than this, Bitcoin Core will treat it as if there were no fee.
+     * If fee rate is lower than this, Bitcoin Core will treat it as if there were no fee.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1_000); // 0.01 mBTC
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE_RATE = Coin.valueOf(100); // per vkB
+
+    /** @deprecated use {@link #REFERENCE_DEFAULT_MIN_TX_FEE_RATE} */
+    @Deprecated
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = REFERENCE_DEFAULT_MIN_TX_FEE_RATE;
 
     /**
-     * If using this feePerKb, transactions will get confirmed within the next couple of blocks.
-     * This should be adjusted from time to time. Last adjustment: February 2017.
+     * Minimum feerate for defining dust, in sats per kB.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100_000); // 1 mBTC
+    public static final Coin DUST_RELAY_TX_FEE_RATE = Coin.valueOf(3_000); // per kB
+
+    /**
+     * If using this fee rate, transactions will get confirmed within the next couple of blocks.
+     * This should be adjusted from time to time. Last adjustment: January 2026.
+     */
+    public static final Coin DEFAULT_TX_FEE_RATE = Coin.valueOf(10_000); // per vkB
+
+    /** @deprecated use {@link #DEFAULT_TX_FEE_RATE} */
+    @Deprecated
+    public static final Coin DEFAULT_TX_FEE = DEFAULT_TX_FEE_RATE;
+
+    /**
+     * The scale factor for Witness data in Segregated Witness transactions.
+     * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki">BIP 141</a>
+     */
+    public static final int WITNESS_SCALE_FACTOR = 4;
+
+    /**
+     * Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
+     * @param weight the transaction weight
+     * @return the virtual transaction size
+     * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki">BIP 141</a>
+     */
+    public static int calculateVirtualTransactionSize(int weight) {
+        return (weight + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR; // round up
+    }
 
     private final int protocolVersion;
 
@@ -397,7 +425,7 @@ public class Transaction implements Message {
     public int getVsize() {
         if (!hasWitnesses())
             return this.messageSize();
-        return IntMath.divide(getWeight(), 4, RoundingMode.CEILING); // round up
+        return calculateVirtualTransactionSize(getWeight());
     }
 
 
@@ -903,7 +931,7 @@ public class Transaction implements Message {
      */
     public TransactionInput addInput(Sha256Hash spendTxHash, long outputIndex, Script script) {
         TransactionInput input = addInput(new TransactionInput(this, script.program(),
-                new TransactionOutPoint(outputIndex, spendTxHash)));
+                TransactionOutPoint.of(spendTxHash, outputIndex)));
         invalidateCachedTxIds();
         return input;
     }
@@ -960,22 +988,6 @@ public class Transaction implements Message {
     }
 
     /**
-     * @param prevOut A reference to the output being spent
-     * @param scriptPubKey The scriptPubKey of the output
-     * @param sigKey The signing key
-     * @param sigHash enum specifying how the transaction hash is calculated
-     * @param anyoneCanPay anyone-can-pay hashing
-     * @return The newly created input
-     * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey, SigHash, boolean)}
-     */
-    @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey,
-                                           SigHash sigHash, boolean anyoneCanPay) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, null, sigKey, sigHash, anyoneCanPay);
-    }
-
-    /**
      * Adds a new and fully signed input for the given parameters. Note that this method is <b>not</b> thread safe
      * and requires external synchronization.
      * Defaults to {@link SigHash#ALL} and "false" for the anyoneCanPay flag. This is normally what you want.
@@ -988,19 +1000,6 @@ public class Transaction implements Message {
      */
     public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, Coin amount, ECKey sigKey) throws ScriptException {
         return addSignedInput(prevOut, scriptPubKey, amount, sigKey, SigHash.ALL, false);
-    }
-
-    /**
-     * @param prevOut A reference to the output being spent
-     * @param scriptPubKey The scriptPubKey of the output
-     * @param sigKey The signing key
-     * @return The newly created input
-     * @throws ScriptException if the scriptPubKey is something we don't know how to sign.
-     * @deprecated Use {@link Transaction#addSignedInput(TransactionOutPoint, Script, Coin, ECKey)}
-     */
-    @Deprecated
-    public TransactionInput addSignedInput(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
-        return addSignedInput(prevOut, scriptPubKey, null, sigKey);
     }
 
     /**

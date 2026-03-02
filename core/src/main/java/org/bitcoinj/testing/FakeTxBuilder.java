@@ -41,7 +41,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -213,7 +213,7 @@ public class FakeTxBuilder {
     }
 
     public static class DoubleSpends {
-        public Transaction t1, t2, prevTx;
+        public @Nullable Transaction t1, t2, prevTx;
     }
 
     /**

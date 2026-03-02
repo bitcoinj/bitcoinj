@@ -17,7 +17,14 @@
 package org.bitcoinj.base;
 
 /**
- * Interface for a generic Bitcoin-like cryptocurrency network. See {@link BitcoinNetwork} for the Bitcoin implementation.
+ * Interface describing important properties of a Bitcoin-like cryptocurrency network. See {@link BitcoinNetwork} for
+ * the Bitcoin implementation.
+ * <p>
+ * Use this interface in classes and methods that might support alternative Bitcoin-like networks. Use {@link BitcoinNetwork}
+ * to only support Bitcoin. As {@link BitcoinNetwork} is an {@code enum}, it also works better in {@code switch} statements/expressions.
+ * <p>
+ * For example, in the {@link BitcoinNetwork} enum implementation, {@link #hasMaxMoney()} is always {@code true} and
+ * {@link #maxMoney()} always returns {@link BitcoinNetwork#MAX_MONEY}.
  */
 public interface Network {
     /**

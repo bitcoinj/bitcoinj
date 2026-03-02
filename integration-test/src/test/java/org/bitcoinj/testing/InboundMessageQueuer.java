@@ -16,33 +16,35 @@
 
 package org.bitcoinj.testing;
 
+import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.Message;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerSocketHandler;
 import org.bitcoinj.core.Ping;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An extension of {@link PeerSocketHandler} that keeps inbound messages in a queue for later processing
  */
 public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public final BlockingQueue<Message> inboundMessages = new ArrayBlockingQueue<>(1000);
-    public final Map<Long, CompletableFuture<Void>> mapPingFutures = new HashMap<>();
+    /** Map (by nonce) of sent pings waiting for response */
+    public final Map<Long, CompletableFuture<Void>> mapPingFutures = new ConcurrentHashMap<>();
 
     public Peer peer;
     public BloomFilter lastReceivedFilter;
 
-    protected InboundMessageQueuer(NetworkParameters params) {
-        super(params, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
+    protected InboundMessageQueuer(BitcoinSerializer serializer) {
+        super(PeerAddress.simple(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000)), serializer);
     }
 
     public Message nextMessage() {
@@ -54,7 +56,7 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
     }
 
     @Override
-    protected void processMessage(Message m) throws Exception {
+    protected void processMessage(Message m) {
         if (m instanceof Ping) {
             CompletableFuture<Void> future = mapPingFutures.get(((Ping) m).nonce());
             if (future != null) {

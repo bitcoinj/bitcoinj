@@ -18,6 +18,7 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 
@@ -40,5 +41,16 @@ public class DeterministicKeyTest {
         DeterministicKey ehkey = dh.get(path, false, true);
 
         ehkey.serialize(BitcoinNetwork.MAINNET, false);
+    }
+
+    @Test
+    public void testToString() {
+        // Create a key from a 32-byte seed
+        DeterministicKey key = HDKeyDerivation.createMasterPrivateKey(new byte[32]);
+        String str = key.toString();
+
+        // Verify it prints standard ECKey fields (inherited behavior in master)
+        assertTrue("Should contain public key", str.contains("pub"));
+        assertTrue("Should contain encryption status", str.contains("isEncrypted"));
     }
 }

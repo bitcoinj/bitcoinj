@@ -18,6 +18,7 @@
 package org.bitcoinj.params;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
@@ -25,7 +26,7 @@ import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.DifficultyTransitions;
 import org.bitcoinj.core.NetworkParameters;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Parameters for Bitcoin-like networks.
@@ -52,20 +53,14 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
      * Return network parameters for a network id
      * @param id the network id
      * @return the network parameters for the given string ID or NULL if not recognized
+     * @deprecated use {@link BitcoinNetwork#fromIdString(String)} or {@link BitcoinNetworkParams#of(BitcoinNetwork)}
      */
+    @Deprecated
     @Nullable
     public static BitcoinNetworkParams fromID(String id) {
-        if (id.equals(BitcoinNetwork.ID_MAINNET)) {
-            return MainNetParams.get();
-        } else if (id.equals(BitcoinNetwork.ID_TESTNET)) {
-            return TestNet3Params.get();
-        } else if (id.equals(BitcoinNetwork.ID_SIGNET)) {
-            return SigNetParams.get();
-        } else if (id.equals(BitcoinNetwork.ID_REGTEST)) {
-            return RegTestParams.get();
-        } else {
-            return null;
-        }
+        return BitcoinNetwork.fromIdString(id)
+                .map(BitcoinNetworkParams::of)
+                .orElse(null);
     }
 
     /**
@@ -87,6 +82,19 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
             default:
                 throw new IllegalArgumentException("Unknown network");
         }
+    }
+
+    /**
+     * Return the {@link BitcoinNetwork} type representing the same Bitcoin-like network that this
+     * {@link BitcoinNetworkParams} represents. For almost all purposes, using {@link BitcoinNetwork} is preferable
+     * to using {@link BitcoinNetworkParams}. Note that this override narrows the return type from the more general
+     * {@link Network}.
+     *
+     * @return Network enum for this network
+     */
+    @Override
+    public BitcoinNetwork network() {
+        return (BitcoinNetwork) network;
     }
 
     /**

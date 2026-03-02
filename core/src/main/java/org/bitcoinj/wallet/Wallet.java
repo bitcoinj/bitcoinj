@@ -18,8 +18,6 @@
 package org.bitcoinj.wallet;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.math.IntMath;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.BitcoinNetwork;
@@ -80,6 +78,7 @@ import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.MissingSigResolutionSigner;
@@ -101,7 +100,7 @@ import org.bitcoinj.wallet.listeners.WalletReorganizeEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -1679,7 +1678,7 @@ public class Wallet extends BaseTaggableObject
      * @param delay How much time to wait until saving the wallet on a background thread.
      * @param eventListener callback to be informed when the auto-save thread does things, or null
      */
-    public WalletFiles autosaveToFile(File f, Duration delay, @Nullable WalletFiles.Listener eventListener) {
+    public WalletFiles autosaveToFile(File f, Duration delay, WalletFiles.@Nullable Listener eventListener) {
         lock.lock();
         try {
             checkState(vFileManager == null, () ->
@@ -4519,8 +4518,8 @@ public class Wallet extends BaseTaggableObject
                     // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                     // we sign missing pieces (to check this would require either assuming any signatures are signing
                     // standard output types or a way to get processed signatures out of script execution)
-                    txIn.getScriptSig().correctlySpends(tx, i, txIn.getWitness(), connectedOutput.getValue(),
-                            connectedOutput.getScriptPubKey(), Script.ALL_VERIFY_FLAGS);
+                    ScriptExecution.correctlySpends(txIn.getScriptSig(), tx, i, txIn.getWitness(), connectedOutput.getValue(),
+                            connectedOutput.getScriptPubKey(), ScriptExecution.ALL_VERIFY_FLAGS);
                     log.warn("Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                     continue;
                 } catch (ScriptException e) {
@@ -4552,7 +4551,7 @@ public class Wallet extends BaseTaggableObject
 
     /**
      * Reduce the value of the first output of a transaction to pay the given feePerKb as appropriate for its size.
-     * If ensureMinRequiredFee is true, feePerKb is set to at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE}.
+     * If ensureMinRequiredFee is true, feePerKb is set to at least {@link Transaction#REFERENCE_DEFAULT_MIN_TX_FEE_RATE}.
      * @return true if output is not dust
      */
     private boolean adjustOutputDownwardsForFee(Transaction tx, CoinSelection coinSelection, Coin feePerKb,
@@ -4590,7 +4589,7 @@ public class Wallet extends BaseTaggableObject
                                         (!excludeImmatureCoinbases || isTransactionMature(output.getParentTransaction())))
                     .collect(StreamUtils.toUnmodifiableList());
             } else {
-                candidates = calculateAllSpendCandidatesFromUTXOProvider(excludeImmatureCoinbases);
+                candidates = calculateAllSpendCandidatesFromUTXOProviderInternal(excludeImmatureCoinbases);
             }
             return candidates;
         } finally {
@@ -4632,13 +4631,18 @@ public class Wallet extends BaseTaggableObject
      * Returns the spendable candidates from the {@link UTXOProvider} based on keys that the wallet contains.
      * @return The list of candidates.
      */
+    @Deprecated
     protected List<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(boolean excludeImmatureCoinbases) {
+        return calculateAllSpendCandidatesFromUTXOProviderInternal(excludeImmatureCoinbases);
+    }
+
+    private List<TransactionOutput> calculateAllSpendCandidatesFromUTXOProviderInternal(boolean excludeImmatureCoinbases) {
         checkState(lock.isHeldByCurrentThread());
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         List<TransactionOutput> candidates = new LinkedList<>();
         try {
             int chainHeight = utxoProvider.getChainHeadHeight();
-            for (UTXO output : getStoredOutputsFromUTXOProvider()) {
+            for (UTXO output : getStoredOutputsFromUTXOProviderInternal()) {
                 boolean coinbase = output.isCoinbase();
                 int depth = chainHeight - output.getHeight() + 1; // the current depth of the output (1 = same as head).
                 // Do not try and spend coinbases that were mined too recently, the protocol forbids it.
@@ -4675,7 +4679,12 @@ public class Wallet extends BaseTaggableObject
      * wallet contains.
      * @return The list of stored outputs.
      */
+    @Deprecated
     protected List<UTXO> getStoredOutputsFromUTXOProvider() throws UTXOProviderException {
+        return getStoredOutputsFromUTXOProviderInternal();
+    }
+
+    private List<UTXO> getStoredOutputsFromUTXOProviderInternal() throws UTXOProviderException {
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
         List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
@@ -4697,7 +4706,9 @@ public class Wallet extends BaseTaggableObject
     /**
      * Get the {@link UTXOProvider}.
      * @return The UTXO provider.
+     * @deprecated Use a UTXOProvider separate from the wallet if you want to search an external source for UTXOs.
      */
+    @Deprecated
     @Nullable public UTXOProvider getUTXOProvider() {
         lock.lock();
         try {
@@ -4715,8 +4726,15 @@ public class Wallet extends BaseTaggableObject
      *
      * <p>Note that the associated provider must be reattached after a wallet is loaded from disk.
      * The association is not serialized.</p>
+     * @deprecated Use a UTXOProvider separate from the wallet if you want to search an external source for UTXOs.
      */
+    @Deprecated
     public void setUTXOProvider(@Nullable UTXOProvider provider) {
+        setUTXOProviderInternal(provider);
+    }
+
+    @VisibleForTesting
+    public void setUTXOProviderInternal(@Nullable UTXOProvider provider) {
         lock.lock();
         try {
             checkArgument(provider == null || provider.network() == network);
@@ -4823,23 +4841,25 @@ public class Wallet extends BaseTaggableObject
             // because there are so many ways the block can be invalid.
 
             // Avoid spuriously informing the user of wallet/tx confidence changes whilst we're re-organizing.
-            checkState(confidenceChanged.size() == 0);
+            checkState(confidenceChanged.isEmpty());
             checkState(!insideReorg);
             insideReorg = true;
             checkState(onWalletChangedSuppressions == 0);
             onWalletChangedSuppressions++;
 
-            // Map block hash to transactions that appear in it. We ensure that the map values are sorted according
-            // to their relative position within those blocks.
-            ArrayListMultimap<Sha256Hash, TxOffsetPair> mapBlockTx = ArrayListMultimap.create();
+            // Map block hash to transactions that appear in it. We ensure that the map values (lists) are
+            // sorted according to their relative position within those blocks, by sorting each list
+            // with our custom TxOffsetPair.compareTo().
+            Map<Sha256Hash, List<TxOffsetPair>> mapBlockTx = new HashMap<>();
             for (Transaction tx : getTransactions(true)) {
                 Map<Sha256Hash, Integer> appearsIn = tx.getAppearsInHashes();
                 if (appearsIn == null) continue;  // Pending.
                 for (Map.Entry<Sha256Hash, Integer> block : appearsIn.entrySet())
-                    mapBlockTx.put(block.getKey(), new TxOffsetPair(tx, block.getValue()));
+                    mapBlockTx.computeIfAbsent(block.getKey(), k -> new ArrayList<>())
+                            .add(new TxOffsetPair(tx, block.getValue()));
             }
             for (Sha256Hash blockHash : mapBlockTx.keySet())
-                Collections.sort(mapBlockTx.get(blockHash));
+                Collections.sort(mapBlockTx.get(blockHash));    // Sort each List<TxOffsetPair>>
 
             List<Sha256Hash> oldBlockHashes = new ArrayList<>(oldBlocks.size());
             log.info("Old part of chain (top to bottom):");
@@ -4857,7 +4877,7 @@ public class Wallet extends BaseTaggableObject
             // For each block in the old chain, disconnect the transactions in reverse order.
             List<Transaction> oldChainTxns = new LinkedList<>();
             for (Sha256Hash blockHash : oldBlockHashes) {
-                for (TxOffsetPair pair : mapBlockTx.get(blockHash)) {
+                for (TxOffsetPair pair : mapBlockTx.getOrDefault(blockHash, Collections.emptyList())) {
                     Transaction tx = pair.tx;
                     final Sha256Hash txHash = tx.getTxId();
                     if (tx.isCoinBase()) {
@@ -4926,7 +4946,7 @@ public class Wallet extends BaseTaggableObject
             // conflict.
             for (StoredBlock block : newBlocks) {
                 log.info("Replaying block {}", block.getHeader().getHashAsString());
-                for (TxOffsetPair pair : mapBlockTx.get(block.getHeader().getHash())) {
+                for (TxOffsetPair pair : mapBlockTx.getOrDefault(block.getHeader().getHash(), Collections.emptyList())) {
                     log.info("  tx {}", pair.tx.getTxId());
                     try {
                         receive(pair.tx, block, BlockChain.NewBlockType.BEST_CHAIN, pair.offset);
@@ -5060,8 +5080,8 @@ public class Wallet extends BaseTaggableObject
                     // Only add long (at least 64 bit) data to the bloom filter.
                     // If any long constants become popular in scripts, we will need logic
                     // here to exclude them.
-                    if (!chunk.isOpCode() && (chunk.data != null) && chunk.data.length >= MINIMUM_BLOOM_DATA_LENGTH) {
-                        filter.insert(chunk.data);
+                    if (!chunk.isOpCode() && (chunk.pushData() != null) && chunk.pushData().length >= MINIMUM_BLOOM_DATA_LENGTH) {
+                        filter.insert(chunk.pushData());
                     }
                 }
             }
@@ -5324,8 +5344,8 @@ public class Wallet extends BaseTaggableObject
     }
 
     private Coin estimateFees(Transaction tx, CoinSelection coinSelection, Coin requestedFeePerKb, boolean ensureMinRequiredFee) {
-        Coin feePerKb = (ensureMinRequiredFee && requestedFeePerKb.isLessThan(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE))
-                ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE
+        Coin feePerKb = (ensureMinRequiredFee && requestedFeePerKb.isLessThan(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE_RATE))
+                ? Transaction.REFERENCE_DEFAULT_MIN_TX_FEE_RATE
                 : requestedFeePerKb;
         int vSize = tx.getVsize() + estimateVirtualBytesForSigning(coinSelection.outputs());
         return feePerKb.multiply(vSize).divide(1000);
@@ -5347,8 +5367,7 @@ public class Wallet extends BaseTaggableObject
             } else if (ScriptPattern.isP2WPKH(script)) {
                 ECKey key = findKeyFromPubKeyHash(ScriptPattern.extractHashFromP2WH(script), ScriptType.P2WPKH);
                 Objects.requireNonNull(key, "Coin selection includes unspendable outputs");
-                return IntMath.divide(script.getNumberOfBytesRequiredToSpend(key, null), 4,
-                        RoundingMode.CEILING); // round up
+                return Transaction.calculateVirtualTransactionSize(script.getNumberOfBytesRequiredToSpend(key, null));
             } else if (ScriptPattern.isP2SH(script)) {
                 Script redeemScript = findRedeemDataFromScriptHash(ScriptPattern.extractHashFromP2SH(script)).redeemScript;
                 Objects.requireNonNull(redeemScript, "Coin selection includes unspendable outputs");
@@ -5389,7 +5408,7 @@ public class Wallet extends BaseTaggableObject
      * re-organisation of the wallet contents on the block chain. For instance, in future the wallet may choose to
      * optimise itself to reduce fees or improve privacy.</p>
      */
-    public void setTransactionBroadcaster(@Nullable org.bitcoinj.core.TransactionBroadcaster broadcaster) {
+    public void setTransactionBroadcaster(org.bitcoinj.core.@Nullable TransactionBroadcaster broadcaster) {
         Transaction[] toBroadcast = {};
         lock.lock();
         try {
@@ -5633,7 +5652,7 @@ public class Wallet extends BaseTaggableObject
             }
             // When not signing, don't waste addresses.
             rekeyTx.addOutput(toMove.totalValue(), sign ? freshReceiveAddress() : currentReceiveAddress());
-            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE, true)) {
+            if (!adjustOutputDownwardsForFee(rekeyTx, toMove, Transaction.DEFAULT_TX_FEE_RATE, true)) {
                 log.error("Failed to adjust rekey tx for fees.");
                 return null;
             }

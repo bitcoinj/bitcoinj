@@ -17,16 +17,17 @@ package org.bitcoinj.crypto.internal;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-import org.bouncycastle.crypto.digests.SHA512Digest;
-import org.bouncycastle.crypto.macs.HMac;
-import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 /**
- * Utilities for the crypto module (e.g. using Bouncy Castle)
+ * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle)
  */
 public class CryptoUtils {
     /**
@@ -52,22 +53,48 @@ public class CryptoUtils {
         return ripmemdHash;
     }
 
-    public static HMac createHmacSha512Digest(byte[] key) {
-        SHA512Digest digest = new SHA512Digest();
-        HMac hMac = new HMac(digest);
-        hMac.init(new KeyParameter(key));
-        return hMac;
-    }
-
-    public static byte[] hmacSha512(HMac hmacSha512, byte[] input) {
-        hmacSha512.reset();
-        hmacSha512.update(input, 0, input.length);
-        byte[] out = new byte[64];
-        hmacSha512.doFinal(out, 0);
-        return out;
-    }
-
+    /**
+     * Generate a MAC using a <i>binary</i> key and data
+     * @param key The key in binary format
+     * @param data The message data to process
+     * @return The final result of the MAC operation
+     */
     public static byte[] hmacSha512(byte[] key, byte[] data) {
-        return hmacSha512(createHmacSha512Digest(key), data);
+        // HmacSHA512 is built-in on Java since at least Java 8 and Android since API Level 1
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "HmacSHA512");
+        Mac mac;
+        try {
+            mac = Mac.getInstance("HmacSHA512");
+            mac.init(secretKeySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+        return mac.doFinal(data);
+    }
+
+    /**
+     * Generate a MAC using a {@link String} tag and data. For example, this is used in our BIP-32
+     * implementation with a tag {@code String} of {@code "Bitcoin seed"}. The {@link Charset} parameter
+     * is typically {@link StandardCharsets#US_ASCII}.
+     * @param tag The tag
+     * @param charset The {@link Charset} to be used to encode the tag {@code String}
+     * @param data The message data to process
+     * @return The final result of the MAC operation
+     */
+    public static byte[] hmacSha512(String tag, Charset charset, byte[] data) {
+        return hmacSha512(tag.getBytes(charset), data);
+    }
+
+    /**
+     * Calculate a SHA3-256 digest. Suitable for TOR Onion checksums.
+     * @param inputs An ordered collection of inputs to be hashed
+     * @return A SHA3 256-bit hash
+     */
+    public static byte[] sha3Digest(byte[] ...inputs) {
+        SHA3.Digest256 digest = new SHA3.Digest256();
+        for (byte[] input : inputs) {
+            digest.update(input, 0, input.length);
+        }
+        return digest.digest();
     }
 }

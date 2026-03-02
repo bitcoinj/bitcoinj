@@ -44,7 +44,7 @@ RUN --mount=target=/home/builder/.gradle,type=cache,uid=1000,gid=1000,sharing=lo
     --no-build-cache --no-daemon --no-parallel \
     --settings-file=settings-debian.gradle \
     -Dmaven.repo.local=repo \
-    clean ${ADDITIONAL_GRADLE_TASK} :bitcoinj-base:publishToMavenLocal :bitcoinj-core:publishToMavenLocal :bitcoinj-wallettool:installDist
+    clean ${ADDITIONAL_GRADLE_TASK} publishToMavenLocal :bitcoinj-wallettool:installDist
 
 # stage: export build output
 FROM scratch AS export-stage

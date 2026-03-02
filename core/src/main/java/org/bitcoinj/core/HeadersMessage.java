@@ -25,6 +25,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.bitcoinj.base.internal.Preconditions.check;
@@ -42,7 +43,7 @@ public class HeadersMessage implements Message {
     // The main client will never send us more than this number of headers.
     public static final int MAX_HEADERS = 2000;
 
-    private List<Block> blockHeaders;
+    private final List<Block> blockHeaders;
 
     /**
      * Deserialize this message from a given payload.
@@ -59,7 +60,7 @@ public class HeadersMessage implements Message {
             throw new ProtocolException("Too many headers: got " + numHeaders + " which is larger than " +
                     MAX_HEADERS);
 
-        List<Block> blockHeaders = new ArrayList<>();
+        List<Block> blockHeaders = new ArrayList<>(numHeaders);
         for (int i = 0; i < numHeaders; ++i) {
             final Block newBlockHeader = Block.read(payload);
             if (newBlockHeader.hasTransactions()) {
@@ -76,14 +77,14 @@ public class HeadersMessage implements Message {
         return new HeadersMessage(blockHeaders);
     }
 
-    public HeadersMessage(Block... headers) throws ProtocolException {
-        super();
-        blockHeaders = Arrays.asList(headers);
+    /** @deprecated Use {@link #HeadersMessage(List)} and {@link Arrays#asList(Object[])} */
+    @Deprecated
+    public HeadersMessage(Block... headers) {
+        this(Arrays.asList(headers));
     }
 
-    public HeadersMessage(List<Block> headers) throws ProtocolException {
-        super();
-        blockHeaders = headers;
+    public HeadersMessage(List<Block> headers) {
+        blockHeaders = Collections.unmodifiableList(headers);
     }
 
     @Override

@@ -18,8 +18,7 @@
 package org.bitcoinj.core.listeners;
 
 /**
- * Event Listener for blockchain download. Replaces deprecated {@link PeerDataEventListener} because most (all?)
- * implementations of {@code PeerDataEventListener} were only using {@link BlocksDownloadedEventListener} and {@link ChainDownloadStartedEventListener} anyway.
+ * Event Listener for blockchain download. Combines {@link BlocksDownloadedEventListener} and {@link ChainDownloadStartedEventListener}.
  */
 public interface BlockchainDownloadEventListener extends BlocksDownloadedEventListener, ChainDownloadStartedEventListener {
 }

@@ -25,6 +25,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.listeners.BlocksDownloadedEventListener;
 import org.bitcoinj.core.listeners.PreMessageReceivedEventListener;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithNetworkConnections;
@@ -36,7 +37,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -91,7 +92,7 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Override
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws IOException, BlockStoreException {
         super.setUp();
         VersionMessage ver = new VersionMessage(TESTNET, 100);
         InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), 4000);
@@ -101,16 +102,16 @@ public class PeerTest extends TestWithNetworkConnections {
 
     @Override
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         super.tearDown();
         assertFalse(fail.get());
     }
 
-    private void connect() throws Exception {
+    private void connect() throws IOException, ExecutionException, InterruptedException {
         connectWithVersion(70001, Services.NODE_NETWORK);
     }
 
-    private void connectWithVersion(int version, int flags) throws Exception {
+    private void connectWithVersion(int version, int flags) throws IOException, ExecutionException, InterruptedException {
         VersionMessage peerVersion = new VersionMessage(TESTNET, OTHER_PEER_CHAIN_HEIGHT);
         peerVersion.clientVersion = version;
         peerVersion.localServices = Services.of(flags);
@@ -126,7 +127,7 @@ public class PeerTest extends TestWithNetworkConnections {
     @Test
     public void chainDownloadEnd2End() throws Exception {
         // A full end-to-end test of the chain download process, with a new block being solved in the middle.
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         Block b2 = makeTestBlock(b1);
@@ -211,8 +212,8 @@ public class PeerTest extends TestWithNetworkConnections {
                 b1,
                 TESTNET.getGenesisBlock());
 
-        assertEquals(getblocks.getLocator(), expectedLocator);
-        assertEquals(getblocks.getStopHash(), b3.getHash());
+        assertEquals(expectedLocator, getblocks.getLocator());
+        assertEquals(b3.getHash(), getblocks.getStopHash());
         assertNull(outbound(writeTarget));
     }
 
@@ -274,8 +275,7 @@ public class PeerTest extends TestWithNetworkConnections {
         InboundMessageQueuer writeTarget2 = connect(peer2, peerVersion);
 
         // Make a tx and advertise it to one of the peers.
-        Coin value = COIN;
-        Transaction tx = createFakeTx(TESTNET.network(), value, this.address);
+        Transaction tx = createFakeTx(TESTNET.network(), COIN, this.address);
         InventoryMessage inv = InventoryMessage.ofTransactions(tx);
 
         inbound(writeTarget, inv);
@@ -295,7 +295,7 @@ public class PeerTest extends TestWithNetworkConnections {
     // Check that inventory message containing blocks we want is processed correctly.
     @Test
     public void newBlock() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         final Block b2 = makeTestBlock(b1);
@@ -355,7 +355,7 @@ public class PeerTest extends TestWithNetworkConnections {
     // Check that it starts downloading the block chain correctly on request.
     @Test
     public void startBlockChainDownload() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
         blockChain.add(b1);
         Block b2 = makeTestBlock(b1);
@@ -375,13 +375,13 @@ public class PeerTest extends TestWithNetworkConnections {
             TESTNET.getGenesisBlock());
 
         GetBlocksMessage message = (GetBlocksMessage) outbound(writeTarget);
-        assertEquals(message.getLocator(), expectedLocator);
+        assertEquals(expectedLocator, message.getLocator());
         assertEquals(Sha256Hash.ZERO_HASH, message.getStopHash());
     }
 
     @Test
     public void getBlock() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         connect();
 
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
@@ -394,17 +394,17 @@ public class PeerTest extends TestWithNetworkConnections {
         assertFalse(resultFuture.isDone());
         // Peer asks for it.
         GetDataMessage message = (GetDataMessage) outbound(writeTarget);
-        assertEquals(message.getItems().get(0).hash, b3.getHash());
+        assertEquals(b3.getHash(), message.getItems().get(0).hash);
         assertFalse(resultFuture.isDone());
         // Peer receives it.
         inbound(writeTarget, b3);
         Block b = resultFuture.get();
-        assertEquals(b, b3);
+        assertEquals(b3, b);
     }
 
     @Test
     public void getLargeBlock() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         connect();
 
         Block b1 = createFakeBlock(blockStore, Block.BLOCK_HEIGHT_GENESIS).block;
@@ -420,17 +420,17 @@ public class PeerTest extends TestWithNetworkConnections {
         assertFalse(resultFuture.isDone());
         // Peer asks for it.
         GetDataMessage message = (GetDataMessage) outbound(writeTarget);
-        assertEquals(message.getItems().get(0).hash, b2.getHash());
+        assertEquals(b2.getHash(), message.getItems().get(0).hash);
         assertFalse(resultFuture.isDone());
         // Peer receives it.
         inbound(writeTarget, b2);
         Block b = resultFuture.get();
-        assertEquals(b, b2);
+        assertEquals(b2, b);
     }
 
     @Test
     public void fastCatchup() throws Exception {
-        Context.propagate(new Context(100, Transaction.DEFAULT_TX_FEE, false, true));
+        Context.propagate(new Context(100, Coin.ZERO, false, true));
         connect();
         TimeUtils.setMockClock();
         // Check that blocks before the fast catchup point are retrieved using getheaders, and after using getblocks.
@@ -456,11 +456,11 @@ public class PeerTest extends TestWithNetworkConnections {
         BlockLocator expectedLocator = BlockLocator.ofBlocks(
                 b1,
                 TESTNET.getGenesisBlock());
-        assertEquals(getheaders.getLocator(), expectedLocator);
-        assertEquals(getheaders.getStopHash(), Sha256Hash.ZERO_HASH);
+        assertEquals(expectedLocator, getheaders.getLocator());
+        assertEquals(Sha256Hash.ZERO_HASH, getheaders.getStopHash());
         // Now send all the headers.
-        HeadersMessage headers = new HeadersMessage(b2.asHeader(),
-                b3.asHeader(), b4.asHeader());
+        HeadersMessage headers = new HeadersMessage(Arrays.asList(b2.asHeader(),
+                b3.asHeader(), b4.asHeader()));
         // We expect to be asked for b3 and b4 again, but this time, with a body.
         expectedLocator = BlockLocator.ofBlocks(
                 b2,
@@ -554,9 +554,9 @@ public class PeerTest extends TestWithNetworkConnections {
         t1.addInput(t2.getOutput(0));
         t1.addInput(t3.getOutput(0));
         Sha256Hash t7hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(t1, new byte[]{}, new TransactionOutPoint(0, t7hash)));
+        t1.addInput(new TransactionInput(t1, new byte[]{}, TransactionOutPoint.of(t7hash, 0)));
         Sha256Hash t8hash = Sha256Hash.wrap("3b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
-        t1.addInput(new TransactionInput(t1, new byte[]{}, new TransactionOutPoint(1, t8hash)));
+        t1.addInput(new TransactionInput(t1, new byte[]{}, TransactionOutPoint.of(t8hash, 1)));
         t1.addOutput(COIN, to);
         t1 = roundTripTransaction(t1);
         t2 = roundTripTransaction(t2);
@@ -627,7 +627,7 @@ public class PeerTest extends TestWithNetworkConnections {
         // The ones in brackets are assumed to be in the chain and are represented only by hashes.
         Sha256Hash t4hash = Sha256Hash.wrap("2b801dd82f01d17bbde881687bf72bc62e2faa8ab8133d36fcb8c3abe7459da6");
         Transaction t3 = new Transaction();
-        t3.addInput(new TransactionInput(t3, new byte[]{}, new TransactionOutPoint(0, t4hash)));
+        t3.addInput(new TransactionInput(t3, new byte[]{}, TransactionOutPoint.of(t4hash, 0)));
         t3.addOutput(COIN, ECKey.random());
         t3 = roundTripTransaction(t3);
         Transaction t2 = new Transaction();
@@ -715,7 +715,7 @@ public class PeerTest extends TestWithNetworkConnections {
         checkTimeLockedDependency(true);
     }
 
-    private void checkTimeLockedDependency(boolean shouldAccept) throws Exception {
+    private void checkTimeLockedDependency(boolean shouldAccept) throws IOException, ExecutionException, InterruptedException {
         // Initial setup.
         connectWithVersion(70001, Services.NODE_NETWORK);
         Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
@@ -729,7 +729,7 @@ public class PeerTest extends TestWithNetworkConnections {
         t2.setLockTime(999999);
         // Add a fake input to t3 that goes nowhere.
         Sha256Hash t3 = Sha256Hash.of("abc".getBytes(StandardCharsets.UTF_8));
-        t2.addInput(new TransactionInput(t2, new byte[] {}, new TransactionOutPoint(0, t3), 0xDEADBEEF));
+        t2.addInput(new TransactionInput(t2, new byte[] {}, TransactionOutPoint.of(t3, 0), 0xDEADBEEFL));
         t2.addOutput(COIN, ECKey.random());
         Transaction t1 = new Transaction();
         t1.addInput(t2.getOutput(0));
@@ -844,6 +844,7 @@ public class PeerTest extends TestWithNetworkConnections {
         } catch (ExecutionException e) {
             assertTrue(e.getCause() instanceof ProtocolException);
         }
+        Threading.uncaughtExceptionHandler = null;
         peerDisconnected.get();
         try {
             peer.writeTarget.writeBytes(new byte[1]);
