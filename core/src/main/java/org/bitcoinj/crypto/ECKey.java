@@ -47,9 +47,11 @@ import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
+import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -70,6 +72,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
@@ -521,6 +524,26 @@ public class ECKey implements EncryptableItem {
         }
 
         /**
+         * Check that the sig has a low R component, and will thus be 70 bytes or less in DER encoding (without the
+         * sighash flags byte).
+         *
+         * @return true if sig has a low R component
+         */
+        public boolean hasLowR() {
+            byte[] compact = ByteUtils.bigIntegerToBytes(r, 32);
+            return compact[0] >= 0;
+        }
+
+        public byte[] encodeToCompact() {
+            byte[] compactR = ByteUtils.bigIntegerToBytes(r, 32);
+            byte[] compactS = ByteUtils.bigIntegerToBytes(s, 32);
+            byte[] compact = new byte[64];
+            System.arraycopy(compactR, 0, compact, 32 - compactR.length, compactR.length);
+            System.arraycopy(compactS, 0, compact, 64 - compactS.length, compactS.length);
+            return compact;
+        }
+
+        /**
          * DER is an international standard for serializing data structures which is widely used in cryptography.
          * It's somewhat like protocol buffers but less convenient. This method returns a standard DER encoding
          * of the signature, as recognized by OpenSSL and other libraries.
@@ -629,11 +652,26 @@ public class ECKey implements EncryptableItem {
 
     protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
         Objects.requireNonNull(privateKeyForSigning);
-        ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
+        HMacDSAKCalculatorWithEntrophy kCalculator = new HMacDSAKCalculatorWithEntrophy(new SHA256Digest());
+        ECDSASigner signer = new ECDSASigner(kCalculator);
         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
         signer.init(true, privKey);
+
+        // first try to sign without additional entropy
         BigInteger[] components = signer.generateSignature(input.getBytes());
-        return new ECDSASignature(components[0], components[1]).toCanonicalised();
+        ECDSASignature signature = new ECDSASignature(components[0], components[1]);
+
+        // grind for low R values by adding entropy to the K calculation via RFC 6979 section 3.6.
+        // see discussion at https://github.com/bitcoin/bitcoin/pull/13666
+        for (int counter = 1; !signature.hasLowR() && counter < Integer.MAX_VALUE; counter++) {
+            byte[] entrophy =
+                    ByteBuffer.allocate(32).order(ByteOrder.LITTLE_ENDIAN).putInt(0, counter).array();
+            kCalculator.setEntropy(entrophy);
+            components = signer.generateSignature(input.getBytes());
+            signature = new ECDSASignature(components[0], components[1]);
+        }
+
+        return signature.toCanonicalised();
     }
 
     /**
@@ -1398,5 +1436,43 @@ public class ECKey implements EncryptableItem {
         Buffers.writeLengthPrefixedBytes(buf, BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
         Buffers.writeLengthPrefixedBytes(buf, messageBytes);
         return buf.array();
+    }
+
+    /**
+     * Custom K calculator with ability to add additional entropy to the calculation. This is needed for grinding for
+     * low signature R values. Before calling {@link #setEntropy(byte[])}, no entropy is added.
+     */
+    private static class HMacDSAKCalculatorWithEntrophy extends HMacDSAKCalculator {
+        @Nullable
+        byte[] entrophy = null;
+
+        private HMacDSAKCalculatorWithEntrophy(Digest digest) {
+            super(digest);
+        }
+
+        /**
+         * Add 32 bytes of additional entropy to the K calculation via RFC 6979.
+         *
+         * @param entropy 32 bytes of entropy
+         * @see
+         * <a href="https://www.rfc-editor.org/rfc/rfc6979#section-3.6">RFC 6979 section 3.6. "Additional data…"</a>
+         */
+        public void setEntropy(byte[] entropy) {
+            Objects.requireNonNull(entropy);
+            checkArgument(entropy.length == 32, () -> "entropy must be 32 bytes");
+            this.entrophy = entropy;
+        }
+
+        @Override
+        protected void initAdditionalInput0(HMac hmac0) {
+            if (entrophy != null)
+                hmac0.update(entrophy, 0, 32);
+        }
+
+        @Override
+        protected void initAdditionalInput1(HMac hmac1) {
+            if (entrophy != null)
+                hmac1.update(entrophy, 0, 32);
+        }
     }
 }
