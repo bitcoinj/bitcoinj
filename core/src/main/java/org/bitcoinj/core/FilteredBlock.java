@@ -18,6 +18,7 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.Buffers;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
@@ -39,7 +40,7 @@ public class FilteredBlock implements Message {
     private final Block header;
 
     private final PartialMerkleTree merkleTree;
-    private List<Sha256Hash> cachedTransactionHashes = null;
+    @Nullable private List<Sha256Hash> cachedTransactionHashes = null;
     
     // A set of transactions whose hashes are a subset of getTransactionHashes()
     // These were relayed as a part of the filteredblock getdata, ie likely weren't previously received as loose transactions

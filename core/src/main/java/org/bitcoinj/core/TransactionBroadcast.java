@@ -53,7 +53,7 @@ public class TransactionBroadcast implements Wallet.SendResult {
 
     // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
     private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
-    private final PeerGroup peerGroup;
+    @Nullable private final PeerGroup peerGroup;
     private final Transaction tx;
     private int minConnections;
     private boolean dropPeersAfterBroadcast = false;
