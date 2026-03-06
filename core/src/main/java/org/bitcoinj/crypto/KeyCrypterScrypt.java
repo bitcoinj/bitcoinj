@@ -117,6 +117,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * @param scryptParameters ScryptParameters to use
      * @throws NullPointerException if the scryptParameters or any of its N, R or P is null.
      */
+    @SuppressWarnings("ImpossibleNullComparison")
     public KeyCrypterScrypt(ScryptParameters scryptParameters) {
         this.scryptParameters = Objects.requireNonNull(scryptParameters);
         // Check there is a non-empty salt.
@@ -138,6 +139,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * @throws            KeyCrypterException
      */
     @Override
+    @SuppressWarnings("ImpossibleNullComparison")
     public AesKey deriveKey(CharSequence password) throws KeyCrypterException {
         byte[] passwordBytes = null;
         try {
