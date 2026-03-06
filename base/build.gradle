@@ -1,11 +1,18 @@
 import org.gradle.util.GradleVersion
+import net.ltgt.gradle.errorprone.CheckSeverity
 
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id "net.ltgt.errorprone" version "5.0.0" apply false
 }
 
 version = '0.18-SNAPSHOT'
+
+def supportsErrorProne = GradleVersion.current() >= GradleVersion.version("8.5") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)
+if (supportsErrorProne) {
+    apply plugin: 'net.ltgt.errorprone'
+}
 
 dependencies {
     api 'org.jspecify:jspecify:1.0.0'
@@ -17,12 +24,24 @@ dependencies {
     testImplementation 'nl.jqno.equalsverifier:equalsverifier:3.18.1'
     testImplementation 'org.hamcrest:hamcrest-library:3.0'
     testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
+
+    if (supportsErrorProne) {
+        annotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+        testAnnotationProcessor "com.uber.nullaway:nullaway:0.13.1"
+        errorprone "com.google.errorprone:error_prone_core:2.47.0"
+    }
 }
 
 tasks.withType(JavaCompile) {
     options.compilerArgs.addAll(['--release', '8'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
+    if (supportsErrorProne) {
+        options.errorprone {
+            check("NullAway", CheckSeverity.ERROR)
+            option("NullAway:OnlyNullMarked")
+        }
+    }
 }
 
 javadoc.options.encoding = 'UTF-8'
