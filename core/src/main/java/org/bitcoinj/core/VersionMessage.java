@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.net.InetAddresses;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -149,7 +148,7 @@ public class VersionMessage implements Message {
         this.clientVersion = ProtocolVersion.CURRENT.intValue();
         this.localServices = Services.none();
         this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        InetAddress localhost = InetAddresses.forString("127.0.0.1");
+        InetAddress localhost = InetAddress.getLoopbackAddress();
         this.receivingServices = Services.none();
         this.receivingAddr = new InetSocketAddress(localhost, params.getPort());
         this.subVer = LIBRARY_SUBVER;
