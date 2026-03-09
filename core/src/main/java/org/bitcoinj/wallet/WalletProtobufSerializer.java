@@ -215,7 +215,7 @@ public class WalletProtobufSerializer {
             walletBuilder.setEncryptionType(walletEncryptionType(keyCrypter.getUnderstoodEncryptionType()));
             if (keyCrypter instanceof KeyCrypterScrypt) {
                 KeyCrypterScrypt keyCrypterScrypt = (KeyCrypterScrypt) keyCrypter;
-                walletBuilder.setEncryptionParameters(keyCrypterScrypt.getScryptParameters());
+                walletBuilder.setEncryptionParameters(scryptParametersToProtobuf(keyCrypterScrypt.getScryptParameters()));
             } else {
                 // Some other form of encryption has been specified that we do not know how to persist.
                 throw new RuntimeException("The wallet has encryption of type '" + keyCrypter.getUnderstoodEncryptionType() + "' but this WalletProtobufSerializer does not know how to persist this.");
@@ -250,6 +250,23 @@ public class WalletProtobufSerializer {
             case ENCRYPTED_SCRYPT_AES: return Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES;
             default: throw new IllegalArgumentException("Invalid EncryptionType");
         }
+    }
+
+    private static Protos.ScryptParameters scryptParametersToProtobuf(KeyCrypter.ScryptParameters scryptParameters) {
+        return Protos.ScryptParameters.newBuilder()
+                .setSalt(ByteString.copyFrom(scryptParameters.salt()))
+                .setN(scryptParameters.n())
+                .setR(scryptParameters.r())
+                .setP(scryptParameters.p())
+                .build();
+    }
+
+    private static KeyCrypter.ScryptParameters scryptParametersFromProtobuf(Protos.ScryptParameters protobufParameters) {
+        return new KeyCrypter.ScryptParameters(
+                protobufParameters.getSalt().toByteArray(),
+                protobufParameters.getN(),
+                protobufParameters.getR(),
+                protobufParameters.getP());
     }
 
     private static void populateExtensions(Wallet wallet, Protos.Wallet.Builder walletBuilder) {
@@ -503,7 +520,7 @@ public class WalletProtobufSerializer {
         KeyChainGroup keyChainGroup;
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
-            final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
+            final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(scryptParametersFromProtobuf(encryptionParameters));
             keyChainGroup = KeyChainGroup.fromProtobufEncrypted(network, walletProto.getKeyList(), keyCrypter, keyChainFactory);
         } else {
             keyChainGroup = KeyChainGroup.fromProtobufUnencrypted(network, walletProto.getKeyList(), keyChainFactory);

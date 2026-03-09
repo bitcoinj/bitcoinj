@@ -17,11 +17,8 @@
 
 package org.bitcoinj.crypto;
 
-import com.google.protobuf.ByteString;
 import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.protobuf.wallet.Protos;
-import org.bitcoinj.protobuf.wallet.Protos.ScryptParameters;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -92,9 +89,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * Encryption/Decryption using default parameters and a random salt.
      */
     public KeyCrypterScrypt() {
-        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder().setSalt(
-                ByteString.copyFrom(randomSalt()));
-        this.scryptParameters = scryptParametersBuilder.build();
+        this(new KeyCrypter.ScryptParameters());
     }
 
     /**
@@ -105,9 +100,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      *            number of scrypt iterations
      */
     public KeyCrypterScrypt(int iterations) {
-        Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder()
-                .setSalt(ByteString.copyFrom(randomSalt())).setN(iterations);
-        this.scryptParameters = scryptParametersBuilder.build();
+        this(KeyCrypter.ScryptParameters.withN(iterations));
     }
 
     /**
@@ -120,9 +113,8 @@ public class KeyCrypterScrypt implements KeyCrypter {
         this.scryptParameters = Objects.requireNonNull(scryptParameters);
         // Check there is a non-empty salt.
         // (Some early MultiBit wallets has a missing salt so it is not a hard fail).
-        if (scryptParameters.getSalt() == null
-                || scryptParameters.getSalt().toByteArray() == null
-                || scryptParameters.getSalt().toByteArray().length == 0) {
+        if (scryptParameters.salt() == null
+                || scryptParameters.salt().length == 0) {
             log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
         }
     }
@@ -142,8 +134,8 @@ public class KeyCrypterScrypt implements KeyCrypter {
         try {
             passwordBytes = convertToByteArray(password);
             byte[] salt = new byte[0];
-            if ( scryptParameters.getSalt() != null) {
-                salt = scryptParameters.getSalt().toByteArray();
+            if ( scryptParameters.salt() != null) {
+                salt = scryptParameters.salt();
             } else {
                 // Warn the user that they are not using a salt.
                 // (Some early MultiBit wallets had a blank salt).
@@ -151,7 +143,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             }
 
             Stopwatch watch = Stopwatch.start();
-            byte[] keyBytes = SCrypt.generate(passwordBytes, salt, (int) scryptParameters.getN(), scryptParameters.getR(), scryptParameters.getP(), KEY_LENGTH);
+            byte[] keyBytes = SCrypt.generate(passwordBytes, salt, scryptParameters.n(), scryptParameters.r(), scryptParameters.p(), KEY_LENGTH);
             log.info("Deriving key took {} for {}.", watch, scryptParametersString());
             return new AesKey(keyBytes);
         } catch (Exception e) {
@@ -261,7 +253,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
     }
 
     private String scryptParametersString() {
-        return "N=" + scryptParameters.getN() + ", r=" + scryptParameters.getR() + ", p=" + scryptParameters.getP();
+        return "N=" + scryptParameters.n() + ", r=" + scryptParameters.r() + ", p=" + scryptParameters.p();
     }
 
     @Override

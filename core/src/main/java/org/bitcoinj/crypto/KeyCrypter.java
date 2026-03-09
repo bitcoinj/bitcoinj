@@ -16,6 +16,9 @@
 
 package org.bitcoinj.crypto;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * <p>A KeyCrypter can be used to encrypt and decrypt a message. The sequence of events to encrypt and then decrypt
  * a message are as follows:</p>
@@ -68,5 +71,105 @@ public interface KeyCrypter {
         UNENCRYPTED,
         /** All keys are encrypted with a passphrase-based KDF of scrypt and AES encryption */
         ENCRYPTED_SCRYPT_AES;
+    }
+
+    /**
+     * Parameters for {@code KeyCrypter} implementation using the <b>scrypt</b> key derivation function.
+     * The default values are taken from <a href="http://www.tarsnap.com/scrypt/scrypt-slides.pdf">scrypt-slides.pdf</a>.
+     * They can be increased - {@code n} is the number of iterations performed and
+     * {@code r} and {@code p} can be used to tweak the algorithm.
+     * @see <a href="http://stackoverflow.com/questions/11126315/what-are-optimal-scrypt-work-factors">What are optimal scrypt work factors?</a>
+     */
+    class ScryptParameters {
+        public static int DEFAULT_N = 16384;
+        public static int DEFAULT_R = 8;
+        public static int DEFAULT_P = 1;
+        private final byte[] salt;
+        private final int n;
+        private final int r;
+        private final int p;
+
+        /**
+         * Default parameters for <b>scrypt</b> parameters.
+         */
+        public ScryptParameters() {
+            this(KeyCrypterScrypt.randomSalt(), DEFAULT_N, DEFAULT_R, DEFAULT_P);
+        }
+
+        /**
+         * Canonical constructor for for <b>scrypt</b> parameters.
+         * @param salt salt bytes, should be of length 8.
+         * @param n General work factor, iteration count
+         * @param r Blocksize in use for underlying hash; fine-tunes the relative memory-cost
+         * @param p Parallelization factor; fine-tunes the relative cpu-cost
+         */
+        public ScryptParameters(byte[] salt, long n, int r, int p) {
+            this.salt = salt.clone();   // defensive copy
+            this.n = Math.toIntExact(n);
+            this.r = r;
+            this.p = p;
+        }
+
+        /**
+         * Get default parameters, overriding {@code n}.
+         * @param n General work factor, iteration count
+         * @return default parameters, with the value of {@code n} overridden.
+         */
+        public static ScryptParameters withN(int n) {
+            return new ScryptParameters(KeyCrypterScrypt.randomSalt(), n, DEFAULT_R, DEFAULT_P);
+        }
+
+        /**
+         * Get default parameters, overriding {@code p}.
+         * @param p Parallelization factor; fine-tunes the relative cpu-cost
+         * @return default parameters, with the value of {@code p} overridden.
+         */
+        public static ScryptParameters withP(int p) {
+            return new ScryptParameters(KeyCrypterScrypt.randomSalt(), DEFAULT_N, DEFAULT_R, p);
+        }
+
+        /**
+         * Get the salt.
+         * @return salt
+         */
+        public byte[] salt() {
+            return salt.clone();  // defensive-copy
+        }
+
+        /**
+         * General work factor, iteration count.
+         * @return iteration count
+         */
+        public int n() {
+            return n;
+        }
+
+        /**
+         * blocksize in use for underlying hash; fine-tunes the relative memory-cost.
+         * @return blocksize
+         */
+        public int r() {
+            return r;
+        }
+
+        /**
+         * Parallelization factor; fine-tunes the relative cpu-cost.
+         * @return parallelization factor
+         */
+        public int p() {
+            return p;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof ScryptParameters)) return false;
+            ScryptParameters that = (ScryptParameters) o;
+            return n == that.n && r == that.r && p == that.p && Objects.deepEquals(salt, that.salt);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(Arrays.hashCode(salt), n, r, p);
+        }
     }
 }

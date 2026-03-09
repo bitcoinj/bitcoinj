@@ -16,7 +16,6 @@
 
 package wallettemplate;
 
-import com.google.protobuf.ByteString;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -25,8 +24,8 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.GridPane;
 import org.bitcoinj.crypto.AesKey;
+import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.protobuf.wallet.Protos;
 import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
@@ -55,12 +54,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
     private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> overlayUI;
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
     // using the scryptenc command line tool from the original scrypt distribution, given a memory limit of 40mb.
-    public static final Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder()
-            .setP(6)
-            .setR(8)
-            .setN(32768)
-            .setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt()))
-            .build();
+    public static final KeyCrypter.ScryptParameters SCRYPT_PARAMETERS = KeyCrypter.ScryptParameters.withP(6);
 
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> ui) {
