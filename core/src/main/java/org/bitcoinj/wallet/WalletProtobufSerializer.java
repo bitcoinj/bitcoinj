@@ -212,7 +212,7 @@ public class WalletProtobufSerializer {
             walletBuilder.setEncryptionType(EncryptionType.UNENCRYPTED);
         } else {
             // The wallet is encrypted.
-            walletBuilder.setEncryptionType(keyCrypter.getUnderstoodEncryptionType());
+            walletBuilder.setEncryptionType(walletEncryptionType(keyCrypter.getUnderstoodEncryptionType()));
             if (keyCrypter instanceof KeyCrypterScrypt) {
                 KeyCrypterScrypt keyCrypterScrypt = (KeyCrypterScrypt) keyCrypter;
                 walletBuilder.setEncryptionParameters(keyCrypterScrypt.getScryptParameters());
@@ -239,6 +239,17 @@ public class WalletProtobufSerializer {
         walletBuilder.setVersion(wallet.getVersion());
 
         return walletBuilder.build();
+    }
+
+    /**
+     * Map {@link KeyCrypter.EncryptionType} to {@link Protos.Wallet.EncryptionType}.
+     */
+    private static Protos.Wallet.EncryptionType walletEncryptionType(KeyCrypter.EncryptionType type) {
+        switch (type) {
+            case UNENCRYPTED: return Protos.Wallet.EncryptionType.UNENCRYPTED;
+            case ENCRYPTED_SCRYPT_AES: return Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES;
+            default: throw new IllegalArgumentException("Invalid EncryptionType");
+        }
     }
 
     private static void populateExtensions(Wallet wallet, Protos.Wallet.Builder walletBuilder) {

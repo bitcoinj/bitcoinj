@@ -22,7 +22,6 @@ import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.protobuf.wallet.Protos;
 import org.bitcoinj.protobuf.wallet.Protos.ScryptParameters;
-import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;

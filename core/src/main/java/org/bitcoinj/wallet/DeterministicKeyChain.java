@@ -1395,7 +1395,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
                     .setInitialisationVector(ByteString.copyFrom(data.initialisationVector)));
             // We don't allow mixing of encryption types at the moment.
-            checkState(seed.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
+            checkState(seed.getEncryptionType() == KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES);
         } else {
             final byte[] secret = seed.getSeedBytes();
             if (secret != null)

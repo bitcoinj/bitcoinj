@@ -31,7 +31,6 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.crypto.utils.MessageVerifyUtils;
-import org.bitcoinj.protobuf.wallet.Protos;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -1238,8 +1237,8 @@ public class ECKey implements EncryptableItem {
     }
 
     @Override
-    public Protos.Wallet.EncryptionType getEncryptionType() {
-        return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
+    public KeyCrypterScrypt.EncryptionType getEncryptionType() {
+        return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : KeyCrypterScrypt.EncryptionType.UNENCRYPTED;
     }
 
     /**

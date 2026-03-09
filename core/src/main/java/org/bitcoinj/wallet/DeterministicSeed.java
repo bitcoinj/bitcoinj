@@ -37,7 +37,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.bitcoinj.base.internal.ByteUtils;
-import org.bitcoinj.protobuf.wallet.Protos;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -233,8 +232,8 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     @Override
-    public Protos.Wallet.EncryptionType getEncryptionType() {
-        return Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES;
+    public KeyCrypter.EncryptionType getEncryptionType() {
+        return KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES;
     }
 
     @Nullable

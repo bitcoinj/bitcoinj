@@ -359,7 +359,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
                     .setInitialisationVector(ByteString.copyFrom(data.initialisationVector)));
             // We don't allow mixing of encryption types at the moment.
-            checkState(item.getEncryptionType() == Protos.Wallet.EncryptionType.ENCRYPTED_SCRYPT_AES);
+            checkState(item.getEncryptionType() == KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES);
             proto.setType(Protos.Key.Type.ENCRYPTED);
         } else {
             final byte[] secret = item.getSecretBytes();

@@ -72,7 +72,6 @@ import org.bitcoinj.base.utils.Fiat;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.KeyChain.KeyPurpose;
 import org.bitcoinj.protobuf.wallet.Protos;
-import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
 import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.easymock.EasyMock;
@@ -1874,7 +1873,7 @@ public class WalletTest extends TestWithWallet {
         KeyCrypter keyCrypter = encryptedWallet.getKeyCrypter();
         AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
 
-        assertEquals(EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
+        assertEquals(KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
         assertTrue(encryptedWallet.checkPassword(PASSWORD1));
         assertTrue(encryptedWallet.checkAESKey(aesKey));
         assertFalse(encryptedWallet.checkPassword(WRONG_PASSWORD));
@@ -1916,7 +1915,7 @@ public class WalletTest extends TestWithWallet {
         AesKey wrongAesKey = keyCrypter.deriveKey(WRONG_PASSWORD);
 
         // Check the wallet is currently encrypted
-        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
+        assertEquals("Wallet is not an encrypted wallet", KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
         assertFalse(encryptedWallet.checkAESKey(wrongAesKey));
 
         // Check that the wrong password does not decrypt the wallet.
@@ -1963,7 +1962,7 @@ public class WalletTest extends TestWithWallet {
         AesKey aesKey = keyCrypter.deriveKey(PASSWORD1);
 
         // Check the wallet is currently encrypted
-        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
+        assertEquals("Wallet is not an encrypted wallet", KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
 
         // Decrypt wallet.
         assertNotNull("The keyCrypter is missing but should not be", keyCrypter);
@@ -1982,7 +1981,7 @@ public class WalletTest extends TestWithWallet {
         // Encrypt wallet.
         encryptedWallet.encrypt(keyCrypter, aesKey);
 
-        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
+        assertEquals("Wallet is not an encrypted wallet", KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
 
         // Try encrypting it again
         try {
@@ -1991,7 +1990,7 @@ public class WalletTest extends TestWithWallet {
         } catch (IllegalStateException e) {
             // expected
         }
-        assertEquals("Wallet is not an encrypted wallet", EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
+        assertEquals("Wallet is not an encrypted wallet", KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES, encryptedWallet.getEncryptionType());
     }
 
     @Test(expected = KeyCrypterException.class)

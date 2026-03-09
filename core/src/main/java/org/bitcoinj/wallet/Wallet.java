@@ -88,7 +88,6 @@ import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.protobuf.wallet.Protos;
-import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.bitcoinj.wallet.listeners.CurrentKeyChangeEventListener;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
@@ -1461,14 +1460,14 @@ public class Wallet extends BaseTaggableObject
      *
      * (This is a convenience method - the encryption type is actually stored in the keyCrypter).
      */
-    public EncryptionType getEncryptionType() {
+    public KeyCrypter.EncryptionType getEncryptionType() {
         keyChainGroupLock.lock();
         try {
             KeyCrypter crypter = keyChainGroup.getKeyCrypter();
             if (crypter != null)
                 return crypter.getUnderstoodEncryptionType();
             else
-                return EncryptionType.UNENCRYPTED;
+                return KeyCrypter.EncryptionType.UNENCRYPTED;
         } finally {
             keyChainGroupLock.unlock();
         }
@@ -1476,7 +1475,7 @@ public class Wallet extends BaseTaggableObject
 
     /** Returns true if the wallet is encrypted using any scheme, false if not. */
     public boolean isEncrypted() {
-        return getEncryptionType() != EncryptionType.UNENCRYPTED;
+        return getEncryptionType() != KeyCrypter.EncryptionType.UNENCRYPTED;
     }
 
     /**

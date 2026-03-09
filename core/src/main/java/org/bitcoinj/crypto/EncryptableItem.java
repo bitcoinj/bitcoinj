@@ -16,8 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.protobuf.wallet.Protos;
-
 import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.util.Optional;
@@ -39,7 +37,7 @@ public interface EncryptableItem {
     EncryptedData getEncryptedData();
 
     /** Returns an enum constant describing what algorithm was used to encrypt the key or UNENCRYPTED. */
-    Protos.Wallet.EncryptionType getEncryptionType();
+    KeyCrypterScrypt.EncryptionType getEncryptionType();
 
     /** Returns the time at which this encryptable item was first created/derived, or empty of unknown. */
     Optional<Instant> getCreationTime();

@@ -16,8 +16,6 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.protobuf.wallet.Protos.Wallet.EncryptionType;
-
 /**
  * <p>A KeyCrypter can be used to encrypt and decrypt a message. The sequence of events to encrypt and then decrypt
  * a message are as follows:</p>
@@ -61,4 +59,14 @@ public interface KeyCrypter {
      * @throws KeyCrypterException if encryption was unsuccessful
      */
     EncryptedData encrypt(byte[] plainBytes, AesKey aesKey) throws KeyCrypterException;
+
+    /**
+     * Type of encryption used by a KeyCrypter.
+     */
+    enum EncryptionType {
+        /** No encryption */
+        UNENCRYPTED,
+        /** All keys are encrypted with a passphrase-based KDF of scrypt and AES encryption */
+        ENCRYPTED_SCRYPT_AES;
+    }
 }
