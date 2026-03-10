@@ -104,7 +104,7 @@ public interface KeyCrypter {
          * @param p Parallelization factor; fine-tunes the relative cpu-cost
          */
         public ScryptParameters(byte[] salt, long n, int r, int p) {
-            this.salt = salt.clone();   // defensive copy
+            this.salt = Objects.requireNonNull(salt).clone();   // defensive copy
             this.n = Math.toIntExact(n);
             this.r = r;
             this.p = p;
