@@ -22,6 +22,7 @@ import org.bitcoinj.base.internal.StreamUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,24 +57,31 @@ public class TransactionBroadcast implements Wallet.SendResult {
     private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
     @Nullable private final PeerGroup peerGroup;
     private final Transaction tx;
-    private int minConnections;
-    private boolean dropPeersAfterBroadcast = false;
+    private final int minConnections;
+    private final boolean dropPeersAfterBroadcast;
     private int numWaitingFor;
 
     /** Used for shuffling the peers before broadcast: unit tests can replace this to make themselves deterministic. */
     @VisibleForTesting
     public static Random random = new Random();
 
-    TransactionBroadcast(PeerGroup peerGroup, Transaction tx) {
+    TransactionBroadcast(@NonNull PeerGroup peerGroup, Transaction tx, int minConnections, boolean dropPeersAfterBroadcast) {
         this.peerGroup = peerGroup;
         this.tx = tx;
-        this.minConnections = Math.max(1, peerGroup.getMinBroadcastConnections());
+        this.minConnections = minConnections;
+        this.dropPeersAfterBroadcast = dropPeersAfterBroadcast;
+    }
+
+    TransactionBroadcast(@NonNull PeerGroup peerGroup, Transaction tx) {
+        this(peerGroup, tx, Math.max(1, peerGroup.getMinBroadcastConnections()), false);
     }
 
     // Only for mock broadcasts.
     private TransactionBroadcast(Transaction tx) {
         this.peerGroup = null;
         this.tx = tx;
+        this.minConnections = 1;
+        this.dropPeersAfterBroadcast = false;
     }
 
     public Transaction transaction() {
@@ -116,14 +124,6 @@ public class TransactionBroadcast implements Wallet.SendResult {
     @Deprecated
     public CompletableFuture<Transaction> future() {
         return awaitRelayed().thenApply(TransactionBroadcast::transaction);
-    }
-
-    public void setMinConnections(int minConnections) {
-        this.minConnections = minConnections;
-    }
-
-    public void setDropPeersAfterBroadcast(boolean dropPeersAfterBroadcast) {
-        this.dropPeersAfterBroadcast = dropPeersAfterBroadcast;
     }
 
     // TODO: Should this method be moved into the PeerGroup?
