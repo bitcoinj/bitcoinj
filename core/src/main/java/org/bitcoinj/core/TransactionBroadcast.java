@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -53,7 +54,7 @@ public class TransactionBroadcast implements Wallet.SendResult {
 
     // This future completes when we have verified that more than numWaitingFor Peers have seen the broadcast
     private final CompletableFuture<TransactionBroadcast> seenFuture = new CompletableFuture<>();
-    private final PeerGroup peerGroup;
+    @Nullable private final PeerGroup peerGroup;
     private final Transaction tx;
     private int minConnections;
     private boolean dropPeersAfterBroadcast = false;
@@ -90,6 +91,12 @@ public class TransactionBroadcast implements Wallet.SendResult {
     @VisibleForTesting
     public static TransactionBroadcast createMockBroadcast(Transaction tx, final CompletableFuture<Transaction> future) {
         return new TransactionBroadcast(tx) {
+            @Override
+            public CompletableFuture<TransactionBroadcast> broadcastOnly() {
+                // broadcast is not supported for MockBroadcast (peerGroup is null)
+                throw new UnsupportedOperationException();
+            }
+
             @Override
             public CompletableFuture<Transaction> broadcast() {
                 return future;
@@ -141,6 +148,7 @@ public class TransactionBroadcast implements Wallet.SendResult {
      * will complete exceptionally if <i>any</i> of the peer broadcasts fails.
      */
     public CompletableFuture<TransactionBroadcast> broadcastOnly() {
+        Objects.requireNonNull(peerGroup); // peerGroup is null for a "mock broadcast", but then this broadcastOnly() can't be called
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
         final Context context = Context.get();
         return peerGroup.waitForPeers(minConnections).thenComposeAsync( peerList /* not used */ -> {
