@@ -27,6 +27,7 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptPattern;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;
@@ -51,7 +52,7 @@ import static org.junit.Assert.assertTrue;
 public class TransactionOutputTest extends TestWithWallet {
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException {
         super.setUp();
     }
 

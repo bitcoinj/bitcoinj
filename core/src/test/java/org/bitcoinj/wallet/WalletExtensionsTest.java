@@ -16,6 +16,7 @@
 
 package org.bitcoinj.wallet;
 
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FooWalletExtension;
 import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
@@ -26,7 +27,7 @@ public class WalletExtensionsTest extends TestWithWallet {
 
     @Before
     @Override
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException {
         super.setUp();
     }
 
