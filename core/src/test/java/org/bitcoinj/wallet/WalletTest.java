@@ -145,7 +145,7 @@ public class WalletTest extends TestWithWallet {
 
     @Before
     @Override
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException {
         super.setUp();
     }
 

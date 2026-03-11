@@ -25,6 +25,7 @@ import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
@@ -48,7 +49,7 @@ import static org.junit.Assert.assertTrue;
 public class DefaultCoinSelectorTest extends TestWithWallet {
     @Before
     @Override
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException {
         super.setUp();
         TimeUtils.setMockClock(); // Use mock clock
     }

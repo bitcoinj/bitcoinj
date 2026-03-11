@@ -31,6 +31,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.store.BlockStore;
+import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
@@ -64,7 +65,7 @@ public class TestWithWallet {
         TimeUtils.clearMockClock();
     }
 
-    public void setUp() throws Exception {
+    public void setUp() throws BlockStoreException {
         BriefLogFormatter.init();
         Context.propagate(new Context(100, Coin.ZERO, false, true));
         wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH, KeyChainGroupStructure.BIP32);
