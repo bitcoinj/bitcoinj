@@ -19,18 +19,11 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FooWalletExtension;
 import org.bitcoinj.testing.TestWithWallet;
-import org.junit.After;
 import org.junit.Test;
 
 public class WalletExtensionsTest extends TestWithWallet {
 
     public WalletExtensionsTest() throws BlockStoreException {
-    }
-
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
     }
 
     @Test(expected = java.lang.IllegalStateException.class)

@@ -31,7 +31,6 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -51,11 +50,6 @@ import static org.junit.Assert.assertTrue;
 public class TransactionOutputTest extends TestWithWallet {
 
     public TransactionOutputTest() throws BlockStoreException {
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
     }
 
     @Test

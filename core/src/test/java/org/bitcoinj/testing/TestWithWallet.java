@@ -75,9 +75,6 @@ public class TestWithWallet {
         chain = new BlockChain(BitcoinNetwork.TESTNET, wallet, blockStore);
     }
 
-    public void tearDown() throws Exception {
-    }
-
     @Nullable
     protected Transaction sendMoneyToWallet(Wallet wallet, AbstractBlockChain.NewBlockType type, Transaction... transactions)
             throws VerificationException {
