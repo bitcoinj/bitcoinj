@@ -17,7 +17,6 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.BitcoinNetwork;
-import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Coin;
@@ -50,7 +49,6 @@ public class DefaultCoinSelectorTest extends TestWithWallet {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        TimeUtils.setMockClock(); // Use mock clock
     }
 
     @After
