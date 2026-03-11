@@ -47,8 +47,8 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 
 /**
  * A utility class that you can derive from in your unit tests. TestWithWallet sets up an empty wallet,
- * an in-memory block store and a block chain object. It also provides helper methods for filling the wallet
- * with money in whatever ways you wish. Note that for simplicity with amounts, this class sets the default
+ * an in-memory block store and a {@link BlockChain}. It also provides helper methods for filling the wallet
+ * with money in whatever way you wish. Note that for simplicity with amounts, this class sets the default
  * fee per kilobyte to zero.
  */
 public class TestWithWallet {
