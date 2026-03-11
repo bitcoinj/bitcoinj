@@ -28,7 +28,6 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -46,10 +45,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class DefaultCoinSelectorTest extends TestWithWallet {
-    @Before
-    @Override
-    public void setUp() throws BlockStoreException {
-        super.setUp();
+    public DefaultCoinSelectorTest() throws BlockStoreException {
     }
 
     @After
