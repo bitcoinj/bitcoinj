@@ -20,15 +20,11 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FooWalletExtension;
 import org.bitcoinj.testing.TestWithWallet;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 public class WalletExtensionsTest extends TestWithWallet {
 
-    @Before
-    @Override
-    public void setUp() throws BlockStoreException {
-        super.setUp();
+    public WalletExtensionsTest() throws BlockStoreException {
     }
 
     @After

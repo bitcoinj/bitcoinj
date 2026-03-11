@@ -76,7 +76,6 @@ import org.bitcoinj.wallet.Wallet.BalanceType;
 import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.easymock.EasyMock;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -143,10 +142,7 @@ public class WalletTest extends TestWithWallet {
 
     private static final Coin TEST_TX_FEE_RATE = Coin.valueOf(100_000); // per vkB
 
-    @Before
-    @Override
-    public void setUp() throws BlockStoreException {
-        super.setUp();
+    public WalletTest() throws BlockStoreException {
     }
 
     @After
