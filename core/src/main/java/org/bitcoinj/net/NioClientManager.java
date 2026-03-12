@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -53,7 +55,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
         SocketChannel sc;
         StreamConnection connection;
         SocketAddress address;
-        CompletableFuture<SocketAddress> future = new CompletableFuture<>();
+        @Nullable CompletableFuture<SocketAddress> future = new CompletableFuture<>();
 
         PendingConnect(SocketChannel sc, StreamConnection connection, SocketAddress address) { this.sc = sc; this.connection = connection; this.address = address; }
     }
@@ -76,10 +78,12 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                     log.debug("Connected to {}", sc.socket().getRemoteSocketAddress());
                     key.interestOps((key.interestOps() | SelectionKey.OP_READ) & ~SelectionKey.OP_CONNECT).attach(handler);
                     connection.connectionOpened();
+                    Objects.requireNonNull(data.future);
                     data.future.complete(data.address);
                 } else {
                     log.warn("Failed to connect to {}", sc.socket().getRemoteSocketAddress());
                     handler.closeConnection(); // Failed to connect for some reason
+                    Objects.requireNonNull(data.future);
                     data.future.completeExceptionally(new ConnectException("Unknown reason"));
                     data.future = null;
                 }
@@ -93,6 +97,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
                 else
                     log.warn("Failed to connect: {}: {}", cause.getClass().getName(), cause.getMessage(), e);
                 handler.closeConnection();
+                Objects.requireNonNull(data.future);
                 data.future.completeExceptionally(cause);
                 data.future = null;
             }
@@ -170,6 +175,7 @@ public class NioClientManager extends AbstractExecutionThreadService implements 
             PendingConnect data = new PendingConnect(sc, connection, serverAddress);
             newConnectionChannels.offer(data);
             selector.wakeup();
+            Objects.requireNonNull(data.future);
             return data.future;
         } catch (Throwable e) {
             return FutureUtils.failedFuture(e);

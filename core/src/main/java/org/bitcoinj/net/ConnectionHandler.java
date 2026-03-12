@@ -93,7 +93,7 @@ class ConnectionHandler implements MessageWriteTarget {
         this.channel = Objects.requireNonNull(((SocketChannel)key.channel()));
         readBuff = ByteBuffer.allocateDirect(Math.min(Math.max(connection.getMaxMessageSize(), BUFFER_SIZE_LOWER_BOUND), BUFFER_SIZE_UPPER_BOUND));
         this.connectedHandlers = connectedHandlers;
-        if (connectedHandlers != null) {
+        if (this.connectedHandlers != null) {
             // Since we are doing this before setWriteTarget() we don't have to worry about closeCalled being true
             checkState(this.connectedHandlers.add(this));
         }
