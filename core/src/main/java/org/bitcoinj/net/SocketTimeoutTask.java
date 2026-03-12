@@ -16,6 +16,8 @@
 
 package org.bitcoinj.net;
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.Duration;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,7 +28,7 @@ import java.util.TimerTask;
 public class SocketTimeoutTask implements TimeoutHandler {
     // TimerTask and timeout value which are added to a timer to kill the connection on timeout
     private final Runnable actualTask;
-    private TimerTask timeoutTask;
+    @Nullable private TimerTask timeoutTask;
     private Duration timeout = Duration.ZERO;
     private boolean timeoutEnabled = true;
 
