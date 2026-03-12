@@ -34,8 +34,10 @@ import org.junit.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class VersionTallyTest {
@@ -64,7 +66,7 @@ public class VersionTallyTest {
             assertNull(instance.getCountAtOrAbove(1));
             instance.add(1);
         }
-        assertEquals(TESTNET.getMajorityWindow(), instance.getCountAtOrAbove(1).intValue());
+        assertEquals(TESTNET.getMajorityWindow(), Objects.requireNonNull(instance.getCountAtOrAbove(1)).intValue());
     }
 
     /**
@@ -88,21 +90,21 @@ public class VersionTallyTest {
             assertNull(instance.getCountAtOrAbove(1));
             instance.add(1);
         }
-        assertEquals(TESTNET.getMajorityWindow(), instance.getCountAtOrAbove(1).intValue());
+        assertEquals(TESTNET.getMajorityWindow(), Objects.requireNonNull(instance.getCountAtOrAbove(1)).intValue());
 
         // Check the count updates as we replace with 2s
         for (int i = 0; i < TESTNET.getMajorityWindow(); i++) {
-            assertEquals(i, instance.getCountAtOrAbove(2).intValue());
+            assertEquals(i, Objects.requireNonNull(instance.getCountAtOrAbove(2)).intValue());
             instance.add(2);
         }
  
         // Inject a rogue 1
         instance.add(1);
-        assertEquals(TESTNET.getMajorityWindow() - 1, instance.getCountAtOrAbove(2).intValue());
+        assertEquals(TESTNET.getMajorityWindow() - 1, Objects.requireNonNull(instance.getCountAtOrAbove(2)).intValue());
 
         // Check we accept high values as well
         instance.add(10);
-        assertEquals(TESTNET.getMajorityWindow() - 1, instance.getCountAtOrAbove(2).intValue());
+        assertEquals(TESTNET.getMajorityWindow() - 1, Objects.requireNonNull(instance.getCountAtOrAbove(2)).intValue());
     }
 
     @Test
@@ -119,9 +121,10 @@ public class VersionTallyTest {
             assertEquals(2, chainHead.getHeader().version());
             time = time.plus(1, ChronoUnit.MINUTES);
         }
+        assertNotNull(chainHead);
 
         VersionTally instance = new VersionTally(TESTNET);
         instance.initialize(blockStore, chainHead);
-        assertEquals(TESTNET.getMajorityWindow(), instance.getCountAtOrAbove(2).intValue());
+        assertEquals(TESTNET.getMajorityWindow(), Objects.requireNonNull(instance.getCountAtOrAbove(2)).intValue());
     }
 }
