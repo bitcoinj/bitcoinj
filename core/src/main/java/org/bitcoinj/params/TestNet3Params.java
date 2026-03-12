@@ -21,6 +21,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 
@@ -68,7 +69,7 @@ public class TestNet3Params extends BitcoinNetworkParams {
 
     }
 
-    private static TestNet3Params instance;
+    @Nullable private static TestNet3Params instance;
     public static synchronized TestNet3Params get() {
         if (instance == null) {
             instance = new TestNet3Params();

@@ -21,6 +21,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 
@@ -119,7 +120,7 @@ public class MainNetParams extends BitcoinNetworkParams {
         };
     }
 
-    private static MainNetParams instance;
+    @Nullable private static MainNetParams instance;
     public static synchronized MainNetParams get() {
         if (instance == null) {
             instance = new MainNetParams();

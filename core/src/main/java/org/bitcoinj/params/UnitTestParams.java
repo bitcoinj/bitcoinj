@@ -22,6 +22,7 @@ import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.TestBlocks;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Network parameters used by the bitcoinj unit tests (and potentially your own). This lets you solve a block using
@@ -59,7 +60,7 @@ public class UnitTestParams extends BitcoinNetworkParams {
         addrSeeds = null;
     }
 
-    private static UnitTestParams instance;
+    @Nullable private static UnitTestParams instance;
     public static synchronized UnitTestParams get() {
         if (instance == null) {
             instance = new UnitTestParams();

@@ -20,6 +20,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 
@@ -65,7 +66,7 @@ public class SigNetParams extends BitcoinNetworkParams {
         addrSeeds = null;
     }
 
-    private static SigNetParams instance;
+    @Nullable private static SigNetParams instance;
     public static synchronized SigNetParams get() {
         if (instance == null) {
             instance = new SigNetParams();
