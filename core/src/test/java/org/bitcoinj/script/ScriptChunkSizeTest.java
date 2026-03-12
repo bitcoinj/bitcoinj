@@ -16,6 +16,7 @@
 
 package org.bitcoinj.script;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.bitcoinj.script.ScriptOpCodes.OP_NOP;
@@ -42,7 +44,7 @@ public class ScriptChunkSizeTest {
     private static final Random RANDOM = new Random(42);
 
     @Parameterized.Parameter
-    public ScriptChunk scriptChunk;
+    @Nullable public ScriptChunk scriptChunk;
 
     @Parameterized.Parameters
     public static Collection<ScriptChunk> data() {
@@ -83,6 +85,7 @@ public class ScriptChunkSizeTest {
 
     @Test
     public void testSize() {
+        Objects.requireNonNull(scriptChunk);
         assertEquals(scriptChunk.toByteArray().length, scriptChunk.size());
     }
 }
