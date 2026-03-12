@@ -1737,10 +1737,10 @@ public class PeerGroup implements TransactionBroadcaster {
         }
     }
 
-    /** Use "Context.get().getConfidenceTable()" instead */
+    /** Use "Context.get().peerNetwork().txConfidenceTable()" instead */
     @Deprecated @Nullable
     public TxConfidenceTable getMemoryPool() {
-        return Context.get().getConfidenceTable();
+        return Context.get().peerNetwork().txConfidenceTable();
     }
 
     /**
