@@ -46,7 +46,7 @@ public final class Fiat implements Monetary, Comparable<Fiat> {
 
     private Fiat(final String currencyCode, final long value) {
         this.value = value;
-        this.currencyCode = currencyCode;
+        this.currencyCode = Objects.requireNonNull(currencyCode);
     }
 
     public static Fiat valueOf(final String currencyCode, final long value) {
