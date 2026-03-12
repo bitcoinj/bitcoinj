@@ -17,4 +17,7 @@
 /**
  * Listeners for various wallet events.
  */
+@NullMarked
 package org.bitcoinj.wallet.listeners;
+
+import org.jspecify.annotations.NullMarked;
