@@ -17,4 +17,7 @@
 /**
  * Classes that know how to discover peers in the P2P network using DNS or HTTP.
  */
+@NullMarked
 package org.bitcoinj.net.discovery;
+
+import org.jspecify.annotations.NullMarked;
