@@ -23,6 +23,7 @@ import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public class MultiplexingDiscovery implements PeerDiscovery {
     private static final Logger log = LoggerFactory.getLogger(MultiplexingDiscovery.class);
 
     protected final List<PeerDiscovery> seeds;
-    private volatile ExecutorService vThreadPool;
+    @Nullable private volatile ExecutorService vThreadPool;
     private final boolean parallelQueries;
     private final boolean shufflePeers;
 
