@@ -38,7 +38,7 @@ public abstract class BitcoinNetworkParams extends NetworkParameters {
     public static final int REWARD_HALVING_INTERVAL = 210_000;
 
     /** lazy-initialized by the first call to {@link NetworkParameters#getGenesisBlock()} */
-    protected Block genesisBlock;
+    @Nullable protected Block genesisBlock;
 
     /**
      * No-args constructor
