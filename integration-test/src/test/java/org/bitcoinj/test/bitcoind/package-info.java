@@ -17,4 +17,7 @@
 /**
  * <b>bitcoinj</b> integration tests that require {@code bitcoind}.
  */
+@NullMarked
 package org.bitcoinj.test.bitcoind;
+
+import org.jspecify.annotations.NullMarked;
