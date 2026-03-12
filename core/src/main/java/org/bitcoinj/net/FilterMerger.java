@@ -20,6 +20,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.PeerFilterProvider;
 import org.bitcoinj.core.PeerGroup;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -49,15 +50,15 @@ public class FilterMerger {
     // TODO: Make final after deprecated setBloomFilterFPRate() method is removed
     private volatile double vBloomFilterFPRate;
     private int lastBloomFilterElementCount;
-    private BloomFilter lastFilter;
+    @Nullable private BloomFilter lastFilter;
 
     public FilterMerger(double bloomFilterFPRate) {
         this.vBloomFilterFPRate = bloomFilterFPRate;
     }
 
     public static class Result {
-        public BloomFilter filter;
-        public Instant earliestKeyTime;
+        @Nullable public BloomFilter filter;
+        @Nullable public Instant earliestKeyTime;
         public boolean changed;
     }
 
@@ -118,6 +119,7 @@ public class FilterMerger {
         return vBloomFilterFPRate;
     }
 
+    @Nullable
     public BloomFilter getLastFilter() {
         return lastFilter;
     }
