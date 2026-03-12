@@ -21,6 +21,7 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 
@@ -67,7 +68,7 @@ public class RegTestParams extends BitcoinNetworkParams {
         return true;
     }
 
-    private static RegTestParams instance;
+    @Nullable private static RegTestParams instance;
     public static synchronized RegTestParams get() {
         if (instance == null) {
             instance = new RegTestParams();
