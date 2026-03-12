@@ -22,6 +22,7 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.MessageSerializer;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -109,7 +110,7 @@ public class BlockFileLoader implements Iterable<Block> {
     public class BlockFileIterator implements Iterator<ByteBuffer> {
         private final File file;
         private final BufferedInputStream currentFileStream;
-        private ByteBuffer nextBlock = null;
+        private @Nullable ByteBuffer nextBlock = null;
 
         public BlockFileIterator(File blockFile) throws FileNotFoundException {
             this.file = blockFile;
@@ -124,6 +125,7 @@ public class BlockFileLoader implements Iterable<Block> {
         }
 
         @Override
+        @Nullable
         public ByteBuffer next() throws NoSuchElementException {
             if (!hasNext())
                 throw new NoSuchElementException();

@@ -18,6 +18,7 @@ package org.bitcoinj.utils;
 
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.utils.BtcAutoFormat.Style;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -1309,6 +1310,7 @@ public abstract class BtcFormat extends Format {
       * {@link Coin} object that represents the parsed value.
       * @see NumberFormat */
     @Override
+    @Nullable
     public final Object parseObject(String source, ParsePosition pos) { return parse(source, pos); }
 
     private static class ScaleMatcher {
@@ -1320,8 +1322,8 @@ public abstract class BtcFormat extends Format {
     /* Lazy initialization;  No reason to create all these objects unless needed for parsing */
     // coin indicator regex String; TODO: does this need to be volatile?
     private volatile String ci = "(" + COIN_SYMBOL + "|" + COIN_SYMBOL_ALT + "|B⃦|" + COIN_CODE + "|XBT)";
-    private Pattern coinPattern;
-    private volatile ScaleMatcher[] denoms;
+    private @Nullable Pattern coinPattern;
+    private volatile ScaleMatcher @Nullable [] denoms;
     ScaleMatcher[] denomMatchers() {
         ScaleMatcher[] result = denoms;
         if (result == null) { synchronized(this) {
@@ -1412,6 +1414,7 @@ public abstract class BtcFormat extends Format {
      * @return a Coin object representing the parsed value
      * @see java.text.ParsePosition
      */
+    @Nullable
     public Coin parse(String source, ParsePosition pos) {
         DecimalFormatSymbols anteSigns = null;
         int parseScale = COIN_SCALE; // default
@@ -1427,6 +1430,7 @@ public abstract class BtcFormat extends Format {
                     }
                 }
                 if (parseScale == COIN_SCALE) {
+                    Objects.requireNonNull(coinPattern);
                     Matcher matcher = coinPattern.matcher(source);
                     matcher.find();
                     anteSigns = setSymbolAndCode(numberFormat, matcher.group());
