@@ -27,6 +27,7 @@ import org.bitcoinj.params.Networks;
 import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.base.utils.MonetaryFormat;
 import org.bitcoinj.utils.VersionTally;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -77,7 +78,7 @@ public abstract class NetworkParameters {
     protected String[] dnsSeeds;
     protected int[] addrSeeds;
     protected Map<Integer, Sha256Hash> checkpoints = new HashMap<>();
-    protected volatile transient MessageSerializer defaultSerializer = null;
+    @Nullable protected volatile transient MessageSerializer defaultSerializer = null;
 
     protected NetworkParameters(Network network) {
         this.network = network;
