@@ -18,6 +18,7 @@
 package org.bitcoinj.net;
 
 import com.google.common.base.Throwables;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -39,7 +41,7 @@ public class NioClient implements MessageWriteTarget {
     class Handler implements TimeoutHandler, StreamConnection {
         private final StreamConnection upstreamConnection;
         private final SocketTimeoutTask timeoutTask;
-        private MessageWriteTarget writeTarget;
+        @Nullable private MessageWriteTarget writeTarget;
         private boolean closeOnOpen = false;
         private boolean closeCalled = false;
 
@@ -125,11 +127,13 @@ public class NioClient implements MessageWriteTarget {
 
     @Override
     public void closeConnection() {
+        Objects.requireNonNull(handler.writeTarget);
         handler.writeTarget.closeConnection();
     }
 
     @Override
     public synchronized CompletableFuture<Void> writeBytes(byte[] message) throws IOException {
+        Objects.requireNonNull(handler.writeTarget);
         return handler.writeTarget.writeBytes(message);
     }
 }
