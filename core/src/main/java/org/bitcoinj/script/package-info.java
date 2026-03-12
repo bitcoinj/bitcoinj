@@ -17,4 +17,7 @@
 /**
  * Classes for working with and executing Bitcoin script programs, as embedded in inputs and outputs.
  */
+@NullMarked
 package org.bitcoinj.script;
+
+import org.jspecify.annotations.NullMarked;
