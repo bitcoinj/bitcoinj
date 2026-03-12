@@ -29,7 +29,7 @@ public class BitcoinNetworkParamsTest {
     private final BitcoinNetworkParams BITCOIN_PARAMS = new BitcoinNetworkParams(BitcoinNetwork.TESTNET) {
         @Override
         public Block getGenesisBlock() {
-            return null;
+            throw new UnsupportedOperationException();
         }
     };
 
