@@ -1094,11 +1094,9 @@ public class ScriptExecution {
             throw new ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, "Script larger than 10,000 bytes");
 
         LinkedList<byte[]> stack = new LinkedList<>();
-        LinkedList<byte[]> p2shStack = null;
 
         ScriptExecution.executeScript(txContainingThis, scriptSigIndex, script, stack, verifyFlags);
-        if (verifyFlags.contains(VerifyFlag.P2SH))
-            p2shStack = new LinkedList<>(stack);
+        LinkedList<byte[]> p2shStack = (verifyFlags.contains(VerifyFlag.P2SH)) ? new LinkedList<>(stack) : null;
         ScriptExecution.executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, verifyFlags);
 
         if (stack.size() == 0)
