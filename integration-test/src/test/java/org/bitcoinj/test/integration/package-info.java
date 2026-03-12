@@ -25,4 +25,7 @@
  * </ul>
  * Tests in this package use <b>JUnit 5</b>.
  */
+@NullMarked
 package org.bitcoinj.test.integration;
+
+import org.jspecify.annotations.NullMarked;
