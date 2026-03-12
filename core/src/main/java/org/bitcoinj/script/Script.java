@@ -114,7 +114,7 @@ public class Script {
      * @param creationTime creation time to associate the script with
      * @return script that wraps the chunks
      */
-    public static Script of(List<ScriptChunk> chunks, Instant creationTime) {
+    public static Script of(List<ScriptChunk> chunks, @Nullable Instant creationTime) {
         return new Script(chunks, creationTime);
     }
 
@@ -139,7 +139,7 @@ public class Script {
      * @return parsed program
      * @throws ScriptException if the program could not be parsed
      */
-    public static Script parse(byte[] program, Instant creationTime) throws ScriptException {
+    public static Script parse(byte[] program, @Nullable Instant creationTime) throws ScriptException {
         return new Script(program, creationTime);
     }
 
@@ -390,16 +390,14 @@ public class Script {
      */
     public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
         if (ScriptPattern.isP2PKH(this)) {
-            checkArgument(key != null, () ->
-                    "key required to create P2PKH input script");
+            Objects.requireNonNull(key, "key required to create P2PKH input script");
             return ScriptBuilder.createInputScript(null, key);
         } else if (ScriptPattern.isP2WPKH(this)) {
             return ScriptBuilder.createEmpty();
         } else if (ScriptPattern.isP2PK(this)) {
             return ScriptBuilder.createInputScript(null);
         } else if (ScriptPattern.isP2SH(this)) {
-            checkArgument(redeemScript != null, () ->
-                    "redeem script required to create P2SH input script");
+            Objects.requireNonNull(redeemScript, "redeem script required to create P2SH input script");
             return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Do not understand script type: " + this);
@@ -478,8 +476,10 @@ public class Script {
 
         ArrayList<ECKey> result = new ArrayList<>();
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
-        for (int i = 0 ; i < numKeys ; i++)
-            result.add(ECKey.fromPublicOnly(chunks.get(1 + i).data));
+        for (int i = 0 ; i < numKeys ; i++) {
+            byte[] data = Objects.requireNonNull(chunks.get(1 + i).data);
+            result.add(ECKey.fromPublicOnly(data));
+        }
         return result;
     }
 
@@ -488,7 +488,8 @@ public class Script {
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true, false);
         for (int i = 0 ; i < numKeys ; i++) {
-            if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
+            byte[] data = Objects.requireNonNull(chunks.get(1 + i).data);
+            if (ECKey.fromPublicOnly(data).verify(hash, signature)) {
                 return i;
             }
         }
@@ -572,7 +573,7 @@ public class Script {
         Collections.reverse(chunks);
         for (ScriptChunk chunk : chunks) {
             if (!chunk.isOpCode()) {
-                Script subScript = parse(chunk.data);
+                Script subScript = parse(Objects.requireNonNull(chunk.data));
                 return getSigOpCount(subScript.chunks, true);
             }
         }
@@ -604,8 +605,7 @@ public class Script {
     public int getNumberOfBytesRequiredToSpend(@Nullable ECKey pubKey, @Nullable Script redeemScript) {
         if (ScriptPattern.isP2SH(this)) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
-            checkArgument(redeemScript != null, () ->
-                    "P2SH script requires redeemScript to be spent");
+            Objects.requireNonNull(redeemScript, "P2SH script requires redeemScript to be spent");
             return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.program().length;
         } else if (ScriptPattern.isSentToMultisig(this)) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
