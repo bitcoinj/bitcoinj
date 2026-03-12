@@ -17,4 +17,7 @@
 /**
  * Listeners for various bitcoinj events.
  */
+@NullMarked
 package org.bitcoinj.core.listeners;
+
+import org.jspecify.annotations.NullMarked;
