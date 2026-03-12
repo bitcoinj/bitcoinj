@@ -181,8 +181,8 @@ public class ScriptChunk {
      * Get the script's push data or {@code null} if there is none.
      * @return push data or {@code null}
      */
-    @Nullable
-    public byte[] pushData() {
+
+    public byte @Nullable [] pushData() {
         return data;
     }
 

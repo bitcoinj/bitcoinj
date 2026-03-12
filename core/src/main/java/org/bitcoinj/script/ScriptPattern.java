@@ -24,6 +24,7 @@ import org.bitcoinj.base.Sha256Hash;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.bitcoinj.script.Script.decodeFromOpN;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
@@ -72,7 +73,7 @@ public class ScriptPattern {
      * will want to guard calls to this method with {@link #isP2PKH(Script)}.
      */
     public static byte[] extractHashFromP2PKH(Script script) {
-        return script.chunks().get(2).data;
+        return Objects.requireNonNull(script.chunks().get(2).data);
     }
 
     /**
@@ -114,7 +115,7 @@ public class ScriptPattern {
      * will want to guard calls to this method with {@link #isP2SH(Script)}.
      */
     public static byte[] extractHashFromP2SH(Script script) {
-        return script.chunks().get(1).data;
+        return Objects.requireNonNull(script.chunks().get(1).data);
     }
 
     /**
@@ -145,7 +146,7 @@ public class ScriptPattern {
      * want to guard calls to this method with {@link #isP2PK(Script)}.
      */
     public static byte[] extractKeyFromP2PK(Script script) {
-        return script.chunks().get(0).data;
+        return Objects.requireNonNull(script.chunks().get(0).data);
     }
 
     /**
@@ -201,7 +202,7 @@ public class ScriptPattern {
      * {@link #isP2WH(Script)}.
      */
     public static byte[] extractHashFromP2WH(Script script) {
-        return script.chunks().get(1).data;
+        return Objects.requireNonNull(script.chunks().get(1).data);
     }
 
     /**
@@ -227,7 +228,7 @@ public class ScriptPattern {
      * form, so you will want to guard calls to this method with {@link #isP2TR(Script)}.
      */
     public static byte[] extractOutputKeyFromP2TR(Script script) {
-        return script.chunks().get(1).data;
+        return Objects.requireNonNull(script.chunks().get(1).data);
     }
 
     /**
