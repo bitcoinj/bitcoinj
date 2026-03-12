@@ -20,6 +20,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Stack;
 
@@ -75,6 +76,7 @@ public class VersionTally {
      * @return the count for the block version, or null if the window is not yet
      * full.
      */
+    @Nullable
     public Integer getCountAtOrAbove(final long version) {
         if (versionsStored < versionWindow.length) {
             return null;
