@@ -89,7 +89,13 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
             }
 
             Sha256Hash sighash = tx.hashForSignature(i, redeemData.redeemScript, Transaction.SigHash.ALL, false);
-            SignatureAndKey sigKey = getSignature(sighash, propTx.keyPaths.get(scriptPubKey));
+
+            HDPath.HDPartialPath keyPath = propTx.keyPaths.get(scriptPubKey);
+            if (keyPath == null) {
+                log.warn("scriptPubKey not found in proposed transaction keyPaths");
+                return false;
+            }
+            SignatureAndKey sigKey = getSignature(sighash, keyPath);
             TransactionSignature txSig = new TransactionSignature(sigKey.sig, Transaction.SigHash.ALL, false);
             int sigIndex = inputScript.getSigInsertionIndex(sighash, sigKey.pubKey);
             inputScript = scriptPubKey.getScriptSigWithSignature(inputScript, txSig.encodeToBitcoin(), sigIndex);
