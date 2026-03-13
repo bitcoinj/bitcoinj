@@ -18,6 +18,7 @@
 package org.bitcoinj.base;
 
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.btc.BtcSha256;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +39,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * <p>
  * Given that {@code Sha256Hash} instances can be created using {@link #wrapReversed(byte[])} or {@link #twiceOf(byte[])} or by wrapping raw bytes, there is no guarantee that if two {@code Sha256Hash} instances are found equal (via {@link #equals(Object)}) that their preimages would be the same (even in the absence of a hash collision.)
  */
-public class Sha256Hash implements Comparable<Sha256Hash> {
+public class Sha256Hash implements Comparable<Sha256Hash>, BtcSha256 {
     public static final int LENGTH = 32; // bytes
     public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);
 
@@ -261,11 +262,15 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
         return ByteUtils.bytesToBigInteger(bytes);
     }
 
+    public byte[] toByteArray() {
+        return bytes;
+    }
+
     /**
      * Returns the internal byte array, without defensively copying. Therefore do NOT modify the returned array.
      */
     public byte[] getBytes() {
-        return bytes;
+        return toByteArray();
     }
 
     /**
