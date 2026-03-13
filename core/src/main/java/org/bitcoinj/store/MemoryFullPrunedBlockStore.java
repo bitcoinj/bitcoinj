@@ -34,6 +34,7 @@ import org.bitcoinj.script.ScriptPattern;
 
 import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -194,10 +195,10 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         public boolean wasUndoable;
         public StoredBlockAndWasUndoableFlag(StoredBlock block, boolean wasUndoable) { this.block = block; this.wasUndoable = wasUndoable; }
     }
-    private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
-    private TransactionalFullBlockMap fullBlockMap;
+    private @Nullable TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
+    private @Nullable TransactionalFullBlockMap fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
-    private TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
+    private @Nullable TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private final int fullStoreDepth;
@@ -209,21 +210,20 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
      * @param fullStoreDepth The depth of blocks to keep FullStoredBlocks instead of StoredBlocks
      */
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
+        network = params.network();
         blockMap = new TransactionalHashMap<>();
         fullBlockMap = new TransactionalFullBlockMap();
         transactionOutputMap = new TransactionalHashMap<>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
+        StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().asHeader(), params.getGenesisBlock().getWork(), 0);
+        chainHead = storedGenesisHeader;
+        verifiedChainHead = storedGenesisHeader;
         try {
-            StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().asHeader(), params.getGenesisBlock().getWork(), 0);
             // The coinbase in the genesis block is not spendable
-            List<Transaction> genesisTransactions = new LinkedList<>();
-            StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), genesisTransactions);
+            StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), Collections.emptyList());
             put(storedGenesisHeader, storedGenesis);
-            setChainHead(storedGenesisHeader);
-            setVerifiedChainHead(storedGenesisHeader);
-            network = params.network();
-        } catch (BlockStoreException | VerificationException e) {
+        } catch (BlockStoreException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
@@ -238,6 +238,8 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public synchronized final void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(blockMap);
         Sha256Hash hash = storedBlock.getHeader().getHash();
         fullBlockMap.put(hash, storedBlock.getHeight(), undoableBlock);
         blockMap.put(hash, new StoredBlockAndWasUndoableFlag(storedBlock, true));
@@ -279,6 +281,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     }
     
     @Override
+    @Nullable
     public synchronized StoredBlock getVerifiedChainHead() throws BlockStoreException {
         Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
         return verifiedChainHead;
@@ -292,6 +295,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             setChainHead(chainHead);
         // Potential leak here if not all blocks get setChainHead'd
         // Though the FullPrunedBlockStore allows for this, the current AbstractBlockChain will not do it.
+        Objects.requireNonNull(fullBlockMap);
         fullBlockMap.removeByHeight(chainHead.getHeight() - fullStoreDepth);
     }
     
@@ -324,6 +328,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public synchronized void beginDatabaseBatchWrite() throws BlockStoreException {
+        Objects.requireNonNull(blockMap);
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(transactionOutputMap);
         blockMap.beginDatabaseBatchWrite();
         fullBlockMap.BeginTransaction();
         transactionOutputMap.beginDatabaseBatchWrite();
@@ -331,6 +338,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public synchronized void commitDatabaseBatchWrite() throws BlockStoreException {
+        Objects.requireNonNull(blockMap);
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(transactionOutputMap);
         blockMap.commitDatabaseBatchWrite();
         fullBlockMap.CommitTransaction();
         transactionOutputMap.commitDatabaseBatchWrite();
@@ -338,6 +348,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public synchronized void abortDatabaseBatchWrite() throws BlockStoreException {
+        Objects.requireNonNull(blockMap);
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(transactionOutputMap);
         blockMap.abortDatabaseBatchWrite();
         fullBlockMap.AbortTransaction();
         transactionOutputMap.abortDatabaseBatchWrite();
@@ -359,7 +372,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public int getChainHeadHeight() throws UTXOProviderException {
         try {
-            return getVerifiedChainHead().getHeight();
+            return Objects.requireNonNull(getVerifiedChainHead()).getHeight();
         } catch (BlockStoreException e) {
             throw new UTXOProviderException(e);
         }
@@ -367,6 +380,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException {
+        Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         // This is *NOT* optimal: We go through all the outputs and select the ones we are looking for.
         // If someone uses this store for production then they have a lot more to worry about than an inefficient impl :)
         List<UTXO> foundOutputs = new ArrayList<>();

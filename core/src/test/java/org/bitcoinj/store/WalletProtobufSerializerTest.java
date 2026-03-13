@@ -192,7 +192,9 @@ public class WalletProtobufSerializerTest {
         myWallet.receiveFromBlock(doubleSpends.t2, null, BlockChain.NewBlockType.BEST_CHAIN, 0);
         Wallet wallet1 = roundTrip(myWallet);
         assertEquals(1, wallet1.getTransactions(true).size());
+        assertNotNull(doubleSpends.t1);
         Transaction t1 = wallet1.getTransaction(doubleSpends.t1.getTxId());
+        assertNotNull(t1);
         assertEquals(ConfidenceType.DEAD, t1.getConfidence().getConfidenceType());
         assertEquals(Coin.ZERO, wallet1.getBalance());
 
@@ -408,7 +410,7 @@ public class WalletProtobufSerializerTest {
             new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET, null, proto);
             fail();
         } catch (UnreadableWalletException e) {
-            assertTrue(e.getMessage().contains("mandatory"));
+            assertTrue(Objects.requireNonNull(e.getMessage()).contains("mandatory"));
         }
         Wallet wallet = new WalletProtobufSerializer().readWallet(BitcoinNetwork.TESTNET,
                 new WalletExtension[]{ new FooWalletExtension("com.whatever.required", true) },
