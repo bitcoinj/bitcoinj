@@ -19,4 +19,7 @@
  * local private keys or fetching them from remote servers. The {@link org.bitcoinj.wallet.Wallet} class uses these
  * when sending money.
  */
+@NullMarked
 package org.bitcoinj.signers;
+
+import org.jspecify.annotations.NullMarked;
