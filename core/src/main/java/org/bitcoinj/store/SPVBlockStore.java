@@ -65,7 +65,7 @@ public class SPVBlockStore implements BlockStore {
     // Magic header for the V2 format.
     static final byte[] HEADER_MAGIC_V2 = "SPV2".getBytes(StandardCharsets.US_ASCII);
 
-    protected volatile MappedByteBuffer buffer;
+    protected volatile @Nullable MappedByteBuffer buffer;
     protected final NetworkParameters params;
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
@@ -95,8 +95,8 @@ public class SPVBlockStore implements BlockStore {
         }
     };
     // Used to stop other applications/processes from opening the store.
-    protected FileLock fileLock = null;
-    protected RandomAccessFile randomAccessFile = null;
+    protected @Nullable FileLock fileLock;
+    protected RandomAccessFile randomAccessFile;
     private final FileChannel channel;
     private int fileLength;
 
@@ -201,6 +201,7 @@ public class SPVBlockStore implements BlockStore {
     }
 
     private void initNewStore(Block genesisBlock) throws Exception {
+        Objects.requireNonNull(buffer);
         ((Buffer) buffer).rewind();
         buffer.put(HEADER_MAGIC_V2);
         // Insert the genesis block.
@@ -225,6 +226,7 @@ public class SPVBlockStore implements BlockStore {
 
         randomAccessFile.setLength(fileLength);
         // Map it into memory again because of the length change.
+        Objects.requireNonNull(buffer);
         buffer.force();
         buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
 
@@ -327,7 +329,7 @@ public class SPVBlockStore implements BlockStore {
         } finally { lock.unlock(); }
     }
 
-    protected StoredBlock lastChainHead = null;
+    protected @Nullable StoredBlock lastChainHead;
 
     @Override
     public StoredBlock getChainHead() throws BlockStoreException {
@@ -366,14 +368,19 @@ public class SPVBlockStore implements BlockStore {
 
     @Override
     public void close() throws BlockStoreException {
-        try {
+        if (!(buffer == null)) {
             buffer.force();
             buffer = null;  // Allow it to be GCd and the underlying file mapping to go away.
-            fileLock.release();
+        }
+        try {
+            if (fileLock != null) {
+                fileLock.release();
+            }
             randomAccessFile.close();
-            blockCache.clear();
         } catch (IOException e) {
             throw new BlockStoreException(e);
+        } finally {
+            blockCache.clear();
         }
     }
 
@@ -395,6 +402,7 @@ public class SPVBlockStore implements BlockStore {
 
     /** Returns the offset from the file start where the latest block should be written (end of prev block). */
     int getRingCursor() {
+        Objects.requireNonNull(buffer);
         int c = buffer.getInt(4);
         checkState(c >= FILE_PROLOGUE_BYTES, () ->
                 "integer overflow");
@@ -403,10 +411,12 @@ public class SPVBlockStore implements BlockStore {
 
     private void setRingCursor(int newCursor) {
         checkArgument(newCursor >= 0);
+        Objects.requireNonNull(buffer);
         buffer.putInt(4, newCursor);
     }
 
     public void clear() throws Exception {
+        Objects.requireNonNull(buffer);
         lock.lock();
         try {
             // Clear caches
