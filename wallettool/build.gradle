@@ -123,6 +123,8 @@ if (hasGraalVM) {
                 imageName = walletToolName
                 configurationFileDirectories.from(file('src/main/graal'))
                 buildArgs.add('--allow-incomplete-classpath')
+                buildArgs.add('-H:+UnlockExperimentalVMOptions')
+                buildArgs.add('-H:-CheckToolchain')
             }
         }
     }
