@@ -173,16 +173,21 @@ public class Peer extends PeerSocketHandler {
      * <p>
      * Don't add to getDataFutures directly, use either addGetDataFuture() or addGetDataFutures().
      */
-    private final Queue<GetDataRequest<Message>> getDataFutures;
+    private final Queue<GetDataRequest<Transaction>> getTxDataFutures;
+    private final Queue<GetDataRequest<Block>> getBlockDataFutures;
 
     @SuppressWarnings("unchecked")
-    private <T extends Message> void addGetDataFuture(GetDataRequest<T> future) {
-        getDataFutures.add((GetDataRequest<Message>) future);
+    private <T extends Message> void addGetDataTxFuture(GetDataRequest<T> future) {
+        getTxDataFutures.add((GetDataRequest<Transaction>) future);
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Message> void addGetDataFutures(List<? extends GetDataRequest<T>> futures) {
-        getDataFutures.addAll((List<? extends GetDataRequest<Message>>) futures);
+    private <T extends Message> void addGetDataBlockFuture(GetDataRequest<T> future) {
+        getBlockDataFutures.addAll((List<? extends GetDataRequest<Block>>) future);
+    }
+
+    private void addGetDataFutures(List<? extends GetDataRequest<Transaction>> futures) {
+        getTxDataFutures.addAll(futures);
     }
 
     @GuardedBy("getAddrFutures") private final LinkedList<CompletableFuture<AddressMessage>> getAddrFutures;
@@ -254,7 +259,8 @@ public class Peer extends PeerSocketHandler {
         this.blockChain = chain;  // Allowed to be null.
         this.requiredServices = requiredServices;
         this.vDownloadData = chain != null;
-        this.getDataFutures = new ConcurrentLinkedQueue<>();
+        this.getBlockDataFutures = new ConcurrentLinkedQueue<>();
+        this.getTxDataFutures = new ConcurrentLinkedQueue<>();
         this.getAddrFutures = new LinkedList<>();
         this.fastCatchupTime = params.getGenesisBlock().time();
         this.pendingPings = new CopyOnWriteArrayList<>();
@@ -611,12 +617,22 @@ public class Peer extends PeerSocketHandler {
         // in the chain).
         //
         // We go through and cancel the pending getdata futures for the items we were told weren't found.
-        for (GetDataRequest<Message> req : getDataFutures) {
+        for (GetDataRequest<Transaction> req : getTxDataFutures) {
             for (InventoryItem item : m.getItems()) {
                 if (item.hash.equals(req.hash)) {
                     log.info("{}: Bottomed out dep tree at {}", this, req.hash);
                     req.cancel(true);
-                    getDataFutures.remove(req);
+                    getTxDataFutures.remove(req);
+                    break;
+                }
+            }
+        }
+        for (GetDataRequest<Block> req : getBlockDataFutures) {
+            for (InventoryItem item : m.getItems()) {
+                if (item.hash.equals(req.hash)) {
+                    log.info("{}: Bottomed out dep tree at {}", this, req.hash);
+                    req.cancel(true);
+                    getBlockDataFutures.remove(req);
                     break;
                 }
             }
@@ -1121,12 +1137,25 @@ public class Peer extends PeerSocketHandler {
         return exhausted;
     }
 
-    private boolean maybeHandleRequestedData(Message m, Sha256Hash hash) {
+    private boolean maybeHandleRequestedData(Transaction m, Sha256Hash hash) {
         boolean found = false;
-        for (GetDataRequest<Message> req : getDataFutures) {
+        for (GetDataRequest<Transaction> req : getTxDataFutures) {
             if (hash.equals(req.hash)) {
                 req.complete(m);
-                getDataFutures.remove(req);
+                getTxDataFutures.remove(req);
+                found = true;
+                // Keep going in case there are more.
+            }
+        }
+        return found;
+    }
+
+    private boolean maybeHandleRequestedData(Block m, Sha256Hash hash) {
+        boolean found = false;
+        for (GetDataRequest<Block> req : getBlockDataFutures) {
+            if (hash.equals(req.hash)) {
+                req.complete(m);
+                getBlockDataFutures.remove(req);
                 found = true;
                 // Keep going in case there are more.
             }
@@ -1290,7 +1319,7 @@ public class Peer extends PeerSocketHandler {
         // This does not need to be locked.
         log.info("Request to fetch block {}", blockHash);
         GetDataMessage getdata = GetDataMessage.ofBlock(blockHash, true);
-        return sendSingleGetData(getdata);
+        return sendSingleGetDataBlock(getdata);
     }
 
     /**
@@ -1303,21 +1332,35 @@ public class Peer extends PeerSocketHandler {
         // TODO: Unit test this method.
         log.info("Request to fetch peer mempool tx  {}", hash);
         GetDataMessage getdata = GetDataMessage.ofTransaction(hash, vPeerVersionMessage.services().has(Services.NODE_WITNESS));
-        return sendSingleGetData(getdata);
+        return sendSingleGetDataTransaction(getdata);
     }
 
     /**
-     * Sends a getdata with a single item in it.
-     * @param getdata A GetDataMessage with a single item in it
+     * Sends a getdata with a single Transaction item in it.
+     * @param getdata A GetDataMessage with a single Transaction item in it
      * @return A future for the requested item
-     * @param <T> Either {@link Block} or {@link Transaction}
      * @throws IllegalArgumentException If the GetDataMessage does not contain exactly 1 item
      */
-    private <T extends Message> CompletableFuture<T> sendSingleGetData(GetDataMessage getdata) {
+    private CompletableFuture<Transaction> sendSingleGetDataTransaction(GetDataMessage getdata) {
         // This does not need to be locked.
         checkArgument(getdata.getItems().size() == 1);
-        GetDataRequest<T> req = new GetDataRequest<>(getdata.getItems().get(0).hash);
-        addGetDataFuture(req);
+        GetDataRequest<Transaction> req = new GetDataRequest<>(getdata.getItems().get(0).hash);
+        addGetDataTxFuture(req);
+        sendMessage(getdata);
+        return req;
+    }
+
+    /**
+     * Sends a getdata with a single Block item in it.
+     * @param getdata A GetDataMessage with a single Block item in it
+     * @return A future for the requested item
+     * @throws IllegalArgumentException If the GetDataMessage does not contain exactly 1 item
+     */
+    private CompletableFuture<Block> sendSingleGetDataBlock(GetDataMessage getdata) {
+        // This does not need to be locked.
+        checkArgument(getdata.getItems().size() == 1);
+        GetDataRequest<Block> req = new GetDataRequest<>(getdata.getItems().get(0).hash);
+        addGetDataBlockFuture(req);
         sendMessage(getdata);
         return req;
     }
