@@ -880,7 +880,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     if (key.hasDeterministicSeed()) {
                         seedBytes = key.getDeterministicSeed().toByteArray();
                     }
-                    seed = new DeterministicSeed(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, seedCreationTime);
+                    seed = DeterministicSeed.fromProtobuf(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, seedCreationTime);
                 } else if (key.hasEncryptedData()) {
                     if (key.hasDeterministicSeed())
                         throw new UnreadableWalletException("Malformed key proto: " + key);
@@ -892,7 +892,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         encryptedSeedBytes = new EncryptedData(encryptedSeed.getInitialisationVector().toByteArray(),
                                 encryptedSeed.getEncryptedPrivateKey().toByteArray());
                     }
-                    seed = new DeterministicSeed(data, encryptedSeedBytes, seedCreationTime);
+                    seed = DeterministicSeed.fromProtobufEncrypted(data, encryptedSeedBytes, seedCreationTime);
                 } else {
                     throw new UnreadableWalletException("Malformed key proto: " + key);
                 }

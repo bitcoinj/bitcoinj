@@ -27,7 +27,7 @@ public class DeterministicSeedTest {
     @Test
     public void testToString() {
         long creationTime = 1000L;
-        DeterministicSeed seed = new DeterministicSeed("correct horse battery staple", null, "", Instant.ofEpochSecond(creationTime));
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic("correct horse battery staple", "", Instant.ofEpochSecond(creationTime));
 
         String s1 = seed.toString();
         assertTrue(s1.contains("DeterministicSeed"));
