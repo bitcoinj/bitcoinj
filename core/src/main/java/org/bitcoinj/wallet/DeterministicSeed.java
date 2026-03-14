@@ -108,7 +108,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param creationTime when the seed was originally created
      */
     public static DeterministicSeed ofEntropy(byte[] entropy, String passphrase, Instant creationTime) {
-        return new DeterministicSeed(entropy, passphrase, Objects.requireNonNull(creationTime));
+        return DeterministicSeed.ofEntropyInternal(entropy, passphrase, Objects.requireNonNull(creationTime));
     }
 
     /**
@@ -118,7 +118,11 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
     public static DeterministicSeed ofEntropy(byte[] entropy, String passphrase) {
-        return new DeterministicSeed(entropy, passphrase, null);
+        return DeterministicSeed.ofEntropyInternal(entropy, passphrase, null);
+    }
+
+    public static DeterministicSeed ofEntropyInternal(byte[] entropy, String passphrase, @Nullable Instant creationTime) {
+        return new DeterministicSeed(entropy, passphrase, creationTime);
     }
 
     /**
@@ -129,7 +133,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
     public static DeterministicSeed ofRandom(SecureRandom random, int bits, String passphrase) {
-        return new DeterministicSeed(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+        return DeterministicSeed.ofEntropyInternal(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
