@@ -159,7 +159,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private DeterministicSeed(List<String> mnemonicCode, byte @Nullable [] seed, String passphrase, @Nullable Instant creationTime) {
-        this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, Objects.requireNonNull(passphrase))), mnemonicCode, creationTime);
+        this(optionalSeedFromMnemonic(mnemonicCode, passphrase, seed), mnemonicCode, creationTime);
     }
 
     private DeterministicSeed(byte[] entropy, String passphrase, @Nullable Instant creationTime) {
@@ -171,6 +171,15 @@ public class DeterministicSeed implements EncryptableItem {
         this.encryptedMnemonicCode = null;
         this.encryptedSeed = null;
         this.creationTime = creationTime;
+    }
+
+    // If seed is null, generate seed from mnemonic and passphrase. Otherwise, return unmodified seed.
+    private static byte[] optionalSeedFromMnemonic(List<String> mnemonicCode, String passphrase, byte @Nullable [] seed) {
+        return seed != null ? seed : seedFromMnemonic(mnemonicCode, passphrase);
+    }
+
+    private static byte[] seedFromMnemonic(List<String> mnemonicCode, String passphrase) {
+        return MnemonicCode.toSeed(mnemonicCode, Objects.requireNonNull(passphrase));
     }
 
     private static byte[] getEntropy(SecureRandom random, int bits) {
