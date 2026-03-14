@@ -150,6 +150,7 @@ public class DeterministicSeed implements EncryptableItem {
         return new DeterministicSeed(encryptedMnemonic, encryptedSeed, creationTime);
     }
 
+    // Canonical constructor: both seed and mnemonic sentence are present
     private DeterministicSeed(byte[] seed, List<String> mnemonic, @Nullable Instant creationTime) {
         this.seed = Objects.requireNonNull(seed);
         this.mnemonicCode = Objects.requireNonNull(mnemonic);
@@ -158,6 +159,7 @@ public class DeterministicSeed implements EncryptableItem {
         this.creationTime = creationTime;
     }
 
+    // Canonical constructor: encrypted mnemonic sentence and optional encrypted seed
     private DeterministicSeed(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
         this.seed = null;
         this.mnemonicCode = null;
