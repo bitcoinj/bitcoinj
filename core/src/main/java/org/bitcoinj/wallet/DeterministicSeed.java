@@ -137,7 +137,7 @@ public class DeterministicSeed implements EncryptableItem {
      * Use {@link #ofMnemonic(String, String, Instant)} or {@link #ofMnemonic(String, String)}  instead.
      */
     DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, @Nullable Instant creationTime) {
-        this(decodeMnemonicCode(mnemonicString), seed, passphrase, creationTime);
+        this(splitMnemonicCode(mnemonicString), seed, passphrase, creationTime);
     }
 
     /** Internal use only. */
@@ -326,11 +326,13 @@ public class DeterministicSeed implements EncryptableItem {
         return mnemonicCode != null ? InternalUtils.SPACE_JOINER.join(mnemonicCode) : null;
     }
 
+    // decode to String from byte[]
     private static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
-        return decodeMnemonicCode(new String(mnemonicCode, StandardCharsets.UTF_8));
+        return splitMnemonicCode(new String(mnemonicCode, StandardCharsets.UTF_8));
     }
 
-    private static List<String> decodeMnemonicCode(String mnemonicCode) {
+    // Split mnemonic code into List<String>
+    private static List<String> splitMnemonicCode(String mnemonicCode) {
         return InternalUtils.WHITESPACE_SPLITTER.splitToList(mnemonicCode);
     }
 }
