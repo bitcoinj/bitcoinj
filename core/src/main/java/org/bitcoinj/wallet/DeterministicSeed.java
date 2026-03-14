@@ -66,7 +66,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param creationTime when the seed was originally created
      */
     public static DeterministicSeed ofMnemonic(String mnemonicCode, String passphrase, Instant creationTime) {
-        return new DeterministicSeed(mnemonicCode, null, passphrase, Objects.requireNonNull(creationTime));
+        return new DeterministicSeed(splitMnemonicCode(mnemonicCode), null, passphrase, Objects.requireNonNull(creationTime));
     }
 
     /**
@@ -76,7 +76,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
     public static DeterministicSeed ofMnemonic(String mnemonicCode, String passphrase) {
-        return new DeterministicSeed(mnemonicCode, null, passphrase, null);
+        return new DeterministicSeed(splitMnemonicCode(mnemonicCode), null, passphrase, null);
     }
 
     /**
@@ -134,16 +134,12 @@ public class DeterministicSeed implements EncryptableItem {
 
     // For use in DeteministicKeyChain.fromProtobuf() only
     static DeterministicSeed fromProtobuf(String mnemonicString, byte[] seed, String passphrase, @Nullable Instant creationTime) {
-        return new DeterministicSeed(mnemonicString, seed, passphrase, creationTime);
+        return new DeterministicSeed(splitMnemonicCode(mnemonicString), seed, passphrase, creationTime);
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
     static DeterministicSeed fromProtobufEncrypted(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
         return new DeterministicSeed(encryptedMnemonic, encryptedSeed, creationTime);
-    }
-
-    private DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, @Nullable Instant creationTime) {
-        this(splitMnemonicCode(mnemonicString), seed, passphrase, creationTime);
     }
 
     private DeterministicSeed(byte[] seed, List<String> mnemonic, @Nullable Instant creationTime) {
