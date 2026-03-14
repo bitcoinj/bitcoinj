@@ -129,7 +129,7 @@ public class DeterministicSeed implements EncryptableItem {
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
     public static DeterministicSeed ofRandom(SecureRandom random, int bits, String passphrase) {
-        return new DeterministicSeed(random, bits, passphrase);
+        return new DeterministicSeed(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
@@ -160,10 +160,6 @@ public class DeterministicSeed implements EncryptableItem {
 
     private DeterministicSeed(List<String> mnemonicCode, byte @Nullable [] seed, String passphrase, @Nullable Instant creationTime) {
         this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, Objects.requireNonNull(passphrase))), mnemonicCode, creationTime);
-    }
-
-    private DeterministicSeed(SecureRandom random, int bits, String passphrase) {
-        this(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
     private DeterministicSeed(byte[] entropy, String passphrase, @Nullable Instant creationTime) {
