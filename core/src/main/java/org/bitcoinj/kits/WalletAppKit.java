@@ -93,21 +93,21 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected final ScriptType preferredOutputScriptType;
     protected final KeyChainGroupStructure structure;
     protected final String filePrefix;
-    protected volatile BlockChain vChain;
-    protected volatile SPVBlockStore vStore;
-    protected volatile Wallet vWallet;
-    protected volatile PeerGroup vPeerGroup;
+    protected @Nullable volatile BlockChain vChain;
+    protected @Nullable volatile SPVBlockStore vStore;
+    protected @Nullable volatile Wallet vWallet;
+    protected @Nullable volatile PeerGroup vPeerGroup;
 
     protected final File directory;
-    protected volatile File vWalletFile;
+    protected @Nullable volatile File vWalletFile;
 
     protected boolean useAutoSave = true;
-    protected PeerAddress[] peerAddresses;
+    protected PeerAddress @Nullable[] peerAddresses;
     protected DownloadProgressTracker downloadListener = new DownloadProgressTracker();
     protected boolean autoStop = true;
-    protected InputStream checkpoints;
+    protected @Nullable InputStream checkpoints;
     protected boolean blockingStartup = true;
-    protected String userAgent, version;
+    protected @Nullable String userAgent, version;
     protected WalletProtobufSerializer.@NonNull WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
     @Nullable protected DeterministicSeed restoreFromSeed;
     @Nullable protected DeterministicKey restoreFromKey;
