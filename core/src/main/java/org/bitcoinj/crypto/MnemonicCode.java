@@ -139,11 +139,11 @@ public class MnemonicCode {
 
     /**
      * Convert mnemonic sentence to a binary seed using the (one way) PBKDF2 function.
-     * @param words mnemonic sentence
+     * @param sentence mnemonic sentence
      * @param passphrase passphrase
      * @return binary seed
      */
-    public static byte[] toSeed(List<String> words, String passphrase) {
+    public static byte[] toSeed(List<String> sentence, String passphrase) {
         Objects.requireNonNull(passphrase, "A null passphrase is not allowed.");
 
         // To create binary seed from mnemonic, we use PBKDF2 function
@@ -153,7 +153,7 @@ public class MnemonicCode {
         // used as a pseudo-random function. Desired length of the
         // derived key is 512 bits (= 64 bytes).
         //
-        String pass = InternalUtils.SPACE_JOINER.join(words);
+        String pass = InternalUtils.SPACE_JOINER.join(sentence);
         String salt = "mnemonic" + passphrase;
 
         Stopwatch watch = Stopwatch.start();
@@ -164,26 +164,26 @@ public class MnemonicCode {
 
     /**
      * Convert a mnemonic sentence to its corresponding entropy value.
-     * @param words mnemonic sentence
+     * @param sentence mnemonic sentence
      * @return corresponding entropy value
      * @throws MnemonicException.MnemonicLengthException if sentence is empty or not a multiple of 3 words
      * @throws MnemonicException.MnemonicWordException if a word is invalid
      * @throws MnemonicException.MnemonicChecksumException if the checksum fails
      */
-    public byte[] toEntropy(List<String> words) throws MnemonicException.MnemonicLengthException, MnemonicException.MnemonicWordException, MnemonicException.MnemonicChecksumException {
-        if (words.size() % 3 > 0)
+    public byte[] toEntropy(List<String> sentence) throws MnemonicException.MnemonicLengthException, MnemonicException.MnemonicWordException, MnemonicException.MnemonicChecksumException {
+        if (sentence.size() % 3 > 0)
             throw new MnemonicException.MnemonicLengthException("Word list size must be multiple of three words.");
 
-        if (words.size() == 0)
+        if (sentence.size() == 0)
             throw new MnemonicException.MnemonicLengthException("Word list is empty.");
 
         // For each word in the sentence, look it up in the wordlist and construct the
         // concatenation of the corresponding entropy and the checksum.
         //
-        int concatLenBits = words.size() * 11;
+        int concatLenBits = sentence.size() * 11;
         boolean[] concatBits = new boolean[concatLenBits];
         int wordindex = 0;
-        for (String word : words) {
+        for (String word : sentence) {
             // Find the word's index in the wordlist.
             int ndx = Collections.binarySearch(this.wordList, word);
             if (ndx < 0)
@@ -247,7 +247,7 @@ public class MnemonicCode {
         // which is a position in a wordlist.  We convert numbers into
         // words and use joined words as mnemonic sentence.
 
-        ArrayList<String> words = new ArrayList<>();
+        ArrayList<String> sentence = new ArrayList<>();
         int nwords = concatBits.length / 11;
         for (int i = 0; i < nwords; ++i) {
             int index = 0;
@@ -256,18 +256,18 @@ public class MnemonicCode {
                 if (concatBits[(i * 11) + j])
                     index |= 0x1;
             }
-            words.add(this.wordList.get(index));
+            sentence.add(this.wordList.get(index));
         }
-        return words;
+        return sentence;
     }
 
     /**
      * Check if a mnemonic sentence is valid.
-     * @param words mnemonic sentence
+     * @param sentence mnemonic sentence
      * @throws MnemonicException if invalid
      */
-    public void check(List<String> words) throws MnemonicException {
-        toEntropy(words);
+    public void check(List<String> sentence) throws MnemonicException {
+        toEntropy(sentence);
     }
 
     private static boolean[] bytesToBits(byte[] data) {
