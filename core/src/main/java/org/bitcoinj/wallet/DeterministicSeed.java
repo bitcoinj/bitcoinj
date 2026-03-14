@@ -132,11 +132,17 @@ public class DeterministicSeed implements EncryptableItem {
         return new DeterministicSeed(random, bits, passphrase);
     }
 
-    /**
-     * Internal use only – will be restricted to private in a future release.
-     * Use {@link #ofMnemonic(String, String, Instant)} or {@link #ofMnemonic(String, String)}  instead.
-     */
-    DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, @Nullable Instant creationTime) {
+    // For use in DeteministicKeyChain.fromProtobuf() only
+    static DeterministicSeed fromProtobuf(String mnemonicString, byte[] seed, String passphrase, @Nullable Instant creationTime) {
+        return new DeterministicSeed(mnemonicString, seed, passphrase, creationTime);
+    }
+
+    // For use in DeteministicKeyChain.fromProtobuf() only
+    static DeterministicSeed fromProtobufEncrypted(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
+        return new DeterministicSeed(encryptedMnemonic, encryptedSeed, creationTime);
+    }
+
+    private DeterministicSeed(String mnemonicString, byte[] seed, String passphrase, @Nullable Instant creationTime) {
         this(splitMnemonicCode(mnemonicString), seed, passphrase, creationTime);
     }
 
@@ -148,8 +154,7 @@ public class DeterministicSeed implements EncryptableItem {
         this.creationTime = creationTime;
     }
 
-    /** Internal use only – will be restricted to private in a future release. */
-    DeterministicSeed(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
+    private DeterministicSeed(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
         this.seed = null;
         this.mnemonicCode = null;
         this.encryptedMnemonicCode = Objects.requireNonNull(encryptedMnemonic);
