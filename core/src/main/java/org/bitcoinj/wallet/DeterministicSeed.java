@@ -140,7 +140,6 @@ public class DeterministicSeed implements EncryptableItem {
         this(splitMnemonicCode(mnemonicString), seed, passphrase, creationTime);
     }
 
-    /** Internal use only. */
     private DeterministicSeed(byte[] seed, List<String> mnemonic, @Nullable Instant creationTime) {
         this.seed = Objects.requireNonNull(seed);
         this.mnemonicCode = Objects.requireNonNull(mnemonic);
@@ -158,7 +157,6 @@ public class DeterministicSeed implements EncryptableItem {
         this.creationTime = creationTime;
     }
 
-    /** Internal use only. */
     private DeterministicSeed(List<String> mnemonicCode, byte @Nullable [] seed, String passphrase, @Nullable Instant creationTime) {
         this((seed != null ? seed : MnemonicCode.toSeed(mnemonicCode, Objects.requireNonNull(passphrase))), mnemonicCode, creationTime);
     }
@@ -167,7 +165,6 @@ public class DeterministicSeed implements EncryptableItem {
         this(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
-    /** Internal use only. */
     private DeterministicSeed(byte[] entropy, String passphrase, @Nullable Instant creationTime) {
         checkArgument(entropy.length * 8 >= DEFAULT_SEED_ENTROPY_BITS, () -> "entropy size too small");
         Objects.requireNonNull(passphrase);
