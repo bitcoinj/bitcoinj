@@ -420,6 +420,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         }
         vChain = new BlockChain(network, vStore);
         vPeerGroup = createPeerGroup();
+        Objects.requireNonNull(vPeerGroup);
         if (this.userAgent != null)
             vPeerGroup.setUserAgent(userAgent, version);
 
@@ -441,6 +442,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         // Start the PeerGroup (asynchronously) and start downloading the blockchain (asynchronously)
         vPeerGroup.startAsync().whenComplete((result, t) -> {
             if (t == null) {
+                Objects.requireNonNull(vPeerGroup);
                 vPeerGroup.startBlockChainDownload(downloadListener);
             } else {
                 throw new RuntimeException(t);
@@ -460,6 +462,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
 
         maybeMoveOldWalletOutOfTheWay();
 
+        Objects.requireNonNull(vWalletFile);
         if (vWalletFile.exists()) {
             wallet = loadWallet(shouldReplayWallet);
         } else {
@@ -506,6 +509,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
 
     private void maybeMoveOldWalletOutOfTheWay() {
         if (restoreFromSeed == null && restoreFromKey == null) return;
+        Objects.requireNonNull(vWalletFile);
         if (!vWalletFile.exists()) return;
         int counter = 1;
         File newName;
@@ -543,6 +547,9 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
         try {
+            Objects.requireNonNull(vPeerGroup);
+            Objects.requireNonNull(vWallet);
+            Objects.requireNonNull(vStore);
             vPeerGroup.stop();
             vWallet.saveToFile(vWalletFile);
             vStore.close();
@@ -576,24 +583,28 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     public BlockChain chain() {
         checkState(state() == State.STARTING || state() == State.RUNNING, () ->
                 "cannot call until startup is complete");
+        Objects.requireNonNull(vChain);
         return vChain;
     }
 
     public BlockStore store() {
         checkState(state() == State.STARTING || state() == State.RUNNING, () ->
                 "cannot call until startup is complete");
+        Objects.requireNonNull(vStore);
         return vStore;
     }
 
     public Wallet wallet() {
         checkState(state() == State.STARTING || state() == State.RUNNING, () ->
                 "cannot call until startup is complete");
+        Objects.requireNonNull(vWallet);
         return vWallet;
     }
 
     public PeerGroup peerGroup() {
         checkState(state() == State.STARTING || state() == State.RUNNING, () ->
                 "cannot call until startup is complete");
+        Objects.requireNonNull(vPeerGroup);
         return vPeerGroup;
     }
 
