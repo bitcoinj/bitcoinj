@@ -108,7 +108,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected @Nullable InputStream checkpoints;
     protected boolean blockingStartup = true;
     protected @Nullable String userAgent, version;
-    protected WalletProtobufSerializer.@NonNull WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
+    protected WalletProtobufSerializer.WalletFactory walletFactory = WalletProtobufSerializer.WalletFactory.DEFAULT;
     @Nullable protected DeterministicSeed restoreFromSeed;
     @Nullable protected DeterministicKey restoreFromKey;
     @Nullable protected PeerDiscovery discovery;
