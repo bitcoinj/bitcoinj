@@ -91,10 +91,10 @@ public class MnemonicCode {
 
     /** Initialize from the included <i>wordlist</i>. Won't work on Android. */
     public MnemonicCode() throws IOException {
-        this(openDefaultWords(), BIP39_ENGLISH_SHA256);
+        this(openDefaultWordList(), BIP39_ENGLISH_SHA256);
     }
 
-    private static InputStream openDefaultWords() throws IOException {
+    private static InputStream openDefaultWordList() throws IOException {
         InputStream stream = MnemonicCode.class.getResourceAsStream(BIP39_ENGLISH_RESOURCE_NAME);
         if (stream == null)
             throw new FileNotFoundException(BIP39_ENGLISH_RESOURCE_NAME);
