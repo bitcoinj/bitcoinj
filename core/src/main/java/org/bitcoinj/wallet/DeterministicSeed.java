@@ -62,7 +62,7 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      * @param creationTime when the seed was originally created
      */
-    public static DeterministicSeed ofMnemonic(String mnemonicCode, String passphrase, Instant creationTime) {
+    public static Unencrypted ofMnemonic(String mnemonicCode, String passphrase, Instant creationTime) {
         return new Unencrypted(seedFromMnemonic(splitMnemonicCode(mnemonicCode), passphrase), splitMnemonicCode(mnemonicCode), Objects.requireNonNull(creationTime));
     }
 
@@ -72,7 +72,7 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
      * @param mnemonicCode list of words, space separated
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
-    public static DeterministicSeed ofMnemonic(String mnemonicCode, String passphrase) {
+    public static Unencrypted ofMnemonic(String mnemonicCode, String passphrase) {
         return new Unencrypted(seedFromMnemonic(splitMnemonicCode(mnemonicCode), passphrase), splitMnemonicCode(mnemonicCode), null);
     }
 
@@ -83,7 +83,7 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      * @param creationTime when the seed was originally created
      */
-    public static DeterministicSeed ofMnemonic(List<String> mnemonicCode, String passphrase, Instant creationTime) {
+    public static Unencrypted ofMnemonic(List<String> mnemonicCode, String passphrase, Instant creationTime) {
         return new Unencrypted(seedFromMnemonic(mnemonicCode, passphrase), mnemonicCode, Objects.requireNonNull(creationTime));
     }
 
@@ -93,7 +93,7 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
      * @param mnemonicCode list of words
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
-    public static DeterministicSeed ofMnemonic(List<String> mnemonicCode, String passphrase) {
+    public static Unencrypted ofMnemonic(List<String> mnemonicCode, String passphrase) {
         return new Unencrypted(seedFromMnemonic(mnemonicCode, passphrase), mnemonicCode, null);
     }
 
@@ -104,7 +104,7 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      * @param creationTime when the seed was originally created
      */
-    public static DeterministicSeed ofEntropy(byte[] entropy, String passphrase, Instant creationTime) {
+    public static Unencrypted ofEntropy(byte[] entropy, String passphrase, Instant creationTime) {
         return DeterministicSeed.ofEntropyInternal(entropy, passphrase, Objects.requireNonNull(creationTime));
     }
 
@@ -114,11 +114,11 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
      * @param entropy entropy bits, length must be at least 128 bits and a multiple of 32 bits
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
-    public static DeterministicSeed ofEntropy(byte[] entropy, String passphrase) {
+    public static Unencrypted ofEntropy(byte[] entropy, String passphrase) {
         return DeterministicSeed.ofEntropyInternal(entropy, passphrase, null);
     }
 
-    private static DeterministicSeed ofEntropyInternal(byte[] entropy, String passphrase, @Nullable Instant creationTime) {
+    private static Unencrypted ofEntropyInternal(byte[] entropy, String passphrase, @Nullable Instant creationTime) {
         checkArgument(entropy.length * 8 >= DEFAULT_SEED_ENTROPY_BITS, () -> "entropy size too small");
         Objects.requireNonNull(passphrase);
         List<String> mnemonicCode = MnemonicCode.INSTANCE.toMnemonic(entropy);
@@ -133,17 +133,17 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
      * @param bits number of bits of entropy, must be at least 128 bits and a multiple of 32 bits
      * @param passphrase user supplied passphrase, or empty string if there is no passphrase
      */
-    public static DeterministicSeed ofRandom(SecureRandom random, int bits, String passphrase) {
+    public static Unencrypted ofRandom(SecureRandom random, int bits, String passphrase) {
         return DeterministicSeed.ofEntropyInternal(getEntropy(random, bits), Objects.requireNonNull(passphrase), TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
-    static DeterministicSeed fromProtobuf(String mnemonicString, byte @Nullable [] seed, String passphrase, @Nullable Instant creationTime) {
+    static Unencrypted fromProtobuf(String mnemonicString, byte @Nullable [] seed, String passphrase, @Nullable Instant creationTime) {
         return new Unencrypted(optionalSeedFromMnemonic(splitMnemonicCode(mnemonicString), passphrase, seed), splitMnemonicCode(mnemonicString), creationTime);
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
-    static DeterministicSeed fromProtobufEncrypted(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
+    static Encrypted fromProtobufEncrypted(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
         return new Encrypted(encryptedMnemonic, encryptedSeed, creationTime);
     }
 
@@ -151,7 +151,7 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
         this.creationTime = creationTime;
     }
 
-    private static class Unencrypted extends DeterministicSeed {
+    public static class Unencrypted extends DeterministicSeed {
         private final byte[] seed;
         private final List<String> mnemonicCode; // only one of mnemonicCode/encryptedMnemonicCode will be set
 
@@ -200,7 +200,7 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
         }
     }
 
-    private static class Encrypted extends DeterministicSeed {
+    public static class Encrypted extends DeterministicSeed {
         private final EncryptedData encryptedMnemonicCode;
         @Nullable private final EncryptedData encryptedSeed;
 
@@ -349,13 +349,13 @@ public abstract /* sealed */ class DeterministicSeed implements EncryptableItem 
         this.creationTime = null;
     }
 
-    public DeterministicSeed encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
+    public Encrypted encrypt(KeyCrypter keyCrypter, AesKey aesKey) {
         checkState(this instanceof Unencrypted, () ->
                 "trying to encrypt seed twice");
         return ((Unencrypted) this).encrypt(keyCrypter, aesKey);
     }
 
-    public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, AesKey aesKey) {
+    public Unencrypted decrypt(KeyCrypter crypter, String passphrase, AesKey aesKey) {
         checkState(this instanceof Encrypted);
         return ((Encrypted) this).decrypt(crypter, passphrase, aesKey);
     }
