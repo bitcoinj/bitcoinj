@@ -30,7 +30,7 @@ public class DeterministicSeedTest {
         DeterministicSeed seed = DeterministicSeed.ofMnemonic("correct horse battery staple", "", Instant.ofEpochSecond(creationTime));
 
         String s1 = seed.toString();
-        assertTrue(s1.contains("DeterministicSeed"));
+        assertTrue(s1.contains("Unencrypted"));     // This is the classname
         assertTrue(s1.contains("unencrypted"));
         assertFalse("Security Fail: toString() leaked the mnemonic!", s1.contains("correct horse battery staple"));
 
