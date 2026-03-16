@@ -19,4 +19,7 @@
  * is featured in the <b>Getting Started</b> tutorial.
  * @see <a href="https://bitcoinj.org/getting-started-java">Getting Started</a>
  */
+@NullMarked
 package org.bitcoinj.examples;
+
+import org.jspecify.annotations.NullMarked;
