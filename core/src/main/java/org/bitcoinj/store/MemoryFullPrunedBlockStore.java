@@ -194,10 +194,10 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         public boolean wasUndoable;
         public StoredBlockAndWasUndoableFlag(StoredBlock block, boolean wasUndoable) { this.block = block; this.wasUndoable = wasUndoable; }
     }
-    private TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
-    private TransactionalFullBlockMap fullBlockMap;
+    private @Nullable TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
+    private @Nullable TransactionalFullBlockMap fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
-    private TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
+    private @Nullable TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private final int fullStoreDepth;

@@ -65,7 +65,7 @@ public class SPVBlockStore implements BlockStore {
     // Magic header for the V2 format.
     static final byte[] HEADER_MAGIC_V2 = "SPV2".getBytes(StandardCharsets.US_ASCII);
 
-    protected volatile MappedByteBuffer buffer;
+    protected volatile @Nullable MappedByteBuffer buffer;
     protected final NetworkParameters params;
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
@@ -95,7 +95,7 @@ public class SPVBlockStore implements BlockStore {
         }
     };
     // Used to stop other applications/processes from opening the store.
-    protected FileLock fileLock = null;
+    protected @Nullable FileLock fileLock;
     protected RandomAccessFile randomAccessFile = null;
     private final FileChannel channel;
     private int fileLength;
@@ -327,7 +327,7 @@ public class SPVBlockStore implements BlockStore {
         } finally { lock.unlock(); }
     }
 
-    protected StoredBlock lastChainHead = null;
+    protected @Nullable StoredBlock lastChainHead;
 
     @Override
     public StoredBlock getChainHead() throws BlockStoreException {
