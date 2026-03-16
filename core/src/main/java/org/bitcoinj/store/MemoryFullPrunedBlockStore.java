@@ -34,6 +34,7 @@ import org.bitcoinj.script.ScriptPattern;
 
 import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -217,8 +218,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         // Insert the genesis block.
         StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().asHeader(), params.getGenesisBlock().getWork(), 0);
         // The coinbase in the genesis block is not spendable
-        List<Transaction> genesisTransactions = new LinkedList<>();
-        StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), genesisTransactions);
+        StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), Collections.emptyList());
         try {
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
