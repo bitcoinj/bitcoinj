@@ -385,7 +385,7 @@ public class KeyChainGroupTest {
 
     @Test
     public void addAndActivateHDChain_freshCurrentAddress() {
-        DeterministicSeed seed = DeterministicSeed.ofEntropy(ENTROPY, "");
+        DeterministicSeed.Unencrypted seed = DeterministicSeed.ofEntropy(ENTROPY, "");
         DeterministicKeyChain chain1 = DeterministicKeyChain.builder().seed(seed)
                 .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH).outputScriptType(ScriptType.P2PKH).build();
         group = KeyChainGroup.builder(BitcoinNetwork.MAINNET).addChain(chain1).build();
