@@ -29,6 +29,7 @@ import org.bitcoinj.wallet.CoinSelector;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.File;
@@ -46,7 +47,7 @@ public class ForwardingService implements Closeable {
     static final int MAX_CONNECTIONS = 4;
     private final BitcoinNetwork network;
     private final Address forwardingAddress;
-    private volatile WalletAppKit kit;
+    private volatile @Nullable WalletAppKit kit;
     /* We need to save the listener object (created by a method reference) so we can remove it later */
     private final WalletCoinsReceivedEventListener coinsReceivedListener = this::coinForwardingListener;
 

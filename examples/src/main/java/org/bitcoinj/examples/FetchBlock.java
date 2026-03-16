@@ -30,6 +30,7 @@ import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
@@ -44,7 +45,7 @@ import java.util.concurrent.Future;
 @CommandLine.Command(usageHelpAutoWidth = true, sortOptions = false)
 public class FetchBlock implements Callable<Integer> {
     @CommandLine.Parameters(index = "0", description = "The hash of the block to download.")
-    private String blockHashParam;
+    private @Nullable String blockHashParam;
     @CommandLine.Option(names = "--localhost", description = "Connect to the localhost node. Default: ${DEFAULT-VALUE}")
     private boolean localhost = true;
     @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
