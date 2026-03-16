@@ -32,7 +32,7 @@ public class MemoryBlockStore implements BlockStore {
     private @Nullable LinkedHashMap<Sha256Hash, StoredBlock> blockMap = new LinkedHashMap<Sha256Hash, StoredBlock>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Sha256Hash, StoredBlock> eldest) {
-            return blockMap.size() > 5000;
+            return this.size() > 5000;
         }
     };
     private StoredBlock chainHead;
