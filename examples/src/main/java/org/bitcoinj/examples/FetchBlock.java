@@ -33,6 +33,7 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -60,6 +61,7 @@ public class FetchBlock implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         // Connect to testnet and find a peer
+        Objects.requireNonNull(blockHashParam);
         System.out.println("Connecting to node");
         final Network network = BitcoinNetwork.TESTNET;
         final NetworkParameters params = NetworkParameters.of(network);
