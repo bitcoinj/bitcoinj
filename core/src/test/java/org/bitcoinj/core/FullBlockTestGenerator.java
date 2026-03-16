@@ -56,7 +56,6 @@ import java.util.Set;
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.bitcoinj.base.Coin.SATOSHI;
 import static org.bitcoinj.base.Coin.ZERO;
-import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.script.ScriptOpCodes.OP_1;
 import static org.bitcoinj.script.ScriptOpCodes.OP_2DUP;
@@ -1625,7 +1624,7 @@ public class FullBlockTestGenerator {
 
         if (runExpensiveTests) {
             // No way you can fit this test in memory
-            checkArgument(blockStorageFile != null);
+            Objects.requireNonNull(blockStorageFile);
 
             NewBlock lastBlock = b1001;
             TransactionOutPoint lastOutput = TransactionOutPoint.of(b1001.block.transaction(1).getTxId(), 1);

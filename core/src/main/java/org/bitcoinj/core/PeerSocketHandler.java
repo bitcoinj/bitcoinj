@@ -201,7 +201,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
      */
     @Override
     public void setWriteTarget(MessageWriteTarget writeTarget) {
-        checkArgument(writeTarget != null);
+        Objects.requireNonNull(writeTarget);
         lock.lock();
         boolean closeNow = false;
         try {

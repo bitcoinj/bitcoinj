@@ -51,7 +51,7 @@ public class ExchangeRateTest {
         rate.fiatToCoin(Fiat.parseFiat("USD", "1"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = NullPointerException.class)
     public void constructMissingCurrencyCode() {
         new ExchangeRate(Fiat.valueOf(null, 1));
     }

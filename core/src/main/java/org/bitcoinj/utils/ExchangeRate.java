@@ -36,8 +36,7 @@ public class ExchangeRate {
     public ExchangeRate(Coin coin, Fiat fiat) {
         checkArgument(coin.isPositive());
         checkArgument(fiat.isPositive());
-        checkArgument(fiat.currencyCode != null, () ->
-                "currency code required");
+        Objects.requireNonNull(fiat.currencyCode, "currency code required");
         this.coin = coin;
         this.fiat = fiat;
     }
