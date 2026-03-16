@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import org.jspecify.annotations.Nullable;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
@@ -96,7 +97,7 @@ public class SPVBlockStore implements BlockStore {
     };
     // Used to stop other applications/processes from opening the store.
     protected @Nullable FileLock fileLock;
-    protected RandomAccessFile randomAccessFile = null;
+    protected final RandomAccessFile randomAccessFile;
     private final FileChannel channel;
     private int fileLength;
 
@@ -123,11 +124,16 @@ public class SPVBlockStore implements BlockStore {
         this.params = Objects.requireNonNull(params);
         checkArgument(capacity > 0);
 
-        try {
-            boolean exists = file.exists();
+        boolean exists = file.exists();
 
+        try {
             // Set up the backing file, empty if it doesn't exist.
             randomAccessFile = new RandomAccessFile(file, "rw");
+        } catch (FileNotFoundException e) {
+            throw new BlockStoreException(e);
+        }
+
+        try {
             channel = randomAccessFile.getChannel();
 
             // Lock the file.
@@ -192,7 +198,7 @@ public class SPVBlockStore implements BlockStore {
                         StandardCharsets.US_ASCII));
         } catch (Exception e) {
             try {
-                if (randomAccessFile != null) randomAccessFile.close();
+                randomAccessFile.close();
             } catch (IOException e2) {
                 throw new BlockStoreException(e2);
             }
