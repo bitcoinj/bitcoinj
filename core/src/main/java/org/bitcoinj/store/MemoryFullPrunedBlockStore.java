@@ -209,6 +209,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
      * @param fullStoreDepth The depth of blocks to keep FullStoredBlocks instead of StoredBlocks
      */
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
+        network = params.network();
         blockMap = new TransactionalHashMap<>();
         fullBlockMap = new TransactionalFullBlockMap();
         transactionOutputMap = new TransactionalHashMap<>();
@@ -222,7 +223,6 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             put(storedGenesisHeader, storedGenesis);
             setChainHead(storedGenesisHeader);
             setVerifiedChainHead(storedGenesisHeader);
-            network = params.network();
         } catch (BlockStoreException | VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
