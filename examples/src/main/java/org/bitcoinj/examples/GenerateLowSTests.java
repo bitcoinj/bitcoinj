@@ -38,6 +38,7 @@ import org.bitcoinj.signers.LocalTransactionSigner;
 import org.bitcoinj.signers.TransactionSigner.ProposedTransaction;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -75,6 +76,7 @@ public class GenerateLowSTests {
             }
 
             @Override
+            @Nullable
             public RedeemData findRedeemDataFromScriptHash(byte[] scriptHash) {
                 return null;
             }
