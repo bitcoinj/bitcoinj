@@ -381,9 +381,10 @@ public class SPVBlockStore implements BlockStore {
                 fileLock.release();
             }
             randomAccessFile.close();
-            blockCache.clear();
         } catch (IOException e) {
             throw new BlockStoreException(e);
+        } finally {
+            blockCache.clear();
         }
     }
 
