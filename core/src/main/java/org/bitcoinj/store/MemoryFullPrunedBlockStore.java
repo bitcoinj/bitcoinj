@@ -221,8 +221,8 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), Collections.emptyList());
         try {
             put(storedGenesisHeader, storedGenesis);
-            setChainHead(storedGenesisHeader);
-            setVerifiedChainHead(storedGenesisHeader);
+            chainHead = storedGenesisHeader;
+            verifiedChainHead = storedGenesisHeader;
         } catch (BlockStoreException | VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
