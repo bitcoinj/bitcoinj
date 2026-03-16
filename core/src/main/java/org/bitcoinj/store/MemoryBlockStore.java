@@ -42,7 +42,7 @@ public class MemoryBlockStore implements BlockStore {
             Block genesisHeader = genesisBlock.asHeader();
             StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
             put(storedGenesis);
-            setChainHead(storedGenesis);
+            chainHead = storedGenesis;
         } catch (BlockStoreException | VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
         }
