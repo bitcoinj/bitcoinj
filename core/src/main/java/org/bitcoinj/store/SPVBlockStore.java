@@ -207,6 +207,7 @@ public class SPVBlockStore implements BlockStore {
     }
 
     private void initNewStore(Block genesisBlock) throws Exception {
+        Objects.requireNonNull(buffer);
         ((Buffer) buffer).rewind();
         buffer.put(HEADER_MAGIC_V2);
         // Insert the genesis block.
@@ -231,6 +232,7 @@ public class SPVBlockStore implements BlockStore {
 
         randomAccessFile.setLength(fileLength);
         // Map it into memory again because of the length change.
+        Objects.requireNonNull(buffer);
         buffer.force();
         buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
 
@@ -406,6 +408,7 @@ public class SPVBlockStore implements BlockStore {
 
     /** Returns the offset from the file start where the latest block should be written (end of prev block). */
     int getRingCursor() {
+        Objects.requireNonNull(buffer);
         int c = buffer.getInt(4);
         checkState(c >= FILE_PROLOGUE_BYTES, () ->
                 "integer overflow");
@@ -414,10 +417,12 @@ public class SPVBlockStore implements BlockStore {
 
     private void setRingCursor(int newCursor) {
         checkArgument(newCursor >= 0);
+        Objects.requireNonNull(buffer);
         buffer.putInt(4, newCursor);
     }
 
     public void clear() throws Exception {
+        Objects.requireNonNull(buffer);
         lock.lock();
         try {
             // Clear caches

@@ -238,6 +238,8 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public synchronized final void put(StoredBlock storedBlock, StoredUndoableBlock undoableBlock) throws BlockStoreException {
         Objects.requireNonNull(blockMap, "MemoryFullPrunedBlockStore is closed");
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(blockMap);
         Sha256Hash hash = storedBlock.getHeader().getHash();
         fullBlockMap.put(hash, storedBlock.getHeight(), undoableBlock);
         blockMap.put(hash, new StoredBlockAndWasUndoableFlag(storedBlock, true));
@@ -292,6 +294,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             setChainHead(chainHead);
         // Potential leak here if not all blocks get setChainHead'd
         // Though the FullPrunedBlockStore allows for this, the current AbstractBlockChain will not do it.
+        Objects.requireNonNull(fullBlockMap);
         fullBlockMap.removeByHeight(chainHead.getHeight() - fullStoreDepth);
     }
     
@@ -324,6 +327,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public synchronized void beginDatabaseBatchWrite() throws BlockStoreException {
+        Objects.requireNonNull(blockMap);
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(transactionOutputMap);
         blockMap.beginDatabaseBatchWrite();
         fullBlockMap.BeginTransaction();
         transactionOutputMap.beginDatabaseBatchWrite();
@@ -331,6 +337,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public synchronized void commitDatabaseBatchWrite() throws BlockStoreException {
+        Objects.requireNonNull(blockMap);
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(transactionOutputMap);
         blockMap.commitDatabaseBatchWrite();
         fullBlockMap.CommitTransaction();
         transactionOutputMap.commitDatabaseBatchWrite();
@@ -338,6 +347,9 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public synchronized void abortDatabaseBatchWrite() throws BlockStoreException {
+        Objects.requireNonNull(blockMap);
+        Objects.requireNonNull(fullBlockMap);
+        Objects.requireNonNull(transactionOutputMap);
         blockMap.abortDatabaseBatchWrite();
         fullBlockMap.AbortTransaction();
         transactionOutputMap.abortDatabaseBatchWrite();
@@ -359,7 +371,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public int getChainHeadHeight() throws UTXOProviderException {
         try {
-            return getVerifiedChainHead().getHeight();
+            return Objects.requireNonNull(getVerifiedChainHead()).getHeight();
         } catch (BlockStoreException e) {
             throw new UTXOProviderException(e);
         }
@@ -367,6 +379,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
 
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException {
+        Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
         // This is *NOT* optimal: We go through all the outputs and select the ones we are looking for.
         // If someone uses this store for production then they have a lot more to worry about than an inefficient impl :)
         List<UTXO> foundOutputs = new ArrayList<>();
