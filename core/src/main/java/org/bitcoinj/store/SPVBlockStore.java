@@ -372,10 +372,14 @@ public class SPVBlockStore implements BlockStore {
 
     @Override
     public void close() throws BlockStoreException {
-        try {
+        if (buffer != null) {
             buffer.force();
             buffer = null;  // Allow it to be GCd and the underlying file mapping to go away.
-            fileLock.release();
+        }
+        try {
+            if (fileLock != null) {
+                fileLock.release();
+            }
             randomAccessFile.close();
             blockCache.clear();
         } catch (IOException e) {
