@@ -20,6 +20,7 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.VerificationException;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Map;
  * Keeps {@link StoredBlock}s in memory. Used primarily for unit testing.
  */
 public class MemoryBlockStore implements BlockStore {
-    private LinkedHashMap<Sha256Hash, StoredBlock> blockMap = new LinkedHashMap<Sha256Hash, StoredBlock>() {
+    private @Nullable LinkedHashMap<Sha256Hash, StoredBlock> blockMap = new LinkedHashMap<Sha256Hash, StoredBlock>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Sha256Hash, StoredBlock> eldest) {
             return blockMap.size() > 5000;
@@ -55,6 +56,7 @@ public class MemoryBlockStore implements BlockStore {
     }
 
     @Override
+    @Nullable
     public synchronized StoredBlock get(Sha256Hash hash) throws BlockStoreException {
         if (blockMap == null) throw new BlockStoreException("MemoryBlockStore is closed");
         return blockMap.get(hash);

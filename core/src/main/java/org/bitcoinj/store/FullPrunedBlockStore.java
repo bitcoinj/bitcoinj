@@ -21,6 +21,7 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.StoredUndoableBlock;
 import org.bitcoinj.core.UTXO;
 import org.bitcoinj.core.UTXOProvider;
+import org.jspecify.annotations.Nullable;
 
 
 /**
@@ -66,6 +67,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * Returns the StoredBlock that was added as a StoredUndoableBlock given a hash. The returned values block.getHash()
      * method will be equal to the parameter. If no such block is found, returns null.
      */
+    @Nullable
     StoredBlock getOnceUndoableStoredBlock(Sha256Hash hash) throws BlockStoreException;
 
     /**
@@ -73,11 +75,13 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * block is found, returns null. Note that this may return null more often than get(Sha256Hash hash) as not all
      * {@link StoredBlock}s have a {@link StoredUndoableBlock} copy stored as well.
      */
+    @Nullable
     StoredUndoableBlock getUndoBlock(Sha256Hash hash) throws BlockStoreException;
     
     /**
      * Gets a {@link UTXO} with the given hash and index, or null if none is found
      */
+    @Nullable
     UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException;
     
     /**
@@ -103,6 +107,7 @@ public interface FullPrunedBlockStore extends BlockStore, UTXOProvider {
      * been fully verified and the point in the chain at which the unspent transaction output set in this
      * store represents.
      */
+    @Nullable
     StoredBlock getVerifiedChainHead() throws BlockStoreException;
 
     /**

@@ -19,6 +19,7 @@ package org.bitcoinj.store;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
@@ -42,6 +43,7 @@ public interface BlockStore {
      * Returns the StoredBlock given a hash. The returned values block.getHash() method will be equal to the
      * parameter. If no such block is found, returns null.
      */
+    @Nullable
     StoredBlock get(Sha256Hash hash) throws BlockStoreException;
 
     /**
@@ -56,7 +58,7 @@ public interface BlockStore {
      * Sets the {@link StoredBlock} that represents the top of the chain of greatest total work.
      */
     void setChainHead(StoredBlock chainHead) throws BlockStoreException;
-    
+
     /** Closes the store. */
     void close() throws BlockStoreException;
 }
