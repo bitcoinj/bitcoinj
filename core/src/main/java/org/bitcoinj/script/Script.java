@@ -390,16 +390,14 @@ public class Script {
      */
     public Script createEmptyInputScript(@Nullable ECKey key, @Nullable Script redeemScript) {
         if (ScriptPattern.isP2PKH(this)) {
-            checkArgument(key != null, () ->
-                    "key required to create P2PKH input script");
+            Objects.requireNonNull(key, "key required to create P2PKH input script");
             return ScriptBuilder.createInputScript(null, key);
         } else if (ScriptPattern.isP2WPKH(this)) {
             return ScriptBuilder.createEmpty();
         } else if (ScriptPattern.isP2PK(this)) {
             return ScriptBuilder.createInputScript(null);
         } else if (ScriptPattern.isP2SH(this)) {
-            checkArgument(redeemScript != null, () ->
-                    "redeem script required to create P2SH input script");
+            Objects.requireNonNull(redeemScript, "redeem script required to create P2SH input script");
             return ScriptBuilder.createP2SHMultiSigInputScript(null, redeemScript);
         } else {
             throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Do not understand script type: " + this);
@@ -604,8 +602,7 @@ public class Script {
     public int getNumberOfBytesRequiredToSpend(@Nullable ECKey pubKey, @Nullable Script redeemScript) {
         if (ScriptPattern.isP2SH(this)) {
             // scriptSig: <sig> [sig] [sig...] <redeemscript>
-            checkArgument(redeemScript != null, () ->
-                    "P2SH script requires redeemScript to be spent");
+            Objects.requireNonNull(redeemScript, "P2SH script requires redeemScript to be spent");
             return redeemScript.getNumberOfSignaturesRequiredToSpend() * SIG_SIZE + redeemScript.program().length;
         } else if (ScriptPattern.isSentToMultisig(this)) {
             // scriptSig: OP_0 <sig> [sig] [sig...]
