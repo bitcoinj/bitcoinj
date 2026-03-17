@@ -17,4 +17,7 @@
 /**
  * <b>bitcoinj<b> tool utility applications.
  */
+@NullMarked
 package org.bitcoinj.tools;
+
+import org.jspecify.annotations.NullMarked;
