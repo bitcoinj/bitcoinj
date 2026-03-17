@@ -26,6 +26,7 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.ExecutionException;
@@ -36,7 +37,7 @@ import java.util.concurrent.ExecutionException;
 public class TestFeeLevel {
 
     private static final int NUM_OUTPUTS = 2;
-    private static WalletAppKit kit;
+    private static @Nullable WalletAppKit kit;
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.initWithSilentBitcoinJ();
