@@ -874,6 +874,67 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Test
+    public void looseTransactionProcessedAfterFilteredBlock() throws Exception {
+        // Reproduces GitHub issue #4116: a loose (mempool) transaction received immediately
+        // after a FilteredBlock's transactions is silently dropped by Peer.processTransaction
+        // because the return statement executes unconditionally, even when the transaction
+        // does not belong to the current FilteredBlock.
+        peerGroup.start();
+
+        InboundMessageQueuer p1 = connectPeer(1);
+        Peer peer = peerOf(p1);
+
+        // Disable dependency download so the test doesn't need to handle GetData for deps
+        peer.setDownloadTxDependencies(false);
+
+        // Build a simple chain
+        Block b1 = FakeTxBuilder.createFakeBlock(blockStore, BLOCK_HEIGHT_GENESIS).block;
+        TestBlocks.solve(b1);
+        blockChain.add(b1);
+
+        // Create a block with just a coinbase (no wallet-relevant txs to avoid side effects)
+        Block b2 = FakeTxBuilder.makeTestBlock(b1);
+        TestBlocks.solve(b2);
+
+        // Apply the peer's bloom filter to create a FilteredBlock
+        FilteredBlock fb = p1.lastReceivedFilter.applyAndUpdate(b2);
+
+        // Create a loose mempool transaction that pays to the wallet's existing address
+        Transaction looseTx = FakeTxBuilder.createFakeTx(UNITTEST.network(), COIN, address);
+
+        // Track if the loose transaction broadcast listener fires
+        final Transaction[] broadcastTx = new Transaction[1];
+        peer.addOnTransactionBroadcastListener(Threading.SAME_THREAD,
+                (p, tx) -> broadcastTx[0] = tx);
+
+        // Announce the block so the peer requests it as a FilteredBlock
+        inbound(p1, InventoryMessage.ofBlocks(b2));
+        GetDataMessage getdata = (GetDataMessage) outbound(p1);
+        assertEquals(InventoryItem.Type.FILTERED_BLOCK, getdata.getItems().get(0).type);
+
+        // Peer sends a ping after requesting a filtered block
+        Ping ping = (Ping) outbound(p1);
+
+        // Send the FilteredBlock (no wallet-matched txs to relay)
+        inbound(p1, fb);
+
+        // Now send the loose transaction. It does not belong to the FilteredBlock,
+        // so provideTransaction() returns false, triggering endFilteredBlock().
+        // Due to bug #4116, the unconditional return then drops this transaction.
+        inbound(p1, looseTx);
+
+        // Send pong to finalize
+        inbound(p1, ping.pong());
+        pingAndWait(p1);
+        Threading.waitForUserCode();
+
+        // Assert the loose transaction was NOT silently dropped
+        assertNotNull("Loose transaction should be processed after FilteredBlock (issue #4116)",
+                broadcastTx[0]);
+        assertEquals(looseTx.getTxId(), broadcastTx[0].getTxId());
+    }
+
+    @Test
     public void testMaxOfMostFreq() {
         assertEquals(0, PeerGroup.maxOfMostFreq(Collections.emptyList()));
         assertEquals(0, PeerGroup.maxOfMostFreq(List.of(0, 0, 1)));
