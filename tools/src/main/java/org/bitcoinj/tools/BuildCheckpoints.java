@@ -51,6 +51,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -91,6 +92,7 @@ public class BuildCheckpoints implements Callable<Integer> {
 
         final String suffix;
         params = NetworkParameters.of(net);
+        Objects.requireNonNull(params);
         Context.propagate(new Context());
 
         switch (net) {
@@ -157,6 +159,7 @@ public class BuildCheckpoints implements Callable<Integer> {
         System.out.println("Checkpointing up to " + TimeUtils.dateTimeFormat(timeAgo));
 
         chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
+            Objects.requireNonNull(params);
             int height = block.getHeight();
             if (height % params.getInterval() == 0 && timeAgo.isAfter(block.getHeader().time())) {
                 System.out.println(String.format("Checkpointing block %s at height %d, time %s",
@@ -211,6 +214,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     }
 
     private static void sanityCheck(File file, int expectedSize) throws IOException {
+        Objects.requireNonNull(params);
         FileInputStream fis = new FileInputStream(file);
         CheckpointManager manager;
         try {
@@ -240,6 +244,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     }
 
     private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress) {
+        Objects.requireNonNull(params);
         final PeerAddress peerAddress = PeerAddress.simple(ipAddress, params.getPort());
         System.out.println("Connecting to " + peerAddress + "...");
         peerGroup.addAddress(peerAddress);

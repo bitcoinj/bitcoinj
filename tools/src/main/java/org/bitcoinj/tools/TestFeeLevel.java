@@ -29,6 +29,7 @@ import org.bitcoinj.wallet.Wallet;
 import org.jspecify.annotations.Nullable;
 
 import java.io.File;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -61,6 +62,7 @@ public class TestFeeLevel {
     }
 
     private static void go(Coin feeRateToTest, int numOutputs) throws InterruptedException, ExecutionException, InsufficientMoneyException {
+        Objects.requireNonNull(kit);
         System.out.println("Wallet has " + kit.wallet().getBalance().toFriendlyString()
                 + "; current receive address is " + kit.wallet().currentReceiveAddress());
 
