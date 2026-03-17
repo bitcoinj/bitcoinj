@@ -32,6 +32,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -66,7 +67,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     @CommandLine.Option(names = "--net", description = "Which network to connect to. Valid values: ${COMPLETION-CANDIDATES}. Default: ${DEFAULT-VALUE}")
     private BitcoinNetwork net = BitcoinNetwork.MAINNET;
     @CommandLine.Option(names = "--peer", description = "IP address/domain name for connection instead of localhost.")
-    private String peer = null;
+    @Nullable private String peer = null;
     @CommandLine.Option(names = "--days", description = "How many days to keep as a safety margin. Checkpointing will be done up to this many days ago.")
     private int days = 7;
     @CommandLine.Option(names = "--verbose", description = "Enables logging.")
@@ -74,7 +75,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
     private boolean help;
 
-    private static NetworkParameters params;
+    private static @Nullable NetworkParameters params;
 
     public static void main(String[] args) throws Exception {
         int exitCode = new CommandLine(new BuildCheckpoints()).execute(args);
