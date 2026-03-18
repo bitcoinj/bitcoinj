@@ -82,10 +82,15 @@ public class NioServer extends AbstractExecutionThreadService {
         this.connectionFactory = connectionFactory;
 
         sc = ServerSocketChannel.open();
-        sc.configureBlocking(false);
-        sc.socket().bind(bindAddress);
-        selector = SelectorProvider.provider().openSelector();
-        sc.register(selector, SelectionKey.OP_ACCEPT);
+        try {
+            sc.configureBlocking(false);
+            sc.socket().bind(bindAddress);
+            selector = SelectorProvider.provider().openSelector();
+            sc.register(selector, SelectionKey.OP_ACCEPT);
+        } catch (IOException e) {
+            sc.close();
+            throw e;
+        }
     }
 
     @Override
