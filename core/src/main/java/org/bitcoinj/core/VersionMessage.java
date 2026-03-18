@@ -103,7 +103,8 @@ public class VersionMessage implements Message {
      */
     public boolean relayTxesBeforeFilter;
 
-    private static final int NETADDR_BYTES = Services.BYTES + /* IPv6 */  16 + /* port */ Short.BYTES;
+    private static final int IPV6_ADDR_BYTES = 16; // 128 bits
+    private static final int NETADDR_BYTES = Services.BYTES + /* IPv6 */ IPV6_ADDR_BYTES + /* port */ Short.BYTES;
 
     /**
      * Deserialize this message from a given payload.
@@ -119,7 +120,7 @@ public class VersionMessage implements Message {
         Services localServices = Services.read(payload);
         Instant time = Instant.ofEpochSecond(ByteUtils.readInt64(payload));
         Services receivingServices = Services.read(payload);
-        InetAddress receivingInetAddress = PeerAddress.getByAddress(Buffers.readBytes(payload, 16));
+        InetAddress receivingInetAddress = PeerAddress.getByAddress(Buffers.readBytes(payload, IPV6_ADDR_BYTES));
         int receivingPort = ByteUtils.readUint16BE(payload);
         InetSocketAddress receivingAddr = new InetSocketAddress(receivingInetAddress, receivingPort);
         Buffers.skipBytes(payload, NETADDR_BYTES); // addr_from
@@ -201,7 +202,7 @@ public class VersionMessage implements Message {
                 Services.BYTES + // localServices
                 Long.BYTES + // time
                 Services.BYTES + // receivingServices
-                16 + 2 + // receivingAddr
+                IPV6_ADDR_BYTES + 2 + // receivingAddr
                 NETADDR_BYTES +
                 4 + 4 + // local host nonce
                 Buffers.lengthPrefixedStringSize(subVer) +
