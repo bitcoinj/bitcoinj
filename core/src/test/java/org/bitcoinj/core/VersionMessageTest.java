@@ -20,8 +20,10 @@ package org.bitcoinj.core;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.Test;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
@@ -32,6 +34,23 @@ import static org.junit.Assert.assertTrue;
 
 public class VersionMessageTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
+    private static final Inet4Address LOCALHOST_IPV4ADDR = getLocalhostAddr();
+
+    private static Inet4Address getLocalhostAddr() {
+        try {
+            return (Inet4Address) InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testConstructor() {
+        VersionMessage versionMessage = new VersionMessage(TESTNET, 0);
+        // Receiving address is currently hardcoded to 127.0.0.1 (ipv4 localhost)
+        assertEquals(LOCALHOST_IPV4ADDR, versionMessage.receivingAddr.getAddress());
+        assertEquals(TESTNET.getPort(), versionMessage.receivingAddr.getPort());
+    }
 
     @Test
     public void decode_noRelay_bestHeight_subVer() {
