@@ -48,6 +48,8 @@ public class NioServer extends AbstractExecutionThreadService {
         if (key.isValid() && key.isAcceptable()) {
             // Accept a new connection, give it a stream connection as an attachment
             SocketChannel newChannel = sc.accept();
+            if (newChannel == null)
+                return; // Spurious wakeup, no pending connection
             newChannel.configureBlocking(false);
             SelectionKey newKey = newChannel.register(selector, SelectionKey.OP_READ);
             try {
