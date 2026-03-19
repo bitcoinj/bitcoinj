@@ -114,7 +114,7 @@ public class Script {
      * @param creationTime creation time to associate the script with
      * @return script that wraps the chunks
      */
-    public static Script of(List<ScriptChunk> chunks, Instant creationTime) {
+    public static Script of(List<ScriptChunk> chunks, @Nullable Instant creationTime) {
         return new Script(chunks, creationTime);
     }
 
@@ -139,7 +139,7 @@ public class Script {
      * @return parsed program
      * @throws ScriptException if the program could not be parsed
      */
-    public static Script parse(byte[] program, Instant creationTime) throws ScriptException {
+    public static Script parse(byte[] program, @Nullable Instant creationTime) throws ScriptException {
         return new Script(program, creationTime);
     }
 

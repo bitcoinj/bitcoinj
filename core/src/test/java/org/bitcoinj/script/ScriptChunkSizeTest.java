@@ -16,6 +16,7 @@
 
 package org.bitcoinj.script;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -42,7 +43,7 @@ public class ScriptChunkSizeTest {
     private static final Random RANDOM = new Random(42);
 
     @Parameterized.Parameter
-    public ScriptChunk scriptChunk;
+    @Nullable public ScriptChunk scriptChunk;
 
     @Parameterized.Parameters
     public static Collection<ScriptChunk> data() {
