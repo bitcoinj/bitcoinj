@@ -106,7 +106,7 @@ public class GenerateLowSTests {
             EnumSet.of(ScriptExecution.VerifyFlag.DERSIG, ScriptExecution.VerifyFlag.P2SH));
 
         final Script scriptSig = input.getScriptSig();
-        final TransactionSignature signature = TransactionSignature.decodeFromBitcoin(scriptSig.chunks().get(0).pushData(), true, false);
+        final TransactionSignature signature = TransactionSignature.decodeFromBitcoin(Objects.requireNonNull(scriptSig.chunks().get(0).pushData()), true, false);
 
         // First output a conventional low-S transaction with the LOW_S flag, for the tx_valid.json set
         System.out.println("[\"A transaction with a low-S signature.\"],");
@@ -119,7 +119,7 @@ public class GenerateLowSTests {
 
         final BigInteger highS = HIGH_S_DIFFERENCE.subtract(signature.s);
         final TransactionSignature highSig = new TransactionSignature(signature.r, highS);
-        input = input.withScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(scriptSig.chunks().get(1).pushData()).build());
+        input = input.withScriptSig(new ScriptBuilder().data(highSig.encodeToBitcoin()).data(Objects.requireNonNull(scriptSig.chunks().get(1).pushData())).build());
         ScriptExecution.correctlySpends(input.getScriptSig(), outputTransaction, 0, null, null, output.getScriptPubKey(),
             EnumSet.of(ScriptExecution.VerifyFlag.P2SH));
 
