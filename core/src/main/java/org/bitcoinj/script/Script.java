@@ -476,8 +476,10 @@ public class Script {
 
         ArrayList<ECKey> result = new ArrayList<>();
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
-        for (int i = 0 ; i < numKeys ; i++)
-            result.add(ECKey.fromPublicOnly(chunks.get(1 + i).data));
+        for (int i = 0 ; i < numKeys ; i++) {
+            byte[] data = Objects.requireNonNull(chunks.get(1 + i).data);
+            result.add(ECKey.fromPublicOnly(data));
+        }
         return result;
     }
 
@@ -486,7 +488,8 @@ public class Script {
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true, false);
         for (int i = 0 ; i < numKeys ; i++) {
-            if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
+            byte[] data = Objects.requireNonNull(chunks.get(1 + i).data);
+            if (ECKey.fromPublicOnly(data).verify(hash, signature)) {
                 return i;
             }
         }
@@ -570,7 +573,7 @@ public class Script {
         Collections.reverse(chunks);
         for (ScriptChunk chunk : chunks) {
             if (!chunk.isOpCode()) {
-                Script subScript = parse(chunk.data);
+                Script subScript = parse(Objects.requireNonNull(chunk.data));
                 return getSigOpCount(subScript.chunks, true);
             }
         }

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.bitcoinj.script.ScriptOpCodes.OP_NOP;
@@ -84,6 +85,7 @@ public class ScriptChunkSizeTest {
 
     @Test
     public void testSize() {
+        Objects.requireNonNull(scriptChunk);
         assertEquals(scriptChunk.toByteArray().length, scriptChunk.size());
     }
 }

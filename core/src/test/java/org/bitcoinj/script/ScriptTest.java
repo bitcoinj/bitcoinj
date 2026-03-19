@@ -79,6 +79,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -393,9 +394,10 @@ public class ScriptTest {
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
                     TransactionInput input = transaction.getInput(i);
-                    assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
+                    Script script = scriptPubKeys.get(input.getOutpoint());
+                    assertNotNull(script);
                     ScriptExecution.correctlySpends(input.getScriptSig(), transaction, i, null, null,
-                            scriptPubKeys.get(input.getOutpoint()), verifyFlags);
+                            script, verifyFlags);
                 }
             } catch (Exception e) {
                 System.err.println(test);
@@ -442,10 +444,11 @@ public class ScriptTest {
 
             for (int i = 0; i < transaction.getInputs().size() && valid; i++) {
                 TransactionInput input = transaction.getInput(i);
-                assertTrue(scriptPubKeys.containsKey(input.getOutpoint()));
+                Script script = scriptPubKeys.get(input.getOutpoint());
+                assertNotNull(script);
                 try {
                     ScriptExecution.correctlySpends(input.getScriptSig(), transaction, i, null, null,
-                            scriptPubKeys.get(input.getOutpoint()), verifyFlags);
+                            script, verifyFlags);
                 } catch (VerificationException e) {
                     valid = false;
                 }
