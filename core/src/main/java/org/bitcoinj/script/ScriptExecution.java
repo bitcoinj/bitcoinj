@@ -46,6 +46,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
@@ -718,6 +719,7 @@ public class ScriptExecution {
                             }
                             break;
                         }
+                        Objects.requireNonNull(txContainingThis);
                         executeCheckLockTimeVerify(txContainingThis, (int) index, stack, verifyFlags);
                         break;
                     case OP_CHECKSEQUENCEVERIFY:
@@ -728,6 +730,7 @@ public class ScriptExecution {
                             }
                             break;
                         }
+                        Objects.requireNonNull(txContainingThis);
                         executeCheckSequenceVerify(txContainingThis, (int) index, stack, verifyFlags);
                         break;
                     case OP_NOP1:
@@ -1018,6 +1021,7 @@ public class ScriptExecution {
                                        Script scriptPubKey, Set<VerifyFlag> verifyFlags) throws ScriptException {
         List<ScriptChunk> chunks = script.chunks();
         if (ScriptPattern.isP2WPKH(scriptPubKey)) {
+            Objects.requireNonNull(witness);
             // For segwit, full validation isn't implemented. So we simply check the signature. P2SH_P2WPKH is handled
             // by the P2SH code for now.
             if (witness.getPushCount() < 2)
@@ -1040,11 +1044,12 @@ public class ScriptExecution {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, "Invalid size: " + chunks.size());
             TransactionSignature signature;
             try {
-                signature = TransactionSignature.decodeFromBitcoin(chunks.get(0).data, true, true);
+                byte[] data = Objects.requireNonNull(chunks.get(0).data);
+                signature = TransactionSignature.decodeFromBitcoin(data, true, true);
             } catch (SignatureDecodeException x) {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
             }
-            ECKey pubkey = ECKey.fromPublicOnly(chunks.get(1).data);
+            ECKey pubkey = ECKey.fromPublicOnly(Objects.requireNonNull(chunks.get(1).data));
             Sha256Hash sigHash = txContainingThis.hashForSignature(scriptSigIndex, scriptPubKey,
                     signature.sigHashMode(), false);
             boolean validSig = pubkey.verify(sigHash, signature);
@@ -1055,7 +1060,8 @@ public class ScriptExecution {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SCRIPT_SIZE, "Invalid size: " + chunks.size());
             TransactionSignature signature;
             try {
-                signature = TransactionSignature.decodeFromBitcoin(chunks.get(0).data, false, false);
+                byte[] data = Objects.requireNonNull(chunks.get(0).data);
+                signature = TransactionSignature.decodeFromBitcoin(data, false, false);
             } catch (SignatureDecodeException x) {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
             }
@@ -1121,6 +1127,7 @@ public class ScriptExecution {
 
         // TODO: Check if we can take out enforceP2SH if there's a checkpoint at the enforcement block.
         if (verifyFlags.contains(VerifyFlag.P2SH) && ScriptPattern.isP2SH(scriptPubKey)) {
+            Objects.requireNonNull(p2shStack);
             for (ScriptChunk chunk : script.chunks())
                 if (!chunk.isPushData())
                     throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_PUSHONLY, "Attempted to spend a P2SH scriptPubKey with a script that contained the script op " + chunk);
