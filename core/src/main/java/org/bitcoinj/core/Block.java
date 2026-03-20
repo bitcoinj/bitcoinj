@@ -265,7 +265,11 @@ public class Block implements Message {
     private static List<Transaction> genesisTransactions() {
         byte[] messageBytes = GENESIS_MESSAGE.getBytes(StandardCharsets.US_ASCII);
         Script scriptSig = // TODO find out what the pushdata(4) is supposed to mean
-                new ScriptBuilder().bigNum(STANDARD_MAX_DIFFICULTY_TARGET).bigNum(4).data(messageBytes).build();
+                new ScriptBuilder()
+                        .bigNum(Difficulty.STANDARD_MAX_DIFFICULTY_TARGET.compact())
+                        .bigNum(4)
+                        .data(messageBytes)
+                        .build();
         Transaction tx = Transaction.coinbase(scriptSig.program());
         tx.addOutput(new TransactionOutput(
                 tx, FIFTY_COINS, ScriptBuilder.createP2PKOutputScript(GENESIS_OUTPUT_PUBKEY).program()));
