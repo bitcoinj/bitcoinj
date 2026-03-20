@@ -209,6 +209,7 @@ public class Block implements Message {
         this.difficultyTarget = difficultyTarget;
         this.nonce = nonce;
         this.prevHash = Sha256Hash.ZERO_HASH;
+        this.merkleRoot = calculateMerkleRoot(transactions);
         this.transactions = new ArrayList<>(Objects.requireNonNull(transactions));
     }
 
