@@ -113,6 +113,7 @@ public class CheckpointManager {
     }
 
     /** Returns a checkpoints stream pointing to inside the bitcoinj JAR */
+    @Nullable
     public static InputStream openStream(NetworkParameters params) {
         return CheckpointManager.class.getResourceAsStream("/" + params.getId() + ".checkpoints.txt");
     }

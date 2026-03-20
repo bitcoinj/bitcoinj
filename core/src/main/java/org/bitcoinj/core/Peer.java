@@ -130,7 +130,7 @@ public class Peer extends PeerSocketHandler {
     // The current Bloom filter set on the connection, used to tell the remote peer what transactions to send us.
     private volatile BloomFilter vBloomFilter;
     // The last filtered block we received, we're waiting to fill it out with transactions.
-    private FilteredBlock currentFilteredBlock = null;
+    @Nullable private FilteredBlock currentFilteredBlock = null;
     // If non-null, we should discard incoming filtered blocks because we ran out of keys and are awaiting a new filter
     // to be calculated by the PeerGroup. The discarded block hashes should be added here so we can re-request them
     // once we've recalculated and resent a new filter.
@@ -190,16 +190,16 @@ public class Peer extends PeerSocketHandler {
     // Outstanding pings against this peer and how long the last one took to complete.
     private final ReentrantLock pingIntervalsLock = new ReentrantLock();
     @GuardedBy("pingIntervalsLock") private final Deque<Duration> pingIntervals = new ArrayDeque<>(PING_MOVING_AVERAGE_WINDOW);
-    private volatile Duration lastPing = null;    // should only be written while holding pingIntervalsLock
-    private volatile Duration averagePing = null; // should only be written while holding pingIntervalsLock
+    @Nullable private volatile Duration lastPing = null;    // should only be written while holding pingIntervalsLock
+    @Nullable private volatile Duration averagePing = null; // should only be written while holding pingIntervalsLock
 
     private final CopyOnWriteArrayList<PendingPing> pendingPings;
     // Disconnect from a peer that is not responding to Pings
     private static final int PENDING_PINGS_LIMIT = 50;
     private static final int PING_MOVING_AVERAGE_WINDOW = 20;
 
-    private volatile VersionMessage vPeerVersionMessage;
-    private volatile Coin vFeeFilter;
+    @Nullable private volatile VersionMessage vPeerVersionMessage;
+    @Nullable private volatile Coin vFeeFilter;
 
     // A future which completes (with this) when the connection is open
     private final CompletableFuture<Peer> connectionOpenFuture = new CompletableFuture<>();

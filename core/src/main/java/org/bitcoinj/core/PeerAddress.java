@@ -225,7 +225,7 @@ public class PeerAddress {
         return new PeerAddress(addr, hostname, port, services, time);
     }
 
-    private PeerAddress(InetAddress addr, String hostname, int port, Services services, Instant time) {
+    private PeerAddress(@Nullable InetAddress addr, @Nullable String hostname, int port, Services services, Instant time) {
         this.addr = addr;
         this.hostname = hostname;
         this.port = port;
@@ -386,10 +386,12 @@ public class PeerAddress {
         return ipv6;
     }
 
+    @Nullable
     public String getHostname() {
         return hostname;
     }
 
+    @Nullable
     public InetAddress getAddr() {
         return addr;
     }
