@@ -224,7 +224,6 @@ public class Block implements Message {
      */
     public Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
                  Difficulty difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
-        super();
         this.version = version;
         this.prevHash = prevHash;
         this.merkleRoot = merkleRoot;
