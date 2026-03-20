@@ -219,7 +219,6 @@ public class Block extends BaseMessage {
      */
     public Block(long version, Sha256Hash prevBlockHash, Sha256Hash merkleRoot, Instant time,
                  long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
-        super();
         this.version = version;
         this.prevBlockHash = prevBlockHash;
         this.merkleRoot = merkleRoot;
