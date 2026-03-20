@@ -121,9 +121,12 @@ public class Block implements Message {
 
     // Fields defined as part of the protocol format.
     private final long version;
+    @NonNull
     private final Sha256Hash prevHash; // previous block
     private Sha256Hash merkleRoot, witnessRoot;
+    @NonNull
     private Instant time;
+    @NonNull
     private Difficulty difficultyTarget; // "nBits"
     private long nonce;
 
@@ -375,6 +378,7 @@ public class Block implements Message {
      * the block explorer. If you call this on block 1 in the mainnet chain
      * you will get "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048".
      */
+    @NonNull
     public String getHashAsString() {
         return getHash().toString();
     }
@@ -383,6 +387,7 @@ public class Block implements Message {
      * Returns the hash of the block (which for a valid, solved block should be
      * below the target). Big endian.
      */
+    @NonNull
     public Sha256Hash getHash() {
         if (hash == null)
             hash = calculateHash();
@@ -403,6 +408,7 @@ public class Block implements Message {
      * hash values. Then the work of the block will be 20. As the target gets
      * lower, the amount of work goes up.
      */
+    @NonNull
     public BigInteger getWork() throws VerificationException {
         BigInteger target = difficultyTarget.asInteger();
         return LARGEST_HASH.divide(target.add(BigInteger.ONE));
@@ -413,6 +419,7 @@ public class Block implements Message {
      *
      * @return new, header-only {@code Block}
      */
+    @NonNull
     public Block asHeader() {
         return new Block(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, getHash());
     }
@@ -651,6 +658,7 @@ public class Block implements Message {
     /**
      * Returns the merkle root in big endian form, calculating it from transactions if necessary.
      */
+    @NonNull
     public Sha256Hash getMerkleRoot() {
         if (merkleRoot == null) {
             //TODO check if this is really necessary.
@@ -671,6 +679,7 @@ public class Block implements Message {
     /**
      * Returns the witness root in big endian form, calculating it from transactions if necessary.
      */
+    @NonNull
     public Sha256Hash getWitnessRoot() {
         if (witnessRoot == null)
             witnessRoot = calculateWitnessRoot(transactions);
@@ -719,6 +728,7 @@ public class Block implements Message {
      *
      * @return hash of the previous block
      */
+    @NonNull
     public Sha256Hash prevHash() {
         return prevHash;
     }
@@ -732,6 +742,7 @@ public class Block implements Message {
     /**
      * Returns the time at which the block was solved and broadcast, according to the clock of the solving node.
      */
+    @NonNull
     public Instant time() {
         return time;
     }
@@ -762,6 +773,7 @@ public class Block implements Message {
      * That number is the result of applying a formula to the underlying difficulty to normalize the minimum to 1.
      * Calculating the difficulty that way is currently unsupported.
      */
+    @NonNull
     public Difficulty difficultyTarget() {
         return difficultyTarget;
     }
@@ -774,7 +786,7 @@ public class Block implements Message {
 
     /** Sets the difficulty target. */
     // For testing only
-    void setDifficultyTarget(Difficulty difficultyTarget) {
+    void setDifficultyTarget(@NonNull Difficulty difficultyTarget) {
         unCacheHeader();
         this.difficultyTarget = difficultyTarget;
         this.hash = null;
