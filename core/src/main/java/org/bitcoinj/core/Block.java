@@ -488,7 +488,7 @@ public class Block implements Message {
     }
 
     private void checkMerkleRoot() throws VerificationException {
-        Sha256Hash calculatedRoot = calculateMerkleRoot();
+        Sha256Hash calculatedRoot = calculateMerkleRoot(transactions);
         if (!calculatedRoot.equals(merkleRoot)) {
             log.error("Merkle tree did not verify");
             throw new VerificationException("Merkle hashes do not match: " + calculatedRoot + " vs " + merkleRoot);
@@ -521,17 +521,17 @@ public class Block implements Message {
         }
     }
 
-    private Sha256Hash calculateMerkleRoot() {
-        List<Sha256Hash> tree = buildMerkleTree(false);
+    private static Sha256Hash calculateMerkleRoot(List<Transaction> transactions) {
+        List<Sha256Hash> tree = buildMerkleTree(transactions, false);
         return tree.get(tree.size() - 1);
     }
 
-    private Sha256Hash calculateWitnessRoot() {
-        List<Sha256Hash> tree = buildMerkleTree(true);
+    private static Sha256Hash calculateWitnessRoot(List<Transaction> transactions) {
+        List<Sha256Hash> tree = buildMerkleTree(transactions, true);
         return tree.get(tree.size() - 1);
     }
 
-    private List<Sha256Hash> buildMerkleTree(boolean useWTxId) {
+    private static List<Sha256Hash> buildMerkleTree(List<Transaction> transactions, boolean useWTxId) {
         // The Merkle root is based on a tree of hashes calculated from the transactions:
         //
         //     root
@@ -633,7 +633,7 @@ public class Block implements Message {
         if (merkleRoot == null) {
             //TODO check if this is really necessary.
             unCacheHeader();
-            merkleRoot = calculateMerkleRoot();
+            merkleRoot = calculateMerkleRoot(transactions);
         }
         return merkleRoot;
     }
@@ -651,7 +651,7 @@ public class Block implements Message {
      */
     public Sha256Hash getWitnessRoot() {
         if (witnessRoot == null)
-            witnessRoot = calculateWitnessRoot();
+            witnessRoot = calculateWitnessRoot(transactions);
         return witnessRoot;
     }
 
