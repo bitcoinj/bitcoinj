@@ -372,7 +372,7 @@ public class Block extends BaseMessage {
      * The number that is one greater than the largest representable SHA-256
      * hash.
      */
-    private static BigInteger LARGEST_HASH = BigInteger.ONE.shiftLeft(256);
+    private static final BigInteger LARGEST_HASH = BigInteger.ONE.shiftLeft(256);
 
     /**
      * Returns the work represented by this block.<p>
