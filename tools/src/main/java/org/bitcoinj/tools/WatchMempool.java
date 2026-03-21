@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class WatchMempool {
     private static final Logger log = LoggerFactory.getLogger(WatchMempool.class);
@@ -46,7 +47,7 @@ public class WatchMempool {
     private static final Duration STATISTICS_FREQUENCY = Duration.ofSeconds(5);
 
     public static void main(String[] args) throws InterruptedException {
-        BriefLogFormatter.init();
+        BriefLogFormatter.init(Level.WARNING); // Only log WARNING or higher messages
         PeerGroup peerGroup = new PeerGroup(NETWORK);
         peerGroup.setMaxConnections(32);
         peerGroup.addPeerDiscovery(new DnsDiscovery(NETWORK));
