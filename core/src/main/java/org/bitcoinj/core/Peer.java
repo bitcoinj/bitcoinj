@@ -754,16 +754,15 @@ public class Peer extends PeerSocketHandler {
                 return;
             }
             if (currentFilteredBlock != null) {
-                if (!currentFilteredBlock.provideTransaction(tx)) {
-                    // Got a tx that didn't fit into the filtered block, so we must have received everything.
-                    endFilteredBlock(currentFilteredBlock);
-                    currentFilteredBlock = null;
-                    // Fall through to process tx as a loose transaction.
-                } else {
+                if (currentFilteredBlock.provideTransaction(tx)) {
                     // Don't tell wallets or listeners about this tx as they'll learn about it when the filtered block is
                     // fully downloaded instead.
                     return;
                 }
+                // Got a tx that didn't fit into the filtered block, so we must have received everything.
+                endFilteredBlock(currentFilteredBlock);
+                currentFilteredBlock = null;
+                // Fall through to process tx as a loose transaction.
             }
             // It's a broadcast transaction. Tell all wallets about this tx so they can check if it's relevant or not.
             for (final Wallet wallet : wallets) {
