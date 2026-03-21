@@ -26,6 +26,7 @@ import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.bitcoinj.wallet.RiskAnalysis.Result;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,11 +54,11 @@ public class WatchMempool {
         peerGroup.addPeerDiscovery(new DnsDiscovery(NETWORK));
         peerGroup.addOnTransactionBroadcastListener((peer, tx) -> {
             Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
-            incrementCounter(TOTAL_KEY);
             log.info("tx {} result {}", tx.getTxId(), result);
-            incrementCounter(result.name());
-            if (result == Result.NON_STANDARD)
-                incrementCounter(Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx));
+            String violationName = (result == Result.NON_STANDARD)
+                    ? Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx)
+                    : null;
+            incrementCounters(result.name(), violationName);
         });
         peerGroup.start();
 
@@ -67,21 +68,30 @@ public class WatchMempool {
         }
     }
 
-    private static synchronized void incrementCounter(String name) {
-        Integer count = counters.get(name);
-        if (count == null)
-            count = 0;
-        count++;
-        counters.put(name, count);
+    private static void incrementCounters(String name, @Nullable String violationName) {
+        synchronized (counters) {
+            incrementCounter(TOTAL_KEY);
+            incrementCounter(name);
+            if (violationName != null)
+                incrementCounter(violationName);
+        }
     }
 
-    private static synchronized void printCounters() {
+    private static void incrementCounter(String name) {
+        counters.merge(name, 1, Integer::sum);
+    }
+
+    private static void printCounters() {
         Duration elapsed = TimeUtils.elapsedTime(START);
+        Map<String, Integer> snapshot;
+        synchronized (counters) {
+            snapshot = Map.copyOf(counters);
+        }
         System.out.printf("Runtime: %d:%02d minutes\n", elapsed.toMinutes(), elapsed.toSecondsPart());
-        Integer total = counters.get(TOTAL_KEY);
+        Integer total = snapshot.get(TOTAL_KEY);
         if (total == null)
             return;
-        for (Map.Entry<String, Integer> counter : counters.entrySet()) {
+        for (Map.Entry<String, Integer> counter : snapshot.entrySet()) {
             System.out.printf("  %-40s%6d  (%d%% of total)\n", counter.getKey(), counter.getValue(),
                     (int) counter.getValue() * 100 / total);
         }
