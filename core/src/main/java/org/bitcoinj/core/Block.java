@@ -28,6 +28,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.InternalUtils;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,13 +152,9 @@ public class Block implements Message {
         long nonce = ByteUtils.readUint32(payload);
         payload.reset(); // read again from the mark for the hash
         Sha256Hash hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(Buffers.readBytes(payload, HEADER_SIZE)));
-        // transactions
-        List<Transaction> transactions = payload.hasRemaining() ? // otherwise this message is just a header
-                readTransactions(payload) :
-                null;
-        Block block = new Block(version, prevHash, merkleRoot, time, difficultyTarget, nonce, transactions);
-        block.hash = hash;
-        return block;
+        return payload.hasRemaining()
+                ? new Block(version, prevHash, merkleRoot, time, difficultyTarget, nonce, readTransactions(payload), hash) // full block
+                : new Block(version, prevHash, merkleRoot, time, difficultyTarget, nonce, hash);                           // header
     }
 
     /**
@@ -234,6 +231,32 @@ public class Block implements Message {
         this.transactions = transactions != null ?
                 new ArrayList<>(transactions) :
                 null;
+    }
+
+    // block header constructor that takes pre-calculated hash - this block header could be treated as immutable
+    private Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
+                  Difficulty difficultyTarget, long nonce, Sha256Hash hash) {
+        this.version = version;
+        this.prevHash = prevHash;
+        this.merkleRoot = merkleRoot;
+        this.time = time;
+        this.difficultyTarget = difficultyTarget;
+        this.nonce = nonce;
+        this.transactions = null;
+        this.hash = hash;
+    }
+
+    // full block constructor that takes pre-calculated hash - this block could be treated as immutable
+    private Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
+                  Difficulty difficultyTarget, long nonce, @NonNull List<Transaction> transactions, Sha256Hash hash) {
+        this.version = version;
+        this.prevHash = prevHash;
+        this.merkleRoot = merkleRoot;
+        this.time = time;
+        this.difficultyTarget = difficultyTarget;
+        this.nonce = nonce;
+        this.transactions = new ArrayList<>(Objects.requireNonNull(transactions));
+        this.hash = hash;
     }
 
     /** @deprecated use {@link #Block(long, Sha256Hash, Sha256Hash, Instant, Difficulty, long, List)} */
@@ -391,9 +414,7 @@ public class Block implements Message {
      * @return new, header-only {@code Block}
      */
     public Block asHeader() {
-        Block block = new Block(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, null);
-        block.hash = getHash();
-        return block;
+        return new Block(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, getHash());
     }
 
     /** @deprecated use {@link #asHeader()} */
