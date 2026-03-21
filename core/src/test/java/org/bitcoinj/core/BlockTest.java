@@ -27,6 +27,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain.NewBlockType;
+import org.bitcoinj.core.data.BlockHeaderData;
 import org.bitcoinj.crypto.DumpedPrivateKey;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
@@ -311,8 +312,8 @@ public class BlockTest {
 
     @Test(expected = BufferUnderflowException.class)
     public void parseBlockWithHugeDeclaredTransactionsSize() {
-        Block header = new Block(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH,
-                Difficulty.EASIEST_DIFFICULTY_TARGET, 0, null);
+        Block header = new FinishedBlockHeader(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH,
+                Difficulty.EASIEST_DIFFICULTY_TARGET, 0, Sha256Hash.ZERO_HASH);
         VarInt huge = VarInt.of(Integer.MAX_VALUE);
         // construct block with HUGE transaction count
         ByteBuffer buf = ByteBuffer.allocate(Block.HEADER_SIZE + huge.getSizeInBytes());
