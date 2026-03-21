@@ -49,9 +49,11 @@ public class WatchMempool {
 
     public static void main(String[] args) throws InterruptedException {
         BriefLogFormatter.init(Level.WARNING); // Only log WARNING or higher messages
+        // Create a PeerGroup
         PeerGroup peerGroup = new PeerGroup(NETWORK);
         peerGroup.setMaxConnections(32);
         peerGroup.addPeerDiscovery(new DnsDiscovery(NETWORK));
+        // Listen for every transaction received by the PeerGroup
         peerGroup.addOnTransactionBroadcastListener((peer, tx) -> {
             Result result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze();
             log.info("tx {} result {}", tx.getTxId(), result);
@@ -60,8 +62,11 @@ public class WatchMempool {
                     : null;
             incrementCounters(result.name(), violationName);
         });
+        // Start the PeerGroup
         peerGroup.start();
 
+        // Transactions will be counted by the listener
+        // We will print the current counters every STATISTICS_FREQUENCY seconds
         while (true) {
             Thread.sleep(STATISTICS_FREQUENCY.toMillis());
             printCounters();
