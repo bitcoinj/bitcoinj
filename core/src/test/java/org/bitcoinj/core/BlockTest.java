@@ -68,7 +68,7 @@ public class BlockTest {
         Context.propagate(new Context());
         // One with some of transactions in, so a good test of the merkle tree hashing.
         block700000Bytes = ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"));
-        block700000 = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(block700000Bytes));
+        block700000 = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(block700000Bytes)).asUnfinished();
         assertEquals("000000000000406178b12a4dea3b27e13b3c4fe4510994fd667d7c1e6a3f4dc1", block700000.getHashAsString());
     }
 
@@ -102,7 +102,7 @@ public class BlockTest {
         // This params accepts any difficulty target.
         final TweakableTestNet3Params TWEAK_TESTNET = new TweakableTestNet3Params();
         TWEAK_TESTNET.setMaxTarget(Difficulty.EASIEST_DIFFICULTY_TARGET);
-        Block block = TWEAK_TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(block700000Bytes));
+        Block block = TWEAK_TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(block700000Bytes)).asUnfinished();
         block.setNonce(12346);
         try {
             Block.verify(TWEAK_TESTNET, block, Block.BLOCK_HEIGHT_GENESIS, EnumSet.noneOf(Block.VerifyFlag.class));
@@ -312,7 +312,7 @@ public class BlockTest {
 
     @Test(expected = BufferUnderflowException.class)
     public void parseBlockWithHugeDeclaredTransactionsSize() {
-        Block header = new FinishedBlockHeader(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH,
+        Block header = new FinishedBlock.Header(1, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH,
                 Difficulty.EASIEST_DIFFICULTY_TARGET, 0, Sha256Hash.ZERO_HASH);
         VarInt huge = VarInt.of(Integer.MAX_VALUE);
         // construct block with HUGE transaction count

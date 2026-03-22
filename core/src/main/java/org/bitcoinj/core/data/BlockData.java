@@ -20,8 +20,10 @@ import org.bitcoinj.core.Transaction;
 
 import java.util.List;
 
-/*
- * The use of existing concrete types will be replaced as our immutable implementations get further along.
+/**
+ * An object containing a full (immutable) block.
+ * <p>
+ * The use of bitcoinj {@code Transaction} will be replaced as our immutable implementations get further along.
  */
 public interface BlockData extends BlockHeaderData {
     List<Transaction> transactions();

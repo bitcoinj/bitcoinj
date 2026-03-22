@@ -127,12 +127,12 @@ public class Block implements Message {
     @NonNull
     private Instant time;
     @NonNull
-    protected Difficulty difficultyTarget; // "nBits"
-    protected long nonce;
+    private Difficulty difficultyTarget; // "nBits"
+    private long nonce;
 
     // If null, it means this object holds only the headers.
     @Nullable
-    protected final List<Transaction> transactions;
+    private final List<Transaction> transactions;
 
     /** Stores the hash of the block. If null, getHash() will recalculate it. */
     private Sha256Hash hash;
@@ -156,8 +156,8 @@ public class Block implements Message {
         payload.reset(); // read again from the mark for the hash
         Sha256Hash hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(Buffers.readBytes(payload, HEADER_SIZE)));
         return payload.hasRemaining()
-                ? new FinishedBlock(version, prevHash, merkleRoot, time, difficultyTarget, nonce, readTransactions(payload), hash)
-                : new FinishedBlockHeader(version, prevHash, merkleRoot, time, difficultyTarget, nonce, hash);
+                ? new FinishedBlock.Full(version, prevHash, merkleRoot, time, difficultyTarget, nonce, readTransactions(payload), hash)
+                : new FinishedBlock.Header(version, prevHash, merkleRoot, time, difficultyTarget, nonce, hash);
     }
 
     /**
@@ -421,7 +421,15 @@ public class Block implements Message {
      */
     @NonNull
     public Block asHeader() {
-        return new FinishedBlockHeader(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, getHash());
+        return new FinishedBlock.Header(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, getHash());
+    }
+
+    /**
+     * Immutable subclasses must override this method and return a (mutable) {@link Block}
+     * @return an unfinished (i.e. immutable) block
+     */
+    public Block asUnfinished() {
+        return this;
     }
 
     /** @deprecated use {@link #asHeader()} */

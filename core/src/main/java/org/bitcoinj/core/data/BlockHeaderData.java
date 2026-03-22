@@ -16,23 +16,23 @@
 
 package org.bitcoinj.core.data;
 
+import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.Sha256Hash;
 
 import java.time.Instant;
 
 /**
- * Implementations SHOULD be immutable.
- * getHash() may be present/precomputed, computed each time or computed lazily.
+ * An object containing a full (immutable) block header.
+ * {@link #getHash()} may be precomputed, computed each time, or computed lazily.
  * Implement {@link Hashed#hash()} if the Block hash is precomputed and returnable without computation.
- * The use of existing concrete types will be replaced as our immutable implementations get further along.
  */
 public interface BlockHeaderData {
-    long version();   // TODO: Should this be long or int?
+    long version();
     Sha256Hash prevHash();
     Sha256Hash merkleRoot();
     Instant time();
-    long bits();       // TODO: Should this be long, int, or a DifficultyTarget type?
-    long nonce();      // TODO: long or int?
-    // This _may_ compute or compute-and-memoize the hash, there is no performance guarantee
+    Difficulty difficulty();
+    long nonce();
+    // This _may_ compute or compute-and-memoize the hash, there is no performance guarantee.
     Sha256Hash getHash();
 }

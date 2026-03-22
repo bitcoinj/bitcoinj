@@ -59,8 +59,8 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(VersionMessage.class, "version");
         names.put(InventoryMessage.class, "inv");
         names.put(Block.class, "block");
-        names.put(FinishedBlock.class, "block");
-        names.put(FinishedBlockHeader.class, "block");
+        names.put(FinishedBlock.Full.class, "block");
+        names.put(FinishedBlock.Header.class, "block");
         names.put(GetDataMessage.class, "getdata");
         names.put(Transaction.class, "tx");
         names.put(AddressV1Message.class, "addr");
