@@ -52,11 +52,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class WalletAccountPathTest {
     private static final String testWalletMnemonic = "panda diary marriage suffer basic glare surge auto scissors describe sell unique";
 
-    @TempDir File tempDir;
-    File walletFile;
+    private final File walletFile;
 
-    @BeforeEach
-    void setupTest() {
+    public WalletAccountPathTest(@TempDir File tempDir) {
         walletFile = new File(tempDir, "test.wallet");
     }
 
