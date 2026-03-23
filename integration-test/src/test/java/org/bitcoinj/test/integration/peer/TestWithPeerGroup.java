@@ -57,7 +57,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * used with loopback peers created using connectPeer. This involves real TCP connections so is a pretty accurate
  * mock, but means unit tests cannot be run simultaneously.
  */
-public class TestWithPeerGroup extends TestWithNetworkConnections {
+public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
     @Nullable protected PeerGroup peerGroup;
 
     @Nullable protected VersionMessage remoteVersionMessage;
