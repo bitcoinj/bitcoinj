@@ -25,7 +25,7 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.test.integration.peer.InboundMessageQueuer;
-import org.bitcoinj.testing.TestWithPeerGroup;
+import org.bitcoinj.test.integration.peer.TestWithPeerGroup;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
