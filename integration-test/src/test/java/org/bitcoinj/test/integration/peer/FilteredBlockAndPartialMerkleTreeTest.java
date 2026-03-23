@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.core;
+package org.bitcoinj.test.integration.peer;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
@@ -25,13 +25,25 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
+import org.bitcoinj.core.BitcoinSerializer;
+import org.bitcoinj.core.Block;
+import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.GetDataMessage;
+import org.bitcoinj.core.InventoryItem;
+import org.bitcoinj.core.InventoryMessage;
+import org.bitcoinj.core.PartialMerkleTree;
+import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.Ping;
+import org.bitcoinj.core.StoredBlock;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType;
+import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.test.integration.peer.InboundMessageQueuer;
-import org.bitcoinj.test.integration.peer.TestWithPeerGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.After;
 import org.junit.Before;
