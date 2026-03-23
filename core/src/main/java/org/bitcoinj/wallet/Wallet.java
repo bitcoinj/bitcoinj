@@ -33,7 +33,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
@@ -5085,7 +5085,7 @@ public class Wallet extends BaseTaggableObject
                 }
             }
             for (TransactionOutPoint point : bloomOutPoints)
-                filter.insert(point);
+                filter.insert(point.serialize());
             return filter;
         } finally {
             endBloomFilterCalculation();
