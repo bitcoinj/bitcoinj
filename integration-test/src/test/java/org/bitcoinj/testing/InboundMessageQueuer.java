@@ -43,9 +43,16 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
 
     @Nullable public Peer peer;
     @Nullable public BloomFilter lastReceivedFilter;
+    private final PeerAddress peerAddress;
 
     protected InboundMessageQueuer(BitcoinSerializer serializer) {
-        super(PeerAddress.simple(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000)), serializer);
+        super(serializer);
+        peerAddress = PeerAddress.simple(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000));
+    }
+
+    @Override
+    public PeerAddress getAddress() {
+        return peerAddress;
     }
 
     public Message nextMessage() {
