@@ -25,6 +25,7 @@ import org.bitcoinj.net.SocketTimeoutTask;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.net.TimeoutHandler;
 import org.bitcoinj.utils.Threading;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,6 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     private final SocketTimeoutTask timeoutTask;
 
     private final MessageSerializer serializer;
-    protected final PeerAddress peerAddress;
     // If we close() before we know our writeTarget, set this to true to call writeTarget.closeConnection() right away.
     private boolean closePending = false;
     // writeTarget will be thread-safe, and may call into PeerGroup, which calls us, so we should call it unlocked
@@ -65,8 +65,7 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
     private int largeReadBufferPos;
     private BitcoinSerializer.BitcoinPacketHeader header;
 
-    protected PeerSocketHandler(PeerAddress peerAddress, MessageSerializer messageSerializer) {
-        this.peerAddress = Objects.requireNonNull(peerAddress);
+    protected PeerSocketHandler(MessageSerializer messageSerializer) {
         this.serializer = Objects.requireNonNull(messageSerializer);
         this.timeoutTask = new SocketTimeoutTask(this::timeoutOccurred);
     }
@@ -220,12 +219,12 @@ public abstract class PeerSocketHandler implements TimeoutHandler, StreamConnect
         return Message.MAX_SIZE;
     }
 
+    // getAddress() is only used for logging and exception messages in PeerSocketHandler
     /**
      * @return the IP address and port of peer.
      */
-    public PeerAddress getAddress() {
-        return peerAddress;
-    }
+    @NonNull
+    public abstract PeerAddress getAddress();
 
     /** Catch any exceptions, logging them and then closing the channel. */
     private void exceptionCaught(Exception e) {

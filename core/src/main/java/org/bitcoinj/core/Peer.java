@@ -38,6 +38,7 @@ import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,8 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 public class Peer extends PeerSocketHandler {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
     protected final ReentrantLock lock = Threading.lock(Peer.class);
+
+    protected final @NonNull PeerAddress peerAddress;
 
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
@@ -247,7 +250,8 @@ public class Peer extends PeerSocketHandler {
      */
     public Peer(NetworkParameters params, VersionMessage ver, PeerAddress remoteAddress,
                 @Nullable AbstractBlockChain chain, long requiredServices, int downloadTxDependencyDepth) {
-        super(remoteAddress, params.getDefaultSerializer());
+        super(params.getDefaultSerializer());
+        this.peerAddress = remoteAddress;
         this.params = Objects.requireNonNull(params);
         this.versionMessage = Objects.requireNonNull(ver);
         this.vDownloadTxDependencyDepth = chain != null ? downloadTxDependencyDepth : 0;
@@ -282,6 +286,12 @@ public class Peer extends PeerSocketHandler {
     public Peer(NetworkParameters params, AbstractBlockChain blockChain, PeerAddress peerAddress, String thisSoftwareName, String thisSoftwareVersion) {
         this(params, new VersionMessage(params, blockChain.getBestChainHeight()), peerAddress, blockChain);
         this.versionMessage.appendToSubVer(thisSoftwareName, thisSoftwareVersion, null);
+    }
+
+    @Override
+    @NonNull
+    public PeerAddress getAddress() {
+        return peerAddress;
     }
 
     /** Registers a listener that is invoked when new blocks are downloaded. */
