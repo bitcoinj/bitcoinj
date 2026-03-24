@@ -2382,7 +2382,7 @@ public class PeerGroup implements TransactionBroadcaster {
             if (peerHeight < mostCommonChainHeight || peerHeight > mostCommonChainHeight + 1)
                 continue;
             candidates.add(peer);
-            highestPriority = Math.max(highestPriority, getPriority(peer.peerAddress));
+            highestPriority = Math.max(highestPriority, getPriority(peer.getAddress()));
         }
         if (candidates.isEmpty())
             return null;
@@ -2390,7 +2390,7 @@ public class PeerGroup implements TransactionBroadcaster {
         // If there is a difference in priority, consider only the highest.
         for (Iterator<Peer> i = candidates.iterator(); i.hasNext(); ) {
             Peer peer = i.next();
-            if (getPriority(peer.peerAddress) < highestPriority)
+            if (getPriority(peer.getAddress()) < highestPriority)
                 i.remove();
         }
 
