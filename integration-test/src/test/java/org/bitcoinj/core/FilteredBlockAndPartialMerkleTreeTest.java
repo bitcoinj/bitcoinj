@@ -53,6 +53,7 @@ import java.util.Set;
 import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -77,7 +78,9 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         // Cheat and place the previous block (block 100000) at the head of the block store without supporting blocks
         store.put(new StoredBlock(SERIALIZER.makeBlock(ByteBuffer.wrap(ByteUtils.parseHex("0100000050120119172a610421a6c3011dd330d9df07b63616c2cc1f1cd00200000000006657a9252aacd5c0b2940996ecff952228c3067cc38d4885efb5a4ac4247e9f337221b4d4c86041b0f2b5710"))),
                 BigInteger.ONE, 100_000));
-        store.setChainHead(store.get(Sha256Hash.wrap("000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506")));
+        StoredBlock head = store.get(Sha256Hash.wrap("000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506"));
+        assertNotNull(head);
+        store.setChainHead(head);
 
         wallet = Wallet.createBasic(BitcoinNetwork.TESTNET);
         wallet.importKeys(Arrays.asList(ECKey.fromPublicOnly(ByteUtils.parseHex("04b27f7e9475ccf5d9a431cb86d665b8302c140144ec2397fce792f4a4e7765fecf8128534eaa71df04f93c74676ae8279195128a1506ebf7379d23dab8fca0f63")),
@@ -181,11 +184,13 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         assertEquals(Sha256Hash.wrap("c5abc61566dbb1c4bce5e1fda7b66bed22eb2130cea4b721690bc1488465abc9"), tx3.getTxId());
         assertEquals(tx3.getTxId(),txHashList.get(3));
 
+        assertNotNull(wallet);
         BloomFilter filter = wallet.getBloomFilter(wallet.getKeyChainGroupSize()*2, 0.001, 0xDEADBEEF);
         // Compare the serialized bloom filter to a known-good value
         assertArrayEquals(ByteUtils.parseHex("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"), filter.serialize());
 
         // Create a peer.
+        assertNotNull(peerGroup);
         peerGroup.start();
         InboundMessageQueuer p1 = connectPeer(1);
         assertEquals(1, peerGroup.numConnectedPeers());
@@ -224,7 +229,9 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         }
 
         // Peer 1 goes away.
-        closePeer(peerOf(p1));
+        Peer p = peerOf(p1);
+        assertNotNull(p);
+        closePeer(p);
     }
 
     @Test
