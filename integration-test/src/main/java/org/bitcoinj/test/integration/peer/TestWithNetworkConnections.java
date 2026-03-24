@@ -51,6 +51,8 @@ import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javax.net.SocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -64,6 +66,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
@@ -72,6 +75,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * Utility class that makes it easy to work with mock NetworkConnections.
  */
 public class TestWithNetworkConnections {
+    private static final Logger log = LoggerFactory.getLogger(TestWithNetworkConnections.class);
     protected static final int TCP_PORT_BASE = 10000;
     public static final int PEER_SERVERS = 5;
 
@@ -81,7 +85,7 @@ public class TestWithNetworkConnections {
     @Nullable protected BlockChain blockChain;
     @Nullable protected Wallet wallet;
     @Nullable protected Address address;
-    @Nullable protected SocketAddress socketAddress;
+    //@Nullable protected SocketAddress socketAddress;
 
     private final NioServer[] peerServers = new NioServer[PEER_SERVERS];
     @Nullable private final ClientConnectionManager channels;
@@ -90,14 +94,16 @@ public class TestWithNetworkConnections {
     public class TestStreamConnectionFactory implements StreamConnectionFactory {
         @Override
         public @Nullable StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-            return new InboundMessageQueuer(UNITTEST.getSerializer()) {
+            // This appears to be the only subclass of InboundMessageQueuer
+            return new InboundMessageQueuer(UNITTEST.getSerializer(), inetAddress, port) {
                 @Override
                 public void connectionClosed() {
                 }
 
                 @Override
                 public void connectionOpened() {
-                    newPeerWriteTargetQueue.offer(this);
+                    boolean added = newPeerWriteTargetQueue.offer(this);
+                    log.warn("TestStreamConnectionFactory added to queue: {}", added);
                 }
             };
         }
@@ -112,12 +118,11 @@ public class TestWithNetworkConnections {
     private final ClientType clientType;
     public TestWithNetworkConnections(ClientType clientType) {
         this.clientType = clientType;
-        if (clientType == ClientType.NIO_CLIENT_MANAGER)
-            channels = new NioClientManager();
-        else if (clientType == ClientType.BLOCKING_CLIENT_MANAGER)
-            channels = new BlockingClientManager();
-        else
-            channels = null;
+        channels = switch (clientType) {
+            case NIO_CLIENT_MANAGER -> new NioClientManager();
+            case BLOCKING_CLIENT_MANAGER -> new BlockingClientManager();
+            case NIO_CLIENT, BLOCKING_CLIENT -> null;
+        };
     }
 
     public void setUp() throws IOException, BlockStoreException {
@@ -125,7 +130,7 @@ public class TestWithNetworkConnections {
     }
     
     public void setUp(BlockStore blockStore) throws IOException, BlockStoreException {
-        BriefLogFormatter.init();
+        BriefLogFormatter.init(Level.ALL);
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
@@ -145,7 +150,7 @@ public class TestWithNetworkConnections {
             channels.awaitRunning();
         }
 
-        socketAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), 1111);
+        //socketAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), 1111);
     }
 
     protected void startPeerServers() throws IOException {
@@ -166,8 +171,13 @@ public class TestWithNetworkConnections {
     }
 
     protected void stopPeerServers() {
-        for (int i = 0 ; i < PEER_SERVERS ; i++)
-            stopPeerServer(i);
+        for (int i = 0 ; i < PEER_SERVERS ; i++) {
+            try {
+                stopPeerServer(i);
+            } catch (Exception e) {
+                log.warn("failed to stop peer server {}", i, e);
+            }
+        }
     }
 
     protected void stopPeerServer(int i) {
@@ -184,18 +194,20 @@ public class TestWithNetworkConnections {
         final Thread thisThread = Thread.currentThread();
         peer.addDisconnectedEventListener((p, peerCount) -> {
             synchronized (doneConnecting) {
-                if (!doneConnecting.get())
+                if (!doneConnecting.get()) {
+                    log.warn("Interrupting thisThread!!!");
                     thisThread.interrupt();
+                }
             }
         });
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
             Objects.requireNonNull(channels);
-            channels.openConnection(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer);
+            channels.openConnection(new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE), peer);
         }
         else if (clientType == ClientType.NIO_CLIENT)
-            new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, Duration.ofMillis(100));
+            new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE), peer, Duration.ofMillis(100));
         else if (clientType == ClientType.BLOCKING_CLIENT)
-            new BlockingClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, Duration.ofMillis(100), SocketFactory.getDefault(), null);
+            new BlockingClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), TCP_PORT_BASE), peer, Duration.ofMillis(100), SocketFactory.getDefault(), null);
         else
             throw new RuntimeException();
         // Claim we are connected to a different IP that what we really are, so tx confidence broadcastBy sets work
@@ -206,15 +218,21 @@ public class TestWithNetworkConnections {
         writeTarget.sendMessage(versionMessage);
         writeTarget.sendMessage(new VersionAck());
         try {
-            checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
-            checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);
+            Message m1 = writeTarget.nextMessageBlocking();
+            checkState(m1 instanceof VersionMessage);
+            Message m2 = writeTarget.nextMessageBlocking();
+            checkState(m2 instanceof Message);
+            Message m3 = writeTarget.nextMessageBlocking();
+            checkState(m3 instanceof VersionAck);
             peer.getVersionHandshakeFuture().get();
             synchronized (doneConnecting) {
                 doneConnecting.set(true);
             }
-            Thread.interrupted(); // Clear interrupted bit in case it was set before we got into the CS
+            boolean interrupted = Thread.interrupted(); // Clear interrupted bit in case it was set before we got into the CS
+            log.warn("interrupted = {}", false);
         } catch (InterruptedException e) {
             // We were disconnected before we got back version/verack
+            log.warn("We were disconnected before we got back version/verack");
         }
         return writeTarget;
     }
@@ -262,6 +280,7 @@ public class TestWithNetworkConnections {
         outboundPingAndWait(p, nonce);
     }
 
+    @Nullable
     protected Message outbound(InboundMessageQueuer p1) throws ExecutionException, InterruptedException {
         pingAndWait(p1);
         return p1.nextMessage();

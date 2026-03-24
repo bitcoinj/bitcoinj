@@ -9,6 +9,7 @@ dependencies {
     implementation project(':bitcoinj-core')
     implementation project(':bitcoinj-examples')
     api 'org.jspecify:jspecify:1.0.0'
+    implementation 'org.slf4j:slf4j-api:2.0.16'
 
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
