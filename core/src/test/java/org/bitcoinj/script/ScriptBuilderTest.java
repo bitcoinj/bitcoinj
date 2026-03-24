@@ -18,6 +18,7 @@ package org.bitcoinj.script;
 
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.AddressParser;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.base.internal.ByteUtils;
@@ -228,15 +229,21 @@ public class ScriptBuilderTest {
         AddressParser addressParser = AddressParser.getDefault();
 
         for (AddressData valid : AddressData.VALID_ADDRESSES) {
+            BitcoinNetwork network = networkFromIdString(valid.expectedNetwork);
             SegwitAddress address = (SegwitAddress) addressParser.parseAddress(valid.address);
 
             assertEquals(valid.expectedScriptPubKey,
                     ByteUtils.formatHex(ScriptBuilder.createOutputScript(address).program()));
             if (valid.expectedWitnessVersion == 0) {
                 Script expectedScriptPubKey = Script.parse(ByteUtils.parseHex(valid.expectedScriptPubKey));
-                assertEquals(address, SegwitAddress.fromHash(valid.expectedNetwork,
+                assertEquals(address, SegwitAddress.fromHash(network,
                         ScriptPattern.extractHashFromP2WH(expectedScriptPubKey)));
             }
         }
+    }
+
+    private BitcoinNetwork networkFromIdString(String id) {
+        return BitcoinNetwork.fromIdString(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid network id: " + id));
     }
 }
