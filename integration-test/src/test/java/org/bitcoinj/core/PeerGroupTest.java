@@ -630,9 +630,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Transaction tx2 = new Transaction();
         tx2.addInput(tx.getOutput(0));
         TransactionOutPoint outpoint = tx2.getInput(0).getOutpoint();
-        assertTrue(p1.lastReceivedFilter.contains(key.getPubKey()));
-        assertTrue(p1.lastReceivedFilter.contains(key.getPubKeyHash()));
-        assertFalse(p1.lastReceivedFilter.contains(tx.getTxId().getBytes()));
+        assertTrue(p1.lastReceivedFilter().contains(key.getPubKey()));
+        assertTrue(p1.lastReceivedFilter().contains(key.getPubKeyHash()));
+        assertFalse(p1.lastReceivedFilter().contains(tx.getTxId().getBytes()));
         inbound(p1, tx);
         // p1 requests dep resolution, p2 is quiet.
         assertTrue(outbound(p1) instanceof GetDataMessage);
@@ -644,9 +644,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.waitForJobQueue();
         // Now we connect p3 and there is a new bloom filter sent, that DOES match the relevant outpoint.
         InboundMessageQueuer p3 = connectPeer(3);
-        assertTrue(p3.lastReceivedFilter.contains(key.getPubKey()));
-        assertTrue(p3.lastReceivedFilter.contains(key.getPubKeyHash()));
-        assertTrue(p3.lastReceivedFilter.contains(outpoint.serialize()));
+        assertTrue(p3.lastReceivedFilter().contains(key.getPubKey()));
+        assertTrue(p3.lastReceivedFilter().contains(key.getPubKeyHash()));
+        assertTrue(p3.lastReceivedFilter().contains(outpoint.serialize()));
     }
 
     @Test
@@ -658,7 +658,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         InboundMessageQueuer p1 = connectPeer(1);
         InboundMessageQueuer p2 = connectPeer(2);
         peerGroup.waitForJobQueue();
-        BloomFilter f1 = p1.lastReceivedFilter;
+        BloomFilter f1 = p1.lastReceivedFilter();
         ECKey key = null;
         // We have to run ahead of the lookahead zone for this test. There should only be one bloom filter recalc.
         for (int i = 0; i < wallet.getKeyChainGroupLookaheadSize() + wallet.getKeyChainGroupLookaheadThreshold() + 1; i++) {
@@ -799,9 +799,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         peerGroup.start();
         InboundMessageQueuer p1 = connectPeer(1);
-        assertTrue(p1.lastReceivedFilter.contains(keys.get(0).getPubKey()));
-        assertTrue(p1.lastReceivedFilter.contains(keys.get(5).getPubKeyHash()));
-        assertFalse(p1.lastReceivedFilter.contains(keys.get(keys.size() - 1).getPubKey()));
+        assertTrue(p1.lastReceivedFilter().contains(keys.get(0).getPubKey()));
+        assertTrue(p1.lastReceivedFilter().contains(keys.get(5).getPubKeyHash()));
+        assertFalse(p1.lastReceivedFilter().contains(keys.get(keys.size() - 1).getPubKey()));
         peerGroup.startBlockChainDownload(null);
         peerGroup.startBlockChainDownloadFromPeer(peerGroup.getConnectedPeers().iterator().next());
         assertNextMessageIs(p1, GetBlocksMessage.class);
@@ -822,7 +822,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Send the chain that doesn't have all the transactions in it. The blocks after the exhaustion point should all
         // be ignored.
         int epoch = wallet.getKeyChainGroupCombinedKeyLookaheadEpochs();
-        BloomFilter filter = BloomFilter.read(ByteBuffer.wrap(p1.lastReceivedFilter.serialize()));
+        BloomFilter filter = BloomFilter.read(ByteBuffer.wrap(p1.lastReceivedFilter().serialize()));
         filterAndSend(p1, blocks, filter);
         Block exhaustionPoint = blocks.get(3);
         pingAndWait(p1);
@@ -897,7 +897,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         TestBlocks.solve(b2);
 
         // Apply the peer's bloom filter to create a FilteredBlock
-        FilteredBlock fb = p1.lastReceivedFilter.applyAndUpdate(b2);
+        FilteredBlock fb = p1.lastReceivedFilter().applyAndUpdate(b2);
 
         // Create a loose mempool transaction that pays to the wallet's existing address
         Transaction looseTx = FakeTxBuilder.createFakeTx(UNITTEST.network(), COIN, address);

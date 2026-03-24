@@ -42,7 +42,7 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
     public final Map<Long, CompletableFuture<Void>> mapPingFutures = new ConcurrentHashMap<>();
 
     @Nullable public Peer peer;
-    @Nullable public BloomFilter lastReceivedFilter;
+    @Nullable private BloomFilter lastReceivedFilter;
     private final PeerAddress peerAddress;
 
     protected InboundMessageQueuer(BitcoinSerializer serializer) {
@@ -61,6 +61,11 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
 
     public Message nextMessageBlocking() throws InterruptedException {
         return inboundMessages.take();
+    }
+
+    @Nullable
+    public BloomFilter lastReceivedFilter() {
+        return lastReceivedFilter;
     }
 
     @Override
