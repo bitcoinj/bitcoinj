@@ -30,7 +30,7 @@ import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.testing.InboundMessageQueuer;
+import org.bitcoinj.test.integration.peer.InboundMessageQueuer;
 import org.bitcoinj.testing.TestWithPeerGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.After;

@@ -32,6 +32,8 @@ import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.test.integration.peer.InboundMessageQueuer;
+import org.bitcoinj.test.integration.peer.TestWithNetworkConnections;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.jspecify.annotations.Nullable;
 import org.junit.Rule;

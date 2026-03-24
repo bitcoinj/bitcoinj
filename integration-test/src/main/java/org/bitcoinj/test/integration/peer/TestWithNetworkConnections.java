@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.testing;
+package org.bitcoinj.test.integration.peer;
 
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.BitcoinNetwork;

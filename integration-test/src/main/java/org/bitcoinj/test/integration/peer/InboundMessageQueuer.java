@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.testing;
+package org.bitcoinj.test.integration.peer;
 
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.BloomFilter;
