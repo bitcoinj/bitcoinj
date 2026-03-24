@@ -41,6 +41,7 @@ import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.bitcoinj.base.ScriptType.P2PKH;
 import static org.bitcoinj.base.ScriptType.P2WPKH;
+import static org.bitcoinj.test.integration.wallet.WalletTestParams.WALLET_MNEMONIC;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP32;
 import static org.bitcoinj.wallet.KeyChainGroupStructure.BIP43;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,8 +51,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Create new Wallets in a temp directory and make sure their account paths are correct.
  */
 public class WalletAccountPathTest {
-    private static final String testWalletMnemonic = "panda diary marriage suffer basic glare surge auto scissors describe sell unique";
-
     @TempDir File tempDir;
     File walletFile;
 
@@ -90,7 +89,7 @@ public class WalletAccountPathTest {
     // Create a wallet, save it to a file, then reload from a file
     private static Wallet createWallet(File walletFile, Network network, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
         Context.propagate(new Context());
-        DeterministicSeed seed = DeterministicSeed.ofMnemonic(testWalletMnemonic, "", Instant.now());
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic(WALLET_MNEMONIC, "", Instant.now());
         Wallet wallet = Wallet.fromSeed(network, seed, outputScriptType, structure);
         wallet.saveToFile(walletFile);
         return Wallet.loadFromFile(walletFile);
