@@ -91,8 +91,10 @@ public class BitcoindComparisonTool {
         }
 
         VersionMessage ver = new VersionMessage(PARAMS, 42);
-        ver.appendToSubVer("BlockAcceptanceComparisonTool", "1.1", null);
-        ver.localServices = Services.of(Services.NODE_NETWORK);
+        ver = ver.appendToSubVer("BlockAcceptanceComparisonTool", "1.1", null);
+        ver = new VersionMessage.Builder(ver)
+                .localServices(Services.of(Services.NODE_NETWORK))
+                .build();
         final Peer bitcoind = new Peer(PARAMS, ver, PeerAddress.localhost(PARAMS),
                 new BlockChain(PARAMS.network(), new MemoryBlockStore(PARAMS.getGenesisBlock())));
         checkState(bitcoind.getVersionMessage().services().has(Services.NODE_NETWORK));
@@ -104,7 +106,7 @@ public class BitcoindComparisonTool {
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
         final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
         bitcoind.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> {
-            if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
+            if (!peer.getPeerVersionMessage().subVer().contains("Satoshi")) {
                 System.out.println();
                 System.out.println("************************************************************************************************************************\n" +
                                    "WARNING: You appear to be using this to test an alternative implementation with full validation rules. You should go\n" +

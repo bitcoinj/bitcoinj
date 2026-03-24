@@ -112,9 +112,10 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     private void connectWithVersion(int version, int flags) throws IOException, ExecutionException, InterruptedException {
-        VersionMessage peerVersion = new VersionMessage(TESTNET, OTHER_PEER_CHAIN_HEIGHT);
-        peerVersion.clientVersion = version;
-        peerVersion.localServices = Services.of(flags);
+        VersionMessage peerVersion = new VersionMessage.Builder(TESTNET, OTHER_PEER_CHAIN_HEIGHT)
+                .clientVersion(version)
+                .localServices(Services.of(flags))
+                .build();
         writeTarget = connect(peer, peerVersion);
     }
 
@@ -267,9 +268,10 @@ public class PeerTest extends TestWithNetworkConnections {
         InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), 4242);
         Peer peer2 = new Peer(TESTNET, ver, PeerAddress.simple(address), blockChain);
         peer2.addWallet(wallet);
-        VersionMessage peerVersion = new VersionMessage(TESTNET, OTHER_PEER_CHAIN_HEIGHT);
-        peerVersion.clientVersion = 70001;
-        peerVersion.localServices = Services.of(Services.NODE_NETWORK);
+        VersionMessage peerVersion = new VersionMessage.Builder(TESTNET, OTHER_PEER_CHAIN_HEIGHT)
+                .clientVersion(70001)
+                .localServices(Services.of(Services.NODE_NETWORK))
+                .build();
 
         connect();
         InboundMessageQueuer writeTarget2 = connect(peer2, peerVersion);

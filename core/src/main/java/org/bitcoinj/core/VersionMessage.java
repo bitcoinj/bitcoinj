@@ -36,14 +36,15 @@ import static org.bitcoinj.base.internal.Preconditions.check;
 
 /**
  * <p>A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
- * particularly interesting. The subVer field, since BIP 14, acts as a User-Agent string would. You can and should 
+ * particularly interesting. The subVer field, since BIP 14, acts as a User-Agent string would. You can and should
  * append to or change the subVer for your own software so other implementations can identify it, and you can look at
  * the subVer field received from other nodes to see what they are running.</p>
  *
- * <p>After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
+ * <p>This class is immutable. Use {@link Builder} to create instances with custom field values.
+ * After creating yourself a VersionMessage, you can pass it to {@link PeerGroup#setVersionMessage(VersionMessage)}
  * to ensure it will be used for each new connection.</p>
- * 
- * <p>Instances of this class are not safe for use by multiple threads.</p>
+ *
+ * <p>Instances of this class are immutable and safe for use by multiple threads.</p>
  */
 public class VersionMessage implements Message {
 
@@ -68,40 +69,31 @@ public class VersionMessage implements Message {
     @Deprecated
     public static final int NODE_BITCOIN_CASH = 1 << 5;
 
+    /** The version number of the protocol spoken. */
+    private final int clientVersion;
+    /** Flags defining what optional services are supported. */
+    private final Services localServices;
+    /** What the other side believes the current time to be. */
+    private final Instant time;
+    /** The services supported by the receiving node as perceived by the transmitting node. */
+    private final Services receivingServices;
     /**
-     * The version number of the protocol spoken.
+     * The network address of the receiving node as perceived by the transmitting node.
+     * Note: bitcoinj defaults this to {@code 127.0.0.1}; {@link PeerGroup} overrides it before sending.
      */
-    public int clientVersion;
-    /**
-     * Flags defining what optional services are supported.
-     */
-    public Services localServices;
-    /**
-     * What the other side believes the current time to be.
-     */
-    public Instant time;
-    /**
-     * The services supported by the receiving node as perceived by the transmitting node.
-     */
-    public Services receivingServices;
-    /**
-     * The network address of the receiving node as perceived by the transmitting node
-     */
-    public InetSocketAddress receivingAddr;
+    private final InetSocketAddress receivingAddr;
     /**
      * User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
      * Bitcoin Core sets it to something like "/Satoshi:0.9.1/".
      */
-    public String subVer;
-    /**
-     * How many blocks are in the chain, according to the other side.
-     */
-    public long bestHeight;
+    private final String subVer;
+    /** How many blocks are in the chain, according to the other side. */
+    private final long bestHeight;
     /**
      * Whether or not to relay tx invs before a filter is received.
      * See <a href="https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#extensions-to-existing-messages">BIP 37</a>.
      */
-    public boolean relayTxesBeforeFilter;
+    private final boolean relayTxesBeforeFilter;
 
     private static final int IPV6_ADDR_BYTES = 16; // 128 bits
     private static final int NETADDR_BYTES = Services.BYTES + /* IPv6 */ IPV6_ADDR_BYTES + /* port */ Short.BYTES;
@@ -151,13 +143,13 @@ public class VersionMessage implements Message {
         this.localServices = Services.none();
         this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
         this.receivingServices = Services.none();
-        this.receivingAddr = new InetSocketAddress(getLocalhostAddr(), params.getPort());
+        this.receivingAddr = new InetSocketAddress(localhostAddress(), params.getPort());
         this.subVer = LIBRARY_SUBVER;
         this.bestHeight = bestHeight;
         this.relayTxesBeforeFilter = true;
     }
 
-    private InetAddress getLocalhostAddr() {
+    private static InetAddress localhostAddress() {
         try {
             return InetAddress.getByAddress(new byte[] {127, 0, 0, 1});
         } catch (UnknownHostException e) {
@@ -169,31 +161,58 @@ public class VersionMessage implements Message {
                            InetSocketAddress receivingAddr, String subVer, long bestHeight,
                            boolean relayTxesBeforeFilter) {
         this.clientVersion = clientVersion;
-        this.localServices = localServices;
-        this.time = time;
-        this.receivingServices = receivingServices;
-        this.receivingAddr = receivingAddr;
-        this.subVer = subVer;
+        this.localServices = Objects.requireNonNull(localServices);
+        this.time = Objects.requireNonNull(time);
+        this.receivingServices = Objects.requireNonNull(receivingServices);
+        this.receivingAddr = Objects.requireNonNull(receivingAddr);
+        this.subVer = Objects.requireNonNull(subVer);
         this.bestHeight = bestHeight;
         this.relayTxesBeforeFilter = relayTxesBeforeFilter;
     }
 
-    /**
-     * Gets the client version.
-     *
-     * @return client version
-     */
+    /** Gets the protocol version number. */
     public int clientVersion() {
         return clientVersion;
     }
 
-    /**
-     * Get the service bitfield that represents the node services being provided.
-     *
-     * @return service bitfield
-     */
+    /** Gets the service bitfield that represents the node services being provided. */
     public Services services() {
         return localServices;
+    }
+
+    /** Gets the services supported by the transmitting node. Alias for {@link #services()}. */
+    public Services localServices() {
+        return localServices;
+    }
+
+    /** Gets the timestamp of this version message. */
+    public Instant time() {
+        return time;
+    }
+
+    /** Gets the services supported by the receiving node as perceived by the transmitting node. */
+    public Services receivingServices() {
+        return receivingServices;
+    }
+
+    /** Gets the network address of the receiving node as perceived by the transmitting node. */
+    public InetSocketAddress receivingAddr() {
+        return receivingAddr;
+    }
+
+    /** Gets the User-Agent string as defined in BIP 14. */
+    public String subVer() {
+        return subVer;
+    }
+
+    /** Gets the best block height known to the transmitting node. */
+    public long bestHeight() {
+        return bestHeight;
+    }
+
+    /** Gets whether tx invs should be relayed before a bloom filter is set (BIP 37). */
+    public boolean relayTxesBeforeFilter() {
+        return relayTxesBeforeFilter;
     }
 
     @Override
@@ -239,7 +258,7 @@ public class VersionMessage implements Message {
         VersionMessage other = (VersionMessage) o;
         return other.bestHeight == bestHeight &&
                 other.clientVersion == clientVersion &&
-                other.localServices == localServices &&
+                other.localServices.equals(localServices) &&
                 other.time.equals(time) &&
                 other.subVer.equals(subVer) &&
                 other.receivingServices.equals(receivingServices) &&
@@ -275,9 +294,10 @@ public class VersionMessage implements Message {
     }
 
     /**
-     * <p>Appends the given user-agent information to the subVer field. The subVer is composed of a series of
-     * name:version pairs separated by slashes in the form of a path. For example a typical subVer field for bitcoinj
-     * users might look like "/bitcoinj:0.13/MultiBit:1.2/" where libraries come further to the left.</p>
+     * <p>Returns a new VersionMessage with the given user-agent information appended to the subVer field.
+     * The subVer is composed of a series of name:version pairs separated by slashes in the form of a path.
+     * For example a typical subVer field for bitcoinj users might look like
+     * "/bitcoinj:0.13/MultiBit:1.2/" where libraries come further to the left.</p>
      *
      * <p>There can be as many components as you feel a need for, and the version string can be anything, but it is
      * recommended to use A.B.C where A = major, B = minor and C = revision for software releases, and dates for
@@ -292,17 +312,20 @@ public class VersionMessage implements Message {
      * <p>See <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a> for more information.</p>
      *
      * @param comments Optional (can be null) platform or other node specific information.
+     * @return a new VersionMessage with the updated subVer
      * @throws IllegalArgumentException if name, version or comments contains invalid characters.
      */
-    public void appendToSubVer(String name, String version, @Nullable String comments) {
+    public VersionMessage appendToSubVer(String name, String version, @Nullable String comments) {
         checkSubVerComponent(name);
         checkSubVerComponent(version);
+        String newSubVer;
         if (comments != null) {
             checkSubVerComponent(comments);
-            subVer = subVer.concat(String.format(Locale.US, "%s:%s(%s)/", name, version, comments));
+            newSubVer = subVer.concat(String.format(Locale.US, "%s:%s(%s)/", name, version, comments));
         } else {
-            subVer = subVer.concat(String.format(Locale.US, "%s:%s/", name, version));
+            newSubVer = subVer.concat(String.format(Locale.US, "%s:%s/", name, version));
         }
+        return new Builder(this).subVer(newSubVer).build();
     }
 
     private static void checkSubVerComponent(String component) {
@@ -320,5 +343,90 @@ public class VersionMessage implements Message {
     @Deprecated
     public static String toStringServices(long services) {
         return Services.of(services).toString();
+    }
+
+    /**
+     * A builder for creating {@link VersionMessage} instances with custom field values,
+     * or for creating modified copies of existing messages.
+     */
+    public static class Builder {
+        private int clientVersion;
+        private Services localServices;
+        private Instant time;
+        private Services receivingServices;
+        private InetSocketAddress receivingAddr;
+        private String subVer;
+        private long bestHeight;
+        private boolean relayTxesBeforeFilter;
+
+        /** Creates a builder initialized with default SPV values. */
+        public Builder(NetworkParameters params, int bestHeight) {
+            this.clientVersion = ProtocolVersion.CURRENT.intValue();
+            this.localServices = Services.none();
+            this.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
+            this.receivingServices = Services.none();
+            this.receivingAddr = new InetSocketAddress(localhostAddress(), params.getPort());
+            this.subVer = LIBRARY_SUBVER;
+            this.bestHeight = bestHeight;
+            this.relayTxesBeforeFilter = true;
+        }
+
+        /** Creates a builder copying all fields from an existing VersionMessage. */
+        public Builder(VersionMessage source) {
+            this.clientVersion = source.clientVersion;
+            this.localServices = source.localServices;
+            this.time = source.time;
+            this.receivingServices = source.receivingServices;
+            this.receivingAddr = source.receivingAddr;
+            this.subVer = source.subVer;
+            this.bestHeight = source.bestHeight;
+            this.relayTxesBeforeFilter = source.relayTxesBeforeFilter;
+        }
+
+        public Builder clientVersion(int clientVersion) {
+            this.clientVersion = clientVersion;
+            return this;
+        }
+
+        public Builder localServices(Services localServices) {
+            this.localServices = Objects.requireNonNull(localServices);
+            return this;
+        }
+
+        public Builder time(Instant time) {
+            this.time = Objects.requireNonNull(time);
+            return this;
+        }
+
+        public Builder receivingServices(Services receivingServices) {
+            this.receivingServices = Objects.requireNonNull(receivingServices);
+            return this;
+        }
+
+        public Builder receivingAddr(InetSocketAddress receivingAddr) {
+            this.receivingAddr = Objects.requireNonNull(receivingAddr);
+            return this;
+        }
+
+        public Builder subVer(String subVer) {
+            this.subVer = Objects.requireNonNull(subVer);
+            return this;
+        }
+
+        public Builder bestHeight(long bestHeight) {
+            this.bestHeight = bestHeight;
+            return this;
+        }
+
+        public Builder relayTxesBeforeFilter(boolean relayTxesBeforeFilter) {
+            this.relayTxesBeforeFilter = relayTxesBeforeFilter;
+            return this;
+        }
+
+        /** Builds a new immutable VersionMessage. */
+        public VersionMessage build() {
+            return new VersionMessage(clientVersion, localServices, time, receivingServices, receivingAddr,
+                    subVer, bestHeight, relayTxesBeforeFilter);
+        }
     }
 }

@@ -87,7 +87,7 @@ public class PrintPeers {
             peer.addConnectedEventListener((p, peerCount) -> {
                 // Check the chain height it claims to have.
                 VersionMessage ver = peer.getPeerVersionMessage();
-                long nodeHeight = ver.bestHeight;
+                long nodeHeight = ver.bestHeight();
                 synchronized (lock) {
                     long diff = bestHeight[0] - nodeHeight;
                     if (diff > 0) {

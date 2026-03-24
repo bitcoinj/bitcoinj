@@ -436,9 +436,10 @@ public class PeerGroup implements TransactionBroadcaster {
         maxConnections = 0;
 
         int height = chain == null ? 0 : chain.getBestChainHeight();
-        versionMessage = new VersionMessage(params, height);
         // We never request that the remote node wait for a bloom filter yet, as we have no wallets
-        versionMessage.relayTxesBeforeFilter = true;
+        versionMessage = new VersionMessage.Builder(params, height)
+                .relayTxesBeforeFilter(true)
+                .build();
 
         downloadTxDependencyDepth = Integer.MAX_VALUE;
 
@@ -712,22 +713,23 @@ public class PeerGroup implements TransactionBroadcaster {
         //TODO Check that height is needed here (it wasnt, but it should be, no?)
         int height = chain == null ? 0 : chain.getBestChainHeight();
         VersionMessage ver = new VersionMessage(params, height);
-        ver.relayTxesBeforeFilter = false;
-        updateVersionMessageRelayTxesBeforeFilter(ver);
-        ver.appendToSubVer(name, version, comments);
+        ver = new VersionMessage.Builder(ver)
+                .relayTxesBeforeFilter(computeRelayTxesBeforeFilter())
+                .build();
+        ver = ver.appendToSubVer(name, version, comments);
         setVersionMessage(ver);
     }
     
-    // Updates the relayTxesBeforeFilter flag of ver
-    private void updateVersionMessageRelayTxesBeforeFilter(VersionMessage ver) {
-        // We will provide the remote node with a bloom filter (ie they shouldn't relay yet)
-        // if chain == null || !chain.shouldVerifyTransactions() and a wallet is added and bloom filters are enabled
-        // Note that the default here means that no tx invs will be received if no wallet is ever added
+    // Computes whether to relay tx invs before a bloom filter is set.
+    // We will provide the remote node with a bloom filter (ie they shouldn't relay yet)
+    // if chain == null || !chain.shouldVerifyTransactions() and a wallet is added and bloom filters are enabled
+    // Note that the default here means that no tx invs will be received if no wallet is ever added
+    private boolean computeRelayTxesBeforeFilter() {
         lock.lock();
         try {
             boolean spvMode = chain != null && !chain.shouldVerifyTransactions();
             boolean willSendFilter = spvMode && peerFilterProviders.size() > 0 && vBloomFilteringEnabled;
-            ver.relayTxesBeforeFilter = !willSendFilter;
+            return !willSendFilter;
         } finally {
             lock.unlock();
         }
@@ -1303,7 +1305,9 @@ public class PeerGroup implements TransactionBroadcaster {
             // automatically rewind the block chain and redownload the blocks to find transactions relevant to those keys,
             // all transparently and in the background. But we are a long way from that yet.
             CompletableFuture<BloomFilter> future = recalculateFastCatchupAndFilter(FilterRecalculateMode.SEND_IF_CHANGED);
-            updateVersionMessageRelayTxesBeforeFilter(getVersionMessage());
+            versionMessage = new VersionMessage.Builder(versionMessage)
+                    .relayTxesBeforeFilter(computeRelayTxesBeforeFilter())
+                    .build();
             return future;
         } finally {
             lock.unlock();
@@ -1498,10 +1502,11 @@ public class PeerGroup implements TransactionBroadcaster {
     @Nullable @GuardedBy("lock")
     protected Peer connectTo(PeerAddress address, boolean incrementMaxConnections, Duration connectTimeout) {
         checkState(lock.isHeldByCurrentThread());
-        VersionMessage ver = getVersionMessage().duplicate();
-        ver.bestHeight = chain == null ? 0 : chain.getBestChainHeight();
-        ver.time = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
-        ver.receivingAddr = new InetSocketAddress(address.getAddr(), address.getPort());
+        VersionMessage ver = new VersionMessage.Builder(getVersionMessage())
+                .bestHeight(chain == null ? 0 : chain.getBestChainHeight())
+                .time(TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS))
+                .receivingAddr(new InetSocketAddress(address.getAddr(), address.getPort()))
+                .build();
 
         Peer peer = createPeer(address, ver);
         peer.addConnectedEventListener(Threading.SAME_THREAD, startupListener);
@@ -2075,7 +2080,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             ArrayList<Peer> results = new ArrayList<>(peers.size());
             for (Peer peer : peers)
-                if (peer.getPeerVersionMessage().clientVersion >= protocolVersion)
+                if (peer.getPeerVersionMessage().clientVersion() >= protocolVersion)
                     results.add(peer);
             return results;
         } finally {
@@ -2125,7 +2130,7 @@ public class PeerGroup implements TransactionBroadcaster {
         try {
             ArrayList<Peer> results = new ArrayList<>(peers.size());
             for (Peer peer : peers)
-                if (peer.getPeerVersionMessage().localServices.has(mask))
+                if (peer.getPeerVersionMessage().localServices().has(mask))
                     results.add(peer);
             return results;
         } finally {
@@ -2372,7 +2377,7 @@ public class PeerGroup implements TransactionBroadcaster {
         final int MINIMUM_VERSION = ProtocolVersion.WITNESS_VERSION.intValue();
         for (Peer peer : peers) {
             final VersionMessage versionMessage = peer.getPeerVersionMessage();
-            if (versionMessage.clientVersion < MINIMUM_VERSION)
+            if (versionMessage.clientVersion() < MINIMUM_VERSION)
                 continue;
             if (!versionMessage.services().has(Services.NODE_NETWORK))
                 continue;
