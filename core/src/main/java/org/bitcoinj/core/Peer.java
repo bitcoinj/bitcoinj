@@ -84,7 +84,7 @@ public class Peer extends PeerSocketHandler {
     private static final Logger log = LoggerFactory.getLogger(Peer.class);
     protected final ReentrantLock lock = Threading.lock(Peer.class);
 
-    protected final @NonNull PeerAddress peerAddress;
+    private final @NonNull PeerAddress peerAddress;
 
     private final NetworkParameters params;
     private final AbstractBlockChain blockChain;
