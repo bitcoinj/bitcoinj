@@ -313,6 +313,56 @@ public abstract class AbstractFullPrunedBlockChainTest {
     }
 
     @Test
+    public void testGetOpenTransactionOutputsSegwit() throws Exception {
+        final int UNDOABLE_BLOCKS_STORED = 10;
+        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        chain = new FullPrunedBlockChain(PARAMS, store);
+
+        ECKey outKey = ECKey.random();
+        int height = 1;
+
+        // Build some blocks on genesis block to create a spendable output
+        Block rollingBlock = TestBlocks.createNextBlockWithCoinbase(PARAMS.getGenesisBlock(), Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+        TestBlocks.solve(rollingBlock);
+        chain.add(rollingBlock);
+        Transaction transaction = rollingBlock.transaction(0);
+        TransactionOutput spendableOutput = transaction.getOutput(0);
+        TransactionOutPoint spendableOutputPoint = spendableOutput.getOutPointFor();
+        Script spendableOutputScriptPubKey = spendableOutput.getScriptPubKey();
+        for (int i = 1; i < PARAMS.getSpendableCoinbaseDepth(); i++) {
+            rollingBlock = TestBlocks.createNextBlockWithCoinbase(rollingBlock, Block.BLOCK_VERSION_GENESIS, outKey.getPubKey(), height++);
+            TestBlocks.solve(rollingBlock);
+            chain.add(rollingBlock);
+        }
+        rollingBlock = TestBlocks.createNextBlock(rollingBlock, null);
+
+        // Create bitcoin spend of 1 BTC to a P2WPKH (native segwit) address.
+        ECKey toKey = ECKey.random();
+        Coin amount = Coin.valueOf(100000000);
+        Address segwitAddress = toKey.toAddress(ScriptType.P2WPKH, PARAMS.network());
+
+        Transaction t = new Transaction();
+        t.addOutput(new TransactionOutput(t, amount, segwitAddress));
+        t.addSignedInput(spendableOutputPoint, spendableOutputScriptPubKey, spendableOutput.getValue(), outKey);
+        rollingBlock.addTransaction(t);
+        TestBlocks.solve(rollingBlock);
+        chain.add(rollingBlock);
+
+        List<UTXO> outputs = store.getOpenTransactionOutputs(Arrays.asList(toKey));
+        assertNotNull(outputs);
+        assertEquals("Wrong number of outputs", 1, outputs.size());
+        UTXO output = outputs.get(0);
+        assertEquals("The address is not equal", segwitAddress, output.getScript().getToAddress(PARAMS.network()));
+        assertEquals("The amount is not equal", amount, output.getValue());
+
+        outputs = null;
+        output = null;
+        try {
+            store.close();
+        } catch (Exception e) {}
+    }
+
+    @Test
     public void testUTXOProviderWithWallet() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
         store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
