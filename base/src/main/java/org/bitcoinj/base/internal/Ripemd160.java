@@ -29,8 +29,8 @@ import static java.lang.Integer.rotateLeft;
  * This avoids a dependency on Bouncy Castle for a hash that is not available
  * in the standard JDK {@link java.security.MessageDigest} providers. The
  * implementation follows the specification at
- * <a href="https://homes.esat.kuleuven.be/~bosselaers/ripemd160.html">
- * https://homes.esat.kuleuven.be/~bosselaers/ripemd160.html</a>.
+ * <a href="https://homes.esat.kuleuven.be/~bosselae/ripemd160.html">
+ * https://homes.esat.kuleuven.be/~bosselae/ripemd160.html</a>.
  * <p>
  * Not instantiable.
  */
