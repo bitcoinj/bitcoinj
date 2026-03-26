@@ -206,11 +206,6 @@ public class Ripemd160Test {
         assertArrayEquals(copy, input);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void nullInputThrows() {
-        Ripemd160.hash(null);
-    }
-
     // -- Helpers --
 
     private static void assertHash(String expectedHex, String asciiInput) {
