@@ -32,7 +32,7 @@ import static org.junit.Assert.assertFalse;
 public class Ripemd160Test {
 
     // -- RIPEMD-160 specification test vectors --
-    // From https://homes.esat.kuleuven.be/~bosselaers/ripemd160.html
+    // From https://homes.esat.kuleuven.be/~bosselae/ripemd160.html
 
     @Test
     public void emptyString() {
