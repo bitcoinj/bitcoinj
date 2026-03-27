@@ -20,14 +20,18 @@ import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Abstract controller class for a wallet application's main window (i.e. the one that is the primary @{code Stage})
  */
 public abstract class MainWindowController extends OverlayableStackPaneController {
-    protected Scene scene;
+    protected @Nullable Scene scene;
 
     public Scene scene() {
+        Objects.requireNonNull(scene, "Controller not initialized or initialization failed to initialize scene");
         return scene;
     }
 
