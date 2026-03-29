@@ -165,7 +165,7 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      * @return the hash (in big-endian order)
      */
     public static byte[] hash(byte[] input) {
-        return hash(input, 0, input.length);
+        return newDigest().digest(input);
     }
 
     /**
