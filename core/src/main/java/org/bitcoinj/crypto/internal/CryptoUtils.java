@@ -16,7 +16,6 @@
 package org.bitcoinj.crypto.internal;
 
 import org.bitcoinj.base.Sha256Hash;
-import org.bouncycastle.jcajce.provider.digest.SHA3;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Mac;
@@ -95,9 +94,16 @@ public class CryptoUtils {
      * @return A SHA3 256-bit hash
      */
     public static byte[] sha3Digest(byte[] ...inputs) {
-        SHA3.Digest256 digest = new SHA3.Digest256();
+        MessageDigest digest;
+        {
+            try {
+                digest = MessageDigest.getInstance("SHA3-256", bcProvider);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException("SHA3-256 algorithm not found", e);
+            }
+        }
         for (byte[] input : inputs) {
-            digest.update(input, 0, input.length);
+            digest.update(input);
         }
         return digest.digest();
     }
