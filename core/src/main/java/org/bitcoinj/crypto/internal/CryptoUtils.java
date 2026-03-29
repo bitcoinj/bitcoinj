@@ -32,6 +32,21 @@ import java.security.Provider;
  */
 public class CryptoUtils {
     private static final Provider bcProvider = new BouncyCastleProvider();
+    private static final MessageDigest ripemd160Prototype;
+    private static final MessageDigest sha3Prototype;
+
+    static {
+        try {
+            ripemd160Prototype = MessageDigest.getInstance("RIPEMD160", bcProvider);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            sha3Prototype = MessageDigest.getInstance("SHA3-256", bcProvider);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Calculate RIPEMD160(SHA256(input)). This is used in Address calculations.
@@ -50,9 +65,9 @@ public class CryptoUtils {
      */
     public static byte[] digestRipeMd160(byte[] input) {
         try {
-            return MessageDigest.getInstance("RIPEMD160", bcProvider).digest(input);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("RIPEMD160 algorithm not found", e);
+            return ((MessageDigest) ripemd160Prototype.clone()).digest(input);
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("RIPEMD160 MessageDigest not cloneable", e);
         }
     }
 
@@ -97,9 +112,9 @@ public class CryptoUtils {
         MessageDigest digest;
         {
             try {
-                digest = MessageDigest.getInstance("SHA3-256", bcProvider);
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("SHA3-256 algorithm not found", e);
+                digest = ((MessageDigest) sha3Prototype.clone());
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException("SHA3-256 MessageDigest not cloneable", e);
             }
         }
         for (byte[] input : inputs) {
