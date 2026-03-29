@@ -16,20 +16,24 @@
 package org.bitcoinj.crypto.internal;
 
 import org.bitcoinj.base.Sha256Hash;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 
 /**
  * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle)
  */
 public class CryptoUtils {
+    private static final Provider bcProvider = new BouncyCastleProvider();
+
     /**
      * Calculate RIPEMD160(SHA256(input)). This is used in Address calculations.
      * @param input bytes to hash
@@ -46,11 +50,11 @@ public class CryptoUtils {
      * @return RIPEMD160(input)
      */
     public static byte[] digestRipeMd160(byte[] input) {
-        RIPEMD160Digest digest = new RIPEMD160Digest();
-        digest.update(input, 0, input.length);
-        byte[] ripmemdHash = new byte[20];
-        digest.doFinal(ripmemdHash, 0);
-        return ripmemdHash;
+        try {
+            return MessageDigest.getInstance("RIPEMD160", bcProvider).digest(input);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("RIPEMD160 algorithm not found", e);
+        }
     }
 
     /**
