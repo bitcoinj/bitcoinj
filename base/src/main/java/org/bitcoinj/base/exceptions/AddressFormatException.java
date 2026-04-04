@@ -20,7 +20,6 @@ package org.bitcoinj.base.exceptions;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.Bech32;
 
-@SuppressWarnings("serial")
 public class AddressFormatException extends IllegalArgumentException {
     public AddressFormatException() {
         super();

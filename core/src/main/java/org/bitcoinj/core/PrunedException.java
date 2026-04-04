@@ -26,7 +26,6 @@ import org.bitcoinj.base.Sha256Hash;
  * as the pruning parameters should be set very conservatively, such that an absolutely enormous re-org would be
  * required to trigger it.
  */
-@SuppressWarnings("serial")
 public class PrunedException extends Exception {
     private Sha256Hash hash;
     public PrunedException(Sha256Hash hash) {
