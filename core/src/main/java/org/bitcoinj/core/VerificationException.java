@@ -16,7 +16,6 @@
 
 package org.bitcoinj.core;
 
-@SuppressWarnings("serial")
 public class VerificationException extends RuntimeException {
     public VerificationException() {
         super();
