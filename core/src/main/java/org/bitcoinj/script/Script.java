@@ -1727,6 +1727,8 @@ public class Script {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
             }
             ECKey pubkey = ECKey.fromPublicOnly(witness.getPush(1));
+            if (!Arrays.equals(CryptoUtils.sha256hash160(pubkey.getPubKey()), ScriptPattern.extractHashFromP2WH(scriptPubKey)))
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "");
             Script scriptCode = ScriptBuilder.createP2PKHOutputScript(pubkey);
             Sha256Hash sigHash = txContainingThis.hashForWitnessSignature(scriptSigIndex, scriptCode, value,
                     signature.sigHashMode(), false);
@@ -1743,6 +1745,8 @@ public class Script {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
             }
             ECKey pubkey = ECKey.fromPublicOnly(chunks.get(1).data);
+            if (!Arrays.equals(CryptoUtils.sha256hash160(pubkey.getPubKey()), ScriptPattern.extractHashFromP2PKH(scriptPubKey)))
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "");
             Sha256Hash sigHash = txContainingThis.hashForSignature(scriptSigIndex, scriptPubKey,
                     signature.sigHashMode(), false);
             boolean validSig = pubkey.verify(sigHash, signature);
