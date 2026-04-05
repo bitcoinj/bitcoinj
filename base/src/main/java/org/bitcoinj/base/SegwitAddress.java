@@ -185,7 +185,7 @@ public class SegwitAddress implements Address {
     /**
      * Check if this script is a P2A (pay-to-anchor) output script.
      *
-     * @return <code>true</code> if the given wittnessProgram and wittnessVersion represent a Pay-to-anchor output script, <code>false</code> otherwise
+     * @return <code>true</code> if the given witnessProgram and witnessVersion represent a Pay-to-anchor output script, <code>false</code> otherwise
      */
     private boolean isPayToAnchorOutputScript(int witnessVersion, byte[] witnessProgram) {
         return witnessVersion == 1 && Arrays.equals(P2A_SCRIPT, witnessProgram);
