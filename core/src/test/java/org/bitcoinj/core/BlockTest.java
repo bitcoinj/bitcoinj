@@ -17,7 +17,6 @@
 
 package org.bitcoinj.core;
 
-import com.google.common.io.ByteStreams;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Difficulty;
@@ -66,7 +65,7 @@ public class BlockTest {
     public void setUp() throws Exception {
         Context.propagate(new Context());
         // One with some of transactions in, so a good test of the merkle tree hashing.
-        block700000Bytes = ByteStreams.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"));
+        block700000Bytes = ByteUtils.toByteArray(BlockTest.class.getResourceAsStream("block_testnet700000.dat"));
         block700000 = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(block700000Bytes));
         assertEquals("000000000000406178b12a4dea3b27e13b3c4fe4510994fd667d7c1e6a3f4dc1", block700000.getHashAsString());
     }
@@ -167,7 +166,7 @@ public class BlockTest {
         // shorter than we see in most other cases.
 
         Block block = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-            ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet21066.dat"))));
+            ByteUtils.toByteArray(getClass().getResourceAsStream("block_testnet21066.dat"))));
 
         // Check block.
         assertEquals("0000000004053156021d8e42459d284220a7f6e087bf78f30179c3703ca4eefa", block.getHashAsString());
@@ -179,7 +178,7 @@ public class BlockTest {
         // are applied correctly.
 
         block = TESTNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-            ByteStreams.toByteArray(getClass().getResourceAsStream("block_testnet32768.dat"))));
+            ByteUtils.toByteArray(getClass().getResourceAsStream("block_testnet32768.dat"))));
 
         // Check block.
         assertEquals("000000007590ba495b58338a5806c2b6f10af921a70dbd814e0da3c6957c0c03", block.getHashAsString());
@@ -198,7 +197,7 @@ public class BlockTest {
         final long BLOCK_NONCE = 3973947400L;
         final Coin BALANCE_AFTER_BLOCK = Coin.valueOf(22223642);
         Block block169482 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block169482.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block169482.dat"))));
 
         // Check block.
         assertNotNull(block169482);
@@ -228,7 +227,7 @@ public class BlockTest {
     @Test
     public void testBlock481815_witnessCommitmentInCoinbase() throws Exception {
         Block block481815 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block481815.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block481815.dat"))));
         assertEquals(2097, block481815.transactionCount());
         assertEquals("f115afa8134171a0a686bfbe9667b60ae6fb5f6a439e0265789babc315333262",
                 block481815.getMerkleRoot().toString());
@@ -248,7 +247,7 @@ public class BlockTest {
     @Test
     public void testBlock481829_witnessTransactions() throws Exception {
         Block block481829 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block481829.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block481829.dat"))));
         assertEquals(2020, block481829.transactionCount());
         assertEquals("f06f697be2cac7af7ed8cd0b0b81eaa1a39e444c6ebd3697e35ab34461b6c58d",
                 block481829.getMerkleRoot().toString());
@@ -275,35 +274,35 @@ public class BlockTest {
 
         // 227835/00000000000001aa077d7aa84c532a4d69bdbff519609d1da0835261b7a74eb6: last version 1 block
         final Block block227835 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block227835.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block227835.dat"))));
         assertFalse(block227835.isBIP34());
         assertFalse(block227835.isBIP66());
         assertFalse(block227835.isBIP65());
 
         // 227836/00000000000000d0dfd4c9d588d325dce4f32c1b31b7c0064cba7025a9b9adcc: version 2 block
         final Block block227836 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block227836.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block227836.dat"))));
         assertTrue(block227836.isBIP34());
         assertFalse(block227836.isBIP66());
         assertFalse(block227836.isBIP65());
 
         // 363703/0000000000000000011b2a4cb91b63886ffe0d2263fd17ac5a9b902a219e0a14: version 3 block
         final Block block363703 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block363703.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block363703.dat"))));
         assertTrue(block363703.isBIP34());
         assertTrue(block363703.isBIP66());
         assertFalse(block363703.isBIP65());
 
         // 383616/00000000000000000aab6a2b34e979b09ca185584bd1aecf204f24d150ff55e9: version 4 block
         final Block block383616 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block383616.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block383616.dat"))));
         assertTrue(block383616.isBIP34());
         assertTrue(block383616.isBIP66());
         assertTrue(block383616.isBIP65());
 
         // 370661/00000000000000001416a613602d73bbe5c79170fd8f39d509896b829cf9021e: voted for BIP101
         final Block block370661 = MAINNET.getDefaultSerializer().makeBlock(ByteBuffer.wrap(
-                ByteStreams.toByteArray(getClass().getResourceAsStream("block370661.dat"))));
+                ByteUtils.toByteArray(getClass().getResourceAsStream("block370661.dat"))));
         assertTrue(block370661.isBIP34());
         assertTrue(block370661.isBIP66());
         assertTrue(block370661.isBIP65());
