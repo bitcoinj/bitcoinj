@@ -45,9 +45,15 @@ import org.bitcoinj.base.internal.ByteUtils;
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
 /**
- * A MnemonicCode object may be used to convert between binary seed values and
- * lists of words per <a href="https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki">the BIP 39
- * specification</a>
+ * A {@code MnemonicCode} object contains a BIP-39 <i>wordlist</i> and provides the {@link #toMnemonic(byte[])} method to convert
+ * an entropy value to a <i>mnemonic sentence</i> (also called a <i>mnemonic code</i> or <i>seed phrase</i>) using the wordlist.
+ * {@link #toEntropy(List)} converts a mnemonic sentence to its corresponding entropy value. The static method {@link #toSeed(List, String)}
+ * is used to convert a mnemonic sentence to a binary seed via the (one-way) PBKDF2 function.
+ * <p>
+ * Unfortunately, the name of this class is misleading. It <i>does not</i> store or represent a BIP-39 mnemonic code/mnemonic sentence,
+ * it stores a BIP-39 wordlist. The Javadoc for this class has been updated and now consistently uses the term <i>mnemonic sentence</i>
+ * to refer to a seed phrase/mnemonic code and <i>wordlist</i> to refer to the BIP-39 2048-word wordlist.
+ * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki">BIP 39: Mnemonic code for generating deterministic keys</a>
  */
 
 public class MnemonicCode {
@@ -58,7 +64,7 @@ public class MnemonicCode {
     private static final String BIP39_ENGLISH_RESOURCE_NAME = "mnemonic/wordlist/english.txt";
     private static final String BIP39_ENGLISH_SHA256 = "ad90bf3beb7b0eb7e5acd74727dc0da96e0a280a258354e7293fb7e211ac03db";
 
-    /** UNIX time for when the BIP39 standard was finalised. This can be used as a default seed birthday. */
+    /** UNIX time for when the BIP39 standard was finalized. This can be used as a default seed birthday. */
     public static final Instant BIP39_STANDARDISATION_TIME = Instant.ofEpochSecond(1369267200);
 
     /**
@@ -83,12 +89,12 @@ public class MnemonicCode {
         }
     }
 
-    /** Initialise from the included word list. Won't work on Android. */
+    /** Initialize from the included <i>wordlist</i>. Won't work on Android. */
     public MnemonicCode() throws IOException {
-        this(openDefaultWords(), BIP39_ENGLISH_SHA256);
+        this(openDefaultWordList(), BIP39_ENGLISH_SHA256);
     }
 
-    private static InputStream openDefaultWords() throws IOException {
+    private static InputStream openDefaultWordList() throws IOException {
         InputStream stream = MnemonicCode.class.getResourceAsStream(BIP39_ENGLISH_RESOURCE_NAME);
         if (stream == null)
             throw new FileNotFoundException(BIP39_ENGLISH_RESOURCE_NAME);
@@ -96,9 +102,9 @@ public class MnemonicCode {
     }
 
     /**
-     * Creates an MnemonicCode object, initializing with words read from the supplied input stream.  If a wordListDigest
+     * Creates an MnemonicCode object, initializing with a <i>wordlist</i> read from the supplied input stream.  If a wordListDigest
      * is supplied the digest of the words will be checked.
-     * @param wordstream input stream of 2048 line-seperated words
+     * @param wordstream input stream of a wordlist (2048 line-separated words)
      * @param wordListDigest hex-encoded Sha256 digest to check against
      * @throws IOException if there was a problem reading the steam
      * @throws IllegalArgumentException if list size is not 2048 or digest mismatch
@@ -124,17 +130,20 @@ public class MnemonicCode {
     }
 
     /**
-     * Gets the word list this code uses.
-     * @return unmodifiable word list
+     * Gets the BIP-39 <i>wordlist</i>.
+     * @return unmodifiable wordlist
      */
     public List<String> getWordList() {
         return wordList;
     }
 
     /**
-     * Convert mnemonic word list to seed.
+     * Convert mnemonic sentence to a binary seed using the (one way) PBKDF2 function.
+     * @param sentence mnemonic sentence
+     * @param passphrase passphrase
+     * @return binary seed
      */
-    public static byte[] toSeed(List<String> words, String passphrase) {
+    public static byte[] toSeed(List<String> sentence, String passphrase) {
         Objects.requireNonNull(passphrase, "A null passphrase is not allowed.");
 
         // To create binary seed from mnemonic, we use PBKDF2 function
@@ -144,7 +153,7 @@ public class MnemonicCode {
         // used as a pseudo-random function. Desired length of the
         // derived key is 512 bits (= 64 bytes).
         //
-        String pass = InternalUtils.SPACE_JOINER.join(words);
+        String pass = InternalUtils.SPACE_JOINER.join(sentence);
         String salt = "mnemonic" + passphrase;
 
         Stopwatch watch = Stopwatch.start();
@@ -154,23 +163,28 @@ public class MnemonicCode {
     }
 
     /**
-     * Convert mnemonic word list to original entropy value.
+     * Convert a mnemonic sentence to its corresponding entropy value.
+     * @param sentence mnemonic sentence
+     * @return corresponding entropy value
+     * @throws MnemonicException.MnemonicLengthException if sentence is empty or not a multiple of 3 words
+     * @throws MnemonicException.MnemonicWordException if a word is invalid
+     * @throws MnemonicException.MnemonicChecksumException if the checksum fails
      */
-    public byte[] toEntropy(List<String> words) throws MnemonicException.MnemonicLengthException, MnemonicException.MnemonicWordException, MnemonicException.MnemonicChecksumException {
-        if (words.size() % 3 > 0)
+    public byte[] toEntropy(List<String> sentence) throws MnemonicException.MnemonicLengthException, MnemonicException.MnemonicWordException, MnemonicException.MnemonicChecksumException {
+        if (sentence.size() % 3 > 0)
             throw new MnemonicException.MnemonicLengthException("Word list size must be multiple of three words.");
 
-        if (words.size() == 0)
+        if (sentence.size() == 0)
             throw new MnemonicException.MnemonicLengthException("Word list is empty.");
 
-        // Look up all the words in the list and construct the
-        // concatenation of the original entropy and the checksum.
+        // For each word in the sentence, look it up in the wordlist and construct the
+        // concatenation of the corresponding entropy and the checksum.
         //
-        int concatLenBits = words.size() * 11;
+        int concatLenBits = sentence.size() * 11;
         boolean[] concatBits = new boolean[concatLenBits];
         int wordindex = 0;
-        for (String word : words) {
-            // Find the words index in the wordlist.
+        for (String word : sentence) {
+            // Find the word's index in the wordlist.
             int ndx = Collections.binarySearch(this.wordList, word);
             if (ndx < 0)
                 throw new MnemonicException.MnemonicWordException(word);
@@ -184,7 +198,7 @@ public class MnemonicCode {
         int checksumLengthBits = concatLenBits / 33;
         int entropyLengthBits = concatLenBits - checksumLengthBits;
 
-        // Extract original entropy as bytes.
+        // Extract corresponding entropy as bytes.
         byte[] entropy = new byte[entropyLengthBits / 8];
         for (int ii = 0; ii < entropy.length; ++ii)
             for (int jj = 0; jj < 8; ++jj)
@@ -204,8 +218,9 @@ public class MnemonicCode {
     }
 
     /**
-     * Convert entropy data to mnemonic word list.
+     * Convert entropy data to mnemonic sentence.
      * @param entropy entropy bits, length must be a multiple of 32 bits
+     * @return mnemonic sentence
      */
     public List<String> toMnemonic(byte[] entropy) {
         checkArgument(entropy.length % 4 == 0, () ->
@@ -232,7 +247,7 @@ public class MnemonicCode {
         // which is a position in a wordlist.  We convert numbers into
         // words and use joined words as mnemonic sentence.
 
-        ArrayList<String> words = new ArrayList<>();
+        ArrayList<String> sentence = new ArrayList<>();
         int nwords = concatBits.length / 11;
         for (int i = 0; i < nwords; ++i) {
             int index = 0;
@@ -241,17 +256,18 @@ public class MnemonicCode {
                 if (concatBits[(i * 11) + j])
                     index |= 0x1;
             }
-            words.add(this.wordList.get(index));
+            sentence.add(this.wordList.get(index));
         }
-            
-        return words;        
+        return sentence;
     }
 
     /**
-     * Check to see if a mnemonic word list is valid.
+     * Check if a mnemonic sentence is valid.
+     * @param sentence mnemonic sentence
+     * @throws MnemonicException if invalid
      */
-    public void check(List<String> words) throws MnemonicException {
-        toEntropy(words);
+    public void check(List<String> sentence) throws MnemonicException {
+        toEntropy(sentence);
     }
 
     private static boolean[] bytesToBits(byte[] data) {
