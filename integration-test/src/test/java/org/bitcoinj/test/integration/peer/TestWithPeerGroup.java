@@ -82,11 +82,10 @@ public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
     public void setUp(BlockStore blockStore) throws IOException, BlockStoreException {
         super.setUp(blockStore);
 
-        remoteVersionMessage = new VersionMessage(UNITTEST, 1);
-        remoteVersionMessage.localServices =
-                Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS);
-        remoteVersionMessage.clientVersion =
-                ProtocolVersion.WITNESS_VERSION.intValue();
+        remoteVersionMessage = new VersionMessage.Builder(UNITTEST, 1)
+                .localServices(Services.of(Services.NODE_NETWORK | Services.NODE_BLOOM | Services.NODE_WITNESS))
+                .clientVersion(ProtocolVersion.WITNESS_VERSION.intValue())
+                .build();
         blockJobs = false;
         initPeerGroup();
     }

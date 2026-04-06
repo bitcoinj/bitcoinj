@@ -257,9 +257,9 @@ public class PeerMonitor {
                 case IP_ADDRESS:
                     return getAddressForPeer(peer);
                 case PROTOCOL_VERSION:
-                    return Integer.toString(peer.getPeerVersionMessage().clientVersion);
+                    return Integer.toString(peer.getPeerVersionMessage().clientVersion());
                 case USER_AGENT:
-                    return peer.getPeerVersionMessage().subVer;
+                    return peer.getPeerVersionMessage().subVer();
                 case CHAIN_HEIGHT:
                     return peer.getBestHeight();
                 case FEE_FILTER:

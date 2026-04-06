@@ -410,12 +410,12 @@ public class Peer extends PeerSocketHandler {
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
         helper.addValue(getAddress());
-        helper.add("version", vPeerVersionMessage.clientVersion);
-        helper.add("subVer", vPeerVersionMessage.subVer);
-        if (vPeerVersionMessage.localServices.hasAny())
-            helper.add("services", vPeerVersionMessage.localServices.toString());
-        helper.add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time));
-        helper.add("height", vPeerVersionMessage.bestHeight);
+        helper.add("version", vPeerVersionMessage.clientVersion());
+        helper.add("subVer", vPeerVersionMessage.subVer());
+        if (vPeerVersionMessage.localServices().hasAny())
+            helper.add("services", vPeerVersionMessage.localServices().toString());
+        helper.add("time", TimeUtils.dateTimeFormat(vPeerVersionMessage.time()));
+        helper.add("height", vPeerVersionMessage.bestHeight());
         return helper.toString();
     }
 
@@ -439,7 +439,7 @@ public class Peer extends PeerSocketHandler {
         // Announce ourselves. This has to come first to connect to clients beyond v0.3.20.2 which wait to hear
         // from us until they send their version message back.
         PeerAddress address = getAddress();
-        log.info("Announcing to {} as: {}", address == null ? "Peer" : address.toSocketAddress(), versionMessage.subVer);
+        log.info("Announcing to {} as: {}", address == null ? "Peer" : address.toSocketAddress(), versionMessage.subVer());
         sendMessage(versionMessage);
         connectionOpenFuture.complete(this);
         // When connecting, the remote peer sends us a version message with various bits of
@@ -545,7 +545,7 @@ public class Peer extends PeerSocketHandler {
         // them out here.
         Services services = peerVersionMessage.services();
         if (!services.anyOf(Services.NODE_NETWORK | Services.NODE_NETWORK_LIMITED) ||
-                (!params.allowEmptyPeerChain() && peerVersionMessage.bestHeight == 0)) {
+                (!params.allowEmptyPeerChain() && peerVersionMessage.bestHeight() == 0)) {
             // Shut down the channel gracefully.
             log.info("{}: Peer does not have at least a recent part of the block chain.", this);
             close();
@@ -553,7 +553,7 @@ public class Peer extends PeerSocketHandler {
         }
         if (!services.has(requiredServices)) {
             log.info("{}: Peer doesn't support these required services: {}", this,
-                    Services.of(requiredServices & ~peerVersionMessage.localServices.bits()).toString());
+                    Services.of(requiredServices & ~peerVersionMessage.localServices().bits()).toString());
             // Shut down the channel gracefully.
             close();
             return;
@@ -564,9 +564,9 @@ public class Peer extends PeerSocketHandler {
             close();
             return;
         }
-        if (peerVersionMessage.bestHeight < 0)
+        if (peerVersionMessage.bestHeight() < 0)
             // In this case, it's a protocol violation.
-            throw new ProtocolException("Peer reports invalid best height: " + peerVersionMessage.bestHeight);
+            throw new ProtocolException("Peer reports invalid best height: " + peerVersionMessage.bestHeight());
         // Now it's our turn ...
         // Send a sendaddrv2 message, indicating that we prefer to receive addrv2 messages.
         sendMessage(new SendAddrV2Message());
@@ -599,9 +599,9 @@ public class Peer extends PeerSocketHandler {
         // We check min version after onPeerConnected as channel.close() will
         // call onPeerDisconnected, and we should probably call onPeerConnected first.
         final int version = vMinProtocolVersion;
-        if (vPeerVersionMessage.clientVersion < version) {
+        if (vPeerVersionMessage.clientVersion() < version) {
             log.warn("Connected to a peer speaking protocol version {} but need {}, closing",
-                    vPeerVersionMessage.clientVersion, version);
+                    vPeerVersionMessage.clientVersion(), version);
             close();
         }
     }
@@ -664,7 +664,7 @@ public class Peer extends PeerSocketHandler {
                 // of the chain - always process the last block as a full/filtered block to kick us out of the
                 // fast catchup mode (in which we ignore new blocks).
                 boolean passedTime = header.time().compareTo(fastCatchupTime) >= 0;
-                boolean reachedTop = blockChain.getBestChainHeight() >= vPeerVersionMessage.bestHeight;
+                boolean reachedTop = blockChain.getBestChainHeight() >= vPeerVersionMessage.bestHeight();
                 if (!passedTime && !reachedTop) {
                     if (!vDownloadData) {
                         // Not download peer anymore, some other peer probably became better.
@@ -1149,7 +1149,7 @@ public class Peer extends PeerSocketHandler {
         // It is possible for the peer block height difference to be negative when blocks have been solved and broadcast
         // since the time we first connected to the peer. However, it's weird and unexpected to receive a callback
         // with negative "blocks left" in this case, so we clamp to zero so the API user doesn't have to think about it.
-        final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight - Objects.requireNonNull(blockChain).getBestChainHeight());
+        final int blocksLeft = Math.max(0, (int) vPeerVersionMessage.bestHeight() - Objects.requireNonNull(blockChain).getBestChainHeight());
         for (final ListenerRegistration<BlocksDownloadedEventListener> registration : blocksDownloadedEventListeners) {
             registration.executor.execute(() -> registration.listener.onBlocksDownloaded(Peer.this, block, fb, blocksLeft));
         }
@@ -1674,7 +1674,7 @@ public class Peer extends PeerSocketHandler {
      * @return the height of the best chain as claimed by peer: sum of its ver announcement and blocks announced since.
      */
     public long getBestHeight() {
-        return vPeerVersionMessage.bestHeight + blocksAnnounced.get();
+        return vPeerVersionMessage.bestHeight() + blocksAnnounced.get();
     }
 
     /**
@@ -1685,8 +1685,8 @@ public class Peer extends PeerSocketHandler {
     public boolean setMinProtocolVersion(int minProtocolVersion) {
         this.vMinProtocolVersion = minProtocolVersion;
         VersionMessage ver = getPeerVersionMessage();
-        if (ver != null && ver.clientVersion < minProtocolVersion) {
-            log.warn("{}: Disconnecting due to new min protocol version {}, got: {}", this, minProtocolVersion, ver.clientVersion);
+        if (ver != null && ver.clientVersion() < minProtocolVersion) {
+            log.warn("{}: Disconnecting due to new min protocol version {}, got: {}", this, minProtocolVersion, ver.clientVersion());
             close();
             return true;
         }
