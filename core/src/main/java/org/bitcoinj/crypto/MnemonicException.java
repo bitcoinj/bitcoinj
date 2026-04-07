@@ -19,7 +19,6 @@ package org.bitcoinj.crypto;
 /**
  * Exceptions thrown by the MnemonicCode module.
  */
-@SuppressWarnings("serial")
 public class MnemonicException extends Exception {
     public MnemonicException() {
         super();
