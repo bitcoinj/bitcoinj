@@ -15,7 +15,8 @@
  */
 package org.bitcoinj.crypto.internal;
 
-import org.bitcoinj.base.internal.Ripemd160;
+import org.bitcoinj.base.Sha256Hash;
+import org.bouncycastle.crypto.digests.RIPEMD160Digest;
 import org.bouncycastle.jcajce.provider.digest.SHA3;
 
 import javax.crypto.Mac;
@@ -26,7 +27,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle)
+ * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle).
  */
 public class CryptoUtils {
     /**
@@ -35,7 +36,8 @@ public class CryptoUtils {
      * @return RIPEMD160(SHA256(input))
      */
     public static byte[] sha256hash160(byte[] input) {
-        return Ripemd160.hash160(input);
+        byte[] sha256 = Sha256Hash.hash(input);
+        return digestRipeMd160(sha256);
     }
 
     /**
@@ -44,7 +46,11 @@ public class CryptoUtils {
      * @return RIPEMD160(input)
      */
     public static byte[] digestRipeMd160(byte[] input) {
-        return Ripemd160.hash(input);
+        RIPEMD160Digest digest = new RIPEMD160Digest();
+        digest.update(input, 0, input.length);
+        byte[] ripmemdHash = new byte[20];
+        digest.doFinal(ripmemdHash, 0);
+        return ripmemdHash;
     }
 
     /**
