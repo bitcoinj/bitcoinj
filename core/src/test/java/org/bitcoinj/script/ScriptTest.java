@@ -68,6 +68,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -304,9 +305,9 @@ public class ScriptTest {
         Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
         if (!"NONE".equals(str)) {
             for (String flag : str.split(",")) {
-                try {
-                    flags.add(VerifyFlag.valueOf(flag));
-                } catch (IllegalArgumentException x) {
+                Optional<VerifyFlag> optionalFlag = VerifyFlag.parse(flag);
+                optionalFlag.ifPresent(flags::add);
+                if (!optionalFlag.isPresent()) {
                     log.debug("Cannot handle verify flag {} -- ignored.", flag);
                 }
             }
