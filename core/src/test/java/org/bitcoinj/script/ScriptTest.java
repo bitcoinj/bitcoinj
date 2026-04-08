@@ -62,6 +62,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,7 +71,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.bitcoinj.core.Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
 import static org.bitcoinj.script.ScriptExecution.VerifyFlag;
@@ -301,18 +304,21 @@ public class ScriptTest {
         return Script.parse(out.toByteArray());
     }
 
+    private final Pattern COMMA_DELIMITED = Pattern.compile(",");
+
     private Set<VerifyFlag> parseVerifyFlags(String str) {
-        Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
-        if (!"NONE".equals(str)) {
-            for (String flag : str.split(",")) {
-                Optional<VerifyFlag> optionalFlag = VerifyFlag.parse(flag);
-                optionalFlag.ifPresent(flags::add);
-                if (!optionalFlag.isPresent()) {
-                    log.debug("Cannot handle verify flag {} -- ignored.", flag);
-                }
-            }
+        return "NONE".equals(str)
+                    ? Collections.emptySet()
+                    : COMMA_DELIMITED.splitAsStream(str)
+                        .peek(this::logInvalidFlag)
+                        .flatMap(s -> VerifyFlag.parse(s).map(Stream::of).orElse(Stream.empty()))
+                        .collect(Collectors.collectingAndThen(Collectors.toSet(), Collections::unmodifiableSet));
+    }
+
+    private void logInvalidFlag(String s) {
+        if (!VerifyFlag.parse(s).isPresent()) {
+            log.debug("Cannot handle verify flag {} -- ignored.", s);
         }
-        return flags;
     }
 
     @Test
