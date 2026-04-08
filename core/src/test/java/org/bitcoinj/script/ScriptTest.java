@@ -72,6 +72,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.bitcoinj.core.Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
+import static org.bitcoinj.script.ScriptExecution.VerifyFlag;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -299,12 +300,12 @@ public class ScriptTest {
         return Script.parse(out.toByteArray());
     }
 
-    private Set<ScriptExecution.VerifyFlag> parseVerifyFlags(String str) {
-        Set<ScriptExecution.VerifyFlag> flags = EnumSet.noneOf(ScriptExecution.VerifyFlag.class);
+    private Set<VerifyFlag> parseVerifyFlags(String str) {
+        Set<VerifyFlag> flags = EnumSet.noneOf(VerifyFlag.class);
         if (!"NONE".equals(str)) {
             for (String flag : str.split(",")) {
                 try {
-                    flags.add(ScriptExecution.VerifyFlag.valueOf(flag));
+                    flags.add(VerifyFlag.valueOf(flag));
                 } catch (IllegalArgumentException x) {
                     log.debug("Cannot handle verify flag {} -- ignored.", flag);
                 }
@@ -317,7 +318,7 @@ public class ScriptTest {
     public void dataDrivenScripts() throws Exception {
         List<List<String>> tests = readScriptTestsJson("script_tests.json");
         for (List<String> test : tests) {
-            Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2));
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2));
             ScriptError expectedError = ScriptError.fromMnemonic(test.get(3));
             try {
                 Script scriptSig = parseScriptString(test.get(0));
@@ -390,7 +391,7 @@ public class ScriptTest {
                 Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.scriptPubKeyEntries);
                 transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(test.transaction.toLowerCase())));
                 Transaction.verify(TESTNET.network(), transaction);
-                Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
+                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
                     TransactionInput input = transaction.getInput(i);
@@ -424,7 +425,7 @@ public class ScriptTest {
                 int protoVersionNoWitness = serializer.getProtocolVersion() | SERIALIZE_TRANSACTION_NO_WITNESS;
                 transaction = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(ByteBuffer.wrap(txBytes));
             }
-            Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
 
             boolean valid = true;
             try {
