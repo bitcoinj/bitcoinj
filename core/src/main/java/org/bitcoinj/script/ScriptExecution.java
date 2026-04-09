@@ -184,6 +184,7 @@ public class ScriptExecution {
                     .findFirst();
         }
     }
+    public static final Set<VerifyFlag> NO_VERIFY_FLAGS = Collections.emptySet();
     public static final Set<VerifyFlag> ALL_VERIFY_FLAGS = Collections.unmodifiableSet(EnumSet.allOf(VerifyFlag.class));
 
     private static final int MAX_SCRIPT_SIZE = 10000;
