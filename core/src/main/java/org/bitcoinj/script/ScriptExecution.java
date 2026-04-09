@@ -42,6 +42,7 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -183,7 +184,7 @@ public class ScriptExecution {
                     .findFirst();
         }
     }
-    public static final EnumSet<VerifyFlag> ALL_VERIFY_FLAGS = EnumSet.allOf(VerifyFlag.class);
+    public static final Set<VerifyFlag> ALL_VERIFY_FLAGS = Collections.unmodifiableSet(EnumSet.allOf(VerifyFlag.class));
 
     private static final int MAX_SCRIPT_SIZE = 10000;
     public static final int MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
