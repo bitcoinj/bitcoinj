@@ -6,6 +6,9 @@
 ["correct prevout hash), using the given scriptSig. All nLockTimes are 0, all"],
 ["nSequences are max."],
 
+ ["Invalid HASH160 tests"],
+ ["0x47 0x3044022044dc17b0887c161bb67ba9635bf758735bdde503e4b0a0987f587f14a4e1143d022009a215772d49a85dae40d8ca03955af26ad3978a0ff965faa12915e9586249a501 0x21 0x02865c40293a680cb9c020e7b1e106d8c1916d3cef99aa431a56d253e69256dac0", "DUP HASH160 0x14 0x0001020304050607080910111213141516171819 EQUALVERIFY CHECKSIG", "", "EQUALVERIFY", "Incorrect HASH160 (also invalid signature, but EQUALVERIFY should fail first"],
+
 ["", "DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK", "Test the test: we should have an empty stack after scriptSig evaluation"],
 ["  ", "DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK", "and multiple spaces should not change that."],
 ["   ", "DEPTH 0 EQUAL", "P2SH,STRICTENC", "OK"],
