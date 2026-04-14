@@ -79,9 +79,8 @@ public class GuiUtils {
         Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> GuiUtils.crashAlert(findRootCause(exception)));
     }
 
-    public static void informationalAlert(String message, String details, Object... args) {
-        String formattedDetails = String.format(details, args);
-        Runnable r = () -> runAlert((stage, controller) -> controller.informational(stage, message, formattedDetails));
+    public static void informationalAlert(String message, String details) {
+        Runnable r = () -> runAlert((stage, controller) -> controller.informational(stage, message, details));
         if (Platform.isFxApplicationThread())
             r.run();
         else
