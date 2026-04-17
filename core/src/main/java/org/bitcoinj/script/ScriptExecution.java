@@ -1033,7 +1033,12 @@ public class ScriptExecution {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
             }
             ECKey pubkey = ECKey.fromPublicOnly(witness.getPush(1));
-            Script scriptCode = ScriptBuilder.createP2PKHOutputScript(pubkey);
+            byte[] requiredHash160 = ScriptPattern.extractHashFromP2WH(scriptPubKey);
+            byte[] providedHash160 = CryptoUtils.sha256hash160(pubkey.getPubKey());
+            if (!Arrays.equals(requiredHash160, providedHash160)) {
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "Invalid pubkey hash");
+            }
+            Script scriptCode = ScriptBuilder.createP2PKHOutputScript(requiredHash160);
             Sha256Hash sigHash = txContainingThis.hashForWitnessSignature(scriptSigIndex, scriptCode, value,
                     signature.sigHashMode(), false);
             boolean validSig = pubkey.verify(sigHash, signature);
@@ -1050,6 +1055,11 @@ public class ScriptExecution {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
             }
             ECKey pubkey = ECKey.fromPublicOnly(Objects.requireNonNull(chunks.get(1).data));
+            byte[] requiredHash160 = ScriptPattern.extractHashFromP2PKH(scriptPubKey);
+            byte[] providedHash160 = CryptoUtils.sha256hash160(pubkey.getPubKey());
+            if (!Arrays.equals(requiredHash160, providedHash160)) {
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "Invalid pubkey hash");
+            }
             Sha256Hash sigHash = txContainingThis.hashForSignature(scriptSigIndex, scriptPubKey,
                     signature.sigHashMode(), false);
             boolean validSig = pubkey.verify(sigHash, signature);
