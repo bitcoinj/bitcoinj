@@ -198,7 +198,7 @@ public class BuildCheckpoints implements Callable<Integer> {
             writer.println(checkpoints.size());
             ByteBuffer bufferV1 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
             ByteBuffer bufferV2 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
-            Base64.Encoder base64 = Base64.getEncoder();
+            Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
             for (StoredBlock block : checkpoints.values()) {
                 if (block.getChainWork().compareTo(MAX_WORK_V1) <= 0) {
                     ((Buffer) bufferV1).rewind();
