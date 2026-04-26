@@ -198,15 +198,16 @@ public class BuildCheckpoints implements Callable<Integer> {
             writer.println(checkpoints.size());
             ByteBuffer bufferV1 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE);
             ByteBuffer bufferV2 = ByteBuffer.allocate(StoredBlock.COMPACT_SERIALIZED_SIZE_V2);
+            Base64.Encoder base64 = Base64.getEncoder();
             for (StoredBlock block : checkpoints.values()) {
                 if (block.getChainWork().compareTo(MAX_WORK_V1) <= 0) {
                     ((Buffer) bufferV1).rewind();
                     block.serializeCompact(bufferV1);
-                    writer.println(Base64.getEncoder().encodeToString(bufferV1.array()));
+                    writer.println(base64.encodeToString(bufferV1.array()));
                 } else {
                     ((Buffer) bufferV2).rewind();
                     block.serializeCompactV2(bufferV2);
-                    writer.println(Base64.getEncoder().encodeToString(bufferV2.array()));
+                    writer.println(base64.encodeToString(bufferV2.array()));
                 }
             }
             System.out.println("Checkpoints written to '" + file.getCanonicalPath() + "'.");
