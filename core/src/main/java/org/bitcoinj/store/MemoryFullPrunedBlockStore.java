@@ -17,9 +17,8 @@
 package org.bitcoinj.store;
 
 import org.bitcoinj.base.Network;
-import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.Address;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -33,6 +32,7 @@ import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
 
 import org.jspecify.annotations.Nullable;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -186,6 +186,48 @@ class TransactionalFullBlockMap {
 }
 
 /**
+ * A {@link TransactionalHashMap} subclass that stores {@link UTXO}s keyed by {@link TransactionOutPoint}
+ * and supports querying for outputs matching a set of keys.
+ * This class is not thread-safe.
+ */
+class MemoryUtxoSet extends TransactionalHashMap<TransactionOutPoint, UTXO> {
+
+    /**
+     * Find all unspent outputs that are spendable by any of the given keys.
+     * Matches P2PKH, P2WPKH, and P2PK scripts by comparing pubkey hashes.
+     *
+     * @param keys the keys to match against
+     * @return list of matching UTXOs
+     */
+    List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) {
+        Set<ByteBuffer> pubKeyHashes = new HashSet<>(keys.size());
+        for (ECKey key : keys) {
+            pubKeyHashes.add(ByteBuffer.wrap(key.getPubKeyHash()));
+        }
+        List<UTXO> foundOutputs = new ArrayList<>();
+        for (UTXO output : values()) {
+            if (output == null)
+                continue;
+            Script script = output.getScript();
+            byte[] scriptHash;
+            if (ScriptPattern.isP2PKH(script)) {
+                scriptHash = ScriptPattern.extractHashFromP2PKH(script);
+            } else if (ScriptPattern.isP2WPKH(script)) {
+                scriptHash = ScriptPattern.extractHashFromP2WH(script);
+            } else if (ScriptPattern.isP2PK(script)) {
+                scriptHash = CryptoUtils.sha256hash160(ScriptPattern.extractKeyFromP2PK(script));
+            } else {
+                continue;
+            }
+            if (pubKeyHashes.contains(ByteBuffer.wrap(scriptHash))) {
+                foundOutputs.add(output);
+            }
+        }
+        return foundOutputs;
+    }
+}
+
+/**
  * Keeps {@link StoredBlock}s, {@link StoredUndoableBlock}s and {@link UTXO}s in memory.
  * Used primarily for unit testing.
  */
@@ -198,7 +240,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     private @Nullable TransactionalHashMap<Sha256Hash, StoredBlockAndWasUndoableFlag> blockMap;
     private @Nullable TransactionalFullBlockMap fullBlockMap;
     //TODO: Use something more suited to remove-heavy use?
-    private @Nullable TransactionalHashMap<TransactionOutPoint, UTXO> transactionOutputMap;
+    private @Nullable MemoryUtxoSet transactionOutputMap;
     private StoredBlock chainHead;
     private StoredBlock verifiedChainHead;
     private final int fullStoreDepth;
@@ -213,7 +255,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
         network = params.network();
         blockMap = new TransactionalHashMap<>();
         fullBlockMap = new TransactionalFullBlockMap();
-        transactionOutputMap = new TransactionalHashMap<>();
+        transactionOutputMap = new MemoryUtxoSet();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
         StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().asHeader(), params.getGenesisBlock().getWork(), 0);
@@ -380,23 +422,6 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        // This is *NOT* optimal: We go through all the outputs and select the ones we are looking for.
-        // If someone uses this store for production then they have a lot more to worry about than an inefficient impl :)
-        List<UTXO> foundOutputs = new ArrayList<>();
-        List<UTXO> outputsList = transactionOutputMap.values();
-        for (UTXO output : outputsList) {
-            for (ECKey key : keys) {
-                // TODO switch to pubKeyHash in order to support native segwit addresses
-                Script script = output.getScript();
-                if (ScriptPattern.isP2PKH(script) || ScriptPattern.isP2PK(script)) {
-                    Address outputAddress = script.getToAddress(network, true);
-                    Address keyAddress = key.toAddress(ScriptType.P2PKH, network);
-                    if (outputAddress.equals(keyAddress)) {
-                        foundOutputs.add(output);
-                    }
-                }
-            }
-        }
-        return foundOutputs;
+        return transactionOutputMap.getOpenTransactionOutputs(keys);
     }
 }
