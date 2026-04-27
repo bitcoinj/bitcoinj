@@ -93,7 +93,7 @@ public class CryptoUtils {
     public static byte[] sha3Digest(byte[] ...inputs) {
         SHA3.Digest256 digest = new SHA3.Digest256();
         for (byte[] input : inputs) {
-            digest.update(input, 0, input.length);
+            digest.update(input);
         }
         return digest.digest();
     }
