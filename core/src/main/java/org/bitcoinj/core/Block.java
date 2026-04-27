@@ -156,8 +156,8 @@ public class Block implements Message {
         payload.reset(); // read again from the mark for the hash
         Sha256Hash hash = Sha256Hash.wrapReversed(Sha256Hash.hashTwice(Buffers.readBytes(payload, HEADER_SIZE)));
         return payload.hasRemaining()
-                ? new Block(version, prevHash, merkleRoot, time, difficultyTarget, nonce, readTransactions(payload), hash) // full block
-                : new Block(version, prevHash, merkleRoot, time, difficultyTarget, nonce, hash);                           // header
+                ? new FinishedBlock.Full(version, prevHash, merkleRoot, time, difficultyTarget, nonce, readTransactions(payload), hash)
+                : new FinishedBlock.Header(version, prevHash, merkleRoot, time, difficultyTarget, nonce, hash);
     }
 
     /**
@@ -237,7 +237,7 @@ public class Block implements Message {
     }
 
     // block header constructor that takes pre-calculated hash - this block header could be treated as immutable
-    private Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
+    protected Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
                   Difficulty difficultyTarget, long nonce, Sha256Hash hash) {
         this.version = version;
         this.prevHash = prevHash;
@@ -250,7 +250,7 @@ public class Block implements Message {
     }
 
     // full block constructor that takes pre-calculated hash - this block could be treated as immutable
-    private Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
+    protected Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
                   Difficulty difficultyTarget, long nonce, @NonNull List<Transaction> transactions, Sha256Hash hash) {
         this.version = version;
         this.prevHash = prevHash;
@@ -421,7 +421,15 @@ public class Block implements Message {
      */
     @NonNull
     public Block asHeader() {
-        return new Block(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, getHash());
+        return new FinishedBlock.Header(version, prevHash, getMerkleRoot(), time, difficultyTarget, nonce, getHash());
+    }
+
+    /**
+     * Immutable subclasses must override this method and return a (mutable) {@link Block}
+     * @return an unfinished (i.e. immutable) block
+     */
+    public Block asUnfinished() {
+        return this;
     }
 
     /** @deprecated use {@link #asHeader()} */
@@ -646,7 +654,10 @@ public class Block implements Message {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        // Relax class check for backward compatibility, so that Block, FinishedBlock,
+        // and FinishedBlockHeader all match if they have the same block hash.
+        // In future releases, these different objects should not be "equal".
+        if (!(o instanceof Block)) return false;
         return getHash().equals(((Block)o).getHash());
     }
 

@@ -1032,7 +1032,7 @@ public class FullBlockTestGenerator {
 
         Block b56;
         try {
-            b56 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57.block.serialize()));
+            b56 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57.block.serialize())).asUnfinished();
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1073,7 +1073,7 @@ public class FullBlockTestGenerator {
 
         Block b56p2;
         try {
-            b56p2 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57p2.block.serialize()));
+            b56p2 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b57p2.block.serialize())).asUnfinished();
         } catch (ProtocolException e) {
             throw new RuntimeException(e); // Cannot happen.
         }
@@ -1321,7 +1321,7 @@ public class FullBlockTestGenerator {
         }
         b72.solve();
 
-        Block b71 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b72.block.serialize()));
+        Block b71 = params.getDefaultSerializer().makeBlock(ByteBuffer.wrap(b72.block.serialize())).asUnfinished();
         b71.addTransaction(b72.block.transaction(2));
         checkState(b71.getHash().equals(b72.getHash()));
         blocks.add(new BlockAndValidity(b71, false, true, b69.getHash(), chainHeadHeight + 21, "b71"));
