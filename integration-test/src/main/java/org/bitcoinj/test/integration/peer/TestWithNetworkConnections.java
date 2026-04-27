@@ -166,8 +166,13 @@ public class TestWithNetworkConnections {
     }
 
     protected void stopPeerServers() {
-        for (int i = 0 ; i < PEER_SERVERS ; i++)
-            stopPeerServer(i);
+        for (int i = 0 ; i < PEER_SERVERS ; i++) {
+            try {
+                stopPeerServer(i);
+            } catch (Exception e) {
+                // continue stopping remaining servers
+            }
+        }
     }
 
     protected void stopPeerServer(int i) {

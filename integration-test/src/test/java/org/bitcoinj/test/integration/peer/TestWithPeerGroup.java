@@ -94,12 +94,13 @@ public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
     @Override
     public void tearDown() {
         try {
-            super.tearDown();
             blockJobs = false;
             if (peerGroup != null && peerGroup.isRunning())
                 peerGroup.stopAsync();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            super.tearDown();
         }
     }
 
