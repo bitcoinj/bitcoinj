@@ -16,20 +16,38 @@
 package org.bitcoinj.crypto.internal;
 
 import org.bitcoinj.base.Sha256Hash;
-import org.bouncycastle.crypto.digests.RIPEMD160Digest;
-import org.bouncycastle.jcajce.provider.digest.SHA3;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 
 /**
  * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle)
  */
 public class CryptoUtils {
+    private static final Provider bcProvider = new BouncyCastleProvider();
+    private static final MessageDigest ripemd160Prototype;
+    private static final MessageDigest sha3Prototype;
+
+    static {
+        try {
+            ripemd160Prototype = MessageDigest.getInstance("RIPEMD160", bcProvider);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            sha3Prototype = MessageDigest.getInstance("SHA3-256", bcProvider);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Calculate RIPEMD160(SHA256(input)). This is used in Address calculations.
      * @param input bytes to hash
@@ -46,11 +64,11 @@ public class CryptoUtils {
      * @return RIPEMD160(input)
      */
     public static byte[] digestRipeMd160(byte[] input) {
-        RIPEMD160Digest digest = new RIPEMD160Digest();
-        digest.update(input, 0, input.length);
-        byte[] ripmemdHash = new byte[20];
-        digest.doFinal(ripmemdHash, 0);
-        return ripmemdHash;
+        try {
+            return ((MessageDigest) ripemd160Prototype.clone()).digest(input);
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("RIPEMD160 MessageDigest not cloneable", e);
+        }
     }
 
     /**
@@ -91,9 +109,16 @@ public class CryptoUtils {
      * @return A SHA3 256-bit hash
      */
     public static byte[] sha3Digest(byte[] ...inputs) {
-        SHA3.Digest256 digest = new SHA3.Digest256();
+        MessageDigest digest;
+        {
+            try {
+                digest = ((MessageDigest) sha3Prototype.clone());
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException("SHA3-256 MessageDigest not cloneable", e);
+            }
+        }
         for (byte[] input : inputs) {
-            digest.update(input, 0, input.length);
+            digest.update(input);
         }
         return digest.digest();
     }
