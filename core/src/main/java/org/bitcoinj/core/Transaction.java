@@ -25,6 +25,7 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.btc.BtcTransaction;
 import org.bitcoinj.core.LockTime.HeightLock;
 import org.bitcoinj.core.LockTime.TimeLock;
 import org.bitcoinj.crypto.AesKey;
@@ -86,7 +87,7 @@ import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
-public class Transaction implements Message {
+public class Transaction implements Message, BtcTransaction {
     private static final Comparator<Transaction> SORT_TX_BY_ID = Comparator.comparing(Transaction::getTxId);
 
     /**
@@ -348,6 +349,10 @@ public class Transaction implements Message {
         outputs = new ArrayList<>();
         // We don't initialize appearsIn deliberately as it's only useful for transactions stored in the wallet.
         vLockTime = LockTime.unset();
+    }
+
+    public byte[] serialize() {
+        return write(ByteBuffer.allocate(messageSize())).array();
     }
 
     /**
