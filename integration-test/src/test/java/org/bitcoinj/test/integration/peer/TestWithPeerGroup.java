@@ -33,6 +33,7 @@ import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
@@ -57,6 +58,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * used with loopback peers created using connectPeer. This involves real TCP connections so is a pretty accurate
  * mock, but means unit tests cannot be run simultaneously.
  */
+@NullMarked
 public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
     @Nullable protected PeerGroup peerGroup;
 
