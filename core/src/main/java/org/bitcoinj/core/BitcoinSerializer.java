@@ -71,7 +71,7 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(GetAddrMessage.class, "getaddr");
         names.put(SendAddrV2Message.class, "sendaddrv2");
         names.put(HeadersMessage.class, "headers");
-        names.put(BloomFilter.class, "filterload");
+        names.put(BloomFilterMessage.class, "filterload");
         names.put(FilteredBlock.class, "merkleblock");
         names.put(NotFoundMessage.class, "notfound");
         names.put(MemoryPoolMessage.class, "mempool");
@@ -249,7 +249,7 @@ public class BitcoinSerializer extends MessageSerializer {
         } else if (command.equals("headers")) {
             return HeadersMessage.read(payload);
         } else if (command.equals("filterload")) {
-            return makeBloomFilter(payload);
+            return makeBloomFilterMessage(payload);
         } else if (command.equals("notfound")) {
             return NotFoundMessage.read(payload);
         } else if (command.equals("mempool")) {
@@ -297,8 +297,8 @@ public class BitcoinSerializer extends MessageSerializer {
      * serialization format support.
      */
     @Override
-    public Message makeBloomFilter(ByteBuffer payload) throws ProtocolException {
-        return BloomFilter.read(payload);
+    public BloomFilterMessage makeBloomFilterMessage(ByteBuffer payload) throws ProtocolException {
+        return BloomFilterMessage.read(payload);
     }
 
     /**
