@@ -37,6 +37,9 @@ import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.bitcoinj.walletfx.utils.WTUtils;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 import static org.bitcoinj.walletfx.utils.GuiUtils.checkGuiThread;
@@ -44,19 +47,19 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.crashAlert;
 import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 
 public class SendMoneyController implements OverlayController<SendMoneyController> {
-    public Button sendBtn;
-    public Button cancelBtn;
-    public TextField address;
-    public Label titleLabel;
-    public TextField amountEdit;
-    public Label btcLabel;
+    public @Nullable Button sendBtn;
+    public @Nullable Button cancelBtn;
+    public @Nullable TextField address;
+    public @Nullable Label titleLabel;
+    public @Nullable TextField amountEdit;
+    public @Nullable Label btcLabel;
 
-    private WalletApplication app;
-    private OverlayableStackPaneController rootController;
-    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> overlayUI;
+    private @Nullable WalletApplication app;
+    private @Nullable OverlayableStackPaneController rootController;
+    private OverlayableStackPaneController.@Nullable OverlayUI<? extends OverlayController<SendMoneyController>> overlayUI;
 
-    private TransactionBroadcast sendResult;
-    private AesKey aesKey;
+    private @Nullable TransactionBroadcast sendResult;
+    private @Nullable AesKey aesKey;
 
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<SendMoneyController>> ui) {
@@ -67,6 +70,8 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     // Called by FXMLLoader
     public void initialize() {
         app = WalletApplication.instance();
+        Objects.requireNonNull(amountEdit);
+        Objects.requireNonNull(address);
         Coin balance = app.walletAppKit().wallet().getBalance();
         checkState(!balance.isZero());
         new BitcoinAddressValidator(app.walletAppKit().wallet(), address, sendBtn);
@@ -77,10 +82,17 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     }
 
     public void cancel(ActionEvent event) {
+        Objects.requireNonNull(overlayUI);
         overlayUI.done();
     }
 
-    public void send(ActionEvent event) {
+    public void send(@Nullable ActionEvent event) {
+        Objects.requireNonNull(app);
+        Objects.requireNonNull(amountEdit);
+        Objects.requireNonNull(address);
+        Objects.requireNonNull(sendBtn);
+        Objects.requireNonNull(btcLabel);
+        Objects.requireNonNull(overlayUI);
         // Address exception cannot happen as we validated it beforehand.
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
@@ -96,8 +108,10 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
             req.allowUnconfirmed();
             sendResult = app.walletAppKit().wallet().sendCoins(req);
             sendResult.awaitRelayed().whenComplete((result, t) -> {
+                Objects.requireNonNull(overlayUI);
+                Objects.requireNonNull(overlayUI);
                 if (t == null) {
-                    Platform.runLater(() -> overlayUI.done());
+                    Platform.runLater(() -> {Objects.requireNonNull(overlayUI); overlayUI.done();});
                 } else {
                     // We died trying to empty the wallet.
                     crashAlert(t);
@@ -122,14 +136,21 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     }
 
     private void askForPasswordAndRetry() {
+        Objects.requireNonNull(rootController);
+        Objects.requireNonNull(address);
+        Objects.requireNonNull(amountEdit);
         OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = rootController.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
+            Objects.requireNonNull(rootController);
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen. By now the send money screen is history so we must recreate it.
             checkGuiThread();
             OverlayableStackPaneController.OverlayUI<SendMoneyController> screen = rootController.overlayUI("send_money.fxml");
+            Objects.requireNonNull(screen.controller);
+            Objects.requireNonNull(screen.controller.address);
+            Objects.requireNonNull(screen.controller.amountEdit);
             screen.controller.aesKey = cur;
             screen.controller.address.setText(addressStr);
             screen.controller.amountEdit.setText(amountStr);
@@ -138,6 +159,8 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
     }
 
     private void updateTitleForBroadcast() {
+        Objects.requireNonNull(sendResult);
+        Objects.requireNonNull(titleLabel);
         final int peers = sendResult.transaction().getConfidence().numBroadcastPeers();
         titleLabel.setText(String.format("Broadcasting ... seen by %d peers", peers));
     }

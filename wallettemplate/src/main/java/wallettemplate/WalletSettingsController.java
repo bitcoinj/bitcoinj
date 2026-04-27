@@ -55,16 +55,16 @@ import static org.bitcoinj.walletfx.utils.WTUtils.unchecked;
 public class WalletSettingsController implements OverlayController<WalletSettingsController> {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);
 
-    @FXML Button passwordButton;
-    @FXML DatePicker datePicker;
-    @FXML TextArea wordsArea;
-    @FXML Button restoreButton;
+    @FXML @Nullable Button passwordButton;
+    @FXML @Nullable DatePicker datePicker;
+    @FXML @Nullable TextArea wordsArea;
+    @FXML @Nullable Button restoreButton;
 
-    private WalletApplication app;
-    private OverlayableStackPaneController rootController;
-    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> overlayUI;
+    private @Nullable WalletApplication app;
+    private @Nullable OverlayableStackPaneController rootController;
+    private OverlayableStackPaneController.@Nullable OverlayUI<? extends OverlayController<WalletSettingsController>> overlayUI;
 
-    private AesKey aesKey;
+    private @Nullable AesKey aesKey;
 
     @Override
     public void initOverlay(OverlayableStackPaneController overlayableStackPaneController, OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSettingsController>> ui) {
@@ -74,6 +74,10 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
     // Note: NOT called by FXMLLoader!
     public void initialize(@Nullable AesKey aesKey) {
+        Objects.requireNonNull(passwordButton);
+        Objects.requireNonNull(datePicker);
+        Objects.requireNonNull(wordsArea);
+        Objects.requireNonNull(restoreButton);
         app = WalletApplication.instance();
         DeterministicSeed seed = app.walletAppKit().wallet().getKeyChainSeed();
         if (aesKey == null) {
@@ -110,6 +114,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         // Clear the date picker if the user starts editing the words, if it contained the current wallets date.
         // This forces them to set the birthday field when restoring.
         wordsArea.textProperty().addListener(o -> {
+            Objects.requireNonNull(datePicker);
             if (origDate.equals(datePicker.getValue()))
                 datePicker.setValue(null);
         });
@@ -118,7 +123,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
                 datePicker.valueProperty().isNull(),
 
                 createBooleanBinding(() ->
-                        datePicker.getValue().isAfter(LocalDate.now())
+                        Objects.requireNonNull(datePicker).getValue().isAfter(LocalDate.now())
                 , /* depends on */ datePicker.valueProperty())
         );
 
@@ -137,6 +142,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
         // Highlight the date picker in red if it's empty or in the future, so the user knows why restore is disabled.
         datePickerIsInvalid.addListener((dp, old, cur) -> {
+            Objects.requireNonNull(datePicker);
             if (cur) {
                 datePicker.getStyleClass().add("validation_error");
             } else {
@@ -146,10 +152,12 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     }
 
     private void askForPasswordAndRetry() {
+        Objects.requireNonNull(rootController);
         OverlayableStackPaneController.OverlayUI<WalletPasswordController> pwd = rootController.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
             // the main UI screen.
+            Objects.requireNonNull(rootController);
             checkGuiThread();
             OverlayableStackPaneController.OverlayUI<WalletSettingsController> screen = rootController.overlayUI("wallet_settings.fxml");
             screen.controller.initialize(cur);
@@ -157,10 +165,16 @@ public class WalletSettingsController implements OverlayController<WalletSetting
     }
 
     public void closeClicked(ActionEvent event) {
+        //Objects.requireNonNull(event);
+        Objects.requireNonNull(overlayUI);
         overlayUI.done();
     }
 
     public void restoreClicked(ActionEvent event) {
+        Objects.requireNonNull(app);
+        Objects.requireNonNull(wordsArea);
+        Objects.requireNonNull(datePicker);
+        Objects.requireNonNull(overlayUI);
         // Don't allow a restore unless this wallet is presently empty. We don't want to end up with two wallets, too
         // much complexity, even though WalletAppKit will keep the current one as a backup file in case of disaster.
         if (app.walletAppKit().wallet().getBalance().value > 0) {
@@ -188,6 +202,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
         app.walletAppKit().addListener(new Service.Listener() {
             @Override
             public void terminated(Service.State from) {
+                Objects.requireNonNull(app);
                 app.setupWalletKit(seed);
                 app.walletAppKit().startAsync();
             }
@@ -197,6 +212,9 @@ public class WalletSettingsController implements OverlayController<WalletSetting
 
 
     public void passwordButtonClicked(ActionEvent event) {
+        Objects.requireNonNull(app);
+        Objects.requireNonNull(rootController);
+        Objects.requireNonNull(passwordButton);
         if (aesKey == null) {
             rootController.overlayUI("wallet_set_password.fxml");
         } else {

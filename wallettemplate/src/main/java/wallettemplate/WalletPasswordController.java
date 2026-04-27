@@ -34,6 +34,7 @@ import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,16 +54,16 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 public class WalletPasswordController implements OverlayController<WalletPasswordController> {
     private static final Logger log = LoggerFactory.getLogger(WalletPasswordController.class);
 
-    @FXML HBox buttonsBox;
-    @FXML PasswordField pass1;
-    @FXML ImageView padlockImage;
-    @FXML ProgressIndicator progressMeter;
-    @FXML GridPane widgetGrid;
-    @FXML Label explanationLabel;
+    @FXML @Nullable HBox buttonsBox;
+    @FXML @Nullable PasswordField pass1;
+    @FXML @Nullable ImageView padlockImage;
+    @FXML @Nullable ProgressIndicator progressMeter;
+    @FXML @Nullable GridPane widgetGrid;
+    @FXML @Nullable Label explanationLabel;
 
-    private WalletApplication app;
-    private OverlayableStackPaneController rootController;
-    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletPasswordController>> overlayUI;
+    private @Nullable WalletApplication app;
+    private @Nullable OverlayableStackPaneController rootController;
+    private OverlayableStackPaneController.@Nullable OverlayUI<? extends OverlayController<WalletPasswordController>> overlayUI;
 
     private final SimpleObjectProperty<AesKey> aesKey = new SimpleObjectProperty<>();
 
@@ -74,11 +75,16 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
 
     public void initialize() {
         app = WalletApplication.instance();
+        Objects.requireNonNull(progressMeter);
+        Objects.requireNonNull(pass1);
         progressMeter.setOpacity(0);
         Platform.runLater(pass1::requestFocus);
     }
 
     @FXML void confirmClicked(ActionEvent event) {
+        Objects.requireNonNull(app);
+        Objects.requireNonNull(pass1);
+        Objects.requireNonNull(progressMeter);
         String password = pass1.getText();
         if (password.isEmpty() || password.length() < 4) {
             informationalAlert("Bad password", "The password you entered is empty or too short.");
@@ -91,6 +97,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
             @Override
             protected final void onFinish(AesKey aesKey, int timeTakenMsec) {
                 checkGuiThread();
+                Objects.requireNonNull(app);
                 if (app.walletAppKit().wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
                 } else {
@@ -114,6 +121,7 @@ public class WalletPasswordController implements OverlayController<WalletPasswor
     }
 
     public void cancelClicked(ActionEvent event) {
+        Objects.requireNonNull(overlayUI);
         overlayUI.done();
     }
 
