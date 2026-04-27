@@ -21,8 +21,8 @@ import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.jspecify.annotations.Nullable;
-
 import java.util.Stack;
+import java.util.stream.LongStream;
 
 /**
  * Caching counter for the block versions within a moving window. This class
@@ -80,15 +80,11 @@ public class VersionTally {
     public Integer getCountAtOrAbove(final long version) {
         if (versionsStored < versionWindow.length) {
             return null;
+        } else {
+            return (int) LongStream.of(versionWindow)
+                    .filter(l -> l >= version)
+                    .count();
         }
-        int count = 0;
-        for (long l : versionWindow) {
-            if (l >= version) {
-                count++;
-            }
-        }
-
-        return count;
     }
 
     /**
