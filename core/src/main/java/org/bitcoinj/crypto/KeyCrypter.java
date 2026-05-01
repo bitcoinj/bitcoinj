@@ -81,7 +81,7 @@ public interface KeyCrypter {
      * @see <a href="http://stackoverflow.com/questions/11126315/what-are-optimal-scrypt-work-factors">What are optimal scrypt work factors?</a>
      */
     class ScryptParameters {
-        public static final int DEFAULT_N = 16384;
+        public static final int DEFAULT_N = 131072;
         public static final int DEFAULT_R = 8;
         public static final int DEFAULT_P = 1;
         private final byte[] salt;
