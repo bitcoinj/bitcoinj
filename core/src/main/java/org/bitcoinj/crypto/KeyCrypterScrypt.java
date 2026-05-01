@@ -94,7 +94,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
 
     /**
      * Encryption/Decryption using custom number of iterations parameters and a random salt.
-     * As of August 2016, a useful value for mobile devices is 4096 (derivation takes about 1 second).
+     * As of May 2026, a useful value for mobile devices is 131072 (derivation takes about 1 second).
      *
      * @param iterations
      *            number of scrypt iterations
