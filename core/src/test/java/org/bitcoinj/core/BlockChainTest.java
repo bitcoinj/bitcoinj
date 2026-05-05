@@ -24,6 +24,7 @@ import org.bitcoinj.base.Difficulty;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.data.BlockHeaderData;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.SigNetParams;
@@ -44,6 +45,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.bitcoinj.base.Coin.COIN;
@@ -418,8 +420,7 @@ public class BlockChainTest {
                 Sha256Hash.wrap("20222eb90f5895556926c112bb5aa0df4ab5abc3107e21a6950aec3b2e3541e2"), // merkle
                 Instant.ofEpochSecond(1296688946L),
                 Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
-                875942400L,
-                null);
+                875942400L, (List<Transaction>) null);
         assertEquals("000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820", b2.getHashAsString());
         Block.verifyHeader(b2);
         return b2;
@@ -431,8 +432,8 @@ public class BlockChainTest {
                 Sha256Hash.wrap("f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba"), // merkle
                 Instant.ofEpochSecond(1296688928),
                 Difficulty.STANDARD_MAX_DIFFICULTY_TARGET,
-                1924588547,
-                null);
+                1924588547L,
+                (List<Transaction>) null);
         assertEquals("00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206", b1.getHashAsString());
         Block.verifyHeader(b1);
         return b1;
