@@ -45,6 +45,7 @@ import static org.bitcoinj.base.internal.Preconditions.check;
  * 
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
+// TODO: make VersionMessage immutable with Builder pattern (#4165)
 public class VersionMessage implements Message {
 
     /** The version of this library release, as a string. */
