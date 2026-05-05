@@ -27,7 +27,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle)
+ * Utilities for the crypto module (e.g. wrapping built-in primitives and/or Bouncy Castle).
  */
 public class CryptoUtils {
     /**
