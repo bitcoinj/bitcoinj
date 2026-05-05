@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.runners.Parameterized.Parameters;
 
@@ -46,6 +47,7 @@ public class Base58EncodeTest {
                 {BigInteger.valueOf(3471844090L).toByteArray(), "16Ho7Hs"},
                 {new byte[1], "1"},
                 {new byte[7], "1111111"},
+                {new byte[32], "11111111111111111111111111111111"},
                 {new byte[0], ""}
         });
     }
@@ -53,5 +55,15 @@ public class Base58EncodeTest {
     @Test
     public void testEncode() {
         assertEquals(expected, Base58.encode(input));
+    }
+
+    @Test
+    public void testEncode_allByteValues() {
+        // Every individual byte value encodes and decodes back to itself.
+        for (int b = 0; b <= 255; b++) {
+            byte[] bytes = {(byte) b};
+            String encoded = Base58.encode(bytes);
+            assertArrayEquals("byte=" + b, bytes, Base58.decode(encoded));
+        }
     }
 }
