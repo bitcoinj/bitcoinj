@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.InternalUtils;
