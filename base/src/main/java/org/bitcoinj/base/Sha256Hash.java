@@ -39,6 +39,17 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
  * Given that {@code Sha256Hash} instances can be created using {@link #wrapReversed(byte[])} or {@link #twiceOf(byte[])} or by wrapping raw bytes, there is no guarantee that if two {@code Sha256Hash} instances are found equal (via {@link #equals(Object)}) that their preimages would be the same (even in the absence of a hash collision.)
  */
 public class Sha256Hash implements Comparable<Sha256Hash> {
+    // Keep a newly initialized SHA256 MessageDigest for cloning in newDigest()
+    private static final MessageDigest sha256Prototype;
+
+    static {
+        try {
+            sha256Prototype = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static final int LENGTH = 32; // bytes
     public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);
 
@@ -152,9 +163,9 @@ public class Sha256Hash implements Comparable<Sha256Hash> {
      */
     public static MessageDigest newDigest() {
         try {
-            return MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);  // Can't happen.
+            return (MessageDigest) sha256Prototype.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);  // Built-in SHA256 implementation is Cloneable, this should never happen.
         }
     }
 
