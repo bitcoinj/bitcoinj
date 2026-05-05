@@ -16,7 +16,6 @@
 
 package org.bitcoinj.utils;
 
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.bitcoinj.base.internal.PlatformUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +97,7 @@ public class Threading {
         @SuppressWarnings("InfiniteLoopStatement") @Override
         public void run() {
             while (true) {
-                Runnable task = Uninterruptibles.takeUninterruptibly(tasks);
+                Runnable task = takeUninterruptibly(tasks);
                 try {
                     task.run();
                 } catch (Throwable throwable) {
@@ -120,8 +119,43 @@ public class Threading {
                     "If it is, check for deadlocked or slow event handlers. If it isn't, try adjusting the constant \n" +
                     "Threading.UserThread.WARNING_THRESHOLD upwards until it's a suitable level for your app, or Integer.MAX_VALUE to disable." , size);
             }
-            Uninterruptibles.putUninterruptibly(tasks, command);
+            putUninterruptibly(tasks, command);
         }
+
+        private static Runnable takeUninterruptibly(BlockingQueue<Runnable> queue) {
+            boolean isInterrupted = false;
+
+            try {
+                while(true) {
+                    try {
+                        Runnable task = queue.take();
+                        return task;
+                    } catch (InterruptedException exception) {
+                        isInterrupted = true;
+                    }
+                }
+            } finally {
+                if (isInterrupted) Thread.currentThread().interrupt();
+            }
+        }
+
+        private static void putUninterruptibly(BlockingQueue<Runnable> queue, Runnable command) {
+            boolean isInterrupted = false;
+
+            try {
+                while(true) {
+                    try {
+                        queue.put(command);
+                        return;
+                    } catch (InterruptedException exception) {
+                        isInterrupted = true;
+                    }
+                }
+            } finally {
+                if (isInterrupted) Thread.currentThread().interrupt();
+            }
+        }
+
     }
 
     static {
