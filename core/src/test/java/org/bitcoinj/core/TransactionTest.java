@@ -390,6 +390,66 @@ public class TransactionTest {
     }
 
     @Test
+    public void correctlySpends_p2wpkhWitnessPubKeyMismatch_throwsEqualVerify() {
+        // arrange
+        // create a tx sent to a p2wpkh address
+        String prevTxHex = "01000000" // version
+            + "01" // num txIn
+            + "fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f" + "00000000" + "00" + "eeffffff" // txIn
+            + "01" // num txOut
+            + "202cb20600000000" + "1976a914" + "8280b37df378db99f66f85c95a783a76ac7a6d59" + "88ac" // txOut
+            + "11000000"; // nLockTime
+        Transaction prevTx = new Transaction(TESTNET, HEX.decode(prevTxHex));
+
+        // tx was sent to key 0
+        int inputIndex = 0;
+        TransactionInput input = prevTx.getInput(inputIndex);
+        ECKey key0 = ECKey.fromPrivate(HEX.decode("bbc27228ddcb9209d7fd6f36b02f7dfa6252af40bb2f1cbc7a557da8027ff866"));
+        Script scriptPubKey0 = ScriptBuilder.createP2WPKHOutputScript(key0);
+        input.connect(new TransactionOutput(TESTNET, null, Coin.COIN.multiply(6), scriptPubKey0.getProgram()));
+
+        // try to spend prev tx using correct signature from key0 but script from key1
+        Coin inputValue = input.getValue();
+        // script code to be used to calculate sig for p2wpkh according to BIP143
+        Script scriptCode = new ScriptBuilder().data(ScriptBuilder.createP2PKHOutputScript(key0).getProgram()).build();
+        TransactionSignature sigKey0 = prevTx.calculateWitnessSignature(inputIndex, key0, scriptCode, inputValue,
+            Transaction.SigHash.ALL, false);
+        input.setWitness(TransactionWitness.redeemP2WPKH(sigKey0, key0));
+
+        ECKey key1 = ECKey.fromPrivate(HEX.decode("619c335025c7f4012e556c2a58b2506e30b8511b53ade95ea316fd8c3286feb9"));
+        Script scriptPubKey1 = ScriptBuilder.createP2WPKHOutputScript(key1);
+
+        // assert
+        // validate prev tx can be spent from key0
+        Script actualScriptSig = input.getScriptSig();
+        TransactionWitness inputWitness = input.getWitness();
+        int scriptSigIndex = 0;
+        actualScriptSig.correctlySpends(
+            prevTx,
+            scriptSigIndex,
+            inputWitness,
+            inputValue,
+            scriptPubKey0,
+            Script.ALL_VERIFY_FLAGS
+        );
+
+        // and that validating against key1 will throw
+        try {
+            actualScriptSig.correctlySpends(
+                prevTx,
+                scriptSigIndex,
+                inputWitness,
+                inputValue,
+                scriptPubKey1,
+                Script.ALL_VERIFY_FLAGS
+            );
+            fail("spend with different key from prev tx output should throw");
+        } catch (ScriptException e) {
+            assertEquals(ScriptError.SCRIPT_ERR_EQUALVERIFY, e.getError());
+        }
+    }
+
+    @Test
     public void testWitnessSignatureP2SH_P2WPKH() {
         // test vector P2SH-P2WPKH from:
         // https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki
