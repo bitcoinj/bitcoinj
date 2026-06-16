@@ -1585,6 +1585,8 @@ public class Script {
                 throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Cannot decode", x);
             }
             ECKey pubkey = ECKey.fromPublicOnly(witness.getPush(1));
+            if (!Arrays.equals(Utils.sha256hash160(pubkey.getPubKey()), ScriptPattern.extractHashFromP2WH(scriptPubKey)))
+                throw new ScriptException(ScriptError.SCRIPT_ERR_EQUALVERIFY, "");
             Script scriptCode = new ScriptBuilder().data(ScriptBuilder.createP2PKHOutputScript(pubkey).getProgram())
                     .build();
             Sha256Hash sigHash = txContainingThis.hashForWitnessSignature(scriptSigIndex, scriptCode, value,
