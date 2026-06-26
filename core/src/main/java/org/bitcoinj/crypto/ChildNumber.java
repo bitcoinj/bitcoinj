@@ -74,7 +74,7 @@ public class ChildNumber implements Comparable<ChildNumber> {
      * @throws NumberFormatException when parsing fails
      */
     public static ChildNumber parse(String str) {
-        boolean isHard = str.endsWith("H");
+        boolean isHard = str.endsWith("H") || str.endsWith("'");
         String nodeNumber = isHard ?
                 str.substring(0, str.length() - 1) :
                 str;
