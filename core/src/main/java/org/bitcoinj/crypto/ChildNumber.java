@@ -68,13 +68,14 @@ public class ChildNumber implements Comparable<ChildNumber> {
 
     /**
      * Parse a single child number.
+     * Accepts {@code H}, {@code h}, or {@code '} as the hardened suffix.
      *
-     * @param str string of the form "1" or "1H"
+     * @param str string of the form "1", "1H", "1h", or "1'"
      * @return child number instance
      * @throws NumberFormatException when parsing fails
      */
     public static ChildNumber parse(String str) {
-        boolean isHard = str.endsWith("H") || str.endsWith("'");
+        boolean isHard = str.endsWith("H") || str.endsWith("h") || str.endsWith("'");
         String nodeNumber = isHard ?
                 str.substring(0, str.length() - 1) :
                 str;
@@ -105,6 +106,16 @@ public class ChildNumber implements Comparable<ChildNumber> {
     @Override
     public String toString() {
         return String.format(Locale.US, "%d%s", num(), isHardened() ? "H" : "");
+    }
+
+    /**
+     * Serialize this child number using the given character as the hardened suffix.
+     *
+     * @param hardeningSymbol character to use for hardened derivation (e.g. {@code 'H'}, {@code 'h'}, or {@code '\''})
+     * @return string representation with the specified hardening symbol
+     */
+    public String toString(char hardeningSymbol) {
+        return String.format(Locale.US, "%d%s", num(), isHardened() ? String.valueOf(hardeningSymbol) : "");
     }
 
     @Override
