@@ -176,7 +176,7 @@ public class WalletSettingsController implements OverlayController<WalletSetting
                     "After restore, the wallet will no longer be encrypted and you must set a new password.");
         }
 
-        log.info("Attempting wallet restore using seed '{}' from date {}", wordsArea.getText(), datePicker.getValue());
+        log.info("Attempting wallet restore using seed from date {}", datePicker.getValue());
         informationalAlert("Wallet restore in progress",
                 "Your wallet will now be resynced from the Bitcoin network. This can take a long time for old wallets.");
         overlayUI.done();
