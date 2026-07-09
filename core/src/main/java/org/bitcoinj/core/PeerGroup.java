@@ -1166,7 +1166,7 @@ public class PeerGroup implements TransactionBroadcaster {
         vUsedUp = true;
         executorStartupLatch.countDown();
         // We do blocking waits during startup, so run on the executor thread.
-        CompletableFuture<Void> future = channels.start()
+        return channels.start()
             .thenRunAsync(() -> {
                 triggerConnections();
                 setupPinging();
@@ -1175,7 +1175,6 @@ public class PeerGroup implements TransactionBroadcaster {
                     log.error("Exception when starting up", e);
                 }
             });
-        return future;
     }
 
     /** Does a blocking startup. */
