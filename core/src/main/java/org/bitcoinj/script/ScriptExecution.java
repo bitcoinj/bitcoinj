@@ -884,9 +884,8 @@ public class ScriptExecution {
         byte[] prog = script.program();
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
-        ByteBuffer outBuffer = ByteBuffer.allocate(sigBytes.length + 1);
-        Script.writePushData(outBuffer, sigBytes);
-        connectedScript = Script.removeAllInstancesOf(connectedScript, outBuffer.array());
+        byte[] pushSigBytes = Script.toPushData(sigBytes);
+        connectedScript = Script.removeAllInstancesOf(connectedScript, pushSigBytes);
 
         // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
         boolean sigValid = false;
@@ -957,9 +956,8 @@ public class ScriptExecution {
         byte[] connectedScript = Arrays.copyOfRange(prog, lastCodeSepLocation, prog.length);
 
         for (byte[] sig : sigs) {
-            ByteBuffer outBuffer = ByteBuffer.allocate(sig.length + 1);
-            Script.writePushData(outBuffer, sig);
-            connectedScript = Script.removeAllInstancesOf(connectedScript, outBuffer.array());
+            byte[] pushSigBytes = Script.toPushData(sig);
+            connectedScript = Script.removeAllInstancesOf(connectedScript, pushSigBytes);
         }
 
         boolean valid = true;
