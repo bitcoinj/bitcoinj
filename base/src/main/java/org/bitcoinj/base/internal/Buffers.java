@@ -137,4 +137,17 @@ public class Buffers {
         buf.position(buf.position() + numBytes);
         return buf;
     }
+
+    /**
+     * Flip a buffer for reading and read all data. This method is handy when you can't calculate the
+     * actual length of the buffer in advance, but have a reasonable upper-bound to length.
+     * @param buf buffer to flip and read
+     * @return all bytes written to the buffer
+     */
+    public static byte[] flipAndRead(ByteBuffer buf) {
+        buf.flip();
+        byte[] data = new byte[buf.remaining()];
+        buf.get(data);
+        return data;
+    }
 }
