@@ -343,7 +343,7 @@ public final class Coin implements Monetary, Comparable<Coin> {
     }
 
     public Coin negate() {
-        return Coin.valueOf(-this.value);
+        return Coin.valueOf(Math.negateExact(this.value));
     }
 
     /**
