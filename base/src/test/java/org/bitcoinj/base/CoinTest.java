@@ -41,6 +41,7 @@ import static org.bitcoinj.base.Coin.valueOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -165,6 +166,19 @@ public class CoinTest {
         assertTrue(valueOf(1).isLessThan(valueOf(2)));
         assertFalse(valueOf(2).isLessThan(valueOf(2)));
         assertFalse(valueOf(2).isLessThan(valueOf(1)));
+    }
+
+    @Test
+    public void testNegate() {
+        assertEquals(Long.MIN_VALUE + 1, Coin.ofSat(Long.MAX_VALUE).negate().value);
+        assertEquals(-21_000_000L * 100_000_000L, MAX_MONEY.negate().value);
+        assertEquals(-1, SATOSHI.negate().value);
+        assertEquals(0, ZERO.negate().value);
+        assertEquals(1, Coin.ofSat(-1).negate().value);
+        assertEquals(21_000_000L * 100_000_000L, Coin.ofSat(-21_000_000L * 100_000_000L).negate().value);
+        assertEquals(Long.MAX_VALUE, Coin.ofSat(Long.MIN_VALUE + 1).negate().value);
+
+        assertThrows(ArithmeticException.class, () -> Coin.ofSat(Long.MIN_VALUE).negate());
     }
 
     @Test(expected = ArithmeticException.class)
