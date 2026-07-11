@@ -1157,7 +1157,9 @@ public class PeerGroup implements TransactionBroadcaster {
         if (chain == null) {
             // Just try to help catch what might be a programming error.
             log.warn("Starting up with no attached block chain. Did you forget to pass one to the constructor?");
-        }
+        } else {
+            log.info("Starting ...");
+        };
         checkState(!vUsedUp, () ->
                 "cannot start a peer group twice");
         vRunning = true;
@@ -1166,7 +1168,6 @@ public class PeerGroup implements TransactionBroadcaster {
         // We do blocking waits during startup, so run on the executor thread.
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             try {
-                log.info("Starting ...");
                 CompletableFuture<Void> started = channels.start(); // Start asynchronously
                 started.get();                                      // Wait until started
                 triggerConnections();
