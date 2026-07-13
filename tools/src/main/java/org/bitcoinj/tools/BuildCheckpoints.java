@@ -25,6 +25,7 @@ import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.TestNet4Params;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -81,6 +82,10 @@ public class BuildCheckpoints {
             case TEST:
                 params = TestNet3Params.get();
                 suffix = "-testnet";
+                break;
+            case TESTNET4:
+                params = TestNet4Params.get();
+                suffix = "-testnet4";
                 break;
             case REGTEST:
                 params = RegTestParams.get();
