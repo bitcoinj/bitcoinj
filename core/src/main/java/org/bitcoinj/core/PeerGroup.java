@@ -1185,24 +1185,25 @@ public class PeerGroup implements TransactionBroadcaster {
     public CompletableFuture<Void> stopAsync() {
         checkState(vRunning);
         vRunning = false;
+        log.info("Stopping ...");
+        Stopwatch watch = Stopwatch.start();
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            try {
-                log.info("Stopping ...");
-                Stopwatch watch = Stopwatch.start();
-                // The log output this creates can be useful.
-                setDownloadPeer(null);
-                // Blocking close of all sockets.
-                CompletableFuture<Void> stopped = channels.stop();  // Stop asynchronously
-                stopped.get();                                      // Wait until stopped
-                for (PeerDiscovery peerDiscovery : peerDiscoverers) {
-                    peerDiscovery.shutdown();
-                }
-                vRunning = false;
-                log.info("Stopped, took {}.", watch);
-            } catch (Throwable e) {
-                log.error("Exception when shutting down", e);  // The executor swallows exceptions :(
+            // The log output this creates can be useful.
+            setDownloadPeer(null);
+        }, executor)
+        .thenCompose((v) -> channels.stop())            // Close all sockets
+        .thenRun(() -> {
+            for (PeerDiscovery peerDiscovery : peerDiscoverers) {
+                peerDiscovery.shutdown();
             }
-        }, executor);
+            vRunning = false;
+            log.info("Stopped, took {}.", watch);
+        })
+        .whenComplete((v, e) -> {
+            if (e != null) {
+                log.error("Exception when shutting down", e);
+            }
+        });
         executor.shutdown();
         return future;
     }
