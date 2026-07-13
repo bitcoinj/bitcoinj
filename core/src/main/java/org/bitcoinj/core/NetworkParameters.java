@@ -55,6 +55,8 @@ public abstract class NetworkParameters {
     public static final String ID_MAINNET = "org.bitcoin.production";
     /** The string returned by getId() for the testnet. */
     public static final String ID_TESTNET = "org.bitcoin.test";
+    /** The string returned by getId() for testnet4. Must match the value used in the bitcoinj-thin fork. */
+    public static final String ID_TESTNET4 = "org.bitcoin.testnet4";
     /** The string returned by getId() for regtest mode. */
     public static final String ID_REGTEST = "org.bitcoin.regtest";
     /** Unit test network. */
@@ -137,6 +139,30 @@ public abstract class NetworkParameters {
         return genesisBlock;
     }
 
+    /**
+     * Builds a genesis block with a custom coinbase input script and a custom output public key.
+     * Most Bitcoin networks (mainnet, testnet3, regtest) share the original
+     * "The Times 03/Jan/2009 ..." coinbase, but testnet4 (BIP-94) uses a different coinbase
+     * message and output, which produces a different merkle root and genesis hash.
+     * The caller is expected to set the genesis time/difficulty/nonce afterwards.
+     */
+    protected static Block buildGenesisBlock(NetworkParameters networkParameters, byte[] coinbaseScriptSig, byte[] outputPubKey) {
+        Block genesisBlock = new Block(networkParameters, Block.BLOCK_VERSION_GENESIS);
+        Transaction transaction = new Transaction(networkParameters);
+        try {
+            transaction.addInput(new TransactionInput(networkParameters, transaction, coinbaseScriptSig));
+            ByteArrayOutputStream scriptPubKeyBytes = new ByteArrayOutputStream();
+            Script.writeBytes(scriptPubKeyBytes, outputPubKey);
+            scriptPubKeyBytes.write(ScriptOpCodes.OP_CHECKSIG);
+            transaction.addOutput(new TransactionOutput(networkParameters, transaction, FIFTY_COINS, scriptPubKeyBytes.toByteArray()));
+        } catch (Exception e) {
+            // Cannot happen.
+            throw new RuntimeException(e);
+        }
+        genesisBlock.addTransaction(transaction);
+        return genesisBlock;
+    }
+
     public static final int TARGET_TIMESPAN = 14 * 24 * 60 * 60;  // 2 weeks per difficulty cycle, on average.
     public static final int TARGET_SPACING = 10 * 60;  // 10 minutes per block.
     public static final int INTERVAL = TARGET_TIMESPAN / TARGET_SPACING;
@@ -186,6 +212,8 @@ public abstract class NetworkParameters {
             return MainNetParams.get();
         } else if (id.equals(ID_TESTNET)) {
             return TestNet3Params.get();
+        } else if (id.equals(ID_TESTNET4)) {
+            return TestNet4Params.get();
         } else if (id.equals(ID_UNITTESTNET)) {
             return UnitTestParams.get();
         } else if (id.equals(ID_REGTEST)) {
