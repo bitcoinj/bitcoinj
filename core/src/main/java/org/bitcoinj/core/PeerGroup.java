@@ -1196,11 +1196,12 @@ public class PeerGroup implements TransactionBroadcaster {
             for (PeerDiscovery peerDiscovery : peerDiscoverers) {
                 peerDiscovery.shutdown();
             }
-            vRunning = false;
-            log.info("Stopped, took {}.", watch);
         })
         .whenComplete((v, e) -> {
-            if (e != null) {
+            if (e == null) {
+                vRunning = false;
+                log.info("Stopped, took {}.", watch);
+            } else {
                 log.error("Exception when shutting down", e);
             }
         });
