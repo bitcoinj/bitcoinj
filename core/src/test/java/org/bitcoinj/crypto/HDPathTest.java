@@ -235,6 +235,18 @@ public class HDPathTest {
             new PathVector (
                 "1 / 2 / 3 /",
                 HDPath.partial(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+            ),
+
+            // BIP-32 standard apostrophe notation
+            new PathVector (
+                "m/44'/0'/0'",
+                HDPath.m(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true))
+            ),
+
+            new PathVector (
+                "M/44'/0'/0'/1/1",
+                HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                    new ChildNumber(1, false), new ChildNumber(1, false))
             )
         };
     }
