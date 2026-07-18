@@ -1,0 +1,9 @@
+# To see the documentation for all Dependabot configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "daily"
