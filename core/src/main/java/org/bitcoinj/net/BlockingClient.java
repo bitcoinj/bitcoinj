@@ -17,6 +17,7 @@
 package org.bitcoinj.net;
 
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.ContextPropagatingThreadFactory;
 import org.bitcoinj.core.Peer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,8 +74,7 @@ public class BlockingClient implements MessageWriteTarget {
         connection.setWriteTarget(this);
         socket = socketFactory.createSocket();
         final Context context = Context.get();
-        Thread t = new Thread(() -> {
-            Context.propagate(context);
+        Thread t = ContextPropagatingThreadFactory.newThreadWithContext(context, () -> {
             if (clientSet != null)
                 clientSet.add(BlockingClient.this);
             try {
@@ -98,8 +98,7 @@ public class BlockingClient implements MessageWriteTarget {
                     clientSet.remove(BlockingClient.this);
                 connection.connectionClosed();
             }
-        });
-        t.setName("BlockingClient network thread for " + serverAddress);
+        }, "BlockingClient network thread for " + serverAddress);
         t.setDaemon(true);
         t.start();
     }

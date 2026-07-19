@@ -43,7 +43,17 @@ public class ContextPropagatingThreadFactory implements ThreadFactory {
     @Override
     public Thread newThread(final Runnable r) {
         final Context context = Context.get();
-        Thread thread = new Thread(() -> {
+        Thread thread = newThreadWithContext(context, r, name);
+        thread.setPriority(priority);
+        thread.setDaemon(true);
+        Thread.UncaughtExceptionHandler handler = Threading.uncaughtExceptionHandler;
+        if (handler != null)
+            thread.setUncaughtExceptionHandler(handler);
+        return thread;
+    }
+
+    public static Thread newThreadWithContext(Context context, Runnable r, String name) {
+        return new Thread(() -> {
             try {
                 Context.propagate(context);
                 r.run();
@@ -52,11 +62,5 @@ public class ContextPropagatingThreadFactory implements ThreadFactory {
                 throw e;
             }
         }, name);
-        thread.setPriority(priority);
-        thread.setDaemon(true);
-        Thread.UncaughtExceptionHandler handler = Threading.uncaughtExceptionHandler;
-        if (handler != null)
-            thread.setUncaughtExceptionHandler(handler);
-        return thread;
     }
 }
