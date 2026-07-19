@@ -73,8 +73,7 @@ public class BlockingClient implements MessageWriteTarget {
         // sure it doesn't get too large or have to call read too often.
         connection.setWriteTarget(this);
         socket = socketFactory.createSocket();
-        final Context context = Context.get();
-        Thread t = ContextPropagatingThreadFactory.newThreadWithContext(context, () -> {
+        Thread t = ContextPropagatingThreadFactory.newThreadWithContext(Context.get(), () -> {
             if (clientSet != null)
                 clientSet.add(BlockingClient.this);
             try {
