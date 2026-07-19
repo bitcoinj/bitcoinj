@@ -57,7 +57,7 @@ public class TxConfidenceTable {
     // corresponding to expired transactions. In this way memory usage of the system is in line with however many
     // transactions you actually care to track the confidence of. We can still end up with lots of hashes being stored
     // if our peers flood us with invs but the MAX_SIZE param caps this.
-    private ReferenceQueue<TransactionConfidence> referenceQueue;
+    private final ReferenceQueue<TransactionConfidence> referenceQueue;
 
     /** The max size of a table created with the no-args constructor. */
     public static final int MAX_SIZE = 1000;
