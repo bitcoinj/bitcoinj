@@ -119,7 +119,9 @@ public class Context {
     /**
      * Require that new threads use {@link #propagate(Context)} or {@link ContextPropagatingThreadFactory},
      * rather than using a heuristic for the desired context.
+     * @deprecated We plan to replace and deprecate {@link Context}. There is no reason to enable strict mode.
      */
+    @Deprecated
     public static void enableStrictMode() {
         isStrictMode = true;
     }
