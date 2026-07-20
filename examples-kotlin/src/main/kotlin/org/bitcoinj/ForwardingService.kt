@@ -19,6 +19,7 @@ import org.bitcoinj.base.AddressParser
 import org.bitcoinj.base.BitcoinNetwork
 import org.bitcoinj.base.Coin
 import org.bitcoinj.core.Context
+import org.bitcoinj.core.DefaultPeerNetwork
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.core.TransactionBroadcast
 import org.bitcoinj.core.TransactionConfidence
@@ -39,7 +40,6 @@ val USAGE = "Usage: address-to-forward-to $NETS"
 fun main(args: Array<String>) { //pass the network and forwarding address in this order [address, network]
     // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
     BriefLogFormatter.init()
-    Context.propagate(Context())
 
     if (args.isEmpty() || args.size > 2) {
         System.err.println(USAGE)
@@ -77,6 +77,7 @@ class ForwardingService(val config: Config) : Closeable {
      * Start the wallet and register the coin-forwarding listener.
      */
     init {
+        DefaultPeerNetwork.initialize(config.network)
         walletAppKit =
             WalletAppKit.launch(config.network, config.walletDirectory, config.walletPrefix, config.maxConnections)
         wallet = walletAppKit.wallet()

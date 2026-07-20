@@ -16,8 +16,8 @@
 
 package org.bitcoinj.core;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Coin;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.wallet.SendRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,9 +118,9 @@ public class Context {
     }
 
     /**
-     * Require that new threads use {@link #propagate(Context)} or {@link ContextPropagatingThreadFactory},
-     * rather than using a heuristic for the desired context.
+     * @deprecated We plan to replace and deprecate {@link Context}. There is no reason to enable strict mode.
      */
+    @Deprecated
     public static void enableStrictMode() {
         isStrictMode = true;
     }
@@ -144,7 +144,13 @@ public class Context {
      * be used (even indirectly) by a thread, you will want to call this first. Your task may be simplified by using
      * a {@link ContextPropagatingThreadFactory}.
      */
+    @VisibleForTesting
     public static void propagate(Context context) {
+        slot.set(Objects.requireNonNull(context));
+    }
+
+    // Same as propagate, but for internal-use only
+    static void setThreadLocal(Context context) {
         slot.set(Objects.requireNonNull(context));
     }
 

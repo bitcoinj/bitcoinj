@@ -24,9 +24,11 @@ import org.bitcoinj.base.internal.PlatformUtils;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DefaultPeerNetwork;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.PeerNetwork;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.net.discovery.DnsDiscovery;
@@ -88,6 +90,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
+    @Nullable private final PeerNetwork peerNetwork;
     protected final BitcoinNetwork network;
     protected final NetworkParameters params;
     protected final ScriptType preferredOutputScriptType;
@@ -124,7 +127,19 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
      */
     public WalletAppKit(BitcoinNetwork network, ScriptType preferredOutputScriptType,
                         KeyChainGroupStructure structure, File directory, String filePrefix) {
+        this.peerNetwork = null;
         this.network = Objects.requireNonNull(network);
+        this.params = NetworkParameters.of(this.network);
+        this.preferredOutputScriptType = Objects.requireNonNull(preferredOutputScriptType);
+        this.structure = Objects.requireNonNull(structure);
+        this.directory = Objects.requireNonNull(directory);
+        this.filePrefix = Objects.requireNonNull(filePrefix);
+    }
+
+    public WalletAppKit(PeerNetwork peerNetwork, ScriptType preferredOutputScriptType,
+                        KeyChainGroupStructure structure, File directory, String filePrefix) {
+        this.peerNetwork = peerNetwork;
+        this.network = Objects.requireNonNull((BitcoinNetwork) peerNetwork.network());
         this.params = NetworkParameters.of(this.network);
         this.preferredOutputScriptType = Objects.requireNonNull(preferredOutputScriptType);
         this.structure = Objects.requireNonNull(structure);
@@ -369,6 +384,9 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     @Override
     protected void startUp() throws Exception {
         // Runs in a separate thread.
+        if (this.peerNetwork instanceof DefaultPeerNetwork) {
+            ((DefaultPeerNetwork) peerNetwork).initThreadLocal();
+        }
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
                 throw new IOException("Could not create directory " + directory.getAbsolutePath());
@@ -546,6 +564,10 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     @Override
     protected void shutDown() throws Exception {
         // Runs in a separate thread.
+        // Runs in a separate thread.
+        if (this.peerNetwork instanceof DefaultPeerNetwork) {
+            ((DefaultPeerNetwork) peerNetwork).initThreadLocal();
+        }
         try {
             Objects.requireNonNull(vPeerGroup);
             Objects.requireNonNull(vWallet);

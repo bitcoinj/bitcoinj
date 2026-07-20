@@ -32,12 +32,13 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
-import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DefaultPeerNetwork;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.PeerNetwork;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.VerificationException;
@@ -343,14 +344,14 @@ public class WalletTool implements Callable<Integer> {
         if (chainFile == null) {
             chainFile = new File(fileName);
         }
-        Context.propagate(new Context());
+        PeerNetwork peerNetwork = DefaultPeerNetwork.initialize(net); // Initialize the default PeerNetwork and legacy Context
 
         if (conditionStr != null) {
             condition = new Condition(conditionStr);
         }
 
         if (action == ActionEnum.CREATE) {
-            createWallet(net, walletFile);
+            createWallet(peerNetwork, walletFile);
             return 0;  // We're done.
         }
         if (!walletFile.exists()) {
@@ -374,6 +375,7 @@ public class WalletTool implements Callable<Integer> {
                 && force);
         try {
             wallet = Wallet.loadFromFile(walletFile, WalletProtobufSerializer.WalletFactory.DEFAULT, forceReset, ignoreMandatoryExtensions);
+            // wallet.setPeerNetwork(peerNetwork)
         } catch (UnreadableWalletException e) {
             System.err.println("Failed to load wallet '" + walletFile + "': " + e.getMessage());
             e.printStackTrace();
@@ -894,7 +896,8 @@ public class WalletTool implements Callable<Integer> {
         }
     }
 
-    private void createWallet(Network network, File walletFile) throws IOException {
+    private void createWallet(PeerNetwork peerNetwork, File walletFile) throws IOException {
+        Network network = peerNetwork.network();
         KeyChainGroupStructure keyChainGroupStructure = KeyChainGroupStructure.BIP32;
 
         if (walletFile.exists() && !force) {

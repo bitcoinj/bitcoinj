@@ -44,7 +44,6 @@ import org.bitcoinj.net.discovery.PeerDiscovery;
 import org.bitcoinj.net.discovery.PeerDiscoveryException;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.bitcoinj.utils.ExponentialBackoff;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;

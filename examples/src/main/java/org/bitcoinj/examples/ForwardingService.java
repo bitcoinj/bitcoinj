@@ -21,6 +21,7 @@ import org.bitcoinj.base.AddressParser;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DefaultPeerNetwork;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionBroadcast;
 import org.bitcoinj.kits.WalletAppKit;
@@ -58,7 +59,6 @@ public class ForwardingService implements Closeable {
     public static void main(String[] args) throws InterruptedException {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
         BriefLogFormatter.init();
-        Context.propagate(new Context());
 
         if (args.length < 1 || args.length > 2) {
             System.err.println(USAGE);
@@ -88,6 +88,7 @@ public class ForwardingService implements Closeable {
             // Else network not-specified, extract network from address
             network = (BitcoinNetwork) forwardingAddress.network();
         }
+        DefaultPeerNetwork.initialize(network);
     }
 
     /**

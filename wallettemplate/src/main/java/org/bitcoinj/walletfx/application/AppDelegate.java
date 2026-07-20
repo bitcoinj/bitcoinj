@@ -31,6 +31,12 @@ public interface AppDelegate {
      */
     default void init(Application application) throws Exception {
     }
+
+    /**
+     * Called on the JavaFX application thread.
+     * @param primaryStage
+     * @throws Exception
+     */
     void start(Stage primaryStage) throws Exception;
     void stop() throws Exception;
 }
