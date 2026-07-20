@@ -152,7 +152,7 @@ public class TransactionBroadcast implements Wallet.SendResult {
         log.info("Waiting for {} peers required for broadcast, we have {} ...", minConnections, peerGroup.getConnectedPeers().size());
         final Context context = Context.get();
         return peerGroup.waitForPeers(minConnections).thenComposeAsync( peerList /* not used */ -> {
-            Context.propagate(context);
+            Context.setThreadLocal(context);
             // We now have enough connected peers to send the transaction.
             // This can be called immediately if we already have enough. Otherwise it'll be called from a peer
             // thread.

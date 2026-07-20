@@ -17,7 +17,9 @@
 package org.bitcoinj.walletfx.application;
 
 import com.google.common.util.concurrent.Service;
+import org.bitcoinj.core.DefaultPeerNetwork;
 import org.bitcoinj.core.Peer;
+import org.bitcoinj.core.PeerNetwork;
 import org.jspecify.annotations.Nullable;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
@@ -25,7 +27,6 @@ import javafx.stage.Stage;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.PlatformUtils;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -48,6 +49,7 @@ public abstract class WalletApplication implements AppDelegate {
     private WalletAppKit walletAppKit;
     private final String applicationName;
     private final BitcoinNetwork network;
+    private final DefaultPeerNetwork peerNetwork;
     private final KeyChainGroupStructure keyChainGroupStructure;
     private final ScriptType preferredOutputScriptType;
     private final String walletFileName;
@@ -58,6 +60,7 @@ public abstract class WalletApplication implements AppDelegate {
         this.applicationName = applicationName;
         this.walletFileName = applicationName.replaceAll("[^a-zA-Z0-9.-]", "_") + "-" + suffixFromNetwork(network);
         this.network = network;
+        this.peerNetwork = DefaultPeerNetwork.initialize(network);
         this.preferredOutputScriptType = preferredOutputScriptType;
         this.keyChainGroupStructure = keyChainGroupStructure;
     }
@@ -95,6 +98,7 @@ public abstract class WalletApplication implements AppDelegate {
     @Override
     public void start(Stage primaryStage) throws Exception {
         try {
+            peerNetwork.initThreadLocal();
             startImpl(primaryStage);
         } catch (Throwable e) {
             GuiUtils.crashAlert(e);
@@ -125,7 +129,6 @@ public abstract class WalletApplication implements AppDelegate {
     }
 
     protected void startWalletAppKit(Stage primaryStage) throws IOException {
-        Context.propagate(new Context());
         // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
         // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
         // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
@@ -156,7 +159,7 @@ public abstract class WalletApplication implements AppDelegate {
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(applicationName).toFile();
-        walletAppKit = new WalletAppKit(network, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, walletFileName) {
+        walletAppKit = new WalletAppKit(peerNetwork, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, walletFileName) {
             @Override
             protected void onSetupCompleted() {
                 Platform.runLater(controller::onBitcoinSetup);

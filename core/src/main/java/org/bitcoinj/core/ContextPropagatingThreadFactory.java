@@ -55,7 +55,7 @@ public class ContextPropagatingThreadFactory implements ThreadFactory {
     public static Thread newThreadWithContext(Context context, Runnable r, String name) {
         return new Thread(() -> {
             try {
-                Context.propagate(context);
+                Context.setThreadLocal(context);
                 r.run();
             } catch (Exception e) {
                 log.error("Exception in thread", e);

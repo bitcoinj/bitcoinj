@@ -22,6 +22,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DefaultPeerNetwork;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
@@ -93,7 +94,7 @@ public class BuildCheckpoints implements Callable<Integer> {
         final String suffix;
         params = NetworkParameters.of(net);
         Objects.requireNonNull(params);
-        Context.propagate(new Context());
+        DefaultPeerNetwork.initialize(net);
 
         switch (net) {
             case MAINNET:

@@ -19,6 +19,7 @@ package org.bitcoinj.examples;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.DefaultPeerNetwork;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
@@ -60,9 +61,9 @@ public class PrintPeers {
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init(Level.WARNING);
-        Context.propagate(new Context());
         final Network network = BitcoinNetwork.MAINNET;
         final NetworkParameters params = NetworkParameters.of(network);
+        DefaultPeerNetwork.initialize(network);
         System.out.println("=== DNS ===");
         PeerDnsResult result = getPeers(network);
         printPeers(result);
