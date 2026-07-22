@@ -1,0 +1,56 @@
+= bitcoinj Nix ReadMe
+
+These instructions are for a work-in-progress `flake.nix` file. They assume you have `experimental-features = nix-command flakes` enabled. For information about **Nix** see the https://nixos.org[Nix & NixOS] website.
+
+Known issues:
+
+1. The builds are currently using the "escape hatch" method and should be using something like `gradle2nix`.
+2. There should be a separate target to install `bitcoinj-core` and possibly for some of the other module and dependency JARs.
+3. As a result of the above two issues there is a conflict if you install both applications. It can be resolved with the `--priority` option see the note below.
+
+== To start and use a development shell
+
+From the project root directory type:
+
+* `nix develop`
+
+From within the launched shell, you can use commands like:
+
+* `gradle build`
+* `gradle bitcoinj-wallettool:run --args="--help"`
+* `gradle bitcoinj-wallettemplate:run`
+
+
+== To run applications directly
+
+From the project root directory type:
+
+* `nix run .#wallettool -- --help`
+* `nix run .#wallettemplate`
+
+== To install and run applications
+
+From the project root directory type:
+
+. `nix profile install .#wallettool`
+. `wallet-tool --help`
+
+and/or
+
+. `nix profile install .#wallettemplate --priority 4`
+. `bitcoinj-wallettemplate`
+
+NOTE:: The `--priority 4` option above is to avoid the following known issue:
++
+```
+error: An existing package already provides the following file:
+
+         /nix/store/kgchs2a7g0ik2ybwc2v0k9iq4i04sarh-wallettool-0.0.1/share/vanilla/lib/slf4j-jdk14-2.0.9.jar
+
+       This is the conflicting file from the new package:
+
+         /nix/store/9b4517xgawvig9fxyf8vxay2nzbmmvq2-wallettemplate-0.0.1/share/vanilla/lib/slf4j-jdk14-2.0.9.jar
+```
+
+
+
