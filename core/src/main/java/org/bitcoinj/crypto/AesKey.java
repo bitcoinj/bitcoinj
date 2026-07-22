@@ -18,15 +18,51 @@ package org.bitcoinj.crypto;
 
 import org.bitcoinj.base.internal.ByteArray;
 
+import javax.crypto.SecretKey;
+import java.util.Arrays;
+
 /**
  * Wrapper for a {@code byte[]} containing an AES Key.
  */
-public class AesKey extends ByteArray {
+public class AesKey extends ByteArray implements SecretKey {
+    private boolean destroyed = false;
     /**
      * Wrapper for a {@code byte[]} containing an AES Key
      * @param keyBytes implementation-dependent AES Key bytes
      */
     public AesKey(byte[] keyBytes) {
         super(keyBytes);
+    }
+
+    @Override
+    public byte[] bytes() {
+        if (destroyed) throw new IllegalStateException("Key has been destroyed");
+        return super.bytes();
+    }
+
+    @Override
+    public String getAlgorithm() {
+        return "AES";
+    }
+
+    @Override
+    public String getFormat() {
+        return "RAW";
+    }
+
+    @Override
+    public byte[] getEncoded() {
+        return bytes();
+    }
+
+    @Override
+    public void destroy() {
+        Arrays.fill(bytes, (byte) 0);
+        destroyed = true;
+    }
+
+    @Override
+    public boolean isDestroyed() {
+        return destroyed;
     }
 }
