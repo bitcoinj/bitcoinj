@@ -11,8 +11,8 @@ plugins {
 def isModularBuild = GradleVersion.current() >= GradleVersion.version("8.5")
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
 boolean hasAnnotationProcessor = GradleVersion.current() >= annotationProcessorMinVersion
-def junit5MinVersion = GradleVersion.version("4.6")
-boolean hasJunit5 = GradleVersion.current() >= junit5MinVersion
+def jUnit6MinVersion = GradleVersion.version("4.6")
+boolean hasJUnit6 = GradleVersion.current() >= jUnit6MinVersion
 
 def graalVMMinVersion = GradleVersion.version("8.3")     // Gradle plugin for GraalVM requires 8.3+
 boolean hasGraalVM = GradleVersion.current() >= graalVMMinVersion
@@ -29,7 +29,7 @@ dependencies {
     }
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:6.1.2"
-    if (hasJunit5) {
+    if (hasJUnit6) {
         testImplementation platform('org.junit:junit-bom:6.1.2')
         testImplementation 'org.junit.jupiter:junit-jupiter'
         testRuntimeOnly "org.junit.platform:junit-platform-launcher"
@@ -80,8 +80,8 @@ if (isModularBuild) {
     }
 }
 
-// wallettool is using JUnit 5 for testing, if it's not available no tests will be run
-if (hasJunit5) {
+// wallettool is using JUnit 6 for testing, if it's not available no tests will be run
+if (hasJUnit6) {
     test {
         useJUnitPlatform()
     }
