@@ -13,4 +13,7 @@ updates:
     groups:
       picocli:
         patterns:
-          - "info.picocli:*"
+          - "info.picocli*"
+      slf4j:
+        patterns:
+          - "org.slf4j*"
