@@ -7,3 +7,11 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "org.junit*"
+        update-types: ["version-update:semver-major"]
+    # Group multi-artifact families that share a version so each bump is one PR.
+    groups:
+      junit:
+        patterns:
+          - "org.junit*"
