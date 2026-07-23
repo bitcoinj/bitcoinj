@@ -10,3 +10,7 @@ updates:
     ignore:
       - dependency-name: "nl.jqno.equalsverifier:equalsverifier"
         update-types: ["version-update:semver-major"]
+    groups:
+      picocli:
+        patterns:
+          - "info.picocli:*"
