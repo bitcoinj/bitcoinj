@@ -7,3 +7,6 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "nl.jqno.equalsverifier:equalsverifier"
+        update-types: ["version-update:semver-major"]
