@@ -15,3 +15,8 @@ updates:
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
       - dependency-name: "org.asciidoctor.jvm.convert"
         update-types: ["version-update:semver-major"]
+    # Group multi-artifact families that share a version so each bump is one PR.
+    groups:
+      junit:
+        patterns:
+          - "org.junit:*"
