@@ -20,3 +20,6 @@ updates:
       junit:
         patterns:
           - "org.junit:*"
+      slf4j:
+        patterns:
+          - "org.slf4j:*"
