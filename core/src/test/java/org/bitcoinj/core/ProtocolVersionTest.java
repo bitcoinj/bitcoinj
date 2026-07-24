@@ -49,4 +49,27 @@ public class ProtocolVersionTest {
     private ProtocolVersion[] allInstances() {
         return ProtocolVersion.values();
     }
+
+    @Test
+    public void specificVersionValues() {
+        assertEquals(70000, ProtocolVersion.MINIMUM.intValue());
+        assertEquals(70001, ProtocolVersion.BLOOM_FILTER.intValue());
+        assertEquals(70011, ProtocolVersion.BLOOM_FILTER_BIP111.intValue());
+        assertEquals(70012, ProtocolVersion.WITNESS_VERSION.intValue());
+        assertEquals(70013, ProtocolVersion.FEEFILTER.intValue());
+        assertEquals(70013, ProtocolVersion.CURRENT.intValue());
+    }
+
+    @Test
+    public void versionOrdering() {
+        assertTrue(ProtocolVersion.MINIMUM.intValue() < ProtocolVersion.BLOOM_FILTER.intValue());
+        assertTrue(ProtocolVersion.BLOOM_FILTER.intValue() < ProtocolVersion.BLOOM_FILTER_BIP111.intValue());
+        assertTrue(ProtocolVersion.BLOOM_FILTER_BIP111.intValue() < ProtocolVersion.WITNESS_VERSION.intValue());
+        assertTrue(ProtocolVersion.WITNESS_VERSION.intValue() <= ProtocolVersion.FEEFILTER.intValue());
+    }
+
+    @Test
+    public void currentIsFeeFilter() {
+        assertEquals(ProtocolVersion.FEEFILTER.intValue(), ProtocolVersion.CURRENT.intValue());
+    }
 }
