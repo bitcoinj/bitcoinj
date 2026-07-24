@@ -11,5 +11,7 @@ updates:
     ignore:
       - dependency-name: "nl.jqno.equalsverifier:equalsverifier"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "com.fasterxml.jackson.core:jackson-*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
       - dependency-name: "org.asciidoctor.jvm.convert"
         update-types: ["version-update:semver-major"]
