@@ -383,9 +383,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         this.accountPath = accountPath;
         this.seed = seed;
         basicKeyChain = new BasicKeyChain(crypter);
-        if (!seed.isEncrypted()) {
-            rootKey = HDKeyDerivation.createMasterPrivateKey(Objects.requireNonNull(seed.getSeedBytes()));
-            Optional<Instant> creationTime = seed.getCreationTime();
+        if (seed instanceof DeterministicSeed.Unencrypted) {
+            DeterministicSeed.Unencrypted unencrypted = (DeterministicSeed.Unencrypted) seed;
+            rootKey = HDKeyDerivation.createMasterPrivateKey(unencrypted.seedBytes());
+            Optional<Instant> creationTime = unencrypted.getCreationTime();
             if (creationTime.isPresent())
                 rootKey.setCreationTime(creationTime.get());
             else
@@ -406,7 +407,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * For use in encryption when {@link #toEncrypted(KeyCrypter, AesKey)} is called, so that
      * subclasses can override that method and create an instance of the right class.
      *
-     * See also {@link #makeKeyChainFromSeed(DeterministicSeed, HDPath.HDPartialPath, ScriptType)}
+     * See also {@link #makeKeyChainFromSeed(DeterministicSeed.Unencrypted, HDPath.HDPartialPath, ScriptType)}
      */
     protected DeterministicKeyChain(KeyCrypter crypter, AesKey aesKey, DeterministicKeyChain chain) {
         // Can't encrypt a watching chain.
@@ -1064,7 +1065,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 "can't decrypt a watching chain");
         checkState(seed.isEncrypted());
         String passphrase = DEFAULT_PASSPHRASE_FOR_MNEMONIC; // FIXME allow non-empty passphrase
-        DeterministicSeed decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
+        DeterministicSeed.Unencrypted decSeed = seed.decrypt(getKeyCrypter(), passphrase, aesKey);
         DeterministicKeyChain chain = makeKeyChainFromSeed(decSeed, accountPartialPath(), outputScriptType);
         // Now double check that the keys match to catch the case where the key is wrong but padding didn't catch it.
         if (!chain.getWatchingKey().getPubKeyPoint().equals(getWatchingKey().getPubKeyPoint()))
@@ -1089,7 +1090,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      * Subclasses should override this to create an instance of the subclass instead of a plain DKC.
      * This is used in encryption/decryption.
      */
-    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed seed, HDPath.HDPartialPath accountPath,
+    protected DeterministicKeyChain makeKeyChainFromSeed(DeterministicSeed.Unencrypted seed, HDPath.HDPartialPath accountPath,
             ScriptType outputScriptType) {
         return new DeterministicKeyChain(seed, null, outputScriptType, accountPath);
     }
@@ -1443,14 +1444,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         final StringBuilder builder = new StringBuilder();
         if (seed != null) {
             if (includePrivateKeys) {
-                DeterministicSeed decryptedSeed = seed.isEncrypted()
+                DeterministicSeed.Unencrypted decryptedSeed = seed instanceof DeterministicSeed.Encrypted
                         ? seed.decrypt(getKeyCrypter(), DEFAULT_PASSPHRASE_FOR_MNEMONIC, aesKey)
-                        : seed;
-                final List<String> words = decryptedSeed.getMnemonicCode();
+                        : (DeterministicSeed.Unencrypted) seed;
+                final List<String> words = decryptedSeed.mnemonicCode();
                 builder.append("Seed as words:     ").append(InternalUtils.SPACE_JOINER.join(words)).append('\n');
                 builder.append("Seed as hex:       ").append(decryptedSeed.toHexString()).append('\n');
             } else {
-                if (seed.isEncrypted())
+                if (seed instanceof DeterministicSeed.Encrypted)
                     builder.append("Seed is encrypted\n");
             }
             builder.append("Seed birthday:     ");
