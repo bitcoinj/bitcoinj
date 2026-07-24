@@ -159,6 +159,20 @@ public class ByteUtils {
     }
 
     /**
+     * Checks if the {@code long} value fits in an unsigned byte (0-255) and returns it as a {@code byte}.
+     * <p>
+     * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
+     *
+     * @param value value to be checked and cast
+     * @return the value as a {@code byte}
+     * @throws IllegalArgumentException if the value doesn't fit in an unsigned byte
+     */
+    public static byte longToByteExact(long value) {
+        checkArgument(value >= 0 && value <= 255, () -> "Value " + value + " out of range for unsigned byte");
+        return (byte) value;
+    }
+
+    /**
      * Write a 32-bit integer to a given byte array in little-endian format, starting at a given offset.
      * <p>
      * The value is expected as an unsigned {@code long} as per the Java Unsigned Integer API.
