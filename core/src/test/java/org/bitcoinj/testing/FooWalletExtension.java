@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
+@Deprecated
 public class FooWalletExtension implements WalletExtension {
     private final byte[] data = {1, 2, 3};
 
