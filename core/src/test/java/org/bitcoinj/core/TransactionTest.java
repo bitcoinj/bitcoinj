@@ -221,7 +221,8 @@ public class TransactionTest {
         TransactionInput input = tx.addSignedInput(outPoint, ScriptBuilder.createOutputScript(fromAddress), inAmount, fromKey);
 
         // verify signature
-        ScriptExecution.correctlySpends(input.getScriptSig(), tx, 0, null, null, ScriptBuilder.createOutputScript(fromAddress), null);
+        ScriptExecution.correctlySpends(input.getScriptSig(), tx, 0, null, null,
+                ScriptBuilder.createOutputScript(fromAddress), ScriptExecution.NO_VERIFY_FLAGS);
 
         byte[] rawTx = tx.serialize();
 
@@ -244,7 +245,7 @@ public class TransactionTest {
 
         // verify signature
         ScriptExecution.correctlySpends(input.getScriptSig(), tx, 0, input.getWitness(), input.getValue(),
-                ScriptBuilder.createOutputScript(fromAddress), null);
+                ScriptBuilder.createOutputScript(fromAddress), ScriptExecution.NO_VERIFY_FLAGS);
 
         byte[] rawTx = tx.serialize();
 
