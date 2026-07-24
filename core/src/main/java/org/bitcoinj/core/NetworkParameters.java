@@ -397,8 +397,10 @@ public abstract class NetworkParameters {
 
         // Start enforcing CHECKLOCKTIMEVERIFY, (BIP65) for block.nVersion=4
         // blocks, when 75% of the network has upgraded:
+        Integer tallyCount = tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP65);
         if (block.version() >= Block.BLOCK_VERSION_BIP65 &&
-            tally.getCountAtOrAbove(Block.BLOCK_VERSION_BIP65) > this.getMajorityEnforceBlockUpgrade()) {
+                tallyCount != null &&
+                tallyCount > this.getMajorityEnforceBlockUpgrade()) {
             verifyFlags.add(ScriptExecution.VerifyFlag.CHECKLOCKTIMEVERIFY);
         }
 
