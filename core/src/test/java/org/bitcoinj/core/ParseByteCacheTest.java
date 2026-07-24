@@ -196,8 +196,8 @@ public class ParseByteCacheTest {
         serDeser(serializer, b1, bos.toByteArray(), null, null);
         
         // refresh block
-        b1 = (Block) serializer.deserialize(ByteBuffer.wrap(blockBytes));
-        bRef = (Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes));
+        b1 = ((Block) serializer.deserialize(ByteBuffer.wrap(blockBytes))).asUnfinished();
+        bRef = ((Block) serializerRef.deserialize(ByteBuffer.wrap(blockBytes))).asUnfinished();
 
         // change a value in header
         b1.setNonce(23);
