@@ -30,10 +30,12 @@ import org.bitcoinj.walletfx.application.WalletApplication;
 import org.bitcoinj.walletfx.overlay.OverlayController;
 import org.bitcoinj.walletfx.overlay.OverlayableStackPaneController;
 import org.bitcoinj.walletfx.utils.KeyDerivationTasks;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.fadeIn;
@@ -42,16 +44,16 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 
 public class WalletSetPasswordController implements OverlayController<WalletSetPasswordController> {
     private static final Logger log = LoggerFactory.getLogger(WalletSetPasswordController.class);
-    public PasswordField pass1, pass2;
+    @FXML public @Nullable PasswordField pass1, pass2;
 
-    public ProgressIndicator progressMeter;
-    public GridPane widgetGrid;
-    public Button closeButton;
-    public Label explanationLabel;
+    @FXML public @Nullable ProgressIndicator progressMeter;
+    @FXML public @Nullable GridPane widgetGrid;
+    @FXML public @Nullable Button closeButton;
+    @FXML public @Nullable Label explanationLabel;
 
-    private WalletApplication app;
-    private OverlayableStackPaneController rootController;
-    private OverlayableStackPaneController.OverlayUI<? extends OverlayController<WalletSetPasswordController>> overlayUI;
+    private @Nullable WalletApplication app;
+    private @Nullable OverlayableStackPaneController rootController;
+    private OverlayableStackPaneController.@Nullable OverlayUI<? extends OverlayController<WalletSetPasswordController>> overlayUI;
     // These params were determined empirically on a top-range (as of 2014) MacBook Pro with native scrypt support,
     // using the scryptenc command line tool from the original scrypt distribution, given a memory limit of 40mb.
     public static final KeyCrypter.ScryptParameters SCRYPT_PARAMETERS = KeyCrypter.ScryptParameters.withP(6);
@@ -63,11 +65,12 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
     }
 
     public void initialize() {
+        Objects.requireNonNull(progressMeter);
         app = WalletApplication.instance();
         progressMeter.setOpacity(0);
     }
 
-    private static Duration estimatedKeyDerivationTime = null;
+    private static @Nullable Duration estimatedKeyDerivationTime = null;
 
     /**
      * Initialize the {@code estimatedKeyDerivationTime} static field if not already initialized
@@ -100,6 +103,9 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
 
     @FXML
     public void setPasswordClicked(ActionEvent event) {
+        Objects.requireNonNull(pass1);
+        Objects.requireNonNull(pass2);
+        Objects.requireNonNull(progressMeter);
         if (!pass1.getText().equals(pass2.getText())) {
             informationalAlert("Passwords do not match", "Try re-typing your chosen passwords.");
             return;
@@ -123,6 +129,8 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
         KeyDerivationTasks tasks = new KeyDerivationTasks(scrypt, password, estimatedKeyDerivationTime) {
             @Override
             protected final void onFinish(AesKey aesKey, int timeTakenMsec) {
+                Objects.requireNonNull(app);
+                Objects.requireNonNull(overlayUI);
                 // Write the target time to the wallet so we can make the progress bar work when entering the password.
                 WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
@@ -139,6 +147,7 @@ public class WalletSetPasswordController implements OverlayController<WalletSetP
     }
 
     public void closeClicked(ActionEvent event) {
+        Objects.requireNonNull(overlayUI);
         overlayUI.done();
     }
 }
