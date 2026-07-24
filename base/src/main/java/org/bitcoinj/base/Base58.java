@@ -1,6 +1,7 @@
 /*
  * Copyright 2011 Google Inc.
  * Copyright 2018 Andreas Schildbach
+ * Copyright 2026 OpenSea, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +41,15 @@ import java.util.Arrays;
  * <li>Doubleclicking selects the whole number as one word if it's all alphanumeric.</li>
  * </ul>
  * <p>
- * However, note that the encoding/decoding runs in O(n&sup2;) time, so it is not useful for large data.
- * <p>
  * The basic idea of the encoding is to treat the data bytes as a large number represented using
  * base-256 digits, convert the number to be represented using base-58 digits, preserve the exact
  * number of leading zeros (which are otherwise lost during the mathematical operations on the
  * numbers), and finally represent the resulting base-58 digits as alphanumeric ASCII characters.
+ * <p>
+ * This implementation uses fixed-width 32-bit limb arithmetic with 5-digit batching
+ * (58<sup>5</sup> = 656,356,768 fits in a {@code long} alongside a 32-bit limb), which reduces
+ * encode/decode to O(n<sup>2</sup>/k) work with a small constant factor instead of the
+ * byte-level O(n<sup>2</sup>) divmod used by earlier versions.
  */
 public class Base58 {
     public static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
@@ -58,6 +62,12 @@ public class Base58 {
         }
     }
 
+    // Batch BATCH_SIZE base-58 digits per pass over the limb array. 58^5 = 656356768 fits
+    // in a long alongside a 32-bit limb without overflowing (max intermediate value is
+    // 0xFFFFFFFF * 656356768 + 656356767 < 2^63).
+    private static final int BATCH_SIZE = 5;
+    private static final long BATCH_POWER = 656_356_768L; // 58^5
+
     /**
      * Encodes the given bytes as a base58 string (no checksum is appended).
      *
@@ -67,36 +77,63 @@ public class Base58 {
     public static String encode(byte[] input) {
         if (input.length == 0) {
             return "";
-        }       
-        // Count leading zeros.
+        }
+        // Count leading zeros (preserved as leading '1' characters in the output).
         int zeros = 0;
         while (zeros < input.length && input[zeros] == 0) {
             ++zeros;
         }
-        // Convert base-256 digits to base-58 digits (plus conversion to ASCII characters)
-        input = Arrays.copyOf(input, input.length); // since we modify it in-place
-        char[] encoded = new char[input.length * 2]; // upper bound
-        int outputStart = encoded.length;
-        for (int inputStart = zeros; inputStart < input.length; ) {
-            encoded[--outputStart] = ALPHABET[divmod(input, inputStart, 256, 58)];
-            if (input[inputStart] == 0) {
-                ++inputStart; // optimization - skip leading zeros
-            }
+        // Pack the big-endian input into little-endian 32-bit limbs.
+        int numLimbs = (input.length + 3) / 4;
+        int[] limbs = new int[numLimbs];
+        for (int pos = 0; pos < input.length; pos++) {
+            int byteVal = input[input.length - 1 - pos] & 0xFF;
+            int limbIdx = pos >>> 2;
+            int shift = (pos & 3) << 3;
+            limbs[limbIdx] |= byteVal << shift;
         }
-        // Preserve exactly as many leading encoded zeros in output as there were leading zeros in input.
-        while (outputStart < encoded.length && encoded[outputStart] == ENCODED_ZERO) {
-            ++outputStart;
+
+        // Upper bound on output length. log_58(256) ≈ 1.366, so each input byte produces at
+        // most ~1.37 output chars. Using 2*len is a safe (if loose) ceiling. We add BATCH_SIZE
+        // slack so the final partial batch is never truncated.
+        char[] encoded = new char[input.length * 2 + BATCH_SIZE];
+        int charPos = encoded.length;
+
+        int activeLimbs = numLimbs;
+        while (activeLimbs > 0 && limbs[activeLimbs - 1] == 0) activeLimbs--;
+
+        // Repeatedly divide the limb-represented number by 58^BATCH_SIZE and emit BATCH_SIZE
+        // base-58 digits per iteration (LSD first, written right-to-left into `encoded`).
+        while (activeLimbs > 0) {
+            long remainder = 0L;
+            for (int idx = activeLimbs - 1; idx >= 0; idx--) {
+                long value = (remainder << 32) | (limbs[idx] & 0xFFFFFFFFL);
+                limbs[idx] = (int) (value / BATCH_POWER);
+                remainder = value % BATCH_POWER;
+            }
+
+            for (int d = 0; d < BATCH_SIZE; d++) {
+                encoded[--charPos] = ALPHABET[(int) (remainder % 58L)];
+                remainder /= 58L;
+            }
+
+            while (activeLimbs > 0 && limbs[activeLimbs - 1] == 0) activeLimbs--;
+        }
+
+        // The last iteration may have produced BATCH_SIZE zero-padded '1' chars on the most
+        // significant end — strip them. Then re-add the preserved leading zeros.
+        while (charPos < encoded.length && encoded[charPos] == ENCODED_ZERO) {
+            ++charPos;
         }
         while (--zeros >= 0) {
-            encoded[--outputStart] = ENCODED_ZERO;
+            encoded[--charPos] = ENCODED_ZERO;
         }
-        // Return encoded string (including encoded leading zeros).
-        return new String(encoded, outputStart, encoded.length - outputStart);
+        return new String(encoded, charPos, encoded.length - charPos);
     }
 
     /**
      * Encodes the given version and bytes as a base58 string. A checksum is appended.
-     * 
+     *
      * @param version the version to encode
      * @param payload the bytes to encode, e.g. pubkey hash
      * @return the base58-encoded string
@@ -126,38 +163,78 @@ public class Base58 {
         if (input.isEmpty()) {
             return new byte[0];
         }
-        // Convert the base58-encoded ASCII chars to a base58 byte sequence (base58 digits).
-        byte[] input58 = new byte[input.length()];
-        for (int i = 0; i < input.length(); ++i) {
-            char c = input.charAt(i);
-            int digit = c < 128 ? INDEXES[c] : -1;
-            if (digit < 0) {
-                throw new AddressFormatException.InvalidCharacter(c, i);
+
+        // Count leading '1' characters, which encode leading zero bytes.
+        int leadingZeros = 0;
+        while (leadingZeros < input.length() && input.charAt(leadingZeros) == ENCODED_ZERO) {
+            leadingZeros++;
+        }
+        if (leadingZeros == input.length()) {
+            return new byte[leadingZeros];
+        }
+
+        int dataLen = input.length() - leadingZeros;
+        // log_256(58) ≈ 0.733, so dataLen base-58 digits fit in at most ceil(dataLen*0.733)+1 bytes.
+        int estimatedBytes = dataLen * 733 / 1000 + 1;
+        int numLimbs = (estimatedBytes + 3) / 4;
+        int[] limbs = new int[numLimbs];
+        int usedLimbs = 0;
+
+        // Consume base-58 digits in batches of BATCH_SIZE (the last batch may be shorter).
+        int i = leadingZeros;
+        while (i < input.length()) {
+            int remaining = input.length() - i;
+            int batchLen = remaining >= BATCH_SIZE ? BATCH_SIZE : remaining;
+            long batchBase = pow58(batchLen);
+
+            long acc = 0L;
+            for (int k = 0; k < batchLen; k++) {
+                char c = input.charAt(i + k);
+                int digit = c < 128 ? INDEXES[c] : -1;
+                if (digit < 0) {
+                    throw new AddressFormatException.InvalidCharacter(c, i + k);
+                }
+                acc = acc * 58L + digit;
             }
-            input58[i] = (byte) digit;
-        }
-        // Count leading zeros.
-        int zeros = 0;
-        while (zeros < input58.length && input58[zeros] == 0) {
-            ++zeros;
-        }
-        // Convert base-58 digits to base-256 digits.
-        byte[] decoded = new byte[input.length()];
-        int outputStart = decoded.length;
-        for (int inputStart = zeros; inputStart < input58.length; ) {
-            decoded[--outputStart] = divmod(input58, inputStart, 58, 256);
-            if (input58[inputStart] == 0) {
-                ++inputStart; // optimization - skip leading zeros
+            i += batchLen;
+
+            // limbs := limbs * batchBase + acc (little-endian 32-bit limbs, long-precision carry)
+            long carry = acc;
+            for (int j = 0; j < usedLimbs; j++) {
+                long product = (limbs[j] & 0xFFFFFFFFL) * batchBase + carry;
+                limbs[j] = (int) product;
+                carry = product >>> 32;
+            }
+            if (carry != 0L) {
+                // The estimated capacity is a ceiling based on log_256(58), so we always have room.
+                limbs[usedLimbs] = (int) carry;
+                usedLimbs++;
             }
         }
-        // Ignore extra leading zeroes that were added during the calculation.
-        while (outputStart < decoded.length && decoded[outputStart] == 0) {
-            ++outputStart;
+
+        // Serialize the limbs back to big-endian bytes.
+        byte[] bytes = new byte[numLimbs * 4];
+        for (int idx = 0; idx < numLimbs; idx++) {
+            int offset = (numLimbs - 1 - idx) * 4;
+            int limb = limbs[idx];
+            bytes[offset]     = (byte) (limb >>> 24);
+            bytes[offset + 1] = (byte) (limb >>> 16);
+            bytes[offset + 2] = (byte) (limb >>> 8);
+            bytes[offset + 3] = (byte) limb;
         }
-        // Return decoded data (including original number of leading zeros).
-        return Arrays.copyOfRange(decoded, outputStart - zeros, decoded.length);
+
+        // Strip leading zero bytes introduced by the fixed-width limb layout, then prepend
+        // exactly `leadingZeros` zero bytes to match the encoded '1' prefix count.
+        int stripLeading = 0;
+        while (stripLeading < bytes.length && bytes[stripLeading] == 0) {
+            stripLeading++;
+        }
+
+        byte[] result = new byte[leadingZeros + bytes.length - stripLeading];
+        System.arraycopy(bytes, stripLeading, result, leadingZeros, bytes.length - stripLeading);
+        return result;
     }
-    
+
     public static BigInteger decodeToBigInteger(String input) throws AddressFormatException {
         return ByteUtils.bytesToBigInteger(decode(input));
     }
@@ -182,27 +259,10 @@ public class Base58 {
         return data;
     }
 
-    /**
-     * Divides a number, represented as an array of bytes each containing a single digit
-     * in the specified base, by the given divisor. The given number is modified in-place
-     * to contain the quotient, and the return value is the remainder.
-     *
-     * @param number the number to divide
-     * @param firstDigit the index within the array of the first non-zero digit
-     *        (this is used for optimization by skipping the leading zeros)
-     * @param base the base in which the number's digits are represented (up to 256)
-     * @param divisor the number to divide by (up to 256)
-     * @return the remainder of the division operation
-     */
-    private static byte divmod(byte[] number, int firstDigit, int base, int divisor) {
-        // this is just long division which accounts for the base of the input digits
-        int remainder = 0;
-        for (int i = firstDigit; i < number.length; i++) {
-            int digit = (int) number[i] & 0xFF;
-            int temp = remainder * base + digit;
-            number[i] = (byte) (temp / divisor);
-            remainder = temp % divisor;
-        }
-        return (byte) remainder;
+    // 58^n for 0 <= n <= BATCH_SIZE.
+    private static long pow58(int n) {
+        long p = 1L;
+        for (int i = 0; i < n; i++) p *= 58L;
+        return p;
     }
 }
