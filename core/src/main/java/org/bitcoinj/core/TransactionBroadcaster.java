@@ -16,11 +16,38 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Sha256Hash;
+
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+
 /**
  * A general interface which declares the ability to broadcast transactions. This is implemented
  * by {@link PeerGroup}.
  */
 public interface TransactionBroadcaster {
+    // Deprecate
     /** Broadcast the given transaction on the network */
     TransactionBroadcast broadcastTransaction(final Transaction tx);
+
+//    /**
+//    * Send a transaction asynchronously with success defined by default criteria. Most network-related
+//     * failure conditions should result in exceptional completion with a subclass of {@link BroadcastFailure}
+//     * that should contain failure information.
+//     * @param tx transaction to send (must be finalized/immutable or exceptional completion will occur)
+//     * @return A future that completes successfully.
+//     */
+//   CompletableFuture<BroadcastSuccess> sendTransaction(Transaction tx);
+
+    interface BroadcastOptions {
+        Duration timeout();
+    }
+
+    // Information available on success or failure
+    interface BroadcastResult {
+        Sha256Hash txId();
+    }
+
+    interface BroadcastSuccess extends BroadcastResult {};
+    abstract class BroadcastFailure extends RuntimeException implements BroadcastResult {};
 }
