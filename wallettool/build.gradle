@@ -5,7 +5,7 @@ plugins {
     id 'application'
     id 'org.beryx.jlink' version '3.1.5' apply false
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
-    id 'org.graalvm.buildtools.native' version '0.11.0' apply false
+    id 'org.graalvm.buildtools.native' version '1.1.6' apply false
 }
 
 def isModularBuild = GradleVersion.current() >= GradleVersion.version("8.5")
