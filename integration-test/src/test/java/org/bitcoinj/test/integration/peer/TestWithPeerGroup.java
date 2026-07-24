@@ -17,7 +17,7 @@
 package org.bitcoinj.test.integration.peer;
 
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.core.BloomFilterMessage;
 import org.bitcoinj.core.MemoryPoolMessage;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerGroup;
@@ -180,7 +180,7 @@ public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
         checkState(writeTarget.nextMessageBlocking() instanceof VersionMessage);
         checkState(writeTarget.nextMessageBlocking() instanceof SendAddrV2Message);
         checkState(writeTarget.nextMessageBlocking() instanceof VersionAck);
-        checkState(writeTarget.nextMessageBlocking() instanceof BloomFilter);
+        checkState(writeTarget.nextMessageBlocking() instanceof BloomFilterMessage);
         checkState(writeTarget.nextMessageBlocking() instanceof MemoryPoolMessage);
     }
 }
