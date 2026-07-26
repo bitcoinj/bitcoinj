@@ -103,7 +103,7 @@ public class BlockChain extends AbstractBlockChain {
     }
 
     @Override
-    protected void rollbackBlockStore(int height) throws BlockStoreException {
+    public void rollbackBlockStore(int height) throws BlockStoreException {
         lock.lock();
         try {
             int currentHeight = getBestChainHeight();
