@@ -49,6 +49,11 @@ public abstract class HDPath {
 
         private final char symbol;
 
+        /** Convenience shortcut for {@link Prefix#PUBLIC} */
+        public static Prefix M = Prefix.PUBLIC;
+        /** Convenience shortcut for {@link Prefix#PRIVATE} */
+        public static Prefix m = Prefix.PRIVATE;
+
         Prefix(char symbol) {
             this.symbol = symbol;
         }
