@@ -122,7 +122,8 @@ public class SPVBlockStore implements BlockStore {
     public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
         Objects.requireNonNull(file);
         this.params = Objects.requireNonNull(params);
-        checkArgument(capacity > 0);
+        checkArgument(capacity > 0, () -> "capacity must be positive");
+        checkArgument(capacity < 144 * 365 * 10, () -> "capacity must be sane"); // 10 years
 
         boolean exists = file.exists();
 

@@ -48,8 +48,10 @@ import java.time.Instant;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SPVBlockStoreTest {
     private static final NetworkParameters TESTNET = TestNet3Params.get();
@@ -233,5 +235,17 @@ public class SPVBlockStoreTest {
         assertEquals(SPVBlockStore.FILE_PROLOGUE_BYTES + SPVBlockStore.RECORD_SIZE_V2 * 1,
                 store.getRingCursor());
         store.close();
+    }
+
+    @Test
+    public void constructor_rejectOverflowingCapacity() throws Exception {
+        try {
+            new SPVBlockStore(TESTNET, blockStoreFile, Integer.MAX_VALUE, false);
+        } catch (BlockStoreException | RuntimeException expected) {
+            assertFalse("overflowing capacity should be rejected before creating the file",
+                    blockStoreFile.exists());
+            return;
+        }
+        fail("overflowing capacity was accepted");
     }
 }
