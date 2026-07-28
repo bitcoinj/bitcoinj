@@ -77,7 +77,9 @@ import java.util.concurrent.ExecutorService;
  * tx itself later if needed.</p>
  *
  * @see <a href="https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki">BIP 0070</a>
+ * @deprecated The BIP 70 payment protocol will be removed in the next release.
  */
+@Deprecated
 public class PaymentSession {
     private final static ExecutorService executor = Threading.THREAD_POOL;
     private NetworkParameters params;

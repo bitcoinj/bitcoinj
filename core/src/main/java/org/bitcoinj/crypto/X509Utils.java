@@ -43,7 +43,9 @@ import java.util.stream.Stream;
  * X509Utils provides tools for working with X.509 certificates and keystores, as used in the BIP 70 payment protocol.
  * For more details on this, see {@link PaymentSession}, the article "Working with
  * the payment protocol" on the bitcoinj website, or the Bitcoin developer guide.
+ * @deprecated The BIP 70 payment protocol will be removed in the next release.
  */
+@Deprecated
 public class X509Utils {
     /**
      * Returns either a string that "sums up" the certificate for humans, in a similar manner to what you might see

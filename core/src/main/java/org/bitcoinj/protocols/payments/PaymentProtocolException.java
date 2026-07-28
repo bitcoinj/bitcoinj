@@ -19,6 +19,7 @@ package org.bitcoinj.protocols.payments;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+@Deprecated
 public class PaymentProtocolException extends Exception {
     public PaymentProtocolException(String msg) {
         super(msg);

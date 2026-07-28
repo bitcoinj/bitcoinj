@@ -306,7 +306,9 @@ public class BitcoinURI {
     /**
      * @return The URL where a payment request (as specified in BIP 70) may
      *         be fetched.
+     * @deprecated The BIP 70 payment protocol will be removed in the next release.
      */
+    @Deprecated
     public final String getPaymentRequestUrl() {
         return (String) parameterMap.get(FIELD_PAYMENT_REQUEST_URL);
     }
@@ -314,7 +316,9 @@ public class BitcoinURI {
     /**
      * Returns the URLs where a payment request (as specified in BIP 70) may be fetched. The first URL is the main URL,
      * all subsequent URLs are fallbacks.
+     * @deprecated The BIP 70 payment protocol will be removed in the next release.
      */
+    @Deprecated
     public List<String> getPaymentRequestUrls() {
         ArrayList<String> urls = new ArrayList<>();
         while (true) {

@@ -240,7 +240,11 @@ public class SendRequest {
         return req;
     }
 
-    /** Copy data from payment request. */
+    /**
+     * Copy data from payment request.
+     * @deprecated The BIP 70 payment protocol will be removed in the next release.
+     */
+    @Deprecated
     public SendRequest fromPaymentDetails(PaymentDetails paymentDetails) {
         if (paymentDetails.hasMemo())
             this.memo = paymentDetails.getMemo();

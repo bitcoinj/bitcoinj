@@ -70,7 +70,10 @@ import java.util.List;
  * <p>BIP 70 defines a binary, protobuf based protocol that runs directly between sender and receiver of funds. Payment
  * protocol data does not flow over the Bitcoin P2P network or enter the block chain. It's instead for data that is only
  * of interest to the parties involved but isn't otherwise needed for consensus.</p>
+ *
+ * @deprecated The BIP 70 payment protocol will be removed in the next release.
  */
+@Deprecated
 public class PaymentProtocol {
 
     // MIME types as defined in BIP71.
