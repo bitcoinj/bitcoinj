@@ -19,7 +19,7 @@ dependencies {
     implementation project(':bitcoinj-core')
     implementation 'info.picocli:picocli:4.7.6'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation 'org.slf4j:slf4j-jdk14:2.0.16'
+    implementation 'org.slf4j:slf4j-jdk14:2.0.18'
     if (hasAnnotationProcessor) {
         annotationProcessor 'info.picocli:picocli-codegen:4.7.6'
     } else {
@@ -29,7 +29,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.11.4"
 
-    testImplementation 'org.slf4j:slf4j-jdk14:2.0.16'
+    testImplementation 'org.slf4j:slf4j-jdk14:2.0.18'
 }
 
 sourceCompatibility = 11
