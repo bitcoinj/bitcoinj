@@ -17,13 +17,13 @@ boolean hasGraalVM = (GradleVersion.current().compareTo(graalVMMinVersion) >= 0)
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'info.picocli:picocli:4.7.6'
+    implementation 'info.picocli:picocli:4.7.7'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
     implementation 'org.slf4j:slf4j-jdk14:2.0.18'
     if (hasAnnotationProcessor) {
-        annotationProcessor 'info.picocli:picocli-codegen:4.7.6'
+        annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
     } else {
-        compileOnly 'info.picocli:picocli-codegen:4.7.6'
+        compileOnly 'info.picocli:picocli-codegen:4.7.7'
     }
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.11.4"
