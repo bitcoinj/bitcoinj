@@ -66,7 +66,7 @@ public class SPVBlockStore implements BlockStore {
     // Magic header for the V2 format.
     static final byte[] HEADER_MAGIC_V2 = "SPV2".getBytes(StandardCharsets.US_ASCII);
 
-    protected volatile @Nullable MappedByteBuffer buffer;
+    private volatile @Nullable MappedByteBuffer buffer;
     protected final NetworkParameters params;
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
