@@ -45,8 +45,8 @@ public class BlockImporter {
         System.out.println("       Does full verification if the store supports it");
         checkArgument(args.length == 2 || args.length == 3);
 
-        Network network = BitcoinNetwork.fromString(args[1])
-                .orElseThrow(() -> new IllegalArgumentException("Unknown network: " + args[1]));
+        Network network = BitcoinNetwork.fromString(args[0])
+                .orElseThrow(() -> new IllegalArgumentException("Unknown network: " + args[0]));
         NetworkParameters params = NetworkParameters.of(network);
 
         BlockStore store;
