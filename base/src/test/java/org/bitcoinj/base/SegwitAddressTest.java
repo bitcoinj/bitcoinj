@@ -132,7 +132,7 @@ public class SegwitAddressTest {
         for (AddressData valid : AddressData.VALID_ADDRESSES) {
             SegwitAddress address = (SegwitAddress) addressParser.parseAddress(valid.address);
 
-            assertEquals(valid.expectedNetwork, address.network());
+            assertEquals(valid.expectedNetwork, address.network().id());
             assertEquals(valid.address.toLowerCase(Locale.ROOT), address.toBech32());
             assertEquals(valid.expectedWitnessVersion, address.getWitnessVersion());
         }
