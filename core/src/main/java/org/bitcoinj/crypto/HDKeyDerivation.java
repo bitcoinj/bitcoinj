@@ -56,14 +56,16 @@ public final class HDKeyDerivation {
      * Generates a new deterministic key from the given seed, which can be any arbitrary byte array. However resist
      * the temptation to use a string as the seed - any key derived from a password is likely to be weak and easily
      * broken by attackers (this is not theoretical, people have had money stolen that way). This method checks
-     * that the given seed is at least 64 bits long.
+     * that the given seed is at least 128 bits long and at most 512 bits long (as per BIP32).
      *
      * @throws HDDerivationException if generated master key is invalid (private key not between 0 and n inclusive)
-     * @throws IllegalArgumentException if the seed is less than 8 bytes and could be brute forced
+     * @throws IllegalArgumentException if the seed is less than 16 bytes or more than 64 bytes long (as per BIP32).
      */
     public static DeterministicKey createMasterPrivateKey(byte[] seed) throws HDDerivationException {
-        checkArgument(seed.length > 8, () ->
-                "seed is too short and could be brute forced");
+        checkArgument(seed.length >= 16, () ->
+            "seed must be at least 128 bits (16 bytes) per BIP32");
+        checkArgument(seed.length <= 64, () ->
+            "seed must be at most 512 bits (64 bytes) per BIP32");
         // Calculate I = HMAC-SHA512(key="Bitcoin seed", msg=S)
         byte[] i = CryptoUtils.hmacSha512("Bitcoin seed", StandardCharsets.US_ASCII, seed);
         // Split I into two 32-byte sequences, Il and Ir.
