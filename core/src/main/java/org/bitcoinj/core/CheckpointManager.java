@@ -65,10 +65,11 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * coinbase transactions). Those "checkpoints" can be found in NetworkParameters.</p>
  *
  * <p>Checkpoints are read from a text file, one value per line.
- * It consists of the magic string "TXT CHECKPOINTS 1", followed by the number of signatures
- * to read. The value may not be larger than 256.
- * If the number of signatures is larger than zero, each 65 byte ECDSA secp256k1 signature then follows. The signatures
- * sign the hash of all bytes that follow the last signature.</p>
+ * The first line contains the magic string "TXT CHECKPOINTS 1". The next line contains the number of signatures
+ * to read. Currently, this is always zero because the feature hasn't been implemented. In future, the value may be
+ * larger than zero, but not larger than {@link #MAX_SIGNATURES}.
+ * If the number of signatures is larger than zero, each 65 byte ECDSA secp256k1 signature then follows. Currently,
+ * these signatures are read but ignored. In future, they sign the hash of all bytes that follow the last signature.</p>
  *
  * <p>After the signatures come the number of checkpoints in the file. Then each checkpoint follows one per line in
  * compact format (as written by {@link StoredBlock#serializeCompactV2(ByteBuffer)}) as a base64-encoded blob.</p>

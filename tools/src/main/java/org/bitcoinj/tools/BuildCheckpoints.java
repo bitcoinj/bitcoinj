@@ -61,7 +61,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
  * Downloads and verifies a full chain from your local peer, emitting checkpoints at each difficulty transition period
- * to a file which is then signed with your key.
+ * to a file.
  */
 @CommandLine.Command(name = "build-checkpoints", usageHelpAutoWidth = true, sortOptions = false, description = "Create checkpoint files to use with CheckpointManager.")
 public class BuildCheckpoints implements Callable<Integer> {
