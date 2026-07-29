@@ -59,10 +59,8 @@ public class SPVBlockStore implements BlockStore {
 
     /** The default number of headers that will be stored in the ring buffer. */
     public static final int DEFAULT_CAPACITY = 10000;
-    @Deprecated
-    public static final String HEADER_MAGIC = "SPVB";
     // Magic header for the V1 format.
-    static final byte[] HEADER_MAGIC_V1 = HEADER_MAGIC.getBytes(StandardCharsets.US_ASCII);
+    static final byte[] HEADER_MAGIC_V1 = "SPVB".getBytes(StandardCharsets.US_ASCII);
     // Magic header for the V2 format.
     static final byte[] HEADER_MAGIC_V2 = "SPV2".getBytes(StandardCharsets.US_ASCII);
 
