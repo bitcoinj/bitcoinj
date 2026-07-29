@@ -212,6 +212,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         
         // Check that we properly requested the correct FilteredBlock
         Object getData = outbound(p1);
+        assertNotNull(getData);
         assertTrue(getData instanceof GetDataMessage);
         assertEquals(1, ((GetDataMessage) getData).getItems().size());
         assertEquals(block.getHash(), ((GetDataMessage) getData).getItems().get(0).hash);
@@ -219,6 +220,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         
         // Check that we then immediately pinged.
         Object ping = outbound(p1);
+        assertNotNull(ping);
         assertTrue(ping instanceof Ping);
         
         // Respond with transactions and the filtered block
