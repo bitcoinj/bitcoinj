@@ -99,7 +99,7 @@ public class SPVBlockStore implements BlockStore {
     protected @Nullable FileLock fileLock;
     protected final RandomAccessFile randomAccessFile;
     private final FileChannel channel;
-    private int fileLength;
+    private final int fileLength;
 
     /**
      * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} block headers. Will create the
