@@ -126,6 +126,8 @@ public class CheckpointManager {
             if (!TEXTUAL_MAGIC.equals(magic))
                 throw new IOException("unexpected magic: " + magic);
             int numSigs = Integer.parseInt(reader.readLine());
+            if (numSigs < 0 || numSigs > MAX_SIGNATURES)
+                throw new IOException("invalid number of signatures: " + numSigs);
             for (int i = 0; i < numSigs; i++)
                 reader.readLine(); // Skip sigs for now.
             int numCheckpoints = Integer.parseInt(reader.readLine());
