@@ -179,7 +179,7 @@ public final class Fiat implements Monetary, Comparable<Fiat> {
     }
 
     public Fiat negate() {
-        return new Fiat(currencyCode, -this.value);
+        return new Fiat(currencyCode, Math.negateExact(this.value));
     }
 
     /**
