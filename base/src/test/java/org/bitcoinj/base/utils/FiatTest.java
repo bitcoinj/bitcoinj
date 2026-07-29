@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import static org.bitcoinj.base.utils.Fiat.parseFiat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class FiatTest {
@@ -141,5 +142,16 @@ public class FiatTest {
         Fiat fiat2 = fiats[1];
         assertEquals(0, fiat2.getValue());
         assertEquals("USD", fiat2.getCurrencyCode());
+    }
+
+    @Test
+    public void testNegate() {
+        assertEquals(0, Fiat.valueOf("EUR", 0).negate().value);
+        assertEquals(1, Fiat.valueOf("EUR", -1).negate().value);
+        assertEquals(-1, Fiat.valueOf("EUR", 1).negate().value);
+        assertEquals(Long.MIN_VALUE + 1, Fiat.valueOf("EUR", Long.MAX_VALUE).negate().value);
+        assertEquals(Long.MAX_VALUE, Fiat.valueOf("EUR", Long.MIN_VALUE + 1).negate().value);
+
+        assertThrows(ArithmeticException.class, () -> Fiat.valueOf("EUR", Long.MIN_VALUE).negate());
     }
 }
