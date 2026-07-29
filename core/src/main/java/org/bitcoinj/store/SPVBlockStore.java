@@ -16,9 +16,7 @@
 
 package org.bitcoinj.store;
 
-import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -65,7 +63,7 @@ public class SPVBlockStore implements BlockStore {
     static final byte[] HEADER_MAGIC_V2 = "SPV2".getBytes(StandardCharsets.US_ASCII);
 
     private volatile @Nullable MappedByteBuffer buffer;
-    protected final NetworkParameters params;
+    private final Block genesisHeader;
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
     // faulted in. Unfortunately, in theory practice and theory are the same. In practice they aren't.
@@ -105,8 +103,8 @@ public class SPVBlockStore implements BlockStore {
      * @param file file to use for the block store
      * @throws BlockStoreException if something goes wrong
      */
-    public SPVBlockStore(NetworkParameters params, File file) throws BlockStoreException {
-        this(params, file, DEFAULT_CAPACITY, false);
+    public SPVBlockStore(Block genesisBlock, File file) throws BlockStoreException {
+        this(genesisBlock, file, DEFAULT_CAPACITY, false);
     }
 
     /**
@@ -117,9 +115,9 @@ public class SPVBlockStore implements BlockStore {
      * @param grow whether or not to migrate an existing block store of different capacity
      * @throws BlockStoreException if something goes wrong
      */
-    public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
+    public SPVBlockStore(Block genesisBlock, File file, int capacity, boolean grow) throws BlockStoreException {
         Objects.requireNonNull(file);
-        this.params = Objects.requireNonNull(params);
+        this.genesisHeader = Objects.requireNonNull(genesisBlock).asHeader();
         checkArgument(capacity > 0, () -> "capacity must be positive");
         checkArgument(capacity < 144 * 365 * 10, () -> "capacity must be sane"); // 10 years
 
@@ -157,7 +155,7 @@ public class SPVBlockStore implements BlockStore {
                 randomAccessFile.setLength(fileLength);
                 // Map it into memory read/write. See above comment.
                 buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
-                initNewStore(params.getGenesisBlock());
+                initNewStore(genesisHeader);
             }
 
             // Maybe migrate V1 to V2 format.
@@ -205,7 +203,7 @@ public class SPVBlockStore implements BlockStore {
         }
     }
 
-    private void initNewStore(Block genesisBlock) throws Exception {
+    private void initNewStore(Block genesisHeader) throws Exception {
         Objects.requireNonNull(buffer);
         ((Buffer) buffer).rewind();
         buffer.put(HEADER_MAGIC_V2);
@@ -216,7 +214,7 @@ public class SPVBlockStore implements BlockStore {
         } finally {
             lock.unlock();
         }
-        StoredBlock storedGenesis = new StoredBlock(genesisBlock.asHeader(), genesisBlock.getWork(), 0);
+        StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
         put(storedGenesis);
         setChainHead(storedGenesis);
     }
@@ -434,7 +432,7 @@ public class SPVBlockStore implements BlockStore {
                 buffer.put((byte)0);
             }
             // Initialize store again
-            initNewStore(params.getGenesisBlock());
+            initNewStore(genesisHeader);
         } finally { lock.unlock(); }
     }
 }
