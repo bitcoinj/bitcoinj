@@ -269,10 +269,6 @@ public class SPVBlockStore implements BlockStore {
         lock.lock();
         try {
             int cursor = getRingCursor();
-            if (cursor == fileLength) {
-                // Wrapped around.
-                cursor = FILE_PROLOGUE_BYTES;
-            }
             ((Buffer) buffer).position(cursor);
             Sha256Hash hash = block.getHeader().getHash();
             notFoundCache.remove(hash);
@@ -405,13 +401,19 @@ public class SPVBlockStore implements BlockStore {
 
     protected static final int FILE_PROLOGUE_BYTES = 1024;
 
-    /** Returns the offset from the file start where the latest block should be written (end of prev block). */
+    /**
+     * Returns the offset from the start of file where the latest block should be written. Normally this is after
+     * the previous block. But if that's also the end of file, the cursor gets wrapped around to start, after the
+     * prologue.
+     *
+     * @return cursor as offset in bytes
+     */
     int getRingCursor() {
         Objects.requireNonNull(buffer);
-        int c = buffer.getInt(4);
-        checkState(c >= FILE_PROLOGUE_BYTES, () ->
-                "integer overflow");
-        return c;
+        int cursor = buffer.getInt(4);
+        checkState(cursor >= FILE_PROLOGUE_BYTES && cursor <= fileLength, () ->
+                "cursor out of range: " + cursor);
+        return cursor < fileLength ? cursor : FILE_PROLOGUE_BYTES;
     }
 
     private void setRingCursor(int newCursor) {
