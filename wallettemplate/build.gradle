@@ -9,7 +9,7 @@ dependencies {
     implementation project(':bitcoinj-core')
     implementation 'com.google.guava:guava:33.6.0-jre'
     implementation 'com.google.zxing:core:3.5.4'
-    implementation 'org.jspecify:jspecify:1.0.0'
+    implementation 'org.jspecify:jspecify:1.0.1'
     implementation 'org.slf4j:slf4j-api:2.0.18'
 
     runtimeOnly 'org.slf4j:slf4j-jdk14:2.0.18'
