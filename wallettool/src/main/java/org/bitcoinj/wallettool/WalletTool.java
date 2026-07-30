@@ -817,7 +817,7 @@ public class WalletTool implements Callable<Integer> {
             System.out.println("Chain file is missing so resetting the wallet.");
             reset();
         }
-        store = new SPVBlockStore(params, chainFile);
+        store = new SPVBlockStore(net, chainFile);
         if (reset) {
             try {
                 CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,

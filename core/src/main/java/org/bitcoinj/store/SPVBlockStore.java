@@ -103,24 +103,54 @@ public class SPVBlockStore implements BlockStore {
     /**
      * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} block headers. Will create the
      * given file if it's missing. This operation will block on disk.
+     * @param network specifies the network
      * @param file file to use for the block store
      * @throws BlockStoreException if something goes wrong
      */
+    public SPVBlockStore(Network network, File file) throws BlockStoreException {
+        this(network, file, DEFAULT_CAPACITY, false);
+    }
+
+    /**
+     * Creates and initializes an SPV block store that can hold {@link #DEFAULT_CAPACITY} block headers. Will create the
+     * given file if it's missing. This operation will block on disk.
+     * @param params specifies the network
+     * @param file file to use for the block store
+     * @throws BlockStoreException if something goes wrong
+     * @deprecated Use {@link #SPVBlockStore(Network, File)}
+     */
+    @Deprecated
     public SPVBlockStore(NetworkParameters params, File file) throws BlockStoreException {
-        this(params, file, DEFAULT_CAPACITY, false);
+        this(params.network(), file);
     }
 
     /**
      * Creates and initializes an SPV block store that can hold a given amount of blocks. Will create the given file if
      * it's missing. This operation will block on disk.
+     * @param params specifies the network
      * @param file file to use for the block store
      * @param capacity custom capacity in number of block headers
      * @param grow whether or not to migrate an existing block store of different capacity
      * @throws BlockStoreException if something goes wrong
+     * @deprecated Use {@link #SPVBlockStore(Network, File, int, boolean)}
      */
+    @Deprecated
     public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
+        this(params.network(), file, capacity, grow);
+    }
+
+    /**
+      * Creates and initializes an SPV block store that can hold a given amount of blocks. Will create the given file if
+      * it's missing. This operation will block on disk.
+      * @param network specifies the network
+      * @param file file to use for the block store
+      * @param capacity custom capacity in number of block headers
+      * @param grow whether or not to migrate an existing block store of different capacity
+      * @throws BlockStoreException if something goes wrong
+      */
+    public SPVBlockStore(Network network, File file, int capacity, boolean grow) throws BlockStoreException {
         Objects.requireNonNull(file);
-        network = Objects.requireNonNull(params).network();
+        this.network = Objects.requireNonNull(network);
         checkArgument(capacity > 0, () -> "capacity must be positive");
         checkArgument(capacity < 144 * 365 * 10, () -> "capacity must be sane"); // 10 years
 
