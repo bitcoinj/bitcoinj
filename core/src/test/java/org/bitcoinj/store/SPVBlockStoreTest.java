@@ -20,6 +20,7 @@ package org.bitcoinj.store;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Difficulty;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.internal.PlatformUtils;
@@ -29,10 +30,8 @@ import org.bitcoinj.core.Block;
 import org.bitcoinj.core.TestBlocks;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
-import org.bitcoinj.params.TestNet3Params;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -54,7 +53,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class SPVBlockStoreTest {
-    private static final NetworkParameters TESTNET = TestNet3Params.get();
+    private static final Network TESTNET = BitcoinNetwork.TESTNET;
     private File blockStoreFile;
 
     @BeforeClass
@@ -78,7 +77,7 @@ public class SPVBlockStoreTest {
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
-        assertEquals(TESTNET.getGenesisBlock(), genesis.getHeader());
+        assertEquals(Block.getGenesis(TESTNET), genesis.getHeader());
         assertEquals(0, genesis.getHeight());
 
         // Build a new block.
@@ -192,7 +191,7 @@ public class SPVBlockStoreTest {
         assertEquals(b1.getHeader().getHash(), store.getChainHead().getHeader().getHash());
         store.clear();
         assertNull(store.get(b1.getHeader().getHash()));
-        assertEquals(TESTNET.getGenesisBlock().getHash(), store.getChainHead().getHeader().getHash());
+        assertEquals(Block.getGenesis(TESTNET).getHash(), store.getChainHead().getHeader().getHash());
         store.close();
     }
 
@@ -215,7 +214,7 @@ public class SPVBlockStoreTest {
         ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0,
                 SPVBlockStore.FILE_PROLOGUE_BYTES + SPVBlockStore.RECORD_SIZE_V1 * 3);
         buffer.put(SPVBlockStore.HEADER_MAGIC_V1); // header magic
-        Block genesisBlock = TESTNET.getGenesisBlock();
+        Block genesisBlock = Block.getGenesis(TESTNET);
         StoredBlock storedGenesisBlock = new StoredBlock(genesisBlock.asHeader(), genesisBlock.getWork(), 0);
         Sha256Hash genesisHash = storedGenesisBlock.getHeader().getHash();
         ((Buffer) buffer).position(SPVBlockStore.FILE_PROLOGUE_BYTES);
