@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation project(':bitcoinj-core')
-    implementation 'org.jspecify:jspecify:1.0.0'
+    implementation 'org.jspecify:jspecify:1.0.1'
     implementation 'info.picocli:picocli:4.7.7'
     implementation 'org.slf4j:slf4j-jdk14:2.0.18'
 }

@@ -8,7 +8,7 @@ plugins {
 dependencies {
     implementation project(':bitcoinj-core')
     implementation project(':bitcoinj-examples')
-    api 'org.jspecify:jspecify:1.0.0'
+    api 'org.jspecify:jspecify:1.0.1'
 
     testImplementation 'org.slf4j:slf4j-jdk14:2.0.18'
     testImplementation platform('org.junit:junit-bom:6.1.2')
