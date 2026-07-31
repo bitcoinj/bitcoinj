@@ -20,9 +20,12 @@ package org.bitcoinj.wallet;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.TestBlocks;
+import org.bitcoinj.core.UTXO;
+import org.bitcoinj.core.UTXOProvider;
 import org.bitcoinj.crypto.AesKey;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.AbstractBlockChain;
@@ -3525,5 +3528,32 @@ public class WalletTest extends TestWithWallet {
 
         Wallet wallet10 = Wallet.fromWatchingKeyB58(TESTNET, watchingKeyb58, Instant.ofEpochSecond(1415282801));
         assertEquals(TESTNET, wallet10.network());
+    }
+
+    @Test
+    public void utxoProviderDoesNotReceivePrivateKeys() {
+        Wallet wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2WPKH);
+        wallet.importKey(ECKey.random());
+        wallet.freshReceiveKey();
+        AtomicBoolean receivedPrivateKey = new AtomicBoolean(false);
+        wallet.setUTXOProviderInternal(new UTXOProvider() {
+            @Override
+            public Network network() {
+                return BitcoinNetwork.TESTNET;
+            }
+
+            @Override
+            public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) {
+                receivedPrivateKey.set(keys.stream().anyMatch(ECKey::hasPrivKey));
+                return Collections.emptyList();
+            }
+
+            @Override
+            public int getChainHeadHeight() {
+                return 0;
+            }
+        });
+        wallet.calculateAllSpendCandidates(false, false);
+        assertFalse("UTXO providers only need public keys", receivedPrivateKey.get());
     }
 }

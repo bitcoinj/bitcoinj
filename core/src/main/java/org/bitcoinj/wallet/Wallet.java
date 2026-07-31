@@ -4688,6 +4688,7 @@ public class Wallet extends BaseTaggableObject
         List<ECKey> keys = Stream.concat(
                         getImportedKeys().stream(),
                         getActiveKeyChain().getLeafKeys().stream())
+                .map(ECKey::fromPublicOnly) // don't pass private keys to UTXO provider
                 .collect(Collectors.toList());
         return new ArrayList<>(utxoProvider.getOpenTransactionOutputs(keys));
     }
