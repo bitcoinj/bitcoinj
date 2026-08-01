@@ -4685,8 +4685,10 @@ public class Wallet extends BaseTaggableObject
 
     private List<UTXO> getStoredOutputsFromUTXOProviderInternal() throws UTXOProviderException {
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
-        List<ECKey> keys = getImportedKeys();
-        keys.addAll(getActiveKeyChain().getLeafKeys());
+        List<ECKey> keys = Stream.concat(
+                        getImportedKeys().stream(),
+                        getActiveKeyChain().getLeafKeys().stream())
+                .collect(Collectors.toList());
         return new ArrayList<>(utxoProvider.getOpenTransactionOutputs(keys));
     }
 
