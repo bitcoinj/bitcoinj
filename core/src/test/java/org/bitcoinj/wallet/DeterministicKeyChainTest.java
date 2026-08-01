@@ -799,7 +799,7 @@ public class DeterministicKeyChainTest {
 
     @Test
     public void testToString() {
-        DeterministicSeed seed = DeterministicSeed.ofMnemonic("correct horse battery staple", "", Instant.ofEpochSecond(1000L));
+        DeterministicSeed.Unencrypted seed = DeterministicSeed.ofMnemonic("correct horse battery staple", "", Instant.ofEpochSecond(1000L));
         DeterministicKeyChain chain = DeterministicKeyChain.builder().seed(seed).build();
 
         String str = chain.toString();
