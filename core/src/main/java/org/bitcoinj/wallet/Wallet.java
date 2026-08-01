@@ -4690,7 +4690,7 @@ public class Wallet extends BaseTaggableObject
                         getActiveKeyChain().getLeafKeys().stream())
                 .map(ECKey::fromPublicOnly) // don't pass private keys to UTXO provider
                 .collect(Collectors.toList());
-        return new ArrayList<>(utxoProvider.getOpenTransactionOutputs(keys));
+        return Collections.unmodifiableList(new ArrayList<>(utxoProvider.getOpenTransactionOutputs(keys)));
     }
 
     /** Returns the default {@link CoinSelector} object that is used by this wallet if no custom selector is specified. */
