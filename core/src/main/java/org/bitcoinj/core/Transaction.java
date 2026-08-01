@@ -957,9 +957,9 @@ public class Transaction implements Message {
         // Verify the API user didn't try to do operations out of order.
         checkState(!outputs.isEmpty(), () ->
                 "attempting to sign tx without outputs");
-        if (amount == null || amount.value <= 0) {
-            log.warn("Illegal amount value. Amount is required for SegWit transactions.");
-        }
+        Objects.requireNonNull(amount);
+        checkState(amount.value > 0, () ->
+                "Illegal amount value. Amount is required for SegWit transactions.");
         TransactionInput input = new TransactionInput(this, new byte[] {}, prevOut, amount);
         addInput(input);
         int inputIndex = inputs.size() - 1;
