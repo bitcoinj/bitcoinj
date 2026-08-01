@@ -397,6 +397,6 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
                 }
             }
         }
-        return foundOutputs;
+        return Collections.unmodifiableList(foundOutputs);
     }
 }
