@@ -16,6 +16,7 @@
 
 package org.bitcoinj.base;
 
+import java.security.interfaces.ECPublicKey;
 import java.util.Comparator;
 
 /**
@@ -66,6 +67,25 @@ public interface Address extends Comparable<Address> {
      * @return the Network.
      */
     Network network();
+
+    /**
+     * Create a Bitcoin Address from a JCA secp256k1 public key.
+     * <p>
+     * This is WIP. Once https://github.com/bitcoinj/bitcoinj/pull/4187 (or equivalent) is merged
+     * we can move RIPEMD160 to `o.b.base` and then move the CryptoUtils.sha256hash160() method to `base`, too.
+     */
+    static Address fromKey(ECPublicKey publicKey, ScriptType scriptType, BitcoinNetwork network) {
+        // TODO: make sure publicKey is a secp256k1 key
+        byte[] pubKeySerialized = publicKey.getEncoded();   // TODO: implement/verify correct serialization
+        byte[] pubKeyHash = new byte[20];                   // TODO: CryptoUtils.sha256hash160()
+        if (scriptType == ScriptType.P2PKH) {
+            return LegacyAddress.fromPubKeyHash(network, pubKeyHash);
+        } else if (scriptType == ScriptType.P2WPKH) {
+            return SegwitAddress.fromHash(network, pubKeyHash);
+        } else {
+            throw new UnsupportedOperationException("Script type not supported: " + scriptType);
+        }
+    }
 
     /**
      * Comparator for the first two comparison fields in {@code Address} comparisons, see {@link Address#compareTo(Address)}.
