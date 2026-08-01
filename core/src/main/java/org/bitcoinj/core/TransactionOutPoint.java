@@ -83,6 +83,9 @@ public class TransactionOutPoint {
         this(fromTx.getTxId(), index, fromTx, null);
     }
 
+    /**
+     * @deprecated use {@link TransactionOutPoint#of(Sha256Hash, long)}
+     */
     @Deprecated
     public TransactionOutPoint(long index, Sha256Hash hash) {
         this(hash, index, null, null);
