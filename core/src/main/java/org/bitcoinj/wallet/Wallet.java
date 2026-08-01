@@ -4685,11 +4685,9 @@ public class Wallet extends BaseTaggableObject
 
     private List<UTXO> getStoredOutputsFromUTXOProviderInternal() throws UTXOProviderException {
         UTXOProvider utxoProvider = Objects.requireNonNull(vUTXOProvider, "No UTXO provider has been set");
-        List<UTXO> candidates = new ArrayList<>();
         List<ECKey> keys = getImportedKeys();
         keys.addAll(getActiveKeyChain().getLeafKeys());
-        candidates.addAll(utxoProvider.getOpenTransactionOutputs(keys));
-        return candidates;
+        return new ArrayList<>(utxoProvider.getOpenTransactionOutputs(keys));
     }
 
     /** Returns the default {@link CoinSelector} object that is used by this wallet if no custom selector is specified. */
