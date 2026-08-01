@@ -90,7 +90,7 @@ public class TestBlocks {
             // The input does not really need to be a valid signature, as long as it has the right general form.
             TransactionInput input;
             if (prevOut == null) {
-                prevOut = new TransactionOutPoint(0, nextTestOutPointHash());
+                prevOut = TransactionOutPoint.of(nextTestOutPointHash(), 0);
             }
             input = new TransactionInput(t, Script.createInputScript(EMPTY_BYTES, EMPTY_BYTES), prevOut);
             t.addInput(input);

@@ -309,19 +309,19 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     @Nullable
     public synchronized UTXO getTransactionOutput(Sha256Hash hash, long index) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        return transactionOutputMap.get(new TransactionOutPoint(index, hash));
+        return transactionOutputMap.get(TransactionOutPoint.of(hash, index));
     }
 
     @Override
     public synchronized void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        transactionOutputMap.put(new TransactionOutPoint(out.getIndex(), out.getHash()), out);
+        transactionOutputMap.put(TransactionOutPoint.of(out.getHash(), out.getIndex()), out);
     }
 
     @Override
     public synchronized void removeUnspentTransactionOutput(UTXO out) throws BlockStoreException {
         Objects.requireNonNull(transactionOutputMap, "MemoryFullPrunedBlockStore is closed");
-        if (transactionOutputMap.remove(new TransactionOutPoint(out.getIndex(), out.getHash())) == null)
+        if (transactionOutputMap.remove(TransactionOutPoint.of(out.getHash(), out.getIndex())) == null)
             throw new BlockStoreException("Tried to remove a UTXO from MemoryFullPrunedBlockStore that it didn't have!");
     }
 
