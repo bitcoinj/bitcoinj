@@ -18,6 +18,7 @@
 package org.bitcoinj.test.integration.peer;
 
 import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
@@ -27,7 +28,7 @@ import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.BitcoinSerializer;
 import org.bitcoinj.core.Block;
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.core.BloomFilterMessage;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.FilteredBlock;
 import org.bitcoinj.core.GetDataMessage;
@@ -136,9 +137,11 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
                 BitcoinNetwork.TESTNET));
         Block block = FakeTxBuilder.makeTestBlock(TESTNET.getGenesisBlock(), LegacyAddress.fromBase58("msg2t2V2sWNd85LccoddtWysBTR8oPnkzW", BitcoinNetwork.TESTNET), tx1, tx2);
         BloomFilter filter = new BloomFilter(4, 0.1, 1);
-        filter.insert(key1);
-        filter.insert(key2);
-        FilteredBlock filteredBlock = filter.applyAndUpdate(block);
+        filter.insert(key1.getPubKey());
+        filter.insert(key1.getPubKeyHash());
+        filter.insert(key2.getPubKey());
+        filter.insert(key2.getPubKeyHash());
+        FilteredBlock filteredBlock = new BloomFilterMessage(filter).applyAndUpdate(block);
         assertEquals(4, filteredBlock.getTransactionCount());
         // This call triggers verification of the just created data.
         List<Sha256Hash> txns = filteredBlock.getTransactionHashes();
@@ -199,7 +202,8 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         assertNotNull(wallet);
         BloomFilter filter = wallet.getBloomFilter(wallet.getKeyChainGroupSize()*2, 0.001, 0xDEADBEEF);
         // Compare the serialized bloom filter to a known-good value
-        assertArrayEquals(ByteUtils.parseHex("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"), filter.serialize());
+        assertArrayEquals(ByteUtils.parseHex("0e1b091ca195e45a9164889b6bc46a09000000efbeadde02"),
+                new BloomFilterMessage(filter).serialize());
 
         // Create a peer.
         assertNotNull(peerGroup);
