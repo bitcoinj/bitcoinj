@@ -1631,13 +1631,15 @@ public class Transaction implements Message {
      * referenced by the implicit {@link Context}.
      */
     public TransactionConfidence getConfidence() {
-        return getConfidence(Context.get());
+        return getConfidence(Context.get().getConfidenceTable());
     }
 
     /**
      * Returns the confidence object for this transaction from the {@link TxConfidenceTable}
      * referenced by the given {@link Context}.
+     * @deprecated Use {@link #getConfidence()}
      */
+    @Deprecated
     TransactionConfidence getConfidence(Context context) {
         return getConfidence(context.getConfidenceTable());
     }
