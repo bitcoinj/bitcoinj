@@ -49,6 +49,7 @@ public class UTXO {
      * @param value    The value available.
      * @param height   The height this output was created in.
      * @param coinbase The coinbase flag.
+     * @param script   The scriptPubKey.
      */
     public UTXO(Sha256Hash hash,
                 long index,
