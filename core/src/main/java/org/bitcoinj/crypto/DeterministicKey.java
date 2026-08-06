@@ -75,6 +75,10 @@ public class DeterministicKey extends ECKey {
                 parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath, null, null);
     }
 
+    /**
+     * @deprecated Uncompressed points aren't allowed. Use {@link DeterministicKey#DeterministicKey(HDPath.HDPartialPath, byte[], LazyECPoint, BigInteger, DeterministicKey)}
+     */
+    @Deprecated
     public DeterministicKey(HDPath.HDPartialPath childNumberPath,
                             byte[] chainCode,
                             ECPoint publicAsPoint,
@@ -177,6 +181,7 @@ public class DeterministicKey extends ECKey {
                              int parentFingerprint, byte[] chainCode, HDPath hdPath,
                              @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
         super(priv, pub);
+        checkArgument(pub.isCompressedInternal(), () -> "pub must be compressed");
         checkArgument(chainCode.length == 32);
         checkArgument(priv == null || encryptedPrivateKey == null, () ->
                 "priv and encryptedPrivateKey can't be set together");
