@@ -75,6 +75,10 @@ public class DeterministicKey extends ECKey {
                 parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath, null, null);
     }
 
+    /**
+     * @deprecated Uncompressed points aren't allowed. Use {@link DeterministicKey#DeterministicKey(HDPath.HDPartialPath, byte[], LazyECPoint, BigInteger, DeterministicKey)}.
+     */
+    @Deprecated
     public DeterministicKey(HDPath.HDPartialPath childNumberPath,
                             byte[] chainCode,
                             ECPoint publicAsPoint,
