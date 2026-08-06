@@ -3,7 +3,7 @@ import org.gradle.util.GradleVersion
 plugins {
     id 'java'
     id 'application'
-    id 'org.beryx.jlink' version '4.1.0' apply false
+    id 'org.beryx.jlink' version '4.1.1' apply false
     id 'org.asciidoctor.jvm.convert' version '3.3.2' apply false
     id 'org.graalvm.buildtools.native' version '1.1.6' apply false
 }
