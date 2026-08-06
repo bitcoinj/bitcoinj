@@ -181,6 +181,7 @@ public class DeterministicKey extends ECKey {
                              int parentFingerprint, byte[] chainCode, HDPath hdPath,
                              @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
         super(priv, pub);
+        checkArgument(pub.isCompressedInternal(), () -> "pub must be compressed");
         checkArgument(chainCode.length == 32);
         checkArgument(priv == null || encryptedPrivateKey == null, () ->
                 "priv and encryptedPrivateKey can't be set together");
