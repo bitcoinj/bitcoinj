@@ -84,24 +84,24 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
- * <p>Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
+ * Represents an elliptic curve public and (optionally) private key, usable for digital signatures but not encryption.
  * Creating a new ECKey with the empty constructor will generate a new random keypair. Other static methods can be used
  * when you already have the public or private parts. If you create a key with only the public part, you can check
- * signatures but not create them.</p>
- *
- * <p>ECKey also provides access to Bitcoin Core compatible text message signing, as accessible via the UI or JSON-RPC.
+ * signatures but not create them.
+ * <p>
+ * ECKey also provides access to Bitcoin Core compatible text message signing, as accessible via the UI or JSON-RPC.
  * This is slightly different to signing raw bytes - if you want to sign your own data and it won't be exposed as
- * text to people, you don't want to use this.</p>
- *
- * <p>The ECDSA algorithm supports <i>key recovery</i> in which a signature plus a couple of discriminator bits can
+ * text to people, you don't want to use this.
+ * <p>
+ * The ECDSA algorithm supports <i>key recovery</i> in which a signature plus a couple of discriminator bits can
  * be reversed to find the public key used to calculate it. This can be convenient when you have a message and a
- * signature and want to find out who signed it, rather than requiring the user to provide the expected identity.</p>
- *
- * <p>This class supports a variety of serialization forms. The methods that accept/return byte arrays serialize
+ * signature and want to find out who signed it, rather than requiring the user to provide the expected identity.
+ * <p>
+ * This class supports a variety of serialization forms. The methods that accept/return byte arrays serialize
  * private keys as raw byte arrays and public keys using the SEC standard byte encoding for public keys. Signatures
- * are encoded using ASN.1/DER inside the Bitcoin protocol.</p>
- *
- * <p>A key can be <i>compressed</i> or <i>uncompressed</i>. This refers to whether the public key is represented
+ * are encoded using ASN.1/DER inside the Bitcoin protocol.
+ * <p>
+ * A key can be <i>compressed</i> or <i>uncompressed</i>. This refers to whether the public key is represented
  * when encoded into bytes as an (x, y) coordinate on the elliptic curve, or whether it's represented as just an X
  * co-ordinate and an extra byte that carries a sign bit. With the latter form the Y coordinate can be calculated
  * dynamically, however, <b>because the binary serialization is different the address of a key changes if its
@@ -109,7 +109,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * to a compressed version of the key will have a different address to the same key in uncompressed form. Whether
  * a public key is compressed or not is recorded in the SEC binary serialisation format, and preserved in a flag in
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
- * can usually ignore the compressed/uncompressed distinction.</p>
+ * can usually ignore the compressed/uncompressed distinction.
  */
 public class ECKey implements EncryptableItem {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
@@ -636,7 +636,7 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
+     * Verifies the given ECDSA signature against the message bytes using the public key bytes.
      * 
      * @param data      Hash of the data to verify.
      * @param signature ASN.1 encoded signature.
@@ -977,18 +977,18 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * <p>Given the components of a signature and a selector value, recover and return the public key
-     * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p>
-     *
-     * <p>The recId is an index from 0 to 3 which indicates which of the 4 possible keys is the correct one. Because
+     * Given the components of a signature and a selector value, recover and return the public key
+     * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.
+     * <p>
+     * The recId is an index from 0 to 3 which indicates which of the 4 possible keys is the correct one. Because
      * the key recovery operation yields multiple potential keys, the correct key must either be stored alongside the
      * signature, or you must be willing to try each recId in turn until you find one that outputs the key you are
-     * expecting.</p>
-     *
-     * <p>If this method returns null it means recovery was not possible and recId should be iterated.</p>
-     *
-     * <p>Given the above two points, a correct usage of this method is inside a for loop from 0 to 3, and if the
-     * output is null OR a key that is not the one you expect, you try again with the next recId.</p>
+     * expecting.
+     * <p>
+     * If this method returns null it means recovery was not possible and recId should be iterated.
+     * <p>
+     * Given the above two points, a correct usage of this method is inside a for loop from 0 to 3, and if the
+     * output is null OR a key that is not the one you expect, you try again with the next recId.
      *
      * @param recId Which possible key to recover (see inline comments for detailed explanation)
      * @param sig the R and S components of the signature, wrapped.
@@ -1201,13 +1201,13 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * <p>Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.</p>
-     *
-     * <p>Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all
+     * Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.
+     * <p>
+     * Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all
      * bitcoins controlled by the private key) you can use this method to check when you *encrypt* a wallet that
-     * it can definitely be decrypted successfully.</p>
-     *
-     * <p>See {@link Wallet#encrypt(KeyCrypter keyCrypter, AesKey aesKey)} for example usage.</p>
+     * it can definitely be decrypted successfully.
+     * <p>
+     * See {@link Wallet#encrypt(KeyCrypter keyCrypter, AesKey aesKey)} for example usage.
      *
      * @return true if the encrypted key can be decrypted back to the original key successfully.
      */
