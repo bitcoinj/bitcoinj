@@ -622,13 +622,13 @@ public class Script {
         } else if (ScriptPattern.isP2WPKH(this)) {
             // scriptSig is empty
             // witness: <sig> <pubKey>
+            // P2WPKH spends with uncompressed keys are non-standard, we should never generate or send them
             int compressedPubKeySize = 33;
-            int publicKeyLength = pubKey != null ? pubKey.getPubKey().length : compressedPubKeySize;
             return VarInt.sizeOf(2) // number of witness pushes
                     + VarInt.sizeOf(SIG_SIZE) // size of signature push
                     + SIG_SIZE // signature push
-                    + VarInt.sizeOf(publicKeyLength) // size of pubKey push
-                    + publicKeyLength; // pubKey push
+                    + VarInt.sizeOf(compressedPubKeySize) // size of pubKey push
+                    + compressedPubKeySize; // pubKey push
         } else {
             throw new IllegalStateException("Unsupported script type");
         }
