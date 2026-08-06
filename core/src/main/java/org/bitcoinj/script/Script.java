@@ -603,6 +603,9 @@ public class Script {
     /**
      * Returns number of bytes required to spend this script. It accepts optional ECKey and redeemScript that may
      * be required for certain types of script to estimate target size.
+     * @param pubKey length/isCompressed should match that of the Script's pub key hash (only and optionally used for P2PKH)
+     * @param redeemScript (only used/required for P2SH)
+     * @return number of bytes (unweighted)
      */
     public int getNumberOfBytesRequiredToSpend(@Nullable ECKey pubKey, @Nullable Script redeemScript) {
         if (ScriptPattern.isP2SH(this)) {
