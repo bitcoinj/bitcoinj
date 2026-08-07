@@ -396,9 +396,9 @@ public class TransactionInput {
     @Nullable
     TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
         Transaction tx = transactions.get(outpoint.hash());
-        if (tx == null)
-            return null;
-        return tx.getOutput(outpoint);
+        return (tx != null)
+                ? tx.getOutput(outpoint)
+                : null;
     }
 
     /**
