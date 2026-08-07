@@ -19,10 +19,16 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.ECKey;
 
+import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * A KeyBag is simply an object that can map public keys, their 160-bit hashes and script hashes to ECKey
@@ -65,10 +71,40 @@ public interface KeyBag {
      * Alias for getOutpoint().getConnectedRedeemData(keyBag)
      *
      * @param transactionInput
-     * @see TransactionOutPoint#getConnectedRedeemData(KeyBag)
+     * @see KeyBag#getConnectedRedeemData(TransactionOutPoint)
      */
     @Nullable
     default RedeemData getConnectedRedeemData(TransactionInput transactionInput) throws ScriptException {
-        return transactionInput.getOutpoint().getConnectedRedeemData(this);
+        return getConnectedRedeemData(transactionInput.getOutpoint());
+    }
+
+    /**
+     * Returns the RedeemData identified in the connected output, for either P2PKH, P2WPKH, P2PK
+     * or P2SH scripts.
+     * If the script forms cannot be understood, throws ScriptException.
+     *
+     * @param transactionOutPoint
+     * @return a RedeemData or null if the connected data cannot be found in the wallet.
+     */
+    @Nullable
+    default RedeemData getConnectedRedeemData(TransactionOutPoint transactionOutPoint) throws ScriptException {
+        TransactionOutput connectedOutput = transactionOutPoint.getConnectedOutput();
+        Objects.requireNonNull(connectedOutput, "Input is not connected so cannot retrieve key");
+        Script connectedScript = connectedOutput.getScriptPubKey();
+        if (ScriptPattern.isP2PKH(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
+            return RedeemData.of(findKeyFromPubKeyHash(addressBytes, ScriptType.P2PKH), connectedScript);
+        } else if (ScriptPattern.isP2WPKH(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromP2WH(connectedScript);
+            return RedeemData.of(findKeyFromPubKeyHash(addressBytes, ScriptType.P2WPKH), connectedScript);
+        } else if (ScriptPattern.isP2PK(connectedScript)) {
+            byte[] pubkeyBytes = ScriptPattern.extractKeyFromP2PK(connectedScript);
+            return RedeemData.of(findKeyFromPubKey(pubkeyBytes), connectedScript);
+        } else if (ScriptPattern.isP2SH(connectedScript)) {
+            byte[] scriptHash = ScriptPattern.extractHashFromP2SH(connectedScript);
+            return findRedeemDataFromScriptHash(scriptHash);
+        } else {
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
+        }
     }
 }

@@ -202,7 +202,7 @@ public class TransactionOutPoint {
 
     /**
      * Returns the ECKey identified in the connected output, for either P2PKH, P2WPKH or P2PK scripts.
-     * For P2SH scripts you can use {@link #getConnectedRedeemData(KeyBag)} and then get the
+     * For P2SH scripts you can use {@link KeyBag#getConnectedRedeemData(TransactionOutPoint)} and then get the
      * key from RedeemData.
      * If the script form cannot be understood, throws ScriptException.
      *
@@ -233,27 +233,12 @@ public class TransactionOutPoint {
      * If the script forms cannot be understood, throws ScriptException.
      *
      * @return a RedeemData or null if the connected data cannot be found in the wallet.
+     * @deprecated Use {@link KeyBag#getConnectedRedeemData(TransactionOutPoint)}
      */
+    @Deprecated
     @Nullable
     public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
-        TransactionOutput connectedOutput = getConnectedOutput();
-        Objects.requireNonNull(connectedOutput, "Input is not connected so cannot retrieve key");
-        Script connectedScript = connectedOutput.getScriptPubKey();
-        if (ScriptPattern.isP2PKH(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
-            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2PKH), connectedScript);
-        } else if (ScriptPattern.isP2WPKH(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromP2WH(connectedScript);
-            return RedeemData.of(keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2WPKH), connectedScript);
-        } else if (ScriptPattern.isP2PK(connectedScript)) {
-            byte[] pubkeyBytes = ScriptPattern.extractKeyFromP2PK(connectedScript);
-            return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);
-        } else if (ScriptPattern.isP2SH(connectedScript)) {
-            byte[] scriptHash = ScriptPattern.extractHashFromP2SH(connectedScript);
-            return keyBag.findRedeemDataFromScriptHash(scriptHash);
-        } else {
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
-        }
+        return keyBag.getConnectedRedeemData(this);
     }
 
     /**
