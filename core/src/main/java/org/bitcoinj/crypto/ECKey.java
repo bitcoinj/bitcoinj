@@ -131,7 +131,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Return EC parameters for the SECP256K1 curve, in a Bouncy Castle type.
-     * Note that we are migrating to using the build in JDK types for EC parameters,
+     * Note that we are migrating to using the built-in JDK types for EC parameters,
      * so we anticipate this method will be deprecated in the near future.
      * @return Elliptic Curve Domain Parameters (Bouncy Castle)
      */
@@ -140,7 +140,7 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Equal to CURVE.getN().shiftRight(1), used for canonicalising the S value of a signature. If you aren't
+     * Equal to CURVE.getN().shiftRight(1), used for canonicalizing the S value of a signature. If you aren't
      * sure what this is about, you can ignore it.
      */
     static final BigInteger HALF_CURVE_ORDER;
@@ -322,7 +322,7 @@ public class ECKey implements EncryptableItem {
 
     /**
      * Returns a copy of this key, but with the public point represented in uncompressed form. Normally you would
-     * never need this: it's for specialised scenarios or when backwards compatibility in encoded form is necessary.
+     * never need this: it's for specialized scenarios or when backwards compatibility in encoded form is necessary.
      */
     public ECKey decompress() {
         if (!pub.isCompressedInternal())
