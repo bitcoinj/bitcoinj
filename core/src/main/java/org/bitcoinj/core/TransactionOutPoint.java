@@ -189,7 +189,9 @@ public class TransactionOutPoint {
     /**
      * Returns the pubkey script from the connected output.
      * @throws java.lang.NullPointerException if there is no connected output.
+     * @deprecated Use {@link #getConnectedOutput()}
      */
+    @Deprecated
     public byte[] getConnectedPubKeyScript() {
         byte[] result = Objects.requireNonNull(getConnectedOutput()).getScriptBytes();
         checkState(result.length > 0);
