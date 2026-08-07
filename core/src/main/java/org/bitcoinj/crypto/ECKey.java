@@ -394,8 +394,7 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Returns public key bytes from the given private key. To convert a byte array into a BigInteger,
-     * use {@link ByteUtils#bytesToBigInteger(byte[])}
+     * Returns public key bytes from the given private key.
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicBCPointFromPrivate(privKey);
@@ -403,8 +402,7 @@ public class ECKey implements EncryptableItem {
     }
 
     /**
-     * Returns public key point from the given private key. To convert a byte array into a BigInteger,
-     * use {@link ByteUtils#bytesToBigInteger(byte[])}
+     * Returns public key point from the given private key.
      * @deprecated Avoid unnecessary use of Bouncy Castle {@code ECPoint}.
      */
     @Deprecated
