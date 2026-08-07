@@ -47,13 +47,11 @@ import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.core.VerificationException;
-import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.crypto.MnemonicException;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
@@ -62,11 +60,8 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 import org.bitcoinj.script.ScriptExecution;
 import org.bitcoinj.script.ScriptPattern;
-import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
-import org.bitcoinj.testing.KeyChainTransactionSigner;
 import org.bitcoinj.testing.MockTransactionBroadcaster;
 import org.bitcoinj.testing.NopTransactionSigner;
 import org.bitcoinj.testing.TestWithWallet;
@@ -3451,7 +3446,7 @@ public class WalletTest extends TestWithWallet {
 
         // Wallet1 sign input 0
         TransactionInput inputW1 = sendReq.tx.getInput(0);
-        ECKey sigKey1 = inputW1.getOutpoint().getConnectedKey(wallet1);
+        ECKey sigKey1 = wallet1.getConnectedKey(inputW1.getOutpoint());
         Script scriptCode1 = ScriptBuilder.createP2PKHOutputScript(sigKey1);
         TransactionSignature txSig1 = sendReq.tx.calculateWitnessSignature(0, sigKey1, scriptCode1,
                 inputW1.getValue(), Transaction.SigHash.ALL, false);
@@ -3461,7 +3456,7 @@ public class WalletTest extends TestWithWallet {
 
         // Wallet2 sign input 1
         TransactionInput inputW2 = sendReq.tx.getInput(1);
-        ECKey sigKey2 = inputW2.getOutpoint().getConnectedKey(wallet2);
+        ECKey sigKey2 = wallet2.getConnectedKey(inputW2.getOutpoint());
         Script scriptCode2 = ScriptBuilder.createP2PKHOutputScript(sigKey2);
         TransactionSignature txSig2 = sendReq.tx.calculateWitnessSignature(0, sigKey2, scriptCode2,
                 inputW2.getValue(), Transaction.SigHash.ALL, false);
