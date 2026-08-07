@@ -402,12 +402,12 @@ public class TransactionInput {
     }
 
     /**
-     * Alias for getOutpoint().getConnectedRedeemData(keyBag)
-     * @see TransactionOutPoint#getConnectedRedeemData(KeyBag)
+     * @deprecated Use {@link KeyBag#getConnectedRedeemData(TransactionInput)}
      */
+    @Deprecated
     @Nullable
     public RedeemData getConnectedRedeemData(KeyBag keyBag) throws ScriptException {
-        return getOutpoint().getConnectedRedeemData(keyBag);
+        return keyBag.getConnectedRedeemData(this);
     }
 
 
