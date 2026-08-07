@@ -17,8 +17,11 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.ECKey;
 
+import org.bitcoinj.script.ScriptException;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -58,4 +61,14 @@ public interface KeyBag {
     @Nullable
     RedeemData findRedeemDataFromScriptHash(byte[] scriptHash);
 
+    /**
+     * Alias for getOutpoint().getConnectedRedeemData(keyBag)
+     *
+     * @param transactionInput
+     * @see TransactionOutPoint#getConnectedRedeemData(KeyBag)
+     */
+    @Nullable
+    default RedeemData getConnectedRedeemData(TransactionInput transactionInput) throws ScriptException {
+        return transactionInput.getOutpoint().getConnectedRedeemData(this);
+    }
 }

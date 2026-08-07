@@ -82,7 +82,7 @@ public abstract class CustomTransactionSigner implements TransactionSigner {
                 // Expected.
             }
 
-            RedeemData redeemData = txIn.getConnectedRedeemData(keyBag);
+            RedeemData redeemData = keyBag.getConnectedRedeemData(txIn);
             if (redeemData == null) {
                 log.warn("No redeem data found for input {}", i);
                 continue;
