@@ -89,7 +89,7 @@ public class LocalTransactionSigner implements TransactionSigner {
                 // Expected.
             }
 
-            RedeemData redeemData = txIn.getConnectedRedeemData(keyBag);
+            RedeemData redeemData = keyBag.getConnectedRedeemData(txIn);
 
             // For P2SH inputs we need to share derivation path of the signing key with other signers, so that they
             // use correct key to calculate their signatures.
