@@ -17,14 +17,10 @@
 
 package org.bitcoinj.core;
 
-import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptError;
 import org.bitcoinj.script.ScriptException;
-import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
 
@@ -207,24 +203,12 @@ public class TransactionOutPoint {
      * If the script form cannot be understood, throws ScriptException.
      *
      * @return an ECKey or null if the connected key cannot be found in the wallet.
+     * @deprecated Use {@link KeyBag#getConnectedKey(TransactionOutPoint)}
      */
+    @Deprecated
     @Nullable
     public ECKey getConnectedKey(KeyBag keyBag) throws ScriptException {
-        TransactionOutput connectedOutput = getConnectedOutput();
-        Objects.requireNonNull(connectedOutput, "Input is not connected so cannot retrieve key");
-        Script connectedScript = connectedOutput.getScriptPubKey();
-        if (ScriptPattern.isP2PKH(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromP2PKH(connectedScript);
-            return keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2PKH);
-        } else if (ScriptPattern.isP2WPKH(connectedScript)) {
-            byte[] addressBytes = ScriptPattern.extractHashFromP2WH(connectedScript);
-            return keyBag.findKeyFromPubKeyHash(addressBytes, ScriptType.P2WPKH);
-        } else if (ScriptPattern.isP2PK(connectedScript)) {
-            byte[] pubkeyBytes = ScriptPattern.extractKeyFromP2PK(connectedScript);
-            return keyBag.findKeyFromPubKey(pubkeyBytes);
-        } else {
-            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
-        }
+        return keyBag.getConnectedKey(this);
     }
 
     /**
