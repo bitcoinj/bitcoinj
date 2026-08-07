@@ -103,11 +103,12 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * <p>
  * A key can be <i>compressed</i> or <i>uncompressed</i>. This refers to whether the public key is represented
  * when encoded into bytes as an (x, y) coordinate on the elliptic curve, or whether it's represented as just an X
- * co-ordinate and an extra byte that carries a sign bit. With the latter form the Y coordinate can be calculated
- * dynamically, however, <b>because the binary serialization is different the address of a key changes if its
- * compression status is changed</b>. If you deviate from the defaults it's important to understand this: money sent
- * to a compressed version of the key will have a different address to the same key in uncompressed form. Whether
- * a public key is compressed or not is recorded in the SEC binary serialisation format, and preserved in a flag in
+ * coordinate and an extra byte that carries a sign bit. With the latter form the Y coordinate can be calculated
+ * dynamically. However, <b>the binary serialization is different</b>. And <b>for non-HD {@link LegacyAddress} the address of
+ * a key depends upon its compression status</b>. HD Legacy Addresses always use compressed public keys.
+ * If you deviate from the defaults it's important to understand this: money sent
+ * to a compressed version of the key will have a different address from the same key in uncompressed form. Whether
+ * a public key is compressed or not is recorded in the SEC binary serialization format, and preserved in a flag in
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
  * can usually ignore the compressed/uncompressed distinction.
  */
