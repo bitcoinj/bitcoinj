@@ -259,7 +259,7 @@ public class ECKey implements EncryptableItem {
      * @param compressed Determines whether the resulting ECKey will use a compressed encoding for the public key.
      */
     public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
-        ECPoint point = publicPointFromPrivate(privKey);
+        ECPoint point = publicBCPointFromPrivate(privKey);
         return new ECKey(privKey, new LazyECPoint(point, compressed));
     }
 
@@ -398,15 +398,26 @@ public class ECKey implements EncryptableItem {
      * use {@link ByteUtils#bytesToBigInteger(byte[])}
      */
     public static byte[] publicKeyFromPrivate(BigInteger privKey, boolean compressed) {
-        ECPoint point = publicPointFromPrivate(privKey);
+        ECPoint point = publicBCPointFromPrivate(privKey);
         return point.getEncoded(compressed);
     }
 
     /**
      * Returns public key point from the given private key. To convert a byte array into a BigInteger,
      * use {@link ByteUtils#bytesToBigInteger(byte[])}
+     * @deprecated Avoid unnecessary use of Bouncy Castle {@code ECPoint}.
      */
+    @Deprecated
     public static ECPoint publicPointFromPrivate(BigInteger privKey) {
+        return publicBCPointFromPrivate(privKey);
+    }
+
+    /**
+     * Returns a Bouncy Castle public key point from the given private key.
+     * @param privKey secp256k1 private key
+     * @return The public key as a Bouncy Castle point
+     */
+    static ECPoint publicBCPointFromPrivate(BigInteger privKey) {
         /*
          * TODO: FixedPointCombMultiplier currently doesn't support scalars longer than the group order,
          * but that could change in future versions.

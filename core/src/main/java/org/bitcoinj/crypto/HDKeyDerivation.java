@@ -216,16 +216,16 @@ public final class HDKeyDerivation {
         ECPoint Ki;
         switch (mode) {
             case NORMAL:
-                Ki = ECKey.publicPointFromPrivate(ilInt).add(parent.getPubKeyPoint());
+                Ki = ECKey.publicBCPointFromPrivate(ilInt).add(parent.getPubKeyPoint());
                 break;
             case WITH_INVERSION:
                 // This trick comes from Gregory Maxwell. Check the homomorphic properties of our curve hold. The
                 // below calculations should be redundant and give the same result as NORMAL but if the precalculated
                 // tables have taken a bit flip will yield a different answer. This mode is used when vending a key
                 // to perform a last-ditch sanity check trying to catch bad RAM.
-                Ki = ECKey.publicPointFromPrivate(ilInt.add(RAND_INT).mod(N));
+                Ki = ECKey.publicBCPointFromPrivate(ilInt.add(RAND_INT).mod(N));
                 BigInteger additiveInverse = RAND_INT.negate().mod(N);
-                Ki = Ki.add(ECKey.publicPointFromPrivate(additiveInverse));
+                Ki = Ki.add(ECKey.publicBCPointFromPrivate(additiveInverse));
                 Ki = Ki.add(parent.getPubKeyPoint());
                 break;
             default: throw new AssertionError();
