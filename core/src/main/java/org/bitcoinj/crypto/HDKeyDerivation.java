@@ -19,6 +19,7 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.internal.CryptoUtils;
+import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.bouncycastle.math.ec.ECPoint;
 
 import java.math.BigInteger;
@@ -178,7 +179,7 @@ public final class HDKeyDerivation {
         BigInteger ilInt = ByteUtils.bytesToBigInteger(il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
         final BigInteger priv = parent.getPrivKey();
-        BigInteger ki = priv.add(ilInt).mod(ECKey.CURVE.getN());
+        BigInteger ki = priv.add(ilInt).mod(Secp256k1Constants.N);
         assertNonZero(ki, "Illegal derived key: derived private key equals 0.");
         return new RawKeyBytes(ki.toByteArray(), chainCode);
     }
@@ -212,7 +213,7 @@ public final class HDKeyDerivation {
         BigInteger ilInt = ByteUtils.bytesToBigInteger(il);
         assertLessThanN(ilInt, "Illegal derived key: I_L >= n");
 
-        final BigInteger N = ECKey.CURVE.getN();
+        final BigInteger N = Secp256k1Constants.N;
         ECPoint Ki;
         switch (mode) {
             case NORMAL:
@@ -246,7 +247,7 @@ public final class HDKeyDerivation {
     }
 
     private static void assertLessThanN(BigInteger integer, String errorMessage) {
-        if (integer.compareTo(ECKey.CURVE.getN()) > 0)
+        if (integer.compareTo(Secp256k1Constants.N) > 0)
             throw new HDDerivationException(errorMessage);
     }
 
