@@ -242,7 +242,7 @@ public final class HDKeyDerivation {
     }
 
     private static void assertNonInfinity(ECPoint point, String errorMessage) {
-        if (point.equals(ECKey.CURVE.getCurve().getInfinity()))
+        if (point.equals(ECKey.ecDomainParameters().getCurve().getInfinity()))
             throw new HDDerivationException(errorMessage);
     }
 

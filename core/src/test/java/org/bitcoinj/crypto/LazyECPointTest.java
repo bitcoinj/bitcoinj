@@ -12,7 +12,7 @@ import static org.junit.Assert.assertNotNull;
  * Tests for LazyECPoint
  */
 public class LazyECPointTest {
-    org.bouncycastle.math.ec.ECPoint BOUNCY_INFINITY = ECKey.CURVE.getCurve().getInfinity();
+    org.bouncycastle.math.ec.ECPoint BOUNCY_INFINITY = ECKey.ecDomainParameters().getCurve().getInfinity();
     ECPoint JAVA_INFINITY = ECPoint.POINT_INFINITY;
 
     @Test

@@ -33,7 +33,7 @@ import java.util.Objects;
  * Apart from the lazy field {@link #point}, instances of this class are immutable.
  */
 public final class LazyECPoint implements ECPublicKey {
-    private static final ECCurve curve = ECKey.CURVE.getCurve();
+    private static final ECCurve curve = ECKey.ecDomainParameters().getCurve();
 
     // bits will be null if LazyECPoint is constructed from an (already decoded) point
     private final byte @Nullable [] bits;
