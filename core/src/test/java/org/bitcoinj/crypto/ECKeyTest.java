@@ -28,6 +28,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
+import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.jspecify.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -99,7 +100,7 @@ public class ECKeyTest {
         assertEquals(first, duplicate);
         assertEquals(first.hashCode(), duplicate.hashCode());
 
-        final ECKey.ECDSASignature highS = new ECKey.ECDSASignature(first.r, ECKey.CURVE.getN().subtract(first.s));
+        final ECKey.ECDSASignature highS = new ECKey.ECDSASignature(first.r, Secp256k1Constants.N.subtract(first.s));
         assertFalse(highS.isCanonical());
     }
 

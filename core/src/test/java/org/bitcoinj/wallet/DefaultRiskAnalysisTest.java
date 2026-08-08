@@ -30,6 +30,7 @@ import org.bitcoinj.core.TransactionConfidence;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -196,7 +197,7 @@ public class DefaultRiskAnalysisTest {
         // First, a synthetic test.
         TransactionSignature sig = TransactionSignature.dummy();
         Script scriptHighS = ScriptBuilder
-                .createInputScript(new TransactionSignature(sig.r, ECKey.ecDomainParameters().getN().subtract(sig.s)));
+                .createInputScript(new TransactionSignature(sig.r, Secp256k1Constants.N.subtract(sig.s)));
         assertEquals(RuleViolation.SIGNATURE_CANONICAL_ENCODING, DefaultRiskAnalysis.isInputStandard(
                 new TransactionInput(null, scriptHighS.program(), TransactionOutPoint.UNCONNECTED)));
 
