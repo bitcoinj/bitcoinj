@@ -135,7 +135,7 @@ public class ECKey implements EncryptableItem {
      * so we anticipate this method will be deprecated in the near future.
      * @return Elliptic Curve Domain Parameters (Bouncy Castle)
      */
-    public static ECDomainParameters ecDomainParameters() {
+    static ECDomainParameters ecDomainParameters() {
         return CURVE;
     }
 
