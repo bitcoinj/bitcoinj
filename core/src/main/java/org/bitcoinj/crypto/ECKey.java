@@ -127,7 +127,7 @@ public class ECKey implements EncryptableItem {
     private static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
 
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
-    static final ECDomainParameters CURVE;
+    private static final ECDomainParameters CURVE;
 
     /**
      * Return EC parameters for the SECP256K1 curve, in a Bouncy Castle type.

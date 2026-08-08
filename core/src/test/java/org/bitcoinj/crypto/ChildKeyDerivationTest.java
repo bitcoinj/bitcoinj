@@ -335,6 +335,6 @@ public class ChildKeyDerivationTest {
     }
 
     private static byte[] toCompressed(byte[] uncompressedPoint) {
-        return ECKey.CURVE.getCurve().decodePoint(uncompressedPoint).getEncoded(true);
+        return ECKey.ecDomainParameters().getCurve().decodePoint(uncompressedPoint).getEncoded(true);
     }
 }
