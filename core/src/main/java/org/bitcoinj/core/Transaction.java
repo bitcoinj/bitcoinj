@@ -41,8 +41,6 @@ import org.bitcoinj.script.ScriptOpCodes;
 import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.signers.TransactionSigner;
 import org.bitcoinj.utils.ExchangeRate;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.WalletTransaction.Pool;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +56,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -446,15 +443,11 @@ public class Transaction implements Message {
 
     /**
      * Calculates the sum of the outputs that are sending coins to a key in the wallet.
+     * @deprecated Use {@link TransactionBag#getValueSentToMe(Transaction)}
      */
+    @Deprecated
     public Coin getValueSentToMe(TransactionBag transactionBag) {
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(transactionBag)) continue;
-            v = v.add(o.getValue());
-        }
-        return v;
+        return transactionBag.getValueSentToMe(this);
     }
 
     /**
@@ -518,27 +511,11 @@ public class Transaction implements Message {
      * blocks containing the input transactions if the key is in the wallet but the transactions are not.
      *
      * @return sum of the inputs that are spending coins with keys in the wallet
+     * @deprecated Use {@link TransactionBag#getValueSentToMe(Transaction)}
      */
-    public Coin getValueSentFromMe(TransactionBag wallet) throws ScriptException {
-        // This is tested in WalletTest.
-        Coin v = Coin.ZERO;
-        for (TransactionInput input : inputs) {
-            // This input is taking value from a transaction in our wallet. To discover the value,
-            // we must find the connected transaction.
-            TransactionOutput connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.UNSPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.SPENT));
-            if (connected == null)
-                connected = input.getConnectedOutput(wallet.getTransactionPool(Pool.PENDING));
-            if (connected == null)
-                continue;
-            // The connected output may be the change to the sender of a previous input sent to this wallet. In this
-            // case we ignore it.
-            if (!connected.isMineOrWatched(wallet))
-                continue;
-            v = v.add(connected.getValue());
-        }
-        return v;
+    @Deprecated
+    public Coin getValueSentFromMe(TransactionBag transactionBag) throws ScriptException {
+        return transactionBag.getValueSentFromMe(this);
     }
 
     /**
@@ -553,9 +530,11 @@ public class Transaction implements Message {
 
     /**
      * Returns the difference of {@link Transaction#getValueSentToMe(TransactionBag)} and {@link Transaction#getValueSentFromMe(TransactionBag)}.
+     * @deprecated Use {@link TransactionBag#getValue}
      */
-    public Coin getValue(TransactionBag wallet) throws ScriptException {
-        return getValueSentToMe(wallet).subtract(getValueSentFromMe(wallet));
+    @Deprecated
+    public Coin getValue(TransactionBag transactionBag) throws ScriptException {
+        return transactionBag.getValueSentFromMe(this);
     }
 
     /**
@@ -593,13 +572,11 @@ public class Transaction implements Message {
     /**
      * Returns false if this transaction has at least one output that is owned by the given wallet and unspent, true
      * otherwise.
+     * @deprecated Use {@link TransactionBag#isEveryOwnedOutputSpent(Transaction)}
      */
+    @Deprecated
     public boolean isEveryOwnedOutputSpent(TransactionBag transactionBag) {
-        for (TransactionOutput output : outputs) {
-            if (output.isAvailableForSpending() && output.isMineOrWatched(transactionBag))
-                return false;
-        }
-        return true;
+        return transactionBag.isEveryOwnedOutputSpent(this);
     }
 
     /**
@@ -1193,7 +1170,7 @@ public class Transaction implements Message {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular {@link org.bitcoinj.wallet.Wallet} class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
      * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for.</p>
@@ -1213,7 +1190,7 @@ public class Transaction implements Message {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular {@link org.bitcoinj.wallet.Wallet} class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a P2SH output
      * the redeemScript should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for.</p>
@@ -1376,7 +1353,7 @@ public class Transaction implements Message {
      * <p>Calculates a signature hash, that is, a hash of a simplified form of the transaction. How exactly the transaction
      * is simplified is specified by the type and anyoneCanPay parameters.</p>
      *
-     * <p>This is a low level API and when using the regular {@link Wallet} class you don't have to call this yourself.
+     * <p>This is a low level API and when using the regular {@link org.bitcoinj.wallet.Wallet} class you don't have to call this yourself.
      * When working with more complex transaction types and contracts, it can be necessary. When signing a Witness output
      * the scriptCode should be the script encoded into the scriptSig field, for normal transactions, it's the
      * scriptPubKey of the output you're signing for. (See BIP143: https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)</p>
@@ -1587,15 +1564,11 @@ public class Transaction implements Message {
      *
      * @param transactionBag The wallet that controls addresses and watches scripts.
      * @return linked list of outputs relevant to the wallet in this transaction
+     * @deprecated Use {@link TransactionBag#getWalletOutputs(Transaction)}
      */
+    @Deprecated
     public List<TransactionOutput> getWalletOutputs(TransactionBag transactionBag){
-        List<TransactionOutput> walletOutputs = new LinkedList<>();
-        for (TransactionOutput o : outputs) {
-            if (!o.isMineOrWatched(transactionBag)) continue;
-            walletOutputs.add(o);
-        }
-
-        return walletOutputs;
+        return transactionBag.getWalletOutputs(this);
     }
 
     /** Randomly re-orders the transaction outputs: good for privacy */
