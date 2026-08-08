@@ -393,12 +393,10 @@ public class TransactionInput {
      *
      * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
      */
+    @Deprecated
     @Nullable
     TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions) {
-        Transaction tx = transactions.get(outpoint.hash());
-        return (tx != null)
-                ? tx.getOutput(outpoint)
-                : null;
+        return TransactionBag.getConnectedOutput(transactions, outpoint);
     }
 
     /**
