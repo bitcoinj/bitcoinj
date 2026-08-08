@@ -122,11 +122,12 @@ public interface TransactionBag {
         for (TransactionInput input : tx.getInputs()) {
             // This input is taking value from a transaction in our wallet. To discover the value,
             // we must find the connected transaction.
-            TransactionOutput connected = input.getConnectedOutput(getTransactionPool(WalletTransaction.Pool.UNSPENT));
+            TransactionOutPoint outPoint = input.getOutpoint();
+            TransactionOutput connected = getConnectedOutput(getTransactionPool(WalletTransaction.Pool.UNSPENT), outPoint);
             if (connected == null)
-                connected = input.getConnectedOutput(getTransactionPool(WalletTransaction.Pool.SPENT));
+                connected = getConnectedOutput(getTransactionPool(WalletTransaction.Pool.SPENT), outPoint);
             if (connected == null)
-                connected = input.getConnectedOutput(getTransactionPool(WalletTransaction.Pool.PENDING));
+                connected = getConnectedOutput(getTransactionPool(WalletTransaction.Pool.PENDING), outPoint);
             if (connected == null)
                 continue;
             // The connected output may be the change to the sender of a previous input sent to this wallet. In this
@@ -181,5 +182,18 @@ public interface TransactionBag {
                     output.getParentTransaction() != null ? output.getParentTransaction().getTxId() : "(no parent)", e.toString());
             return false;
         }
+    }
+
+    /**
+     * Locates the referenced output from the given pool of transactions. This is for internal use only.
+     *
+     * @return The TransactionOutput or null if the transactions map doesn't contain the referenced tx.
+     */
+    @Nullable
+    static TransactionOutput getConnectedOutput(Map<Sha256Hash, Transaction> transactions, TransactionOutPoint outpoint) {
+        Transaction tx = transactions.get(outpoint.hash());
+        return (tx != null)
+                ? tx.getOutput(outpoint)
+                : null;
     }
 }
