@@ -377,8 +377,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
      */
     protected DeterministicKeyChain(DeterministicSeed seed, @Nullable KeyCrypter crypter,
                                     ScriptType outputScriptType, HDPath.HDPartialPath accountPath) {
-        checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH || outputScriptType == ScriptType.P2WPKH, () ->
-                "only P2PKH or P2WPKH allowed");
+        checkArgument(outputScriptType == null || outputScriptType == ScriptType.P2PKH ||
+                outputScriptType == ScriptType.P2WPKH || outputScriptType == ScriptType.P2TR, () ->
+                "only P2PKH, P2WPKH, or P2TR allowed");
         this.outputScriptType = outputScriptType != null ? outputScriptType : ScriptType.P2PKH;
         this.accountPath = accountPath;
         this.seed = seed;
