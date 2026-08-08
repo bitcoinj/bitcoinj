@@ -20,37 +20,30 @@ import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 
-import org.jspecify.annotations.Nullable;
 import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * A wrapper around a SECP256K1 ECPoint that delays decoding of the point for as long as possible. This is useful
- * because point encode/decode in Bouncy Castle is quite slow especially on Dalvik, as it often involves
- * decompression/recompression.
+ * A wrapper around a SECP256K1 ECPoint. The current implementation is no longer <q>lazy</q>.
  * <p>
- * Apart from the lazy field {@link #point}, instances of this class are immutable.
+ * Previous implementations of this class delayed decoding of the point for as long as possible. This was useful
+ * because point encode/decode in Bouncy Castle was quite slow on Android/Dalvik implementations of that era.
+ * On Modern hardware/sofware this is no longer necessary, so the class is now eager and fully immutable.
  */
 public final class LazyECPoint implements ECPublicKey {
     private static final ECCurve curve = ECKey.CURVE.getCurve();
 
-    // bits will be null if LazyECPoint is constructed from an (already decoded) point
-    private final byte @Nullable [] bits;
     private final boolean compressed;
-
-    // This field is lazy - once set it won't change again. However, it can be set after construction.
-    @Nullable
-    private ECPoint point;
+    private final ECPoint point;
 
     /**
-     * Construct a LazyECPoint from a public key. Due to the delayed decoding of the point the validation of the
-     * public key is delayed too, e.g. until a getter is called.
+     * Construct a LazyECPoint from a public key.
      *
-     * @param bits  public key bytes
+     * @param bits public key bytes
      */
     public LazyECPoint(byte[] bits) {
-        this.bits = bits;
+        this.point = curve.decodePoint(bits);
         this.compressed = ECKey.isPubKeyCompressed(bits);
     }
 
@@ -63,7 +56,6 @@ public final class LazyECPoint implements ECPublicKey {
     public LazyECPoint(ECPoint point, boolean compressed) {
         this.point = Objects.requireNonNull(point).normalize();
         this.compressed = compressed;
-        this.bits = null;
     }
 
     /**
@@ -86,7 +78,7 @@ public final class LazyECPoint implements ECPublicKey {
      * See the {@link ECKey} class docs for a discussion of point compression.
      */
     public LazyECPoint compress() {
-        return compressed ? this : new LazyECPoint(get(), true);
+        return compressed ? this : new LazyECPoint(point, true);
     }
 
     /**
@@ -94,12 +86,10 @@ public final class LazyECPoint implements ECPublicKey {
      * See the {@link ECKey} class docs for a discussion of point compression.
      */
     public LazyECPoint decompress() {
-        return !compressed ? this : new LazyECPoint(get(), false);
+        return !compressed ? this : new LazyECPoint(point, false);
     }
 
     public ECPoint get() {
-        if (point == null)
-            point = curve.decodePoint(bits);
         return point;
     }
 
@@ -126,12 +116,11 @@ public final class LazyECPoint implements ECPublicKey {
      */
     @Override
     public java.security.spec.ECPoint getW() {
-        ECPoint bcPoint = get();
-        return bcPoint.isInfinity()
+        return point.isInfinity()
                 ? java.security.spec.ECPoint.POINT_INFINITY
                 : new java.security.spec.ECPoint(
-                    bcPoint.normalize().getAffineXCoord().toBigInteger(),
-                    bcPoint.normalize().getAffineYCoord().toBigInteger());
+                    point.normalize().getAffineXCoord().toBigInteger(),
+                    point.normalize().getAffineYCoord().toBigInteger());
     }
 
     /**
@@ -143,10 +132,7 @@ public final class LazyECPoint implements ECPublicKey {
     }
 
     public byte[] getEncoded() {
-        if (bits != null)
-            return Arrays.copyOf(bits, bits.length);
-        else
-            return get().getEncoded(compressed);
+        return point.getEncoded(compressed);
     }
 
     // package-private
@@ -156,10 +142,7 @@ public final class LazyECPoint implements ECPublicKey {
 
     // package-private
     byte[] getEncodedInternal(boolean compressed) {
-        if (compressed == isCompressedInternal() && bits != null)
-            return Arrays.copyOf(bits, bits.length);
-        else
-            return get().getEncoded(compressed);
+        return point.getEncoded(compressed);
     }
 
     @Override
