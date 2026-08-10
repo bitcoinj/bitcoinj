@@ -37,13 +37,13 @@ import org.bitcoinj.crypto.HDPath;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;
 import org.bitcoinj.crypto.KeyCrypterScrypt;
-import org.bitcoinj.crypto.LazyECPoint;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.protobuf.wallet.Protos;
+import org.bouncycastle.math.ec.ECPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -903,7 +903,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key);
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
                 // Deserialize the public key and path.
-                LazyECPoint pubkey = new LazyECPoint(key.getPublicKey().toByteArray());
+                ECPoint pubkey = ECKey.parseToBCPoint(key.getPublicKey().toByteArray());
                 // Deserialize the path through the tree.
                 final HDPath.HDPartialPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())

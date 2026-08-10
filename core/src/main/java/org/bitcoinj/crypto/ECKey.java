@@ -158,7 +158,8 @@ public class ECKey implements EncryptableItem {
 
     // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
     @Nullable protected final BigInteger priv;  // A field element.
-    protected final LazyECPoint pub;
+    private final ECPoint bcPoint;
+    private final boolean compressed;
 
     // Creation time of the key, or null if the key was deserialized from a version that did
     // not have this field.
@@ -216,15 +217,18 @@ public class ECKey implements EncryptableItem {
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
-        pub = new LazyECPoint(pubParams.getQ(), true);
+        bcPoint = pubParams.getQ();
+        compressed = true;
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
+    /**
+     * Canonical ECKey constructor
+     * @param priv optional private key
+     * @param pub public key point
+     * @param compressed compression state
+     */
     private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
-        this(priv, new LazyECPoint(Objects.requireNonNull(pub), compressed));
-    }
-
-    protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         if (priv != null) {
             checkArgument(priv.bitLength() <= 32 * 8, () ->
                     "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
@@ -235,7 +239,12 @@ public class ECKey implements EncryptableItem {
             checkArgument(!priv.equals(BigInteger.ONE));
         }
         this.priv = priv;
-        this.pub = Objects.requireNonNull(pub);
+        this.bcPoint = pub;
+        this.compressed = compressed;
+    }
+
+    protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+        this(priv, Objects.requireNonNull(pub), true);
     }
 
     /**
@@ -260,7 +269,7 @@ public class ECKey implements EncryptableItem {
      */
     public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicBCPointFromPrivate(privKey);
-        return new ECKey(privKey, new LazyECPoint(point, compressed));
+        return new ECKey(privKey, point, compressed);
     }
 
     /**
@@ -297,7 +306,7 @@ public class ECKey implements EncryptableItem {
     public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
         Objects.requireNonNull(priv);
         Objects.requireNonNull(pub);
-        return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(pub));
+        return new ECKey(ByteUtils.bytesToBigInteger(priv), parseToBCPoint(pub), isPubKeyCompressed(pub));
     }
 
     /**
@@ -313,7 +322,7 @@ public class ECKey implements EncryptableItem {
      * The compression state of pub will be preserved.
      */
     public static ECKey fromPublicOnly(byte[] pub) {
-        return new ECKey(null, new LazyECPoint(pub));
+        return new ECKey(null, parseToBCPoint(pub), isPubKeyCompressed(pub));
     }
 
     public static ECKey fromPublicOnly(ECKey key) {
@@ -325,10 +334,10 @@ public class ECKey implements EncryptableItem {
      * never need this: it's for specialized scenarios or when backwards compatibility in encoded form is necessary.
      */
     public ECKey decompress() {
-        if (!pub.isCompressedInternal())
+        if (!compressed)
             return this;
         else
-            return new ECKey(priv, new LazyECPoint(pub.get(), false));
+            return new ECKey(priv, bcPoint, false);
     }
 
     /**
@@ -341,6 +350,15 @@ public class ECKey implements EncryptableItem {
         key.encryptedPrivateKey = Objects.requireNonNull(encryptedPrivateKey);
         key.keyCrypter = Objects.requireNonNull(crypter);
         return key;
+    }
+
+    /**
+     * Parse a serialized public key. For internal use only.
+     * @param pub serialized public key bytes
+     * @return A Bouncy Castle ECPoint
+     */
+    public static ECPoint parseToBCPoint(byte[] pub) {
+        return CURVE.getCurve().decodePoint(pub);
     }
 
     /**
@@ -429,7 +447,7 @@ public class ECKey implements EncryptableItem {
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
-            pubKeyHash = CryptoUtils.sha256hash160(this.pub.getEncoded());
+            pubKeyHash = CryptoUtils.sha256hash160(this.bcPoint.getEncoded(compressed));
         return pubKeyHash;
     }
 
@@ -438,12 +456,12 @@ public class ECKey implements EncryptableItem {
      * as the pubKeyHash/address.
      */
     public byte[] getPubKey() {
-        return pub.getEncoded();
+        return bcPoint.getEncoded(compressed);
     }
 
     /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
     public ECPoint getPubKeyPoint() {
-        return pub.get();
+        return bcPoint;
     }
 
     /**
@@ -462,7 +480,7 @@ public class ECKey implements EncryptableItem {
      * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33 bytes, not 64.
      */
     public boolean isCompressed() {
-        return pub.isCompressedInternal();
+        return compressed;
     }
 
     /**
@@ -962,7 +980,7 @@ public class ECKey implements EncryptableItem {
     @Deprecated
     public void verifyMessage(String message, String signatureBase64) throws SignatureException {
         ECKey key = ECKey.signedMessageToKey(message, signatureBase64);
-        if (!key.pub.equals(pub))
+        if (!(key.bcPoint.equals(bcPoint) && key.compressed == compressed))
             throw new SignatureException("Signature did not match for message");
     }
 
@@ -976,7 +994,7 @@ public class ECKey implements EncryptableItem {
         byte recId = -1;
         for (byte i = 0; i < 4; i++) {
             ECKey k = ECKey.recoverFromSignature(i, sig, hash, isCompressed());
-            if (k != null && k.pub.equals(pub)) {
+            if (k != null && k.bcPoint.equals(bcPoint) && k.compressed == compressed) {
                 recId = i;
                 break;
             }
@@ -1299,7 +1317,7 @@ public class ECKey implements EncryptableItem {
         if (o == null || !(o instanceof ECKey)) return false;
         ECKey other = (ECKey) o;
         return Objects.equals(this.priv, other.priv)
-                && Objects.equals(this.pub, other.pub)
+                && Objects.equals(this.bcPoint, other.bcPoint)
                 && Objects.equals(this.creationTime, other.creationTime)
                 && Objects.equals(this.keyCrypter, other.keyCrypter)
                 && Objects.equals(this.encryptedPrivateKey, other.encryptedPrivateKey);
@@ -1307,7 +1325,7 @@ public class ECKey implements EncryptableItem {
 
     @Override
     public int hashCode() {
-        return pub.hashCode();
+        return Arrays.hashCode(bcPoint.getEncoded(true));   // hashcode of "canonical encoding"
     }
 
     @Override
@@ -1328,7 +1346,7 @@ public class ECKey implements EncryptableItem {
     }
 
     public String getPublicKeyAsHex() {
-        return ByteUtils.formatHex(pub.getEncoded());
+        return ByteUtils.formatHex(bcPoint.getEncoded(compressed));
     }
 
 

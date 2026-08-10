@@ -71,7 +71,16 @@ public class DeterministicKey extends ECKey {
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(priv, publicAsPoint.compress(), parent == null ? 0 : parent.depth + 1, parent,
+        this(childNumberPath, chainCode, publicAsPoint.get(), priv, parent);
+    }
+
+    /** Constructs a key from its components. This is not normally something you should use. */
+    public DeterministicKey(HDPath.HDPartialPath childNumberPath,
+                            byte[] chainCode,
+                            ECPoint publicAsPoint,
+                            @Nullable BigInteger priv,
+                            @Nullable DeterministicKey parent) {
+        this(priv, publicAsPoint, parent == null ? 0 : parent.depth + 1, parent,
                 parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath, null, null);
     }
 
@@ -85,7 +94,8 @@ public class DeterministicKey extends ECKey {
                             boolean compressed,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(childNumberPath, chainCode, new LazyECPoint(publicAsPoint, compressed), priv, parent);
+        this(priv, publicAsPoint, parent == null ? 0 : parent.depth + 1, parent,
+                parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath, null, null);
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
@@ -93,7 +103,7 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(priv, new LazyECPoint(ECKey.publicBCPointFromPrivate(priv), true), parent == null ? 0 : parent.depth + 1,
+        this(priv, ECKey.publicBCPointFromPrivate(priv), parent == null ? 0 : parent.depth + 1,
                 parent, parent != null ? parent.getFingerprint() : 0, chainCode, hdPath, null, null);
     }
 
@@ -104,7 +114,17 @@ public class DeterministicKey extends ECKey {
                             LazyECPoint pub,
                             EncryptedData encryptedPrivateKey,
                             @Nullable DeterministicKey parent) {
-        this(null, pub.compress(), parent == null ? 0 : parent.depth + 1, parent,
+        this(childNumberPath, chainCode, crypter, pub.get(), encryptedPrivateKey, parent);
+    }
+
+    /** Constructs a key from its components. This is not normally something you should use. */
+    public DeterministicKey(HDPath.HDPartialPath childNumberPath,
+                            byte[] chainCode,
+                            KeyCrypter crypter,
+                            ECPoint pub,
+                            EncryptedData encryptedPrivateKey,
+                            @Nullable DeterministicKey parent) {
+        this(null, pub, parent == null ? 0 : parent.depth + 1, parent,
                 parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath,
                 Objects.requireNonNull(encryptedPrivateKey), Objects.requireNonNull(crypter));
     }
@@ -134,7 +154,22 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        this(null, publicAsPoint.compress(), depth, parent, parentFingerprint, chainCode, childNumberPath,
+        this(null, publicAsPoint.get(), depth, parent, parentFingerprint, chainCode, childNumberPath,
+                null, null);
+    }
+
+    /**
+     * Constructs a key from its components, including its public key data and possibly-redundant
+     * information about its parent key.  Invoked when deserializing, but otherwise not something that
+     * you normally should use.
+     */
+    public DeterministicKey(HDPath childNumberPath,
+                            byte[] chainCode,
+                            ECPoint publicAsPoint,
+                            @Nullable DeterministicKey parent,
+                            int depth,
+                            int parentFingerprint) {
+        this(null, publicAsPoint, depth, parent, parentFingerprint, chainCode, childNumberPath,
                 null, null);
     }
 
@@ -149,14 +184,14 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        this(priv, new LazyECPoint(ECKey.publicBCPointFromPrivate(priv), true), depth, parent, parentFingerprint,
+        this(priv, ECKey.publicBCPointFromPrivate(priv), depth, parent, parentFingerprint,
                 chainCode, childNumberPath, null, null);
     }
 
     /** @deprecated use {@link #withParent(DeterministicKey)} */
     @Deprecated
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        this(keyToClone.priv, keyToClone.pub, keyToClone.childNumberPath.size(), newParent,
+        this(keyToClone.priv, keyToClone.getPubKeyPoint(), keyToClone.childNumberPath.size(), newParent,
                 newParent.getFingerprint(), keyToClone.chainCode, keyToClone.childNumberPath, null, null);
     }
 
@@ -177,11 +212,10 @@ public class DeterministicKey extends ECKey {
      * @param encryptedPrivateKey private key in encrypted form
      * @param keyCrypter          crypter to use for decrypting the private key
      */
-    private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
+    private DeterministicKey(@Nullable BigInteger priv, ECPoint pub, int depth, @Nullable DeterministicKey parent,
                              int parentFingerprint, byte[] chainCode, HDPath hdPath,
                              @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
         super(priv, pub);
-        checkArgument(pub.isCompressedInternal(), () -> "pub must be compressed");
         checkArgument(chainCode.length == 32);
         checkArgument(priv == null || encryptedPrivateKey == null, () ->
                 "priv and encryptedPrivateKey can't be set together");
@@ -301,7 +335,7 @@ public class DeterministicKey extends ECKey {
     public DeterministicKey withoutPrivateKey() {
         return priv == null && encryptedPrivateKey == null && keyCrypter == null ?
                 this :
-                new DeterministicKey(null, pub, depth, parent, parentFingerprint, chainCode, childNumberPath,
+                new DeterministicKey(null, getPubKeyPoint(), depth, parent, parentFingerprint, chainCode, childNumberPath,
                         null, null);
     }
 
@@ -320,7 +354,7 @@ public class DeterministicKey extends ECKey {
      */
     public DeterministicKey withParent(DeterministicKey parent) {
         Objects.requireNonNull(parent);
-        return new DeterministicKey(this.priv, this.pub, parent.getDepth() + 1, parent, parent.getFingerprint(),
+        return new DeterministicKey(this.priv, getPubKeyPoint(), parent.getDepth() + 1, parent, parent.getFingerprint(),
                 this.chainCode, this.childNumberPath, this.encryptedPrivateKey, this.keyCrypter);
     }
 
@@ -335,7 +369,7 @@ public class DeterministicKey extends ECKey {
      * @return this key without parent pointer
      */
     public DeterministicKey withoutParent() {
-        return new DeterministicKey(priv, pub, depth, null, parentFingerprint, chainCode, childNumberPath,
+        return new DeterministicKey(priv, getPubKeyPoint(), depth, null, parentFingerprint, chainCode, childNumberPath,
                 encryptedPrivateKey, keyCrypter);
     }
 
@@ -367,7 +401,7 @@ public class DeterministicKey extends ECKey {
         final byte[] privKeyBytes = getPrivKeyBytes();
         checkState(privKeyBytes != null, () -> "Private key is not available");
         EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
-        DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, pub, encryptedPrivateKey, newParent);
+        DeterministicKey key = new DeterministicKey(childNumberPath, chainCode, keyCrypter, getPubKeyPoint(), encryptedPrivateKey, newParent);
         if (newParent == null) {
             Optional<Instant> creationTime = this.getCreationTime();
             if (creationTime.isPresent())
@@ -509,7 +543,7 @@ public class DeterministicKey extends ECKey {
 
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
-                cursor.pub, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
+                cursor.getPubKeyPoint(), ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
         // Now we have to re-derive the keys along the path back to ourselves. That path can be found by just truncating
         // our path with the length of the parent's path.
         List<ChildNumber> path = childNumberPath.list().subList(cursor.getPath().size(), childNumberPath.size());
@@ -519,7 +553,7 @@ public class DeterministicKey extends ECKey {
         // downCursor is now the same key as us, but with private key bytes.
         // If it's not, it means we tried decrypting with an invalid password and earlier checks e.g. for padding didn't
         // catch it.
-        if (!downCursor.pub.equals(pub))
+        if (!downCursor.getPubKeyPoint().equals(getPubKeyPoint()))
             throw new KeyCrypterException.PublicPrivateMismatch("Could not decrypt bytes");
         return Objects.requireNonNull(downCursor.priv);
     }
@@ -685,7 +719,7 @@ public class DeterministicKey extends ECKey {
         checkArgument(!buffer.hasRemaining(), () ->
                 "found unexpected data in key");
         if (pub) {
-            return new DeterministicKey(path, chainCode, new LazyECPoint(data), parent, depth, parentFingerprint);
+            return new DeterministicKey(path, chainCode, ECKey.parseToBCPoint(data), parent, depth, parentFingerprint);
         } else {
             return new DeterministicKey(path, chainCode, ByteUtils.bytesToBigInteger(data), parent, depth, parentFingerprint);
         }
@@ -751,7 +785,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
+        helper.add("pub", ByteUtils.formatHex(getPubKeyPoint().getEncoded(true)));
         helper.add("chainCode", ByteUtils.formatHex(chainCode));
         helper.add("path", getPathAsString());
         helper.add("depth", depth);

@@ -93,7 +93,7 @@ public final class HDKeyDerivation {
     }
 
     public static DeterministicKey createMasterPubKeyFromBytes(byte[] pubKeyBytes, byte[] chainCode) {
-        return new DeterministicKey(HDPath.partial(), chainCode, new LazyECPoint(pubKeyBytes), null, null);
+        return new DeterministicKey(HDPath.partial(), chainCode, ECKey.parseToBCPoint(pubKeyBytes), null, null);
     }
 
     /**
@@ -193,7 +193,7 @@ public final class HDKeyDerivation {
             PublicDeriveMode mode) throws HDDerivationException {
         RawKeyBytes rawKey = deriveChildKeyBytesFromPublic(parent, childNumber, PublicDeriveMode.NORMAL);
         return new DeterministicKey(parent.getPath().extend(childNumber), rawKey.chainCode,
-                new LazyECPoint(rawKey.keyBytes), null, parent);
+                ECKey.parseToBCPoint(rawKey.keyBytes), null, parent);
     }
 
     public static RawKeyBytes deriveChildKeyBytesFromPublic(DeterministicKey parent, ChildNumber childNumber, PublicDeriveMode mode) throws HDDerivationException {

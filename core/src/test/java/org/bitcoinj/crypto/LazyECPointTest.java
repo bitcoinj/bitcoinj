@@ -17,7 +17,7 @@ public class LazyECPointTest {
 
     @Test
     public void convertRandomPoint() {
-        LazyECPoint p1 = ECKey.random().pub;
+        LazyECPoint p1 = new LazyECPoint(ECKey.random().getPubKeyPoint(), true);
         LazyECPoint p2 = new LazyECPoint(p1.getW());  // Round-trip conversion Bouncy -> JCA -> Bouncy
         assertNotNull(p2);
         assertEquals(p1, p2);
