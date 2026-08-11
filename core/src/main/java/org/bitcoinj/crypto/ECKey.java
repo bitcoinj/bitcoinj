@@ -30,7 +30,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
-import org.bitcoinj.crypto.secp.Secp256k1Constants;
+import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;

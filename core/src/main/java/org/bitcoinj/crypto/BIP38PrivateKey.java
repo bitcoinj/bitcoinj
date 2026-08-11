@@ -22,7 +22,7 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.exceptions.AddressFormatException;
 import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.Sha256Hash;
-import org.bitcoinj.crypto.secp.Secp256k1Constants;
+import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bouncycastle.crypto.generators.SCrypt;
 
 import javax.crypto.Cipher;

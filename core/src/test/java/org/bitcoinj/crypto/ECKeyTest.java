@@ -30,7 +30,7 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
-import org.bitcoinj.crypto.secp.Secp256k1Constants;
+import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bitcoinj.crypto.utils.MessageVerifyUtils;
 import org.jspecify.annotations.Nullable;
 import org.junit.Before;
