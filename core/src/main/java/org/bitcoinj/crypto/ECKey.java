@@ -286,7 +286,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      */
     public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicBCPointFromPrivate(privKey);
-        return new ECKey(privKey, new LazyECPoint(point, compressed));
+        return new ECKey(privKey, point, compressed);
     }
 
     /**
@@ -354,7 +354,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         if (!pub.isCompressedInternal())
             return this;
         else
-            return new ECKey(priv, new LazyECPoint(pub.get(), false));
+            return new ECKey(priv, pub.get(), false);
     }
 
     /**
