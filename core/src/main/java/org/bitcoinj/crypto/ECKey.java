@@ -449,6 +449,15 @@ public class ECKey implements EncryptableItem {
                 : CURVE.getCurve().createPoint(jcPoint.getAffineX(), jcPoint.getAffineY());
     }
 
+    /**
+     * Decode (parse) a serialized public key. For internal use only.
+     * @param pubBytes serialized public key (compressed or uncompressed)
+     * @return a Bouncy Castle ECPoint
+     */
+    static ECPoint decodeToBCPoint(byte[] pubBytes) {
+        return CURVE.getCurve().decodePoint(pubBytes);
+    }
+
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
