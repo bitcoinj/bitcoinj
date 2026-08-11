@@ -30,7 +30,6 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
-import org.bitcoinj.crypto.utils.MessageVerifyUtils;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -804,35 +803,9 @@ public class ECKey implements EncryptableItem {
      *
      * @throws IllegalStateException if this ECKey does not have the private part.
      * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
-     * @deprecated use {@link #signMessage(String, ScriptType)} instead and specify the correct script type
-     */
-    @Deprecated
-    public String signMessage(String message) throws KeyCrypterException {
-        return signMessage(message, null, ScriptType.P2PKH);
-    }
-
-    /**
-     * Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
-     * encoded string.
-     *
-     * @throws IllegalStateException if this ECKey does not have the private part.
-     * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
      */
     public String signMessage(String message, ScriptType scriptType) throws KeyCrypterException {
         return signMessage(message, null, scriptType);
-    }
-
-    /**
-     * Signs a text message using the standard Bitcoin messaging signing format and returns the signature as a base64
-     * encoded string.
-     *
-     * @throws IllegalStateException if this ECKey does not have the private part.
-     * @throws KeyCrypterException if this ECKey is encrypted and no AESKey is provided or it does not decrypt the ECKey.
-     * @deprecated use {@link #signMessage(String, AesKey, ScriptType)} instead and specify the correct script type
-     */
-    @Deprecated
-    public String signMessage(String message, @Nullable AesKey aesKey) throws KeyCrypterException {
-        return signMessage(message, aesKey, ScriptType.P2PKH);
     }
 
     /**
@@ -950,20 +923,6 @@ public class ECKey implements EncryptableItem {
         if (key == null)
             throw new SignatureException("Could not recover public key from signature");
         return key;
-    }
-
-    /**
-     * Convenience wrapper around {@link ECKey#signedMessageToKey(String, String)}. If the key derived from the
-     * signature is not the same as this one, throws a SignatureException.
-     * @deprecated Use {@link MessageVerifyUtils#verifyMessage(Address, String, String)} instead,
-     * which works with different address types, which works also with legacy segwit (P2SH-P2WPKH, 3…)
-     * and native segwit addresses (P2WPKH, bc1…).
-     */
-    @Deprecated
-    public void verifyMessage(String message, String signatureBase64) throws SignatureException {
-        ECKey key = ECKey.signedMessageToKey(message, signatureBase64);
-        if (!key.pub.equals(pub))
-            throw new SignatureException("Signature did not match for message");
     }
 
     /**

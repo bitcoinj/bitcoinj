@@ -31,6 +31,7 @@ import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.crypto.HDPath;
+import org.bitcoinj.crypto.utils.MessageVerifyUtils;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
@@ -176,7 +177,8 @@ public class DeterministicKeyChainTest {
     @Test
     public void signMessage() throws Exception {
         ECKey key = chain.getKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        key.verifyMessage("test", key.signMessage("test"));
+        Address address = key.toAddress(chain.getOutputScriptType(), TESTNET);
+        MessageVerifyUtils.verifyMessage(address, "test", key.signMessage("test", address.getOutputScriptType()));
     }
 
     @Test

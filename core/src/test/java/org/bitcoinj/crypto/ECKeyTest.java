@@ -29,6 +29,7 @@ import org.bitcoinj.crypto.ECKey.ECDSASignature;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.FutureUtils;
 import org.bitcoinj.crypto.secp.Secp256k1Constants;
+import org.bitcoinj.crypto.utils.MessageVerifyUtils;
 import org.jspecify.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -259,13 +260,14 @@ public class ECKeyTest {
     @Test
     public void signTextMessage() throws Exception {
         ECKey key = ECKey.random();
+        Address address = key.toAddress(ScriptType.P2PKH, MAINNET);
         String message = "聡中本";
-        String signatureBase64 = key.signMessage(message);
-        log.info("Message signed with " + key.toAddress(ScriptType.P2PKH, MAINNET) + ": " + signatureBase64);
+        String signatureBase64 = key.signMessage(message, address.getOutputScriptType());
+        log.info("Message signed with " + address + ": " + signatureBase64);
         // Should verify correctly.
-        key.verifyMessage(message, signatureBase64);
+        MessageVerifyUtils.verifyMessage(address, message, signatureBase64);
         try {
-            key.verifyMessage("Evil attacker says hello!", signatureBase64);
+            MessageVerifyUtils.verifyMessage(address, "Evil attacker says hello!", signatureBase64);
             fail();
         } catch (SignatureException e) {
             // OK.
