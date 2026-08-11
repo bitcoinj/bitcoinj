@@ -19,7 +19,7 @@ package org.bitcoinj.crypto;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.internal.CryptoUtils;
-import org.bitcoinj.crypto.secp.Secp256k1Constants;
+import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bouncycastle.math.ec.ECPoint;
 
 import java.math.BigInteger;

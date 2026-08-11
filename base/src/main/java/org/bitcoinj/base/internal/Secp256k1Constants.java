@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bitcoinj.crypto.secp;
+package org.bitcoinj.base.internal;
 
 import java.math.BigInteger;
 import java.security.spec.ECFieldFp;
