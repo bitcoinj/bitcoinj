@@ -30,6 +30,7 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
+import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -71,6 +72,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.SignatureException;
+import java.security.interfaces.ECPublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -111,7 +113,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * this class so round-tripping preserves state. Unless you're working with old software or doing unusual things, you
  * can usually ignore the compressed/uncompressed distinction.
  */
-public class ECKey implements EncryptableItem {
+public class ECKey implements EncryptableItem, ECPublicKey {
     private static final Logger log = LoggerFactory.getLogger(ECKey.class);
     // Note: this can be replaced with Arrays.compareUnsigned(a, b) once we require Java 9
     private static final Comparator<byte[]> LEXICOGRAPHICAL_COMPARATOR = ByteUtils.arrayUnsignedComparator();
@@ -1283,6 +1285,45 @@ public class ECKey implements EncryptableItem {
     }
 
     public static class KeyIsEncryptedException extends MissingPrivateKeyException {
+    }
+
+    /**
+     * @return string representing the algorithm used with this key
+     */
+    @Override
+    public String getAlgorithm() {
+        return "Secp256k1";
+    }
+
+    /**
+     * @return string representing encoded format of this key
+     */
+    @Override
+    public String getFormat() {
+        return "SEC";
+    }
+
+    /**
+     * Convert from internal Bouncy Castle {@link ECPoint} to return
+     * a {@code java.security.spec.ECPoint}.
+     * @return Java Cryptography ECPoint instance
+     */
+    @Override
+    public java.security.spec.ECPoint getW() {
+        return ECKey.toJCPoint(getPubKeyPoint());
+    }
+
+    /**
+     * @return Java Cryptography type with Elliptic Curve parameters
+     */
+    @Override
+    public java.security.spec.ECParameterSpec getParams() {
+        return Secp256k1Constants.EC_PARAMS;
+    }
+
+    @Override
+    public byte[] getEncoded() {
+        return getPubKeyPoint().getEncoded(isCompressed());
     }
 
     @Override
