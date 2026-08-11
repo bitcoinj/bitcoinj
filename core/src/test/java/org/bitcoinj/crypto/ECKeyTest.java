@@ -17,6 +17,8 @@
 
 package org.bitcoinj.crypto;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bitcoinj.base.Address;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.base.ScriptType;
@@ -517,19 +519,8 @@ public class ECKeyTest {
         // Tests the canonical sigs from Bitcoin Core unit tests
         InputStream in = getClass().getResourceAsStream("sig_canonical.json");
 
-        // Poor man's JSON parser (because pulling in a lib for this is overkill)
-        while (in.available() > 0) {
-            while (in.available() > 0 && in.read() != '"') ;
-            if (in.available() < 1)
-                break;
-
-            StringBuilder sig = new StringBuilder();
-            int c;
-            while (in.available() > 0 && (c = in.read()) != '"')
-                sig.append((char)c);
-
-            assertTrue(TransactionSignature.isEncodingCanonical(ByteUtils.parseHex(sig.toString())));
-        }
+        List<String> list = new ObjectMapper().readValue(in, new TypeReference<List<String>>() {});
+        list.forEach(sig -> assertTrue(TransactionSignature.isEncodingCanonical(ByteUtils.parseHex(sig))));
         in.close();
     }
 
@@ -538,24 +529,15 @@ public class ECKeyTest {
         // Tests the noncanonical sigs from Bitcoin Core unit tests
         InputStream in = getClass().getResourceAsStream("sig_noncanonical.json");
 
-        // Poor man's JSON parser (because pulling in a lib for this is overkill)
-        while (in.available() > 0) {
-            while (in.available() > 0 && in.read() != '"') ;
-            if (in.available() < 1)
-                break;
-
-            StringBuilder sig = new StringBuilder();
-            int c;
-            while (in.available() > 0 && (c = in.read()) != '"')
-                sig.append((char)c);
-
+        List<String> list = new ObjectMapper().readValue(in, new TypeReference<List<String>>() {});
+        list.forEach(sig -> {
             try {
-                final String sigStr = sig.toString();
-                assertFalse(TransactionSignature.isEncodingCanonical(ByteUtils.parseHex(sigStr)));
+                byte[] sigBytes = ByteUtils.parseHex(sig);
+                assertFalse(TransactionSignature.isEncodingCanonical(sigBytes));
             } catch (IllegalArgumentException e) {
-                // Expected for non-hex strings in the JSON that we should ignore
+                // Expected from `parseHex()` for non-hex strings in the JSON that we should ignore
             }
-        }
+        });
         in.close();
     }
 
