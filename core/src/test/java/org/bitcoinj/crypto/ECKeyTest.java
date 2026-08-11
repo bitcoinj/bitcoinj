@@ -500,11 +500,11 @@ public class ECKeyTest {
     @Test
     public void clear() {
         ECKey unencryptedKey = ECKey.random();
-        ECKey encryptedKey = ECKey.random().encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
 
         checkSomeBytesAreNonZero(unencryptedKey.getPrivKeyBytes());
-
         assertNull(unencryptedKey.getEncryptedPrivateKey());
+
+        ECKey encryptedKey = ECKey.random().encrypt(keyCrypter, keyCrypter.deriveKey(PASSWORD1));
 
         assertNull(encryptedKey.getSecretBytes());
         assertNotNull(encryptedKey.getEncryptedPrivateKey());
