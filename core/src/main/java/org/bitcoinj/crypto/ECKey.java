@@ -1317,7 +1317,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      */
     @Override
     public String getAlgorithm() {
-        return "Secp256k1";
+        return Secp256k1Constants.ALGORITHM_NAME;
     }
 
     /**
@@ -1325,7 +1325,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      */
     @Override
     public String getFormat() {
-        return "SEC";
+        return isCompressed() ? Secp256k1Constants.COMPRESSED_FORMAT_NAME : Secp256k1Constants.UNCOMPRESSED_FORMAT_NAME;
     }
 
     /**

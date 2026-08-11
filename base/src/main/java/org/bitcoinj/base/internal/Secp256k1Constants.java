@@ -26,7 +26,7 @@ import java.security.spec.EllipticCurve;
  * It will eventually be replaces by similar definitions in <b>secp256k1-jdk</b>
  */
 public interface Secp256k1Constants {
-    String ALGORITHM_NAME = "secp256k1";
+    String ALGORITHM_NAME = "Secp256k1";
     String COMPRESSED_FORMAT_NAME = "Compressed SEC";
     String UNCOMPRESSED_FORMAT_NAME = "Uncompressed SEC";
 
