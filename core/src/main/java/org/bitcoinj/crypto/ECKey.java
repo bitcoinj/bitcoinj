@@ -221,8 +221,24 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
+    /**
+     * Construct an ECKey.
+     * @param priv optional private key
+     * @param pub a Bouncy Castle point
+     * @param compressed whether to generate addresses using compressed serialization.
+     */
     private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
         this(priv, new LazyECPoint(Objects.requireNonNull(pub), compressed));
+    }
+
+    /**
+     * Construct a compressed ECKey. This constructor can be used for P2PWKH and HD keys that
+     * always have addresses generated using compressed serialization.
+     * @param priv optional private key
+     * @param pub a Bouncy Castle point
+     */
+    protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+        this(priv, Objects.requireNonNull(pub), true);
     }
 
     protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
