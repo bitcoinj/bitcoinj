@@ -159,7 +159,7 @@ public class ChildKeyDerivationTest {
 
     @Test
     public void inverseEqualsNormal() {
-        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("Wired / Aug 13th 2014 / Snowden: I Left the NSA Clues, But They Couldn't Find Them".getBytes());
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
         HDKeyDerivation.RawKeyBytes key2 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.withoutPrivateKey().withoutParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.NORMAL);
         HDKeyDerivation.RawKeyBytes key3 = HDKeyDerivation.deriveChildKeyBytesFromPublic(key1.withoutPrivateKey().withoutParent(), ChildNumber.ZERO, HDKeyDerivation.PublicDeriveMode.WITH_INVERSION);
         assertArrayEquals(key2.keyBytes, key3.keyBytes);
@@ -198,7 +198,7 @@ public class ChildKeyDerivationTest {
 
     @Test
     public void pubOnlyDerivation() {
-        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
         assertFalse(key1.isPubKeyOnly());
         assertEquals(0,key1.getDepth());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
@@ -286,7 +286,7 @@ public class ChildKeyDerivationTest {
 
     @Test
     public void parentlessDeserialization() {
-        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
         DeterministicKey key3 = HDKeyDerivation.deriveChildKey(key2, ChildNumber.ZERO_HARDENED);
         DeterministicKey key4 = HDKeyDerivation.deriveChildKey(key3, ChildNumber.ZERO_HARDENED);
