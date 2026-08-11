@@ -223,7 +223,7 @@ public class ECKeyTest {
         Address address = key.toAddress(ScriptType.P2WPKH, TESTNET);
 
         assertTrue(address instanceof SegwitAddress);
-        assertEquals(((SegwitAddress) address).getWitnessVersion(), 0);
+        assertEquals(0, ((SegwitAddress) address).getWitnessVersion());
         assertEquals(addr, address.toString());
     }
 
@@ -240,7 +240,7 @@ public class ECKeyTest {
         Address address = key.toAddress(ScriptType.P2TR, TESTNET);
 
         assertTrue(address instanceof SegwitAddress);
-        assertEquals(((SegwitAddress) address).getWitnessVersion(), 1);
+        assertEquals(1, ((SegwitAddress) address).getWitnessVersion());
         assertEquals(addr, address.toString());
     }
 
@@ -351,7 +351,7 @@ public class ECKeyTest {
 
         byte recId = key.findRecoveryId(hash, sig);
         byte expectedRecId = 0;
-        assertEquals(recId, expectedRecId);
+        assertEquals(expectedRecId, recId);
 
         ECKey pubKey = ECKey.fromPublicOnly(key);
         ECKey recoveredKey = ECKey.recoverFromSignature(recId, sig, hash, true);
