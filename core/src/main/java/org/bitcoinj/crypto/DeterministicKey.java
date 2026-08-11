@@ -751,7 +751,7 @@ public class DeterministicKey extends ECKey {
     @Override
     public String toString() {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub", ByteUtils.formatHex(pub.getEncoded()));
+        helper.add("pub", ByteUtils.formatHex(getEncoded()));
         helper.add("chainCode", ByteUtils.formatHex(chainCode));
         helper.add("path", getPathAsString());
         helper.add("depth", depth);

@@ -93,7 +93,10 @@ public final class LazyECPoint {
         return point;
     }
 
-
+    /**
+     * @deprecated Use {@link ECKey#getEncoded()}
+     */
+    @Deprecated
     public byte[] getEncoded() {
         if (bits != null)
             return Arrays.copyOf(bits, bits.length);

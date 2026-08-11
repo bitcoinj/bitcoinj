@@ -463,7 +463,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
-            pubKeyHash = CryptoUtils.sha256hash160(this.pub.getEncoded());
+            pubKeyHash = CryptoUtils.sha256hash160(getEncoded());
         return pubKeyHash;
     }
 
@@ -472,7 +472,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * as the pubKeyHash/address.
      */
     public byte[] getPubKey() {
-        return pub.getEncoded();
+        return getEncoded();
     }
 
     /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
@@ -1361,7 +1361,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     public String getPublicKeyAsHex() {
-        return ByteUtils.formatHex(pub.getEncoded());
+        return ByteUtils.formatHex(getEncoded());
     }
 
 
