@@ -517,28 +517,28 @@ public class ECKeyTest {
     @Test
     public void testCanonicalSigs() throws Exception {
         // Tests the canonical sigs from Bitcoin Core unit tests
-        InputStream in = getClass().getResourceAsStream("sig_canonical.json");
-
-        List<String> list = new ObjectMapper().readValue(in, new TypeReference<List<String>>() {});
-        list.forEach(sig -> assertTrue(TransactionSignature.isEncodingCanonical(ByteUtils.parseHex(sig))));
-        in.close();
+        try (InputStream in = getClass().getResourceAsStream("sig_canonical.json")) {
+            List<String> list = new ObjectMapper().readValue(in, new TypeReference<List<String>>() {
+            });
+            list.forEach(sig -> assertTrue(TransactionSignature.isEncodingCanonical(ByteUtils.parseHex(sig))));
+        }
     }
 
     @Test
     public void testNonCanonicalSigs() throws Exception {
         // Tests the noncanonical sigs from Bitcoin Core unit tests
-        InputStream in = getClass().getResourceAsStream("sig_noncanonical.json");
-
-        List<String> list = new ObjectMapper().readValue(in, new TypeReference<List<String>>() {});
-        list.forEach(sig -> {
-            try {
-                byte[] sigBytes = ByteUtils.parseHex(sig);
-                assertFalse(TransactionSignature.isEncodingCanonical(sigBytes));
-            } catch (IllegalArgumentException e) {
-                // Expected from `parseHex()` for non-hex strings in the JSON that we should ignore
-            }
-        });
-        in.close();
+        try (InputStream in = getClass().getResourceAsStream("sig_noncanonical.json")) {
+            List<String> list = new ObjectMapper().readValue(in, new TypeReference<List<String>>() {
+            });
+            list.forEach(sig -> {
+                try {
+                    byte[] sigBytes = ByteUtils.parseHex(sig);
+                    assertFalse(TransactionSignature.isEncodingCanonical(sigBytes));
+                } catch (IllegalArgumentException e) {
+                    // Expected from `parseHex()` for non-hex strings in the JSON that we should ignore
+                }
+            });
+        }
     }
 
     @Test
