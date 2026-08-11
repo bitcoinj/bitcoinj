@@ -22,6 +22,7 @@ import org.bitcoinj.base.Sha256Hash;
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 
+import org.bitcoinj.base.internal.HexFormat;
 import org.junit.Test;
 
 import org.bitcoinj.base.internal.ByteUtils;
@@ -225,29 +226,29 @@ public class ChildKeyDerivationTest {
 
     @Test
     public void serializePubB58_deserializeB58() {
-        DeterministicKey key = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
         key.clearCreationTime();
 
         // mainnet
         String pub58 = key.serializePubB58(MAINNET);
         String priv58 = key.serializePrivB58(MAINNET);
-        assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
-        assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
+        assertEquals("xpub661MyMwAqRbcF1yGktaZdfUhBayAbdJuQSezmCswoT5mLW5HGsG9zKpZ8LAH4xxm3gFaP3NDngt8VnVb6H9JfZBjMaUWgG8pKmmdXocRZzi", pub58);
+        assertEquals("xprv9s21ZrQH143K2Xtoes3ZGXXxdZ8gCAb43DjPxpULF7YnThk8jKwuSXW5H4zxcsgzAZmp5UGNkjAbgYc6JsEiyHGK4kDkW3UcMSEryYvDxw4", priv58);
         assertEquals(key, DeterministicKey.deserializeB58(priv58, MAINNET));
         assertEquals(key.dropPrivateBytes(), DeterministicKey.deserializeB58(pub58, MAINNET));
 
         // testnet
         pub58 = key.serializePubB58(TESTNET);
         priv58 = key.serializePrivB58(TESTNET);
-        assertEquals("tpubD6NzVbkrYhZ4WuxgZMdpw1Hvi7MKg6YDjDMXVohmZCFfF17hXBPYpc56rCY1KXFMovN29ik37nZimQseiykRTBTJTZJmjENyv2k3R12BJ1M", pub58);
-        assertEquals("tprv8ZgxMBicQKsPdSvtfhyEXbdp95qPWmMK9ukkDHfU8vTGQWrvtnZxe7TEg48Ui7HMsZKMj7CcQRg8YF1ydtFPZBxha5oLa3qeN3iwpYhHPVZ", priv58);
+        assertEquals("tpubD6NzVbkrYhZ4WpA8D5Zeqap4Wi4pb1oxx5FJ7kw69Mqf5njzM67F8mVPNNF4bTuzqanUzct6KniBBxzCV8zYYze2RBDpMno3ujN3HoU1vHK", pub58);
+        assertEquals("tprv8ZgxMBicQKsPdM8LKRu4SB9wwgYtRgd4NmeWqEtnj63GFJVDihHexGsXCFAcdF5JY1Jb5Zt8v5kQ9Q9qS5afnLXubPS4AQCfGXzHRCdtrc5", priv58);
         assertEquals(key, DeterministicKey.deserializeB58(priv58, TESTNET));
         assertEquals(key.dropPrivateBytes(), DeterministicKey.deserializeB58(pub58, TESTNET));
     }
 
     @Test
     public void serializeToTextAndBytes() {
-        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("satoshi lives!".getBytes());
+        DeterministicKey key1 = HDKeyDerivation.createMasterPrivateKey("it was all a hoax".getBytes());
         DeterministicKey key2 = HDKeyDerivation.deriveChildKey(key1, ChildNumber.ZERO_HARDENED);
 
         // Creation time can't survive the xpub serialization format unfortunately.
@@ -259,10 +260,10 @@ public class ChildKeyDerivationTest {
             final String priv58 = key1.serializePrivB58(network);
             final byte[] pub = key1.serialize(network, true);
             final byte[] priv = key1.serialize(network, false);
-            assertEquals("xpub661MyMwAqRbcF7mq7Aejj5xZNzFfgi3ABamE9FedDHVmViSzSxYTgAQGcATDo2J821q7Y9EAagjg5EP3L7uBZk11PxZU3hikL59dexfLkz3", pub58);
-            assertEquals("xprv9s21ZrQH143K2dhN197jMx1ppxRBHFKJpMqdLsF1ewxncv7quRED8N5nksxphju3W7naj1arF56L5PUEWfuSk8h73Sb2uh7bSwyXNrjzhAZ", priv58);
-            assertArrayEquals(new byte[]{4, -120, -78, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, -68, 93, -104, -97, 31, -105, -18, 109, 112, 104, 45, -77, -77, 18, 85, -29, -120, 86, -113, 26, 48, -18, -79, -110, -6, -27, 87, 86, 24, 124, 99, 3, 96, -33, -14, 67, -19, -47, 16, 76, -49, -11, -30, -123, 7, 56, 101, 91, 74, 125, -127, 61, 42, -103, 90, -93, 66, -36, 2, -126, -107, 30, 24, -111}, pub);
-            assertArrayEquals(new byte[]{4, -120, -83, -28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, -68, 93, -104, -97, 31, -105, -18, 109, 112, 104, 45, -77, -77, 18, 85, -29, -120, 86, -113, 26, 48, -18, -79, -110, -6, -27, 87, 86, 24, 124, 99, 0, -96, -75, 47, 90, -49, 92, -74, 92, -128, -125, 23, 38, -10, 97, -66, -19, 50, -112, 30, -111, -57, -124, 118, -86, 126, -35, -4, -51, 19, 109, 67, 116}, priv);
+            assertEquals("xpub661MyMwAqRbcF1yGktaZdfUhBayAbdJuQSezmCswoT5mLW5HGsG9zKpZ8LAH4xxm3gFaP3NDngt8VnVb6H9JfZBjMaUWgG8pKmmdXocRZzi", pub58);
+            assertEquals("xprv9s21ZrQH143K2Xtoes3ZGXXxdZ8gCAb43DjPxpULF7YnThk8jKwuSXW5H4zxcsgzAZmp5UGNkjAbgYc6JsEiyHGK4kDkW3UcMSEryYvDxw4", priv58);
+            assertEquals("0488b21e0000000000000000002fafdaa50722f270b7ec4301c75729d5fbcb0bb0edb79fc92973788f4deba26602f0bc2d77a121a06b711089f9c54bb4ce3ab8e9aa4c073a69666eb67966efe099", ByteUtils.formatHex(pub));
+            assertEquals("0488ade40000000000000000002fafdaa50722f270b7ec4301c75729d5fbcb0bb0edb79fc92973788f4deba26600df96703c74684a37dfc195f53dbe74aa0c7dd6a8c059b057efe4820e9e1e5e49", ByteUtils.formatHex(priv));
             assertEquals(DeterministicKey.deserializeB58(null, priv58, network), key1);
             assertEquals(DeterministicKey.deserializeB58(priv58, network), key1);
             assertEquals(DeterministicKey.deserializeB58(null, pub58, network).getPubKeyPoint(), key1.getPubKeyPoint());
