@@ -72,13 +72,7 @@ public final class LazyECPoint implements ECPublicKey {
      * @param point the wrapped point
      */
     LazyECPoint(java.security.spec.ECPoint point) {
-        this(toBouncy(point), true);
-    }
-
-    private static org.bouncycastle.math.ec.ECPoint toBouncy(java.security.spec.ECPoint point) {
-        return point == java.security.spec.ECPoint.POINT_INFINITY
-                ? curve.getInfinity()
-                : curve.createPoint(point.getAffineX(), point.getAffineY());
+        this(ECKey.toBCPoint(point), true);
     }
 
     /**
@@ -127,11 +121,7 @@ public final class LazyECPoint implements ECPublicKey {
     @Override
     public java.security.spec.ECPoint getW() {
         ECPoint bcPoint = get();
-        return bcPoint.isInfinity()
-                ? java.security.spec.ECPoint.POINT_INFINITY
-                : new java.security.spec.ECPoint(
-                    bcPoint.normalize().getAffineXCoord().toBigInteger(),
-                    bcPoint.normalize().getAffineYCoord().toBigInteger());
+        return ECKey.toJCPoint(bcPoint);
     }
 
     /**

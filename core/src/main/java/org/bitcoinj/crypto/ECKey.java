@@ -425,6 +425,30 @@ public class ECKey implements EncryptableItem {
         return new FixedPointCombMultiplier().multiply(CURVE.getG(), privKey);
     }
 
+    /**
+     * Convert a Bouncy Castle ECPoint to a Java Cryptography ECPoint. For internal use only.
+     * @param bcPoint A Bouncy Castle ECPoint
+     * @return a Java Cryptography ECPoint
+     */
+    static java.security.spec.ECPoint toJCPoint(ECPoint bcPoint) {
+        return bcPoint.isInfinity()
+                ? java.security.spec.ECPoint.POINT_INFINITY
+                : new java.security.spec.ECPoint(
+                    bcPoint.normalize().getAffineXCoord().toBigInteger(),
+                    bcPoint.normalize().getAffineYCoord().toBigInteger());
+    }
+
+    /**
+     * Convert a Java Cryptography ECPoint to a Bouncy Castle ECPoint. For internal use only.
+     * @param jcPoint a Java Cryptography ECPoint
+     * @return a Bouncy Castle ECPoint
+     */
+    static ECPoint toBCPoint(java.security.spec.ECPoint jcPoint) {
+        return jcPoint == java.security.spec.ECPoint.POINT_INFINITY
+                ? CURVE.getCurve().getInfinity()
+                : CURVE.getCurve().createPoint(jcPoint.getAffineX(), jcPoint.getAffineY());
+    }
+
     /** Gets the hash160 form of the public key (as seen in addresses). */
     public byte[] getPubKeyHash() {
         if (pubKeyHash == null)
