@@ -60,6 +60,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -599,10 +600,10 @@ public class ECKeyTest {
         ECKey.isPubKeyCompressed(ByteUtils.parseHex("0438746c59d46d5408bf8b1d0af5740fe1a6e1703fcb56b2953f0b965c740d256f"));
     }
 
-    private static boolean checkSomeBytesAreNonZero(byte @Nullable[] bytes) {
-        if (bytes == null) return false;
-        for (byte b : bytes) if (b != 0) return true;
-        return false;
+    private static void checkSomeBytesAreNonZero(byte[] bytes) {
+        assertNotNull(bytes);
+        for (byte b : bytes) if (b != 0) return;
+        fail("Expected non-zero bytes");
     }
 
     @Test
