@@ -22,7 +22,6 @@ import org.bitcoinj.base.Sha256Hash;
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 
-import org.bitcoinj.base.internal.HexFormat;
 import org.junit.Test;
 
 import org.bitcoinj.base.internal.ByteUtils;
