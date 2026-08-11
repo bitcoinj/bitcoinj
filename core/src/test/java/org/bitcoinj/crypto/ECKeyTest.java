@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.security.spec.ECField;
+import java.security.spec.ECFieldFp;
+import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
 import java.time.Instant;
 import java.util.Arrays;
@@ -623,6 +626,26 @@ public class ECKeyTest {
     static final ECPoint JC_INFINITY = ECPoint.POINT_INFINITY;
 
     @Test
+    public void testGetWRandomPoint() {
+        ECKey key = ECKey.random();
+        ECPoint jcPoint = key.getW();
+        org.bouncycastle.math.ec.ECPoint bcPoint = ECKey.toBCPoint(jcPoint);
+        assertEquals(key.getPubKeyPoint(), bcPoint);
+    }
+
+    @Test
+    public void testGetEncoded() {
+        // Java Cryptography encoding should be the same as Bouncy Castle
+        ECKey compressedKey = ECKey.random();
+        byte[] compressedEncoding = compressedKey.getEncoded();
+        assertArrayEquals(compressedKey.getPubKey(), compressedEncoding);
+
+        ECKey uncompressedKey = compressedKey.decompress();
+        byte[] uncompressedEncoding = uncompressedKey.getEncoded();
+        assertArrayEquals(uncompressedKey.getPubKey(), uncompressedEncoding);
+    }
+
+    @Test
     public void convertRandomPoint() {
         org.bouncycastle.math.ec.ECPoint bcPoint = ECKey.random().getPubKeyPoint();
         ECPoint jcPoint = ECKey.toJCPoint(bcPoint);
@@ -633,5 +656,18 @@ public class ECKeyTest {
     public void infinityConversionTest() {
         assertEquals(JC_INFINITY, ECKey.toJCPoint(BC_INFINITY));
         assertEquals(BC_INFINITY, ECKey.toBCPoint(JC_INFINITY));
+    }
+
+    @Test
+    public void testECPublicKeyInterface() {
+        ECKey key = ECKey.random();
+        assertEquals("Secp256k1", key.getAlgorithm());
+        assertEquals("SEC", key.getFormat());
+
+        ECParameterSpec spec = key.getParams();
+        ECField field = spec.getCurve().getField();
+        assertTrue(field instanceof ECFieldFp);
+        ECFieldFp fieldFp = (ECFieldFp) field;
+        assertEquals(Secp256k1Constants.P, fieldFp.getP());
     }
 }

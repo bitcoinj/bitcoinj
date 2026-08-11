@@ -16,11 +16,9 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.crypto.secp.Secp256k1Constants;
 import org.bouncycastle.math.ec.ECPoint;
 
 import org.jspecify.annotations.Nullable;
-import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -31,7 +29,7 @@ import java.util.Objects;
  * <p>
  * Apart from the lazy field {@link #point}, instances of this class are immutable.
  */
-public final class LazyECPoint implements ECPublicKey {
+public final class LazyECPoint {
     // `bits` will be `null` if `LazyECPoint` is constructed from an (already decoded) point
     // `bits` cannot be `null` if `point` is also `null`
     private final byte @Nullable [] bits;
@@ -95,40 +93,6 @@ public final class LazyECPoint implements ECPublicKey {
         return point;
     }
 
-    /**
-     * @return string representing the algorithm used with this key
-     */
-    @Override
-    public String getAlgorithm() {
-        return "Secp256k1";
-    }
-
-    /**
-     * @return string representing encoded format of this key
-     */
-    @Override
-    public String getFormat() {
-        return "SEC";
-    }
-
-    /**
-     * Convert from internal Bouncy Castle {@link ECPoint} to return
-     * a {@code java.security.spec.ECPoint}.
-     * @return Java Cryptography ECPoint instance
-     */
-    @Override
-    public java.security.spec.ECPoint getW() {
-        ECPoint bcPoint = get();
-        return ECKey.toJCPoint(bcPoint);
-    }
-
-    /**
-     * @return Java Cryptography type with Elliptic Curve parameters
-     */
-    @Override
-    public java.security.spec.ECParameterSpec getParams() {
-        return Secp256k1Constants.EC_PARAMS;
-    }
 
     public byte[] getEncoded() {
         if (bits != null)
