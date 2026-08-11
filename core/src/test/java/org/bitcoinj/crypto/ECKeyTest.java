@@ -504,7 +504,6 @@ public class ECKeyTest {
 
         checkSomeBytesAreNonZero(unencryptedKey.getPrivKeyBytes());
 
-        // The encryptedPrivateKey should be null in an unencrypted ECKey anyhow but check all the same.
         assertNull(unencryptedKey.getEncryptedPrivateKey());
 
         assertNull(encryptedKey.getSecretBytes());
