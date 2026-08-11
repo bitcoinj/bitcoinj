@@ -17,7 +17,6 @@
 package org.bitcoinj.crypto;
 
 import org.bitcoinj.crypto.secp.Secp256k1Constants;
-import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 
 import org.jspecify.annotations.Nullable;
@@ -33,9 +32,8 @@ import java.util.Objects;
  * Apart from the lazy field {@link #point}, instances of this class are immutable.
  */
 public final class LazyECPoint implements ECPublicKey {
-    private static final ECCurve curve = ECKey.ecDomainParameters().getCurve();
-
-    // bits will be null if LazyECPoint is constructed from an (already decoded) point
+    // `bits` will be `null` if `LazyECPoint` is constructed from an (already decoded) point
+    // `bits` cannot be `null` if `point` is also `null`
     private final byte @Nullable [] bits;
     private final boolean compressed;
 
@@ -93,7 +91,7 @@ public final class LazyECPoint implements ECPublicKey {
 
     public ECPoint get() {
         if (point == null)
-            point = curve.decodePoint(bits);
+            point = ECKey.decodeToBCPoint(Objects.requireNonNull(bits));
         return point;
     }
 
