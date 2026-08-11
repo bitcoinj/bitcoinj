@@ -643,14 +643,18 @@ public class ECKeyTest {
 
     @Test
     public void testECPublicKeyInterface() {
-        ECKey key = ECKey.random();
-        assertEquals("Secp256k1", key.getAlgorithm());
-        assertEquals("SEC", key.getFormat());
+        ECKey compressedKey = ECKey.random();
+        assertEquals("Secp256k1", compressedKey.getAlgorithm());
+        assertEquals("Compressed SEC", compressedKey.getFormat());
 
-        ECParameterSpec spec = key.getParams();
+        ECParameterSpec spec = compressedKey.getParams();
         ECField field = spec.getCurve().getField();
         assertTrue(field instanceof ECFieldFp);
         ECFieldFp fieldFp = (ECFieldFp) field;
         assertEquals(Secp256k1Constants.P, fieldFp.getP());
+
+        ECKey uncompressedKey = compressedKey.decompress();
+        assertEquals("Uncompressed SEC", uncompressedKey.getFormat());
+
     }
 }
