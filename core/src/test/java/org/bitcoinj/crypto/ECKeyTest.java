@@ -76,8 +76,8 @@ public class ECKeyTest {
     private KeyCrypter keyCrypter;
 
     private static final int SCRYPT_ITERATIONS = 256;
-    private static CharSequence PASSWORD1 = "my hovercraft has eels";
-    private static CharSequence WRONG_PASSWORD = "it is a snowy day today";
+    private static final CharSequence PASSWORD1 = "my hovercraft has eels";
+    private static final CharSequence WRONG_PASSWORD = "it is a snowy day today";
 
     @Before
     public void setUp() {
