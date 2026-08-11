@@ -508,7 +508,8 @@ public class ECKeyTest {
         assertNull(unencryptedKey.getEncryptedPrivateKey());
 
         assertNull(encryptedKey.getSecretBytes());
-        checkSomeBytesAreNonZero(Objects.requireNonNull(encryptedKey.getEncryptedPrivateKey()).encryptedBytes);
+        assertNotNull(encryptedKey.getEncryptedPrivateKey());
+        checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().encryptedBytes);
         checkSomeBytesAreNonZero(encryptedKey.getEncryptedPrivateKey().initialisationVector);
     }
 
