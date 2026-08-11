@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.security.spec.ECPoint;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -616,5 +617,21 @@ public class ECKeyTest {
         final byte[] bytes = new byte[33];
         bytes[0] = 42;
         ECKey.fromPrivate(bytes);
+    }
+
+    static final org.bouncycastle.math.ec.ECPoint BC_INFINITY = ECKey.ecDomainParameters().getCurve().getInfinity();
+    static final ECPoint JC_INFINITY = ECPoint.POINT_INFINITY;
+
+    @Test
+    public void convertRandomPoint() {
+        org.bouncycastle.math.ec.ECPoint bcPoint = ECKey.random().getPubKeyPoint();
+        ECPoint jcPoint = ECKey.toJCPoint(bcPoint);
+        assertEquals(bcPoint, ECKey.toBCPoint(jcPoint));
+    }
+
+    @Test
+    public void infinityConversionTest() {
+        assertEquals(JC_INFINITY, ECKey.toJCPoint(BC_INFINITY));
+        assertEquals(BC_INFINITY, ECKey.toBCPoint(JC_INFINITY));
     }
 }
