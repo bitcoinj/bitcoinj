@@ -100,11 +100,12 @@ public final class LazyECPoint {
         return compressed;
     }
 
-    private byte[] getEncodedInternal(boolean compressed) {
-        if (compressed == isCompressedInternal() && bits != null)
+    // Canonical encoding is compressed encoding
+    private byte[] getCanonicalEncoding() {
+        if (isCompressedInternal() && bits != null)
             return Arrays.copyOf(bits, bits.length);
         else
-            return get().getEncoded(compressed);
+            return get().getEncoded(true);
     }
 
     @Override
@@ -117,9 +118,5 @@ public final class LazyECPoint {
     @Override
     public int hashCode() {
         return Arrays.hashCode(getCanonicalEncoding());
-    }
-
-    private byte[] getCanonicalEncoding() {
-        return getEncodedInternal(true);
     }
 }
