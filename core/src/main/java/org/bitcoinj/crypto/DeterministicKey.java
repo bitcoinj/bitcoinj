@@ -577,7 +577,7 @@ public class DeterministicKey extends ECKey {
         // downCursor is now the same key as us, but with private key bytes.
         // If it's not, it means we tried decrypting with an invalid password and earlier checks e.g. for padding didn't
         // catch it.
-        if (!downCursor.pub.equals(pub))
+        if (!downCursor.getPubKeyPoint().equals(getPubKeyPoint()))
             throw new KeyCrypterException.PublicPrivateMismatch("Could not decrypt bytes");
         return Objects.requireNonNull(downCursor.priv);
     }
