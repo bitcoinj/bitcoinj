@@ -960,7 +960,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         EncryptedData data = new EncryptedData(proto.getInitialisationVector().toByteArray(),
                                 proto.getEncryptedPrivateKey().toByteArray());
                         Objects.requireNonNull(crypter, "Encountered an encrypted key but no key crypter provided");
-                        detkey = new DeterministicKey(path, chainCode, crypter, pubkey, data, parent);
+                        detkey = new DeterministicKey(path, chainCode, pubkey.get(), parent, data, crypter);
                     } else {
                         // No secret key bytes and key is not encrypted: either a watching key or private key bytes
                         // will be rederived on the fly from the parent.
