@@ -224,6 +224,15 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     /**
      * Construct an ECKey.
      * @param priv optional private key
+     * @param pub a serialized point
+     */
+    private ECKey(@Nullable BigInteger priv, byte[] pub) {
+        this(priv, decodeToBCPoint(pub), isPubKeyCompressed(pub));
+    }
+
+    /**
+     * Construct an ECKey.
+     * @param priv optional private key
      * @param pub a Bouncy Castle point
      * @param compressed whether to generate addresses using compressed serialization.
      */
@@ -314,7 +323,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     public static ECKey fromPrivateAndPrecalculatedPublic(byte[] priv, byte[] pub) {
         Objects.requireNonNull(priv);
         Objects.requireNonNull(pub);
-        return new ECKey(ByteUtils.bytesToBigInteger(priv), new LazyECPoint(pub));
+        return new ECKey(ByteUtils.bytesToBigInteger(priv), pub);
     }
 
     /**
@@ -330,7 +339,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * The compression state of pub will be preserved.
      */
     public static ECKey fromPublicOnly(byte[] pub) {
-        return new ECKey(null, new LazyECPoint(pub));
+        return new ECKey(null, pub);
     }
 
     public static ECKey fromPublicOnly(ECKey key) {
