@@ -100,8 +100,7 @@ public final class LazyECPoint {
         return compressed;
     }
 
-    // package-private
-    byte[] getEncodedInternal(boolean compressed) {
+    private byte[] getEncodedInternal(boolean compressed) {
         if (compressed == isCompressedInternal() && bits != null)
             return Arrays.copyOf(bits, bits.length);
         else
