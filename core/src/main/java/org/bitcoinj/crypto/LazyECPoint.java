@@ -63,15 +63,6 @@ public final class LazyECPoint {
     }
 
     /**
-     * Construct a LazyECPoint from a Java ECPoint.
-     *
-     * @param point the wrapped point
-     */
-    LazyECPoint(java.security.spec.ECPoint point) {
-        this(ECKey.toBCPoint(point), true);
-    }
-
-    /**
      * Returns a compressed version of this elliptic curve point. Returns the same point if it's already compressed.
      * See the {@link ECKey} class docs for a discussion of point compression.
      */
