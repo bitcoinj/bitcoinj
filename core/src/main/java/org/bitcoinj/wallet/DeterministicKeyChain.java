@@ -44,6 +44,7 @@ import org.bitcoinj.utils.ListenerRegistration;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.protobuf.wallet.Protos;
+import org.bouncycastle.math.ec.ECPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -903,7 +904,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     throw new UnreadableWalletException("Deterministic key missing extra data: " + key);
                 byte[] chainCode = key.getDeterministicKey().getChainCode().toByteArray();
                 // Deserialize the public key and path.
-                LazyECPoint pubkey = new LazyECPoint(key.getPublicKey().toByteArray());
+                ECPoint pubkey = ECKey.decodeToBCPoint(key.getPublicKey().toByteArray());
                 // Deserialize the path through the tree.
                 final HDPath.HDPartialPath path = HDPath.deserialize(key.getDeterministicKey().getPathList());
                 if (key.hasOutputScriptType())
@@ -960,7 +961,7 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                         EncryptedData data = new EncryptedData(proto.getInitialisationVector().toByteArray(),
                                 proto.getEncryptedPrivateKey().toByteArray());
                         Objects.requireNonNull(crypter, "Encountered an encrypted key but no key crypter provided");
-                        detkey = new DeterministicKey(path, chainCode, pubkey.get(), parent, data, crypter);
+                        detkey = new DeterministicKey(path, chainCode, pubkey, parent, data, crypter);
                     } else {
                         // No secret key bytes and key is not encrypted: either a watching key or private key bytes
                         // will be rederived on the fly from the parent.
