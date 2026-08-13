@@ -95,7 +95,8 @@ public class DeterministicKey extends ECKey {
                             boolean compressed,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(childNumberPath, chainCode, new LazyECPoint(publicAsPoint, compressed), priv, parent);
+        this(childNumberPath, chainCode, publicAsPoint, priv, parent);
+        checkArgument(compressed, () -> "pub must be compressed");
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
@@ -103,7 +104,7 @@ public class DeterministicKey extends ECKey {
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(priv, new LazyECPoint(ECKey.publicBCPointFromPrivate(priv), true), parent == null ? 0 : parent.depth + 1,
+        this(priv, ECKey.publicBCPointFromPrivate(priv), parent == null ? 0 : parent.depth + 1,
                 parent, parent != null ? parent.getFingerprint() : 0, chainCode, hdPath, null, null);
     }
 
@@ -188,7 +189,7 @@ public class DeterministicKey extends ECKey {
                             @Nullable DeterministicKey parent,
                             int depth,
                             int parentFingerprint) {
-        this(priv, new LazyECPoint(ECKey.publicBCPointFromPrivate(priv), true), depth, parent, parentFingerprint,
+        this(priv, ECKey.publicBCPointFromPrivate(priv), depth, parent, parentFingerprint,
                 chainCode, childNumberPath, null, null);
     }
 
