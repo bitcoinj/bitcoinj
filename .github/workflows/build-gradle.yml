@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
     env:
       # Use env variable to specify the JDK version to use for the `testMinJdk` Gradle option
-      MIN_JDK: ${{ matrix.os == 'macOS-15' && '11' || '8' }}
+      MIN_JDK: ${{ matrix.os == 'macOS-15' && '11' || '11' }}
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
       - name: Git checkout
