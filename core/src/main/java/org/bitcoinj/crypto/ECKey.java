@@ -250,7 +250,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         this(priv, Objects.requireNonNull(pub), true);
     }
 
-    protected ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
+    private ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
         if (priv != null) {
             checkArgument(priv.bitLength() <= 32 * 8, () ->
                     "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
