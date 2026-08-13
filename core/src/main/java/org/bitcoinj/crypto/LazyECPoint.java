@@ -29,6 +29,7 @@ import java.util.Objects;
  * <p>
  * Apart from the lazy field {@link #point}, instances of this class are immutable.
  */
+@Deprecated
 public final class LazyECPoint {
     // `bits` will be `null` if `LazyECPoint` is constructed from an (already decoded) point
     // `bits` cannot be `null` if `point` is also `null`
