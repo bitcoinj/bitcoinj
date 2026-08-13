@@ -220,7 +220,7 @@ public class ChildKeyDerivationTest {
         DeterministicKey pubkey3 = HDKeyDerivation.deriveChildKey(pubkey2, ChildNumber.ZERO);
         assertTrue(pubkey3.isPubKeyOnly());
         assertEquals(2, pubkey3.getDepth());
-        assertEquals(key3.getPubKeyPoint(), pubkey3.getPubKeyPoint());
+        assertEquals(key3.getW(), pubkey3.getW());
     }
 
     @Test
@@ -265,12 +265,12 @@ public class ChildKeyDerivationTest {
             assertArrayEquals(new byte[]{4, -120, -83, -28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, -68, 93, -104, -97, 31, -105, -18, 109, 112, 104, 45, -77, -77, 18, 85, -29, -120, 86, -113, 26, 48, -18, -79, -110, -6, -27, 87, 86, 24, 124, 99, 0, -96, -75, 47, 90, -49, 92, -74, 92, -128, -125, 23, 38, -10, 97, -66, -19, 50, -112, 30, -111, -57, -124, 118, -86, 126, -35, -4, -51, 19, 109, 67, 116}, priv);
             assertEquals(DeterministicKey.deserializeB58(null, priv58, network), key1);
             assertEquals(DeterministicKey.deserializeB58(priv58, network), key1);
-            assertEquals(DeterministicKey.deserializeB58(null, pub58, network).getPubKeyPoint(), key1.getPubKeyPoint());
-            assertEquals(DeterministicKey.deserializeB58(pub58, network).getPubKeyPoint(), key1.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserializeB58(null, pub58, network).getW(), key1.getW());
+            assertEquals(DeterministicKey.deserializeB58(pub58, network).getW(), key1.getW());
             assertEquals(DeterministicKey.deserialize(network, priv, null), key1);
             assertEquals(DeterministicKey.deserialize(network, priv), key1);
-            assertEquals(DeterministicKey.deserialize(network, pub, null).getPubKeyPoint(), key1.getPubKeyPoint());
-            assertEquals(DeterministicKey.deserialize(network, pub).getPubKeyPoint(), key1.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserialize(network, pub, null).getW(), key1.getW());
+            assertEquals(DeterministicKey.deserialize(network, pub).getW(), key1.getW());
         }
         {
             final String pub58 = key2.serializePubB58(network);
@@ -278,9 +278,9 @@ public class ChildKeyDerivationTest {
             final byte[] pub = key2.serialize(network, true);
             final byte[] priv = key2.serialize(network, false);
             assertEquals(DeterministicKey.deserializeB58(key1, priv58, network), key2);
-            assertEquals(DeterministicKey.deserializeB58(key1, pub58, network).getPubKeyPoint(), key2.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserializeB58(key1, pub58, network).getW(), key2.getW());
             assertEquals(DeterministicKey.deserialize(network, priv, key1), key2);
-            assertEquals(DeterministicKey.deserialize(network, pub, key1).getPubKeyPoint(), key2.getPubKeyPoint());
+            assertEquals(DeterministicKey.deserialize(network, pub, key1).getW(), key2.getW());
         }
     }
 
