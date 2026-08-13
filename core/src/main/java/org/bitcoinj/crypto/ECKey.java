@@ -159,7 +159,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
 
     // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
     @Nullable protected final BigInteger priv;  // A field element.
-    private final LazyECPoint pub;
+    private final ECPoint pub;
+    private final boolean compressed;
 
     // Creation time of the key, or null if the key was deserialized from a version that did
     // not have this field.
@@ -217,7 +218,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
         priv = privParams.getD();
-        pub = new LazyECPoint(pubParams.getQ(), true);
+        pub = pubParams.getQ();
+        compressed = true;
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
 
@@ -257,7 +259,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
             checkArgument(!priv.equals(BigInteger.ONE));
         }
         this.priv = priv;
-        this.pub = new LazyECPoint(Objects.requireNonNull(pub), compressed);
+        this.pub = Objects.requireNonNull(pub);
+        this.compressed = compressed;
     }
 
     /**
@@ -347,10 +350,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * never need this: it's for specialized scenarios or when backwards compatibility in encoded form is necessary.
      */
     public ECKey decompress() {
-        if (!pub.isCompressedInternal())
+        if (!this.isCompressed())
             return this;
         else
-            return new ECKey(priv, pub.get(), false);
+            return new ECKey(priv, pub, false);
     }
 
     /**
@@ -498,7 +501,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
 
     /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
     public ECPoint getPubKeyPoint() {
-        return pub.get();
+        return pub;
     }
 
     /**
@@ -517,7 +520,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * Returns whether this key is using the compressed form or not. Compressed pubkeys are only 33 bytes, not 64.
      */
     public boolean isCompressed() {
-        return pub.isCompressedInternal();
+        return compressed;
     }
 
     /**
