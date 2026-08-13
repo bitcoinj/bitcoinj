@@ -161,6 +161,26 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
+     * Convenience constructor that converts {@link LazyECPoint} to {@link ECPoint}.
+     * 
+     * @param priv                private key, or {@code null} if public key only
+     * @param pub                 public key, corresponding to private key (if present)
+     * @param depth               depth of this key in the path, {@code 0} means master key
+     * @param parent              parent deterministic key, or {@code null} if unknown or this is master key
+     * @param parentFingerprint   4 byte fingerprint of parent key, or {0} if parent unknown or this is master key
+     * @param chainCode           32 bytes of chain code
+     * @param hdPath              path leading up to this key
+     * @param encryptedPrivateKey private key in encrypted form
+     * @param keyCrypter          crypter to use for decrypting the private key
+     */
+    private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
+                             int parentFingerprint, byte[] chainCode, HDPath hdPath,
+                             @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
+        this(priv, pub.get(), depth, parent, parentFingerprint, chainCode,hdPath, encryptedPrivateKey, keyCrypter);
+        checkArgument(pub.isCompressedInternal(), () -> "pub must be compressed");
+    }
+
+    /**
      * Canonical constructor.
      * <p>
      * Note on keys with an unusually large depth: due to a restriction of the serialization format, keys with a depth
@@ -177,11 +197,10 @@ public class DeterministicKey extends ECKey {
      * @param encryptedPrivateKey private key in encrypted form
      * @param keyCrypter          crypter to use for decrypting the private key
      */
-    private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
+    private DeterministicKey(@Nullable BigInteger priv, ECPoint pub, int depth, @Nullable DeterministicKey parent,
                              int parentFingerprint, byte[] chainCode, HDPath hdPath,
                              @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
         super(priv, pub);
-        checkArgument(pub.isCompressedInternal(), () -> "pub must be compressed");
         checkArgument(chainCode.length == 32);
         checkArgument(priv == null || encryptedPrivateKey == null, () ->
                 "priv and encryptedPrivateKey can't be set together");
