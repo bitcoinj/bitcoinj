@@ -231,16 +231,6 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Construct an ECKey.
-     * @param priv optional private key
-     * @param pub a Bouncy Castle point
-     * @param compressed whether to generate addresses using compressed serialization.
-     */
-    private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
-        this(priv, new LazyECPoint(Objects.requireNonNull(pub), compressed));
-    }
-
-    /**
      * Construct a compressed ECKey. This constructor can be used for P2PWKH and HD keys that
      * always have addresses generated using compressed serialization.
      * @param priv optional private key
@@ -250,7 +240,13 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         this(priv, Objects.requireNonNull(pub), true);
     }
 
-    private ECKey(@Nullable BigInteger priv, LazyECPoint pub) {
+    /**
+     * ECKey canonical constructor.
+     * @param priv optional private key
+     * @param pub a Bouncy Castle point
+     * @param compressed whether to generate addresses using compressed serialization.
+     */
+    private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
         if (priv != null) {
             checkArgument(priv.bitLength() <= 32 * 8, () ->
                     "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
@@ -261,7 +257,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
             checkArgument(!priv.equals(BigInteger.ONE));
         }
         this.priv = priv;
-        this.pub = Objects.requireNonNull(pub);
+        this.pub = new LazyECPoint(Objects.requireNonNull(pub), compressed);
     }
 
     /**
