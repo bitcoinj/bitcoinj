@@ -65,7 +65,11 @@ public class DeterministicKey extends ECKey {
     /** 32 bytes */
     private final byte[] chainCode;
 
-    /** Constructs a key from its components. This is not normally something you should use. */
+    /**
+     * Constructs a key from its components. This is not normally something you should use.
+     * @deprecated Use {@link DeterministicKey#DeterministicKey(HDPath.HDPartialPath, byte[], ECPoint, BigInteger, DeterministicKey)}
+     */
+    @Deprecated
     public DeterministicKey(HDPath.HDPartialPath childNumberPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
@@ -85,7 +89,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * @deprecated Uncompressed points aren't allowed. Use {@link DeterministicKey#DeterministicKey(HDPath.HDPartialPath, byte[], LazyECPoint, BigInteger, DeterministicKey)}.
+     * @deprecated Uncompressed points aren't allowed. Use {@link DeterministicKey#DeterministicKey(HDPath.HDPartialPath, byte[], ECPoint, BigInteger, DeterministicKey)}.
      */
     @Deprecated
     public DeterministicKey(HDPath.HDPartialPath childNumberPath,
@@ -152,7 +156,9 @@ public class DeterministicKey extends ECKey {
      * Constructs a key from its components, including its public key data and possibly-redundant
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
+     * @deprecated Use {@link DeterministicKey#DeterministicKey(HDPath, byte[], ECPoint, DeterministicKey, int, int)}
      */
+    @Deprecated
     public DeterministicKey(HDPath childNumberPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
