@@ -160,7 +160,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
-    @Nullable protected final BigInteger priv;  // A field element.
+    @Nullable private final BigInteger priv;  // A field element.
     private final ECPoint pub;
     private final boolean compressed;
 
@@ -368,6 +368,15 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         key.encryptedPrivateKey = Objects.requireNonNull(encryptedPrivateKey);
         key.keyCrypter = Objects.requireNonNull(crypter);
         return key;
+    }
+
+    /**
+     * Get nullable private key as {@link BigInteger}. Similar to
+     * {@link java.security.interfaces.ECPrivateKey#getS()}, but return null if private key is not available.
+     * @return private key or {@code null} if not available
+     */
+    protected @Nullable BigInteger getNullableS() {
+        return priv;
     }
 
     /**

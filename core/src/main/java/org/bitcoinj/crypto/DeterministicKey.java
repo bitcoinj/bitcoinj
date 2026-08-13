@@ -201,7 +201,7 @@ public class DeterministicKey extends ECKey {
     /** @deprecated use {@link #withParent(DeterministicKey)} */
     @Deprecated
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
-        this(keyToClone.priv, keyToClone.getPubKeyPoint(), keyToClone.childNumberPath.size(), newParent,
+        this(keyToClone.getNullableS(), keyToClone.getPubKeyPoint(), keyToClone.childNumberPath.size(), newParent,
                 newParent.getFingerprint(), keyToClone.chainCode, keyToClone.childNumberPath, null, null);
     }
 
@@ -343,7 +343,7 @@ public class DeterministicKey extends ECKey {
      * @return this key without private key
      */
     public DeterministicKey withoutPrivateKey() {
-        return priv == null && encryptedPrivateKey == null && keyCrypter == null ?
+        return !super.hasPrivKey() && encryptedPrivateKey == null && keyCrypter == null ?
                 this :
                 new DeterministicKey(null, getPubKeyPoint(), depth, parent, parentFingerprint, chainCode, childNumberPath,
                         null, null);
@@ -364,7 +364,7 @@ public class DeterministicKey extends ECKey {
      */
     public DeterministicKey withParent(DeterministicKey parent) {
         Objects.requireNonNull(parent);
-        return new DeterministicKey(this.priv, this.getPubKeyPoint(), parent.getDepth() + 1, parent, parent.getFingerprint(),
+        return new DeterministicKey(this.getNullableS(), this.getPubKeyPoint(), parent.getDepth() + 1, parent, parent.getFingerprint(),
                 this.chainCode, this.childNumberPath, this.encryptedPrivateKey, this.keyCrypter);
     }
 
@@ -379,7 +379,7 @@ public class DeterministicKey extends ECKey {
      * @return this key without parent pointer
      */
     public DeterministicKey withoutParent() {
-        return new DeterministicKey(priv, getPubKeyPoint(), depth, null, parentFingerprint, chainCode, childNumberPath,
+        return new DeterministicKey(getNullableS(), getPubKeyPoint(), depth, null, parentFingerprint, chainCode, childNumberPath,
                 encryptedPrivateKey, keyCrypter);
     }
 
@@ -438,7 +438,7 @@ public class DeterministicKey extends ECKey {
 
     @Override
     public byte @Nullable [] getSecretBytes() {
-        return priv != null ? getPrivKeyBytes() : null;
+        return super.hasPrivKey() ? getPrivKeyBytes() : null;
     }
 
     /**
@@ -448,7 +448,7 @@ public class DeterministicKey extends ECKey {
      */
     @Override
     public boolean isEncrypted() {
-        return priv == null && (super.isEncrypted() || (parent != null && parent.isEncrypted()));
+        return !super.hasPrivKey() && (super.isEncrypted() || (parent != null && parent.isEncrypted()));
     }
 
     /**
@@ -537,7 +537,7 @@ public class DeterministicKey extends ECKey {
     private DeterministicKey findParentWithPrivKey() {
         DeterministicKey cursor = this;
         while (cursor != null) {
-            if (cursor.priv != null) break;
+            if (cursor.getNullableS() != null) break;
             cursor = cursor.parent;
         }
         return cursor;
@@ -546,9 +546,9 @@ public class DeterministicKey extends ECKey {
     @Nullable
     private BigInteger findOrDerivePrivateKey() {
         DeterministicKey cursor = findParentWithPrivKey();
-        if (cursor == null || cursor.priv == null)
+        if (cursor == null || cursor.getNullableS() == null)
             return null;
-        return derivePrivateKeyDownwards(cursor, cursor.priv);
+        return derivePrivateKeyDownwards(cursor, cursor.getNullableS());
     }
 
     private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, BigInteger parentalPrivateKey) {
@@ -565,7 +565,7 @@ public class DeterministicKey extends ECKey {
         // catch it.
         if (!downCursor.getPubKeyPoint().equals(getPubKeyPoint()))
             throw new KeyCrypterException.PublicPrivateMismatch("Could not decrypt bytes");
-        return Objects.requireNonNull(downCursor.priv);
+        return Objects.requireNonNull(downCursor.getNullableS());
     }
 
     /**
