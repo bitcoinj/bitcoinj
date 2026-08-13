@@ -71,8 +71,7 @@ public class DeterministicKey extends ECKey {
                             LazyECPoint publicAsPoint,
                             @Nullable BigInteger priv,
                             @Nullable DeterministicKey parent) {
-        this(priv, publicAsPoint.compress(), parent == null ? 0 : parent.depth + 1, parent,
-                parent != null ? parent.getFingerprint() : 0, chainCode, childNumberPath, null, null);
+        this(childNumberPath, chainCode, publicAsPoint.get(), priv, parent);
     }
 
     /** Constructs a key from its components. This is not normally something you should use. */
@@ -198,26 +197,6 @@ public class DeterministicKey extends ECKey {
     public DeterministicKey(DeterministicKey keyToClone, DeterministicKey newParent) {
         this(keyToClone.priv, keyToClone.getPubKeyPoint(), keyToClone.childNumberPath.size(), newParent,
                 newParent.getFingerprint(), keyToClone.chainCode, keyToClone.childNumberPath, null, null);
-    }
-
-    /**
-     * Convenience constructor that converts {@link LazyECPoint} to {@link ECPoint}.
-     * 
-     * @param priv                private key, or {@code null} if public key only
-     * @param pub                 public key, corresponding to private key (if present)
-     * @param depth               depth of this key in the path, {@code 0} means master key
-     * @param parent              parent deterministic key, or {@code null} if unknown or this is master key
-     * @param parentFingerprint   4 byte fingerprint of parent key, or {0} if parent unknown or this is master key
-     * @param chainCode           32 bytes of chain code
-     * @param hdPath              path leading up to this key
-     * @param encryptedPrivateKey private key in encrypted form
-     * @param keyCrypter          crypter to use for decrypting the private key
-     */
-    private DeterministicKey(@Nullable BigInteger priv, LazyECPoint pub, int depth, @Nullable DeterministicKey parent,
-                             int parentFingerprint, byte[] chainCode, HDPath hdPath,
-                             @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
-        this(priv, pub.get(), depth, parent, parentFingerprint, chainCode,hdPath, encryptedPrivateKey, keyCrypter);
-        checkArgument(pub.isCompressedInternal(), () -> "pub must be compressed");
     }
 
     /**
