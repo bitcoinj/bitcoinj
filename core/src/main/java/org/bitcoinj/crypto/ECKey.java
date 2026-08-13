@@ -481,7 +481,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param pubBytes serialized public key (compressed or uncompressed)
      * @return a Bouncy Castle ECPoint
      */
-    static ECPoint decodeToBCPoint(byte[] pubBytes) {
+    public static ECPoint decodeToBCPoint(byte[] pubBytes) {
         return CURVE.getCurve().decodePoint(pubBytes);
     }
 
