@@ -239,7 +239,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param pub a serialized point
      */
     private ECKey(@Nullable BigInteger priv, byte[] pub) {
-        this(priv, decodeToBCPoint(pub), isPubKeyCompressed(pub));
+        this(priv != null ? SecpPrivKey.of(priv) : null, decodeToBCPoint(pub), isPubKeyCompressed(pub));
     }
 
     /**
@@ -249,6 +249,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param pub a Bouncy Castle point
      */
     protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
+        this(priv != null ? SecpPrivKey.of(priv) : null, Objects.requireNonNull(pub), true);
+    }
+
+    protected ECKey(@Nullable SecpPrivKey priv, ECPoint pub) {
         this(priv, Objects.requireNonNull(pub), true);
     }
 
@@ -258,17 +262,12 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param pub a Bouncy Castle point
      * @param compressed whether to generate addresses using compressed serialization.
      */
-    private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
+    private ECKey(@Nullable SecpPrivKey priv, ECPoint pub, boolean compressed) {
         if (priv != null) {
-            checkArgument(priv.bitLength() <= 32 * 8, () ->
-                    "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
-            // Try and catch buggy callers or bad key imports, etc. Zero and one are special because these are often
-            // used as sentinel values and because scripting languages have a habit of auto-casting true and false to
-            // 1 and 0 or vice-versa. Type confusion bugs could therefore result in private keys with these values.
-            checkArgument(!priv.equals(BigInteger.ZERO));
-            checkArgument(!priv.equals(BigInteger.ONE));
+            // checkArgument(!priv.equals(BigInteger.ZERO));
+            // checkArgument(!priv.equals(BigInteger.ONE));
         }
-        this.privKey = priv != null ? SecpPrivKey.of(priv) : null;
+        this.privKey = priv;
         this.pubKey = new SecpPubKeyImpl(ECKey.toJCPoint(Objects.requireNonNull(pub)));
         this.compressed = compressed;
     }
@@ -295,7 +294,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      */
     public static ECKey fromPrivate(BigInteger privKey, boolean compressed) {
         ECPoint point = publicBCPointFromPrivate(privKey);
-        return new ECKey(privKey, point, compressed);
+        return new ECKey(SecpPrivKey.of(privKey), point, compressed);
     }
 
     /**
@@ -321,7 +320,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param compressed Determines whether the resulting ECKey will use a compressed encoding for the public key.
      */
     public static ECKey fromPrivateAndPrecalculatedPublic(BigInteger priv, ECPoint pub, boolean compressed) {
-        return new ECKey(priv, pub, compressed);
+        return new ECKey(SecpPrivKey.of(priv), pub, compressed);
     }
 
     /**
@@ -355,6 +354,11 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         return fromPublicOnly(key.getPubKeyPoint(), key.isCompressed());
     }
 
+    @Nullable
+    protected SecpPrivKey getSecpPrivKey() {
+        return privKey;
+    }
+
     // Nullable access (non-throwing) to private key as BigInteger
     @Nullable protected BigInteger getNullableS() {
         return (privKey != null) ? privKey.getS() : null;
@@ -368,7 +372,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         if (!this.isCompressed())
             return this;
         else
-            return new ECKey(getNullableS(), getPubKeyPoint(), false);
+            return new ECKey(getSecpPrivKey(), getPubKeyPoint(), false);
     }
 
     /**
