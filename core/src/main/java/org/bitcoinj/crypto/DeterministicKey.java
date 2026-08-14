@@ -530,7 +530,7 @@ public class DeterministicKey extends ECKey {
         if (parentalPrivateKeyBytes.length != 32)
             throw new KeyCrypterException.InvalidCipherText(
                     "Decrypted key must be 32 bytes long, but is " + parentalPrivateKeyBytes.length);
-        return derivePrivateKeyDownwards(cursor, parentalPrivateKeyBytes);
+        return derivePrivateKeyDownwards(cursor, ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes));
     }
 
     @Nullable
@@ -548,12 +548,12 @@ public class DeterministicKey extends ECKey {
         DeterministicKey cursor = findParentWithPrivKey();
         if (cursor == null || cursor.priv == null)
             return null;
-        return derivePrivateKeyDownwards(cursor, cursor.priv.toByteArray());
+        return derivePrivateKeyDownwards(cursor, cursor.priv);
     }
 
-    private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, byte[] parentalPrivateKeyBytes) {
+    private BigInteger derivePrivateKeyDownwards(DeterministicKey cursor, BigInteger parentalPrivateKey) {
         DeterministicKey downCursor = new DeterministicKey(cursor.childNumberPath, cursor.chainCode,
-                cursor.getPubKeyPoint(), ByteUtils.bytesToBigInteger(parentalPrivateKeyBytes), cursor.parent);
+                cursor.getPubKeyPoint(), parentalPrivateKey, cursor.parent);
         // Now we have to re-derive the keys along the path back to ourselves. That path can be found by just truncating
         // our path with the length of the parent's path.
         List<ChildNumber> path = childNumberPath.list().subList(cursor.getPath().size(), childNumberPath.size());
