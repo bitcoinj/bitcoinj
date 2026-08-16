@@ -62,6 +62,7 @@ import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
 import org.bouncycastle.math.ec.FixedPointUtil;
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Curve;
+import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -399,7 +400,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      */
     public byte[] toASN1() {
         try {
-            byte[] privKeyBytes = getPrivKeyBytes();
+            byte[] privKeyBytes = new byte[32];
+            BigIntegers.asUnsignedByteArray(getPrivKey(), privKeyBytes, 0, privKeyBytes.length);
             // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
             //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
             //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
