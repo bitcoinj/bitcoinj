@@ -32,6 +32,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bitcoinj.wallet.Wallet;
+import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1OctetString;
@@ -40,6 +41,7 @@ import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.BERTags;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERSequenceGenerator;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.DLSequence;
@@ -594,13 +596,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
          */
         public byte[] encodeToDER() {
             try {
-                // Usually 70-72 bytes.
-                ByteArrayOutputStream bos = new ByteArrayOutputStream(72);
-                DERSequenceGenerator seq = new DERSequenceGenerator(bos);
-                seq.addObject(new ASN1Integer(r));
-                seq.addObject(new ASN1Integer(s));
-                seq.close();
-                return bos.toByteArray();
+                return new DERSequence(new ASN1Integer(r), new ASN1Integer(s)).getEncoded(ASN1Encoding.DER);
             } catch (IOException e) {
                 throw new RuntimeException(e);  // Cannot happen.
             }
