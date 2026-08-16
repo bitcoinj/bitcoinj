@@ -32,6 +32,7 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bitcoinj.wallet.Wallet;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -42,7 +43,6 @@ import org.bouncycastle.asn1.BERTags;
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERSequenceGenerator;
 import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -400,21 +400,18 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     public byte[] toASN1() {
         try {
             byte[] privKeyBytes = getPrivKeyBytes();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(400);
-
             // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
             //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
             //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
             //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
             //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
             // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
-            DERSequenceGenerator seq = new DERSequenceGenerator(baos);
-            seq.addObject(new ASN1Integer(1)); // version
-            seq.addObject(new DEROctetString(privKeyBytes));
-            seq.addObject(new DERTaggedObject(0, CURVE_PARAMS.toASN1Primitive()));
-            seq.addObject(new DERTaggedObject(1, new DERBitString(getPubKey())));
-            seq.close();
-            return baos.toByteArray();
+            return new DERSequence(new ASN1Encodable[] {
+                    new ASN1Integer(1),   // version
+                    new DEROctetString(privKeyBytes),
+                    new DERTaggedObject(0, CURVE_PARAMS.toASN1Primitive()),
+                    new DERTaggedObject(1, new DERBitString(getPubKey()))}
+            ).getEncoded(ASN1Encoding.DER);
         } catch (IOException e) {
             throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
         }
