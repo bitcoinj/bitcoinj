@@ -817,11 +817,12 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
         //
         try {
-            ASN1InputStream decoder = new ASN1InputStream(asn1privkey);
-            DLSequence seq = (DLSequence) decoder.readObject();
-            checkArgument(decoder.readObject() == null, () ->
-                    "input contains extra bytes");
-            decoder.close();
+            final DLSequence seq;
+            try (ASN1InputStream decoder = new ASN1InputStream(asn1privkey)) {
+                seq = (DLSequence) decoder.readObject();
+                checkArgument(decoder.readObject() == null, () ->
+                        "input contains extra bytes");
+            }
 
             checkArgument(seq.size() == 4, () ->
                     "input does not appear to be an ASN.1 OpenSSL EC private key");
