@@ -20,9 +20,8 @@ import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.core.VerificationException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 
@@ -148,13 +147,10 @@ public class TransactionSignature extends ECKey.ECDSASignature {
      * components into a structure, and then we append a byte to the end for the sighash flags.
      */
     public byte[] encodeToBitcoin() {
-        try {
-            ByteArrayOutputStream bos = derByteStream();
-            bos.write(sighashFlags);
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        byte[] derSignature = encodeToDER();
+        byte[] bitcoinSignature = Arrays.copyOf(derSignature, derSignature.length + 1);
+        bitcoinSignature[bitcoinSignature.length - 1] = (byte) sighashFlags;
+        return bitcoinSignature;
     }
 
     @Override
