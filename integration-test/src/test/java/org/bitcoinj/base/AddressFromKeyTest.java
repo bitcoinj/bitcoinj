@@ -18,6 +18,8 @@ package org.bitcoinj.base;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bitcoinj.crypto.ECKey;
+import org.bitcoinj.secp.Secp256k1;
+import org.bitcoinj.secp.SecpPubKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -66,6 +68,21 @@ public class AddressFromKeyTest {
         assertTrue(address instanceof SegwitAddress);
         assertEquals(0, ((SegwitAddress) address).getWitnessVersion());
         assertEquals(ADDRESS, address);
+    }
+
+    /**
+     * Test with the secp256k1-jdk implementation of ECPublicKey
+     */
+    @Test
+    public void testAddressFromSecpJdkKey() {
+        try (Secp256k1 secp = Secp256k1.getById(Secp256k1.ProviderId.BOUNCY_CASTLE)) {
+            SecpPubKey key = secp.ecPubKeyParse(PUBKEY).get();
+            Address address = Address.fromKey(key, ScriptType.P2WPKH, TESTNET);
+
+            assertTrue(address instanceof SegwitAddress);
+            assertEquals(0, ((SegwitAddress) address).getWitnessVersion());
+            assertEquals(ADDRESS, address);
+        }
     }
 
     /**
