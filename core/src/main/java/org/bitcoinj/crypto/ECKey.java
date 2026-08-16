@@ -604,13 +604,14 @@ public class ECKey implements EncryptableItem, ECPublicKey {
          * @throws SignatureDecodeException if the signature is unparseable in some way.
          */
         public static ECDSASignature decodeFromDER(byte[] bytes) throws SignatureDecodeException {
-            ASN1InputStream decoder = null;
             try {
                 // BouncyCastle by default is strict about parsing ASN.1 integers. We relax this check, because some
                 // Bitcoin signatures would not parse.
                 Properties.setThreadOverride("org.bouncycastle.asn1.allow_unsafe_integer", true);
-                decoder = new ASN1InputStream(bytes);
-                final ASN1Primitive seqObj = decoder.readObject();
+                final ASN1Primitive seqObj;
+                try (ASN1InputStream decoder = new ASN1InputStream(bytes)) {
+                    seqObj = decoder.readObject();
+                }
                 if (seqObj == null)
                     throw new SignatureDecodeException("Reached past end of ASN.1 stream.");
                 if (!(seqObj instanceof DLSequence))
@@ -629,8 +630,6 @@ public class ECKey implements EncryptableItem, ECPublicKey {
             } catch (IOException e) {
                 throw new SignatureDecodeException(e);
             } finally {
-                if (decoder != null)
-                    try { decoder.close(); } catch (IOException x) {}
                 Properties.removeThreadOverride("org.bouncycastle.asn1.allow_unsafe_integer");
             }
         }
