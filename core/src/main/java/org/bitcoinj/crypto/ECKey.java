@@ -31,6 +31,14 @@ import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.Secp256k1Constants;
+import org.bitcoinj.secp.EcdsaSignature;
+import org.bitcoinj.secp.Secp256k1;
+import org.bitcoinj.secp.SecpPrivKey;
+import org.bitcoinj.secp.SecpPubKey;
+import org.bitcoinj.secp.internal.EcdsaSignatureImpl;
+import org.bitcoinj.secp.internal.SecpPrivKeyImpl;
+import org.bitcoinj.secp.internal.SecpPubKeyImpl;
+import org.bitcoinj.secp.internal.SecpScalarImpl;
 import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Encoding;
@@ -48,15 +56,12 @@ import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.math.ec.FixedPointCombMultiplier;
@@ -132,6 +137,9 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     /** The parameters of the secp256k1 curve that Bitcoin uses. */
     private static final ECDomainParameters CURVE;
 
+    /** The secp256k1-jdk provider to use (hard-coded for now) */
+    private static final Secp256k1.ProviderId SECP_PROVIDER_ID = Secp256k1.ProviderId.BOUNCY_CASTLE;
+
     /**
      * Return EC parameters for the SECP256K1 curve, in a Bouncy Castle type.
      * Note that we are migrating to using the built-in JDK types for EC parameters,
@@ -160,8 +168,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     // The two parts of the key. If "pub" is set but not "priv", we can only verify signatures, not make them.
-    @Nullable protected final BigInteger priv;  // A field element.
-    private final ECPoint pub;
+    @Nullable private final SecpPrivKey privKey;
+    private final SecpPubKey pubKey;
     private final boolean compressed;
 
     // Creation time of the key, or null if the key was deserialized from a version that did
@@ -219,8 +227,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         AsymmetricCipherKeyPair keypair = generator.generateKeyPair();
         ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
         ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
-        priv = privParams.getD();
-        pub = pubParams.getQ();
+        privKey = SecpPrivKey.of(privParams.getD());
+        pubKey = new SecpPubKeyImpl(ECKey.toJCPoint(pubParams.getQ()));
         compressed = true;
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
     }
@@ -260,8 +268,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
             checkArgument(!priv.equals(BigInteger.ZERO));
             checkArgument(!priv.equals(BigInteger.ONE));
         }
-        this.priv = priv;
-        this.pub = Objects.requireNonNull(pub);
+        this.privKey = priv != null ? SecpPrivKey.of(priv) : null;
+        this.pubKey = new SecpPubKeyImpl(ECKey.toJCPoint(Objects.requireNonNull(pub)));
         this.compressed = compressed;
     }
 
@@ -347,6 +355,11 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         return fromPublicOnly(key.getPubKeyPoint(), key.isCompressed());
     }
 
+    // Nullable access (non-throwing) to private key as BigInteger
+    @Nullable protected BigInteger getNullableS() {
+        return (privKey != null) ? privKey.getS() : null;
+    }
+
     /**
      * Returns a copy of this key, but with the public point represented in uncompressed form. Normally you would
      * never need this: it's for specialized scenarios or when backwards compatibility in encoded form is necessary.
@@ -355,7 +368,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         if (!this.isCompressed())
             return this;
         else
-            return new ECKey(priv, pub, false);
+            return new ECKey(getNullableS(), getPubKeyPoint(), false);
     }
 
     /**
@@ -376,7 +389,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * {@link #isEncrypted()} to tell the cases apart.
      */
     public boolean isPubKeyOnly() {
-        return priv == null;
+        return privKey == null;
     }
 
     /**
@@ -384,7 +397,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * {@link #isPubKeyOnly()}.
      */
     public boolean hasPrivKey() {
-        return priv != null;
+        return privKey != null;
     }
 
     /** Returns true if this key is watch only, meaning it has a public key but no private key. */
@@ -500,7 +513,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
 
     /** Gets the public key in the form of an elliptic curve point object from Bouncy Castle. */
     public ECPoint getPubKeyPoint() {
-        return pub;
+        return ECKey.toBCPoint(pubKey.toECPoint());
     }
 
     /**
@@ -510,9 +523,9 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @throws java.lang.IllegalStateException if the private key bytes are not available.
      */
     public BigInteger getPrivKey() {
-        if (priv == null)
+        if (privKey == null)
             throw new MissingPrivateKeyException();
-        return priv;
+        return Objects.requireNonNull(getNullableS());
     }
 
     /**
@@ -685,19 +698,22 @@ public class ECKey implements EncryptableItem, ECPublicKey {
             return decrypt(aesKey).sign(input);
         } else {
             // No decryption of private key required.
-            if (priv == null)
+            if (privKey == null)
                 throw new MissingPrivateKeyException();
         }
-        return doSign(input, priv);
+        return doSign(input, privKey);
     }
 
     protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
+        return doSign(input, new SecpPrivKeyImpl(privateKeyForSigning));
+    }
+
+    protected ECDSASignature doSign(Sha256Hash input, SecpPrivKey privateKeyForSigning) {
         Objects.requireNonNull(privateKeyForSigning);
-        ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
-        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters(privateKeyForSigning, CURVE);
-        signer.init(true, privKey);
-        BigInteger[] components = signer.generateSignature(input.getBytes());
-        return new ECDSASignature(components[0], components[1]).toCanonicalised();
+        try (Secp256k1 secp = Secp256k1.getById(SECP_PROVIDER_ID)) {
+            EcdsaSignature secpSig = secp.ecdsaSign(input.getBytes(), privateKeyForSigning).get();
+            return new ECDSASignature(secpSig.r().toBigInteger(), secpSig.s().toBigInteger());
+        }
     }
 
     /**
@@ -708,17 +724,20 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
-        ECDSASigner signer = new ECDSASigner();
-        ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE.getCurve().decodePoint(pub), CURVE);
-        signer.init(false, params);
-        try {
-            return signer.verifySignature(data, signature.r, signature.s);
-        } catch (NullPointerException e) {
-            // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those signatures
-            // are inherently invalid/attack sigs so we just fail them here rather than crash the thread.
-            log.error("Caught NPE inside bouncy castle", e);
-            return false;
+        SecpScalarImpl r = new SecpScalarImpl(signature.r);
+        SecpScalarImpl s = new SecpScalarImpl(signature.s);
+        EcdsaSignature sig = new EcdsaSignatureImpl(r, s);
+        return verify(data, sig, toSecpPubKey(pub));
+    }
+
+    public static boolean verify(byte[] data, EcdsaSignature signature, SecpPubKey pubKey) {
+        try (Secp256k1 secp = Secp256k1.getById(SECP_PROVIDER_ID)) {
+            return secp.ecdsaVerify(signature, data, pubKey).get();
         }
+    }
+
+    public static boolean verify(byte[] data, byte[] signature, SecpPubKey pubKey) throws SignatureDecodeException {
+        return verify(data, toSecpSignature(ECDSASignature.decodeFromDER(signature)), pubKey);
     }
 
     /**
@@ -730,7 +749,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) throws SignatureDecodeException {
-        return verify(data, ECDSASignature.decodeFromDER(signature), pub);
+        return verify(data, toSecpSignature(ECDSASignature.decodeFromDER(signature)), toSecpPubKey(pub));
     }
 
     /**
@@ -741,7 +760,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
     public boolean verify(byte[] hash, byte[] signature) throws SignatureDecodeException {
-        return ECKey.verify(hash, signature, getPubKey());
+        return ECKey.verify(hash, signature, this.pubKey);
     }
 
     /**
@@ -749,6 +768,20 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      */
     public boolean verify(Sha256Hash sigHash, ECDSASignature signature) {
         return ECKey.verify(sigHash.getBytes(), signature, getPubKey());
+    }
+
+    private static SecpPubKey toSecpPubKey(ECPoint bcPoint) {
+        return new SecpPubKeyImpl(toJCPoint(bcPoint));
+    }
+
+    private static SecpPubKey toSecpPubKey(byte[] pub) {
+        return toSecpPubKey(ECKey.decodeToBCPoint(pub));
+    }
+
+    private static EcdsaSignature toSecpSignature(ECDSASignature signature) {
+        SecpScalarImpl r = new SecpScalarImpl(signature.r);
+        SecpScalarImpl s = new SecpScalarImpl(signature.s);
+        return new EcdsaSignatureImpl(r, s);
     }
 
     /**
@@ -992,7 +1025,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         byte recId = -1;
         for (byte i = 0; i < 4; i++) {
             ECKey k = ECKey.recoverFromSignature(i, sig, hash, isCompressed());
-            if (k != null && k.pub.equals(pub)) {
+            if (k != null && k.pubKey.getW().equals(pubKey.getW())) {
                 recId = i;
                 break;
             }
@@ -1353,8 +1386,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         if (this == o) return true;
         if (o == null || !(o instanceof ECKey)) return false;
         ECKey other = (ECKey) o;
-        return Objects.equals(this.priv, other.priv)
-                && Objects.equals(this.pub, other.pub)
+        return Objects.equals(privKey != null ? privKey.getS() : null, (other.privKey != null) ? other.privKey.getS() : null)
+                && Objects.equals(this.pubKey.getW(), other.pubKey.getW())
                 && Objects.equals(this.creationTime, other.creationTime)
                 && Objects.equals(this.keyCrypter, other.keyCrypter)
                 && Objects.equals(this.encryptedPrivateKey, other.encryptedPrivateKey);
@@ -1362,7 +1395,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
 
     @Override
     public int hashCode() {
-        return pub.hashCode();
+        return pubKey.toECPoint().hashCode();
     }
 
     @Override
