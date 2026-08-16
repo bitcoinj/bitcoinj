@@ -594,7 +594,13 @@ public class ECKey implements EncryptableItem, ECPublicKey {
          */
         public byte[] encodeToDER() {
             try {
-                return derByteStream().toByteArray();
+                // Usually 70-72 bytes.
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(72);
+                DERSequenceGenerator seq = new DERSequenceGenerator(bos);
+                seq.addObject(new ASN1Integer(r));
+                seq.addObject(new ASN1Integer(s));
+                seq.close();
+                return bos.toByteArray();
             } catch (IOException e) {
                 throw new RuntimeException(e);  // Cannot happen.
             }
@@ -634,13 +640,13 @@ public class ECKey implements EncryptableItem, ECPublicKey {
             }
         }
 
+        /**
+         * @deprecated Use {@link #encodeToDER()}}
+         */
+        @Deprecated
         protected ByteArrayOutputStream derByteStream() throws IOException {
-            // Usually 70-72 bytes.
             ByteArrayOutputStream bos = new ByteArrayOutputStream(72);
-            DERSequenceGenerator seq = new DERSequenceGenerator(bos);
-            seq.addObject(new ASN1Integer(r));
-            seq.addObject(new ASN1Integer(s));
-            seq.close();
+            bos.write(encodeToDER());
             return bos;
         }
 
