@@ -235,6 +235,24 @@ public class HDPathTest {
             new PathVector (
                 "1 / 2 / 3 /",
                 HDPath.partial(new ChildNumber(1, false), new ChildNumber(2, false), new ChildNumber(3, false))
+            ),
+
+            // apostrophe notation
+            new PathVector (
+                "m/44'/0'/0'",
+                HDPath.m(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true))
+            ),
+
+            new PathVector (
+                "M/44'/0'/0'/1/1",
+                HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                    new ChildNumber(1, false), new ChildNumber(1, false))
+            ),
+
+            // lowercase h notation
+            new PathVector (
+                "m/44h/0h/0h",
+                HDPath.m(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true))
             )
         };
     }
@@ -280,6 +298,102 @@ public class HDPathTest {
     @Test
     public void equals_not_M_m() {
         assertNotEquals(HDPath.M(), HDPath.m());
+    }
+
+    // ── ChildNumber.toString(char) ──────────────────────────────────────
+
+    @Test
+    public void childNumber_toString_defaultUsesH() {
+        assertEquals("44H", new ChildNumber(44, true).toString());
+        assertEquals("0", new ChildNumber(0, false).toString());
+    }
+
+    @Test
+    public void childNumber_toString_apostrophe() {
+        assertEquals("44'", new ChildNumber(44, true).toString('\''));
+        assertEquals("0", new ChildNumber(0, false).toString('\''));
+    }
+
+    @Test
+    public void childNumber_toString_lowercaseH() {
+        assertEquals("44h", new ChildNumber(44, true).toString('h'));
+        assertEquals("0", new ChildNumber(0, false).toString('h'));
+    }
+
+    @Test
+    public void childNumber_toString_uppercaseH() {
+        assertEquals("44H", new ChildNumber(44, true).toString('H'));
+    }
+
+    // ── ChildNumber.parse ───────────────────────────────────────────────
+
+    @Test
+    public void childNumber_parse_uppercaseH() {
+        ChildNumber cn = ChildNumber.parse("44H");
+        assertEquals(44, cn.num());
+        assertTrue(cn.isHardened());
+    }
+
+    @Test
+    public void childNumber_parse_lowercaseH() {
+        ChildNumber cn = ChildNumber.parse("44h");
+        assertEquals(44, cn.num());
+        assertTrue(cn.isHardened());
+    }
+
+    @Test
+    public void childNumber_parse_apostrophe() {
+        ChildNumber cn = ChildNumber.parse("44'");
+        assertEquals(44, cn.num());
+        assertTrue(cn.isHardened());
+    }
+
+    @Test
+    public void childNumber_parse_allFormatsEquivalent() {
+        assertEquals(ChildNumber.parse("44H"), ChildNumber.parse("44h"));
+        assertEquals(ChildNumber.parse("44H"), ChildNumber.parse("44'"));
+    }
+
+    // ── HDPath.toString(char) ───────────────────────────────────────────
+
+    @Test
+    public void hdPath_toString_apostrophe() {
+        HDPath path = HDPath.m(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true));
+        assertEquals("m/44'/0'/0'", path.toString('\''));
+    }
+
+    @Test
+    public void hdPath_toString_lowercaseH() {
+        HDPath path = HDPath.m(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true));
+        assertEquals("m/44h/0h/0h", path.toString('h'));
+    }
+
+    @Test
+    public void hdPath_toString_uppercaseH_matchesDefault() {
+        HDPath path = HDPath.M(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                new ChildNumber(1, false), new ChildNumber(1, false));
+        assertEquals(path.toString(), path.toString('H'));
+    }
+
+    @Test
+    public void hdPath_toString_partialPath_apostrophe() {
+        HDPath path = HDPath.partial(new ChildNumber(44, true), new ChildNumber(0, true));
+        assertEquals("/44'/0'", path.toString('\''));
+    }
+
+    @Test
+    public void hdPath_toString_mixedHardenedAndNot() {
+        HDPath path = HDPath.m(new ChildNumber(44, true), new ChildNumber(0, true), new ChildNumber(0, true),
+                new ChildNumber(1, false), new ChildNumber(0, false));
+        assertEquals("m/44'/0'/0'/1/0", path.toString('\''));
+    }
+
+    @Test
+    public void hdPath_parse_then_toString_roundtrip() {
+        HDPath path = HDPath.parsePath("m/44'/0'/0'/1/1");
+        assertEquals("m/44'/0'/0'/1/1", path.toString('\''));
+        assertEquals("m/44H/0H/0H/1/1", path.toString('H'));
+        assertEquals("m/44h/0h/0h/1/1", path.toString('h'));
     }
 
     // This should be a record
