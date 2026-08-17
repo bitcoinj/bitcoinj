@@ -266,9 +266,9 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Construct an ECKey from an ASN.1 encoded private key. These are produced by OpenSSL and stored by Bitcoin
-     * Core in its wallet. Note that this is slow because it requires an EC point multiply.
+     * Construct an ECKey from an ASN.1 encoded private key.
      */
+    @Deprecated
     public static ECKey fromASN1(byte[] asn1privkey) {
         return extractKeyFromASN1(asn1privkey);
     }
@@ -393,10 +393,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Output this ECKey as an ASN.1 encoded private key, as understood by OpenSSL or used by Bitcoin Core
-     * in its wallet storage format.
+     * Output this ECKey as an ASN.1 encoded private key.
      * @throws ECKey.MissingPrivateKeyException if the private key is missing or encrypted.
      */
+    @Deprecated
     public byte[] toASN1() {
         try {
             byte[] privKeyBytes = getPrivKeyBytes();
