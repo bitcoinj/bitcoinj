@@ -542,9 +542,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Groups the two components that make up a signature, and provides a way to encode to DER form, which is
-     * how ECDSA signatures are represented when embedded in other data structures in the Bitcoin protocol. The raw
-     * components can be useful for doing further EC maths on them.
+     * Groups the two components {@code R} and {@code S} that make up an ECDSA signature. ECDSA signatures can be
+     * serialized to DER encoding with {@link ECDSASignature#encodeToDER()}, which is the standard encoding for
+     * ECDSA signatures in the Bitcoin protocol. The raw {@code R} and {@code S} components can be useful for doing
+     * further EC math on them.
      */
     public static class ECDSASignature {
         /** The two components of the signature. */
@@ -658,11 +659,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using DER format, so you want {@link ECKey.ECDSASignature#encodeToDER()}
-     * instead. However sometimes the independent components can be useful, for instance, if you're going to do further
-     * EC maths on them.
+     * Create an {@link ECDSASignature} by signing a message.
      *
+     * @param input hash of message to sign
+     * @return ECDSA signature
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
     public ECDSASignature sign(Sha256Hash input) throws KeyCrypterException {
@@ -670,12 +670,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using DER format, so you want {@link ECKey.ECDSASignature#encodeToDER()}
-     * instead. However sometimes the independent components can be useful, for instance, if you're doing to do further
-     * EC maths on them.
+     * Create an {@link ECDSASignature} by signing a message.
      *
      * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
+     * @return ECDSA signature
      * @throws KeyCrypterException if there's something wrong with aesKey.
      * @throws ECKey.MissingPrivateKeyException if this key cannot sign because it's pubkey only.
      */
