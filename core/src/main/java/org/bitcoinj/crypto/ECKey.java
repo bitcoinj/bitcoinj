@@ -659,9 +659,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
 
     /**
      * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using ASN.1 format, so you want {@link ECKey#toASN1()}
-     * instead. However sometimes the independent components can be useful, for instance, if you're going to do
-     * further EC maths on them.
+     * usually encoded using DER format, so you want {@link ECKey.ECDSASignature#encodeToDER()}
+     * instead. However sometimes the independent components can be useful, for instance, if you're going to do further
+     * EC maths on them.
+     *
      * @throws KeyCrypterException if this ECKey doesn't have a private part.
      */
     public ECDSASignature sign(Sha256Hash input) throws KeyCrypterException {
@@ -705,7 +706,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * Verifies the given ECDSA signature against the message bytes using the public key bytes.
      * 
      * @param data      Hash of the data to verify.
-     * @param signature ASN.1 encoded signature.
+     * @param signature DER encoded signature.
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
@@ -723,10 +724,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
+     * Verifies the given DER encoded ECDSA signature against a hash using the public key.
      *
      * @param data      Hash of the data to verify.
-     * @param signature ASN.1 encoded signature.
+     * @param signature DER encoded signature.
      * @param pub       The public key bytes to use.
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
@@ -735,10 +736,10 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
+     * Verifies the given DER encoded ECDSA signature against a hash using the public key.
      *
      * @param hash      Hash of the data to verify.
-     * @param signature ASN.1 encoded signature.
+     * @param signature DER encoded signature.
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
     public boolean verify(byte[] hash, byte[] signature) throws SignatureDecodeException {
@@ -753,7 +754,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key, and throws an exception
+     * Verifies the given DER encoded ECDSA signature against a hash using the public key, and throws an exception
      * if the signature doesn't match
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      * @throws java.security.SignatureException if the signature does not match.
