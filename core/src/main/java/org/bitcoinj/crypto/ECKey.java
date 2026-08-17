@@ -38,6 +38,7 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.BERTags;
 import org.bouncycastle.asn1.DERBitString;
@@ -616,7 +617,9 @@ public class ECKey implements EncryptableItem, ECPublicKey {
                     throw new SignatureDecodeException("Reached past end of ASN.1 stream.");
                 if (!(seqObj instanceof DLSequence))
                     throw new SignatureDecodeException("Read unexpected class: " + seqObj.getClass().getName());
-                final DLSequence seq = (DLSequence) seqObj;
+                final ASN1Sequence seq = (ASN1Sequence) seqObj;
+                if (seq.size() != 2)
+                    throw new SignatureDecodeException("Unexpected sequence size: " + seq.size());
                 ASN1Integer r, s;
                 try {
                     r = (ASN1Integer) seq.getObjectAt(0);
