@@ -63,4 +63,9 @@ public class MockAltNetwork implements Network {
     public boolean exceedsMaxMoney(Monetary monetary) {
         return false;
     }
+
+    @Override
+    public String messageSigningPrefix() {
+        return "Mockcoin Signed Message:\n";
+    }
 }

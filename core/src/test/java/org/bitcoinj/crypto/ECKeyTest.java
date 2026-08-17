@@ -19,11 +19,7 @@ package org.bitcoinj.crypto;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bitcoinj.base.Address;
-import org.bitcoinj.base.LegacyAddress;
-import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.SegwitAddress;
-import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.base.*;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Transaction;
@@ -287,7 +283,7 @@ public class ECKeyTest {
         String message = "hello";
         String sigBase64 = "HxNZdo6ggZ41hd3mM3gfJRqOQPZYcO8z8qdX2BwmpbF11CaOQV+QiZGGQxaYOncKoNW61oRuSMMF8udfK54XqI8=";
         Address expectedAddress = LegacyAddress.fromBase58("14YPSNPi6NSXnUxtPAsyJSuw3pv7AU3Cag", MAINNET);
-        ECKey key = ECKey.signedMessageToKey(message, sigBase64);
+        ECKey key = ECKey.signedMessageToKey(message, sigBase64, MAINNET);
         Address gotAddress = key.toAddress(ScriptType.P2PKH, MAINNET);
         assertEquals(expectedAddress, gotAddress);
     }
@@ -297,7 +293,7 @@ public class ECKeyTest {
         String message = "message signed using an p2pkh address derived from an uncompressed public key";
         String sigBase64 = "HDoME2gqLJApQTOLnce4J7BZcO1yIxUSP6tdKIUBLO99E+BH3uABshRoFzIdVYZo16zpAGtiHq8Xq9YbswDVR1M=";
         Address expectedAddress = LegacyAddress.fromBase58("1C6SjmutxV21sPdqQAWLJbvznfyCoU2zWc", MAINNET);
-        ECKey key = ECKey.signedMessageToKey(message, sigBase64);
+        ECKey key = ECKey.signedMessageToKey(message, sigBase64, MAINNET);
         Address gotAddress = key.toAddress(ScriptType.P2PKH, MAINNET);
         assertEquals(expectedAddress, gotAddress);
     }
@@ -307,7 +303,7 @@ public class ECKeyTest {
         String message = "This msg was signed with a native SegWit v0 address, the signature header byte therefore is in the range 39-42 (according to BIP 137).";
         String sigBase64 = "KH4/rrraZsPwuuW6pSKVnZVdZXmzLPBOPSS9zz6QLZnTGhO2mHFAs53QLPp94Hahz7kTgNiO6VYZpehMbNHIvNA=";
         Address expectedAddress = SegwitAddress.fromBech32("bc1qvcl0z7f25sf2u8up5wplk7arwclghh7de8fy6l", MAINNET);
-        ECKey key = ECKey.signedMessageToKey(message, sigBase64);
+        ECKey key = ECKey.signedMessageToKey(message, sigBase64, MAINNET);
         Address gotAddress = key.toAddress(ScriptType.P2WPKH, MAINNET);
         assertEquals(expectedAddress, gotAddress);
     }
@@ -317,12 +313,22 @@ public class ECKeyTest {
         String message = "This message was signed with a P2SH-P2WPKH address, the signature header byte therefore is in the range 35-38 (according to BIP 137).";
         String sigBase64 = "I6CwPW9ErVV8SphnQbHnOfYcwcqMdJaZRkym5QHzykpzVw38SrftZFaWoqMl+pvJ92hOyj8PjDOQOT2hDXtk5V0=";
         Address expectedAddress = LegacyAddress.fromBase58("3HnHC8dJCqixUBFNYXdz2LFXQwvAkkTR3m", MAINNET);
-        ECKey key = ECKey.signedMessageToKey(message, sigBase64);
+        ECKey key = ECKey.signedMessageToKey(message, sigBase64, MAINNET);
         final byte[] segwitV0_OpPush20 = {0x00, 0x14};
         byte[] segwitV0ScriptPubKey = ByteUtils.concat(segwitV0_OpPush20, key.getPubKeyHash()); // as defined in BIP 141
         byte[] scriptHashOfSegwitScript = CryptoUtils.sha256hash160(segwitV0ScriptPubKey);
         Address gotAddress = LegacyAddress.fromScriptHash(MAINNET, scriptHashOfSegwitScript);
         assertEquals(expectedAddress, gotAddress);
+    }
+
+    @Test
+    public void verifyMessageWithDifferentNetwork() throws Exception {
+        String message = "hello";
+        String sigBase64 = "HxNZdo6ggZ41hd3mM3gfJRqOQPZYcO8z8qdX2BwmpbF11CaOQV+QiZGGQxaYOncKoNW61oRuSMMF8udfK54XqI8=";
+        Address expectedAddress = LegacyAddress.fromBase58("14YPSNPi6NSXnUxtPAsyJSuw3pv7AU3Cag", MAINNET);
+        ECKey key = ECKey.signedMessageToKey(message, sigBase64, LitecoinNetwork.MAINNET);
+        Address gotAddress = key.toAddress(ScriptType.P2PKH, MAINNET);
+        assertNotEquals(expectedAddress, gotAddress);
     }
 
     @Test

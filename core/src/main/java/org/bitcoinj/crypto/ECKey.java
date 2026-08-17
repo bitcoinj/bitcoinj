@@ -878,7 +878,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         if (!isCompressed() && (scriptType == ScriptType.P2WPKH || scriptType == ScriptType.P2SH)) {
             throw new IllegalArgumentException("Segwit P2WPKH and P2SH-P2WPKH script types only can be used with compressed keys. See BIP 141.");
         }
-        byte[] data = formatMessageForSigning(message);
+        byte[] data = formatMessageForSigning(message, BitcoinNetwork.MAINNET); // Note: Signing is hardcoded for Bitcoin network, because it is not used by TYR Markets
         Sha256Hash hash = Sha256Hash.twiceOf(data);
         ECDSASignature sig = sign(hash, aesKey);
         byte recId = findRecoveryId(hash, sig); // for detailed explanation of recId see recoverFromSignature()
@@ -923,7 +923,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param signatureBase64 The Bitcoin-format message signature in base64
      * @throws SignatureException If the public key could not be recovered or if there was a signature format error.
      */
-    public static ECKey signedMessageToKey(String message, String signatureBase64) throws SignatureException {
+    public static ECKey signedMessageToKey(String message, String signatureBase64, Network network) throws SignatureException {
         byte[] signatureEncoded;
         try {
             signatureEncoded = Base64.getDecoder().decode(signatureBase64);
@@ -941,7 +941,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         BigInteger r = ByteUtils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 1, 33));
         BigInteger s = ByteUtils.bytesToBigInteger(Arrays.copyOfRange(signatureEncoded, 33, 65));
         ECDSASignature sig = new ECDSASignature(r, s);
-        byte[] messageBytes = formatMessageForSigning(message);
+        byte[] messageBytes = formatMessageForSigning(message, network);
         // Note that the C++ code doesn't actually seem to specify any character encoding. Presumably it's whatever
         // JSON-SPIRIT hands back. Assume UTF-8 for now.
         Sha256Hash messageHash = Sha256Hash.twiceOf(messageBytes);
@@ -1444,10 +1444,6 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         }
     }
 
-    /** The string that prefixes all text messages signed using Bitcoin keys. */
-    private static final String BITCOIN_SIGNED_MESSAGE_HEADER = "Bitcoin Signed Message:\n";
-    private static final byte[] BITCOIN_SIGNED_MESSAGE_HEADER_BYTES = BITCOIN_SIGNED_MESSAGE_HEADER.getBytes(StandardCharsets.UTF_8);
-
     /**
      * Given a textual message, returns a byte array formatted as follows:
      * <p>
@@ -1456,11 +1452,12 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param message message to format for signing
      * @return byte array, formatted for signing
      */
-    private static byte[] formatMessageForSigning(String message) {
+    private static byte[] formatMessageForSigning(String message, Network network) {
+        byte[] headerBytes = network.messageSigningPrefix().getBytes(StandardCharsets.UTF_8);
         byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8);
-        ByteBuffer buf = ByteBuffer.allocate(Buffers.lengthPrefixedBytesSize(BITCOIN_SIGNED_MESSAGE_HEADER_BYTES) +
+        ByteBuffer buf = ByteBuffer.allocate(Buffers.lengthPrefixedBytesSize(headerBytes) +
                 Buffers.lengthPrefixedBytesSize(messageBytes));
-        Buffers.writeLengthPrefixedBytes(buf, BITCOIN_SIGNED_MESSAGE_HEADER_BYTES);
+        Buffers.writeLengthPrefixedBytes(buf, headerBytes);
         Buffers.writeLengthPrefixedBytes(buf, messageBytes);
         return buf.array();
     }

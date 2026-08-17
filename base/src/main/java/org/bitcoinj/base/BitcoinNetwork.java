@@ -183,6 +183,11 @@ public enum BitcoinNetwork implements Network {
         }
     }
 
+    @Override
+    public String messageSigningPrefix() {
+        return "Bitcoin Signed Message:\n";
+    }
+
     /**
      * Check if an address is valid on this network.
      * This is meant to be used as a precondition for a method or function that expects a valid address. If

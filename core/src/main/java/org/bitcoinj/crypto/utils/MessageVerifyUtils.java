@@ -1,11 +1,8 @@
 package org.bitcoinj.crypto.utils;
 
-import org.bitcoinj.base.LegacyAddress;
-import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.base.Address;
+import org.bitcoinj.base.*;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.base.SegwitAddress;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +75,7 @@ public class MessageVerifyUtils {
             }
         }
 
-        final byte[] pubKeyHashFromSignature = ECKey.signedMessageToKey(message, signatureBase64).getPubKeyHash();
+        final byte[] pubKeyHashFromSignature = ECKey.signedMessageToKey(message, signatureBase64, address.network()).getPubKeyHash();
         final byte[] pubKeyHashFromAddress = address.getHash();
 
         if (!Arrays.equals(pubKeyHashFromAddress, pubKeyHashFromSignature)) {
@@ -90,7 +87,7 @@ public class MessageVerifyUtils {
                                                                final String message,
                                                                final String signatureBase64) throws SignatureException {
 
-        final byte[] pubKeyHashFromSignature = ECKey.signedMessageToKey(message, signatureBase64).getPubKeyHash();
+        final byte[] pubKeyHashFromSignature = ECKey.signedMessageToKey(message, signatureBase64, address.network()).getPubKeyHash();
 
         // in case of P2SH addresses the address doesn't contain a pubKeyHash, but
         // instead the hash of a script, to be used in a scriptPubKey like this:
