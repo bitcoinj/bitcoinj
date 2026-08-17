@@ -32,7 +32,7 @@ import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.bitcoinj.core.ContextPropagatingThreadFactory;
 import org.jspecify.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
