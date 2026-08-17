@@ -138,7 +138,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     private static final ECDomainParameters CURVE;
 
     /** The secp256k1-jdk provider to use (hard-coded for now) */
-    private static final Secp256k1.ProviderId SECP_PROVIDER_ID = Secp256k1.ProviderId.BOUNCY_CASTLE;
+    private static final Secp256k1.ProviderId SECP_PROVIDER_ID = Secp256k1.ProviderId.LIBSECP256K1_FFM;
 
     /**
      * Return EC parameters for the SECP256K1 curve, in a Bouncy Castle type.

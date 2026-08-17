@@ -49,6 +49,11 @@ allprojects {
         }
     }
 
+    test {
+        jvmArgs += '--enable-native-access=ALL-UNNAMED'
+        systemProperty "java.library.path", findProperty("javaPath") ?: System.getenv("LIBSECP_DIR")
+    }
+
     // Ensure standard artifacts in all projects are built reproducibly
 
     tasks.withType(AbstractArchiveTask) {

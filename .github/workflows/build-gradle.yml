@@ -31,6 +31,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ matrix.gradle }}
+      - name: Install secp256k1 with APT
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install -y libsecp256k1-dev
+          echo "LIBSECP_DIR=/usr/lib/$(uname -m)-linux-gnu" >> $GITHUB_ENV
+      - name: Install secp256k1 with Homebrew
+        if: runner.os == 'macOS'
+        run: |
+          brew install secp256k1
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
+          echo "LIBSECP_DIR=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
       - name: Run Gradle
         run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build installDist jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
@@ -71,6 +82,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ matrix.gradle }}
+      - name: Install secp256k1 with APT
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install -y libsecp256k1-dev
+          echo "LIBSECP_DIR=/usr/lib/$(uname -m)-linux-gnu" >> $GITHUB_ENV
+      - name: Install secp256k1 with Homebrew
+        if: runner.os == 'macOS'
+        run: |
+          brew install secp256k1
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
+          echo "LIBSECP_DIR=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
       - name: Run Gradle
         run: gradle test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload wallet-tool as artifact
