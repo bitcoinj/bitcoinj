@@ -147,7 +147,7 @@ public class GenerateLowSTests {
         for (int i = 0; i < numInputs; i++) {
             TransactionInput txIn = outputTransaction.getInput(i);
             Script scriptPubKey = txIn.getConnectedOutput().getScriptPubKey();
-            RedeemData redeemData = txIn.getConnectedRedeemData(bag);
+            RedeemData redeemData = bag.getConnectedRedeemData(txIn);
             Objects.requireNonNull(redeemData, () ->
                     "Transaction exists in wallet that we cannot redeem: " + txIn.getOutpoint().hash());
             outputTransaction.replaceInput(i, txIn.withScriptSig(scriptPubKey.createEmptyInputScript(redeemData.keys.get(0), redeemData.redeemScript)));

@@ -21,6 +21,7 @@ import com.google.common.base.MoreObjects;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptPattern;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,10 +53,13 @@ public class RedeemData {
     }
 
     /**
-     * Creates RedeemData for P2PKH, P2WPKH or P2PK input. Provided key is a single private key needed
-     * to spend such inputs.
+     * Create RedeemData for P2PKH, P2WPKH or P2PK input.
+     * @param key single private key needed to spend
+     * @param redeemScript script to spend
+     * @return RedeemData or {@code null} if {@code key} was {@code null}
      */
-    public static RedeemData of(ECKey key, Script redeemScript) {
+    @Nullable
+    public static RedeemData of(@Nullable ECKey key, Script redeemScript) {
         checkArgument(ScriptPattern.isP2PKH(redeemScript)
                 || ScriptPattern.isP2WPKH(redeemScript) || ScriptPattern.isP2PK(redeemScript));
         return key != null ? new RedeemData(Collections.singletonList(key), redeemScript) : null;
