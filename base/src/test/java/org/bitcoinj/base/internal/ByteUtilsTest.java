@@ -21,7 +21,11 @@ import junitparams.Parameters;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.Comparator;
 import java.util.Random;
 
@@ -329,5 +333,27 @@ public class ByteUtilsTest {
     @Test
     public void testDecodeMPI() {
         assertEquals(BigInteger.ZERO, ByteUtils.decodeMPI(new byte[]{}, false));
+    }
+
+    @Test
+    @Parameters(method = "inputStreamToByteArrayTestVectors")
+    public void testInputStreamToByteArray(byte[] inputBytes) throws IOException {
+        InputStream is = new ByteArrayInputStream(inputBytes);
+        byte[] outputBytes = ByteUtils.toByteArray(is);
+        assertArrayEquals(inputBytes, outputBytes);
+    }
+
+    private byte[][] inputStreamToByteArrayTestVectors() {
+        return new byte[][] {
+            randomBytes(0), randomBytes(1),
+            randomBytes(8191), randomBytes(8192), randomBytes(8193) // edge cases for buffer size
+        };
+    }
+
+    private byte[] randomBytes(int length) {
+        byte[] bytes = new byte[length];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(bytes);
+        return bytes;
     }
 }
