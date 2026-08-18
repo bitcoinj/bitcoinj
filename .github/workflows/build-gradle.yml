@@ -8,25 +8,14 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, macOS-15, macOS-15-intel, windows-2022]
-        java: ['17', '21', '25']
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macOS-15, macOS-15-intel]
+        java: ['25']
         distribution: ['temurin']
-        gradle: ['8.14.4', '9.2.1']
-        exclude:
-          # Java 25+ requires Gradle 9.1+
-          - java: '25'
-            gradle: '8.14.4'
-          # Exclude older versions of Gradle on macOS and Windows
-          - os: macOS-15
-            gradle: '8.14.4'
-          - os: macOS-15-intel
-            gradle: '8.14.4'
-          - os: windows-2022
-            gradle: '8.14.4'
+        gradle: ['9.2.1']
       fail-fast: false
     env:
       # Use env variable to specify the JDK version to use for the `testMinJdk` Gradle option
-      MIN_JDK: ${{ matrix.os == 'macOS-15' && '11' || '8' }}
+      MIN_JDK: ${{ matrix.os == 'macOS-15' && '11' || '11' }}
     name: ${{ matrix.os }} JDK ${{ matrix.java }}.${{ matrix.distribution }} Gradle ${{ matrix.gradle }}
     steps:
       - name: Git checkout
@@ -42,6 +31,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ matrix.gradle }}
+      - name: Install secp256k1 with APT
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install -y libsecp256k1-dev
+          echo "LIBSECP_DIR=/usr/lib/$(uname -m)-linux-gnu" >> $GITHUB_ENV
+      - name: Install secp256k1 with Homebrew
+        if: runner.os == 'macOS'
+        run: |
+          brew install secp256k1
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
+          echo "LIBSECP_DIR=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
       - name: Run Gradle
         run: gradle -PtestMinJdk=${{ env.MIN_JDK }} build installDist jlink --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload Test Results and Reports
@@ -82,6 +82,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ matrix.gradle }}
+      - name: Install secp256k1 with APT
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install -y libsecp256k1-dev
+          echo "LIBSECP_DIR=/usr/lib/$(uname -m)-linux-gnu" >> $GITHUB_ENV
+      - name: Install secp256k1 with Homebrew
+        if: runner.os == 'macOS'
+        run: |
+          brew install secp256k1
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
+          echo "LIBSECP_DIR=$(brew --prefix secp256k1)/lib" >> $GITHUB_ENV
       - name: Run Gradle
         run: gradle test nativeCompile --init-script build-scan-agree.gradle --scan --info --stacktrace
       - name: Upload wallet-tool as artifact

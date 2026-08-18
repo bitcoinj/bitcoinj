@@ -22,6 +22,9 @@ plugins {
 allprojects {
     repositories {
         mavenCentral()
+        maven {
+            url 'https://gitlab.com/api/v4/projects/55956336/packages/maven'        // secp256k1-jdk
+        }
     }
 
     group = 'org.bitcoinj'
@@ -44,6 +47,11 @@ allprojects {
                 option("NullAway:OnlyNullMarked")
             }
         }
+    }
+
+    test {
+        jvmArgs += '--enable-native-access=ALL-UNNAMED'
+        systemProperty "java.library.path", findProperty("javaPath") ?: System.getenv("LIBSECP_DIR")
     }
 
     // Ensure standard artifacts in all projects are built reproducibly
