@@ -708,6 +708,48 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param pub       The public key bytes to use.
      */
     public static boolean verify(byte[] data, ECDSASignature signature, byte[] pub) {
+        return  verify(data, signature, pub, false);
+    }
+
+    /**
+     * Verifies the given DER encoded ECDSA signature against a hash using the public key.
+     *
+     * @param data      Hash of the data to verify.
+     * @param signature DER encoded signature.
+     * @param pub       The public key bytes to use.
+     * @throws SignatureDecodeException if the signature is unparseable in some way.
+     */
+    public static boolean verify(byte[] data, byte[] signature, byte[] pub) throws SignatureDecodeException {
+        return verify(data, ECDSASignature.decodeFromDER(signature), pub, false);
+    }
+
+    /**
+     * Verifies the given DER encoded ECDSA signature against a hash using the public key.
+     *
+     * @param hash      Hash of the data to verify.
+     * @param signature DER encoded signature.
+     * @throws SignatureDecodeException if the signature is unparseable in some way.
+     * @return true if successfully verified.
+     */
+    public static boolean verifyCanonical(byte[] hash, byte[] signature, byte[] pub) throws SignatureDecodeException {
+        return ECKey.verify(hash, ECDSASignature.decodeFromDER(signature), pub, true);
+    }
+
+
+    /**
+     * Verifies the given ECDSA signature against the message bytes using the public key bytes.
+     *
+     * @param data      Hash of the data to verify.
+     * @param signature DER encoded signature.
+     * @param pub       The public key bytes to use.
+     * @param requireCanonicalSValue if the S-value must be canonical (below half
+     * the order of the curve). A non-canonical signature will result in {@code false} being returned.
+     * @return true if successfully verified.
+     */
+    static boolean verify(byte[] data, ECDSASignature signature, byte[] pub, boolean requireCanonicalSValue) {
+        if (requireCanonicalSValue && !signature.isCanonical()) {
+            return false;
+        }
         ECDSASigner signer = new ECDSASigner();
         ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE.getCurve().decodePoint(pub), CURVE);
         signer.init(false, params);
@@ -724,13 +766,12 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     /**
      * Verifies the given DER encoded ECDSA signature against a hash using the public key.
      *
-     * @param data      Hash of the data to verify.
+     * @param hash      Hash of the data to verify.
      * @param signature DER encoded signature.
-     * @param pub       The public key bytes to use.
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
-    public static boolean verify(byte[] data, byte[] signature, byte[] pub) throws SignatureDecodeException {
-        return verify(data, ECDSASignature.decodeFromDER(signature), pub);
+    public boolean verify(byte[] hash, byte[] signature) throws SignatureDecodeException {
+        return ECKey.verify(hash, ECDSASignature.decodeFromDER(signature), getPubKey(), false);
     }
 
     /**
@@ -740,15 +781,15 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @param signature DER encoded signature.
      * @throws SignatureDecodeException if the signature is unparseable in some way.
      */
-    public boolean verify(byte[] hash, byte[] signature) throws SignatureDecodeException {
-        return ECKey.verify(hash, signature, getPubKey());
+    public boolean verifyCanonical(byte[] hash, byte[] signature) throws SignatureDecodeException {
+        return ECKey.verify(hash, ECDSASignature.decodeFromDER(signature), getPubKey(), true);
     }
 
     /**
      * Verifies the given R/S pair (signature) against a hash using the public key.
      */
     public boolean verify(Sha256Hash sigHash, ECDSASignature signature) {
-        return ECKey.verify(sigHash.getBytes(), signature, getPubKey());
+        return ECKey.verify(sigHash.getBytes(), signature, getPubKey(), false);
     }
 
     /**
@@ -758,7 +799,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * @throws java.security.SignatureException if the signature does not match.
      */
     public void verifyOrThrow(byte[] hash, byte[] signature) throws SignatureDecodeException, SignatureException {
-        if (!verify(hash, signature))
+        if (!verify(hash, ECDSASignature.decodeFromDER(signature), getPubKey(), false))
             throw new SignatureException();
     }
 
