@@ -114,72 +114,74 @@ public class BuildCheckpoints implements Callable<Integer> {
 
         // Configure bitcoinj to fetch only headers, not save them to disk, connect to a local fully synced/validated
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
-        final BlockStore store = new MemoryBlockStore(params.getGenesisBlock());
-        final BlockChain chain = new BlockChain(net, store);
-        final PeerGroup peerGroup = new PeerGroup(net, chain);
+        final TreeMap<Integer, StoredBlock> checkpoints;
+        final File textFile;
+        try (BlockStore store = new MemoryBlockStore(params.getGenesisBlock())) {
+            final BlockChain chain = new BlockChain(net, store);
+            final PeerGroup peerGroup = new PeerGroup(net, chain);
 
-        final InetAddress ipAddress;
+            final InetAddress ipAddress;
 
-        // DNS discovery can be used for some networks
-        boolean networkHasDnsSeeds = params.getDnsSeeds() != null;
-        if (peer != null) {
-            // use peer provided in argument
-            try {
-                ipAddress = InetAddress.getByName(peer);
+            // DNS discovery can be used for some networks
+            boolean networkHasDnsSeeds = params.getDnsSeeds() != null;
+            if (peer != null) {
+                // use peer provided in argument
+                try {
+                    ipAddress = InetAddress.getByName(peer);
+                    startPeerGroup(peerGroup, ipAddress);
+                } catch (UnknownHostException e) {
+                    System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
+                    return 1;
+                }
+            } else if (networkHasDnsSeeds) {
+                // use a peer group discovered with dns
+                peerGroup.setUserAgent("PeerMonitor", "1.0");
+                peerGroup.setMaxConnections(20);
+                peerGroup.addPeerDiscovery(new DnsDiscovery(net));
+                peerGroup.start();
+
+                // Connect to at least 4 peers because some may not support download
+                Future<List<Peer>> future = peerGroup.waitForPeers(4);
+                System.out.println("Connecting to " + params.getId() + ", timeout 20 seconds...");
+                // throw timeout exception if we can't get peers
+                future.get(20, SECONDS);
+            } else {
+                // try localhost
+                ipAddress = InetAddress.getLocalHost();
                 startPeerGroup(peerGroup, ipAddress);
-            } catch (UnknownHostException e) {
-                System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
-                return 1;
             }
-        } else if (networkHasDnsSeeds) {
-            // use a peer group discovered with dns
-            peerGroup.setUserAgent("PeerMonitor", "1.0");
-            peerGroup.setMaxConnections(20);
-            peerGroup.addPeerDiscovery(new DnsDiscovery(net));
-            peerGroup.start();
 
-            // Connect to at least 4 peers because some may not support download
-            Future<List<Peer>> future = peerGroup.waitForPeers(4);
-            System.out.println("Connecting to " + params.getId() + ", timeout 20 seconds...");
-            // throw timeout exception if we can't get peers
-            future.get(20, SECONDS);
-        } else {
-            // try localhost
-            ipAddress = InetAddress.getLocalHost();
-            startPeerGroup(peerGroup, ipAddress);
+            // Sorted map of block height to StoredBlock object.
+            checkpoints = new TreeMap<>();
+
+            Instant now = TimeUtils.currentTime();
+            peerGroup.setFastCatchupTime(now);
+
+            Instant timeAgo = now.minus(days, ChronoUnit.DAYS);
+            System.out.println("Checkpointing up to " + TimeUtils.dateTimeFormat(timeAgo));
+
+            chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
+                Objects.requireNonNull(params);
+                int height = block.getHeight();
+                if (height % params.getInterval() == 0 && timeAgo.isAfter(block.getHeader().time())) {
+                    System.out.println(String.format("Checkpointing block %s at height %d, time %s",
+                            block.getHeader().getHash(), block.getHeight(),
+                            TimeUtils.dateTimeFormat(block.getHeader().time())));
+                    checkpoints.put(height, block);
+                }
+            });
+
+            peerGroup.downloadBlockChain();
+
+            checkState(checkpoints.size() > 0);
+
+            textFile = new File("checkpoints" + suffix + ".txt");
+
+            // Write checkpoint data out.
+            writeTextualCheckpoints(checkpoints, textFile);
+
+            peerGroup.stop();
         }
-
-        // Sorted map of block height to StoredBlock object.
-        final TreeMap<Integer, StoredBlock> checkpoints = new TreeMap<>();
-
-        Instant now = TimeUtils.currentTime();
-        peerGroup.setFastCatchupTime(now);
-
-        Instant timeAgo = now.minus(days, ChronoUnit.DAYS);
-        System.out.println("Checkpointing up to " + TimeUtils.dateTimeFormat(timeAgo));
-
-        chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
-            Objects.requireNonNull(params);
-            int height = block.getHeight();
-            if (height % params.getInterval() == 0 && timeAgo.isAfter(block.getHeader().time())) {
-                System.out.println(String.format("Checkpointing block %s at height %d, time %s",
-                        block.getHeader().getHash(), block.getHeight(),
-                        TimeUtils.dateTimeFormat(block.getHeader().time())));
-                checkpoints.put(height, block);
-            }
-        });
-
-        peerGroup.downloadBlockChain();
-
-        checkState(checkpoints.size() > 0);
-
-        final File textFile = new File("checkpoints" + suffix + ".txt");
-
-        // Write checkpoint data out.
-        writeTextualCheckpoints(checkpoints, textFile);
-
-        peerGroup.stop();
-        store.close();
 
         // Sanity check the created files.
         sanityCheck(textFile, checkpoints.size());
