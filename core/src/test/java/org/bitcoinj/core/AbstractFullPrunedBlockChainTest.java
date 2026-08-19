@@ -66,9 +66,6 @@ public abstract class AbstractFullPrunedBlockChainTest {
     protected static UnitTestParams PARAMS;
     private static final BitcoinNetworkParams MAINNET = MainNetParams.get();
 
-    protected FullPrunedBlockChain chain;
-    protected FullPrunedBlockStore store;
-
     @BeforeClass
     public static void setUpClass() {
         TimeUtils.clearMockClock();
@@ -95,9 +92,9 @@ public abstract class AbstractFullPrunedBlockChainTest {
         // Tests various test cases from FullBlockTestGenerator
         FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
         RuleList blockList = generator.getBlocksToTest(false, false, null);
-        
-        store = createStore(PARAMS, blockList.maximumReorgBlockCount);
-        chain = new FullPrunedBlockChain(PARAMS, store);
+
+        FullPrunedBlockStore store = createStore(PARAMS, blockList.maximumReorgBlockCount);
+        FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
         for (Rule rule : blockList.list) {
             if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
@@ -141,8 +138,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     @Test
     public void skipScripts() throws Exception {
-        store = createStore(PARAMS, 10);
-        chain = new FullPrunedBlockChain(PARAMS, store);
+        FullPrunedBlockStore store = createStore(PARAMS, 10);
+        FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -184,8 +181,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        chain = new FullPrunedBlockChain(PARAMS, store);
+        FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
         
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -247,10 +244,10 @@ public abstract class AbstractFullPrunedBlockChainTest {
     public void testFirst100KBlocks() throws Exception {
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Arrays.asList(blockFile));
-        
-        store = createStore(MAINNET, 10);
+
+        FullPrunedBlockStore store = createStore(MAINNET, 10);
         resetStore(store);
-        chain = new FullPrunedBlockChain(MAINNET.network(), store);
+        FullPrunedBlockChain chain = new FullPrunedBlockChain(MAINNET.network(), store);
         for (Block block : loader)
             chain.add(block);
         try {
@@ -261,8 +258,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testGetOpenTransactionOutputs() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        chain = new FullPrunedBlockChain(PARAMS, store);
+        FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -315,8 +312,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
-        chain = new FullPrunedBlockChain(PARAMS, store);
+        FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
         // Check that we aren't accidentally leaving any references
         // to the full StoredUndoableBlock's lying around (ie memory leaks)
@@ -386,9 +383,9 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void missingHeightFromCoinbase() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = PARAMS.getMajorityEnforceBlockUpgrade() + 1;
-        store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
+        FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED);
         try {
-            chain = new FullPrunedBlockChain(PARAMS, store);
+            FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
             ECKey outKey = ECKey.random();
             int height = 1;
             Block chainHead = PARAMS.getGenesisBlock();
