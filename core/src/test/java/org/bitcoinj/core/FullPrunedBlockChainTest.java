@@ -186,11 +186,7 @@ public class FullPrunedBlockChainTest {
             rollingBlock.addTransaction(t);
             TestBlocks.solve(rollingBlock);
             chain.setRunScripts(false);
-            try {
-                chain.add(rollingBlock);
-            } catch (VerificationException e) {
-                fail();
-            }
+            chain.add(rollingBlock);
         }
     }
 
