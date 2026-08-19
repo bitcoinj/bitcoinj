@@ -21,6 +21,8 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
 import org.jspecify.annotations.Nullable;
 
+import java.io.Closeable;
+
 /**
  * An implementor of BlockStore saves StoredBlock objects to disk. Different implementations store them in
  * different ways. An in-memory implementation (MemoryBlockStore) exists for unit testing but real apps will want to
@@ -31,7 +33,7 @@ import org.jspecify.annotations.Nullable;
  *
  * BlockStores are thread safe.
  */
-public interface BlockStore {
+public interface BlockStore extends AutoCloseable {
     /**
      * Saves the given block header+extra data. The key isn't specified explicitly as it can be calculated from the
      * StoredBlock directly. Can throw if there is a problem with the underlying storage layer such as running out of
