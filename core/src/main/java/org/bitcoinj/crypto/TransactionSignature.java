@@ -76,10 +76,10 @@ public class TransactionSignature extends ECKey.ECDSASignature {
     }
 
     /**
-     * Returns true if the given signature is has canonical encoding, and will thus be accepted as standard by
+     * Returns true if the given signature has canonical encoding, and will thus be accepted as standard by
      * Bitcoin Core. DER and the SIGHASH encoding allow for quite some flexibility in how the same structures
      * are encoded, and this can open up novel attacks in which a man in the middle takes a transaction and then
-     * changes its signature such that the transaction hash is different but it's still valid. This can confuse wallets
+     * changes its signature such that the transaction hash is different but still valid. This can confuse wallets
      * and generally violates people's mental model of how Bitcoin should work, thus, non-canonical signatures are now
      * not relayed by default.
      */
