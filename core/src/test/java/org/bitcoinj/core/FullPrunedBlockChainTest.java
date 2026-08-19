@@ -39,7 +39,6 @@ import org.bitcoinj.wallet.WalletTransaction;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +51,7 @@ import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 /**
@@ -59,9 +59,6 @@ import static org.junit.Assert.fail;
  */
 
 public class FullPrunedBlockChainTest {
-    @org.junit.Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChainTest.class);
 
     protected static UnitTestParams PARAMS;
@@ -388,47 +385,44 @@ public class FullPrunedBlockChainTest {
     public void missingHeightFromCoinbase() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = PARAMS.getMajorityEnforceBlockUpgrade() + 1;
         try (FullPrunedBlockStore store = provider.createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
-            try {
-                FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
-                ECKey outKey = ECKey.random();
-                int height = 1;
-                Block chainHead = PARAMS.getGenesisBlock();
+            FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
+            ECKey outKey = ECKey.random();
+            int height = 1;
+            Block chainHead = PARAMS.getGenesisBlock();
 
-                // Build some blocks on genesis block to create a spendable output.
+            // Build some blocks on genesis block to create a spendable output.
 
-                // Put in just enough v1 blocks to stop the v2 blocks from forming a majority
-                for (height = 1; height <= (PARAMS.getMajorityWindow() - PARAMS.getMajorityEnforceBlockUpgrade()); height++) {
-                    chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_GENESIS,
-                            outKey.getPubKey(), height);
-                    TestBlocks.solve(chainHead);
-                    chain.add(chainHead);
-                }
-
-                // Fill the rest of the window in with v2 blocks
-                for (; height < PARAMS.getMajorityWindow(); height++) {
-                    chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
-                            outKey.getPubKey(), height);
-                    TestBlocks.solve(chainHead);
-                    chain.add(chainHead);
-                }
-                // Throw a broken v2 block in before we have a supermajority to enable
-                // enforcement, which should validate as-is
-                chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
-                        outKey.getPubKey(), height * 2);
+            // Put in just enough v1 blocks to stop the v2 blocks from forming a majority
+            for (height = 1; height <= (PARAMS.getMajorityWindow() - PARAMS.getMajorityEnforceBlockUpgrade()); height++) {
+                chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_GENESIS,
+                        outKey.getPubKey(), height);
                 TestBlocks.solve(chainHead);
                 chain.add(chainHead);
-                height++;
-
-                // Trying to add a broken v2 block should now result in rejection as
-                // we have a v2 supermajority
-                thrown.expect(VerificationException.CoinbaseHeightMismatch.class);
-                chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
-                        outKey.getPubKey(), height * 2);
-                TestBlocks.solve(chainHead);
-                chain.add(chainHead);
-            } catch (final VerificationException ex) {
-                throw (Exception) ex.getCause();
             }
+
+            // Fill the rest of the window in with v2 blocks
+            for (; height < PARAMS.getMajorityWindow(); height++) {
+                chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
+                        outKey.getPubKey(), height);
+                TestBlocks.solve(chainHead);
+                chain.add(chainHead);
+            }
+            // Throw a broken v2 block in before we have a supermajority to enable
+            // enforcement, which should validate as-is
+            chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
+                    outKey.getPubKey(), height * 2);
+            TestBlocks.solve(chainHead);
+            chain.add(chainHead);
+            height++;
+
+            // Trying to add a broken v2 block should now result in rejection as we have a v2 supermajority
+            Block brokenBlock = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
+                    outKey.getPubKey(), height * 2);
+            TestBlocks.solve(brokenBlock);
+            VerificationException ex = assertThrows(VerificationException.class, () ->
+                chain.add(brokenBlock)
+            );
+            assertEquals(VerificationException.CoinbaseHeightMismatch.class, ex.getCause().getClass());
         }
     }
 }
