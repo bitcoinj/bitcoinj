@@ -266,6 +266,21 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
+     * ECKey encrypted canonical constructor.
+     * @param pub a Bouncy Castle point
+     * @param compressed whether to generate addresses using compressed serialization.
+     * @param encryptedPrivateKey encrypted private key
+     * @param keyCrypter key crypter
+     */
+    private ECKey(ECPoint pub, boolean compressed, EncryptedData encryptedPrivateKey, KeyCrypter keyCrypter) {
+        this.priv = null;
+        this.pub = Objects.requireNonNull(pub);
+        this.compressed = compressed;
+        this.encryptedPrivateKey = Objects.requireNonNull(encryptedPrivateKey);
+        this.keyCrypter = Objects.requireNonNull(keyCrypter);
+    }
+
+    /**
      * Construct an ECKey from an ASN.1 encoded private key.
      */
     @Deprecated
@@ -364,10 +379,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      * unusable for signing unless a decryption key is supplied.
      */
     public static ECKey fromEncrypted(EncryptedData encryptedPrivateKey, KeyCrypter crypter, byte[] pubKey) {
-        ECKey key = fromPublicOnly(pubKey);
-        key.encryptedPrivateKey = Objects.requireNonNull(encryptedPrivateKey);
-        key.keyCrypter = Objects.requireNonNull(crypter);
-        return key;
+        return new ECKey(decodeToBCPoint(pubKey), isPubKeyCompressed(pubKey), encryptedPrivateKey, crypter);
     }
 
     /**
