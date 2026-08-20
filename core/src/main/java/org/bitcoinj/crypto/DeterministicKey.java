@@ -225,19 +225,13 @@ public class DeterministicKey extends ECKey {
     private DeterministicKey(@Nullable BigInteger priv, ECPoint pub, int depth, @Nullable DeterministicKey parent,
                              int parentFingerprint, byte[] chainCode, HDPath hdPath,
                              @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
-        super(priv, pub);
+        super(priv, pub, encryptedPrivateKey, keyCrypter);
         checkArgument(chainCode.length == 32);
-        checkArgument(priv == null || encryptedPrivateKey == null, () ->
-                "priv and encryptedPrivateKey can't be set together");
-        checkArgument((encryptedPrivateKey == null) == (keyCrypter == null), () ->
-                "encryptedPrivateKey and keyCrypter must be set together");
         this.depth = depth;
         this.parent = parent;
         this.parentFingerprint = ascertainParentFingerprint(parent, parentFingerprint);
         this.chainCode = Arrays.copyOf(chainCode, chainCode.length);
         this.childNumberPath = Objects.requireNonNull(hdPath).asPartial();
-        this.encryptedPrivateKey = encryptedPrivateKey;
-        this.keyCrypter = keyCrypter;
     }
 
     /**

@@ -252,17 +252,32 @@ public class ECKey implements EncryptableItem, ECPublicKey {
      */
     private ECKey(@Nullable BigInteger priv, ECPoint pub, boolean compressed) {
         if (priv != null) {
-            checkArgument(priv.bitLength() <= 32 * 8, () ->
-                    "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
-            // Try and catch buggy callers or bad key imports, etc. Zero and one are special because these are often
-            // used as sentinel values and because scripting languages have a habit of auto-casting true and false to
-            // 1 and 0 or vice-versa. Type confusion bugs could therefore result in private keys with these values.
-            checkArgument(!priv.equals(BigInteger.ZERO));
-            checkArgument(!priv.equals(BigInteger.ONE));
+            checkPrivateKey(priv);
         }
         this.priv = priv;
         this.pub = Objects.requireNonNull(pub);
         this.compressed = compressed;
+    }
+
+    /**
+     * Deterministic ECKey canonical constructor.
+     * @param pub a Bouncy Castle point
+     * @param encryptedPrivateKey encrypted private key
+     * @param keyCrypter key crypter
+     */
+    protected ECKey(@Nullable BigInteger priv, ECPoint pub, @Nullable EncryptedData encryptedPrivateKey, @Nullable KeyCrypter keyCrypter) {
+        checkArgument(priv == null || encryptedPrivateKey == null, () ->
+                "priv and encryptedPrivateKey can't be set together");
+        checkArgument((encryptedPrivateKey == null) == (keyCrypter == null), () ->
+                "encryptedPrivateKey and keyCrypter must be set together");
+        if (priv != null) {
+            checkPrivateKey(priv);
+        }
+        this.priv = priv;
+        this.pub = Objects.requireNonNull(pub);
+        this.compressed = true;
+        this.encryptedPrivateKey = encryptedPrivateKey;
+        this.keyCrypter = keyCrypter;
     }
 
     /**
@@ -278,6 +293,16 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         this.compressed = compressed;
         this.encryptedPrivateKey = Objects.requireNonNull(encryptedPrivateKey);
         this.keyCrypter = Objects.requireNonNull(keyCrypter);
+    }
+
+    private static void checkPrivateKey(BigInteger priv) {
+        checkArgument(priv.bitLength() <= 32 * 8, () ->
+                "private key exceeds 32 bytes: " + priv.bitLength() + " bits");
+        // Try and catch buggy callers or bad key imports, etc. Zero and one are special because these are often
+        // used as sentinel values and because scripting languages have a habit of auto-casting true and false to
+        // 1 and 0 or vice-versa. Type confusion bugs could therefore result in private keys with these values.
+        checkArgument(!priv.equals(BigInteger.ZERO));
+        checkArgument(!priv.equals(BigInteger.ONE));
     }
 
     /**
