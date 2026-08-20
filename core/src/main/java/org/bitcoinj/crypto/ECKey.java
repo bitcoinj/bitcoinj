@@ -168,8 +168,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     // not have this field.
     @Nullable private Instant creationTime = null;
 
-    @Nullable protected KeyCrypter keyCrypter;
-    @Nullable protected EncryptedData encryptedPrivateKey;
+    @Nullable protected final KeyCrypter keyCrypter;
+    @Nullable protected final EncryptedData encryptedPrivateKey;
 
     private byte @Nullable [] pubKeyHash;
 
@@ -223,6 +223,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         pub = pubParams.getQ();
         compressed = true;
         creationTime = TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS);
+        encryptedPrivateKey = null;
+        keyCrypter = null;
     }
 
     /**
@@ -257,6 +259,8 @@ public class ECKey implements EncryptableItem, ECPublicKey {
         this.priv = priv;
         this.pub = Objects.requireNonNull(pub);
         this.compressed = compressed;
+        this.encryptedPrivateKey = null;
+        this.keyCrypter = null;
     }
 
     /**
