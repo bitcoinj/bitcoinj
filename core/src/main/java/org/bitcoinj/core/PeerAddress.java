@@ -199,6 +199,11 @@ public class PeerAddress {
                         addr = null;
                         break;
                     case I2P:
+                        if (addrLen != 32)
+                            throw new ProtocolException("invalid length of I2P address: " + addrLen);
+                        hostname = BASE32.encode(addrBytes).replace("=","") + ".b32.i2p";
+                        addr = null;
+                        break;
                     case CJDNS:
                         // ignore unimplemented network IDs for now
                         addr = null;
