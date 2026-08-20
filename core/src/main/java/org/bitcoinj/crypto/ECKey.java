@@ -237,16 +237,6 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Construct a compressed ECKey. This constructor can be used for P2PWKH and HD keys that
-     * always have addresses generated using compressed serialization.
-     * @param priv optional private key
-     * @param pub a Bouncy Castle point
-     */
-    protected ECKey(@Nullable BigInteger priv, ECPoint pub) {
-        this(priv, Objects.requireNonNull(pub), true);
-    }
-
-    /**
      * ECKey canonical constructor.
      * @param priv optional private key
      * @param pub a Bouncy Castle point
