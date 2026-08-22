@@ -73,87 +73,88 @@ public class SPVBlockStoreTest {
     @Test
     public void basics() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        StoredBlock b1;
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile)) {
 
-        Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        // Check the first block in a new store is the genesis block.
-        StoredBlock genesis = store.getChainHead();
-        assertEquals(TESTNET.getGenesisBlock(), genesis.getHeader());
-        assertEquals(0, genesis.getHeight());
+            Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+            // Check the first block in a new store is the genesis block.
+            StoredBlock genesis = store.getChainHead();
+            assertEquals(TESTNET.getGenesisBlock(), genesis.getHeader());
+            assertEquals(0, genesis.getHeight());
 
-        // Build a new block.
-        StoredBlock b1 = genesis.build(TestBlocks.createNextBlock(genesis.getHeader(), to).asHeader());
-        store.put(b1);
-        store.setChainHead(b1);
-        store.close();
+            // Build a new block.
+            b1 = genesis.build(TestBlocks.createNextBlock(genesis.getHeader(), to).asHeader());
+            store.put(b1);
+            store.setChainHead(b1);
+        }
 
         // Check we can get it back out again if we rebuild the store object.
-        store = new SPVBlockStore(TESTNET, blockStoreFile);
-        StoredBlock b2 = store.get(b1.getHeader().getHash());
-        assertEquals(b1, b2);
-        // Check the chain head was stored correctly also.
-        StoredBlock chainHead = store.getChainHead();
-        assertEquals(b1, chainHead);
-        store.close();
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile)) {
+            StoredBlock b2 = store.get(b1.getHeader().getHash());
+            assertEquals(b1, b2);
+            // Check the chain head was stored correctly also.
+            StoredBlock chainHead = store.getChainHead();
+            assertEquals(b1, chainHead);
+        }
     }
 
     @Test
     public void get_zeroHash() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
-        // Needs to fail locating a block even though our fresh ring buffer is full of zero hashes.
-        StoredBlock b = store.get(Sha256Hash.ZERO_HASH);
-        assertNull(b);
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile)) {
+            // Needs to fail locating a block even though our fresh ring buffer is full of zero hashes.
+            StoredBlock b = store.get(Sha256Hash.ZERO_HASH);
+            assertNull(b);
+        }
     }
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_onSameFile() throws Exception {
-        new SPVBlockStore(TESTNET, blockStoreFile);
-        new SPVBlockStore(TESTNET, blockStoreFile);
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile)) {
+            new SPVBlockStore(TESTNET, blockStoreFile).close();
+        }
     }
 
     @Test
     public void twoStores_butSequentially() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
-        store.close();
-        store = new SPVBlockStore(TESTNET, blockStoreFile);
+        new SPVBlockStore(TESTNET, blockStoreFile).close();
+        new SPVBlockStore(TESTNET, blockStoreFile).close();
     }
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_sequentially_butMismatchingCapacity() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, false);
-        store.close();
-        store = new SPVBlockStore(TESTNET, blockStoreFile, 20, false);
+        new SPVBlockStore(TESTNET, blockStoreFile, 10, false).close();
+        new SPVBlockStore(TESTNET, blockStoreFile, 20, false).close();
     }
 
     @Test
     public void twoStores_sequentially_grow() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
-        final StoredBlock block0 = store.getChainHead();
-        final StoredBlock block1 = block0.build(TestBlocks.createNextBlock(block0.getHeader(), to).asHeader());
-        store.put(block1);
-        final StoredBlock block2 = block1.build(TestBlocks.createNextBlock(block1.getHeader(), to).asHeader());
-        store.put(block2);
-        store.setChainHead(block2);
-        store.close();
+        final StoredBlock block0, block1, block2;
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true)) {
+            block0 = store.getChainHead();
+            block1 = block0.build(TestBlocks.createNextBlock(block0.getHeader(), to).asHeader());
+            store.put(block1);
+            block2 = block1.build(TestBlocks.createNextBlock(block1.getHeader(), to).asHeader());
+            store.put(block2);
+            store.setChainHead(block2);
+        }
 
-        store = new SPVBlockStore(TESTNET, blockStoreFile, 20, true);
-        final StoredBlock read2 = store.getChainHead();
-        assertEquals(block2, read2);
-        final StoredBlock read1 = read2.getPrev(store);
-        assertEquals(block1, read1);
-        final StoredBlock read0 = read1.getPrev(store);
-        assertEquals(block0, read0);
-        store.close();
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 20, true)) {
+            final StoredBlock read2 = store.getChainHead();
+            assertEquals(block2, read2);
+            final StoredBlock read1 = read2.getPrev(store);
+            assertEquals(block1, read1);
+            final StoredBlock read0 = read1.getPrev(store);
+            assertEquals(block0, read0);
+        }
         assertEquals(SPVBlockStore.getFileSize(20), blockStoreFile.length());
     }
 
     @Test(expected = BlockStoreException.class)
     public void twoStores_sequentially_shrink() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, 20, true);
-        store.close();
-        store = new SPVBlockStore(TESTNET, blockStoreFile, 10, true);
+        new SPVBlockStore(TESTNET, blockStoreFile, 20, true).close();
+        new SPVBlockStore(TESTNET, blockStoreFile, 10, true).close();
     }
 
     @Test
@@ -162,44 +163,43 @@ public class SPVBlockStoreTest {
         // us.
         final int ITERATIONS = 100000;
         final Duration THRESHOLD = Duration.ofSeconds(5);
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
-        Stopwatch watch = Stopwatch.start();
-        for (int i = 0; i < ITERATIONS; i++) {
-            // Using i as the nonce so that the block hashes are different.
-            Block block = new Block(0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH,
-                    Difficulty.EASIEST_DIFFICULTY_TARGET, i, Collections.emptyList());
-            StoredBlock b = new StoredBlock(block, BigInteger.ZERO, i);
-            store.put(b);
-            store.setChainHead(b);
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile)) {
+            Stopwatch watch = Stopwatch.start();
+            for (int i = 0; i < ITERATIONS; i++) {
+                // Using i as the nonce so that the block hashes are different.
+                Block block = new Block(0, Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, Instant.EPOCH,
+                        Difficulty.EASIEST_DIFFICULTY_TARGET, i, Collections.emptyList());
+                StoredBlock b = new StoredBlock(block, BigInteger.ZERO, i);
+                store.put(b);
+                store.setChainHead(b);
+            }
+            watch.stop();
+            assertTrue("took " + watch + " for " + ITERATIONS + " iterations",
+                    watch.elapsed().compareTo(THRESHOLD) < 0);
         }
-        watch.stop();
-        assertTrue("took " + watch + " for " + ITERATIONS + " iterations",
-                watch.elapsed().compareTo(THRESHOLD) < 0);
-        store.close();
     }
 
     @Test
     public void clear() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile)) {
 
-        // Build a new block.
-        Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
-        StoredBlock genesis = store.getChainHead();
-        StoredBlock b1 = genesis.build(TestBlocks.createNextBlock(genesis.getHeader(), to).asHeader());
-        store.put(b1);
-        store.setChainHead(b1);
-        assertEquals(b1.getHeader().getHash(), store.getChainHead().getHeader().getHash());
-        store.clear();
-        assertNull(store.get(b1.getHeader().getHash()));
-        assertEquals(TESTNET.getGenesisBlock().getHash(), store.getChainHead().getHeader().getHash());
-        store.close();
+            // Build a new block.
+            Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+            StoredBlock genesis = store.getChainHead();
+            StoredBlock b1 = genesis.build(TestBlocks.createNextBlock(genesis.getHeader(), to).asHeader());
+            store.put(b1);
+            store.setChainHead(b1);
+            assertEquals(b1.getHeader().getHash(), store.getChainHead().getHeader().getHash());
+            store.clear();
+            assertNull(store.get(b1.getHeader().getHash()));
+            assertEquals(TESTNET.getGenesisBlock().getHash(), store.getChainHead().getHeader().getHash());
+        }
     }
 
     @Test
     public void oneStoreDelete() throws Exception {
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
-        store.close();
+        new SPVBlockStore(TESTNET, blockStoreFile).close();
         boolean deleted = blockStoreFile.delete();
         if (!PlatformUtils.isWindows()) {
             // TODO: Deletion is failing on Windows
@@ -227,20 +227,20 @@ public class SPVBlockStoreTest {
         raf.close();
 
         // migrate to V2 format
-        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile);
+        try (SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile)) {
 
-        // check block is the same
-        assertEquals(genesisHash, store.getChainHead().getHeader().getHash());
-        // check ring cursor
-        assertEquals(SPVBlockStore.FILE_PROLOGUE_BYTES + SPVBlockStore.RECORD_SIZE_V2 * 1,
-                store.getRingCursor());
-        store.close();
+            // check block is the same
+            assertEquals(genesisHash, store.getChainHead().getHeader().getHash());
+            // check ring cursor
+            assertEquals(SPVBlockStore.FILE_PROLOGUE_BYTES + SPVBlockStore.RECORD_SIZE_V2 * 1,
+                    store.getRingCursor());
+        }
     }
 
     @Test
     public void constructor_rejectOverflowingCapacity() throws Exception {
         try {
-            new SPVBlockStore(TESTNET, blockStoreFile, Integer.MAX_VALUE, false);
+            new SPVBlockStore(TESTNET, blockStoreFile, Integer.MAX_VALUE, false).close();
         } catch (BlockStoreException | RuntimeException expected) {
             assertFalse("overflowing capacity should be rejected before creating the file",
                     blockStoreFile.exists());

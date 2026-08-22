@@ -31,7 +31,7 @@ import org.jspecify.annotations.Nullable;
  *
  * BlockStores are thread safe.
  */
-public interface BlockStore {
+public interface BlockStore extends AutoCloseable {
     /**
      * Saves the given block header+extra data. The key isn't specified explicitly as it can be calculated from the
      * StoredBlock directly. Can throw if there is a problem with the underlying storage layer such as running out of
