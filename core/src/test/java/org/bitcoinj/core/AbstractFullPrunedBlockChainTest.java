@@ -30,6 +30,7 @@ import org.bitcoinj.params.UnitTestParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
+import org.bitcoinj.store.MemoryFullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.SendRequest;
@@ -63,6 +64,30 @@ public abstract class AbstractFullPrunedBlockChainTest {
     protected static UnitTestParams PARAMS;
     private static final BitcoinNetworkParams MAINNET = MainNetParams.get();
 
+    private final BlockStoreProvider provider;
+
+    // There is currently only MemoryFullPrunedBlockStore as we have removed the other implementations.
+    // This interface preserves a layer of abstraction if we need it in the future.
+    public interface BlockStoreProvider {
+        FullPrunedBlockStore createStore(BitcoinNetworkParams params, int blockCount) throws BlockStoreException;
+        void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
+    }
+
+    public AbstractFullPrunedBlockChainTest() {
+        provider = new BlockStoreProvider() {
+
+            @Override
+            public FullPrunedBlockStore createStore(BitcoinNetworkParams params, int blockCount) throws BlockStoreException {
+                return new MemoryFullPrunedBlockStore(params, blockCount);
+            }
+
+            @Override
+            public void resetStore(FullPrunedBlockStore store) throws BlockStoreException {
+                //No-op for memory store, because it's not persistent
+            }
+        };
+    }
+
     @BeforeClass
     public static void setUpClass() {
         TimeUtils.clearMockClock();
@@ -79,18 +104,13 @@ public abstract class AbstractFullPrunedBlockChainTest {
         Context.propagate(new Context(100, Coin.ZERO, false, false));
     }
 
-    public abstract FullPrunedBlockStore createStore(BitcoinNetworkParams params, int blockCount)
-        throws BlockStoreException;
-
-    public abstract void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
-
     @Test
     public void testGeneratedChain() throws Exception {
         // Tests various test cases from FullBlockTestGenerator
         FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
         RuleList blockList = generator.getBlocksToTest(false, false, null);
 
-        try (FullPrunedBlockStore store = createStore(PARAMS, blockList.maximumReorgBlockCount)) {
+        try (FullPrunedBlockStore store = provider.createStore(PARAMS, blockList.maximumReorgBlockCount)) {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
             for (Rule rule : blockList.list) {
@@ -133,7 +153,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
     @Test
     public void skipScripts() throws Exception {
-        try (FullPrunedBlockStore store = createStore(PARAMS, 10)) {
+        try (FullPrunedBlockStore store = provider.createStore(PARAMS, 10)) {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
             // Check that we aren't accidentally leaving any references
@@ -170,7 +190,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testFinalizedBlocks() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        try (FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
+        try (FullPrunedBlockStore store = provider.createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
             // Check that we aren't accidentally leaving any references
@@ -232,8 +252,8 @@ public abstract class AbstractFullPrunedBlockChainTest {
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
         BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Arrays.asList(blockFile));
 
-        try (FullPrunedBlockStore store = createStore(MAINNET, 10)) {
-            resetStore(store);
+        try (FullPrunedBlockStore store = provider.createStore(MAINNET, 10)) {
+            provider.resetStore(store);
             FullPrunedBlockChain chain = new FullPrunedBlockChain(MAINNET.network(), store);
             for (Block block : loader)
                 chain.add(block);
@@ -243,7 +263,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testGetOpenTransactionOutputs() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        try (FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
+        try (FullPrunedBlockStore store = provider.createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
             // Check that we aren't accidentally leaving any references
@@ -295,7 +315,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void testUTXOProviderWithWallet() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = 10;
-        try (FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
+        try (FullPrunedBlockStore store = provider.createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
             // Check that we aren't accidentally leaving any references
@@ -364,7 +384,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     @Test
     public void missingHeightFromCoinbase() throws Exception {
         final int UNDOABLE_BLOCKS_STORED = PARAMS.getMajorityEnforceBlockUpgrade() + 1;
-        try (FullPrunedBlockStore store = createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
+        try (FullPrunedBlockStore store = provider.createStore(PARAMS, UNDOABLE_BLOCKS_STORED)) {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
             ECKey outKey = ECKey.random();
             int height = 1;
