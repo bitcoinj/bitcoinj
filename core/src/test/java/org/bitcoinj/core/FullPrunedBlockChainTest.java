@@ -58,7 +58,7 @@ import static org.junit.Assert.fail;
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
  */
 
-public abstract class FullPrunedBlockChainTest {
+public class FullPrunedBlockChainTest {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChainTest.class);
 
     protected static UnitTestParams PARAMS;
