@@ -19,5 +19,5 @@ package org.bitcoinj.core;
 /**
  * A MemoryStore implementation of the FullPrunedBlockStoreTest
  */
-public class MemoryFullPrunedBlockChainTest extends AbstractFullPrunedBlockChainTest {
+public class MemoryFullPrunedBlockChainTest extends FullPrunedBlockChainTest {
 }
