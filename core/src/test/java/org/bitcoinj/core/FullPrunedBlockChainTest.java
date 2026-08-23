@@ -58,8 +58,8 @@ import static org.junit.Assert.fail;
  * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
  */
 
-public abstract class AbstractFullPrunedBlockChainTest {
-    private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
+public abstract class FullPrunedBlockChainTest {
+    private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChainTest.class);
 
     protected static UnitTestParams PARAMS;
     private static final BitcoinNetworkParams MAINNET = MainNetParams.get();
@@ -73,7 +73,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
         void resetStore(FullPrunedBlockStore store) throws BlockStoreException;
     }
 
-    public AbstractFullPrunedBlockChainTest() {
+    public FullPrunedBlockChainTest() {
         provider = new BlockStoreProvider() {
 
             @Override
