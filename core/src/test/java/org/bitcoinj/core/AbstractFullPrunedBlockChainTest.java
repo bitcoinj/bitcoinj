@@ -38,7 +38,6 @@ import org.bitcoinj.wallet.WalletTransaction;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +50,7 @@ import static org.bitcoinj.base.Coin.FIFTY_COINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 /**
@@ -58,9 +58,6 @@ import static org.junit.Assert.fail;
  */
 
 public abstract class AbstractFullPrunedBlockChainTest {
-    @org.junit.Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     private static final Logger log = LoggerFactory.getLogger(AbstractFullPrunedBlockChainTest.class);
 
     protected static UnitTestParams PARAMS;
@@ -400,15 +397,13 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
             // Trying to add a broken v2 block should now result in rejection as
             // we have a v2 supermajority
-            thrown.expect(VerificationException.CoinbaseHeightMismatch.class);
-            chainHead = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
+            Block brokenBlock = TestBlocks.createNextBlockWithCoinbase(chainHead, Block.BLOCK_VERSION_BIP34,
                     outKey.getPubKey(), height * 2);
-            TestBlocks.solve(chainHead);
-            try {
-                chain.add(chainHead);
-            } catch (final VerificationException ex) {
-                throw (Exception) ex.getCause();
-            }
+            TestBlocks.solve(brokenBlock);
+            VerificationException ex = assertThrows(VerificationException.class, () ->
+                chain.add(brokenBlock)
+            );
+            assertEquals(VerificationException.CoinbaseHeightMismatch.class, ex.getCause().getClass());
         }
     }
 }
