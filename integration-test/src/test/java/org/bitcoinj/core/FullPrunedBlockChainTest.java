@@ -55,7 +55,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 /**
- * We don't do any wallet tests here, we leave that to {@link ChainSplitTest}
+ * We don't do any wallet tests here, we leave that to {@code ChainSplitTest}
  */
 
 public class FullPrunedBlockChainTest {
