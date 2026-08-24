@@ -45,11 +45,11 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.testing.FakeTxBuilder;
 import org.bitcoinj.wallet.Wallet;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -63,17 +63,18 @@ import java.util.List;
 import java.util.Set;
 
 import static org.bitcoinj.base.internal.ByteUtils.writeInt32LE;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-@RunWith(value = Parameterized.class)
+@ParameterizedClass
+@MethodSource("parameters")
 public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
     private static final BitcoinSerializer SERIALIZER = new BitcoinSerializer(BitcoinNetwork.TESTNET);
 
-    @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
         return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
                              new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
@@ -83,7 +84,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         super(clientType);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws BlockStoreException, IOException {
         MemoryBlockStore store = new MemoryBlockStore(TESTNET.getGenesisBlock());
 
@@ -103,7 +104,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         super.setUp(store);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         super.tearDown();
     }
@@ -152,7 +153,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         return Sha256Hash.wrap(bits);
     }
 
-    @Test(expected = VerificationException.class)
+    @Test
     public void merkleTreeMalleability() {
         List<Sha256Hash> hashes = new ArrayList<>();
         for (byte i = 1; i <= 10; i++) hashes.add(numAsHash(i));
@@ -163,7 +164,9 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
         ByteUtils.setBitLE(includeBits, 10);
         PartialMerkleTree pmt = PartialMerkleTree.buildFromLeaves(includeBits, hashes);
         List<Sha256Hash> matchedHashes = new ArrayList<>();
-        pmt.getTxnHashAndMerkleRoot(matchedHashes);
+        assertThrows(VerificationException.class, () ->
+            pmt.getTxnHashAndMerkleRoot(matchedHashes)
+        );
     }
 
     @Test
