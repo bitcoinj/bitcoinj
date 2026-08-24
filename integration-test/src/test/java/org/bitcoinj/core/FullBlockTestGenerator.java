@@ -78,20 +78,20 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 
 /**
  * YOU ARE READING THIS CODE BECAUSE EITHER...
- *
+ * <p>
  * a) You are testing an alternative implementation with full validation rules. If you are doing this, you should go
  *    rethink your life. Seriously, why are you reimplementing Bitcoin consensus rules? Instead, go work on making
  *    Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right, and starting with
  *    this tester as a way to try to do so will simply end in pain and lost coins. SERIOUSLY, JUST STOP!
- *
+ * <p>
  * b) Bitcoin Core is failing some test in here and you're wondering what test is causing failure. Just stop. There is no
  *    hope trying to read this file and decipher it. Give up and ping BlueMatt. Seriously, this stuff is a huge mess.
- *
+ * <p>
  * c) You are trying to add a new test. STOP! WHY THE HELL WOULD YOU EVEN DO THAT? GO REWRITE THIS TESTER!
- *
+ * <p>
  * d) You are BlueMatt and you're trying to hack more crap onto this multi-headed lopsided Proof Of Stake. Why are you
  *    doing this? Seriously, why have you not rewritten this thing yet? WTF man...
- *
+ * <p>
  * IN ANY CASE, STOP READING NOW. IT WILL SAVE YOU MUCH PAIN AND MISERY LATER
  */
 
