@@ -36,9 +36,9 @@ import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +48,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.bitcoinj.base.Coin.FIFTY_COINS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * We don't do any wallet tests here, we leave that to {@code ChainSplitTest}
@@ -88,7 +88,7 @@ public class FullPrunedBlockChainTest {
         };
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() {
         TimeUtils.clearMockClock();
         PARAMS = new UnitTestParams() {
@@ -98,7 +98,7 @@ public class FullPrunedBlockChainTest {
         };
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         BriefLogFormatter.init();
         Context.propagate(new Context(100, Coin.ZERO, false, false));
@@ -302,10 +302,10 @@ public class FullPrunedBlockChainTest {
 
             List<UTXO> outputs = store.getOpenTransactionOutputs(Arrays.asList(toKey));
             assertNotNull(outputs);
-            assertEquals("Wrong Number of Outputs", 1, outputs.size());
+            assertEquals(1, outputs.size(), "Wrong Number of Outputs");
             UTXO output = outputs.get(0);
-            assertEquals("The address is not equal", address, output.getScript().getToAddress(PARAMS.network(), true));
-            assertEquals("The amount is not equal", totalAmount, output.getValue());
+            assertEquals(address, output.getScript().getToAddress(PARAMS.network(), true), "The address is not equal");
+            assertEquals(totalAmount, output.getValue(), "The amount is not equal");
 
             outputs = null;
             output = null;
@@ -340,8 +340,8 @@ public class FullPrunedBlockChainTest {
 
             // Create 1 BTC spend to a key in this wallet (to ourselves).
             Wallet wallet = Wallet.createDeterministic(PARAMS.network(), ScriptType.P2PKH);
-            assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-            assertEquals("Estimated balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED));
+            assertEquals(Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE), "Available balance is incorrect");
+            assertEquals(Coin.ZERO, wallet.getBalance(Wallet.BalanceType.ESTIMATED), "Estimated balance is incorrect");
 
             wallet.setUTXOProviderInternal(store);
             ECKey toKey = wallet.freshReceiveKey();
@@ -364,16 +364,16 @@ public class FullPrunedBlockChainTest {
             Coin fee = Coin.ZERO;
 
             // There should be one pending tx (our spend).
-            assertEquals("Wrong number of PENDING.4", 1, wallet.getPoolSize(WalletTransaction.Pool.PENDING));
+            assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING), "Wrong number of PENDING.4");
             Coin totalPendingTxAmount = Coin.ZERO;
             for (Transaction tx : wallet.getPendingTransactions()) {
                 totalPendingTxAmount = totalPendingTxAmount.add(tx.getValueSentToMe(wallet));
             }
 
             // The available balance should be the 0 (as we spent the 1 BTC that's pending) and estimated should be 1/2 - fee BTC
-            assertEquals("Available balance is incorrect", Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE));
-            assertEquals("Estimated balance is incorrect", amount2.subtract(fee), wallet.getBalance(Wallet.BalanceType.ESTIMATED));
-            assertEquals("Pending tx amount is incorrect", amount2.subtract(fee), totalPendingTxAmount);
+            assertEquals(Coin.ZERO, wallet.getBalance(Wallet.BalanceType.AVAILABLE), "Available balance is incorrect");
+            assertEquals(amount2.subtract(fee), wallet.getBalance(Wallet.BalanceType.ESTIMATED), "Estimated balance is incorrect");
+            assertEquals(amount2.subtract(fee), totalPendingTxAmount, "Pending tx amount is incorrect");
         }
     }
 
