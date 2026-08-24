@@ -97,7 +97,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
 
 class NewBlock {
     public Block block;
-    private TransactionOutPointWithValue spendableOutput;
+    private final TransactionOutPointWithValue spendableOutput;
     public NewBlock(Block block, TransactionOutPointWithValue spendableOutput) {
         this.block = block; this.spendableOutput = spendableOutput;
     }
@@ -164,15 +164,15 @@ class RuleList {
 
 public class FullBlockTestGenerator {
     // Used by BitcoindComparisonTool and AbstractFullPrunedBlockChainTest to create test cases
-    private NetworkParameters params;
-    private ECKey coinbaseOutKey;
-    private byte[] coinbaseOutKeyPubKey;
+    private final NetworkParameters params;
+    private final ECKey coinbaseOutKey;
+    private final byte[] coinbaseOutKeyPubKey;
 
     // Used to double-check that we are always using the right next-height
-    private Map<Sha256Hash, Integer> blockToHeightMap = new HashMap<>();
+    private final Map<Sha256Hash, Integer> blockToHeightMap = new HashMap<>();
 
-    private Map<Sha256Hash, Block> hashHeaderMap = new HashMap<>();
-    private Map<Sha256Hash, Sha256Hash> coinbaseBlockMap = new HashMap<>();
+    private final Map<Sha256Hash, Block> hashHeaderMap = new HashMap<>();
+    private final Map<Sha256Hash, Sha256Hash> coinbaseBlockMap = new HashMap<>();
 
     public FullBlockTestGenerator(NetworkParameters params) {
         this.params = params;
