@@ -114,9 +114,8 @@ public class FullPrunedBlockChainTest {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
 
             for (Rule rule : blockList.list) {
-                if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity))
+                if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity block))
                     continue;
-                FullBlockTestGenerator.BlockAndValidity block = (FullBlockTestGenerator.BlockAndValidity) rule;
                 log.info("Testing rule " + block.ruleName + " with block hash " + block.block.getHash());
                 boolean threw = false;
                 try {
@@ -250,7 +249,7 @@ public class FullPrunedBlockChainTest {
     @Test
     public void testFirst100KBlocks() throws Exception {
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Arrays.asList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, List.of(blockFile));
 
         try (FullPrunedBlockStore store = provider.createStore(MAINNET, 10)) {
             provider.resetStore(store);
@@ -300,7 +299,7 @@ public class FullPrunedBlockChainTest {
             chain.add(rollingBlock);
             totalAmount = totalAmount.add(amount);
 
-            List<UTXO> outputs = store.getOpenTransactionOutputs(Arrays.asList(toKey));
+            List<UTXO> outputs = store.getOpenTransactionOutputs(List.of(toKey));
             assertNotNull(outputs);
             assertEquals(1, outputs.size(), "Wrong Number of Outputs");
             UTXO output = outputs.get(0);

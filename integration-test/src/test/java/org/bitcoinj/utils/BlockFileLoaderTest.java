@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,7 +38,7 @@ public class BlockFileLoaderTest {
     @Test
     public void iterateFirst100kCount() {
         File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, List.of(blockFile));
 
         long blockCount = 0;
         for (Block b : loader) {
@@ -51,7 +51,7 @@ public class BlockFileLoaderTest {
     @Test
     public void iterateFirst100kTwice() {
         File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, List.of(blockFile));
 
         long blockCount = 0;
         for (Block b : loader) {
@@ -71,7 +71,7 @@ public class BlockFileLoaderTest {
     @Test
     public void streamFirst100kCount() {
         File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, List.of(blockFile));
 
         long blockCount = loader.stream().count();
 
@@ -81,7 +81,7 @@ public class BlockFileLoaderTest {
     @Test
     public void streamFirst100kTwice() {
         File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, List.of(blockFile));
 
         long blockCount = loader.stream().count();
 
@@ -95,7 +95,7 @@ public class BlockFileLoaderTest {
     @Test
     public void streamFirst100kCountTransactions() {
         File blockFile = new File(getClass().getResource("../core/first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, Collections.singletonList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(BitcoinNetwork.MAINNET, List.of(blockFile));
 
         long transactionCount = loader.stream()
                 .map(Block::transactions)
