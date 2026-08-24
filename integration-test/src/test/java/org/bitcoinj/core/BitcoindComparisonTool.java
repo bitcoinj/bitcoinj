@@ -86,7 +86,7 @@ public class BitcoindComparisonTool {
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(PARAMS.network(), store);
         } catch (BlockStoreException e) {
-            e.printStackTrace();
+            log.error("Exception: ", e);
             System.exit(1);
         }
 
@@ -248,11 +248,11 @@ public class BitcoindComparisonTool {
                     threw = true;
                     if (!block.throwsException) {
                         log.error("ERROR: Block didn't match throws flag on block \"{}\"", block.ruleName);
-                        e.printStackTrace();
+                        log.error("Exception: ", e);
                         rulesSinceFirstFail++;
                     } else if (block.connects) {
                         log.error("ERROR: Block didn't match connects flag on block \"{}\"", block.ruleName);
-                        e.printStackTrace();
+                        log.error("Exception: ", e);
                         rulesSinceFirstFail++;
                     }
                 }
