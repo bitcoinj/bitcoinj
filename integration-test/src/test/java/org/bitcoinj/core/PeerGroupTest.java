@@ -36,12 +36,12 @@ import org.bitcoinj.test.integration.peer.InboundMessageQueuer;
 import org.bitcoinj.test.integration.peer.TestWithPeerGroup;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -71,17 +71,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.bitcoinj.base.Coin.COIN;
 import static org.bitcoinj.base.Coin.valueOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 // TX announcement and broadcast is tested in TransactionBroadcastTest.
 
-@RunWith(value = Parameterized.class)
+@ParameterizedClass
+@MethodSource("parameters")
 public class PeerGroupTest extends TestWithPeerGroup {
     private static final int BLOCK_HEIGHT_GENESIS = 0;
 
@@ -102,7 +103,6 @@ public class PeerGroupTest extends TestWithPeerGroup {
     private PreMessageReceivedEventListener preMessageReceivedListener;
     private Map<Peer, AtomicInteger> peerToMessageCount;
 
-    @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
         return List.of(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
                              new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER});
@@ -113,7 +113,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Override
-    @Before
+    @BeforeEach
     public void setUp() throws BlockStoreException, IOException {
         super.setUp();
         peerToMessageCount = new HashMap<>();
@@ -128,7 +128,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     @Override
-    @After
+    @AfterEach
     public void tearDown() {
         super.tearDown();
     }
@@ -362,7 +362,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Now we successfully connect to another peer. There should be no messages sent.
         InboundMessageQueuer p2 = connectPeer(2);
         Message message = outbound(p2);
-        assertNull(message == null ? "" : message.toString(), message);
+        assertNull(message, message == null ? "" : message.toString());
     }
 
     @Test
@@ -539,13 +539,13 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // check things after disconnect
         assertFalse(peerConnectedFuture.isDone()); // should never have connected
         watch.stop();
-        assertTrue("Disconnect in " + watch + " for " + timeout.toMillis() + " ms timeout",
-                watch.elapsed().compareTo(timeout.minus(errorMargin)) >= 0); // should not disconnect before timeout
+        assertTrue(watch.elapsed().compareTo(timeout.minus(errorMargin)) >= 0,
+                "Disconnect in " + watch + " for " + timeout.toMillis() + " ms timeout"); // should not disconnect before timeout
         assertTrue(peerDisconnectedFuture.isDone()); // but should disconnect eventually
     }
 
     @Test
-    @Ignore("disabled for now as this test is too flaky")
+    @Disabled("disabled for now as this test is too flaky")
     public void peerPriority() throws Exception {
         final List<InetSocketAddress> addresses = new ArrayList<>(List.of(
                 new InetSocketAddress("localhost", 2000),
@@ -929,8 +929,8 @@ public class PeerGroupTest extends TestWithPeerGroup {
         Threading.waitForUserCode();
 
         // Assert the loose transaction was NOT silently dropped
-        assertNotNull("Loose transaction should be processed after FilteredBlock (issue #4116)",
-                broadcastTx[0]);
+        assertNotNull(broadcastTx[0],
+                "Loose transaction should be processed after FilteredBlock (issue #4116)");
         assertEquals(looseTx.getTxId(), broadcastTx[0].getTxId());
     }
 

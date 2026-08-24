@@ -31,11 +31,11 @@ import org.bitcoinj.test.integration.peer.InboundMessageQueuer;
 import org.bitcoinj.test.integration.peer.TestWithNetworkConnections;
 import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import org.jspecify.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
@@ -63,22 +63,22 @@ import static org.bitcoinj.testing.FakeTxBuilder.createFakeBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.createFakeTx;
 import static org.bitcoinj.testing.FakeTxBuilder.makeTestBlock;
 import static org.bitcoinj.testing.FakeTxBuilder.roundTripTransaction;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-@RunWith(value = Parameterized.class)
+@ParameterizedClass
+@MethodSource("parameters")
 public class PeerTest extends TestWithNetworkConnections {
     private Peer peer;
     private InboundMessageQueuer writeTarget;
     private static final int OTHER_PEER_CHAIN_HEIGHT = 110;
     private final AtomicBoolean fail = new AtomicBoolean(false);
 
-    @Parameterized.Parameters
     public static Collection<ClientType[]> parameters() {
         return Arrays.asList(new ClientType[] {ClientType.NIO_CLIENT_MANAGER},
                              new ClientType[] {ClientType.BLOCKING_CLIENT_MANAGER},
@@ -91,7 +91,7 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Override
-    @Before
+    @BeforeEach
     public void setUp() throws IOException, BlockStoreException {
         super.setUp();
         VersionMessage ver = new VersionMessage(TESTNET, 100);
@@ -101,7 +101,7 @@ public class PeerTest extends TestWithNetworkConnections {
     }
 
     @Override
-    @After
+    @AfterEach
     public void tearDown() {
         super.tearDown();
         assertFalse(fail.get());
@@ -500,7 +500,7 @@ public class PeerTest extends TestWithNetworkConnections {
         pingAndWait(writeTarget);
         assertTrue(future.isDone());
         Duration elapsed = future.get();
-        assertTrue(elapsed.toMillis() + " ms", elapsed.toMillis() > 1000);
+        assertTrue(elapsed.toMillis() > 1000, elapsed.toMillis() + " ms");
         assertEquals(elapsed, peer.lastPingInterval().get());
         assertEquals(elapsed, peer.pingInterval().get());
         // Do it again and make sure it affects the average.

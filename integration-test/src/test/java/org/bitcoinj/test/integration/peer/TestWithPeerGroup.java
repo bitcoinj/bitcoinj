@@ -34,8 +34,7 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
 import org.jspecify.annotations.Nullable;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -57,6 +56,7 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * used with loopback peers created using connectPeer. This involves real TCP connections so is a pretty accurate
  * mock, but means unit tests cannot be run simultaneously.
  */
+@Timeout(15)
 public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
     @Nullable protected PeerGroup peerGroup;
 
@@ -69,9 +69,6 @@ public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
             throw new RuntimeException();
         this.clientType = clientType;
     }
-
-    @Rule
-    public Timeout globalTimeout = Timeout.seconds(15);
 
     @Override
     public void setUp() throws IOException, BlockStoreException {
