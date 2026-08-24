@@ -19,18 +19,18 @@ package org.bitcoinj.utils;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Context;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class BlockFileLoaderTest {
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         Context.propagate(new Context());
     }
