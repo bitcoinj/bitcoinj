@@ -79,7 +79,7 @@ public class BitcoindComparisonTool {
         FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
         final RuleList blockList = generator.getBlocksToTest(false, runExpensiveTests, blockFile);
         final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<>();
-        final Iterator<Block> blocks = new BlockFileLoader(PARAMS.network(), Arrays.asList(blockFile)).iterator();
+        final Iterator<Block> blocks = new BlockFileLoader(PARAMS.network(), List.of(blockFile)).iterator();
 
         try {
             FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
@@ -106,13 +106,14 @@ public class BitcoindComparisonTool {
         bitcoind.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> {
             if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
                 System.out.println();
-                System.out.println("************************************************************************************************************************\n" +
-                                   "WARNING: You appear to be using this to test an alternative implementation with full validation rules. You should go\n" +
-                                   "think hard about what you're doing. Seriously, no one has gotten even close to correctly reimplementing Bitcoin\n" +
-                                   "consensus rules, despite serious investment in trying. It is a huge task and the slightest difference is a huge bug.\n" +
-                                   "Instead, go work on making Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right,\n" +
-                                   "and starting with this tester as a way to try to do so will simply end in pain and lost coins.\n" +
-                                   "************************************************************************************************************************");
+                System.out.println("""
+                    ************************************************************************************************************************
+                    WARNING: You appear to be using this to test an alternative implementation with full validation rules. You should go
+                    think hard about what you're doing. Seriously, no one has gotten even close to correctly reimplementing Bitcoin
+                    consensus rules, despite serious investment in trying. It is a huge task and the slightest difference is a huge bug.
+                    Instead, go work on making Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right,
+                    and starting with this tester as a way to try to do so will simply end in pain and lost coins.
+                    ************************************************************************************************************************""");
                 System.out.println();
             }
             log.info("bitcoind connected");
@@ -218,10 +219,9 @@ public class BitcoindComparisonTool {
                 
         int rulesSinceFirstFail = 0;
         for (Rule rule : blockList.list) {
-            if (rule instanceof FullBlockTestGenerator.BlockAndValidity) {
-                FullBlockTestGenerator.BlockAndValidity block = (FullBlockTestGenerator.BlockAndValidity) rule;
+            if (rule instanceof FullBlockTestGenerator.BlockAndValidity block) {
                 boolean threw = false;
-                Block nextBlock = preloadedBlocks.get(((FullBlockTestGenerator.BlockAndValidity) rule).blockHash);
+                Block nextBlock = preloadedBlocks.get(block.blockHash);
                 // Often load at least one block because sometimes we have duplicates with the same hash (b56/57)
                 for (int i = 0; i < 1
                         || nextBlock == null || !nextBlock.getHash().equals(block.blockHash);

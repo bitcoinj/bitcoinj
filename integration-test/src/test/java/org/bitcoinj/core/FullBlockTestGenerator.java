@@ -188,7 +188,7 @@ public class FullBlockTestGenerator {
         final Script OP_NOP_SCRIPT = new ScriptBuilder().op(OP_NOP).build();
 
         // TODO: Rename this variable.
-        List<Rule> blocks = new LinkedList<Rule>() {
+        List<Rule> blocks = new LinkedList<>() {
             @Override
             public boolean add(Rule element) {
                 if (outStream != null && element instanceof BlockAndValidity) {
@@ -199,7 +199,7 @@ public class FullBlockTestGenerator {
                         ByteUtils.writeInt32LE(block.length, length, 0);
                         outStream.write(length);
                         outStream.write(block);
-                        ((BlockAndValidity)element).block = null;
+                        ((BlockAndValidity) element).block = null;
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -907,7 +907,7 @@ public class FullBlockTestGenerator {
             } catch (RuntimeException e) { } // Should happen
             if (b45.hasTransactions())
                 throw new RuntimeException("addTransaction doesn't properly check for adding a non-coinbase as first tx");
-            b45.replaceTransactions(Arrays.asList(t));
+            b45.replaceTransactions(List.of(t));
 
             b45.setTime(b44.time().plusSeconds(1));
         }
