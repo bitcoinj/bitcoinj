@@ -116,34 +116,34 @@ public class FullPrunedBlockChainTest {
             for (Rule rule : blockList.list) {
                 if (!(rule instanceof FullBlockTestGenerator.BlockAndValidity block))
                     continue;
-                log.info("Testing rule " + block.ruleName + " with block hash " + block.block.getHash());
+                log.info("Testing rule {} with block hash {}", block.ruleName, block.block.getHash());
                 boolean threw = false;
                 try {
                     if (chain.add(block.block) != block.connects) {
-                        log.error("Block didn't match connects flag on block " + block.ruleName);
+                        log.error("Block didn't match connects flag on block {}", block.ruleName);
                         fail();
                     }
                 } catch (VerificationException e) {
                     threw = true;
                     if (!block.throwsException) {
-                        log.error("Block didn't match throws flag on block " + block.ruleName);
+                        log.error("Block didn't match throws flag on block {}", block.ruleName);
                         throw e;
                     }
                     if (block.connects) {
-                        log.error("Block didn't match connects flag on block " + block.ruleName);
+                        log.error("Block didn't match connects flag on block {}", block.ruleName);
                         fail();
                     }
                 }
                 if (!threw && block.throwsException) {
-                    log.error("Block didn't match throws flag on block " + block.ruleName);
+                    log.error("Block didn't match throws flag on block {}", block.ruleName);
                     fail();
                 }
                 if (!chain.getChainHead().getHeader().getHash().equals(block.hashChainTipAfterBlock)) {
-                    log.error("New block head didn't match the correct value after block " + block.ruleName);
+                    log.error("New block head didn't match the correct value after block {}", block.ruleName);
                     fail();
                 }
                 if (chain.getChainHead().getHeight() != block.heightAfterBlock) {
-                    log.error("New block head didn't match the correct height after block " + block.ruleName);
+                    log.error("New block head didn't match the correct height after block {}", block.ruleName);
                     fail();
                 }
             }
