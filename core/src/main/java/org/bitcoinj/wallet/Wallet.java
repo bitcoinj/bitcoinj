@@ -1849,7 +1849,7 @@ public class Wallet extends BaseTaggableObject
         boolean isActuallySpent = true;
         for (TransactionOutput o : tx.getOutputs()) {
             if (o.isAvailableForSpending()) {
-                if (o.isMineOrWatched(this)) isActuallySpent = false;
+                if (isMineOrWatched(o)) isActuallySpent = false;
                 if (o.getSpentBy() != null) {
                     log.error("isAvailableForSpending != spentBy");
                     return false;
@@ -1993,8 +1993,8 @@ public class Wallet extends BaseTaggableObject
                 log.warn("There are now {} risk dropped transactions being kept in memory", riskDropped.size());
                 return;
             }
-            Coin valueSentToMe = tx.getValueSentToMe(this);
-            Coin valueSentFromMe = tx.getValueSentFromMe(this);
+            Coin valueSentToMe = getValueSentToMe(tx);
+            Coin valueSentFromMe = getValueSentFromMe(tx);
             if (log.isInfoEnabled())
                 log.info("Received a pending transaction {} that spends {} from our own wallet, and sends us {}",
                         tx.getTxId(), valueSentFromMe.toFriendlyString(), valueSentToMe.toFriendlyString());
@@ -2103,8 +2103,8 @@ public class Wallet extends BaseTaggableObject
     public boolean isTransactionRelevant(Transaction tx) throws ScriptException {
         lock.lock();
         try {
-            return tx.getValueSentFromMe(this).signum() > 0 ||
-                   tx.getValueSentToMe(this).signum() > 0 ||
+            return getValueSentFromMe(tx).signum() > 0 ||
+                   getValueSentToMe(tx).signum() > 0 ||
                    !findDoubleSpendsAgainst(tx, transactions).isEmpty();
         } finally {
             lock.unlock();
@@ -2224,8 +2224,8 @@ public class Wallet extends BaseTaggableObject
         boolean bestChain = blockType == BlockChain.NewBlockType.BEST_CHAIN;
         boolean sideChain = blockType == BlockChain.NewBlockType.SIDE_CHAIN;
 
-        Coin valueSentFromMe = tx.getValueSentFromMe(this);
-        Coin valueSentToMe = tx.getValueSentToMe(this);
+        Coin valueSentFromMe = getValueSentFromMe(tx);
+        Coin valueSentToMe = getValueSentToMe(tx);
         Coin valueDifference = valueSentToMe.subtract(valueSentFromMe);
 
         log.info("Received tx{} for {}: {} [{}] in block {}", sideChain ? " on a side chain" : "",
@@ -2505,18 +2505,18 @@ public class Wallet extends BaseTaggableObject
         // Now make sure it ends up in the right pool. Also, handle the case where this TX is double-spending
         // against our pending transactions. Note that a tx may double spend our pending transactions and also send
         // us money/spend our money.
-        boolean hasOutputsToMe = tx.getValueSentToMe(this).signum() > 0;
+        boolean hasOutputsToMe = getValueSentToMe(tx).signum() > 0;
         boolean hasOutputsFromMe = false;
         if (hasOutputsToMe) {
             // Needs to go into either unspent or spent (if the outputs were already spent by a pending tx).
-            if (tx.isEveryOwnedOutputSpent(this)) {
+            if (isEveryOwnedOutputSpent(tx)) {
                 log.info("  tx {} ->spent (by pending)", tx.getTxId());
                 addWalletTransaction(Pool.SPENT, tx);
             } else {
                 log.info("  tx {} ->unspent", tx.getTxId());
                 addWalletTransaction(Pool.UNSPENT, tx);
             }
-        } else if (tx.getValueSentFromMe(this).signum() > 0) {
+        } else if (getValueSentFromMe(tx).signum() > 0) {
             hasOutputsFromMe = true;
             // Didn't send us any money, but did spend some. Keep it around for record keeping purposes.
             log.info("  tx {} ->spent", tx.getTxId());
@@ -2541,7 +2541,7 @@ public class Wallet extends BaseTaggableObject
             // disconnect irrelevant inputs (otherwise might cause protobuf serialization issue)
             for (TransactionInput input : tx.getInputs()) {
                 TransactionOutput output = input.getConnectedOutput();
-                if (output != null && !output.isMineOrWatched(this)) {
+                if (output != null && !isMineOrWatched(output)) {
                     input.disconnect();
                 }
             }
@@ -2612,7 +2612,7 @@ public class Wallet extends BaseTaggableObject
                 log.info("  marked {} as spent by {}", input.getOutpoint(), tx.getTxId());
                 maybeMovePool(connected, "prevtx");
                 // Just because it's connected doesn't mean it's actually ours: sometimes we have total visibility.
-                if (output.isMineOrWatched(this)) {
+                if (isMineOrWatched(output)) {
                     checkState(myUnspents.remove(output));
                 }
             }
@@ -2711,7 +2711,7 @@ public class Wallet extends BaseTaggableObject
      */
     private void maybeMovePool(Transaction tx, String context) {
         checkState(lock.isHeldByCurrentThread());
-        if (tx.isEveryOwnedOutputSpent(this)) {
+        if (isEveryOwnedOutputSpent(tx)) {
             // There's nothing left I can spend in this transaction.
             if (unspent.remove(tx.getTxId()) != null) {
                 if (log.isInfoEnabled()) {
@@ -2754,7 +2754,7 @@ public class Wallet extends BaseTaggableObject
             // Put any outputs that are sending money back to us into the unspents map, and calculate their total value.
             Coin valueSentToMe = Coin.ZERO;
             for (TransactionOutput o : tx.getOutputs()) {
-                if (!o.isMineOrWatched(this)) continue;
+                if (!isMineOrWatched(o)) continue;
                 valueSentToMe = valueSentToMe.add(o.getValue());
             }
             // Mark the outputs we're spending as spent so we won't try and use them in future creations. This will also
@@ -2803,7 +2803,7 @@ public class Wallet extends BaseTaggableObject
             // they are showing to the user in qr codes etc.
             markKeysAsUsed(tx);
             try {
-                Coin valueSentFromMe = tx.getValueSentFromMe(this);
+                Coin valueSentFromMe = getValueSentFromMe(tx);
                 Coin newBalance = balance.add(valueSentToMe).subtract(valueSentFromMe);
                 if (valueSentToMe.signum() > 0) {
                     checkBalanceFuturesLocked();
@@ -3188,7 +3188,7 @@ public class Wallet extends BaseTaggableObject
         }
         if (pool == Pool.UNSPENT || pool == Pool.PENDING) {
             for (TransactionOutput output : tx.getOutputs()) {
-                if (output.isAvailableForSpending() && output.isMineOrWatched(this))
+                if (output.isAvailableForSpending() && isMineOrWatched(output))
                     myUnspents.add(output);
             }
         }
@@ -3362,7 +3362,7 @@ public class Wallet extends BaseTaggableObject
                         for (TransactionInput input : tx.getInputs()) {
                             TransactionOutput output = input.getConnectedOutput();
                             if (output == null) continue;
-                            if (output.isMineOrWatched(this))
+                            if (isMineOrWatched(output))
                                 checkState(myUnspents.add(output));
                             input.disconnect();
                         }
@@ -3570,11 +3570,11 @@ public class Wallet extends BaseTaggableObject
 
         for (Transaction tx : txns) {
             try {
-                builder.append(tx.getValue(this).toFriendlyString());
+                builder.append(getValue(tx).toFriendlyString());
                 builder.append(" total value (sends ");
-                builder.append(tx.getValueSentFromMe(this).toFriendlyString());
+                builder.append(getValueSentFromMe(tx).toFriendlyString());
                 builder.append(" and receives ");
-                builder.append(tx.getValueSentToMe(this).toFriendlyString());
+                builder.append(getValueSentToMe(tx).toFriendlyString());
                 builder.append(")\n");
             } catch (ScriptException e) {
                 // Ignore and don't print this line.
@@ -3897,13 +3897,13 @@ public class Wallet extends BaseTaggableObject
         for (Transaction tx: transactions.values()) {
             Coin txTotal = Coin.ZERO;
             for (TransactionOutput output : tx.getOutputs()) {
-                if (output.isMine(this)) {
+                if (isMine(output)) {
                     txTotal = txTotal.add(output.getValue());
                 }
             }
             for (TransactionInput in : tx.getInputs()) {
                 TransactionOutput prevOut = in.getConnectedOutput();
-                if (prevOut != null && prevOut.isMine(this)) {
+                if (prevOut != null && isMine(prevOut)) {
                     txTotal = txTotal.subtract(prevOut.getValue());
                 }
             }
@@ -3929,7 +3929,7 @@ public class Wallet extends BaseTaggableObject
             // Count spent outputs to only if they were not to us. This means we don't count change outputs.
             Coin txOutputTotal = Coin.ZERO;
             for (TransactionOutput out : tx.getOutputs()) {
-                if (out.isMine(this) == false) {
+                if (isMine(out) == false) {
                     txOutputTotal = txOutputTotal.add(out.getValue());
                 }
             }
@@ -3938,7 +3938,7 @@ public class Wallet extends BaseTaggableObject
             Coin txOwnedInputsTotal = Coin.ZERO;
             for (TransactionInput in : tx.getInputs()) {
                 TransactionOutput prevOut = in.getConnectedOutput();
-                if (prevOut != null && prevOut.isMine(this)) {
+                if (prevOut != null && isMine(prevOut)) {
                     txOwnedInputsTotal = txOwnedInputsTotal.add(prevOut.getValue());
                 }
             }
@@ -4657,14 +4657,14 @@ public class Wallet extends BaseTaggableObject
         for (Transaction tx : pending.values()) {
             // Remove the spent outputs.
             for (TransactionInput input : tx.getInputs()) {
-                if (input.getConnectedOutput().isMine(this)) {
+                if (isMine(input.getConnectedOutput())) {
                     candidates.remove(input.getConnectedOutput());
                 }
             }
             // Add change outputs. Do not try and spend coinbases that were mined too recently, the protocol forbids it.
             if (!excludeImmatureCoinbases || isTransactionMature(tx)) {
                 for (TransactionOutput output : tx.getOutputs()) {
-                    if (output.isAvailableForSpending() && output.isMine(this)) {
+                    if (output.isAvailableForSpending() && isMine(output)) {
                         candidates.add(output);
                     }
                 }
@@ -4895,7 +4895,7 @@ public class Wallet extends BaseTaggableObject
                         for (TransactionOutput output : tx.getOutputs()) {
                             TransactionInput input = output.getSpentBy();
                             if (input != null) {
-                                if (output.isMineOrWatched(this))
+                                if (isMineOrWatched(output))
                                     checkState(myUnspents.add(output));
                                 input.disconnect();
                             }
@@ -5098,7 +5098,7 @@ public class Wallet extends BaseTaggableObject
         Script script = out.getScriptPubKey();
         boolean isScriptTypeSupported = ScriptPattern.isP2PK(script) || ScriptPattern.isP2SH(script)
                 || ScriptPattern.isP2WPKH(script) || ScriptPattern.isP2WSH(script);
-        return (isScriptTypeSupported && out.isMine(this)) || watchedScripts.contains(script);
+        return (isScriptTypeSupported && isMine(out)) || watchedScripts.contains(script);
     }
 
     /**

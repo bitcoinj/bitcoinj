@@ -366,7 +366,7 @@ public class FullPrunedBlockChainTest {
             assertEquals(1, wallet.getPoolSize(WalletTransaction.Pool.PENDING), "Wrong number of PENDING.4");
             Coin totalPendingTxAmount = Coin.ZERO;
             for (Transaction tx : wallet.getPendingTransactions()) {
-                totalPendingTxAmount = totalPendingTxAmount.add(tx.getValueSentToMe(wallet));
+                totalPendingTxAmount = totalPendingTxAmount.add(wallet.getValueSentToMe(tx));
             }
 
             // The available balance should be the 0 (as we spent the 1 BTC that's pending) and estimated should be 1/2 - fee BTC
