@@ -95,7 +95,7 @@ class ForwardingService(val config: Config) : Closeable {
     private fun coinForwardingListener(wallet: Wallet, incomingTx: Transaction, prevBalance: Coin, newBalance: Coin) {
         // Incoming transaction received, now "compose" (i.e. chain) a call to wait for required confirmations
         // The transaction "incomingTx" can either be pending, or included into a block (we didn't see the broadcast).
-        val value = incomingTx.getValueSentToMe(wallet)
+        val value = wallet.getValueSentToMe(incomingTx)
         println("Received tx for ${value.toFriendlyString()} : $incomingTx \n")
         println("Transaction will be forwarded after it confirms.")
         println("Waiting for confirmation...")

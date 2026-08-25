@@ -212,7 +212,7 @@ public class TransactionBroadcastTest extends TestWithPeerGroup {
         }
         assertNotNull(t1);
         // 49 BTC in change.
-        assertEquals(valueOf(49, 0), t1.getValueSentToMe(wallet));
+        assertEquals(valueOf(49, 0), wallet.getValueSentToMe(t1));
         // The future won't complete until it's heard back from the network on p2.
         InventoryMessage inv = InventoryMessage.ofTransactions(t1);
         inbound(p2, inv);
