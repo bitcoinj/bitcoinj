@@ -52,7 +52,7 @@ public class TxConfidenceTableTest {
         BriefLogFormatter.init();
         Context context = new Context();
         Context.propagate(context);
-        table = context.getConfidenceTable();
+        table = context.peerNetwork().txConfidenceTable();
 
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Address change = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
