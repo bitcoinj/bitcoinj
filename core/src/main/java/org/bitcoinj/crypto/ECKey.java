@@ -736,15 +736,22 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     protected ECDSASignature doSign(Sha256Hash input, BigInteger privateKeyForSigning) {
-        return doSign(input, new SecpPrivKeyImpl(privateKeyForSigning));
+        Objects.requireNonNull(privateKeyForSigning);
+        try (Secp256k1 secp = Secp256k1.getById(SECP_PROVIDER_ID)) {
+            return doSign(secp, input, new SecpPrivKeyImpl(privateKeyForSigning));
+        }
     }
 
     protected ECDSASignature doSign(Sha256Hash input, SecpPrivKey privateKeyForSigning) {
         Objects.requireNonNull(privateKeyForSigning);
         try (Secp256k1 secp = Secp256k1.getById(SECP_PROVIDER_ID)) {
-            EcdsaSignature secpSig = secp.ecdsaSign(input.getBytes(), privateKeyForSigning).get();
-            return new ECDSASignature(secpSig.r().toBigInteger(), secpSig.s().toBigInteger());
+            return doSign(secp, input, privateKeyForSigning);
         }
+    }
+
+    private ECDSASignature doSign(Secp256k1 secp, Sha256Hash input, SecpPrivKey privateKeyForSigning) {
+        EcdsaSignature secpSig = secp.ecdsaSign(input.getBytes(), privateKeyForSigning).get();
+        return new ECDSASignature(secpSig.r().toBigInteger(), secpSig.s().toBigInteger());
     }
 
     /**
