@@ -892,7 +892,6 @@ public class ScriptExecution {
         }
         connectedScript = Script.removeAllInstancesOf(connectedScript, outStream.toByteArray());
 
-        // TODO: Use int for indexes everywhere, we can't have that many inputs/outputs
         boolean sigValid = false;
         try {
             TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigBytes, requireCanonical,
@@ -1095,7 +1094,7 @@ public class ScriptExecution {
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
      * @param verifyFlags Each flag enables one validation rule.
      */
-    private static void correctlySpends(Script script, Transaction txContainingThis, long scriptSigIndex,
+    private static void correctlySpends(Script script, Transaction txContainingThis, int scriptSigIndex,
                                        Script scriptPubKey, Set<VerifyFlag> verifyFlags) throws ScriptException {
         // Clone the transaction because executing the script involves editing it, and if we die, we'll leave
         // the tx half broken (also it's not so thread safe to work on it directly.
