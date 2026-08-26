@@ -76,10 +76,10 @@ import static org.bitcoinj.base.internal.Preconditions.checkState;
  * verification.  It verifies headers and is implements most of what is required to implement SPV mode, but
  * also provides callback hooks which can be used to do full verification.
  * <p>
- * There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
- * class and implements <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
- * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockChain} paired with a
- * {@link org.bitcoinj.store.MemoryFullPrunedBlockStore} implements full verification, which is equivalent to
+ * The main subclass of AbstractBlockChain in the `bitcoinj-core` module is {@link BlockChain}, which implements
+ * <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
+ * not verify the contents of blocks, just their headers. There is partial implementation of a "full-pruned" blockchain
+ * in the integration test module that partially implements full verification, similar to
  * Bitcoin Core. To learn more about the alternative security models, please consult the articles on the
  * website.
  * <h2>Theory</h2>
