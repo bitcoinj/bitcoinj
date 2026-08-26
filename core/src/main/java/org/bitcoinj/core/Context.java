@@ -83,28 +83,17 @@ public class Context {
     private static final ThreadLocal<Context> slot = new ThreadLocal<>();
 
     /**
-     * Returns the current context that is associated with the <b>calling thread</b>. BitcoinJ is an API that has thread
-     * affinity: much like OpenGL it expects each thread that accesses it to have been configured with a global Context
-     * object. This method returns that. Note that to help you develop, this method will <i>also</i> propagate whichever
-     * context was created last onto the current thread, if it's missing. However it will print an error when doing so
-     * because propagation of contexts is meant to be done manually: this is so two libraries or subsystems that
-     * independently use bitcoinj (or possibly alt coin forks of it) can operate correctly.
-     *
-     * @throws java.lang.IllegalStateException if no context exists at all or if we are in strict mode and there is no context.
+     * Returns the current context that is associated with the <b>calling thread</b>. <b>bitcoinj</b> uses the {@code Context}
+     * object for overriding certain behaviors in tests. Most applications should use the default context.
      */
     public static Context get() {
         Context tls = slot.get();
         if (tls == null) {
-            if (lastConstructed == null)
-                throw new IllegalStateException("You must construct a Context object before using bitcoinj!");
-            slot.set(lastConstructed);
-            log.error("Performing thread fixup: you are accessing bitcoinj via a thread that has not had any context set on it.");
-            log.error("This error has been corrected for, but doing this makes your app less robust.");
-            log.error("You should use Context.propagate() or a ContextPropagatingThreadFactory.");
-            log.error("Please refer to the user guide for more information about this.");
-            log.error("Thread name is {}.", Thread.currentThread().getName());
-            // TODO: Actually write the user guide section about this.
-            // TODO: If the above TODO makes it past the 0.13 release, kick Mike and tell him he sucks.
+            if (lastConstructed != null) {
+                slot.set(lastConstructed);
+            } else {
+                slot.set(new Context());    // No context previously set, use default context
+            }
             return lastConstructed;
         } else {
             return tls;
