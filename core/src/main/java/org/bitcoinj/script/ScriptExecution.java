@@ -1094,10 +1094,8 @@ public class ScriptExecution {
      * @param scriptSigIndex The index in txContainingThis of the scriptSig (note: NOT the index of the scriptPubKey).
      * @param scriptPubKey The connected scriptPubKey containing the conditions needed to claim the value.
      * @param verifyFlags Each flag enables one validation rule.
-     * @deprecated Use {@link #correctlySpends(Script, Transaction, int, TransactionWitness, Coin, Script, Set)} instead.
      */
-    @Deprecated
-    public static void correctlySpends(Script script, Transaction txContainingThis, long scriptSigIndex,
+    private static void correctlySpends(Script script, Transaction txContainingThis, long scriptSigIndex,
                                        Script scriptPubKey, Set<VerifyFlag> verifyFlags) throws ScriptException {
         // Clone the transaction because executing the script involves editing it, and if we die, we'll leave
         // the tx half broken (also it's not so thread safe to work on it directly.
