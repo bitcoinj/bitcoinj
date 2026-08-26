@@ -176,12 +176,16 @@ public abstract class AbstractBlockChain {
 
     /**
      * Constructs a BlockChain connected to the given list of listeners (wallets) and a store.
-     * @param params network parameters for this chain
+     * <p>
+     * Note that for unit/integration-testing, we need to support {@link org.bitcoinj.params.UnitTestParams} being
+     * passed as {@link NetworkParameters}, so we can't replace {@code NetworkParameters} with {@link Network} in this
+     * canonical constructor.
+     * @param params network parameters for this chain ({@link org.bitcoinj.params.UnitTestParams} is supported)
      * @param wallets list of listeners (wallets)
      * @param blockStore where to store blocks
      * @throws BlockStoreException if a failure occurs while storing a block
      */
-    AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
+    protected AbstractBlockChain(NetworkParameters params, List<? extends Wallet> wallets,
                               BlockStore blockStore) throws BlockStoreException {
         this.blockStore = blockStore;
         chainHead = blockStore.getChainHead();
