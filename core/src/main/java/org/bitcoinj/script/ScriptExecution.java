@@ -297,7 +297,7 @@ public class ScriptExecution {
                             ifStack.add(false);
                             continue;
                         }
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_IF on an empty stack");
                         ifStack.add(castToBool(stack.pollLast()));
                         continue;
@@ -306,7 +306,7 @@ public class ScriptExecution {
                             ifStack.add(false);
                             continue;
                         }
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_UNBALANCED_CONDITIONAL, "Attempted OP_NOTIF on an empty stack");
                         ifStack.add(!castToBool(stack.pollLast()));
                         continue;
@@ -346,7 +346,7 @@ public class ScriptExecution {
                     case OP_NOP:
                         break;
                     case OP_VERIFY:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_VERIFY on an empty stack");
                         if (!castToBool(stack.pollLast()))
                             throw new ScriptException(ScriptError.SCRIPT_ERR_VERIFY, "OP_VERIFY failed");
@@ -354,12 +354,12 @@ public class ScriptExecution {
                     case OP_RETURN:
                         throw new ScriptException(ScriptError.SCRIPT_ERR_OP_RETURN, "Script called OP_RETURN");
                     case OP_TOALTSTACK:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_TOALTSTACK on an empty stack");
                         altstack.add(stack.pollLast());
                         break;
                     case OP_FROMALTSTACK:
-                        if (altstack.size() < 1)
+                        if (altstack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_ALTSTACK_OPERATION, "Attempted OP_FROMALTSTACK on an empty altstack");
                         stack.add(altstack.pollLast());
                         break;
@@ -426,7 +426,7 @@ public class ScriptExecution {
                         stack.add(OP2SWAPtmpChunk2);
                         break;
                     case OP_IFDUP:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_IFDUP on an empty stack");
                         if (castToBool(stack.getLast()))
                             stack.add(stack.getLast());
@@ -435,12 +435,12 @@ public class ScriptExecution {
                         stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(stack.size()), false)));
                         break;
                     case OP_DROP:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DROP on an empty stack");
                         stack.pollLast();
                         break;
                     case OP_DUP:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_DUP on an empty stack");
                         stack.add(stack.getLast());
                         break;
@@ -460,7 +460,7 @@ public class ScriptExecution {
                         break;
                     case OP_PICK:
                     case OP_ROLL:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_PICK" +
                                     "/OP_ROLL on an empty stack");
                         long val = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA)).longValue();
@@ -496,7 +496,7 @@ public class ScriptExecution {
                             stack.add(OPSWAPtmpChunk2);
                         break;
                     case OP_SIZE:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SIZE on an empty stack");
                         stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.valueOf(stack.getLast().length), false)));
                         break;
@@ -517,7 +517,7 @@ public class ScriptExecution {
                     case OP_ABS:
                     case OP_NOT:
                     case OP_0NOTEQUAL:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted a numeric op on an empty stack");
                         BigInteger numericOPnum = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA));
 
@@ -666,14 +666,14 @@ public class ScriptExecution {
                             stack.add(ByteUtils.reverseBytes(ByteUtils.encodeMPI(BigInteger.ZERO, false)));
                         break;
                     case OP_RIPEMD160:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_RIPEMD160 on an empty stack");
                         byte[] dataToHash = stack.pollLast();
                         byte[] ripmeMdHash = CryptoUtils.digestRipeMd160(dataToHash);
                         stack.add(ripmeMdHash);
                         break;
                     case OP_SHA1:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA1 on an empty stack");
                         try {
                             stack.add(MessageDigest.getInstance("SHA-1").digest(stack.pollLast()));
@@ -682,17 +682,17 @@ public class ScriptExecution {
                         }
                         break;
                     case OP_SHA256:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA256 on an empty stack");
                         stack.add(Sha256Hash.hash(stack.pollLast()));
                         break;
                     case OP_HASH160:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_HASH160 on an empty stack");
                         stack.add(CryptoUtils.sha256hash160(stack.pollLast()));
                         break;
                     case OP_HASH256:
-                        if (stack.size() < 1)
+                        if (stack.isEmpty())
                             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_SHA256 on an empty stack");
                         stack.add(Sha256Hash.hashTwice(stack.pollLast()));
                         break;
@@ -761,7 +761,7 @@ public class ScriptExecution {
 
     // This is more or less a direct translation of the code in Bitcoin Core
     private static void executeCheckLockTimeVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
-        if (stack.size() < 1)
+        if (stack.isEmpty())
             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKLOCKTIMEVERIFY on a stack with size < 1");
 
         // Thus as a special case we tell CScriptNum to accept up
@@ -799,7 +799,7 @@ public class ScriptExecution {
     }
 
     private static void executeCheckSequenceVerify(Transaction txContainingThis, int index, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
-        if (stack.size() < 1)
+        if (stack.isEmpty())
             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKSEQUENCEVERIFY on a stack with size < 1");
 
         // Note that elsewhere numeric opcodes are limited to
@@ -928,7 +928,7 @@ public class ScriptExecution {
         final boolean requireCanonical = verifyFlags.contains(VerifyFlag.STRICTENC)
                 || verifyFlags.contains(VerifyFlag.DERSIG)
                 || verifyFlags.contains(VerifyFlag.LOW_S);
-        if (stack.size() < 1)
+        if (stack.isEmpty())
             throw new ScriptException(ScriptError.SCRIPT_ERR_INVALID_STACK_OPERATION, "Attempted OP_CHECKMULTISIG(VERIFY) on a stack with size < 2");
         int pubKeyCount = castToBigInteger(stack.pollLast(), verifyFlags.contains(VerifyFlag.MINIMALDATA)).intValue();
         if (pubKeyCount < 0 || pubKeyCount > MAX_PUBKEYS_PER_MULTISIG)
@@ -971,7 +971,7 @@ public class ScriptExecution {
         }
 
         boolean valid = true;
-        while (sigs.size() > 0) {
+        while (!sigs.isEmpty()) {
             byte[] pubKey = pubkeys.pollFirst();
             // We could reasonably move this out of the loop, but because signature verification is significantly
             // more expensive than hashing, its not a big deal.
@@ -1113,7 +1113,7 @@ public class ScriptExecution {
         LinkedList<byte[]> p2shStack = (verifyFlags.contains(VerifyFlag.P2SH)) ? new LinkedList<>(stack) : null;
         ScriptExecution.executeScript(txContainingThis, scriptSigIndex, scriptPubKey, stack, verifyFlags);
 
-        if (stack.size() == 0)
+        if (stack.isEmpty())
             throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "Stack empty at end of script execution.");
 
         List<byte[]> stackCopy = new LinkedList<>(stack);
@@ -1145,7 +1145,7 @@ public class ScriptExecution {
 
             ScriptExecution.executeScript(txContainingThis, scriptSigIndex, scriptPubKeyP2SH, p2shStack, verifyFlags);
 
-            if (p2shStack.size() == 0)
+            if (p2shStack.isEmpty())
                 throw new ScriptException(ScriptError.SCRIPT_ERR_EVAL_FALSE, "P2SH stack empty at end of script execution.");
 
             List<byte[]> p2shStackCopy = new LinkedList<>(p2shStack);
