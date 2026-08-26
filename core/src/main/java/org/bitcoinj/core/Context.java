@@ -80,7 +80,6 @@ public class Context {
     }
 
     private static volatile Context lastConstructed;
-    private static boolean isStrictMode;
     private static final ThreadLocal<Context> slot = new ThreadLocal<>();
 
     /**
@@ -96,11 +95,6 @@ public class Context {
     public static Context get() {
         Context tls = slot.get();
         if (tls == null) {
-            if (isStrictMode) {
-                log.error("Thread is missing a bitcoinj context.");
-                log.error("You should use Context.propagate() or a ContextPropagatingThreadFactory.");
-                throw new IllegalStateException("missing context");
-            }
             if (lastConstructed == null)
                 throw new IllegalStateException("You must construct a Context object before using bitcoinj!");
             slot.set(lastConstructed);
@@ -124,7 +118,6 @@ public class Context {
      */
     @Deprecated
     public static void enableStrictMode() {
-        isStrictMode = true;
     }
 
     // A temporary internal shim designed to help us migrate internally in a way that doesn't wreck source compatibility.
