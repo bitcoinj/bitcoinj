@@ -247,7 +247,7 @@ public class ScriptExecution {
      * is useful if you need more precise control or access to the final state of the stack. This interface is very
      * likely to change in future.
      */
-    public static void executeScript(@Nullable Transaction txContainingThis, long index,
+    static void executeScript(@Nullable Transaction txContainingThis, long index,
                                      Script script, LinkedList<byte[]> stack, Set<VerifyFlag> verifyFlags) throws ScriptException {
         int opCount = 0;
         int lastCodeSepLocation = 0;
