@@ -61,47 +61,45 @@ import static org.bitcoinj.base.internal.Preconditions.checkArgument;
 import static org.bitcoinj.base.internal.Preconditions.checkState;
 
 /**
- * <p>An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
- * the chain follows the rules of the {@link NetworkParameters} for this chain.</p>
- *
- * <p>It can be connected to a {@link Wallet}, and also {@link TransactionReceivedInBlockListener}s that can receive transactions and
- * notifications of re-organizations.</p>
- *
- * <p>An AbstractBlockChain implementation must be connected to a {@link BlockStore} implementation. The chain object
+ * An AbstractBlockChain holds a series of {@link Block} objects, links them together, and knows how to verify that
+ * the chain follows the rules of the {@link NetworkParameters} for this chain.
+ * <p>
+ * It can be connected to a {@link Wallet}, and also {@link TransactionReceivedInBlockListener}s that can receive transactions and
+ * notifications of re-organizations.
+ * <p>
+ * An AbstractBlockChain implementation must be connected to a {@link BlockStore} implementation. The chain object
  * by itself doesn't store any data, that's delegated to the store. Which store you use is a decision best made by
  * reading the getting started guide, but briefly, fully validating block chains need fully validating stores. In
- * the lightweight SPV mode, a {@link SPVBlockStore} is the right choice.</p>
- *
- * <p>This class implements an abstract class which makes it simple to create a BlockChain that does/doesn't do full
+ * the lightweight SPV mode, a {@link SPVBlockStore} is the right choice.
+ * <p>
+ * This class implements an abstract class which makes it simple to create a BlockChain that does/doesn't do full
  * verification.  It verifies headers and is implements most of what is required to implement SPV mode, but
- * also provides callback hooks which can be used to do full verification.</p>
- *
- * <p>There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
+ * also provides callback hooks which can be used to do full verification.
+ * <p>
+ * There are two subclasses of AbstractBlockChain that are useful: {@link BlockChain}, which is the simplest
  * class and implements <i>simplified payment verification</i>. This is a lightweight and efficient mode that does
  * not verify the contents of blocks, just their headers. A {@link FullPrunedBlockChain} paired with a
  * {@link org.bitcoinj.store.MemoryFullPrunedBlockStore} implements full verification, which is equivalent to
  * Bitcoin Core. To learn more about the alternative security models, please consult the articles on the
- * website.</p>
- *
- * <b>Theory</b>
- *
+ * website.
+ * <h2>Theory</h2>
  * <p>The 'chain' is actually a tree although in normal operation it operates mostly as a list of {@link Block}s.
  * When multiple new head blocks are found simultaneously, there are multiple stories of the economy competing to become
  * the one true consensus. This can happen naturally when two miners solve a block within a few seconds of each other,
- * or it can happen when the chain is under attack.</p>
- *
- * <p>A reference to the head block of the best known chain is stored. If you can reach the genesis block by repeatedly
+ * or it can happen when the chain is under attack.
+ * <p>
+ * A reference to the head block of the best known chain is stored. If you can reach the genesis block by repeatedly
  * walking through the prevBlock pointers, then we say this is a full chain. If you cannot reach the genesis block
  * we say it is an orphan chain. Orphan chains can occur when blocks are solved and received during the initial block
- * chain download, or if we connect to a peer that doesn't send us blocks in order.</p>
- *
- * <p>A reorganize occurs when the blocks that make up the best known chain change. Note that simply adding a
+ * chain download, or if we connect to a peer that doesn't send us blocks in order.
+ * <p>
+ * A reorganize occurs when the blocks that make up the best known chain change. Note that simply adding a
  * new block to the top of the best chain isn't a reorganize, but that a reorganize is always triggered by adding
  * a new block that connects to some other (non best head) block. By "best" we mean the chain representing the largest
- * amount of work done.</p>
- *
- * <p>Every so often the block chain passes a difficulty transition point. At that time, all the blocks in the last
- * 2016 blocks are examined and a new difficulty target is calculated from them.</p>
+ * amount of work done.
+ * <p>
+ * Every so often the block chain passes a difficulty transition point. At that time, all the blocks in the last
+ * 2016 blocks are examined and a new difficulty target is calculated from them.
  */
 public abstract class AbstractBlockChain {
     private static final Logger log = LoggerFactory.getLogger(AbstractBlockChain.class);
