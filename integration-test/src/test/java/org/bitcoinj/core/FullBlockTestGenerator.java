@@ -96,7 +96,7 @@ import static org.bitcoinj.script.ScriptOpCodes.OP_TRUE;
  */
 
 class NewBlock {
-    public Block block;
+    public final Block block;
     private final TransactionOutPointWithValue spendableOutput;
     public NewBlock(Block block, TransactionOutPointWithValue spendableOutput) {
         this.block = block; this.spendableOutput = spendableOutput;
@@ -117,8 +117,8 @@ class NewBlock {
 
 class TransactionOutPointWithValue {
     public TransactionOutPoint outpoint;
-    public Coin value;
-    public Script scriptPubKey;
+    public final Coin value;
+    public final Script scriptPubKey;
 
     public TransactionOutPointWithValue(TransactionOutPoint outpoint, Coin value, Script scriptPubKey) {
         this.outpoint = outpoint;
@@ -134,7 +134,7 @@ class TransactionOutPointWithValue {
 
 /** An arbitrary rule which the testing client must match */
 class Rule {
-    String ruleName;
+    final String ruleName;
     Rule(String ruleName) {
         this.ruleName = ruleName;
     }
@@ -144,7 +144,7 @@ class Rule {
  * A test which checks the mempool state (ie defined which transactions should be in memory pool
  */
 class MemoryPoolState extends Rule {
-    Set<InventoryItem> mempool;
+    final Set<InventoryItem> mempool;
     public MemoryPoolState(Set<InventoryItem> mempool, String ruleName) {
         super(ruleName);
         this.mempool = mempool;
@@ -152,9 +152,9 @@ class MemoryPoolState extends Rule {
 }
 
 class RuleList {
-    public List<Rule> list;
+    public final List<Rule> list;
     public int maximumReorgBlockCount;
-    Map<Sha256Hash, Block> hashHeaderMap;
+    final Map<Sha256Hash, Block> hashHeaderMap;
     public RuleList(List<Rule> list, Map<Sha256Hash, Block> hashHeaderMap, int maximumReorgBlockCount) {
         this.list = list;
         this.hashHeaderMap = hashHeaderMap;
@@ -1772,12 +1772,12 @@ public class FullBlockTestGenerator {
      */
     class BlockAndValidity extends Rule {
         Block block;
-        Sha256Hash blockHash;
-        boolean connects;
-        boolean throwsException;
+        final Sha256Hash blockHash;
+        final boolean connects;
+        final boolean throwsException;
         boolean sendOnce; // We can throw away the memory for this block once we send it the first time (if bitcoind asks again, its broken)
-        Sha256Hash hashChainTipAfterBlock;
-        int heightAfterBlock;
+        final Sha256Hash hashChainTipAfterBlock;
+        final int heightAfterBlock;
 
         public BlockAndValidity(Block block, boolean connects, boolean throwsException, Sha256Hash hashChainTipAfterBlock, int heightAfterBlock, String blockName) {
             super(blockName);
