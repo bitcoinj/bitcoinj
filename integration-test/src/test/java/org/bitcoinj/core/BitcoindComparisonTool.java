@@ -80,8 +80,8 @@ public class BitcoindComparisonTool {
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
 
-        FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
-        final RuleList blockList = generator.getBlocksToTest(false, runExpensiveTests, blockFile);
+        final RuleList blockList = new FullBlockTestGenerator(PARAMS)
+                .getBlocksToTest(false, runExpensiveTests, blockFile);
         final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<>();
         final Iterator<Block> blocks = new BlockFileLoader(PARAMS.network(), List.of(blockFile)).iterator();
 
