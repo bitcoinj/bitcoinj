@@ -128,7 +128,7 @@ public class BuildCheckpoints implements Callable<Integer> {
                 // use peer provided in argument
                 try {
                     ipAddress = InetAddress.getByName(peer);
-                    startPeerGroup(peerGroup, ipAddress);
+                    startPeerGroup(peerGroup, ipAddress, net);
                 } catch (UnknownHostException e) {
                     System.err.println("Could not understand peer domain name/IP address: " + peer + ": " + e.getMessage());
                     return 1;
@@ -148,7 +148,7 @@ public class BuildCheckpoints implements Callable<Integer> {
             } else {
                 // try localhost
                 ipAddress = InetAddress.getLocalHost();
-                startPeerGroup(peerGroup, ipAddress);
+                startPeerGroup(peerGroup, ipAddress, net);
             }
 
             // Sorted map of block height to StoredBlock object.
@@ -246,9 +246,9 @@ public class BuildCheckpoints implements Callable<Integer> {
         }
     }
 
-    private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress) {
+    private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress, BitcoinNetwork network) {
         Objects.requireNonNull(params);
-        final PeerAddress peerAddress = PeerAddress.simple(ipAddress, params.getPort());
+        final PeerAddress peerAddress = PeerAddress.simple(ipAddress, NetworkParameters.of(network).getPort());
         System.out.println("Connecting to " + peerAddress + "...");
         peerGroup.addAddress(peerAddress);
         peerGroup.start();

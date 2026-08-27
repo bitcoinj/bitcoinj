@@ -83,6 +83,23 @@ public class PeerAddress {
     }
 
     /**
+     * Constructs a simple peer address from the given IP address for the given {@link Network}, but without services.
+     * The time is set to current time.
+     *
+     * @param addr ip address of peer
+     * @param network Network is used to determine the port the peer is listening on
+     * @return simple peer address
+     */
+    public static PeerAddress simple(InetAddress addr, Network network) {
+        return new PeerAddress(
+                Objects.requireNonNull(addr),
+                null,
+                NetworkParameters.of(network).port,
+                Services.none(),
+                TimeUtils.currentTime().truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    /**
      * Constructs a simple peer address from the given IP address and port, but without services. The time is set to
      * current time.
      *
