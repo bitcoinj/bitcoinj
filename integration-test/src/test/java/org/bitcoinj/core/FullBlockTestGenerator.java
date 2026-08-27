@@ -1737,7 +1737,7 @@ public class FullBlockTestGenerator {
     }
 
     /** An arbitrary rule which the testing client must match */
-    public abstract static class Rule {
+    public abstract sealed static class Rule {
         final String ruleName;
         protected Rule(String ruleName) {
             this.ruleName = ruleName;
@@ -1747,7 +1747,7 @@ public class FullBlockTestGenerator {
     /**
      * A test which checks the mempool state (ie defined which transactions should be in memory pool
      */
-    public static class MemoryPoolState extends Rule {
+    public static final class MemoryPoolState extends Rule {
         final Set<InventoryItem> mempool;
         public MemoryPoolState(Set<InventoryItem> mempool, String ruleName) {
             super(ruleName);
@@ -1759,7 +1759,7 @@ public class FullBlockTestGenerator {
      * Represents a block which is sent to the tested application and which the application must either reject or accept,
      * depending on the flags in the rule
      */
-    public class BlockAndValidity extends Rule {
+    public final class BlockAndValidity extends Rule {
         Block block;
         final Sha256Hash blockHash;
         final boolean connects;
