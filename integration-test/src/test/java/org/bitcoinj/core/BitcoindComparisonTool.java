@@ -313,21 +313,21 @@ public class BitcoindComparisonTool {
                 if (block.sendOnce)
                     preloadedBlocks.remove(nextBlock.getHash());
                 log.info("Block \"{}\" completed processing", block.ruleName);
-            } else if (rule instanceof MemoryPoolState) {
+            } else if (rule instanceof MemoryPoolState memPoolRule) {
                 MemoryPoolMessage message = new MemoryPoolMessage();
                 bitcoind.sendMessage(message);
                 bitcoind.sendPing().get();
-                if (mostRecentInv == null && !((MemoryPoolState) rule).mempool.isEmpty()) {
+                if (mostRecentInv == null && !memPoolRule.mempool.isEmpty()) {
                     log.error("ERROR: bitcoind had an empty mempool, but we expected some transactions on rule {}", rule.ruleName);
                     rulesSinceFirstFail++;
-                } else if (mostRecentInv != null && ((MemoryPoolState) rule).mempool.isEmpty()) {
+                } else if (mostRecentInv != null && memPoolRule.mempool.isEmpty()) {
                     log.error("ERROR: bitcoind had a non-empty mempool, but we expected an empty one on rule {}", rule.ruleName);
                     rulesSinceFirstFail++;
                 } else if (mostRecentInv != null) {
-                    Set<InventoryItem> originalRuleSet = new HashSet<>(((MemoryPoolState)rule).mempool);
-                    boolean matches = mostRecentInv.items.size() == ((MemoryPoolState)rule).mempool.size();
+                    Set<InventoryItem> originalRuleSet = new HashSet<>(memPoolRule.mempool);
+                    boolean matches = mostRecentInv.items.size() == memPoolRule.mempool.size();
                     for (InventoryItem item : mostRecentInv.items)
-                        if (!((MemoryPoolState) rule).mempool.remove(item))
+                        if (!memPoolRule.mempool.remove(item))
                             matches = false;
                     if (matches)
                         continue;
