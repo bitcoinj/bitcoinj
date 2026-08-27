@@ -132,36 +132,6 @@ class TransactionOutPointWithValue {
     }
 }
 
-/** An arbitrary rule which the testing client must match */
-abstract class Rule {
-    final String ruleName;
-    protected Rule(String ruleName) {
-        this.ruleName = ruleName;
-    }
-}
-
-/**
- * A test which checks the mempool state (ie defined which transactions should be in memory pool
- */
-class MemoryPoolState extends Rule {
-    final Set<InventoryItem> mempool;
-    public MemoryPoolState(Set<InventoryItem> mempool, String ruleName) {
-        super(ruleName);
-        this.mempool = mempool;
-    }
-}
-
-class RuleList {
-    public final List<Rule> list;
-    public int maximumReorgBlockCount;
-    final Map<Sha256Hash, Block> hashHeaderMap;
-    public RuleList(List<Rule> list, Map<Sha256Hash, Block> hashHeaderMap, int maximumReorgBlockCount) {
-        this.list = list;
-        this.hashHeaderMap = hashHeaderMap;
-        this.maximumReorgBlockCount = maximumReorgBlockCount;
-    }
-}
-
 public class FullBlockTestGenerator {
     // Used by BitcoindComparisonTool and AbstractFullPrunedBlockChainTest to create test cases
     private final NetworkParameters params;
@@ -1766,11 +1736,30 @@ public class FullBlockTestGenerator {
         }
     }
 
+    /** An arbitrary rule which the testing client must match */
+    public abstract static class Rule {
+        final String ruleName;
+        protected Rule(String ruleName) {
+            this.ruleName = ruleName;
+        }
+    }
+
+    /**
+     * A test which checks the mempool state (ie defined which transactions should be in memory pool
+     */
+    public static class MemoryPoolState extends Rule {
+        final Set<InventoryItem> mempool;
+        public MemoryPoolState(Set<InventoryItem> mempool, String ruleName) {
+            super(ruleName);
+            this.mempool = mempool;
+        }
+    }
+
     /**
      * Represents a block which is sent to the tested application and which the application must either reject or accept,
      * depending on the flags in the rule
      */
-    class BlockAndValidity extends Rule {
+    public class BlockAndValidity extends Rule {
         Block block;
         final Sha256Hash blockHash;
         final boolean connects;
@@ -1819,6 +1808,17 @@ public class FullBlockTestGenerator {
         public BlockAndValidity setSendOnce(boolean sendOnce) {
             this.sendOnce = sendOnce;
             return this;
+        }
+    }
+
+    public static class RuleList {
+        public final List<Rule> list;
+        public int maximumReorgBlockCount;
+        final Map<Sha256Hash, Block> hashHeaderMap;
+        public RuleList(List<Rule> list, Map<Sha256Hash, Block> hashHeaderMap, int maximumReorgBlockCount) {
+            this.list = list;
+            this.hashHeaderMap = hashHeaderMap;
+            this.maximumReorgBlockCount = maximumReorgBlockCount;
         }
     }
 }

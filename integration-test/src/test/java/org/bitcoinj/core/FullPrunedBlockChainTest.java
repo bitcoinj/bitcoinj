@@ -23,6 +23,8 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.FullBlockTestGenerator.Rule;
+import org.bitcoinj.core.FullBlockTestGenerator.RuleList;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.MainNetParams;

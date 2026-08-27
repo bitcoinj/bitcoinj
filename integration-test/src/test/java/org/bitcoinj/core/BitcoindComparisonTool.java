@@ -18,6 +18,9 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.FullBlockTestGenerator.MemoryPoolState;
+import org.bitcoinj.core.FullBlockTestGenerator.Rule;
+import org.bitcoinj.core.FullBlockTestGenerator.RuleList;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.RegTestParams;
