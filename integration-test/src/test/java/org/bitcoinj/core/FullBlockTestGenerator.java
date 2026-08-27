@@ -133,9 +133,9 @@ class TransactionOutPointWithValue {
 }
 
 /** An arbitrary rule which the testing client must match */
-class Rule {
+abstract class Rule {
     final String ruleName;
-    Rule(String ruleName) {
+    protected Rule(String ruleName) {
         this.ruleName = ruleName;
     }
 }
