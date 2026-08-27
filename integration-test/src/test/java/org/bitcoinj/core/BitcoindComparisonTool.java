@@ -75,6 +75,7 @@ public class BitcoindComparisonTool {
         BriefLogFormatter.init();
         System.out.println("USAGE: bitcoinjBlockStoreLocation runExpensiveTests(1/0) [port=18444]");
         boolean runExpensiveTests = args.length > 1 && Integer.parseInt(args[1]) == 1;
+        int peerPort = args.length > 2 ? Integer.parseInt(args[2]) : PARAMS.getPort();
 
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
@@ -213,7 +214,7 @@ public class BitcoindComparisonTool {
         bitcoindChainHead = PARAMS.getGenesisBlock().getHash();
         
         // bitcoind MUST be on localhost or we will get banned as a DoSer
-        new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), args.length > 2 ? Integer.parseInt(args[2]) : PARAMS.getPort()), bitcoind, Duration.ofSeconds(1));
+        new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), peerPort), bitcoind, Duration.ofSeconds(1));
 
         connectedFuture.get();
 
