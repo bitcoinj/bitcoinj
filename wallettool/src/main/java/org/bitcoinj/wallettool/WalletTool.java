@@ -837,7 +837,7 @@ public class WalletTool implements Callable<Integer> {
         }
         peerGroup.setUserAgent("WalletTool", "1.0");
         if (net == BitcoinNetwork.REGTEST) {
-            peerGroup.addAddress(PeerAddress.localhost(params));
+            peerGroup.addAddress(PeerAddress.localhost(net));
             peerGroup.setMinBroadcastConnections(1);
             peerGroup.setMaxConnections(1);
         }

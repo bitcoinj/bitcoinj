@@ -73,7 +73,7 @@ public class PrivateKeys {
             BlockChain chain = new BlockChain(network, wallet, blockStore);
 
             final PeerGroup peerGroup = new PeerGroup(network, chain);
-            peerGroup.addAddress(PeerAddress.localhost(params));
+            peerGroup.addAddress(PeerAddress.localhost(network));
             peerGroup.startAsync();
             peerGroup.downloadBlockChain();
 
