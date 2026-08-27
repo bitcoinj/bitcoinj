@@ -17,6 +17,7 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
 import org.bitcoinj.base.internal.TimeUtils;
@@ -231,6 +232,17 @@ public class PeerAddress {
         this.port = port;
         this.services = services;
         this.time = time;
+    }
+
+    /**
+     * Get the address for a localhost peer for a specified {@link Network}.
+     * <p>
+     * The {@code Network} determines the port the peer should be running on.
+     * @param network the network the peer is running on.
+     * @return peer address
+     */
+    public static PeerAddress localhost(Network network) {
+        return localhost(NetworkParameters.of(network));
     }
 
     public static PeerAddress localhost(NetworkParameters params) {
