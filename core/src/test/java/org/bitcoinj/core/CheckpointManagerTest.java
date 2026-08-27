@@ -16,21 +16,28 @@
 
 package org.bitcoinj.core;
 
-import org.easymock.EasyMockRunner;
-import org.easymock.Mock;
+import org.bitcoinj.params.MainNetParams;
+import org.easymock.EasyMock;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 
-@RunWith(EasyMockRunner.class)
 public class CheckpointManagerTest {
 
-    @Mock
     NetworkParameters params;
+
+    @Before
+    public void setUp() {
+        // Use MainNetParams and only mock the behavior of getId()
+        params = EasyMock.partialMockBuilder(MainNetParams.class)
+                .withConstructor()
+                .addMockedMethod("getId")
+                .createMock();
+    }
 
     @Test(expected = NullPointerException.class)
     public void shouldThrowNullPointerExceptionWhenCheckpointsNotFound() throws IOException {
