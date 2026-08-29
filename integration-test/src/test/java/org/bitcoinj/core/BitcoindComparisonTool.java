@@ -82,7 +82,7 @@ public class BitcoindComparisonTool {
         final Iterator<Block> blocks = new BlockFileLoader(PARAMS.network(), List.of(blockFile)).iterator();
 
         try {
-            FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS, blockList.maximumReorgBlockCount);
+            FullPrunedBlockStore store = new MemoryFullPrunedBlockStore(PARAMS.network(), blockList.maximumReorgBlockCount);
             //store = new MemoryFullPrunedBlockStore(params, blockList.maximumReorgBlockCount);
             chain = new FullPrunedBlockChain(PARAMS.network(), store);
         } catch (BlockStoreException e) {
