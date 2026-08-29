@@ -86,7 +86,7 @@ public class FilteredBlockAndPartialMerkleTreeTest extends TestWithPeerGroup {
 
     @BeforeEach
     public void setUp() throws BlockStoreException, IOException {
-        MemoryBlockStore store = new MemoryBlockStore(TESTNET.getGenesisBlock());
+        MemoryBlockStore store = new MemoryBlockStore(TESTNET.network());
 
         // Cheat and place the previous block (block 100000) at the head of the block store without supporting blocks
         store.put(new StoredBlock(SERIALIZER.makeBlock(ByteBuffer.wrap(ByteUtils.parseHex("0100000050120119172a610421a6c3011dd330d9df07b63616c2cc1f1cd00200000000006657a9252aacd5c0b2940996ecff952228c3067cc38d4885efb5a4ac4247e9f337221b4d4c86041b0f2b5710"))),
