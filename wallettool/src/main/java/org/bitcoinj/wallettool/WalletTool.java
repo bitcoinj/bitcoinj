@@ -34,7 +34,6 @@ import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.InsufficientMoneyException;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
@@ -221,7 +220,6 @@ public class WalletTool implements Callable<Integer> {
 
     private static final Logger log = LoggerFactory.getLogger(WalletTool.class);
 
-    @Nullable private static NetworkParameters params;
     @Nullable private static BlockStore store;
     @Nullable private static AbstractBlockChain chain;
     @Nullable private static PeerGroup peerGroup;
@@ -338,7 +336,6 @@ public class WalletTool implements Callable<Integer> {
             java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
             logger.setLevel(Level.SEVERE);
         }
-        params = NetworkParameters.of(net);
         String fileName = String.format("%s.chain", net);
         if (chainFile == null) {
             chainFile = new File(fileName);
