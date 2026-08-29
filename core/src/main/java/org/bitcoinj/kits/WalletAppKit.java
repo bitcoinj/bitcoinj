@@ -89,7 +89,6 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     protected static final Logger log = LoggerFactory.getLogger(WalletAppKit.class);
 
     protected final BitcoinNetwork network;
-    protected final NetworkParameters params;
     protected final ScriptType preferredOutputScriptType;
     protected final KeyChainGroupStructure structure;
     protected final String filePrefix;
@@ -125,7 +124,6 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
     public WalletAppKit(BitcoinNetwork network, ScriptType preferredOutputScriptType,
                         KeyChainGroupStructure structure, File directory, String filePrefix) {
         this.network = Objects.requireNonNull(network);
-        this.params = NetworkParameters.of(this.network);
         this.preferredOutputScriptType = Objects.requireNonNull(preferredOutputScriptType);
         this.structure = Objects.requireNonNull(structure);
         this.directory = Objects.requireNonNull(directory);
@@ -383,10 +381,10 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         vWallet = createOrLoadWallet(shouldReplayWallet);
 
         // Initiate Bitcoin network objects (block store, blockchain and peer group)
-        vStore = new SPVBlockStore(params, chainFile);
+        vStore = new SPVBlockStore(network, chainFile);
         if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
             if (checkpoints == null && !PlatformUtils.isAndroidRuntime()) {
-                checkpoints = CheckpointManager.openStream(params);
+                checkpoints = CheckpointManager.openStream(network);
             }
 
             if (checkpoints != null) {
@@ -410,7 +408,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
                     time = vWallet.earliestKeyCreationTime();
                 }
                 if (time.isAfter(Instant.EPOCH))
-                    CheckpointManager.checkpoint(params, checkpoints, vStore, time);
+                    CheckpointManager.checkpoint(network, checkpoints, vStore, time);
                 else
                     log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");
             } else if (chainFileExists) {
@@ -430,7 +428,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
             for (PeerAddress addr : peerAddresses) vPeerGroup.addAddress(addr);
             vPeerGroup.setMaxConnections(peerAddresses.length);
             peerAddresses = null;
-        } else if (params.network() != BitcoinNetwork.REGTEST) {
+        } else if (network != BitcoinNetwork.REGTEST) {
             vPeerGroup.addPeerDiscovery(discovery != null ? discovery : new DnsDiscovery(network));
         }
         vChain.addWallet(vWallet);
@@ -576,8 +574,12 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         return network;
     }
 
+    /**
+     * @deprecated Use {@link WalletAppKit#network()}
+     */
+    @Deprecated
     public NetworkParameters params() {
-        return params;
+        return NetworkParameters.of(network);
     }
 
     public BlockChain chain() {
