@@ -63,7 +63,7 @@ public class FetchBlock implements Callable<Integer> {
         Objects.requireNonNull(blockHashParam);
         System.out.println("Connecting to node");
         final Network network = BitcoinNetwork.TESTNET;
-        BlockStore blockStore = new MemoryBlockStore(Block.getGenesis(network));
+        BlockStore blockStore = new MemoryBlockStore(network);
         BlockChain chain = new BlockChain(network, blockStore);
         PeerGroup peerGroup = new PeerGroup(network, chain);
         if (localhost) {

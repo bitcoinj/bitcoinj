@@ -94,7 +94,7 @@ public class BitcoindComparisonTool {
         ver.appendToSubVer("BlockAcceptanceComparisonTool", "1.1", null);
         ver.localServices = Services.of(Services.NODE_NETWORK);
         final Peer bitcoind = new Peer(PARAMS, ver, PeerAddress.localhost(PARAMS.network()),
-                new BlockChain(PARAMS.network(), new MemoryBlockStore(PARAMS.getGenesisBlock())));
+                new BlockChain(PARAMS.network(), new MemoryBlockStore(PARAMS.network())));
         checkState(bitcoind.getVersionMessage().services().has(Services.NODE_NETWORK));
 
         final BlockWrapper currentBlock = new BlockWrapper();

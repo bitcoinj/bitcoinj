@@ -56,7 +56,7 @@ public class BlockImporter {
                 break;
             case "Mem":
                 checkArgument(args.length == 2);
-                store = new MemoryBlockStore(Block.getGenesis(network));
+                store = new MemoryBlockStore(network);
                 break;
             case "SPV":
                 checkArgument(args.length == 3);

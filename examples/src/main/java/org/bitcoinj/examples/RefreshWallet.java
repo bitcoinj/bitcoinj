@@ -21,7 +21,6 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.store.BlockStore;
@@ -43,7 +42,7 @@ public class RefreshWallet {
 
         // Set up the components and link them together.
         final Network network = BitcoinNetwork.TESTNET;
-        BlockStore blockStore = new MemoryBlockStore(NetworkParameters.of(network).getGenesisBlock());
+        BlockStore blockStore = new MemoryBlockStore(network);
         BlockChain chain = new BlockChain(network, wallet, blockStore);
 
         final PeerGroup peerGroup = new PeerGroup(network, chain);

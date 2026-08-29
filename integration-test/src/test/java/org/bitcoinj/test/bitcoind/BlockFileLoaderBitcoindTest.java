@@ -66,7 +66,7 @@ public class BlockFileLoaderBitcoindTest {
     public void iterateEntireBitcoindBlockchainIntoBlockStore() throws BlockStoreException, PrunedException {
         Network network = BitcoinNetwork.MAINNET;
         BlockFileLoader loader = new BlockFileLoader(network, BlockFileLoader.getReferenceClientBlockFileList());
-        BlockStore store = new MemoryBlockStore(Block.getGenesis(network));
+        BlockStore store = new MemoryBlockStore(network);
         AbstractBlockChain chain = new BlockChain(network, store);
 
         long blockCount = 0;

@@ -22,7 +22,6 @@ import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
-import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
@@ -68,7 +67,7 @@ public class PrivateKeys {
             Address destination = wallet.parseAddress(args[1]);
 
             // Find the transactions that involve those coins.
-            final MemoryBlockStore blockStore = new MemoryBlockStore(Block.getGenesis(network));
+            final MemoryBlockStore blockStore = new MemoryBlockStore(network);
             BlockChain chain = new BlockChain(network, wallet, blockStore);
 
             final PeerGroup peerGroup = new PeerGroup(network, chain);
