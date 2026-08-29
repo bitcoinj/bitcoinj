@@ -28,6 +28,7 @@ import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.net.discovery.DnsDiscovery;
+import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -76,8 +77,6 @@ public class BuildCheckpoints implements Callable<Integer> {
     @CommandLine.Option(names = "--help", usageHelp = true, description = "Displays program options.")
     private boolean help;
 
-    private static @Nullable NetworkParameters params;
-
     public static void main(String[] args) throws Exception {
         int exitCode = new CommandLine(new BuildCheckpoints()).execute(args);
         System.exit(exitCode);
@@ -91,8 +90,7 @@ public class BuildCheckpoints implements Callable<Integer> {
             BriefLogFormatter.initWithSilentBitcoinJ();
 
         final String suffix;
-        params = NetworkParameters.of(net);
-        Objects.requireNonNull(params);
+        BitcoinNetworkParams params = BitcoinNetworkParams.of(net);
         Context.propagate(new Context());
 
         switch (net) {
@@ -142,7 +140,7 @@ public class BuildCheckpoints implements Callable<Integer> {
 
                 // Connect to at least 4 peers because some may not support download
                 Future<List<Peer>> future = peerGroup.waitForPeers(4);
-                System.out.println("Connecting to " + params.getId() + ", timeout 20 seconds...");
+                System.out.println("Connecting to " + net + ", timeout 20 seconds...");
                 // throw timeout exception if we can't get peers
                 future.get(20, SECONDS);
             } else {
@@ -161,7 +159,6 @@ public class BuildCheckpoints implements Callable<Integer> {
             System.out.println("Checkpointing up to " + TimeUtils.dateTimeFormat(timeAgo));
 
             chain.addNewBestBlockListener(Threading.SAME_THREAD, block -> {
-                Objects.requireNonNull(params);
                 int height = block.getHeight();
                 if (height % params.getInterval() == 0 && timeAgo.isAfter(block.getHeader().time())) {
                     System.out.println(String.format("Checkpointing block %s at height %d, time %s",
@@ -184,7 +181,7 @@ public class BuildCheckpoints implements Callable<Integer> {
         }
 
         // Sanity check the created files.
-        sanityCheck(textFile, checkpoints.size());
+        sanityCheck(net, textFile, checkpoints.size());
 
         return 0;
     }
@@ -216,29 +213,28 @@ public class BuildCheckpoints implements Callable<Integer> {
         }
     }
 
-    private static void sanityCheck(File file, int expectedSize) throws IOException {
-        Objects.requireNonNull(params);
+    private static void sanityCheck(BitcoinNetwork network, File file, int expectedSize) throws IOException {
         FileInputStream fis = new FileInputStream(file);
         CheckpointManager manager;
         try {
-            manager = new CheckpointManager(params, fis);
+            manager = new CheckpointManager(NetworkParameters.of(network), fis);
         } finally {
             fis.close();
         }
 
         checkState(manager.numCheckpoints() == expectedSize);
 
-        if (params.network() == BitcoinNetwork.MAINNET) {
+        if (network == BitcoinNetwork.MAINNET) {
             StoredBlock test = manager.getCheckpointBefore(Instant.ofEpochSecond(1390500000)); // Thu Jan 23 19:00:00 CET 2014
             checkState(test.getHeight() == 280224);
             checkState(test.getHeader().getHashAsString()
                     .equals("00000000000000000b5d59a15f831e1c45cb688a4db6b0a60054d49a9997fa34"));
-        } else if (params.network() == BitcoinNetwork.TESTNET) {
+        } else if (network == BitcoinNetwork.TESTNET) {
             StoredBlock test = manager.getCheckpointBefore(Instant.ofEpochSecond(1390500000)); // Thu Jan 23 19:00:00 CET 2014
             checkState(test.getHeight() == 167328);
             checkState(test.getHeader().getHashAsString()
                     .equals("0000000000035ae7d5025c2538067fe7adb1cf5d5d9c31b024137d9090ed13a9"));
-        } else if (params.network() == BitcoinNetwork.SIGNET) {
+        } else if (network == BitcoinNetwork.SIGNET) {
             StoredBlock test = manager.getCheckpointBefore(Instant.ofEpochSecond(1642000000)); // 2022-01-12
             checkState(test.getHeight() == 72576);
             checkState(test.getHeader().getHashAsString()
@@ -247,8 +243,7 @@ public class BuildCheckpoints implements Callable<Integer> {
     }
 
     private static void startPeerGroup(PeerGroup peerGroup, InetAddress ipAddress, BitcoinNetwork network) {
-        Objects.requireNonNull(params);
-        final PeerAddress peerAddress = PeerAddress.simple(ipAddress, NetworkParameters.of(network).getPort());
+        final PeerAddress peerAddress = PeerAddress.simple(ipAddress, network);
         System.out.println("Connecting to " + peerAddress + "...");
         peerGroup.addAddress(peerAddress);
         peerGroup.start();
