@@ -899,7 +899,7 @@ public class ScriptExecution {
 
             // TODO: Should check hash type is known
             Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
-            sigValid = ECKey.verify(hash.getBytes(), sig, pubKey);
+            sigValid = ECKey.verify(hash.getBytes(), sig.toCanonicalised(), pubKey);
         } catch (VerificationException.NoncanonicalSignature e) {
             throw new ScriptException(ScriptError.SCRIPT_ERR_SIG_DER, "Script contains non-canonical signature");
         } catch (SignatureDecodeException e) {
@@ -977,7 +977,7 @@ public class ScriptExecution {
             try {
                 TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical, false);
                 Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
-                if (ECKey.verify(hash.getBytes(), sig, pubKey))
+                if (ECKey.verify(hash.getBytes(), sig.toCanonicalised(), pubKey))
                     sigs.pollFirst();
             } catch (Exception e) {
                 // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
@@ -1077,7 +1077,7 @@ public class ScriptExecution {
             ECKey pubkey = ECKey.fromPublicOnly(ScriptPattern.extractKeyFromP2PK(scriptPubKey));
             Sha256Hash sigHash = txContainingThis.hashForSignature(scriptSigIndex, scriptPubKey,
                     signature.sigHashMode(), false);
-            boolean validSig = pubkey.verify(sigHash, signature);
+            boolean validSig = pubkey.verify(sigHash, signature.toCanonicalised());  // ???
             if (!validSig)
                 throw new ScriptException(ScriptError.SCRIPT_ERR_CHECKSIGVERIFY, "Invalid signature");
         } else {
