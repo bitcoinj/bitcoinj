@@ -63,7 +63,7 @@ public class DefaultRiskAnalysisTest {
 
     @Before
     public void setup() {
-        Context.propagate(new Context());
+        Context.setDefault();
         wallet = Wallet.createDeterministic(BitcoinNetwork.MAINNET, ScriptType.P2PKH);
         wallet.setLastBlockSeenHeight(1000);
         wallet.setLastBlockSeenTime(Instant.ofEpochSecond(TIMESTAMP));
