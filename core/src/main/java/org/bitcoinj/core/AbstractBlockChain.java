@@ -129,7 +129,7 @@ public abstract class AbstractBlockChain {
     private final Object chainHeadLock = new Object();
 
     /** network parameters for this chain */
-    protected final NetworkParameters params;
+    private final NetworkParameters params;
     private final DifficultyTransitions difficultyTransitions;
     private final CopyOnWriteArrayList<ListenerRegistration<NewBestBlockListener>> newBestBlockListeners;
     private final CopyOnWriteArrayList<ListenerRegistration<ReorganizeListener>> reorganizeListeners;
@@ -189,7 +189,7 @@ public abstract class AbstractBlockChain {
         chainHead = blockStore.getChainHead();
         log.info("chain head is at height {}:\n{}", chainHead.getHeight(), chainHead.getHeader());
         this.params = params;
-        this.difficultyTransitions = DifficultyTransitions.of((BitcoinNetwork) params.network());
+        this.difficultyTransitions = DifficultyTransitions.of((BitcoinNetwork) network());
 
         this.newBestBlockListeners = new CopyOnWriteArrayList<>();
         this.reorganizeListeners = new CopyOnWriteArrayList<>();
@@ -200,6 +200,22 @@ public abstract class AbstractBlockChain {
 
         this.versionTally = new VersionTally(params);
         this.versionTally.initialize(blockStore, chainHead);
+    }
+
+    /**
+     * Return the network this blockchain represents.
+     * @return the network
+     */
+    public Network network() {
+        return params.network();
+    }
+
+    /**
+     * Get NetworkParameters for this chain.
+     * @return parameters for this chain.
+     */
+    protected NetworkParameters params() {
+        return params;
     }
 
     /**

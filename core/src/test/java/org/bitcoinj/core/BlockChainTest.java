@@ -142,7 +142,7 @@ public class BlockChainTest {
 
     // adds 2015 (interval-1) intermediate blocks between the transition points
     private static void addIntermediteBlocks(BlockChain chain, int epoch, Duration spacing) throws PrunedException {
-        int interval = chain.params.interval;
+        int interval = chain.params().interval;
         Block prev = chain.getChainHead().getHeader();
         // there is an additional spacing here, to account for the fact that for the difficulty adjustment only
         // interval minus 1 blocks are taken into account
@@ -156,7 +156,7 @@ public class BlockChainTest {
     }
 
     private static void addTransitionBlock(BlockChain chain, int epoch, Duration spacing) throws PrunedException {
-        int interval = chain.params.interval;
+        int interval = chain.params().interval;
         Block prev = chain.getChainHead().getHeader();
         Instant newTime = prev.time().plus(spacing);
         Block newBlock = TestBlocks.createNextBlock(prev, null, 1, newTime, epoch * interval);
