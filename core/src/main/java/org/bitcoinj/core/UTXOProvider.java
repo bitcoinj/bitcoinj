@@ -18,15 +18,12 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Network;
 import org.bitcoinj.crypto.ECKey;
-import org.bitcoinj.store.FullPrunedBlockStore;
 
 import java.util.List;
 
 /**
  * A UTXOProvider encapsulates functionality for returning unspent transaction outputs,
  * for use by the wallet or other code that crafts spends.
- *
- * <p>A {@link FullPrunedBlockStore} is an internal implementation within bitcoinj.</p>
  */
 public interface UTXOProvider {
     /**
