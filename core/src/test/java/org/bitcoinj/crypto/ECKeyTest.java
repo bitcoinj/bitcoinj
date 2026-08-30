@@ -118,13 +118,18 @@ public class ECKeyTest {
         // a message with it.
         BigInteger privkey = ByteUtils.bytesToBigInteger(ByteUtils.parseHex("180cb41c7c600be951b5d3d0a7334acc7506173875834f7a6c4c786a28fcbb19"));
         ECKey key = ECKey.fromPrivate(privkey);
-        byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
-        assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));
+        byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();       // bitcoinj signing is canonical
+        assertTrue(key.verifyCanonical(Sha256Hash.ZERO_HASH.getBytes(), output));
 
-        // Test interop with a signature from elsewhere.
+        // Test interop with a (noncanonical) signature from elsewhere.
         byte[] sig = ByteUtils.parseHex(
                 "3046022100dffbc26774fc841bbe1c1362fd643609c6e42dcb274763476d87af2c0597e89e022100c59e3c13b96b316cae9fa0ab0260612c7a133a6fe2b3445b6bf80b3123bf274d");
+        ECDSASignature nonCanonical = ECDSASignature.decodeFromDER(sig);
+        assertFalse(nonCanonical.isCanonical());
+
         assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), sig));
+        assertFalse(key.verifyCanonical(Sha256Hash.ZERO_HASH.getBytes(), sig));
+        assertTrue(key.verifyCanonical(Sha256Hash.ZERO_HASH.getBytes(), nonCanonical.toCanonicalised().encodeToDER()));
     }
 
     @Test
