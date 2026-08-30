@@ -23,7 +23,7 @@ import org.bitcoinj.base.Address;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.crypto.AesKey;
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.base.LegacyAddress;
 import org.bitcoinj.crypto.ChildNumber;
