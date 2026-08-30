@@ -497,7 +497,7 @@ public abstract class AbstractBlockChain {
             }
 
             Difficulty target = block.difficultyTarget();
-            if (target.compareTo(params.maxTarget) > 0)
+            if (target.compareTo(params.maxTarget()) > 0)
                 throw new VerificationException("Difficulty target is out of range: " + target);
 
             // If we want to verify transactions (ie we are running with full blocks), verify that block has transactions
