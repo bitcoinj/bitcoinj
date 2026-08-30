@@ -877,23 +877,14 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                 if (key.hasSecretBytes()) {
                     if (key.hasEncryptedDeterministicSeed())
                         throw new UnreadableWalletException("Malformed key proto: " + key);
-                    byte[] seedBytes = null;
-                    if (key.hasDeterministicSeed()) {
-                        seedBytes = key.getDeterministicSeed().toByteArray();
-                    }
+                    byte[] seedBytes = key.hasDeterministicSeed() ? key.getDeterministicSeed().toByteArray() : null;
                     seed = DeterministicSeed.fromProtobuf(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, seedCreationTime);
                 } else if (key.hasEncryptedData()) {
                     if (key.hasDeterministicSeed())
                         throw new UnreadableWalletException("Malformed key proto: " + key);
-                    EncryptedData data = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
+                    EncryptedData encryptedMnemonic = new EncryptedData(key.getEncryptedData().getInitialisationVector().toByteArray(),
                             key.getEncryptedData().getEncryptedPrivateKey().toByteArray());
-                    EncryptedData encryptedSeedBytes = null;
-                    if (key.hasEncryptedDeterministicSeed()) {
-                        Protos.EncryptedData encryptedSeed = key.getEncryptedDeterministicSeed();
-                        encryptedSeedBytes = new EncryptedData(encryptedSeed.getInitialisationVector().toByteArray(),
-                                encryptedSeed.getEncryptedPrivateKey().toByteArray());
-                    }
-                    seed = DeterministicSeed.fromProtobufEncrypted(data, encryptedSeedBytes, seedCreationTime);
+                    seed = DeterministicSeed.fromProtobufEncrypted(encryptedMnemonic, seedCreationTime);
                 } else {
                     throw new UnreadableWalletException("Malformed key proto: " + key);
                 }
@@ -1386,22 +1377,10 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
         return getKeys(key -> key.getPath().size() == accountPartialPath().size() + 2);    // leaf keys only
     }
 
-    /*package*/ static void serializeSeedEncryptableItem(DeterministicSeed seed, Protos.Key.Builder proto) {
-        // The seed can be missing if we have not derived it yet from the mnemonic.
-        // This will not normally happen once all the wallets are on the latest code that caches
-        // the seed.
-        if (seed.isEncrypted() && seed.getEncryptedSeedData() != null) {
-            EncryptedData data = seed.getEncryptedSeedData();
-            proto.setEncryptedDeterministicSeed(proto.getEncryptedDeterministicSeed().toBuilder()
-                    .setEncryptedPrivateKey(ByteString.copyFrom(data.encryptedBytes))
-                    .setInitialisationVector(ByteString.copyFrom(data.initialisationVector)));
-            // We don't allow mixing of encryption types at the moment.
-            checkState(seed.getEncryptionType() == KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES);
-        } else {
-            final byte[] secret = seed.getSeedBytes();
-            if (secret != null)
-                proto.setDeterministicSeed(ByteString.copyFrom(secret));
-        }
+    static void serializeSeedEncryptableItem(DeterministicSeed seed, Protos.Key.Builder proto) {
+        final byte[] secret = seed.getSeedBytes();
+        if (secret != null)
+            proto.setDeterministicSeed(ByteString.copyFrom(secret));
     }
 
     /**
