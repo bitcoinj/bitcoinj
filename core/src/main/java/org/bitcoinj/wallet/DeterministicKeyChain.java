@@ -881,7 +881,9 @@ public class DeterministicKeyChain implements EncryptableKeyChain {
                     if (key.hasDeterministicSeed()) {
                         seedBytes = key.getDeterministicSeed().toByteArray();
                     }
-                    seed = DeterministicSeed.fromProtobuf(key.getSecretBytes().toStringUtf8(), seedBytes, passphrase, seedCreationTime);
+                    seed = DeterministicSeed.fromProtobuf(key.getSecretBytes().toStringUtf8(), passphrase, seedCreationTime);
+                    if (seedBytes != null && !Arrays.equals(seedBytes, seed.getSeedBytes()))
+                        throw new UnreadableWalletException("Seed bytes do not match mnemonic");
                 } else if (key.hasEncryptedData()) {
                     if (key.hasDeterministicSeed())
                         throw new UnreadableWalletException("Malformed key proto: " + key);

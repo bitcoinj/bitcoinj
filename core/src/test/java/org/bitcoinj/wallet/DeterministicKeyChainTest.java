@@ -17,6 +17,7 @@
 
 package org.bitcoinj.wallet;
 
+import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
@@ -60,6 +61,7 @@ import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -808,5 +810,23 @@ public class DeterministicKeyChainTest {
         assertTrue("Output should contain class name", str.contains("DeterministicKeyChain"));
         assertFalse("Security Fail: toString() leaked the mnemonic!", str.contains("correct horse battery staple"));
         assertFalse("Security Fail: toString() leaked the xprv (private key)!", str.contains("xprv"));
+    }
+
+    @Test
+    public void fromProtobuf_rejectMnemonicThatDoesNotMatchSeedBytes() {
+        DeterministicKeyChain mismatchingChain = DeterministicKeyChain.builder()
+                .entropy(ENTROPY, Instant.EPOCH)
+                .accountPath(DeterministicKeyChain.ACCOUNT_ZERO_PATH)
+                .build();
+        List<Protos.Key> mismatchingProto = new ArrayList<>(mismatchingChain.serializeToProtobuf());
+        byte[] anotherSeed =
+                DeterministicSeed.ofEntropy(Sha256Hash.hash("another".getBytes()), "").getSeedBytes();
+        Protos.Key mismatchingMnemonic = mismatchingProto.get(0).toBuilder()
+                .setSecretBytes(ByteString.copyFrom(anotherSeed))
+                .build();
+        mismatchingProto.set(0, mismatchingMnemonic);
+
+        assertThrows("Mnemonic words must be verified against the serialized seed bytes",
+                UnreadableWalletException.class, () -> DeterministicKeyChain.fromProtobuf(mismatchingProto, null));
     }
 }
