@@ -259,12 +259,12 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 }
                 // All values were already checked for being non-negative (as it is verified in Transaction.verify())
                 // but we check again here just for defence in depth. Transactions with zero output value are OK.
-                if (valueOut.signum() < 0 || params.network().exceedsMaxMoney(valueOut))
+                if (valueOut.signum() < 0 || network().exceedsMaxMoney(valueOut))
                     throw new VerificationException("Transaction output value out of range");
                 if (isCoinBase) {
                     coinbaseValue = valueOut;
                 } else {
-                    if (valueIn.compareTo(valueOut) < 0 || params.network().exceedsMaxMoney(valueIn))
+                    if (valueIn.compareTo(valueOut) < 0 || network().exceedsMaxMoney(valueIn))
                         throw new VerificationException("Transaction input value out of range");
                     totalFees = totalFees.add(valueIn.subtract(valueOut));
                 }
@@ -278,7 +278,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     listScriptVerificationResults.add(future);
                 }
             }
-            if (params.network().exceedsMaxMoney(totalFees) || getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
+            if (network().exceedsMaxMoney(totalFees) || getBlockInflation(height).add(totalFees).compareTo(coinbaseValue) < 0)
                 throw new VerificationException("Transaction fees out of range");
 
             List<VerificationException> verifications = FutureUtils.allAsList(listScriptVerificationResults).whenComplete((list, thrown) -> {
@@ -382,12 +382,12 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                     }
                     // All values were already checked for being non-negative (as it is verified in Transaction.verify())
                     // but we check again here just for defence in depth. Transactions with zero output value are OK.
-                    if (valueOut.signum() < 0 || params.network().exceedsMaxMoney(valueOut))
+                    if (valueOut.signum() < 0 || network().exceedsMaxMoney(valueOut))
                         throw new VerificationException("Transaction output value out of range");
                     if (isCoinBase) {
                         coinbaseValue = valueOut;
                     } else {
-                        if (valueIn.compareTo(valueOut) < 0 || params.network().exceedsMaxMoney(valueIn))
+                        if (valueIn.compareTo(valueOut) < 0 || network().exceedsMaxMoney(valueIn))
                             throw new VerificationException("Transaction input value out of range");
                         totalFees = totalFees.add(valueIn.subtract(valueOut));
                     }
@@ -401,7 +401,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         listScriptVerificationResults.add(future);
                     }
                 }
-                if (params.network().exceedsMaxMoney(totalFees) || getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
+                if (network().exceedsMaxMoney(totalFees) || getBlockInflation(newBlock.getHeight()).add(totalFees).compareTo(coinbaseValue) < 0)
                     throw new VerificationException("Transaction fees out of range");
                 txOutChanges = new TransactionOutputChanges(txOutsCreated, txOutsSpent);
                 List<VerificationException> verifications = FutureUtils.allAsList(listScriptVerificationResults).whenComplete((list, thrown) -> {
