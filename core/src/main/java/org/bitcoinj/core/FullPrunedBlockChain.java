@@ -176,7 +176,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             throws VerificationException, BlockStoreException {
         checkState(lock.isHeldByCurrentThread());
         checkArgument(!block.isHeaderOnly(), () -> "block is header-only");
-        if (!params.passesCheckpoint(height, block.getHash()))
+        if (!params().passesCheckpoint(height, block.getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + height);
 
         blockStore.beginDatabaseBatchWrite();
@@ -189,12 +189,12 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
             scriptVerificationExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         try {
-            if (!params.isCheckpoint(height)) {
+            if (!params().isCheckpoint(height)) {
                 // BIP30 violator blocks are ones that contain a duplicated transaction. They are all in the
                 // checkpoints list and we therefore only check non-checkpoints for duplicated transactions here. See the
                 // BIP30 document for more details on this: https://github.com/bitcoin/bips/blob/master/bip-0030.mediawiki
                 for (Transaction tx : block.transactions()) {
-                    final Set<ScriptExecution.VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
+                    final Set<ScriptExecution.VerifyFlag> verifyFlags = params().getTransactionVerificationFlags(block, tx, getVersionTally(), height);
                     Sha256Hash hash = tx.getTxId();
                     // If we already have unspent outputs for this hash, we saw the tx already. Either the block is
                     // being added twice (bug) or the block is a BIP30 violator.
@@ -212,7 +212,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 Coin valueIn = Coin.ZERO;
                 Coin valueOut = Coin.ZERO;
                 final List<Script> prevOutScripts = new LinkedList<>();
-                final Set<ScriptExecution.VerifyFlag> verifyFlags = params.getTransactionVerificationFlags(block, tx, getVersionTally(), height);
+                final Set<ScriptExecution.VerifyFlag> verifyFlags = params().getTransactionVerificationFlags(block, tx, getVersionTally(), height);
                 if (!isCoinBase) {
                     // For each input of the transaction remove the corresponding output from the set of unspent
                     // outputs.
@@ -226,7 +226,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                         // chains. The assumption is there will ~never be re-orgs deeper than the spendable coinbase
                         // chain depth.
                         if (prevOut.isCoinbase()) {
-                            if (height - prevOut.getHeight() < params.getSpendableCoinbaseDepth()) {
+                            if (height - prevOut.getHeight() < params().getSpendableCoinbaseDepth()) {
                                 throw new VerificationException("Tried to spend coinbase at depth " + (height - prevOut.getHeight()));
                             }
                         }
@@ -303,7 +303,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     protected synchronized TransactionOutputChanges connectTransactions(StoredBlock newBlock)
             throws VerificationException, BlockStoreException, PrunedException {
         checkState(lock.isHeldByCurrentThread());
-        if (!params.passesCheckpoint(newBlock.getHeight(), newBlock.getHeader().getHash()))
+        if (!params().passesCheckpoint(newBlock.getHeight(), newBlock.getHeader().getHash()))
             throw new VerificationException("Block failed checkpoint lockin at " + newBlock.getHeight());
 
         blockStore.beginDatabaseBatchWrite();
@@ -321,7 +321,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 LinkedList<UTXO> txOutsCreated = new LinkedList<>();
                 long sigOps = 0;
 
-                if (!params.isCheckpoint(newBlock.getHeight())) {
+                if (!params().isCheckpoint(newBlock.getHeight())) {
                     for (Transaction tx : transactions) {
                         Sha256Hash hash = tx.getTxId();
                         if (blockStore.hasUnspentOutputs(hash, tx.getOutputs().size()))
@@ -336,7 +336,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 List<CompletableFuture<VerificationException>> listScriptVerificationResults = new ArrayList<>(transactions.size());
                 for (final Transaction tx : transactions) {
                     final Set<ScriptExecution.VerifyFlag> verifyFlags =
-                        params.getTransactionVerificationFlags(newBlock.getHeader(), tx, getVersionTally(), Integer.SIZE);
+                        params().getTransactionVerificationFlags(newBlock.getHeader(), tx, getVersionTally(), Integer.SIZE);
                     boolean isCoinBase = tx.isCoinBase();
                     Coin valueIn = Coin.ZERO;
                     Coin valueOut = Coin.ZERO;
@@ -349,7 +349,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                                     in.getOutpoint().index());
                             if (prevOut == null)
                                 throw new VerificationException("Attempted spend of a non-existent or already spent output!");
-                            if (prevOut.isCoinbase() && newBlock.getHeight() - prevOut.getHeight() < params.getSpendableCoinbaseDepth())
+                            if (prevOut.isCoinbase() && newBlock.getHeight() - prevOut.getHeight() < params().getSpendableCoinbaseDepth())
                                 throw new VerificationException("Tried to spend coinbase at depth " + (newBlock.getHeight() - prevOut.getHeight()));
                             valueIn = valueIn.add(prevOut.getValue());
                             if (verifyFlags.contains(ScriptExecution.VerifyFlag.P2SH)) {
@@ -413,7 +413,7 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
                 verifications.stream().filter(Objects::nonNull).findAny().ifPresent(e -> { throw e; });
             } else {
                 txOutChanges = block.getTxOutChanges();
-                if (!params.isCheckpoint(newBlock.getHeight()))
+                if (!params().isCheckpoint(newBlock.getHeight()))
                     for (UTXO out : txOutChanges.txOutsCreated) {
                         Sha256Hash hash = out.getHash();
                         if (blockStore.getTransactionOutput(hash, out.getIndex()) != null)
@@ -473,6 +473,6 @@ public class FullPrunedBlockChain extends AbstractBlockChain {
     }
 
     private Coin getBlockInflation(int height) {
-        return ((BitcoinNetworkParams) params).getBlockInflation(height);
+        return ((BitcoinNetworkParams) params()).getBlockInflation(height);
     }
 }

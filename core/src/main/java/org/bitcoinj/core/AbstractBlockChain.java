@@ -129,7 +129,7 @@ public abstract class AbstractBlockChain {
     private final Object chainHeadLock = new Object();
 
     /** network parameters for this chain */
-    protected final NetworkParameters params;
+    private final NetworkParameters params;
     private final DifficultyTransitions difficultyTransitions;
     private final CopyOnWriteArrayList<ListenerRegistration<NewBestBlockListener>> newBestBlockListeners;
     private final CopyOnWriteArrayList<ListenerRegistration<ReorganizeListener>> reorganizeListeners;
@@ -208,6 +208,14 @@ public abstract class AbstractBlockChain {
      */
     public Network network() {
         return params.network();
+    }
+
+    /**
+     * Get NetworkParameters for this chain.
+     * @return parameters for this chain.
+     */
+    protected NetworkParameters params() {
+        return params;
     }
 
     /**
