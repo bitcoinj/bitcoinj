@@ -11,6 +11,7 @@ version = '0.18-SNAPSHOT'
 dependencies {
     api project(':bitcoinj-base')
     api 'org.jspecify:jspecify:1.0.1'
+    api 'org.bitcoinj.secp:secp-api:0.3.1'
     api 'org.bouncycastle:bcprov-jdk15to18:1.85.2'
     api 'com.google.guava:guava:33.6.0-android'
     api 'com.google.protobuf:protobuf-javalite:4.35.1'
@@ -18,6 +19,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.18'
 
     testImplementation project(':bitcoinj-test-support')
+    testImplementation 'org.bitcoinj.secp:secp-bouncy:0.3.1'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.easymock:easymock:5.6.0'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.21.5'
@@ -45,7 +47,7 @@ if (GradleVersion.current() > gradleVersionTargetJVM) {
 }
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs.addAll(['--release', '8'])
+    options.compilerArgs.addAll(['--release', '9'])
     options.compilerArgs << '-Xlint:deprecation'
     options.encoding = 'UTF-8'
 }
