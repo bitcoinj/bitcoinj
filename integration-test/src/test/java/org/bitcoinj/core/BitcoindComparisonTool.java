@@ -18,6 +18,9 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
+import org.bitcoinj.core.FullBlockTestGenerator.MemoryPoolState;
+import org.bitcoinj.core.FullBlockTestGenerator.Rule;
+import org.bitcoinj.core.FullBlockTestGenerator.RuleList;
 import org.bitcoinj.net.NioClient;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.RegTestParams;
@@ -72,12 +75,13 @@ public class BitcoindComparisonTool {
         BriefLogFormatter.init();
         System.out.println("USAGE: bitcoinjBlockStoreLocation runExpensiveTests(1/0) [port=18444]");
         boolean runExpensiveTests = args.length > 1 && Integer.parseInt(args[1]) == 1;
+        int peerPort = args.length > 2 ? Integer.parseInt(args[2]) : PARAMS.getPort();
 
         File blockFile = File.createTempFile("testBlocks", ".dat");
         blockFile.deleteOnExit();
 
-        FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
-        final RuleList blockList = generator.getBlocksToTest(false, runExpensiveTests, blockFile);
+        final RuleList blockList = new FullBlockTestGenerator(PARAMS)
+                .getBlocksToTest(false, runExpensiveTests, blockFile);
         final Map<Sha256Hash, Block> preloadedBlocks = new HashMap<>();
         final Iterator<Block> blocks = new BlockFileLoader(PARAMS.network(), List.of(blockFile)).iterator();
 
@@ -210,7 +214,7 @@ public class BitcoindComparisonTool {
         bitcoindChainHead = PARAMS.getGenesisBlock().getHash();
         
         // bitcoind MUST be on localhost or we will get banned as a DoSer
-        new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), args.length > 2 ? Integer.parseInt(args[2]) : PARAMS.getPort()), bitcoind, Duration.ofSeconds(1));
+        new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), peerPort), bitcoind, Duration.ofSeconds(1));
 
         connectedFuture.get();
 
@@ -310,21 +314,21 @@ public class BitcoindComparisonTool {
                 if (block.sendOnce)
                     preloadedBlocks.remove(nextBlock.getHash());
                 log.info("Block \"{}\" completed processing", block.ruleName);
-            } else if (rule instanceof MemoryPoolState) {
+            } else if (rule instanceof MemoryPoolState memPoolRule) {
                 MemoryPoolMessage message = new MemoryPoolMessage();
                 bitcoind.sendMessage(message);
                 bitcoind.sendPing().get();
-                if (mostRecentInv == null && !((MemoryPoolState) rule).mempool.isEmpty()) {
+                if (mostRecentInv == null && !memPoolRule.mempool.isEmpty()) {
                     log.error("ERROR: bitcoind had an empty mempool, but we expected some transactions on rule {}", rule.ruleName);
                     rulesSinceFirstFail++;
-                } else if (mostRecentInv != null && ((MemoryPoolState) rule).mempool.isEmpty()) {
+                } else if (mostRecentInv != null && memPoolRule.mempool.isEmpty()) {
                     log.error("ERROR: bitcoind had a non-empty mempool, but we expected an empty one on rule {}", rule.ruleName);
                     rulesSinceFirstFail++;
                 } else if (mostRecentInv != null) {
-                    Set<InventoryItem> originalRuleSet = new HashSet<>(((MemoryPoolState)rule).mempool);
-                    boolean matches = mostRecentInv.items.size() == ((MemoryPoolState)rule).mempool.size();
+                    Set<InventoryItem> originalRuleSet = new HashSet<>(memPoolRule.mempool);
+                    boolean matches = mostRecentInv.items.size() == memPoolRule.mempool.size();
                     for (InventoryItem item : mostRecentInv.items)
-                        if (!((MemoryPoolState) rule).mempool.remove(item))
+                        if (!memPoolRule.mempool.remove(item))
                             matches = false;
                     if (matches)
                         continue;
