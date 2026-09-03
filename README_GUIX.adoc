@@ -1,0 +1,17 @@
+= Preliminary bitcoinj Guix support
+
+At the present time, **bitcoinj** can't be built as a **Guix** package, but it can be built in a Guix development shell. This requires using **Maven**, so you need to check out the `feature-maven-build` branch (which should also include this `README` and a `manifest.scm` file.
+
+From a system with the Guix package manager installed (tested on NixOS) you can do a partial build of bitcoinj. Currently, the latest **Maven** in Guix is version 3.9.0 - which doesn't fully support JDK 17, so the shell needs to be started with `MAVEN_OPTS` as follows:
+
+----
+guix shell -m manifest.scm -- env MAVEN_OPTS="--add-opens java.base/java.lang=ALL-UNNAMED" bash
+----
+
+Once the devshell is launched you can build bitcoinj with the `mvn` command. For example:
+
+----
+mvn verify
+----
+
+
