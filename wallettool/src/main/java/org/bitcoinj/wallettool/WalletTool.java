@@ -338,7 +338,7 @@ public class WalletTool implements Callable<Integer> {
             java.util.logging.Logger logger = LogManager.getLogManager().getLogger("");
             logger.setLevel(Level.SEVERE);
         }
-        params = NetworkParameters.of(net);
+
         String fileName = String.format("%s.chain", net);
         if (chainFile == null) {
             chainFile = new File(fileName);
@@ -379,12 +379,12 @@ public class WalletTool implements Callable<Integer> {
             e.printStackTrace();
             return 1;
         }
-        if (wallet.network() != net) {
-            System.err.println("Wallet does not match requested network: " +
-                    wallet.network() + " vs " + net);
-            return 1;
+        Network detectedWalletNetwork = wallet.network();
+        if (detectedWalletNetwork != net) {
+            System.out.println("Detected Wallet network is " + detectedWalletNetwork);
+            net = (BitcoinNetwork) detectedWalletNetwork;
         }
-
+        params = NetworkParameters.of(net);
         // What should we do?
         switch (action) {
             case DUMP: dumpWallet(); break;
