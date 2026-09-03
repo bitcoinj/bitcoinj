@@ -16,14 +16,14 @@
 #
 
 # stage: set up debian environment
-FROM debian:bookworm-slim AS setup-stage
+FROM debian:trixie-slim AS setup-stage
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     /usr/bin/rm -f /etc/apt/apt.conf.d/docker-clean && \
     /usr/bin/apt-get update && \
-    /usr/bin/apt-get --yes --no-install-recommends install openjdk-17-jdk-headless gradle && \
+    /usr/bin/apt-get --yes --no-install-recommends install adduser openjdk-21-jdk-headless gradle && \
     /usr/sbin/adduser --disabled-login --gecos "" builder
 
 # stage: build
