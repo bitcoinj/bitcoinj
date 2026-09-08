@@ -78,6 +78,9 @@ public class DefaultAddressParserProvider implements AddressParser.AddressParser
 
     @Override
     public AddressParser forNetwork(Network network) {
+        if (!segwitNetworks.contains(network) && !base58Networks.contains(network)) {
+            throw new IllegalArgumentException(network + " not supported by this provider");
+        }
         return address -> this.parseAddress(address, network);
     }
 
