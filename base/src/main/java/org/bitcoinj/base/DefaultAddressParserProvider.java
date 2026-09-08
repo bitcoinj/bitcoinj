@@ -24,18 +24,24 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Address parser that knows about the address types supported by bitcoinj core and is configurable
- * with additional network types.
+ * An {@code AddressParserProvider} that supports both Base58 and Bech32 encodings and knows about a fixed collection of networks.
+ * The networks are specified as two lists: one list for Base58/{@link LegacyAddress} and one for Bech32/{@link SegwitAddress}.
+ * Two lists are used because address <i>normalization</i> (see {@link Address#network()}) is different for {@code LegacyAddress}
+ * and {@code SegwitAddress}.
+ * <p>
+ * The no-args constructor is used by {@link AddressParser#getDefault()} and {@link AddressParser#getDefault(Network)}
+ * to provide parsers for the networks in the {@link BitcoinNetwork} {@code enum}. {@link DefaultAddressParserProvider#DefaultAddressParserProvider(List, List)} is available for implementing subclasses that
+ * add additional Bitcoin or Bitcoin-like networks/sidechains (for example: a new Testnet incarnation or the Liquid sidechain.)
  */
 class DefaultAddressParserProvider implements AddressParser.AddressParserProvider {
 
-    // Networks to try when parsing segwit addresses
+    /** Valid, normalized, {@link BitcoinNetwork} types for {@link SegwitAddress}/Bech32. */
     static final List<Network> DEFAULT_NETWORKS_SEGWIT = unmodifiableList(
                                                                     BitcoinNetwork.MAINNET,
                                                                     BitcoinNetwork.TESTNET,
                                                                     BitcoinNetwork.REGTEST);
 
-    // Networks to try when parsing legacy (base58) addresses
+    /** Valid, normalized, {@link BitcoinNetwork} types for {@link LegacyAddress}/Base58. */
     static final List<Network> DEFAULT_NETWORKS_LEGACY = unmodifiableList(
                                                                     BitcoinNetwork.MAINNET,
                                                                     BitcoinNetwork.TESTNET);
@@ -46,13 +52,16 @@ class DefaultAddressParserProvider implements AddressParser.AddressParserProvide
     private final List<Network> base58Networks;
 
     /**
-     * DefaultAddressParser with default network lists
+     * Construct an {@link AddressParser.AddressParserProvider} that provides parsers that handle addresses for
+     * <b>bitcoinj</b>'s built-in networks.
      */
     DefaultAddressParserProvider() {
         this(DEFAULT_NETWORKS_SEGWIT, DEFAULT_NETWORKS_LEGACY);
     }
 
     /**
+     * Construct an {@link AddressParser.AddressParserProvider} that provides parsers that handle addresses for a
+     * fixed collection of networks based upon the two lists passed to the constructor.
      * Use this constructor if you have a custom list of networks to use when parsing addresses
      * @param segwitNetworks Networks to search when parsing segwit addresses
      * @param base58Networks Networks to search when parsing base58 addresses
