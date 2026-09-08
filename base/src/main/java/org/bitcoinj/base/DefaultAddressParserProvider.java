@@ -33,7 +33,7 @@ import java.util.List;
  * to provide parsers for the networks in the {@link BitcoinNetwork} {@code enum}. {@link DefaultAddressParserProvider#DefaultAddressParserProvider(List, List)} is available for implementing subclasses that
  * add additional Bitcoin or Bitcoin-like networks/sidechains (for example: a new Testnet incarnation or the Liquid sidechain.)
  */
-class DefaultAddressParserProvider implements AddressParser.AddressParserProvider {
+public class DefaultAddressParserProvider implements AddressParser.AddressParserProvider {
 
     /** Valid, normalized, {@link BitcoinNetwork} types for {@link SegwitAddress}/Bech32. */
     static final List<Network> DEFAULT_NETWORKS_SEGWIT = unmodifiableList(
@@ -66,7 +66,7 @@ class DefaultAddressParserProvider implements AddressParser.AddressParserProvide
      * @param segwitNetworks Networks to search when parsing segwit addresses
      * @param base58Networks Networks to search when parsing base58 addresses
      */
-    DefaultAddressParserProvider(List<Network> segwitNetworks, List<Network> base58Networks) {
+    protected DefaultAddressParserProvider(List<Network> segwitNetworks, List<Network> base58Networks) {
         this.segwitNetworks = segwitNetworks;
         this.base58Networks = base58Networks;
     }
