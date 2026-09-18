@@ -383,7 +383,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
         vWallet = createOrLoadWallet(shouldReplayWallet);
 
         // Initiate Bitcoin network objects (block store, blockchain and peer group)
-        vStore = new SPVBlockStore(params, chainFile);
+        vStore = new SPVBlockStore(network, chainFile);
         if (!chainFileExists || restoreFromSeed != null || restoreFromKey != null) {
             if (checkpoints == null && !PlatformUtils.isAndroidRuntime()) {
                 checkpoints = CheckpointManager.openStream(params);

@@ -20,7 +20,6 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.net.discovery.DnsDiscovery;
@@ -39,7 +38,6 @@ public class RestoreFromSeed {
 
     public static void main(String[] args) throws Exception {
         Network network = BitcoinNetwork.TESTNET;
-        NetworkParameters params = NetworkParameters.of(network);
 
         // Bitcoinj supports hierarchical deterministic wallets (or "HD Wallets"): https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
         // HD wallets allow you to restore your wallet simply from a root seed. This seed can be represented using a short mnemonic sentence as described in BIP 39: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
@@ -65,7 +63,7 @@ public class RestoreFromSeed {
         }
 
         // Setting up the BlochChain, the BlocksStore and connecting to the network.
-        SPVBlockStore chainStore = new SPVBlockStore(params, chainFile);
+        SPVBlockStore chainStore = new SPVBlockStore(network, chainFile);
         BlockChain chain = new BlockChain(network, chainStore);
         PeerGroup peerGroup = new PeerGroup(network, chain);
         peerGroup.addPeerDiscovery(new DnsDiscovery(network));
