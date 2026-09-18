@@ -23,6 +23,8 @@ import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.FullBlockTestGenerator.Rule;
+import org.bitcoinj.core.FullBlockTestGenerator.RuleList;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.MainNetParams;
@@ -107,8 +109,8 @@ public class FullPrunedBlockChainTest {
     @Test
     public void testGeneratedChain() throws Exception {
         // Tests various test cases from FullBlockTestGenerator
-        FullBlockTestGenerator generator = new FullBlockTestGenerator(PARAMS);
-        RuleList blockList = generator.getBlocksToTest(false, false, null);
+        RuleList blockList = new FullBlockTestGenerator(PARAMS)
+                .getBlocksToTest(false, false, null);
 
         try (FullPrunedBlockStore store = provider.createStore(PARAMS, blockList.maximumReorgBlockCount)) {
             FullPrunedBlockChain chain = new FullPrunedBlockChain(PARAMS, store);
