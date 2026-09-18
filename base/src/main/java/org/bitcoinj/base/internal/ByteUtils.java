@@ -16,6 +16,7 @@
 
 package org.bitcoinj.base.internal;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -601,6 +602,21 @@ public class ByteUtils {
     /** Sets the given bit in data to one, using little endian (not the same as Java native big endian) */
     public static void setBitLE(byte[] data, int index) {
         data[index >>> 3] |= bitMask[7 & index];
+    }
+
+    /**
+     * Read an {@link InputStream} into a {@code byte[]}
+     * @param in an input stream
+     * @return the bytes
+     * @throws IOException if an IO error occurs
+     */
+    public static byte[] toByteArray(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        for (int n; (n = in.read(buf)) >= 0; ) {
+            out.write(buf, 0, n);
+        }
+        return out.toByteArray();
     }
 
     /**
