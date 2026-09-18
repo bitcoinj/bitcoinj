@@ -243,7 +243,9 @@ public class SendRequest {
         helper.add("feePerKb", feePerKb);
         helper.add("ensureMinRequiredFee", ensureMinRequiredFee);
         helper.add("signInputs", signInputs);
-        helper.add("aesKey", aesKey != null ? "set" : null); // careful to not leak the key
+        // Error Prone rejects helper.add(..., null), even with omitNullValues().
+        if (aesKey != null)
+            helper.add("aesKey", "set"); // careful to not leak the key
         helper.add("coinSelector", coinSelector);
         helper.add("shuffleOutputs", shuffleOutputs);
         helper.add("recipientsPayFees", recipientsPayFees);

@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.MoreObjects;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.core.internal.GuardedBy;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.Sha256Hash;
@@ -1733,7 +1734,7 @@ public class Peer extends PeerSocketHandler {
         if (isBloomFilteringSupported(version)) {
             vBloomFilter = filter;
             log.info("{}: Sending Bloom filter{}", this, andQueryMemPool ? " and querying mempool" : "");
-            sendMessage(filter);
+            sendMessage(new BloomFilterMessage(filter));
             if (andQueryMemPool)
                 sendMessage(new MemoryPoolMessage());
             maybeRestartChainDownload();
