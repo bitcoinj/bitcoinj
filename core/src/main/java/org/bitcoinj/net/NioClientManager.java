@@ -19,7 +19,7 @@ package org.bitcoinj.net;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.bitcoinj.base.internal.FutureUtils;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.bitcoinj.core.ContextPropagatingThreadFactory;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

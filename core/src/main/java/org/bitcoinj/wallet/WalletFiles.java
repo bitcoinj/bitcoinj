@@ -19,7 +19,7 @@ package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.bitcoinj.core.ContextPropagatingThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
