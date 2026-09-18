@@ -58,7 +58,7 @@ public class ForwardingService implements Closeable {
     public static void main(String[] args) throws InterruptedException {
         // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
         BriefLogFormatter.init();
-        Context.propagate(new Context());
+        Context.setDefault();
 
         if (args.length < 1 || args.length > 2) {
             System.err.println(USAGE);

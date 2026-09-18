@@ -40,7 +40,7 @@ public class ForwardingServiceTest {
 
     @BeforeEach
     void setupTest() {
-        Context.propagate(new Context());
+        Context.setDefault();
     }
 
     @Test

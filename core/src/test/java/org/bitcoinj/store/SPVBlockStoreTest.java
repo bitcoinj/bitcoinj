@@ -64,7 +64,7 @@ public class SPVBlockStoreTest {
 
     @Before
     public void setup() throws Exception {
-        Context.propagate(new Context());
+        Context.setDefault();
         blockStoreFile = File.createTempFile("spvblockstore", null);
         blockStoreFile.delete();
         blockStoreFile.deleteOnExit();

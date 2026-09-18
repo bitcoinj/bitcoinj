@@ -39,7 +39,7 @@ val USAGE = "Usage: address-to-forward-to $NETS"
 fun main(args: Array<String>) { //pass the network and forwarding address in this order [address, network]
     // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
     BriefLogFormatter.init()
-    Context.propagate(Context())
+    Context.setDefault()
 
     if (args.isEmpty() || args.size > 2) {
         System.err.println(USAGE)

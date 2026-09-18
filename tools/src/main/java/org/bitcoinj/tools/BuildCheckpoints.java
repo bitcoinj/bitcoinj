@@ -93,7 +93,7 @@ public class BuildCheckpoints implements Callable<Integer> {
         final String suffix;
         params = NetworkParameters.of(net);
         Objects.requireNonNull(params);
-        Context.propagate(new Context());
+        Context.setDefault();
 
         switch (net) {
             case MAINNET:
