@@ -121,10 +121,17 @@ public class ECKeyTest {
         byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
         assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), output));
 
-        // Test interop with a signature from elsewhere.
+        // Test interop with a (non-canonical) signature from elsewhere.
         byte[] sig = ByteUtils.parseHex(
                 "3046022100dffbc26774fc841bbe1c1362fd643609c6e42dcb274763476d87af2c0597e89e022100c59e3c13b96b316cae9fa0ab0260612c7a133a6fe2b3445b6bf80b3123bf274d");
-        assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), sig));
+
+        ECDSASignature uncanonical = ECDSASignature.decodeFromDER(sig);
+        assertFalse(uncanonical.isCanonical());
+
+        ECDSASignature canonical = uncanonical.toCanonicalised();
+        assertTrue(canonical.isCanonical());
+
+        assertTrue(key.verify(Sha256Hash.ZERO_HASH.getBytes(), canonical.encodeToDER()));
     }
 
     @Test
@@ -147,9 +154,16 @@ public class ECKeyTest {
 
             output = ByteUtils.parseHex(
                     "304502206faa2ebc614bf4a0b31f0ce4ed9012eb193302ec2bcaccc7ae8bb40577f47549022100c73a1a1acc209f3f860bf9b9f5e13e9433db6f8b7bd527a088a0e0cd0a4c83e9");
-            assertTrue(key.verify(message, output));
+
+            ECDSASignature uncanonical = ECDSASignature.decodeFromDER(output);
+            assertFalse(uncanonical.isCanonical());
+
+            ECDSASignature canonical = uncanonical.toCanonicalised();
+            assertTrue(canonical.isCanonical());
+
+            assertTrue(key.verify(message, canonical.encodeToDER()));
         }
-        
+
         // Try to sign with one key and verify with the other.
         byte[] message = reverseBytes(ByteUtils.parseHex(
             "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
@@ -176,9 +190,17 @@ public class ECKeyTest {
 
             output = ByteUtils.parseHex(
                     "304502206faa2ebc614bf4a0b31f0ce4ed9012eb193302ec2bcaccc7ae8bb40577f47549022100c73a1a1acc209f3f860bf9b9f5e13e9433db6f8b7bd527a088a0e0cd0a4c83e9");
-            assertTrue(key.verify(message, output));
+
+            ECDSASignature uncanonical = ECDSASignature.decodeFromDER(output);
+            assertFalse(uncanonical.isCanonical());
+
+            ECDSASignature canonical = uncanonical.toCanonicalised();
+            assertTrue(canonical.isCanonical());
+
+
+            assertTrue(key.verify(message, canonical.encodeToDER()));
         }
-        
+
         // Try to sign with one key and verify with the other.
         byte[] message = reverseBytes(ByteUtils.parseHex(
             "11da3761e86431e4a54c176789e41f1651b324d240d599a7067bee23d328ec2a"));
