@@ -79,7 +79,7 @@ public class BlockChainTest {
         TimeUtils.setMockClock(); // Use mock clock
         Context.propagate(new Context(100, Coin.ZERO, false, false));
         testNetWallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
-        testNetStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
+        testNetStore = new MemoryBlockStore(TESTNET.network());
         testNetChain = new BlockChain(BitcoinNetwork.TESTNET, testNetWallet, testNetStore);
         coinbaseTo = testNetWallet.currentReceiveKey().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
     }
@@ -166,7 +166,7 @@ public class BlockChainTest {
     @Test
     public void difficultyTransitions_perfectSpacing() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.network()));
         // genesis block is already there
         addIntermediteBlocks(chain, 0, Duration.ofMinutes(10));
         addTransitionBlock(chain, 1, Duration.ofMinutes(10));
@@ -175,7 +175,7 @@ public class BlockChainTest {
     @Test(expected = VerificationException.class)
     public void difficultyTransitions_tooQuick() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.network()));
         // genesis block is already there
         addIntermediteBlocks(chain, 0, Duration.ofMinutes(10).minusSeconds(1));
         addTransitionBlock(chain, 1, Duration.ofMinutes(10).minusSeconds(1));
@@ -185,7 +185,7 @@ public class BlockChainTest {
     public void difficultyTransitions_tooSlow() throws Exception {
         // we're using signet because it's not at max target from the start
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        BlockChain chain = new BlockChain(BitcoinNetwork.SIGNET, new MemoryBlockStore(SIGNET.getGenesisBlock()));
+        BlockChain chain = new BlockChain(BitcoinNetwork.SIGNET, new MemoryBlockStore(SIGNET.network()));
         // genesis block is already there
         addIntermediteBlocks(chain, 0, Duration.ofMinutes(10).plusSeconds(1));
         addTransitionBlock(chain, 1, Duration.ofMinutes(10).plusSeconds(1));
@@ -194,7 +194,7 @@ public class BlockChainTest {
     @Test
     public void difficultyTransitions_tooSlow_butIsAtMax() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.network()));
         // genesis block is already there
         addIntermediteBlocks(chain, 0, Duration.ofMinutes(20));
         // we can add the transition block with the old target, becuase it is already at the maximum (genesis block)
@@ -204,7 +204,7 @@ public class BlockChainTest {
     @Test(expected = VerificationException.class)
     public void difficultyTransitions_unexpectedChange() throws Exception {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        BlockChain chain = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.network()));
         // genesis block is already there
         Block prev = chain.getChainHead().getHeader();
         Instant newTime = prev.time().plus(Duration.ofMinutes(10));
@@ -440,7 +440,7 @@ public class BlockChainTest {
 
     @Test
     public void estimatedBlockTime() throws Exception {
-        BlockChain prod = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.getGenesisBlock()));
+        BlockChain prod = new BlockChain(BitcoinNetwork.MAINNET, new MemoryBlockStore(MAINNET.network()));
         Instant t = prod.estimateBlockTimeInstant(200000);
         // The actual date of block 200,000 was 2012-09-22 10:47:00
         Instant expected = Instant.from(DateTimeFormatter.ISO_INSTANT.parse("2012-10-23T15:35:05Z"));
