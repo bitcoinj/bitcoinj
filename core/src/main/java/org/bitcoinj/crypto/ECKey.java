@@ -32,18 +32,11 @@ import org.bitcoinj.base.VarInt;
 import org.bitcoinj.crypto.internal.CryptoUtils;
 import org.bitcoinj.base.internal.Secp256k1Constants;
 import org.bitcoinj.wallet.Wallet;
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Integer;
-import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.BERTags;
-import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
@@ -300,14 +293,6 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     }
 
     /**
-     * Construct an ECKey from an ASN.1 encoded private key.
-     */
-    @Deprecated
-    public static ECKey fromASN1(byte[] asn1privkey) {
-        return extractKeyFromASN1(asn1privkey);
-    }
-
-    /**
      * Creates an ECKey given the private key only. The public key is calculated from it (this is slow). The resulting
      * public key is compressed.
      */
@@ -430,31 +415,6 @@ public class ECKey implements EncryptableItem, ECPublicKey {
     /** Returns true if this key is watch only, meaning it has a public key but no private key. */
     public boolean isWatching() {
         return isPubKeyOnly() && !isEncrypted();
-    }
-
-    /**
-     * Output this ECKey as an ASN.1 encoded private key.
-     * @throws ECKey.MissingPrivateKeyException if the private key is missing or encrypted.
-     */
-    @Deprecated
-    public byte[] toASN1() {
-        try {
-            byte[] privKeyBytes = getPrivKeyBytes();
-            // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
-            //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
-            //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
-            //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
-            //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
-            // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
-            return new DERSequence(new ASN1Encodable[] {
-                    new ASN1Integer(1),   // version
-                    new DEROctetString(privKeyBytes),
-                    new DERTaggedObject(0, CURVE_PARAMS.toASN1Primitive()),
-                    new DERTaggedObject(1, new DERBitString(getPubKey()))}
-            ).getEncoded(ASN1Encoding.DER);
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen, writing to memory stream.
-        }
     }
 
     /**
@@ -841,57 +801,6 @@ public class ECKey implements EncryptableItem, ECPublicKey {
             return false;
         else
             throw new IllegalArgumentException(ByteUtils.formatHex(encoded));
-    }
-
-    private static ECKey extractKeyFromASN1(byte[] asn1privkey) {
-        // To understand this code, see the definition of the ASN.1 format for EC private keys in the OpenSSL source
-        // code in ec_asn1.c:
-        //
-        // ASN1_SEQUENCE(EC_PRIVATEKEY) = {
-        //   ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
-        //   ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
-        //   ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
-        //   ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)
-        // } ASN1_SEQUENCE_END(EC_PRIVATEKEY)
-        //
-        try {
-            final DLSequence seq;
-            try (ASN1InputStream decoder = new ASN1InputStream(asn1privkey)) {
-                seq = (DLSequence) decoder.readObject();
-                checkArgument(decoder.readObject() == null, () ->
-                        "input contains extra bytes");
-            }
-
-            checkArgument(seq.size() == 4, () ->
-                    "input does not appear to be an ASN.1 OpenSSL EC private key");
-
-            checkArgument(((ASN1Integer) seq.getObjectAt(0)).getValue().equals(BigInteger.ONE), () ->
-                    "input is of wrong version");
-
-            byte[] privbits = ((ASN1OctetString) seq.getObjectAt(1)).getOctets();
-            BigInteger privkey = ByteUtils.bytesToBigInteger(privbits);
-
-            ASN1TaggedObject pubkey = (ASN1TaggedObject) seq.getObjectAt(3);
-            checkArgument(pubkey.getTagNo() == 1, () ->
-                    "input has 'publicKey' with bad tag number");
-            checkArgument(pubkey.getTagClass() == BERTags.CONTEXT_SPECIFIC, () ->
-                    "input has 'publicKey' with bad tag class");
-            byte[] pubbits = ((DERBitString) pubkey.getBaseObject()).getBytes();
-            checkArgument(pubbits.length == 33 || pubbits.length == 65, () ->
-                    "input has 'publicKey' with invalid length");
-            int encoding = pubbits[0] & 0xFF;
-            // Only allow compressed(2,3) and uncompressed(4), not infinity(0) or hybrid(6,7)
-            checkArgument(encoding >= 2 && encoding <= 4, () ->
-                    "input has 'publicKey' with invalid encoding");
-
-            // Now sanity check to ensure the pubkey bytes match the privkey.
-            ECKey key = ECKey.fromPrivate(privkey, isPubKeyCompressed(pubbits));
-            checkArgument (Arrays.equals(key.getPubKey(), pubbits), () ->
-                    "public key in ASN.1 structure does not match private key.");
-            return key;
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen, reading from memory stream.
-        }
     }
 
     /**
