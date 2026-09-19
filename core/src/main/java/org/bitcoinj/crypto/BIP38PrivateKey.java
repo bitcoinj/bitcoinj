@@ -193,9 +193,4 @@ public class BIP38PrivateKey extends EncodedPrivateKey {
             throw new RuntimeException(x);
         }
     }
-
-    @Override
-    public String toString() {
-        return toBase58();
-    }
 }
