@@ -427,6 +427,7 @@ public class WalletProtobufSerializerTest {
 
     @Test
     public void extensionsWithError() throws Exception {
+        @Deprecated
         WalletExtension extension = new WalletExtension() {
             @Override
             public String getWalletExtensionID() {
