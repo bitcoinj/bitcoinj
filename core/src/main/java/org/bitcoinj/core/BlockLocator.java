@@ -22,6 +22,7 @@ import org.bitcoinj.base.internal.InternalUtils;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,8 +42,12 @@ public final class BlockLocator {
 
     /**
      * Creates a Block locator with defined list of hashes.
+     * @param hashes list of block hashes, must not be null and must not contain null elements
      */
     public BlockLocator(List<Sha256Hash> hashes) {
+        Objects.requireNonNull(hashes, "hashes must not be null");
+        for (Sha256Hash hash : hashes)
+            Objects.requireNonNull(hash, "hash elements must not be null");
         this.hashes = Collections.unmodifiableList(hashes);
     }
 
