@@ -6,7 +6,12 @@ plugins {
 // This module requires JDK 17+ and Gradle 8.5+ to compile.
 
 dependencies {
-    implementation project(':bitcoinj-core')
+    implementation (project(':bitcoinj-core')) {
+        exclude group: 'org.bouncycastle'
+    }
+    implementation 'org.bitcoinj.secp:secp-api:0.3.1'
+    implementation 'org.bitcoinj.secp:secp-bouncy:0.3.1'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'
     implementation project(':bitcoinj-examples')
     api 'org.jspecify:jspecify:1.0.1'
 
