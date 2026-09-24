@@ -54,4 +54,13 @@ public abstract class EncodedPrivateKey {
         EncodedPrivateKey other = (EncodedPrivateKey) o;
         return this.network.equals(other.network) && Arrays.equals(this.bytes, other.bytes);
     }
+
+    /**
+     * This implementation redacts the private key. If absolutely necessary, use specific accessors in subclasses,
+     * e.g. {@code toBase58()}.
+     */
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{network=" + network + ",bytes=redacted}";
+    }
 }

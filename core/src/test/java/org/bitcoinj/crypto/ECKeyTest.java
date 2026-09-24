@@ -196,7 +196,7 @@ public class ECKeyTest {
         String addr = "mqAJmaxMcG5pPHHc3H3NtyXzY7kGbJLuMF";
         String privkey = "92shANodC6Y4evT5kFzjNFQAdjqTtHAnDTLzqBBq4BbKUPyx6CD";
         ECKey key = DumpedPrivateKey.fromBase58(TESTNET, privkey).getKey();
-        assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toString());
+        assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toBase58());
         assertEquals(addr, key.toAddress(ScriptType.P2PKH, TESTNET).toString());
     }
 
@@ -248,7 +248,7 @@ public class ECKeyTest {
     public void base58Encoding_leadingZero() {
         String privkey = "91axuYLa8xK796DnBXXsMbjuc8pDYxYgJyQMvFzrZ6UfXaGYuqL";
         ECKey key = DumpedPrivateKey.fromBase58(TESTNET, privkey).getKey();
-        assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toString());
+        assertEquals(privkey, key.getPrivateKeyEncoded(TESTNET).toBase58());
         assertEquals(0, key.getPrivKeyBytes()[0]);
     }
 
@@ -258,7 +258,7 @@ public class ECKeyTest {
         for (int i = 0 ; i < 20 ; i++) {
             ECKey key = ECKey.random();
             ECKey key1 = DumpedPrivateKey.fromBase58(TESTNET,
-                    key.getPrivateKeyEncoded(TESTNET).toString()).getKey();
+                    key.getPrivateKeyEncoded(TESTNET).toBase58()).getKey();
             assertEquals(ByteUtils.formatHex(key.getPrivKeyBytes()),
                     ByteUtils.formatHex(key1.getPrivKeyBytes()));
         }
@@ -492,7 +492,7 @@ public class ECKeyTest {
     public void roundTripDumpedPrivKey() {
         ECKey key = ECKey.random();
         assertTrue(key.isCompressed());
-        String base58 = key.getPrivateKeyEncoded(TESTNET).toString();
+        String base58 = key.getPrivateKeyEncoded(TESTNET).toBase58();
         ECKey key2 = DumpedPrivateKey.fromBase58(TESTNET, base58).getKey();
         assertTrue(key2.isCompressed());
         assertArrayEquals(key.getPrivKeyBytes(), key2.getPrivKeyBytes());

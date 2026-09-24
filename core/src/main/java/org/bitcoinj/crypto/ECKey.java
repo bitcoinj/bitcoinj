@@ -1428,7 +1428,7 @@ public class ECKey implements EncryptableItem, ECPublicKey {
 
 
     public String getPrivateKeyAsWiF(Network network) {
-        return getPrivateKeyEncoded(network).toString();
+        return getPrivateKeyEncoded(network).toBase58();
     }
 
     private String toString(boolean includePrivate, @Nullable AesKey aesKey, Network network) {
