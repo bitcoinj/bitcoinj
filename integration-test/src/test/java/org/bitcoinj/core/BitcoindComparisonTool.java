@@ -104,18 +104,6 @@ public class BitcoindComparisonTool {
         final AtomicInteger unexpectedInvs = new AtomicInteger(0);
         final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
         bitcoind.addConnectedEventListener(Threading.SAME_THREAD, (peer, peerCount) -> {
-            if (!peer.getPeerVersionMessage().subVer.contains("Satoshi")) {
-                System.out.println();
-                System.out.println("""
-                    ************************************************************************************************************************
-                    WARNING: You appear to be using this to test an alternative implementation with full validation rules. You should go
-                    think hard about what you're doing. Seriously, no one has gotten even close to correctly reimplementing Bitcoin
-                    consensus rules, despite serious investment in trying. It is a huge task and the slightest difference is a huge bug.
-                    Instead, go work on making Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right,
-                    and starting with this tester as a way to try to do so will simply end in pain and lost coins.
-                    ************************************************************************************************************************""");
-                System.out.println();
-            }
             log.info("bitcoind connected");
             // Make sure bitcoind has no blocks
             bitcoind.setDownloadParameters(false);
