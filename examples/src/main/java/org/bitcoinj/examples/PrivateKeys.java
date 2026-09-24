@@ -22,8 +22,8 @@ import org.bitcoinj.base.Base58;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.crypto.DumpedPrivateKey;
@@ -46,7 +46,6 @@ public class PrivateKeys {
     public static void main(String[] args) throws Exception {
         // TODO: Assumes main network not testnet. Make it selectable.
         Network network = BitcoinNetwork.MAINNET;
-        NetworkParameters params = NetworkParameters.of(network);
         try {
             // Decode the private key from Satoshis Base58 variant. If 51 characters long then it's from Bitcoins
             // dumpprivkey command and includes a version byte and checksum, or if 52 characters long then it has 
@@ -69,7 +68,7 @@ public class PrivateKeys {
             Address destination = wallet.parseAddress(args[1]);
 
             // Find the transactions that involve those coins.
-            final MemoryBlockStore blockStore = new MemoryBlockStore(params.getGenesisBlock());
+            final MemoryBlockStore blockStore = new MemoryBlockStore(Block.getGenesis(network));
             BlockChain chain = new BlockChain(network, wallet, blockStore);
 
             final PeerGroup peerGroup = new PeerGroup(network, chain);
