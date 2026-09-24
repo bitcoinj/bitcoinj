@@ -43,7 +43,7 @@ public class BlockFileLoaderBitcoindTest {
 
     @BeforeEach
     public void setUp() {
-        Context.propagate(new Context());
+        Context.setDefault();
     }
 
     @Test

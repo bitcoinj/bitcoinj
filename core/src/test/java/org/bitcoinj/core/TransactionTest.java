@@ -81,7 +81,7 @@ public class TransactionTest {
 
     @Before
     public void setUp() {
-        Context.propagate(new Context());
+        Context.setDefault();
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
