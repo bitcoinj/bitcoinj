@@ -410,7 +410,7 @@ public class WalletAppKit extends AbstractIdleService implements Closeable {
                     time = vWallet.earliestKeyCreationTime();
                 }
                 if (time.isAfter(Instant.EPOCH))
-                    CheckpointManager.checkpoint(params, checkpoints, vStore, time);
+                    CheckpointManager.checkpoint(network, checkpoints, vStore, time);
                 else
                     log.warn("Creating a new uncheckpointed block store due to a wallet with a creation time of zero: this will result in a very slow chain sync");
             } else if (chainFileExists) {

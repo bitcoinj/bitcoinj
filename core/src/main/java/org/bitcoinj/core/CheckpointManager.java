@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.store.BlockStore;
@@ -113,6 +114,15 @@ public class CheckpointManager {
             throw new IOException("Unsupported format.");
     }
 
+    /**
+     * Open a checkpoints stream for the given {@link BitcoinNetwork} pointing to inside the bitcoinj JAR.
+     * @param network the network
+     * @return input stream
+     */
+    public static InputStream openStream(BitcoinNetwork network) {
+        return openStream(NetworkParameters.of(network));
+    }
+
     /** Returns a checkpoints stream pointing to inside the bitcoinj JAR */
     public static InputStream openStream(NetworkParameters params) {
         return CheckpointManager.class.getResourceAsStream("/" + params.getId() + ".checkpoints.txt");
@@ -180,6 +190,17 @@ public class CheckpointManager {
     /** Returns a hash of the concatenated checkpoint data. */
     public Sha256Hash getDataHash() {
         return dataHash;
+    }
+
+    /**
+     * Convenience method that creates a CheckpointManager, loads the given data, gets the checkpoint for the given
+     * time, then inserts it into the store and sets that to be the chain head. Useful when you have just created
+     * a new store from scratch and want to use configure it all in one go.
+     * <p>
+     * Note that time is adjusted backwards by a week to account for possible clock drift in the block headers.
+     */
+    public static void checkpoint(BitcoinNetwork network, InputStream checkpoints, BlockStore store, Instant time) throws BlockStoreException, IOException {
+        checkpoint(NetworkParameters.of(network), checkpoints, store, time);
     }
 
     /**
