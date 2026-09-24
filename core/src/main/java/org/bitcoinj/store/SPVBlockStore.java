@@ -16,6 +16,7 @@
 
 package org.bitcoinj.store;
 
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.internal.ByteUtils;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
@@ -65,7 +66,7 @@ public class SPVBlockStore implements BlockStore {
     static final byte[] HEADER_MAGIC_V2 = "SPV2".getBytes(StandardCharsets.US_ASCII);
 
     private volatile @Nullable MappedByteBuffer buffer;
-    protected final NetworkParameters params;
+    protected final Network network;
 
     // The entire ring-buffer is mmapped and accessing it should be as fast as accessing regular memory once it's
     // faulted in. Unfortunately, in theory practice and theory are the same. In practice they aren't.
@@ -119,7 +120,7 @@ public class SPVBlockStore implements BlockStore {
      */
     public SPVBlockStore(NetworkParameters params, File file, int capacity, boolean grow) throws BlockStoreException {
         Objects.requireNonNull(file);
-        this.params = Objects.requireNonNull(params);
+        network = Objects.requireNonNull(params).network();
         checkArgument(capacity > 0, () -> "capacity must be positive");
         checkArgument(capacity < 144 * 365 * 10, () -> "capacity must be sane"); // 10 years
 
@@ -157,7 +158,7 @@ public class SPVBlockStore implements BlockStore {
                 randomAccessFile.setLength(fileLength);
                 // Map it into memory read/write. See above comment.
                 buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, fileLength);
-                initNewStore(params.getGenesisBlock());
+                initNewStore(Block.getGenesis(network));
             }
 
             // Maybe migrate V1 to V2 format.
@@ -436,7 +437,7 @@ public class SPVBlockStore implements BlockStore {
                 buffer.put((byte)0);
             }
             // Initialize store again
-            initNewStore(params.getGenesisBlock());
+            initNewStore(Block.getGenesis(network));
         } finally { lock.unlock(); }
     }
 }
