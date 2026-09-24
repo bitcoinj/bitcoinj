@@ -66,7 +66,7 @@ public class ParseByteCacheTest {
     private static final NetworkParameters MAINNET = MainNetParams.get();
 
     private void resetBlockStore() {
-        blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
+        blockStore = new MemoryBlockStore(TESTNET.network());
     }
     
     @Before

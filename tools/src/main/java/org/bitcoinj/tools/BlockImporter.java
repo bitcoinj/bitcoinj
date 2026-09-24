@@ -21,7 +21,6 @@ import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.FullPrunedBlockChain;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PrunedException;
 import org.bitcoinj.core.VerificationException;
 import org.bitcoinj.store.BlockStore;
@@ -46,21 +45,20 @@ public class BlockImporter {
 
         BitcoinNetwork network = BitcoinNetwork.fromString(args[0])
                 .orElseThrow(() -> new IllegalArgumentException("Unknown network: " + args[0]));
-        NetworkParameters params = NetworkParameters.of(network);
 
         BlockStore store;
         switch (args[1]) {
             case "MemFull":
                 checkArgument(args.length == 2);
-                store = new MemoryFullPrunedBlockStore(params, 100);
+                store = new MemoryFullPrunedBlockStore(network, 100);
                 break;
             case "Mem":
                 checkArgument(args.length == 2);
-                store = new MemoryBlockStore(params.getGenesisBlock());
+                store = new MemoryBlockStore(network);
                 break;
             case "SPV":
                 checkArgument(args.length == 3);
-                store = new SPVBlockStore(params, new File(args[2]));
+                store = new SPVBlockStore(network, new File(args[2]));
                 break;
             default:
                 System.err.println("Unknown store " + args[1]);
