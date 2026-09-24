@@ -18,7 +18,6 @@ import org.bitcoinj.base.Address
 import org.bitcoinj.base.AddressParser
 import org.bitcoinj.base.BitcoinNetwork
 import org.bitcoinj.base.Coin
-import org.bitcoinj.core.Context
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.core.TransactionBroadcast
 import org.bitcoinj.core.TransactionConfidence
@@ -39,7 +38,6 @@ val USAGE = "Usage: address-to-forward-to $NETS"
 fun main(args: Array<String>) { //pass the network and forwarding address in this order [address, network]
     // This line makes the log output more compact and easily read, especially when using the JDK log adapter.
     BriefLogFormatter.init()
-    Context.propagate(Context())
 
     if (args.isEmpty() || args.size > 2) {
         System.err.println(USAGE)
