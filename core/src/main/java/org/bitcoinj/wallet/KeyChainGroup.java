@@ -114,7 +114,7 @@ public class KeyChainGroup implements KeyBag {
          * @param outputScriptType type of addresses (aka output scripts) to generate for receiving
          */
         public Builder fromRandom(ScriptType outputScriptType) {
-            DeterministicSeed seed = DeterministicSeed.ofRandom(new SecureRandom(),
+            DeterministicSeed.Unencrypted seed = DeterministicSeed.ofRandom(new SecureRandom(),
                     DeterministicSeed.DEFAULT_SEED_ENTROPY_BITS, "");
             fromSeed(seed, outputScriptType);
             return this;

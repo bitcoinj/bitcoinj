@@ -18,6 +18,7 @@ package org.bitcoinj.test.integration.wallet;
 
 import org.bitcoinj.core.Context;
 import org.bitcoinj.crypto.HDPath;
+import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,8 @@ import java.io.File;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Basic test of loading a wallet from a known test file
@@ -40,10 +43,12 @@ public class WalletLoadTest {
         Context.propagate(new Context());
         Wallet wallet = Wallet.loadFromFile(walletFile);
 
-        Instant creation = wallet.getKeyChainSeed().getCreationTime().get();
+        DeterministicSeed.Unencrypted seed = (DeterministicSeed.Unencrypted) wallet.getKeyChainSeed();
+
+        Instant creation = seed.getCreationTime().get();
         assertEquals(testWalletCreation, creation, "unexpected creation timestamp");
 
-        String mnemonic = wallet.getKeyChainSeed().getMnemonicString();
+        String mnemonic = seed.mnemonicAsString();
         assertEquals(testWalletMnemonic, mnemonic, "unexpected mnemonic");
 
         HDPath accountPath = wallet.getActiveKeyChain().accountFullPath();
