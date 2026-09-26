@@ -17,7 +17,7 @@
 package org.bitcoinj.wallet;
 
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.crypto.KeyCrypterException;

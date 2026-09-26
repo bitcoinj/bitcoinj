@@ -17,6 +17,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.base.BloomFilter;
+
 import java.time.Instant;
 
 /**
