@@ -1,0 +1,113 @@
+/*
+ * Copyright by the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bitcoinj.crypto;
+
+import org.bitcoinj.base.Network;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.junit.Test;
+
+import java.util.Objects;
+
+import static org.junit.Assert.assertEquals;
+
+/**
+ * Test BIP-85 key derivation.  Align with test vectors from <a href="https://bips.xyz/85">https://bips.xyz/85</a>
+ * and <a href="https://iancoleman.io/bip39/">https://iancoleman.io/bip39/</a>.
+ */
+public class DeterministicEntropyTest {
+
+    /**
+     * Test derived BIP-85 keys match <a href="https://iancoleman.io/bip39/">https://iancOleman.io/bip39/</a>
+     */
+    @Test
+    public void testIanColeman() throws Exception {
+
+        String mnemonicWords = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+        DeterministicSeed seed = DeterministicSeed.ofMnemonic(mnemonicWords, "");
+        DeterministicKey key = HDKeyDerivation.createMasterPrivateKey(Objects.requireNonNull(seed.getSeedBytes()));
+
+        assertEquals("73c5da0a", Integer.toHexString(key.getFingerprint()));
+
+        assertEquals("prosper short ramp prepare exchange stove life snack client enough purpose fold",
+                deriveBIP85(key, DeterministicEntropy.WordCount.Twelve, 0));
+
+        assertEquals("prosper short ramp prepare exchange stove life snack client enough purpose fold",
+                deriveBIP85(key, DeterministicEntropy.Language.English, DeterministicEntropy.WordCount.Twelve, 0));
+
+        assertEquals("winter brother stamp provide uniform useful doctor prevent venue upper peasant auto view club next clerk tone fox",
+                deriveBIP85(key, DeterministicEntropy.WordCount.Eighteen, 0));
+
+        assertEquals("stick exact spice sock filter ginger museum horse kit multiply manual wear grief demand derive alert quiz fault december lava picture immune decade jaguar",
+                deriveBIP85(key, DeterministicEntropy.WordCount.TwentyFour, 0));
+    }
+
+    public String deriveBIP85(DeterministicKey masterPrivateKey, DeterministicEntropy.Language language, DeterministicEntropy.WordCount wordCount, int index) {
+        return String.join(" ",
+                Objects.requireNonNull(DeterministicEntropy.deriveBIP85Seed(masterPrivateKey, language, wordCount, index).getMnemonicCode()));
+    }
+
+    public String deriveBIP85(DeterministicKey masterPrivateKey, DeterministicEntropy.WordCount wordCount, int index) {
+        return String.join(" ",
+                Objects.requireNonNull(DeterministicEntropy.deriveBIP85Seed(masterPrivateKey, wordCount, index).getMnemonicCode()));
+    }
+
+    /**
+     * Test derived BIP-85 keys match test vectors from <a href="https://bips.xyz/85#12-english-words">https://bips.xyz/85#12-english-words</a>
+     */
+    @Test
+    public void test12Words() {
+        // Test vector from https://bips.xyz/85#12-english-words
+        String xprv = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
+        Network network = MainNetParams.get().network();
+        DeterministicKey masterKey = DeterministicKey.deserializeB58(xprv, network);
+        assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
+
+        assertEquals("girl mad pet galaxy egg matter matrix prison refuse sense ordinary nose",
+                deriveBIP85(masterKey, DeterministicEntropy.WordCount.Twelve, 0));
+    }
+
+    /**
+     * Test derived BIP-85 keys match test vectors from <a href="https://bips.xyz/85#12-english-words">https://bips.xyz/85#12-english-words</a>
+     */
+    @Test
+    public void test18Words() {
+        // Test vector from https://bips.xyz/85#12-english-words
+        String xprv = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
+        Network network = MainNetParams.get().network();
+        DeterministicKey masterKey = DeterministicKey.deserializeB58(xprv, network);
+        assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
+
+        assertEquals("near account window bike charge season chef number sketch tomorrow excuse sniff circle vital hockey outdoor supply token",
+                deriveBIP85(masterKey, DeterministicEntropy.WordCount.Eighteen, 0));
+    }
+
+    /**
+     * Test derived BIP-85 keys match test vectors from <a href="https://bips.xyz/85#12-english-words">https://bips.xyz/85#12-english-words</a>
+     */
+    @Test
+    public void test24Words() {
+        // Test vector from https://bips.xyz/85#12-english-words
+        String xprv = "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb";
+        Network network = MainNetParams.get().network();
+        DeterministicKey masterKey = DeterministicKey.deserializeB58(xprv, network);
+        assertEquals("627ef3a6", Integer.toHexString(masterKey.getFingerprint()));
+
+        assertEquals("puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano",
+                deriveBIP85(masterKey, DeterministicEntropy.WordCount.TwentyFour, 0));
+    }
+}
