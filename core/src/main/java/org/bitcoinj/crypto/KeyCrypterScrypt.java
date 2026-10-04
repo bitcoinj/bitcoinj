@@ -17,6 +17,7 @@
 
 package org.bitcoinj.crypto;
 
+import org.bitcoinj.base.internal.Preconditions;
 import org.bitcoinj.base.internal.Stopwatch;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
@@ -107,16 +108,13 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * Encryption/ Decryption using specified Scrypt parameters.
      *
      * @param scryptParameters ScryptParameters to use
-     * @throws NullPointerException if the scryptParameters or any of its N, R or P is null.
+     * @throws NullPointerException if the scryptParameters or any is null.
+     * @throws IllegalArgumentException if salt isn't at least 8 bytes long.
      */
     public KeyCrypterScrypt(ScryptParameters scryptParameters) {
         this.scryptParameters = Objects.requireNonNull(scryptParameters);
-        // Check there is a non-empty salt.
-        // (Some early MultiBit wallets has a missing salt so it is not a hard fail).
-        if (scryptParameters.salt() == null
-                || scryptParameters.salt().length == 0) {
-            log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
-        }
+        Preconditions.checkArgument(scryptParameters.salt().length >= 8,
+                () -> "ScryptParameters with salt of length 8 or greater is required");
     }
 
     /**
@@ -133,17 +131,9 @@ public class KeyCrypterScrypt implements KeyCrypter {
         byte[] passwordBytes = null;
         try {
             passwordBytes = convertToByteArray(password);
-            byte[] salt = new byte[0];
-            if ( scryptParameters.salt() != null) {
-                salt = scryptParameters.salt();
-            } else {
-                // Warn the user that they are not using a salt.
-                // (Some early MultiBit wallets had a blank salt).
-                log.warn("You are using a ScryptParameters with no salt. Your encryption may be vulnerable to a dictionary attack.");
-            }
 
             Stopwatch watch = Stopwatch.start();
-            byte[] keyBytes = SCrypt.generate(passwordBytes, salt, scryptParameters.n(), scryptParameters.r(), scryptParameters.p(), KEY_LENGTH);
+            byte[] keyBytes = SCrypt.generate(passwordBytes, scryptParameters.salt(), scryptParameters.n(), scryptParameters.r(), scryptParameters.p(), KEY_LENGTH);
             log.info("Deriving key took {} for {}.", watch, scryptParametersString());
             return new AesKey(keyBytes);
         } catch (Exception e) {
