@@ -11,7 +11,7 @@ plugins {
 def isModularBuild = GradleVersion.current() >= GradleVersion.version("8.5")
 def annotationProcessorMinVersion = GradleVersion.version("4.6")
 boolean hasAnnotationProcessor = GradleVersion.current() >= annotationProcessorMinVersion
-def jUnit6MinVersion = GradleVersion.version("4.6")
+def jUnit6MinVersion = GradleVersion.version("5.0") // JUnit 6 requires Java 17, so Java Toolchains is needed
 boolean hasJUnit6 = GradleVersion.current() >= jUnit6MinVersion
 
 def graalVMMinVersion = GradleVersion.version("8.3")     // Gradle plugin for GraalVM requires 8.3+
