@@ -1,15 +1,19 @@
 /*
- * Settings file only for Debian Gradle 4.4.1.
+ * Settings file only for Debian Gradle.
  * Usage: gradle --settings-file=settings-debian.gradle build
  */
 
 import org.gradle.util.GradleVersion
 
-// Required Gradle version for build
-def gradleVersion = GradleVersion.version("4.4.1")
+// Required Gradle versions for build
+def gradleVersions = [
+        GradleVersion.version("4.4.1"), // trixie
+        GradleVersion.version("4.6"), // forky
+        GradleVersion.version("4.7") // sid
+]
 
-if (GradleVersion.current() != gradleVersion) {
-    throw new GradleScriptException("bitcoinj build requires Debian Gradle ${gradleVersion.version}", null)
+if (!(GradleVersion.current() in gradleVersions)) {
+    throw new GradleScriptException("bitcoinj build requires Debian Gradle", null)
 }
 
 // we can't test for Java 17 in Gradle 4.4, so at least we test for Java 11
