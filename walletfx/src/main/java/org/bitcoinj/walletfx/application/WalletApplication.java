@@ -33,7 +33,7 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroupStructure;
 import org.bitcoinj.walletfx.utils.GuiUtils;
-import wallettemplate.WalletSetPasswordController;
+//import wallettemplate.WalletSetPasswordController;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,7 +142,7 @@ public abstract class WalletApplication implements AppDelegate {
 
         primaryStage.show();
 
-        WalletSetPasswordController.initEstimatedKeyDerivationTime();
+        //WalletSetPasswordController.initEstimatedKeyDerivationTime();
 
         walletAppKit.addListener(new Service.Listener() {
             @Override
