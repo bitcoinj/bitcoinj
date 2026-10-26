@@ -35,7 +35,7 @@ allprojects {
         dependencies {
             annotationProcessor "com.uber.nullaway:nullaway:0.14.3"
             testAnnotationProcessor "com.uber.nullaway:nullaway:0.14.3"
-            errorprone "com.google.errorprone:error_prone_core:2.50.0"
+            errorprone "com.google.errorprone:error_prone_core:2.51.0"
         }
 
         tasks.withType(JavaCompile) {
