@@ -595,4 +595,22 @@ public abstract class HDPath {
         }
         return b.toString();
     }
+
+    /**
+     * Serialize this path using the given character as the hardened suffix.
+     *
+     * @param hardeningSymbol character to use for hardened derivation (e.g. {@code 'H'}, {@code 'h'}, or {@code '\''})
+     * @return string representation with the specified hardening symbol
+     */
+    public String toString(char hardeningSymbol) {
+        StringBuilder b = new StringBuilder();
+        if (this instanceof HDFullPath) {
+            b.append(((HDFullPath) this).prefix());
+        }
+        for (int child : children) {
+            b.append(SEPARATOR);
+            b.append(new ChildNumber(child).toString(hardeningSymbol));
+        }
+        return b.toString();
+    }
 }
