@@ -49,6 +49,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         delegate.start(primaryStage);
+        WalletSetPasswordController.initEstimatedKeyDerivationTime();
     }
 
     @Override
