@@ -1,11 +1,13 @@
 reference:
-  image: debian:bookworm-slim
+  image: debian:trixie-slim
   before_script:
     - apt-get update
     - apt-get -y install ca-certificates buildah
     # switch to iptables legacy, as GitLab CI doesn't support nftables
     - apt-get -y install --no-install-recommends iptables
     - update-alternatives --set iptables /usr/sbin/iptables-legacy
+    - mkdir -p /etc/containers/
+    - echo -e "[network]\nfirewall_driver=\"iptables\"" > /etc/containers/containers.conf
   script:
     - buildah build --file build.Containerfile --output build .
   after_script:
