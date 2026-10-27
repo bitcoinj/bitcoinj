@@ -5,7 +5,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.18-SNAPSHOT'
+version = '0.18-dwdc.1'
 
 dependencies {
     api 'org.jspecify:jspecify:1.0.0'
