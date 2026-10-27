@@ -9,10 +9,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm, macOS-15, windows-2022]
-        java: ['17', '21', '25']
+        java: ['17', '21', '25', '27']
         distribution: ['temurin']
         gradle: ['8.14.4', '9.8.2']
         exclude:
+          # Java 27 requires Gradle 9.8+
+          - java: '27'
+            gradle: '8.14.4'
           # Java 25+ requires Gradle 9.1+
           - java: '25'
             gradle: '8.14.4'
