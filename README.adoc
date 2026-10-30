@@ -99,7 +99,7 @@ gradle bitcoinj-wallettemplate:jlink
 ### Building the reference build
 
 Our reference build (which is also used for our releases) is running within a container to provide good reproducibility.
-Buildah 1.26+, Podman 4.1+ and Docker (with BuildKit) are supported. We tested various combinations of host OSes
+Buildah 1.39+, Podman 5.4+ and Docker (with BuildKit) are supported. We tested various combinations of host OSes
 (Debian, Ubuntu, macOS, Windows+WSL) and architectures (amd64, arm64). For usage instructions see `build.Containerfile`.
 
 This uses Debian Gradle with the `settings-debian.gradle` settings. If you happen to use Debian and have Gradle
