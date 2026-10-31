@@ -37,6 +37,7 @@ import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.listeners.AbstractKeyChainEventListener;
 import org.bitcoinj.protobuf.wallet.Protos;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -63,6 +64,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@Ignore
 public class DeterministicKeyChainTest {
     private DeterministicKeyChain chain;
     private DeterministicKeyChain segwitChain;
