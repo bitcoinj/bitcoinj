@@ -112,6 +112,8 @@ public interface KeyChainGroupStructure {
                 return ChildNumber.COINTYPE_BTC;
             case TESTNET:
                 return ChildNumber.COINTYPE_TBTC;
+            case SIGNET:
+                return ChildNumber.COINTYPE_TBTC;
             case REGTEST:
                 return ChildNumber.COINTYPE_TBTC;
             default:
