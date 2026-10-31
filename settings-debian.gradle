@@ -8,8 +8,8 @@ import org.gradle.util.GradleVersion
 // Required Gradle versions for build
 def gradleVersions = [
         GradleVersion.version("4.4.1"), // trixie
-        GradleVersion.version("4.6"), // forky
-        GradleVersion.version("4.7") // sid
+        GradleVersion.version("4.7"), // forky
+        GradleVersion.version("4.9") // sid
 ]
 
 if (!(GradleVersion.current() in gradleVersions)) {
