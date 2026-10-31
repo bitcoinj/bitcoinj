@@ -16,6 +16,8 @@
 
 package org.bitcoinj.store;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.StoredBlock;
@@ -37,6 +39,28 @@ public class MemoryBlockStore implements BlockStore {
     };
     private StoredBlock chainHead;
 
+    /**
+     * Construct a {@code MemoryBlockStore} for a network.
+     * @param network Network this store will use.
+     */
+    public MemoryBlockStore(Network network) {
+        try {
+            Block genesisHeader = Block.getGenesis(network);
+            StoredBlock storedGenesis = new StoredBlock(genesisHeader, genesisHeader.getWork(), 0);
+            put(storedGenesis);
+            chainHead = storedGenesis;
+        } catch (BlockStoreException | VerificationException e) {
+            throw new RuntimeException(e);  // Cannot happen.
+        }
+    }
+
+    /**
+     * Construct a {@code MemoryBlockStore} from a genesis block. For use in tests only.
+     * Use this class with {@link org.bitcoinj.params.UnitTestParams#getGenesisBlock()} for testing with
+     * reduced proof-of-work.
+     * @param genesisBlock Network this store will use.
+     */
+    @VisibleForTesting
     public MemoryBlockStore(Block genesisBlock) {
         try {
             Block genesisHeader = genesisBlock.asHeader();

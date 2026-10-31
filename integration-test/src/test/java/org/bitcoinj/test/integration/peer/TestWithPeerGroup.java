@@ -72,6 +72,7 @@ public abstract class TestWithPeerGroup extends TestWithNetworkConnections {
 
     @Override
     public void setUp() throws IOException, BlockStoreException {
+        // These tests require unit test genesis block
         setUp(new MemoryBlockStore(UNITTEST.getGenesisBlock()));
     }
 

@@ -16,9 +16,11 @@
 
 package org.bitcoinj.store;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Address;
+import org.bitcoinj.core.Block;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.base.Sha256Hash;
@@ -206,19 +208,28 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
     
     /**
      * Set up the MemoryFullPrunedBlockStore
-     * @param params The network parameters of this block store - used to get genesis block
+     * @param network The network of this block store - used to get genesis block
      * @param fullStoreDepth The depth of blocks to keep FullStoredBlocks instead of StoredBlocks
      */
+    public MemoryFullPrunedBlockStore(Network network, int fullStoreDepth) {
+        this(network, Block.getGenesis(network), fullStoreDepth);
+    }
+
+    @VisibleForTesting
     public MemoryFullPrunedBlockStore(NetworkParameters params, int fullStoreDepth) {
-        network = params.network();
+        this(params.network(), params.getGenesisBlock(), fullStoreDepth);
+    }
+
+    private MemoryFullPrunedBlockStore(Network network, Block genesisBlock, int fullStoreDepth) {
+        this.network = network;
         blockMap = new TransactionalHashMap<>();
         fullBlockMap = new TransactionalFullBlockMap();
         transactionOutputMap = new TransactionalHashMap<>();
         this.fullStoreDepth = fullStoreDepth > 0 ? fullStoreDepth : 1;
         // Insert the genesis block.
-        StoredBlock storedGenesisHeader = new StoredBlock(params.getGenesisBlock().asHeader(), params.getGenesisBlock().getWork(), 0);
+        StoredBlock storedGenesisHeader = new StoredBlock(genesisBlock.asHeader(), genesisBlock.getWork(), 0);
         // The coinbase in the genesis block is not spendable
-        StoredUndoableBlock storedGenesis = new StoredUndoableBlock(params.getGenesisBlock().getHash(), Collections.emptyList());
+        StoredUndoableBlock storedGenesis = new StoredUndoableBlock(genesisBlock.getHash(), Collections.emptyList());
         try {
             put(storedGenesisHeader, storedGenesis);
             chainHead = storedGenesisHeader;
@@ -227,6 +238,7 @@ public class MemoryFullPrunedBlockStore implements FullPrunedBlockStore {
             throw new RuntimeException(e);  // Cannot happen.
         }
     }
+
 
     @Override
     public synchronized void put(StoredBlock block) throws BlockStoreException {
