@@ -37,6 +37,9 @@ include 'examples'
 project(':examples').name = 'bitcoinj-examples'
 
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_25)) {
+    include 'walletfx'
+    project(':walletfx').name = 'bitcoinj-walletfx'
+
     include 'wallettemplate'
     project(':wallettemplate').name = 'bitcoinj-wallettemplate'
 }
