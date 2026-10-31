@@ -17,6 +17,7 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.store.BlockStore;
@@ -83,7 +84,7 @@ public class CheckpointManager {
     // Map of block header time (in seconds) to data.
     protected final TreeMap<Instant, StoredBlock> checkpoints = new TreeMap<>();
 
-    protected final NetworkParameters params;
+    protected final Network network;
     protected final Sha256Hash dataHash;
 
     /**
@@ -99,7 +100,7 @@ public class CheckpointManager {
 
     /** Loads the checkpoints from the given stream */
     public CheckpointManager(NetworkParameters params, @Nullable InputStream inputStream) throws IOException {
-        this.params = Objects.requireNonNull(params);
+        network = Objects.requireNonNull(params).network();
         if (inputStream == null)
             inputStream = openStream(params);
         Objects.requireNonNull(inputStream);
@@ -161,11 +162,11 @@ public class CheckpointManager {
      */
     public StoredBlock getCheckpointBefore(Instant time) {
         try {
-            checkArgument(time.isAfter(params.getGenesisBlock().time()));
+            checkArgument(time.isAfter(Block.getGenesis(network).time()));
             // This is thread safe because the map never changes after creation.
             Map.Entry<Instant, StoredBlock> entry = checkpoints.floorEntry(time);
             if (entry != null) return entry.getValue();
-            Block genesis = params.getGenesisBlock().asHeader();
+            Block genesis = Block.getGenesis(network).asHeader();
             return new StoredBlock(genesis, genesis.getWork(), 0);
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.

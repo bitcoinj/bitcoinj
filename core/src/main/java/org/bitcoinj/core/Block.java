@@ -19,6 +19,7 @@ package org.bitcoinj.core;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.bitcoinj.base.Difficulty;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.VarInt;
 import org.bitcoinj.base.internal.Buffers;
@@ -267,6 +268,15 @@ public class Block implements Message {
     public Block(long version, Sha256Hash prevHash, Sha256Hash merkleRoot, Instant time,
                  long difficultyTarget, long nonce, @Nullable List<Transaction> transactions) {
         this(version, prevHash, merkleRoot, time, Difficulty.ofCompact(difficultyTarget), nonce, transactions);
+    }
+
+    /**
+     * Get the standard full Genesis Block for a network
+     * @param network the network
+     * @return a complete block (should be treated as immutable)
+     */
+    public static Block getGenesis(Network network) {
+        return NetworkParameters.of(network).getGenesisBlock();
     }
 
     public static Block createGenesis(Instant time, Difficulty difficultyTarget) {
