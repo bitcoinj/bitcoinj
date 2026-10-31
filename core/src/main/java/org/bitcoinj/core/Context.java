@@ -141,13 +141,23 @@ public class Context {
     }
 
     /**
-     * Sets the given context as the current thread context. You should use this if you create your own threads that
-     * want to create core BitcoinJ objects. Generally, if a class can accept a Context in its constructor and might
-     * be used (even indirectly) by a thread, you will want to call this first. Your task may be simplified by using
-     * a {@link ContextPropagatingThreadFactory}.
+     * Sets the given {@code Context} as the current thread {@code Context}. This method is used by tests that create
+     * customized {@code Context} objects. <b>bitcoinj</b> applications should generally use {@link Context#setDefault()}.
+     * This method will likely be deprecated in the future, so if you are using a default context (that is {@code new Context()}),
+     * you should migrate to {@link Context#setDefault()}.
      */
     public static void propagate(Context context) {
         slot.set(Objects.requireNonNull(context));
+    }
+
+    /**
+     * Set the default <b>bitcoinj</b> context. This method is what nearly all <b>bitcoinj</b> applications should use to initialize
+     * the context. You should use this if you create your own threads that want to create core <b>bitcoinj</b> objects.
+     * Generally, if a class can accept a {@code Context} in its constructor and might be used (even indirectly) by a thread,
+     * you should call this first. Your task may be simplified by using a {@link ContextPropagatingThreadFactory}.
+     */
+    public static void setDefault() {
+        Context.propagate(new Context());
     }
 
     /**

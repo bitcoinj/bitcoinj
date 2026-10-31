@@ -55,7 +55,7 @@ public class TransactionInputTest {
 
     @Before
     public void setUp() throws Exception {
-        Context.propagate(new Context());
+        Context.setDefault();
     }
 
     @Test

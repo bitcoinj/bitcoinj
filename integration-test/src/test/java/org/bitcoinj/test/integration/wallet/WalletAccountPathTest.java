@@ -87,7 +87,7 @@ public class WalletAccountPathTest {
 
     // Create a wallet, save it to a file, then reload from a file
     private static Wallet createWallet(File walletFile, Network network, KeyChainGroupStructure structure, ScriptType outputScriptType) throws IOException, UnreadableWalletException {
-        Context.propagate(new Context());
+        Context.setDefault();
         DeterministicSeed seed = DeterministicSeed.ofMnemonic(testWalletMnemonic, "", Instant.now());
         Wallet wallet = Wallet.fromSeed(network, seed, outputScriptType, structure);
         wallet.saveToFile(walletFile);

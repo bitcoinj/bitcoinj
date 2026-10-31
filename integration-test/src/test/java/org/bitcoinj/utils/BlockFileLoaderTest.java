@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class BlockFileLoaderTest {
     @BeforeEach
     public void setUp() throws Exception {
-        Context.propagate(new Context());
+        Context.setDefault();
     }
 
     @Test
