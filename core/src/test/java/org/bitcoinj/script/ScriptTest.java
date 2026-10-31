@@ -62,16 +62,21 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.bitcoinj.core.Transaction.SERIALIZE_TRANSACTION_NO_WITNESS;
+import static org.bitcoinj.script.ScriptExecution.VerifyFlag;
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
 import static org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -299,25 +304,28 @@ public class ScriptTest {
         return Script.parse(out.toByteArray());
     }
 
-    private Set<ScriptExecution.VerifyFlag> parseVerifyFlags(String str) {
-        Set<ScriptExecution.VerifyFlag> flags = EnumSet.noneOf(ScriptExecution.VerifyFlag.class);
-        if (!"NONE".equals(str)) {
-            for (String flag : str.split(",")) {
-                try {
-                    flags.add(ScriptExecution.VerifyFlag.valueOf(flag));
-                } catch (IllegalArgumentException x) {
-                    log.debug("Cannot handle verify flag {} -- ignored.", flag);
-                }
-            }
+    private final Pattern COMMA_DELIMITED = Pattern.compile(",");
+
+    private Set<VerifyFlag> parseVerifyFlags(String str) {
+        return "NONE".equals(str)
+                    ? Collections.emptySet()
+                    : COMMA_DELIMITED.splitAsStream(str)
+                        .peek(this::logInvalidFlag)
+                        .flatMap(s -> VerifyFlag.parse(s).map(Stream::of).orElse(Stream.empty()))
+                        .collect(Collectors.collectingAndThen(Collectors.toSet(), Collections::unmodifiableSet));
+    }
+
+    private void logInvalidFlag(String s) {
+        if (!VerifyFlag.parse(s).isPresent()) {
+            log.debug("Cannot handle verify flag {} -- ignored.", s);
         }
-        return flags;
     }
 
     @Test
     public void dataDrivenScripts() throws Exception {
         List<List<String>> tests = readScriptTestsJson("script_tests.json");
         for (List<String> test : tests) {
-            Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2));
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.get(2));
             ScriptError expectedError = ScriptError.fromMnemonic(test.get(3));
             try {
                 Script scriptSig = parseScriptString(test.get(0));
@@ -390,7 +398,7 @@ public class ScriptTest {
                 Map<TransactionOutPoint, Script> scriptPubKeys = parseScriptPubKeys(test.scriptPubKeyEntries);
                 transaction = TESTNET.getDefaultSerializer().makeTransaction(ByteBuffer.wrap(ByteUtils.parseHex(test.transaction.toLowerCase())));
                 Transaction.verify(TESTNET.network(), transaction);
-                Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
+                Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
 
                 for (int i = 0; i < transaction.getInputs().size(); i++) {
                     TransactionInput input = transaction.getInput(i);
@@ -424,7 +432,7 @@ public class ScriptTest {
                 int protoVersionNoWitness = serializer.getProtocolVersion() | SERIALIZE_TRANSACTION_NO_WITNESS;
                 transaction = serializer.withProtocolVersion(protoVersionNoWitness).makeTransaction(ByteBuffer.wrap(txBytes));
             }
-            Set<ScriptExecution.VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
+            Set<VerifyFlag> verifyFlags = parseVerifyFlags(test.verifyFlags);
 
             boolean valid = true;
             try {

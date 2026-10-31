@@ -42,11 +42,13 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.bitcoinj.script.ScriptOpCodes.OP_0;
@@ -169,9 +171,21 @@ public class ScriptExecution {
         DISCOURAGE_UPGRADABLE_NOPS, // Discourage use of NOPs reserved for upgrades (NOP1-10)
         CLEANSTACK, // Require that only a single stack element remains after evaluation.
         CHECKLOCKTIMEVERIFY, // Enable CHECKLOCKTIMEVERIFY operation
-        CHECKSEQUENCEVERIFY // Enable CHECKSEQUENCEVERIFY operation
+        CHECKSEQUENCEVERIFY; // Enable CHECKSEQUENCEVERIFY operation
+
+        /**
+         * Parse a verify flag string.
+         * @param flagString name of flag
+         * @return flag enum instance or empty if not found
+         */
+        public static Optional<VerifyFlag> parse(String flagString) {
+            return Arrays.stream(values())
+                    .filter(e -> e.name().equals(flagString))
+                    .findFirst();
+        }
     }
-    public static final EnumSet<VerifyFlag> ALL_VERIFY_FLAGS = EnumSet.allOf(VerifyFlag.class);
+    public static final Set<VerifyFlag> NO_VERIFY_FLAGS = Collections.emptySet();
+    public static final Set<VerifyFlag> ALL_VERIFY_FLAGS = Collections.unmodifiableSet(EnumSet.allOf(VerifyFlag.class));
 
     private static final int MAX_SCRIPT_SIZE = 10000;
     public static final int MAX_SCRIPT_ELEMENT_SIZE = 520;  // bytes
