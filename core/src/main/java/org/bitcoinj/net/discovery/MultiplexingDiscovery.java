@@ -22,7 +22,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Services;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.net.discovery.DnsDiscovery.DnsSeedDiscovery;
-import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.bitcoinj.core.ContextPropagatingThreadFactory;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
