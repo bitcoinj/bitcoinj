@@ -25,7 +25,6 @@ import javafx.stage.Stage;
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.internal.PlatformUtils;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.utils.AppDataDirectory;
 import org.bitcoinj.utils.BriefLogFormatter;
@@ -125,7 +124,6 @@ public abstract class WalletApplication implements AppDelegate {
     }
 
     protected void startWalletAppKit(Stage primaryStage) throws IOException {
-        Context.propagate(new Context());
         // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
         // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
         // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
