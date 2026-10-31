@@ -330,4 +330,21 @@ public class ByteUtilsTest {
     public void testDecodeMPI() {
         assertEquals(BigInteger.ZERO, ByteUtils.decodeMPI(new byte[]{}, false));
     }
+
+    @Test
+    public void longToByteExact_valid() {
+        assertEquals(0, ByteUtils.longToByteExact(0));
+        assertEquals((byte) 255, ByteUtils.longToByteExact(255));
+        assertEquals((byte) 127, ByteUtils.longToByteExact(127));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void longToByteExact_negative() {
+        ByteUtils.longToByteExact(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void longToByteExact_overflow() {
+        ByteUtils.longToByteExact(256);
+    }
 }
