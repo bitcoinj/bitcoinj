@@ -17,6 +17,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.io.BaseEncoding;
+import org.bitcoinj.base.BitcoinNetwork;
+import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.store.BlockStore;
@@ -83,7 +85,7 @@ public class CheckpointManager {
     // Map of block header time (in seconds) to data.
     protected final TreeMap<Instant, StoredBlock> checkpoints = new TreeMap<>();
 
-    protected final NetworkParameters params;
+    protected final Network network;
     protected final Sha256Hash dataHash;
 
     /**
@@ -99,7 +101,7 @@ public class CheckpointManager {
 
     /** Loads the checkpoints from the given stream */
     public CheckpointManager(NetworkParameters params, @Nullable InputStream inputStream) throws IOException {
-        this.params = Objects.requireNonNull(params);
+        network = Objects.requireNonNull(params).network();
         if (inputStream == null)
             inputStream = openStream(params);
         Objects.requireNonNull(inputStream);
@@ -111,6 +113,15 @@ public class CheckpointManager {
             dataHash = readTextual(inputStream);
         else
             throw new IOException("Unsupported format.");
+    }
+
+    /**
+     * Open a checkpoints stream for the given {@link BitcoinNetwork} pointing to inside the bitcoinj JAR.
+     * @param network the network
+     * @return input stream
+     */
+    public static InputStream openStream(BitcoinNetwork network) {
+        return openStream(NetworkParameters.of(network));
     }
 
     /** Returns a checkpoints stream pointing to inside the bitcoinj JAR */
@@ -161,11 +172,11 @@ public class CheckpointManager {
      */
     public StoredBlock getCheckpointBefore(Instant time) {
         try {
-            checkArgument(time.isAfter(params.getGenesisBlock().time()));
+            checkArgument(time.isAfter(Block.getGenesis(network).time()));
             // This is thread safe because the map never changes after creation.
             Map.Entry<Instant, StoredBlock> entry = checkpoints.floorEntry(time);
             if (entry != null) return entry.getValue();
-            Block genesis = params.getGenesisBlock().asHeader();
+            Block genesis = Block.getGenesis(network).asHeader();
             return new StoredBlock(genesis, genesis.getWork(), 0);
         } catch (VerificationException e) {
             throw new RuntimeException(e);  // Cannot happen.
@@ -180,6 +191,17 @@ public class CheckpointManager {
     /** Returns a hash of the concatenated checkpoint data. */
     public Sha256Hash getDataHash() {
         return dataHash;
+    }
+
+    /**
+     * Convenience method that creates a CheckpointManager, loads the given data, gets the checkpoint for the given
+     * time, then inserts it into the store and sets that to be the chain head. Useful when you have just created
+     * a new store from scratch and want to use configure it all in one go.
+     * <p>
+     * Note that time is adjusted backwards by a week to account for possible clock drift in the block headers.
+     */
+    public static void checkpoint(BitcoinNetwork network, InputStream checkpoints, BlockStore store, Instant time) throws BlockStoreException, IOException {
+        checkpoint(NetworkParameters.of(network), checkpoints, store, time);
     }
 
     /**

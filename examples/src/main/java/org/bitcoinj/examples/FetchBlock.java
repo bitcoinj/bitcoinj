@@ -22,7 +22,6 @@ import org.bitcoinj.base.Network;
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
@@ -64,8 +63,7 @@ public class FetchBlock implements Callable<Integer> {
         Objects.requireNonNull(blockHashParam);
         System.out.println("Connecting to node");
         final Network network = BitcoinNetwork.TESTNET;
-        final NetworkParameters params = NetworkParameters.of(network);
-        BlockStore blockStore = new MemoryBlockStore(params.getGenesisBlock());
+        BlockStore blockStore = new MemoryBlockStore(Block.getGenesis(network));
         BlockChain chain = new BlockChain(network, blockStore);
         PeerGroup peerGroup = new PeerGroup(network, chain);
         if (localhost) {
