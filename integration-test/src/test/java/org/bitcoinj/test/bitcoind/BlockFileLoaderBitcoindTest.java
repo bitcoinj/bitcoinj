@@ -22,7 +22,6 @@ import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.Context;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.PrunedException;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -66,9 +65,8 @@ public class BlockFileLoaderBitcoindTest {
     @Test
     public void iterateEntireBitcoindBlockchainIntoBlockStore() throws BlockStoreException, PrunedException {
         Network network = BitcoinNetwork.MAINNET;
-        NetworkParameters params = NetworkParameters.of(network);
         BlockFileLoader loader = new BlockFileLoader(network, BlockFileLoader.getReferenceClientBlockFileList());
-        BlockStore store = new MemoryBlockStore(params.getGenesisBlock());
+        BlockStore store = new MemoryBlockStore(network);
         AbstractBlockChain chain = new BlockChain(network, store);
 
         long blockCount = 0;

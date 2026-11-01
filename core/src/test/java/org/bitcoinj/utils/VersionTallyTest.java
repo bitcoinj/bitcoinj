@@ -110,7 +110,7 @@ public class VersionTallyTest {
     @Test
     public void testInitialize() throws BlockStoreException {
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        final BlockStore blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
+        final BlockStore blockStore = new MemoryBlockStore(TESTNET.network());
         final BlockChain chain = new BlockChain(BitcoinNetwork.TESTNET, blockStore);
 
         // Build a historical chain of version 2 blocks

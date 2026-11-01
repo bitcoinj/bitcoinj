@@ -72,7 +72,7 @@ public class ChainSplitTest {
         BriefLogFormatter.init();
         TimeUtils.setMockClock(); // Use mock clock
         Context.propagate(new Context(100, Coin.ZERO, false, true));
-        MemoryBlockStore blockStore = new MemoryBlockStore(TESTNET.getGenesisBlock());
+        MemoryBlockStore blockStore = new MemoryBlockStore(TESTNET.network());
         wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH);
         ECKey key1 = wallet.freshReceiveKey();
         ECKey key2 = wallet.freshReceiveKey();
