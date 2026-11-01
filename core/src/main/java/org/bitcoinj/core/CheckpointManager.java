@@ -21,7 +21,6 @@ import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.FullPrunedBlockStore;
 import org.bitcoinj.store.SPVBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,8 +192,6 @@ public class CheckpointManager {
             throws IOException, BlockStoreException {
         Objects.requireNonNull(params);
         Objects.requireNonNull(store);
-        checkArgument(!(store instanceof FullPrunedBlockStore), () ->
-                "you cannot use checkpointing with a full store");
 
         time = time.minus(7, ChronoUnit.DAYS);
 
