@@ -300,6 +300,9 @@ public class SPVBlockStore implements BlockStore {
             // Starting from the current tip of the ring work backwards until we have either found the block or
             // wrapped around.
             int cursor = getRingCursor();
+            if (cursor == fileLength) {
+                cursor = FILE_PROLOGUE_BYTES;
+            }
             final int startingPoint = cursor;
             final byte[] targetHashBytes = hash.getBytes();
             byte[] scratch = new byte[32];

@@ -103,6 +103,26 @@ public class SPVBlockStoreTest {
         assertNull(b);
     }
 
+    @Test(timeout = 5_000)
+    public void get_missWhenRingIsExactlyFull() throws Exception {
+        final int capacity = 5;
+        SPVBlockStore store = new SPVBlockStore(TESTNET, blockStoreFile, capacity, false);
+        try {
+            assertEquals(SPVBlockStore.getFileSize(capacity), blockStoreFile.length());
+
+            Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
+            Block header = TESTNET.getGenesisBlock();
+            for (int height = 1; height < capacity; height++) {
+                header = TestBlocks.createNextBlock(header, to).asHeader();
+                store.put(new StoredBlock(header, BigInteger.valueOf(height + 1), height));
+            }
+
+            assertNull(store.get(Sha256Hash.of("a header the store has never seen".getBytes())));
+        } finally {
+            store.close();
+        }
+    }
+
     @Test(expected = BlockStoreException.class)
     public void twoStores_onSameFile() throws Exception {
         new SPVBlockStore(TESTNET, blockStoreFile);
