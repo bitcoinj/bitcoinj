@@ -820,7 +820,7 @@ public class WalletTool implements Callable<Integer> {
         store = new SPVBlockStore(params, chainFile);
         if (reset) {
             try {
-                CheckpointManager.checkpoint(params, CheckpointManager.openStream(params), store,
+                CheckpointManager.checkpoint(net, CheckpointManager.openStream(net), store,
                         wallet.earliestKeyCreationTime());
                 StoredBlock head = store.getChainHead();
                 System.out.println("Skipped to checkpoint " + head.getHeight() + " at "
