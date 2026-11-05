@@ -18,6 +18,7 @@
 package org.bitcoinj.core;
 
 import org.bitcoinj.base.Address;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.base.Coin;
 import org.bitcoinj.base.ScriptType;
 import org.bitcoinj.base.Sha256Hash;
@@ -48,7 +49,6 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -278,7 +278,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         peerGroup.addWallet(wallet2);
         blockChain.addWallet(wallet2);
 
-        assertEquals(BloomFilter.class, waitForOutbound(p1).getClass());
+        assertEquals(BloomFilterMessage.class, waitForOutbound(p1).getClass());
         assertEquals(MemoryPoolMessage.class, waitForOutbound(p1).getClass());
 
         Coin value = COIN;
@@ -665,14 +665,16 @@ public class PeerGroupTest extends TestWithPeerGroup {
             key = wallet.freshReceiveKey();
         }
         peerGroup.waitForJobQueue();
-        BloomFilter bf, f2 = null;
-        while ((bf = (BloomFilter) outbound(p1)) != null) {
+        Message outbound;
+        BloomFilter f2 = null;
+        while ((outbound = outbound(p1)) instanceof BloomFilterMessage) {
+            BloomFilterMessage filterMessage = (BloomFilterMessage) outbound;
             assertEquals(MemoryPoolMessage.class, outbound(p1).getClass());
-            f2 = bf;
+            f2 = filterMessage.bloomFilter();
         }
         assertNotNull(key);
         assertNotNull(f2);
-        assertNull(outbound(p1));
+        assertNull(outbound);
         // Check the last filter received.
         assertNotEquals(f1, f2);
         assertTrue(f2.contains(key.getPubKey()));
@@ -822,7 +824,11 @@ public class PeerGroupTest extends TestWithPeerGroup {
         // Send the chain that doesn't have all the transactions in it. The blocks after the exhaustion point should all
         // be ignored.
         int epoch = wallet.getKeyChainGroupCombinedKeyLookaheadEpochs();
-        BloomFilter filter = BloomFilter.read(ByteBuffer.wrap(p1.lastReceivedFilter().serialize()));
+        BloomFilter filter = new BloomFilter(
+                p1.lastReceivedFilter().getDataCopy(),
+                p1.lastReceivedFilter().getHashFuncs(),
+                p1.lastReceivedFilter().getNTweak(),
+                p1.lastReceivedFilter().getNFlags());
         filterAndSend(p1, blocks, filter);
         Block exhaustionPoint = blocks.get(3);
         pingAndWait(p1);
@@ -834,7 +840,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // Await the new filter.
         peerGroup.waitForJobQueue();
-        BloomFilter newFilter = assertNextMessageIs(p1, BloomFilter.class);
+        BloomFilter newFilter = assertNextMessageIs(p1, BloomFilterMessage.class).bloomFilter();
         assertNotEquals(filter, newFilter);
         assertNextMessageIs(p1, MemoryPoolMessage.class);
         Ping ping = assertNextMessageIs(p1, Ping.class);
@@ -850,7 +856,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         // It happened again.
         peerGroup.waitForJobQueue();
-        newFilter = assertNextMessageIs(p1, BloomFilter.class);
+        newFilter = assertNextMessageIs(p1, BloomFilterMessage.class).bloomFilter();
         assertNextMessageIs(p1, MemoryPoolMessage.class);
         inbound(p1, assertNextMessageIs(p1, Ping.class).pong());
         assertNextMessageIs(p1, GetDataMessage.class);
@@ -865,8 +871,9 @@ public class PeerGroupTest extends TestWithPeerGroup {
     }
 
     private void filterAndSend(InboundMessageQueuer p1, List<Block> blocks, BloomFilter filter) {
+        BloomFilterMessage message = new BloomFilterMessage(filter);
         for (Block block : blocks) {
-            FilteredBlock fb = filter.applyAndUpdate(block);
+            FilteredBlock fb = message.applyAndUpdate(block);
             inbound(p1, fb);
             for (Transaction tx : fb.getAssociatedTransactions().values())
                 inbound(p1, tx);
@@ -897,7 +904,7 @@ public class PeerGroupTest extends TestWithPeerGroup {
         TestBlocks.solve(b2);
 
         // Apply the peer's bloom filter to create a FilteredBlock
-        FilteredBlock fb = p1.lastReceivedFilter().applyAndUpdate(b2);
+        FilteredBlock fb = new BloomFilterMessage(p1.lastReceivedFilter()).applyAndUpdate(b2);
 
         // Create a loose mempool transaction that pays to the wallet's existing address
         Transaction looseTx = FakeTxBuilder.createFakeTx(UNITTEST.network(), COIN, address);
