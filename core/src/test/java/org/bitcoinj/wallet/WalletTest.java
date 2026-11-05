@@ -3408,7 +3408,7 @@ public class WalletTest extends TestWithWallet {
     public void roundtripViaMnemonicCode() {
         Wallet wallet = Wallet.createDeterministic(TESTNET, ScriptType.P2WPKH);
         List<String> mnemonicCode = wallet.getKeyChainSeed().getMnemonicCode();
-        final DeterministicSeed clonedSeed = DeterministicSeed.ofMnemonic(mnemonicCode, "",
+        final DeterministicSeed.Unencrypted clonedSeed = DeterministicSeed.ofMnemonic(mnemonicCode, "",
                 wallet.earliestKeyCreationTime());
         Wallet clone = Wallet.fromSeed(TESTNET, clonedSeed, ScriptType.P2WPKH);
         assertEquals(wallet.currentReceiveKey(), clone.currentReceiveKey());

@@ -903,11 +903,10 @@ public class WalletTool implements Callable<Integer> {
         }
         Instant creationTime = getCreationTime().orElse(MnemonicCode.BIP39_STANDARDISATION_TIME);
         if (seedStr != null) {
-            DeterministicSeed seed;
             // Parse as mnemonic code.
             final List<String> split = splitMnemonic(seedStr);
             String passphrase = ""; // TODO allow user to specify a passphrase
-            seed = DeterministicSeed.ofMnemonic(split, passphrase, creationTime);
+            DeterministicSeed.Unencrypted seed = DeterministicSeed.ofMnemonic(split, passphrase, creationTime);
             try {
                 seed.check();
             } catch (MnemonicException.MnemonicLengthException e) {
