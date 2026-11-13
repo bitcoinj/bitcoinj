@@ -1,0 +1,43 @@
+/*
+ * Copyright by the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+module org.bitcoinj.walletfx {
+    requires java.desktop;
+    requires java.logging;
+
+    requires javafx.controls;
+    requires javafx.fxml;
+
+    requires org.jspecify;
+
+    requires org.slf4j;
+    requires com.google.common;
+    requires com.google.zxing;
+
+    requires org.bitcoinj.core;
+    // Since bitcoinj-core doesn't have a module-info and IDEs are generally unaware of the
+    // processing done by the jlink plugin, we include transitive dependencies here that would
+    // be unnecessary if bitcoinj-core were fully modular.
+    requires org.bitcoinj.base;     // Transitive via bitcoinj-core
+    requires com.google.protobuf;   // Transitive via bitcoinj-core
+
+    exports org.bitcoinj.walletfx.application;
+    exports org.bitcoinj.walletfx.controls;
+    exports org.bitcoinj.walletfx.overlay;
+    exports org.bitcoinj.walletfx.utils;
+    exports org.bitcoinj.walletfx.utils.easing;
+    opens org.bitcoinj.walletfx.utils to javafx.fxml;
+    opens org.bitcoinj.walletfx.controls to javafx.fxml;
+}
