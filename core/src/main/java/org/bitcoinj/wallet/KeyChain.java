@@ -16,7 +16,7 @@
 
 package org.bitcoinj.wallet;
 
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.wallet.listeners.KeyChainEventListener;
 import org.bitcoinj.protobuf.wallet.Protos;

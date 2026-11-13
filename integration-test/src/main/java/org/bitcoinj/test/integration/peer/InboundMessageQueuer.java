@@ -16,8 +16,9 @@
 
 package org.bitcoinj.test.integration.peer;
 
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.core.BitcoinSerializer;
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.core.BloomFilterMessage;
 import org.bitcoinj.core.Message;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
@@ -77,8 +78,8 @@ public abstract class InboundMessageQueuer extends PeerSocketHandler {
                 return;
             }
         }
-        if (m instanceof BloomFilter) {
-            lastReceivedFilter = (BloomFilter) m;
+        if (m instanceof BloomFilterMessage) {
+            lastReceivedFilter = ((BloomFilterMessage) m).bloomFilter();
         }
         inboundMessages.offer(m);
     }
