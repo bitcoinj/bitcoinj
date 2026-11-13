@@ -38,6 +38,8 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.bitcoinj.base.BitcoinNetwork.MAINNET;
+import static org.bitcoinj.base.BitcoinNetwork.REGTEST;
+import static org.bitcoinj.base.BitcoinNetwork.SIGNET;
 import static org.bitcoinj.base.BitcoinNetwork.TESTNET;
 import static org.bitcoinj.base.ScriptType.P2PKH;
 import static org.bitcoinj.base.ScriptType.P2WPKH;
@@ -81,8 +83,12 @@ public class WalletAccountPathTest {
             Arguments.of(BIP32, "m/1H", P2WPKH, TESTNET),
             Arguments.of(BIP43, "m/44H/0H/0H", P2PKH, MAINNET),
             Arguments.of(BIP43, "m/44H/1H/0H", P2PKH, TESTNET),
+            Arguments.of(BIP43, "m/44H/1H/0H", P2PKH, SIGNET),
+            Arguments.of(BIP43, "m/44H/1H/0H", P2PKH, REGTEST),
             Arguments.of(BIP43, "m/84H/0H/0H", P2WPKH, MAINNET),
-            Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, TESTNET)
+            Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, TESTNET),
+            Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, SIGNET),
+            Arguments.of(BIP43, "m/84H/1H/0H", P2WPKH, REGTEST)
         );
 
     // Create a wallet, save it to a file, then reload from a file
