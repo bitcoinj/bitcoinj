@@ -61,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class FullPrunedBlockChainTest {
     private static final Logger log = LoggerFactory.getLogger(FullPrunedBlockChainTest.class);
 
+    /**  This test class relies on {@link UnitTestParams} to override default behavior */
     protected static UnitTestParams PARAMS;
     private static final BitcoinNetworkParams MAINNET = MainNetParams.get();
 
