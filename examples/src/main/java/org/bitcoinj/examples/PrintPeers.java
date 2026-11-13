@@ -60,7 +60,7 @@ public class PrintPeers {
 
     public static void main(String[] args) throws Exception {
         BriefLogFormatter.init(Level.WARNING);
-        Context.propagate(new Context());
+        Context.setDefault();
         final Network network = BitcoinNetwork.MAINNET;
         final NetworkParameters params = NetworkParameters.of(network);
         System.out.println("=== DNS ===");

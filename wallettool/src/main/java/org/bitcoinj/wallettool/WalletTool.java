@@ -343,7 +343,7 @@ public class WalletTool implements Callable<Integer> {
         if (chainFile == null) {
             chainFile = new File(fileName);
         }
-        Context.propagate(new Context());
+        Context.setDefault();
 
         if (conditionStr != null) {
             condition = new Condition(conditionStr);
