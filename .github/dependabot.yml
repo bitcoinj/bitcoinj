@@ -23,3 +23,6 @@ updates:
       slf4j:
         patterns:
           - "org.slf4j:*"
+      picocli:
+        patterns:
+          - "info.picocli:*"
