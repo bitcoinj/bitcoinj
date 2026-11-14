@@ -19,12 +19,13 @@ package org.bitcoinj.core;
 
 import org.bitcoinj.base.Sha256Hash;
 import org.bitcoinj.net.NioClient;
+import org.bitcoinj.node.chain.FullPrunedBlockChain;
+import org.bitcoinj.node.store.MemoryFullPrunedBlockStore;
 import org.bitcoinj.params.BitcoinNetworkParams;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.store.BlockStoreException;
-import org.bitcoinj.store.FullPrunedBlockStore;
+import org.bitcoinj.node.store.FullPrunedBlockStore;
 import org.bitcoinj.store.MemoryBlockStore;
-import org.bitcoinj.store.MemoryFullPrunedBlockStore;
 import org.bitcoinj.utils.BlockFileLoader;
 import org.bitcoinj.utils.BriefLogFormatter;
 import org.bitcoinj.utils.Threading;
