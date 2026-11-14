@@ -121,7 +121,7 @@ public class TestWithNetworkConnections {
     }
 
     public void setUp() throws IOException, BlockStoreException {
-        setUp(new MemoryBlockStore(UNITTEST.getGenesisBlock()));
+        setUp(new MemoryBlockStore(UNITTEST.network()));
     }
     
     public void setUp(BlockStore blockStore) throws IOException, BlockStoreException {
