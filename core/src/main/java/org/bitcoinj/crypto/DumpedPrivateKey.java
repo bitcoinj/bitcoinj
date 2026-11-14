@@ -112,9 +112,4 @@ public class DumpedPrivateKey extends EncodedPrivateKey {
     public boolean isPubKeyCompressed() {
         return bytes.length == 33 && bytes[32] == 1;
     }
-
-    @Override
-    public String toString() {
-        return toBase58();
-    }
 }
