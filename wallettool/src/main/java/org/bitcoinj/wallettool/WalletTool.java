@@ -32,7 +32,6 @@ import org.bitcoinj.base.internal.TimeUtils;
 import org.bitcoinj.core.AbstractBlockChain;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
@@ -343,7 +342,6 @@ public class WalletTool implements Callable<Integer> {
         if (chainFile == null) {
             chainFile = new File(fileName);
         }
-        Context.propagate(new Context());
 
         if (conditionStr != null) {
             condition = new Condition(conditionStr);
