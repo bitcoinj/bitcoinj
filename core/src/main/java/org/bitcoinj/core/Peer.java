@@ -1485,7 +1485,7 @@ public class Peer extends PeerSocketHandler {
         }
         // Only add the genesis hash to the locator if we didn't already do so. If the chain is < 100 blocks we already reached it.
         if (cursor != null)
-            hashList.add(blockChain.params.getGenesisBlock().getHash());
+            hashList.add(blockChain.params().getGenesisBlock().getHash());
         return new BlockLocator(hashList);
     }
 
