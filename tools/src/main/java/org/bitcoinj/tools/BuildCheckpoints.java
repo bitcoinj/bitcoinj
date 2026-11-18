@@ -116,7 +116,7 @@ public class BuildCheckpoints implements Callable<Integer> {
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
         final TreeMap<Integer, StoredBlock> checkpoints;
         final File textFile;
-        try (BlockStore store = new MemoryBlockStore(params.getGenesisBlock())) {
+        try (BlockStore store = new MemoryBlockStore(net)) {
             final BlockChain chain = new BlockChain(net, store);
             final PeerGroup peerGroup = new PeerGroup(net, chain);
 

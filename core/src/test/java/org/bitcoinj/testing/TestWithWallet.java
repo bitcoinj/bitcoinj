@@ -71,7 +71,7 @@ public class TestWithWallet {
         wallet = Wallet.createDeterministic(BitcoinNetwork.TESTNET, ScriptType.P2PKH, KeyChainGroupStructure.BIP32);
         myKey = wallet.freshReceiveKey();
         myAddress = wallet.freshReceiveAddress(ScriptType.P2PKH);
-        blockStore = new MemoryBlockStore(TESTNET_PARAMS.getGenesisBlock());
+        blockStore = new MemoryBlockStore(TESTNET_PARAMS.network());
         chain = new BlockChain(BitcoinNetwork.TESTNET, wallet, blockStore);
     }
 
