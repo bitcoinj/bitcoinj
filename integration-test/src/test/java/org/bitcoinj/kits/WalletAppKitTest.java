@@ -40,7 +40,7 @@ public class WalletAppKitTest {
 
     @BeforeEach
     void setupTest(@TempDir File tempDir) {
-        Context.propagate(new Context());
+        Context.setDefault();
         kit = new WalletAppKit(network,
                 ScriptType.P2WPKH,
                 KeyChainGroupStructure.BIP43,

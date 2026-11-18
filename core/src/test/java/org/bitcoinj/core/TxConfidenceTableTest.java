@@ -50,9 +50,8 @@ public class TxConfidenceTableTest {
     @Before
     public void setup() throws Exception {
         BriefLogFormatter.init();
-        Context context = new Context();
-        Context.propagate(context);
-        table = context.getConfidenceTable();
+        Context.setDefault();
+        table = Context.get().getConfidenceTable();
 
         Address to = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);
         Address change = ECKey.random().toAddress(ScriptType.P2PKH, BitcoinNetwork.TESTNET);

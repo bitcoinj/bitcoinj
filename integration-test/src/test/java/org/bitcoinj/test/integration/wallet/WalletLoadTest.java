@@ -37,7 +37,7 @@ public class WalletLoadTest {
 
     @Test
     void basicWalletLoadTest() throws UnreadableWalletException {
-        Context.propagate(new Context());
+        Context.setDefault();
         Wallet wallet = Wallet.loadFromFile(walletFile);
 
         Instant creation = wallet.getKeyChainSeed().getCreationTime().get();
