@@ -36,7 +36,7 @@ public class BIP38PrivateKeyTest {
                 "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg");
         ECKey key = encryptedKey.decrypt("TestingOneTwoThree");
         assertEquals("5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -45,7 +45,7 @@ public class BIP38PrivateKeyTest {
                 "6PRNFFkZc2NZ6dJqFfhRoFNMR9Lnyj7dYGrzdgXXVMXcxoKTePPX1dWByq");
         ECKey key = encryptedKey.decrypt("Satoshi");
         assertEquals("5HtasZ6ofTHP6HCwTqTkLDuLQisYPah7aUnSKfC7h4hMUVw2gi5", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -60,7 +60,7 @@ public class BIP38PrivateKeyTest {
         passphrase.appendCodePoint(0x01f4a9); // PILE OF POO
         ECKey key = encryptedKey.decrypt(passphrase.toString());
         assertEquals("5Jajm8eQ22H3pGWLEVCXyvND8dQZhiQhoLJNKjYXk9roUFTMSZ4", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -69,7 +69,7 @@ public class BIP38PrivateKeyTest {
                 "6PYNKZ1EAgYgmQfmNVamxyXVWHzK5s6DGhwP4J5o44cvXdoY7sRzhtpUeo");
         ECKey key = encryptedKey.decrypt("TestingOneTwoThree");
         assertEquals("L44B5gGEpqEDRS9vVPz7QT35jcBG2r3CZwSwQ4fCewXAhAhqGVpP", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -78,7 +78,7 @@ public class BIP38PrivateKeyTest {
                 "6PYLtMnXvfG3oJde97zRyLYFZCYizPU5T3LwgdYJz1fRhh16bU7u6PPmY7");
         ECKey key = encryptedKey.decrypt("Satoshi");
         assertEquals("KwYgW8gcxj1JWJXhPSu4Fqwzfhp5Yfi42mdYmMa4XqK7NJxXUSK7", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -87,7 +87,7 @@ public class BIP38PrivateKeyTest {
                 "6PfQu77ygVyJLZjfvMLyhLMQbYnu5uguoJJ4kMCLqWwPEdfpwANVS76gTX");
         ECKey key = encryptedKey.decrypt("TestingOneTwoThree");
         assertEquals("5K4caxezwjGCGfnoPTZ8tMcJBLB7Jvyjv4xxeacadhq8nLisLR2", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class BIP38PrivateKeyTest {
                 "6PfLGnQs6VZnrNpmVKfjotbnQuaJK4KZoPFrAjx1JMJUa1Ft8gnf5WxfKd");
         ECKey key = encryptedKey.decrypt("Satoshi");
         assertEquals("5KJ51SgxWaAYR13zd9ReMhJpwrcX47xTJh2D3fGPG9CM8vkv5sH", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -105,7 +105,7 @@ public class BIP38PrivateKeyTest {
                 "6PgNBNNzDkKdhkT6uJntUXwwzQV8Rr2tZcbkDcuC9DZRsS6AtHts4Ypo1j");
         ECKey key = encryptedKey.decrypt("MOLON LABE");
         assertEquals("5JLdxTtcTHcfYcmJsNVy1v2PMDx432JPoYcBTVVRHpPaxUrdtf8", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class BIP38PrivateKeyTest {
                 "6PgGWtx25kUg8QWvwuJAgorN6k9FbE25rv5dMRwu5SKMnfpfVe5mar2ngH");
         ECKey key = encryptedKey.decrypt("ΜΟΛΩΝ ΛΑΒΕ");
         assertEquals("5KMKKuUmAkiNbA3DazMQiLfDq47qs8MAEThm4yL8R2PhV1ov33D", key.getPrivateKeyEncoded(MAINNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -124,7 +124,7 @@ public class BIP38PrivateKeyTest {
                 "6PRPhQhmtw6dQu6jD8E1KS4VphwJxBS9Eh9C8FQELcrwN3vPvskv9NKvuL");
         ECKey key = encryptedKey.decrypt("password");
         assertEquals("93MLfjbY6ugAsLeQfFY6zodDa8izgm1XAwA9cpMbUTwLkDitopg", key.getPrivateKeyEncoded(TESTNET)
-                .toString());
+                .toBase58());
     }
 
     @Test
@@ -134,7 +134,7 @@ public class BIP38PrivateKeyTest {
                 "6PfMmVHn153N3x83Yiy4Nf76dHUkXufe2Adr9Fw5bewrunGNeaw2QCpifb");
         ECKey key = encryptedKey.decrypt("password");
         assertEquals("91tCpdaGr4Khv7UAuUxa6aMqeN5GcPVJxzLtNsnZHTCndxkRcz2", key.getPrivateKeyEncoded(TESTNET)
-                .toString());
+                .toBase58());
     }
 
     @Test(expected = BadPassphraseException.class)
