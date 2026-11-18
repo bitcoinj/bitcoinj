@@ -201,7 +201,7 @@ public class PartialMerkleTree {
         } else {
             right = left;
         }
-        return combineLeftRight(left.getBytes(), right.getBytes());
+        return combineLeftRight(left, right);
     }
 
     // helper function to efficiently calculate the number of nodes at given height in the merkle tree
@@ -233,10 +233,10 @@ public class PartialMerkleTree {
             return hash;
         } else {
             // otherwise, descend into the subtrees to extract matched txids and hashes
-            byte[] left = recursiveExtractHashes(height - 1, pos * 2, used, matchedHashes).getBytes(), right;
+            Sha256Hash left = recursiveExtractHashes(height - 1, pos * 2, used, matchedHashes), right;
             if (pos * 2 + 1 < getTreeWidth(transactionCount, height-1)) {
-                right = recursiveExtractHashes(height - 1, pos * 2 + 1, used, matchedHashes).getBytes();
-                if (Arrays.equals(right, left))
+                right = recursiveExtractHashes(height - 1, pos * 2 + 1, used, matchedHashes);
+                if (right.equals(left))
                     throw new VerificationException("Invalid merkle tree with duplicated left/right branches");
             } else {
                 right = left;
@@ -246,8 +246,8 @@ public class PartialMerkleTree {
         }
     }
 
-    private static Sha256Hash combineLeftRight(byte[] left, byte[] right) {
-        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(reverseBytes(left), reverseBytes(right)));
+    private static Sha256Hash combineLeftRight(Sha256Hash left, Sha256Hash right) {
+        return Sha256Hash.wrapReversed(Sha256Hash.hashTwice(left.serialize(), right.serialize()));
     }
 
     /**
