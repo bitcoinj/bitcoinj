@@ -187,7 +187,7 @@ public class Context {
      * If this is set to true, proof of work is not enforced. This is useful for unit-testing, as we need to create
      * and solve fake blocks quite often.
      */
-    public boolean isRelaxProofOfWork() {
+    boolean isRelaxProofOfWork() {
         return relaxProofOfWork;
     }
 }
