@@ -33,9 +33,8 @@ module wallettemplate {
     requires org.bitcoinj.base;     // Transitive via bitcoinj-core
     requires com.google.protobuf;   // Transitive via bitcoinj-core
 
+    requires org.bitcoinj.walletfx;
+
     exports wallettemplate;
-    exports org.bitcoinj.walletfx.controls;
-    opens wallettemplate to javafx.fxml;
-    opens org.bitcoinj.walletfx.utils to javafx.fxml;
-    opens org.bitcoinj.walletfx.controls to javafx.fxml;
+    opens wallettemplate to javafx.fxml, org.bitcoinj.walletfx;
 }
