@@ -61,7 +61,7 @@ public interface Address extends Comparable<Address> {
      * <b>Note:</b> The network value returned is <i>normalized</i>. For example the address {@code "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"}
      * may be used on either {@link BitcoinNetwork#TESTNET} or {@link BitcoinNetwork#SIGNET}, but the value returned by
      * this method will always be {@link BitcoinNetwork#TESTNET}. Similarly, the address {@code "mnHUcqUVvrfi5kAaXJDQzBb9HsWs78b42R"}
-     * may be used on {@link BitcoinNetwork#TESTNET}, {@link BitcoinNetwork#REGTEST}, or {@link BitcoinNetwork#REGTEST}, but
+     * may be used on {@link BitcoinNetwork#TESTNET}, {@link BitcoinNetwork#SIGNET}, or {@link BitcoinNetwork#REGTEST}, but
      * the value returned by this method will always be {@link BitcoinNetwork#TESTNET}.
      * @return the Network.
      */
