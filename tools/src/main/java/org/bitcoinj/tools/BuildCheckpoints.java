@@ -19,6 +19,7 @@ package org.bitcoinj.tools;
 
 import org.bitcoinj.base.BitcoinNetwork;
 import org.bitcoinj.base.internal.TimeUtils;
+import org.bitcoinj.core.Block;
 import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Context;
@@ -116,7 +117,7 @@ public class BuildCheckpoints implements Callable<Integer> {
         // node and to save block headers that are on interval boundaries, as long as they are <1 month old.
         final TreeMap<Integer, StoredBlock> checkpoints;
         final File textFile;
-        try (BlockStore store = new MemoryBlockStore(params.getGenesisBlock())) {
+        try (BlockStore store = new MemoryBlockStore(Block.getGenesis(net))) {
             final BlockChain chain = new BlockChain(net, store);
             final PeerGroup peerGroup = new PeerGroup(net, chain);
 
