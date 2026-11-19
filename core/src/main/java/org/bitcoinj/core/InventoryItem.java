@@ -21,6 +21,8 @@ import org.bitcoinj.base.Sha256Hash;
 
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
+
 public class InventoryItem {
     
     /**
@@ -53,16 +55,18 @@ public class InventoryItem {
     public final Sha256Hash hash;
 
     public InventoryItem(Type type, Sha256Hash hash) {
-        this.type = type;
-        this.hash = hash;
+        this.type = requireNonNull(type, "type must not be null");
+        this.hash = requireNonNull(hash, "hash must not be null");
     }
 
     public InventoryItem(Block block) {
+        requireNonNull(block, "block must not be null");
         this.type = Type.BLOCK;
         this.hash = block.getHash();
     }
 
     public InventoryItem(Transaction tx) {
+        requireNonNull(tx, "tx must not be null");
         this.type = Type.TRANSACTION;
         this.hash = tx.getTxId();
     }

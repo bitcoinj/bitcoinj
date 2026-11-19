@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test FeeFilterMessage
@@ -57,5 +58,36 @@ public class FeeFilterMessageTest {
 
     private Coin[] invalidFeeRates() {
         return new Coin[] { Coin.NEGATIVE_SATOSHI, Coin.valueOf(Integer.MIN_VALUE), Coin.valueOf(Long.MIN_VALUE) };
+    }
+
+    @Test
+    public void messageSize() {
+        FeeFilterMessage msg = FeeFilterMessage.of(Coin.ofSat(1000));
+        assertEquals(Coin.BYTES, msg.messageSize());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void deprecatedGetFeeRateMatchesFeeRate() {
+        Coin feeRate = Coin.ofSat(5000);
+        FeeFilterMessage msg = FeeFilterMessage.of(feeRate);
+        assertEquals(msg.feeRate(), msg.getFeeRate());
+    }
+
+    @Test
+    public void toStringContainsFeeFilter() {
+        FeeFilterMessage msg = FeeFilterMessage.of(Coin.ofSat(1000));
+        String str = msg.toString();
+        assertTrue(str.contains("feefilter"));
+        assertTrue(str.contains("/kB"));
+    }
+
+    @Test
+    public void ofAndSerializeRoundTrip() {
+        Coin feeRate = Coin.ofSat(48508);
+        FeeFilterMessage original = FeeFilterMessage.of(feeRate);
+        byte[] serialized = original.serialize();
+        FeeFilterMessage deserialized = FeeFilterMessage.read(ByteBuffer.wrap(serialized));
+        assertEquals(feeRate, deserialized.feeRate());
     }
 }
