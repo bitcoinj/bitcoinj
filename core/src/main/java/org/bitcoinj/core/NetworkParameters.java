@@ -30,10 +30,12 @@ import org.bitcoinj.utils.VersionTally;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
@@ -389,7 +391,7 @@ public abstract class NetworkParameters {
      * tests should be a safe subset if block height is unknown.
      * @return the flags
      */
-    public EnumSet<ScriptExecution.VerifyFlag> getTransactionVerificationFlags(final Block block,
+    public Set<ScriptExecution.VerifyFlag> getTransactionVerificationFlags(final Block block,
                                                                                final Transaction transaction, final VersionTally tally, final Integer height) {
         final EnumSet<ScriptExecution.VerifyFlag> verifyFlags = EnumSet.noneOf(ScriptExecution.VerifyFlag.class);
         if (!block.time().isBefore(NetworkParameters.BIP16_ENFORCE_TIME))
@@ -402,6 +404,6 @@ public abstract class NetworkParameters {
             verifyFlags.add(ScriptExecution.VerifyFlag.CHECKLOCKTIMEVERIFY);
         }
 
-        return verifyFlags;
+        return Collections.unmodifiableSet(verifyFlags);
     }
 }
