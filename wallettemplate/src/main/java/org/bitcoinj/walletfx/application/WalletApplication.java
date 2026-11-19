@@ -18,6 +18,7 @@ package org.bitcoinj.walletfx.application;
 
 import com.google.common.util.concurrent.Service;
 import org.bitcoinj.core.Peer;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCombination;
@@ -36,6 +37,7 @@ import org.bitcoinj.walletfx.utils.GuiUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
 
@@ -43,14 +45,14 @@ import static org.bitcoinj.walletfx.utils.GuiUtils.informationalAlert;
  * Base class for JavaFX Wallet Applications
  */
 public abstract class WalletApplication implements AppDelegate {
-    private static WalletApplication instance;
-    private WalletAppKit walletAppKit;
+    private static @Nullable WalletApplication instance;
+    private @Nullable WalletAppKit walletAppKit;
     private final String applicationName;
     private final BitcoinNetwork network;
     private final KeyChainGroupStructure keyChainGroupStructure;
     private final ScriptType preferredOutputScriptType;
     private final String walletFileName;
-    private MainWindowController controller;
+    private @Nullable MainWindowController controller;
 
     public WalletApplication(String applicationName, BitcoinNetwork network, ScriptType preferredOutputScriptType, KeyChainGroupStructure keyChainGroupStructure) {
         instance = this;
@@ -66,10 +68,12 @@ public abstract class WalletApplication implements AppDelegate {
     }
 
     public static WalletApplication instance() {
+        Objects.requireNonNull(instance, "No instance available");
         return instance;
     }
 
     public WalletAppKit walletAppKit() {
+        Objects.requireNonNull(walletAppKit, "WalletAppKit not available yet");
         return walletAppKit;
     }
 
@@ -86,6 +90,7 @@ public abstract class WalletApplication implements AppDelegate {
     }
 
     public MainWindowController mainWindowController() {
+        Objects.requireNonNull(controller, "MainWindowController not started.");
         return controller;
     }
 
@@ -114,6 +119,7 @@ public abstract class WalletApplication implements AppDelegate {
             // AquaFx.style();
         }
         controller = loadController();
+        //Objects.requireNonNull(controller);
         primaryStage.setScene(controller.scene());
         startWalletAppKit(primaryStage);
         controller.scene().getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> {
@@ -132,6 +138,7 @@ public abstract class WalletApplication implements AppDelegate {
         Threading.USER_THREAD = Platform::runLater;
         // Create the app kit. It won't do any heavyweight initialization until after we start it.
         setupWalletKit(null);
+        Objects.requireNonNull(walletAppKit);
 
         if (walletAppKit.isChainFileLocked()) {
             informationalAlert("Already running", "This application is already running and cannot be started twice.");
@@ -151,11 +158,13 @@ public abstract class WalletApplication implements AppDelegate {
     }
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
+        Objects.requireNonNull(controller, "MainWindowController must be loaded first");
         // If seed is non-null it means we are restoring from backup.
         File appDataDirectory = AppDataDirectory.get(applicationName).toFile();
         walletAppKit = new WalletAppKit(network, preferredOutputScriptType, keyChainGroupStructure, appDataDirectory, walletFileName) {
             @Override
             protected void onSetupCompleted() {
+                Objects.requireNonNull(controller);
                 Platform.runLater(controller::onBitcoinSetup);
             }
         };
@@ -173,8 +182,10 @@ public abstract class WalletApplication implements AppDelegate {
 
     @Override
     public void stop() throws Exception {
-        walletAppKit.stopAsync();
-        walletAppKit.awaitTerminated();
+        if (walletAppKit != null) {
+            walletAppKit.stopAsync();
+            walletAppKit.awaitTerminated();
+        }
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
         Runtime.getRuntime().exit(0);
     }

@@ -23,6 +23,7 @@ import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -43,26 +44,30 @@ import org.bitcoinj.walletfx.utils.GuiUtils;
 import org.bitcoinj.walletfx.utils.TextFieldValidator;
 import org.bitcoinj.walletfx.utils.easing.EasingMode;
 import org.bitcoinj.walletfx.utils.easing.ElasticInterpolator;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Gets created auto-magically by FXMLLoader via reflection. The widget fields are set to the GUI controls they're named
  * after. This class handles all the updates and event handling for the main UI.
  */
 public class MainController extends MainWindowController {
-    public HBox controlsBox;
-    public Label balance;
-    public Button sendMoneyOutBtn;
-    public ClickableBitcoinAddress addressControl;
+    @FXML public @Nullable HBox controlsBox;
+    @FXML public @Nullable Label balance;
+    @FXML public @Nullable Button sendMoneyOutBtn;
+    @FXML public @Nullable ClickableBitcoinAddress addressControl;
 
     private final BitcoinUIModel model = new BitcoinUIModel();
-    private NotificationBarPane.Item syncItem;
+    private NotificationBarPane.@Nullable Item syncItem;
     private static final MonetaryFormat MONETARY_FORMAT = MonetaryFormat.BTC.noCode();
 
-    private WalletApplication app;
-    private NotificationBarPane notificationBar;
+    private @Nullable WalletApplication app;
+    private @Nullable NotificationBarPane notificationBar;
 
     // Called by FXMLLoader.
     public void initialize() {
+        Objects.requireNonNull(addressControl);
         app = WalletApplication.instance();
         scene = new Scene(uiStack);
         TextFieldValidator.configureScene(scene);
@@ -75,6 +80,7 @@ public class MainController extends MainWindowController {
 
     @Override
     public void controllerStart(Pane mainUI, String cssResourceName) {
+        Objects.requireNonNull(scene);
         this.mainUI = mainUI;
         // Configure the window with a StackPane so we can overlay things on top of the main UI, and a
         // NotificationBarPane so we can slide messages and progress bars in from the bottom. Note that
@@ -85,6 +91,7 @@ public class MainController extends MainWindowController {
         scene.getStylesheets().add(getClass().getResource(cssResourceName).toString());
         uiStack.getChildren().add(notificationBar);
         scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> {
+            Objects.requireNonNull(app);
             Peer peer = app.walletAppKit().peerGroup().getDownloadPeer();
             if (peer != null)
                 peer.close();
@@ -93,6 +100,10 @@ public class MainController extends MainWindowController {
 
     @Override
     public void onBitcoinSetup() {
+        Objects.requireNonNull(app);
+        Objects.requireNonNull(addressControl);
+        Objects.requireNonNull(balance);
+        Objects.requireNonNull(sendMoneyOutBtn);
         model.setWallet(app.walletAppKit().wallet());
         addressControl.addressProperty().bind(model.addressProperty());
         balance.textProperty().bind(createBalanceStringBinding(model.balanceProperty()));
@@ -122,6 +133,7 @@ public class MainController extends MainWindowController {
     }
 
     private void showBitcoinSyncMessage() {
+        Objects.requireNonNull(notificationBar);
         syncItem = notificationBar.pushItem("Synchronising with the Bitcoin network", model.syncProgressProperty());
     }
 
