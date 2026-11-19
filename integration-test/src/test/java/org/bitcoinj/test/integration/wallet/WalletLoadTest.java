@@ -22,29 +22,27 @@ import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.time.Instant;
 
+import static org.bitcoinj.test.integration.wallet.WalletTestParams.WALLET_BIRTHDAY;
+import static org.bitcoinj.test.integration.wallet.WalletTestParams.WALLET_FILE;
+import static org.bitcoinj.test.integration.wallet.WalletTestParams.WALLET_MNEMONIC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Basic test of loading a wallet from a known test file
  */
 public class WalletLoadTest {
-    private static final File walletFile = new File("src/test/resources/org/bitcoinj/test/integration/wallet/panda-test-wallet.wallet");
-    private static final String testWalletMnemonic = "panda diary marriage suffer basic glare surge auto scissors describe sell unique";
-    private static final Instant testWalletCreation = Instant.ofEpochSecond(1554102000);
-
     @Test
     void basicWalletLoadTest() throws UnreadableWalletException {
         Context.propagate(new Context());
-        Wallet wallet = Wallet.loadFromFile(walletFile);
+        Wallet wallet = Wallet.loadFromFile(WALLET_FILE);
 
         Instant creation = wallet.getKeyChainSeed().getCreationTime().get();
-        assertEquals(testWalletCreation, creation, "unexpected creation timestamp");
+        assertEquals(WALLET_BIRTHDAY, creation, "unexpected creation timestamp");
 
         String mnemonic = wallet.getKeyChainSeed().getMnemonicString();
-        assertEquals(testWalletMnemonic, mnemonic, "unexpected mnemonic");
+        assertEquals(WALLET_MNEMONIC, mnemonic, "unexpected mnemonic");
 
         HDPath accountPath = wallet.getActiveKeyChain().accountFullPath();
         assertEquals(HDPath.parsePath("m/0H"), accountPath);
