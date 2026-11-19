@@ -141,8 +141,8 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
-    static DeterministicSeed fromProtobuf(String mnemonicString, byte @Nullable [] seed, String passphrase, @Nullable Instant creationTime) {
-        return new DeterministicSeed(optionalSeedFromMnemonic(splitMnemonicCode(mnemonicString), passphrase, seed), splitMnemonicCode(mnemonicString), creationTime);
+    static DeterministicSeed fromProtobuf(String mnemonicString, String passphrase, @Nullable Instant creationTime) {
+        return new DeterministicSeed(seedFromMnemonic(splitMnemonicCode(mnemonicString), passphrase), splitMnemonicCode(mnemonicString), creationTime);
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
@@ -166,11 +166,6 @@ public class DeterministicSeed implements EncryptableItem {
         this.encryptedMnemonicCode = Objects.requireNonNull(encryptedMnemonic);
         this.encryptedSeed = encryptedSeed;
         this.creationTime = creationTime;
-    }
-
-    // If seed is null, generate seed from mnemonic and passphrase. Otherwise, return unmodified seed.
-    private static byte[] optionalSeedFromMnemonic(List<String> mnemonicCode, String passphrase, byte @Nullable [] seed) {
-        return seed != null ? seed : seedFromMnemonic(mnemonicCode, passphrase);
     }
 
     private static byte[] seedFromMnemonic(List<String> mnemonicCode, String passphrase) {
@@ -278,8 +273,7 @@ public class DeterministicSeed implements EncryptableItem {
         checkState(isEncrypted());
         Objects.requireNonNull(encryptedMnemonicCode);
         List<String> mnemonic = decodeMnemonicCode(crypter.decrypt(encryptedMnemonicCode, aesKey));
-        byte[] seed = encryptedSeed == null ? null : crypter.decrypt(encryptedSeed, aesKey);
-        return new DeterministicSeed(optionalSeedFromMnemonic(mnemonic, passphrase, seed), mnemonic, creationTime);
+        return new DeterministicSeed(seedFromMnemonic(mnemonic, passphrase), mnemonic, creationTime);
     }
 
     @Override
