@@ -16,7 +16,15 @@
 
 package org.bitcoinj.base;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
 import java.util.Comparator;
+
+import static org.bitcoinj.base.internal.Preconditions.checkArgument;
+import static org.bitcoinj.base.internal.Secp256k1Constants.ALGORITHM_NAME;
+import static org.bitcoinj.base.internal.Secp256k1Constants.COMPRESSED_FORMAT_NAME;
+import static org.bitcoinj.base.internal.Secp256k1Constants.UNCOMPRESSED_FORMAT_NAME;
 
 /**
  * Interface for addresses, e.g. native segwit addresses ({@link SegwitAddress}) or legacy addresses ({@link LegacyAddress}).
@@ -66,6 +74,53 @@ public interface Address extends Comparable<Address> {
      * @return the Network.
      */
     Network network();
+
+    /**
+     * Create a Bitcoin Address from a Secp256k1 {@link ECPublicKey} (Java Cryptography public key.)
+     * <p>
+     * Requires that a {@link java.security.Provider} providing {@code "RIPEMD160"} {@link MessageDigest} be installed.
+     * For example, to install the Bouncy Castle Provider use:
+     * <p>
+     * {@code Security.addProvider(new BouncyCastleProvider());}
+     * <p>
+     * Since {@link org.bitcoinj.base} has minimal dependencies, it is the responsibility of the calling application
+     * to make sure a {@code "RIPEMD160"} provider is on the class path and installed. See the {@code AddressFromKeyTest}
+     * integration test for an example of how to do this.
+     * @param publicKey a Secp256k1 public key
+     * @param scriptType output script type
+     * @param network network address will be used on
+     * @return an address
+     */
+    static Address fromKey(ECPublicKey publicKey, ScriptType scriptType, BitcoinNetwork network) {
+        checkArgument(publicKey.getAlgorithm().equals(ALGORITHM_NAME) &&
+                (publicKey.getFormat().equals(COMPRESSED_FORMAT_NAME) || publicKey.getFormat().equals(UNCOMPRESSED_FORMAT_NAME)),
+                () -> "publicKey algorithm must be 'Secp256k1' and format must be 'Compressed SEC' or 'Uncompressed SEC'" );
+        byte [] pubKeyHash = sha256hash160(publicKey.getEncoded());
+        if (scriptType == ScriptType.P2PKH) {
+            return LegacyAddress.fromPubKeyHash(network, pubKeyHash);
+        } else if (scriptType == ScriptType.P2WPKH) {
+            return SegwitAddress.fromHash(network, pubKeyHash);
+        } else {
+            throw new UnsupportedOperationException("Script type not supported: " + scriptType);
+        }
+    }
+
+    // Temporary until we can move (part of) CryptoUtils to `base`
+    static byte[] sha256hash160(byte[] input) {
+        byte[] sha256 = Sha256Hash.hash(input);
+        return digestRipeMd160(sha256);
+    }
+
+    // Temporary until we can move (part of) CryptoUtils to `base`
+    static byte[] digestRipeMd160(byte[] input) {
+        byte[] pubKeyHash;
+        try {
+            pubKeyHash = MessageDigest.getInstance("RIPEMD160").digest(input);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        return pubKeyHash;
+    }
 
     /**
      * Comparator for the first two comparison fields in {@code Address} comparisons, see {@link Address#compareTo(Address)}.
