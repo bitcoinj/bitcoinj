@@ -25,7 +25,9 @@ package org.bitcoinj.wallet;
  * before you load it (to read existing data) and ensure it's present when the wallet is save (to write the data).</p>
  *
  * <p>Note that extensions are singletons - you cannot add two objects that provide the same ID to the same wallet.</p>
+ * @deprecated Use an alternative mechanism to store additional wallet data.
  */
+@Deprecated
 public interface WalletExtension {
     /** Returns a Java package/class style name used to disambiguate this extension from others. */
     String getWalletExtensionID();
