@@ -105,7 +105,7 @@ public class SendMoneyController implements OverlayController<SendMoneyControlle
             });
             sendResult.transaction().getConfidence().addEventListener((tx, reason) -> {
                 if (reason == TransactionConfidence.Listener.ChangeReason.SEEN_PEERS)
-                    updateTitleForBroadcast();
+                    Platform.runLater(this::updateTitleForBroadcast);
             });
             sendBtn.setDisable(true);
             address.setDisable(true);
