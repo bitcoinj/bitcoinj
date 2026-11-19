@@ -16,8 +16,8 @@
 
 package org.bitcoinj.net;
 
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.base.internal.TimeUtils;
-import org.bitcoinj.core.BloomFilter;
 import org.bitcoinj.core.PeerFilterProvider;
 import org.bitcoinj.core.PeerGroup;
 import org.jspecify.annotations.Nullable;

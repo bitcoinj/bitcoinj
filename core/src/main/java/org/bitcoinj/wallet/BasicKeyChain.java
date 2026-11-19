@@ -20,7 +20,7 @@ package org.bitcoinj.wallet;
 import com.google.protobuf.ByteString;
 import org.bitcoinj.base.Network;
 import org.bitcoinj.crypto.AesKey;
-import org.bitcoinj.core.BloomFilter;
+import org.bitcoinj.base.BloomFilter;
 import org.bitcoinj.crypto.ECKey;
 import org.bitcoinj.crypto.EncryptableItem;
 import org.bitcoinj.crypto.EncryptedData;
@@ -611,8 +611,10 @@ public class BasicKeyChain implements EncryptableKeyChain {
         lock.lock();
         try {
             BloomFilter filter = new BloomFilter(size, falsePositiveRate, tweak);
-            for (ECKey key : hashToKeys.values())
-                filter.insert(key);
+            for (ECKey key : hashToKeys.values()) {
+                filter.insert(key.getPubKey());
+                filter.insert(key.getPubKeyHash());
+            }
             return filter;
         } finally {
             lock.unlock();

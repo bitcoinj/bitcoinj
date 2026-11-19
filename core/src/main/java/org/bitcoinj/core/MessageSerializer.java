@@ -78,7 +78,7 @@ public abstract class MessageSerializer {
      * Make an filter message from the payload. Extension point for alternative
      * serialization format support.
      */
-    public abstract Message makeBloomFilter(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
+    public abstract BloomFilterMessage makeBloomFilterMessage(ByteBuffer payload) throws ProtocolException, UnsupportedOperationException;
 
     /**
      * Make a filtered block from the payload. Extension point for alternative
