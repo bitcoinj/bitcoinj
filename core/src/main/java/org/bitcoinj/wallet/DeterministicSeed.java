@@ -54,7 +54,6 @@ public class DeterministicSeed implements EncryptableItem {
     private final byte @Nullable [] seed;
     @Nullable private final List<String> mnemonicCode; // only one of mnemonicCode/encryptedMnemonicCode will be set
     @Nullable private final EncryptedData encryptedMnemonicCode;
-    @Nullable private final EncryptedData encryptedSeed;
     // Creation time of the seed, or null if the seed was deserialized from a version that did not have this field.
     @Nullable private Instant creationTime = null;
 
@@ -146,8 +145,8 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     // For use in DeteministicKeyChain.fromProtobuf() only
-    static DeterministicSeed fromProtobufEncrypted(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
-        return new DeterministicSeed(encryptedMnemonic, encryptedSeed, creationTime);
+    static DeterministicSeed fromProtobufEncrypted(EncryptedData encryptedMnemonic, @Nullable Instant creationTime) {
+        return new DeterministicSeed(encryptedMnemonic, creationTime);
     }
 
     // Canonical constructor: both seed and mnemonic sentence are present
@@ -155,16 +154,14 @@ public class DeterministicSeed implements EncryptableItem {
         this.seed = Objects.requireNonNull(seed);
         this.mnemonicCode = Objects.requireNonNull(mnemonic);
         this.encryptedMnemonicCode = null;
-        this.encryptedSeed = null;
         this.creationTime = creationTime;
     }
 
-    // Canonical constructor: encrypted mnemonic sentence and optional encrypted seed
-    private DeterministicSeed(EncryptedData encryptedMnemonic, @Nullable EncryptedData encryptedSeed, @Nullable Instant creationTime) {
+    // Canonical constructor: encrypted mnemonic sentence
+    private DeterministicSeed(EncryptedData encryptedMnemonic, @Nullable Instant creationTime) {
         this.seed = null;
         this.mnemonicCode = null;
         this.encryptedMnemonicCode = Objects.requireNonNull(encryptedMnemonic);
-        this.encryptedSeed = encryptedSeed;
         this.creationTime = creationTime;
     }
 
@@ -234,9 +231,15 @@ public class DeterministicSeed implements EncryptableItem {
         return KeyCrypter.EncryptionType.ENCRYPTED_SCRYPT_AES;
     }
 
+    /**
+     * @deprecated Encrypted seed data is no longer stored. The seed is always derived from the encrypted
+     * mnemonic sentence. The protobuf field will remain and always be written as `null`. Non-null values
+     * from earlier versions of bitcoinj will be ignored.
+     */
+    @Deprecated
     @Nullable
     public EncryptedData getEncryptedSeedData() {
-        return encryptedSeed;
+        return null;
     }
 
     @Override
@@ -266,8 +269,7 @@ public class DeterministicSeed implements EncryptableItem {
         checkState(mnemonicCode != null, () ->
                 "mnemonic missing so cannot encrypt");
         EncryptedData encryptedMnemonic = keyCrypter.encrypt(getMnemonicAsBytes(), aesKey);
-        EncryptedData encryptedSeed = keyCrypter.encrypt(seed, aesKey);
-        return new DeterministicSeed(encryptedMnemonic, encryptedSeed, creationTime);
+        return new DeterministicSeed(encryptedMnemonic, creationTime);
     }
 
     private byte[] getMnemonicAsBytes() {
@@ -278,8 +280,7 @@ public class DeterministicSeed implements EncryptableItem {
         checkState(isEncrypted());
         Objects.requireNonNull(encryptedMnemonicCode);
         List<String> mnemonic = decodeMnemonicCode(crypter.decrypt(encryptedMnemonicCode, aesKey));
-        byte[] seed = encryptedSeed == null ? null : crypter.decrypt(encryptedSeed, aesKey);
-        return new DeterministicSeed(optionalSeedFromMnemonic(mnemonic, passphrase, seed), mnemonic, creationTime);
+        return new DeterministicSeed(seedFromMnemonic(mnemonic, passphrase), mnemonic, creationTime);
     }
 
     @Override
