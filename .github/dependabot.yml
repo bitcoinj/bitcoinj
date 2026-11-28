@@ -23,3 +23,8 @@ updates:
       slf4j:
         patterns:
           - "org.slf4j:*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
